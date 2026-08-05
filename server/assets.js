@@ -1194,7 +1194,11 @@ export function compileAssetWorkflow(project, asset) {
 export async function validateAssetWorkflow(project, asset) {
   const prompt = compileAssetWorkflow(project, asset);
   if (!prompt) return { ready: true, errors: [] };
-  const objectInfo = await getObjectInfo(true);
+  // Queueing a selection validates many assets in one request. Reuse the
+  // five-minute ComfyUI schema cache instead of downloading the full
+  // /object_info payload once per asset; callers still receive the same
+  // node/input/model validation, without leaving the UI stuck on Queueing.
+  const objectInfo = await getObjectInfo();
   const errors = [];
   for (const [nodeId, node] of Object.entries(prompt)) {
     const schema = objectInfo?.[node?.class_type];
