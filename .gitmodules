@@ -1,0 +1,4 @@
+[submodule "BlokeyUI"]
+	path = BlokeyUI
+	url = https://github.com/tj1784/BlokeyUI.git
+	branch = codex/unified-sineforge-engine

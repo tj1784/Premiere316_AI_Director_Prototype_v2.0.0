@@ -1,0 +1,12 @@
+PREMIERE316 AI DIRECTOR — QUICK START
+
+1. Make sure Node.js 20+ and FFmpeg are installed.
+2. Run the Desktop shortcut. It starts Premiere316's dedicated BlokeyUI on http://127.0.0.1:8190.
+3. Double-click start_premiere316.bat.
+4. Open http://127.0.0.1:8789 if the browser does not open automatically.
+
+The included Harrowing of Hell project demonstrates the complete interface.
+Real LTX video generation uses workflows/ltx-director-i2v.ui.json.
+The Generate Guide Image and Generate Score buttons currently use clearly documented local FFmpeg prototype fallbacks until dedicated AI workflows are attached.
+
+See README.md and docs/VALIDATION_REPORT.md for full details.

@@ -1,0 +1,30 @@
+{
+  "name": "premiere316",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Premiere-style AI video director for selected-range LTX generation, guide frames, scoring, and final master assembly",
+  "scripts": {
+    "build": "node scripts/build-portable.mjs",
+    "dev:client": "vite",
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "build:vite": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2",
+    "zustand": "^4.5.4"
+  }
+}

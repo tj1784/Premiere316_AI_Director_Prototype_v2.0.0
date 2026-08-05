@@ -1,0 +1,27 @@
+node_modules/
+client/dist/
+projects/
+*.log
+.DS_Store
+
+# Dedicated local ComfyUI/Python runtime, models, cache, quarantine, and outputs.
+# Keep only the lightweight routing and launcher files needed to recreate it.
+BlokeyUI/*
+!BlokeyUI/premiere316_model_paths.yaml
+!BlokeyUI/run_blokeyui_nvidia_8190.bat
+!BlokeyUI/start_premiere316_engine.ps1
+
+# Generated package inventory includes private project filenames and local deps.
+MANIFEST.sha256
+
+# Local credentials and machine-specific state.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.db
+*.db-*
+*.lock

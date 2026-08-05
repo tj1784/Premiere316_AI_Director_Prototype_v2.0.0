@@ -1,0 +1,17 @@
+# Premiere316 uses its own ComfyUI process, custom nodes, inputs, outputs,
+# temp files, user profile, and queue. Large model weights remain in the
+# existing shared model library to avoid duplicating tens of gigabytes.
+premiere316_shared_models:
+  base_path: C:/ComfyUI/ComfyUI_Shared_Folders
+  is_default: false
+  diffusion_models: models/diffusion_models/
+  unet: models/unet/
+  loras: models/loras/
+  vae: models/vae/
+  text_encoders: models/text_encoders/
+  clip: models/text_encoders/
+  latent_upscale_models: models/latent_upscale_models/
+  upscale_models: models/upscale_models/
+  checkpoints: models/checkpoints/
+  qwen_tts: models/qwen-tts/
+  audio_encoders: models/audio_encoders/
