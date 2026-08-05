@@ -1,0 +1,339 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: fx-blue-flame\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nAtmosphere/VFX guard: transfer only light falloff, particle behavior, haze density, ember/gold color relationships, and cinematic exposure. Keep the effect content and compositing requirements controlled by this row.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nFX-BLUE-FLAME — PRODUCTION REFERENCE: CINEMATIC VFX, PARTICLES, LIGHT, TRANSFORMATION, AND MOTION REFERENCE.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nHero production reference of Hell's native blue flame in its initial pre-transformation state: cold supernatural fire that burns without ordinary orange or yellow heat color, the signature illumination of Hell's fortress before divine light arrives. The flame itself is the subject—dense, living, unnatural fire with a deep royal-blue core the color of #4169E1 and cobalt, shifting toward icy cyan and pale electric edges where the fire frays into air. Tongues of blue fire rise in slow, heavy motion as if the atmosphere is thicker than Earth's, not the quick flicker of campfire but a ponderous, predatory burn. Inner cores glow slightly brighter and slightly cooler white-blue; outer envelopes remain saturated sapphire and indigo. Thin translucent sheets of flame peel and curl like silk in water. Embers are not gold sparks but cold blue-white mote trails that drift upward then die into ash-colored smoke. Subtle internal structure: layered sheets of combustion, soft volumetric glow, and sharp filament edges that catch micro-specular highlights without becoming neon CGI. The fire is clearly physical practical-plus-optical VFX language for a photoreal biblical epic—heat shimmer, refractive distortion of the air immediately above the flame, soft bloom into nearby darkness—not cartoon flame, not pure particle-system look, not green screen spill.\n\nMount and environment context: the blue flame issues from ancient iron torch brackets and shallow stone braziers set into black obsidian fortress walls and massive pillars of Hell's cathedral of suffering. Corroded iron cups hold fuel that burns with this unnatural blue; black soot stains the stone above each torch in long upward scars. The background remains deep crimson-black hell architecture—obsidian stone (#0A0A0A), distant red underglow at floor level (~3500K warm crimson spill only at the base of pillars), ceiling lost in smoke and shadow. Multiple blue torch sources recede into depth, each casting elongated, grasping-hand shadows across carved black stone and the distant iron-and-bone gate. The air is filled with thin poison haze and hanging smoke that catches blue light as cold volumetric shafts; no golden divine light, no warm amber transformation, no white marble—this is strictly the initial hell state when blue flame is law.\n\nLighting physics: each flame acts as a practical key with cold blue emission hue (visually royal blue / cyan-blue, not warm yellow fire). Local key ~cold blue spill on nearby stone, armor edges, and floor dust; soft falloff into near-black voids; red floor underglow as secondary fill only at the lowest planes so blue remains dominant mid-frame. Volumetric blue light cones cut through hanging smoke; subtle lens bloom and gentle chromatic fringing at hottest blue cores without modern digital UI look. Color grade: deep crimsons, obsidian blacks, cold blues; crushed shadows with retained texture in stone and iron; desaturated mid-tones except for the vivid flame itself; no warm sunrise, no gold god-rays.\n\nCamera and framing for a 2.39:1 cinematic widescreen production still: medium-close hero framing of one primary torch flame sharp in the foreground (roughly 50–85mm portrait-tele feel), secondary blue torches soft in depth for scale, shallow-to-moderate depth of field so flame detail and heat distortion read clearly while architecture remains readable. Slight low angle looking up the pillar so flame tongues rise against darkness and smoke ceiling. Photoreal live-action plate quality suitable as an FX look-development and lighting-match reference for all pre-arrival Hell scenes—gate approach, guardian confrontation, fortress interiors before Jesus's golden radiance enters.\n\nMaterial and texture continuity locks: blue flame only in this asset (never gold); fuel cups of pitted corroded iron; black stone and soot; dry ash dust motes; no modern fixtures, LEDs, propane hardware, glass globes, electrical wiring, or industrial torch heads. No logos, captions, watermarks, borders, UI, or readable text. Sacred biblical epic tone—cold, ancient, oppressive supernatural fire of Hades, not fantasy magic neon. Continuity: this is the pre-transformation hellfire that later becomes golden fire after the sword shockwave; keep pure blue/cyan emission and cold atmosphere so it can be matched against fx-golden-fire as the after state. Single coherent visual subject: blue hell flame as living light source and atmosphere, photoreal, physically grounded in fortress architecture.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/atmosphere-vfx/fx-blue-flame/fx-blue-flame_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 563418212386452200
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  }
+}

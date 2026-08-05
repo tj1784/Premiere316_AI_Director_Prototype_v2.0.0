@@ -1,0 +1,339 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: loc-desert-night\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nLocation guard: transfer only color, light behavior, haze, scale language, and material realism. Do not copy the reference cave, Hell gate, fortress geometry, crowds, or blocking unless this row explicitly requires those elements.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nEARTH DESERT AT NIGHT — PRODUCTION REFERENCE: CINEMATIC ENVIRONMENT, SCALE, LIGHTING, MATERIALS, AND CONTINUITY.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nCinematic establishing production still for JESUS: THE HARROWING OF HELL, opening beat EXT. EARTH — DESERT — NIGHT (TIMELESS): a vast Judean-style wilderness under a bruised canvas of deep purple and absolute black, the sky layered with bruised plum, indigo, and soot-black clouds that never fully close. Stars pulse erratically across the vault as if holding their breath—some flaring cold white-blue, others dimming in irregular rhythm—cold starlight approximately 5000K laying thin silver edges on every ridge and stone. The land is arid limestone and pale sand, wind-scoured rock shelves, low scrub and sparse dry thorn bushes, cracked earth flats, and distant low hills silhouetted against the darker horizon. No modern structures, no roads, no vehicles, no people in frame; pure empty sacred geography waiting for revelation.\n\nAt frame center-foreground to midground, the ground has cracked open with purpose rather than chaotic violence: a clean vertical wound in the earth, roughly forty feet (twelve meters) in diameter at the surface, edges of fractured stone and compacted desert soil lifting slightly as if the world itself has been cut by divine intent. The fissure lips show layered strata of pale sand, ochre clay, and darker rock; fine dust hangs in the still air above the opening. Looking into the wound, absolute darkness falls away into infinite depth—not a simple hole but a spiritual shaft whose first visible walls are glossy black obsidian-like stone, faintly veined with dying embers of dull red-orange that suggest heat without warmth. At the extreme upper lip of the shaft, the merest suggestion of ancient faces pressed into the stone may read as geological texture and faint relief rather than fully resolved portraits, eyes turned upward in impossible hope, locked to continuity with the descent shaft location but kept subordinate so the hero subject remains the desert night surface and the opened wound.\n\nAtmosphere is heavy and reverent. Fine airborne dust and microscopic ash motes catch the cold starlight in thin volumetric shafts. A faint residual heat shimmer may rise from the fissure mouth against the colder ambient night, creating a subtle density difference in the air above the crack. No fire on the surface; no torchlight; illumination is almost entirely cold celestial light from the pulsing stars and the bruised sky, with the faintest warm underglow leaking from deep within the fissure only as a subterranean suggestion—dying ember color, never full hell red, never divine gold yet. Color grade for this beat: bruised purple-black sky, cold silver star edges, desaturated sand and limestone midtones, deep void black inside the wound, micro-accents of dying ember along the upper shaft walls. Master arc lock: Earth night opening palette before any golden divine intrusion fully arrives.\n\nCamera language: ultra-wide cinematic establishing shot, approximately 24–35mm anamorphic feel, aspect ratio 2.39:1 widescreen, slightly low angle from desert floor looking across the cracked ground toward the vertical wound and then up into the star field, or a high three-quarter overlook that keeps the fissure as the compositional center with desert expanse receding to horizon. Deep focus preferred so both cracked earth texture in the near ground and the infinite sky read sharp; mild atmospheric haze only at far distance. Physically coherent night exposure: true night blacks with recoverable detail in sand grains, rock cracks, and star-lit stone edges; no daytime fill; no neon; no lens flares from modern light sources. Subtle filmic grain and natural optical falloff only.\n\nMaterial and texture inventory for production lock: dry crystalline sand, wind-polished limestone, fractured desert crust with hairline spider cracks radiating from the main fissure, sparse dead scrub with brittle twigs casting long thin starlight shadows, obsidian-dark shaft rim stone with ember veins, suspended dust, zero moisture sheen on the open flats. Continuity pair with loc-desert-dawn: this is the same geographic plate—same ridge line silhouette, same fissure footprint location, same desert floor contours—shown here at night with the wound open and sky bruised purple-black; dawn will reverse to sealed earth, gold horizon, and peace. Do not seal the fissure in this asset; do not introduce dawn light, white dove, title typography, or procession figures.\n\nTone: photorealistic live-action biblical epic production reference, sacred and ominous, quiet before the harrowing. The ground has opened so that the King of Kings may descend; the stars wait. Repeat continuity locks near end: bruised purple-black night sky with erratically pulsing stars; cold starlight ~5000K; purposeful vertical fissure wound ~40ft surface diameter into absolute darkness with obsidian walls veined by dying embers; empty ancient desert; 2.39:1; no modern objects, no people as hero subjects, no readable text, logos, watermarks, borders, or captions; single coherent night plate for LOC-DESERT-NIGHT paired to LOC-DESERT-DAWN.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/locations/loc-desert-night/loc-desert-night_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 1142411495112985100
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  }
+}

@@ -1,0 +1,427 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: character-jesus-the-harrower-close-up\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nCharacter guard: the row alone defines identity, age, ethnicity, anatomy, hair, scars, costume, wounds, pose, and carried objects. Never turn a non-Jesus character into a Jesus lookalike.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested ivory-linen/blood material behavior only; explicitly requested golden luminous-VFX behavior only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nJESUS CHRIST — CLOSE-UP: FACIAL IDENTITY, EXPRESSION, AND CINEMATIC LIGHTING REFERENCE.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nExtreme close-up cinematic portrait of Jesus the Harrower at the decisive moment of the Harrowing of Hell, framed as a photorealistic live-action biblical epic production still in 2.39:1 widescreen. He appears approximately thirty years of age, Mediterranean olive complexion with warm undertones, athletic but unexaggerated facial structure: strong brow, defined cheekbones, straight nose, full but restrained mouth, and a jaw set with quiet resolve rather than strain. Only one human face exists, centered on the front of the head; the rear of the head is pure hair and skull contour with no second face, mask, or symbol.\n\nHis long dark brown to near-black hair falls in thick, naturally wavy strands with complete crown coverage and full rear-head volume, parting slightly off-center so strands catch rim light along the temples and cheekbones. A few fine strands drift across the forehead as if stirred by a faint divine wind. Dark brown eyes hold infinite compassion and absolute authority at once—softened lids, unwavering focus, neither fury nor sentimental tears—looking slightly past the lens as if he sees every soul in the prison beyond. Expression is calm certainty: beyond anger, beyond triumph, the quiet face of the Living One who has already overcome death.\n\nSubtle dried and fresh blood continuity from the Passion remains locked: a thin irregular smear and small crusted beads of blood along the forehead from the crown of thorns, not theatrical gore; faint residual blood dusting at the hairline; optional soft bruise-warmth at the temple. Skin texture is fully human—visible pores, fine stubble shadow along jaw and upper lip, subsurface scattering in the cheeks and nose, a sheen of moisture at the lower lids and philtrum—yet the flesh seems to drink and re-radiate golden light as if divinity moves under the surface. Clean, anatomically correct hands are not the subject of this close-up; if the extreme edge of a shoulder or collarbone enters frame, the white linen robe is simple, handwoven, ankle-length construction only partially visible at the neckline, slightly open at the throat, fabric matte with natural weave, with soft blood stain continuity implied toward the side and wrists out of primary focus.\n\nLighting is sacred chiaroscuro of divine intrusion into hell: key light is ethereal gold and warm amber god-rays from above and slightly camera-left, roughly 6500K pure white mixed with #FFD700 gold and #FFBF00 amber, casting soft specular highlights on the brow ridge, bridge of nose, and lower lip. Subtle red underglow from hell’s residual floor light (#8B0000, ~3500K) kisses the underside of the jaw and one ear as a low fill, while deep obsidian shadow (#0A0A0A) swallows the far side of the face so the cheek falls into rich darkness without crushing facial structure. Thin volumetric haze carries the golden rays; faint blue torch spill (~2000K, cool #4169E1) may exist only as a distant, defocused edge accent in the background, never competing with the divine key. No modern practicals, no LED panels, no lens brand graphics.\n\nCamera: extreme close-up portrait on an 85mm cinematic prime, shallow depth of field near f/1.4 to f/2, eyes tack-sharp with gentle falloff across cheek and hair, background reduced to soft bokeh of smoke, ash motes, and distant fortress gloom. Slightly low or eye-level angle that preserves dignity and authority; micro-film grain, natural lens falloff, no fisheye distortion. Color grade: warm amber and ethereal gold highlights against deep crimson-black shadows, restrained desaturation in midtones for photoreal skin, no neon, no comic contrast. Atmosphere includes fine suspended ash and dust catching god-rays, soft smoke drift behind the head, and a sense of cold stone air yielding to warm perfume of light.\n\nPose and narrative state lock to the screenplay beat when Jesus stands in Hell’s fortress after descent—face calm as guardians fail, about to speak absolute words or having just looked with a gaze that turns weapons to ash. Presence is deliberate, measured, never frantic or cruel. Continuity locks restated: Mediterranean man ~30; long dark hair covering crown and rear completely; dark brown compassionate-authoritative eyes; forehead blood map from the crown; white linen robe continuity if visible; single face only on the front of the head; photoreal live-action biblical epic tone. No modern objects, no jewelry logos, no crowns of metal still worn, no readable text, captions, watermarks, borders, UI, or graphic elements in frame. Sacred reverent tone, not gore spectacle or fantasy camp.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/characters/character-jesus-the-harrower-close-up/character-jesus-the-harrower-close-up_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "63",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 396468942991638500
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 32,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "56": {
+    "inputs": {
+      "image": "CI_STYLE_REF_04_IVORY_LINEN_BLOOD_MATERIAL_DETAIL_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "57": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.55,
+      "image": [
+        "56",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "58": {
+    "inputs": {
+      "pixels": [
+        "57",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "59": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "58",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  },
+  "60": {
+    "inputs": {
+      "image": "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "61": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.45,
+      "image": [
+        "60",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "62": {
+    "inputs": {
+      "pixels": [
+        "61",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "63": {
+    "inputs": {
+      "conditioning": [
+        "59",
+        0
+      ],
+      "latent": [
+        "62",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

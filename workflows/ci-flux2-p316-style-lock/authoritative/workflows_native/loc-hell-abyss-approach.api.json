@@ -1,0 +1,339 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: loc-hell-abyss-approach\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nLocation guard: transfer only color, light behavior, haze, scale language, and material realism. Do not copy the reference cave, Hell gate, fortress geometry, crowds, or blocking unless this row explicitly requires those elements.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nABYSS APPROACH TO HELL'S GATE — PRODUCTION REFERENCE: CINEMATIC ENVIRONMENT, SCALE, LIGHTING, MATERIALS, AND CONTINUITY.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nCinematic biblical epic establishing wide shot of the Abyss approach to Hell's Gate — the transitional forecourt and processional causeway between the base of the vertical descent shaft and the fortress entrance of the damned. Photoreal live-action production reference plate, empty of principal characters so the architecture and atmosphere can lock continuity for every later approach shot.\n\nSpatial geography: the camera stands low on a vast, uneven black-stone processional floor that slopes gently downward toward the far end of the frame, as if gravity itself pulls the traveler deeper into the underworld. Behind and above the camera position, the open mouth of the descent shaft still yawns — a rough circular wound roughly forty feet across where polished obsidian walls give way to this open abyss plaza. Ahead, at extreme distance but still readable, the fortress wall rises like a cliff, and the colossal Gate of iron and bone (one hundred feet tall, sixty feet wide) is only partially revealed through a monumental archway span of about one hundred fifty feet, flanked by twin black stone pillars each roughly twenty feet in diameter. The approach is the long empty space that must be crossed before any hand can touch that Gate.\n\nArchitecture and materials: the floor is slabs of fractured black basalt and obsidian, fitted poorly over millennia, cracked into irregular plates with hairline fissures glowing a dull dying ember red from somewhere far below. Between the slabs, thin seams of cooled slag and blackened bone dust catch the light. Rows of cyclopean pillars march along both flanks of the approach — massive, fluted columns of non-reflective black stone, surface scarred with claw marks, impact pocks, and veins of cooled iron poured into ancient fractures. Some pillars lean slightly; others have lost sections of capital that now lie as rubble along the path. Overhead, a vaulted ceiling is almost entirely lost in stratified smoke and ash; only the lower thirds of ribbed arches and hanging stone ribs can be read, suggesting a cathedral scale that has collapsed into an open abyss rather than a finished hall. Side walls between pillars are raw obsidian faces veined with dying embers — thin orange-red lines like cooling magma, not bright fire — and within those walls, ancient human faces press outward from the stone as if half-submerged in black glass: mouths open, eyes wide with impossible hope, skin texture continuous with the rock so they read as trapped souls fused into architecture, never as separate floating figures.\n\nThe Gate is present but secondary: at the far end of the approach, the iron-and-bone double doors stand closed and intact in their pre-shatter state, surface carved with the faces of the damned frozen in silent screams, corroded bronze fittings and dried blood stains visible only as distant material notes. The Gate does not dominate the frame; the subject is the long approach itself — the sense of walking a last mile through a cathedral of suffering before power is challenged. No guardians are staged as heroes; if silhouettes exist, they are tiny scale figures only at the base of the distant Gate, corroded black iron armor suggestions with faint red-fire pinpoints for eyes, establishing height contrast rather than character portraiture.\n\nLighting: hell realm initial state, before full divine flood. Primary practical sources are blue-flame torches mounted at irregular intervals along the flanking pillars and walls — cold royal-blue fire approximately 2000K, each torch a vertical tongue of unnatural sapphire flame that casts elongated, grasping-hand shadows across floor and pillar flutes. From deep fissures in the floor and from the base of the distant Gate rises a low red underglow approximately 3500K, a crimson hem light that paints the underside of smoke and the lower edges of pillars with deep blood color (#8B0000 range). Ambient fill is almost nonexistent — deep obsidian blacks (#0A0A0A) swallow midtones. Optional subtle continuity note only: a faint, distant cooler-gold contamination of light from the shaft mouth behind camera, still weak and not yet a god-ray flood, suggesting the approach plate just before or at the first tremor of arrival — not full 6500K divine radiance. No pure daylight. No warm sunny key.\n\nAtmosphere and texture: continuous ground-level smoke generation, thick stratified layers of black and gray ash suspended in mid-air, individual ash flakes catching blue torch edges like cold snow. Poison-feeling air with slight volumetric haze that softens distant pillars into atmospheric perspective. Moisture sheen on cooler stone faces where condensation beads; dry dust and powdered bone on horizontal ledges. Surface materials must read as real rock, real iron oxide corrosion, real bone fused into metal at the distant Gate — photoreal grain, micro-scratches, and subsurface scatter on any residual polish of obsidian, never plastic CGI smoothness.\n\nCamera and composition: ultra-wide cinematic anamorphic feel, approximately 24–35mm spherical equivalent, locked low angle looking along the processional axis toward the Gate, horizon of the floor receding into deep perspective, 2.39:1 widescreen framing. Deep focus through midground pillars with natural atmospheric falloff toward the Gate rather than artificial tilt-shift. Slight Dutch-level honesty — horizon true, architecture oppressive by scale alone. Foreground includes a broken pillar stump or cracked floor slab for scale and leading lines; midground holds the colonnade march; background holds the arch and closed Gate. No readable inscriptions, banners, logos, modern scaffolding, electrical fixtures, or contemporary objects of any kind.\n\nColor grade: deep crimsons, pure obsidian blacks, cold blue torch accents, restrained ember reds in floor veins, desaturated mid grays in smoke, overall crushed shadow biblical-epic contrast with selective specular hits on wet stone and torch metal cups. Mood: dread, immensity, sacred terror, the last silent corridor before confrontation — cathedral of suffering, not gore spectacle, not fantasy game level art.\n\nContinuity locks for the production bible: this is the Abyss approach plate (EXT. HELL'S GATE - THE ABYSS / INT. transition into fortress), intermediate between the vertical descent shaft (obsidian walls, wall-faces, dying embers) and Hell's Fortress / Gate hero assets. Gate remains iron-and-bone fusion, closed, pre-crack. Hell torches remain blue until the later transformation beat. Floor fissures show dying embers only, not golden divine light flooding. Wall faces remain hopeful trapped souls fused in stone. One face only on the front of any head if any figure is implied. Photoreal live-action biblical epic tone throughout. No modern elements, no text overlays, no watermarks, no borders, no captions, no UI.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/locations/loc-hell-abyss-approach/loc-hell-abyss-approach_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 873859878987064000
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  }
+}

@@ -1,0 +1,383 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: fx-stone-to-marble\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nAtmosphere/VFX guard: transfer only light falloff, particle behavior, haze density, ember/gold color relationships, and cinematic exposure. Keep the effect content and compositing requirements controlled by this row.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested golden luminous-VFX behavior only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nFX-STONE-TO-MARBLE — PRODUCTION REFERENCE: CINEMATIC VFX, PARTICLES, LIGHT, TRANSFORMATION, AND MOTION REFERENCE.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nCinematic production FX material-transformation plate for the Harrowing of Hell fortress metamorphosis: black hell-stone converting into pure white marble at the exact mid-beat after Christ strikes the chamber floor with the Sword of Light. The subject is architecture and geology in the act of sacred change—not a character portrait. Frame a monumental section of Hell’s Inner Chamber wall and adjacent supporting pillar in extreme close-to-medium scale, filling a 2.39:1 widescreen frame so the surface reads as a living material event.\n\nBEFORE zone (frame-left / shadowed edge): dense volcanic black stone the color of cooled lava and crushed obsidian (#0A0A0A to charcoal), matte and slightly porous, riddled with hairline fractures, soot-stained seams, and iron-oxide rust bleeding from ancient fittings. The stone feels ancient, weighty, cold—cathedral-of-suffering construction with rough chisel scars and dark mineral grit. Residual cold blue torch spill (~2000K, #4169E1) still lingers as a dying rim on the unconverted face, casting elongated residual shadows into deep crimson-black voids (#8B0000 underglow).\n\nTRANSITION band (center of frame—hero FX zone): a ragged luminous frontier races across the masonry where the divine shockwave is rewriting matter. Fine golden light bleeds from inside every crack like molten ore under pressure; hairline fractures open first, then expand into a network of radiant veins. Black crust peels, flakes, and softens as crystalline white mineral pushes through from within. Dust and microscopic stone particles lift in a gentle reverse gravity, catching god rays. The conversion is not an explosion of rubble but a clean alchemical overwrite—obsidian grain reorganizing into polished marble crystals mid-motion. Subtle subsurface glow at the advancing edge; heatless radiance, sacred rather than furnace-hot.\n\nAFTER zone (frame-right / fully claimed by light): luminous white Carrara-like marble, cool pure white with soft dove-gray and faint gold-veined mineral striations, polished to a soft temple sheen yet still monumental and architectural. Facets catch ethereal gold (#FFD700) and warm amber (#FFBF00) divine key light at approximately 6500K. Surfaces read solid, permanent, and newly consecrated—no cartoon sheen, no CGI plastic. Pillar fluting and wall joints remain structurally continuous across the transition so the architecture does not jump; only the material identity and light response change.\n\nEnvironment context: vast Inner Chamber hints at edges—300-foot ceiling lost upward, distant columns of the 48-pillar grid partially visible through volumetric haze; blue torches at far periphery already shifting toward golden fire. Poison smoke becomes warm amber perfume haze; ash particles turn into soft luminous motes. Floor plane below shows spiderweb cracks filled with rising gold light. Keep human figures absent or only as distant soft silhouettes so the material FX remains the hero; no readable faces required.\n\nCamera and optics: ~35–50mm anamorphic cinematic still, slightly low three-quarter angle that emphasizes vertical mass of pillar and wall face; shallow-to-medium depth of field with razor focus on the transition band and marble crystal formation; gentle anamorphic bokeh on distant golden haze. Aspect ratio 2.39:1. Color grade arc locked to continuity: left = deep crimson / obsidian / cold blue residue; center = mixed gold bleed through black; right = white marble, ethereal gold, warm amber. Photoreal live-action biblical epic production reference—physically coherent stone and marble, correct specular response, micro-detail grit and crystal grain, volumetric god rays cutting through residual smoke. Continuity locks: black stone always reads as Hell’s fortress material until claimed; white marble is pure sacred finish; torches remain blue only where unconverted, gold where light has won; no modern objects, no construction tools, no logos, no captions, no watermarks, no borders, no written or graphical elements. Sacred tone: reverent triumph, transformation into life, never gore or campy fantasy destruction.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/atmosphere-vfx/fx-stone-to-marble/fx-stone-to-marble_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "59",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 890199763797064100
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "56": {
+    "inputs": {
+      "image": "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "57": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.45,
+      "image": [
+        "56",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "58": {
+    "inputs": {
+      "pixels": [
+        "57",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "59": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "58",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

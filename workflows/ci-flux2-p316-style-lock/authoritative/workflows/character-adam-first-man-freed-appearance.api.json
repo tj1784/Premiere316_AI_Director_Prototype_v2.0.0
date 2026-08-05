@@ -1,0 +1,421 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: character-adam-first-man-freed-appearance\nWorkflow profile: 4X3 (4:3)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nCharacter guard: the row alone defines identity, age, ethnicity, anatomy, hair, scars, costume, wounds, pose, and carried objects. Never turn a non-Jesus character into a Jesus lookalike.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested production-sheet spacing/readability only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nADAM - FIRST MAN FREED — APPEARANCE: FOUR-VIEW IDENTITY, ANATOMY, COSTUME, AND CONTINUITY REFERENCE.\n\nCreate a four-view cinematic character ingredients sheet showing the same person in frontal three-quarter portrait, full-body, side profile, and rear-head/costume view. Lock facial identity, age, ethnicity, hairline, complete crown and rear hair, costume construction, body proportions, hands, scars, wounds, and carried props across every panel. One face exists only on the front of the head. Photorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nAdam, the First Man Freed—the patriarch of humanity at the exact beat of liberation inside Hell's inner chamber after the chains of the righteous snap free. He is the first soul released when Christ shatters Hell's dominion: ancient beyond counting, weathered by millennia of waiting, yet still bearing the underlying strength of the man formed from dust.\n\nIDENTITY AND ANATOMY: Tall at approximately 6 feet 2 inches (188 cm), slightly above average biblical stature, with a thin, elongated frame that still reveals sinew and bone structure of a once-powerful laborer. Skin is deep Mediterranean-Levantine olive and clay-earth tones, pale from ages without sun yet still warm-toned under divine light; surface heavily dusted with fine gray-ochre hell dust and ash that clings in the hollows of cheeks, temples, collarbones, and the backs of hands. Face is long, noble, and deeply lined—forehead furrowed with vertical and horizontal creases of endurance; high cheekbones; strong straight nose slightly flattened at the bridge; hollowed but dignified cheeks; full lips parted in a trembling whisper of recognition. Eyes are dark brown, large and liquid with tears of recognition and relief after endless ages; lower lids wet and glistening; red-rimmed from weeping; pupils reflecting soft gold divine key light. One face only on the front of the head; rear view shows only the back of skull, hair, and neck—never a second face.\n\nHAIR AND BEARD: Hair and beard white as winter frost—pure silver-white with faint ash-gray undertones, long and flowing. Hair reaches past the shoulders, complete crown coverage with natural part slightly off-center, full volume at the crown, and dense rear-head coverage falling in soft, slightly matted waves; strands carry dust and fine grit at the roots and tips. Beard is full, patriarchal, cascading to mid-chest, thick at the cheeks and jaw, tapering slightly at the tip; individual coarse white hairs catch sidelight; mustache blends into the beard without obscuring the mouth. Eyebrows are bushy, white, and expressive, drawn slightly together in awe.\n\nEXPRESSION AND EMOTIONAL STATE: The moment of first freedom—profound relief, overwhelming gratitude, and stunned recognition that the Second Adam has come. Mouth softens mid-whisper as if forming the words of deliverance; tears cut clear wet paths through centuries of dust on both cheeks, leaving darker clean tracks of skin beneath; chin may tremble; brows lift with sacred awe rather than terror. Hands are large, veined, work-worn, knuckles knotted, nails short and dirt-edged; wrists may show faint pale impressions where corroded iron chains once clamped, skin slightly abraded but not gore-focused.\n\nCOSTUME CONSTRUCTION: Rough-spun earth-tone garments of simple ancient construction, stripped of all worldly accessories. Primary garment is a long, ankle-length or mid-calf tunic of coarse handwoven linen or undyed wool in muted clay brown, dusty ochre, and faded sand-tan, threadbare at elbows, hem, and shoulders where fabric has worn translucent thin from centuries of imprisonment. Visible weave is irregular and homespun; seams are hand-stitched with thicker cord; a few loose threads and small tears at the lower hem. Optional thin cord or twisted fiber belt loosely gathers the waist. No jewelry, no sandals required for consistency (feet may be bare and dust-caked, soles calloused, toenails aged), no modern fasteners, no embroidery logos. Fabric hangs with natural weight and drape; under divine warm light the thin cloth shows subtle translucency at edges; under residual cold blue hell torch fill the same cloth reads cooler gray-brown.\n\nFOUR-VIEW LOCKS (same person, same costume, same age, same dust map):\n1) Frontal three-quarter portrait: head and upper torso, eyes meeting soft divine light from above-camera-right, tears and dust tracks readable, frost-white beard fully visible, rough-spun collar and upper tunic clear.\n2) Full-body: standing or just rising from a kneel, tall thin proportion locked, tunic full length, bare or simple dust-caked feet, arms slightly forward or one hand half-raised in trembling gratitude, silhouette elongated and dignified, scale readable against neutral or soft environmental suggestion of the chamber floor.\n3) Side profile: pure left or right profile locking nose bridge, brow ridge, ear placement, beard silhouette cascading, hairline at temple and nape, posture slightly forward with reverence.\n4) Rear-head/costume view: complete rear hair coverage, nape of neck with dust, back of tunic construction (yoke, seams, worn shoulder blades area), no face on the back of the head, only human anatomy.\n\nENVIRONMENT CONTEXT (subtle, not competing with character sheet clarity): Suggest Hell's inner chamber at the liberation beat—vast black stone floor receding softly out of focus, residual cold blue torch light (~2000K, royal-blue flame quality) as cool fill from the deep background, and a warm ethereal gold/amber divine key (~6500K god-ray quality mixed with amber ~3500–4500K) washing Adam from above and slightly in front as the chains break and light floods. Fine airborne dust motes and ash particles hang in the god rays. Atmosphere is transitioning from poison cold to the first breath of perfume/warm amber hope, but Adam remains the hero subject—environment stays soft, shallow, and secondary.\n\nLIGHTING: Primary key is soft divine golden-white from high front-three-quarter, modeling cheekbones, brow, and tears with gentle specular highlights on wet tracks; cool blue rim or fill from hell torches sculpts the far shoulder and rear hair edges so frost-white hair reads dimensional; low red underglow of the chamber is minimal and subordinate so skin stays human and sacred, not demonic. Physically coherent multi-panel lighting consistency across all four views. Subsurface scatter on ears, nostrils, and thin earlobes under warm key; matte dust absorbs light on cheek hollows.\n\nCAMERA AND PRESENTATION: Production character ingredients sheet for photoreal live-action biblical epic, 2.39:1 cinematic sensibility within each panel or across the sheet layout; medium-long portrait lenses feel (roughly 50–85mm equivalent character portrait compression); shallow but readable depth of field keeping eyes and fabric texture sharp; clean hands with exact finger anatomy; consistent scale across panels. Color grade: warm amber and ethereal gold against residual cold blue shadows; deep obsidian blacks in soft background; no crushed blacks on face; skin retains earth-clay warmth.\n\nTEXTURE AND MATERIAL FIDELITY: Photoreal skin pores, age spots, fine white facial hair, tear film, salt crust at tear corners, woven fabric fiber, frayed hems, powdered ash, grit under fingernails. No illustration look, no anime, no CGI cartoon, no plastic skin.\n\nCONTINUITY LOCKS: First man freed; first soul after mass chain release; white frost hair/beard; thin strong build ~6'2\"; rough-spun earth-tone worn-thin garments; tears cutting paths through dust; no accessories; no carried props; one face only on the front of the head; same identity locked across all four views. Sacred reverent biblical epic tone—deliverance and gratitude, not horror spectacle.\n\nPOSITIVE CONSTRAINTS: No modern objects, no contemporary clothing, no logos, no watermarks, no captions, no borders, no readable text or graphical UI, no second face on the rear of the head, no celebrity likeness, no gore-porn, no fantasy horns or non-human anatomy. Photorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/characters/character-adam-first-man-freed-appearance/character-adam-first-man-freed-appearance_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "69",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 55551185775042350
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 1536,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1536 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 32,
+      "width": 2048,
+      "height": 1536
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "63": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "2X DETAIL UPSCALER"
+    }
+  },
+  "64": {
+    "inputs": {
+      "upscale_model": [
+        "63",
+        0
+      ],
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "2X UPSCALE"
+    }
+  },
+  "65": {
+    "inputs": {
+      "filename_prefix": "Premiere316/characters/character-adam-first-man-freed-appearance/character-adam-first-man-freed-appearance_2x",
+      "images": [
+        "64",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE 2X FINAL"
+    }
+  },
+  "66": {
+    "inputs": {
+      "image": "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "67": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.35,
+      "image": [
+        "66",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "68": {
+    "inputs": {
+      "pixels": [
+        "67",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "69": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "68",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

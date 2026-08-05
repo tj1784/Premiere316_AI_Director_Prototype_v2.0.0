@@ -1,0 +1,421 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: ward-jesus-sandals\nWorkflow profile: 4X3 (4:3)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nWardrobe guard: transfer only textile rendering, light response, practical aging, and filmic material quality. Do not introduce white burial linen, blood, sandals, or a body identity unless this row explicitly requires them.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested production-sheet spacing/readability only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nJESUS CHRIST — ROUGH LEATHER SANDALS — PRODUCTION REFERENCE: COSTUME CONSTRUCTION, MATERIALS, FIT, DAMAGE, AND CONTINUITY.\n\nCreate a four-view cinematic character ingredients sheet showing the same person in frontal three-quarter portrait, full-body, side profile, and rear-head/costume view. Lock facial identity, age, ethnicity, hairline, complete crown and rear hair, costume construction, body proportions, hands, scars, wounds, and carried props across every panel. One face exists only on the front of the head. Photorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nFour-view cinematic wardrobe ingredients sheet isolating the rough leather sandals of Jesus the Harrower from JESUS: THE HARROWING OF HELL, presented as a production costume-construction reference rather than a character portrait sheet. Panel layout shows the same pair of first-century Judean-style sandals worn on matching Mediterranean olive-skinned male feet and lower calves belonging to Jesus (age appearance about 30, height about 5'10\", athletic but not exaggerated musculature), locked across every panel for construction continuity: (1) frontal three-quarter view of both feet standing firmly on dark stone, robe hem just clearing the ankles so the full sandal architecture is readable; (2) full lower-leg and footwear hero view from straight ahead emphasizing bilateral symmetry and strap geometry; (3) side profile of the right foot and sandal showing sole thickness, heel lift, and wrap path; (4) rear and sole-construction view of both sandals including heel counter, rear strap, and underside wear. One face exists only on the front of the head if any upper body is faintly visible; keep framing predominantly from mid-calf down so footwear is the hero subject, with face and identity never competing for attention.\n\nFootwear identity and construction: rough hand-worked leather sandals of humble biblical-period craft, not ornamental Roman military caligae and not modern flip-flops or molded rubber soles. Each sandal uses a single-layer thick sole of vegetable-tanned cowhide, roughly 8–12 mm thick, cut slightly longer and wider than the bare foot for durability, with irregular hand-cut edges and subtle natural leather grain variation. Sole color is deep umber-brown to near-black where oil, sweat, dust, and desert travel have darkened the hide; edges show lighter raw-cut leather where abrasion has worn the finish. The upper is sparse and functional: a broad Y-shaped or T-bar leather strap system typical of simple Palestinian/Judean work sandals—toe loop or toe post secured between the great toe and second toe, a transverse strap across the forefoot, and a heel strap wrapping the Achilles that ties or buckles with a simple leather thong knot rather than metal hardware. Straps are thinner than the sole, about 15–25 mm wide at the broadest points, with hand-punched holes and uneven stitch or lace joins; leather is slightly stiffer and paler on the less-handled outer faces, darker and softened where fingers and repeated wear have burnished the surface.\n\nWear, dirt, and continuity map: these are the sandals Jesus wore from the cross through the descent into Hell—humble, travel-stained, still intact. Upper sole surfaces show packed fine desert grit, ash-gray dust from the hell shaft, and faint dried reddish-brown blood flecks transferred from the crucifixion ground and from blood that ran down the lower robe and legs—sparse and realistic, never gore-heavy. Toe strap areas are polished smooth by constant friction. Heel straps are slightly stretched and darkened with sweat. Undersides of the soles carry crushed black grit, fine ash, and pale limestone dust; tread is nearly flat with only shallow irregular wear rather than modern molded patterns. No metal studs, nails, logos, branding stamps, plastic, rubber, or machine stitching. No gold ornament, gemstones, or decorative tooling beyond simple functional cuts.\n\nWorn relationship to the rest of the costume: white linen ankle-length robe hem hangs just above the sandal tops so ankles remain visible; leather cord belt is not the subject of this sheet but lower robe drape must match Jesus wardrobe continuity—simple undyed white linen, soft folds, blood continuity primarily at wrists and side wound on the torso (not required to dominate foot panels). Feet themselves are clean enough to read anatomy accurately: Mediterranean olive skin, strong tendons, realistic nails, slight dust on the dorsum of the feet where straps leave the skin exposed. Hands are not required in every panel; if present, keep them clean and anatomically correct and out of the way of the footwear read.\n\nLighting and materials response: physically coherent soft production key from slightly above and front-left, warm amber-white key about 4500–5500K as if divine spill mixed with soft studio fill, with a cooler low fill suggesting residual hell-stone ambient light so leather subsurface and grain read clearly without crushing blacks. Mild rim light separates dark sole edges from dark ground. Leather shows matte to low-satin response—oil-darkened zones slightly glossier than dry dusted zones; no plastic shine. Soft shadows under arches and straps define thickness and wrap. Subtle volumetric dust motes optional but restrained so construction stays sharp.\n\nCamera and presentation: multi-panel wardrobe ingredients sheet on a neutral charcoal-to-deep-slate seamless production background, consistent scale across panels, photoreal live-action film production reference quality, sharp macro-readable strap joins and grain, shallow-to-moderate depth of field that keeps both sandals in focus on hero panels, cinematic biblical epic tone—reverent, grounded, documentary-accurate costume department reference. Aspect framing suitable for a clean four-view sheet; no collage captions, no arrows, no size callouts, no fabric swatch labels.\n\nColor grade: desaturated warm earths and umbers for leather; olive skin; cool stone ground; restrained crimson only in the sparse dried blood flecks; no neon, no high-fantasy metal, no modern wardrobe palette. Atmosphere is quiet and forensic—costume continuity lock for every later shot of Jesus walking the hell fortress floor, standing at the Gate, striking the chamber floor, and ascending the staircase of light.\n\nContinuity locks repeated for model adherence: rough leather sandals only; humble first-century construction; dark worn umber leather soles; simple toe-and-heel strap system with leather thong ties; travel dust, ash, and sparse dried blood flecks; matching pair left and right; worn by Jesus’s Mediterranean olive feet under white linen robe hem; no modern footwear, no logos, no text, no watermarks, no borders, no readable writing, no extra faces, single face only on the front of the head if upper body appears. Sacred biblical epic photoreal live-action production reference, not illustration, not anime, not CGI cartoon, not product catalog with typography.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/wardrobe/ward-jesus-sandals/ward-jesus-sandals_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "69",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 417575608068717600
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 1536,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1536 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 32,
+      "width": 2048,
+      "height": 1536
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "63": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "2X DETAIL UPSCALER"
+    }
+  },
+  "64": {
+    "inputs": {
+      "upscale_model": [
+        "63",
+        0
+      ],
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "2X UPSCALE"
+    }
+  },
+  "65": {
+    "inputs": {
+      "filename_prefix": "Premiere316/wardrobe/ward-jesus-sandals/ward-jesus-sandals_2x",
+      "images": [
+        "64",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE 2X FINAL"
+    }
+  },
+  "66": {
+    "inputs": {
+      "image": "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "67": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.35,
+      "image": [
+        "66",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "68": {
+    "inputs": {
+      "pixels": [
+        "67",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "69": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "68",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

@@ -22,7 +22,7 @@ import {
   ensureDirs,
   syncGuideAliases
 } from "./projects.js";
-import { enqueue, listJobs, cancelJob } from "./queue.js";
+import { enqueue, listJobs, cancelJob, cancelAssetJobs } from "./queue.js";
 import {
   fillI2vPrompt,
   normalizeSegments,
@@ -50,8 +50,19 @@ import {
   buildAssetPackage,
   getAssetWorkflowCatalog,
   promoteAssetToFrame,
-  saveAssetPackageFiles
+  saveAssetPackageFiles,
+  reconcileAssetGenerationState,
+  withAssetPromptHeader,
+  registerDirectorAssetImage,
+  validateAssetWorkflow
 } from "./assets.js";
+import { premierePiAgent, PREMIERE_PI_MODEL } from "./pi-agent.js";
+import {
+  cancelPromptEnhance,
+  getPromptEnhanceStatus,
+  grokCliAvailable,
+  startPromptEnhance
+} from "./prompt-enhance.js";
 
 const PORT = process.env.PORT || 8789;
 const app = express();
@@ -60,6 +71,9 @@ app.use(express.json({ limit: "100mb" }));
 const execFileAsync = promisify(execFile);
 const LMS_EXECUTABLE = process.env.LMS_EXECUTABLE || path.join(process.env.USERPROFILE || "", ".lmstudio", "bin", "lms.exe");
 const GPU_HANDOFF_CONFIRMATION = "UNLOAD_QWEN_AND_CANCEL_ACTIVE_GENERATION";
+const COMFY_RESTART_SCRIPT = path.join(PACKAGE_ROOT, "BlokeyUI", "restart_premiere316_engine.ps1");
+let comfyRestarting = false;
+let comfyRestartState = { status: "idle", startedAt: null, finishedAt: null, error: null, detail: null };
 
 function isLoopbackRequest(req) {
   const address = String(req.socket?.remoteAddress || "");
@@ -141,6 +155,8 @@ app.get("/api/health", async (_req, res) => {
   ]);
   res.json({
     comfy,
+    comfyRestarting,
+    comfyRestartStatus: comfyRestartState.status,
     comfyUrl: COMFY_URL,
     ffmpeg,
     lmStudio: screenplay.online,
@@ -152,9 +168,13 @@ app.get("/api/health", async (_req, res) => {
       selectedRangeRender: true,
       guideUpload: false,
       ingredientsICLoRA: true,
-      dedicatedComfyUI: /:8190$/.test(COMFY_URL),
+      dedicatedComfyUI: false,
+      dedicatedComfyRestart: process.platform === "win32" && /:8188$/.test(COMFY_URL) && fs.existsSync(COMFY_RESTART_SCRIPT),
       screenplayGeneration: screenplay.online && screenplay.modelAvailable,
       screenplayStreamingChat: screenplay.online && screenplay.modelAvailable,
+      piExpertOrchestrator: true,
+      piExpertForcedSameModelWorker: true,
+      piExpertModel: PREMIERE_PI_MODEL,
       assetApprovalGate: true,
       exactAssetVersionApproval: true,
       explicitLmStudioGpuHandoff: true,
@@ -167,8 +187,190 @@ app.get("/api/health", async (_req, res) => {
   });
 });
 
+app.post("/api/system/comfy/restart", async (req, res) => {
+  if (!isLoopbackRequest(req)) {
+    return res.status(403).json({ error: "ComfyUI can be restarted only from this computer." });
+  }
+  let comfyUrl;
+  try {
+    comfyUrl = new URL(COMFY_URL);
+  } catch {
+    return res.status(409).json({ error: `The configured ComfyUI URL is invalid: ${COMFY_URL}` });
+  }
+  if (!(["127.0.0.1", "localhost"].includes(comfyUrl.hostname) && comfyUrl.port === "8188")) {
+    return res.status(409).json({ error: "Restart is available only for the routed local Sineforge ComfyUI on port 8188." });
+  }
+  if (process.platform !== "win32" || !fs.existsSync(COMFY_RESTART_SCRIPT)) {
+    return res.status(501).json({ error: "The dedicated ComfyUI restart helper is unavailable on this installation." });
+  }
+  if (comfyRestarting) {
+    return res.status(409).json({ error: "Dedicated ComfyUI is already restarting." });
+  }
+
+  const activePremiereJobs = listJobs().filter((job) => ["queued", "running", "cancelling"].includes(String(job.status || "")));
+  if (activePremiereJobs.length) {
+    return res.status(409).json({
+      error: `Restart blocked: Premiere316 has ${activePremiereJobs.length} queued or running generation job(s). Stop or finish them first.`
+    });
+  }
+
+  const online = await comfyAlive();
+  if (online) {
+    try {
+      const queueResponse = await fetch(new URL("/queue", comfyUrl), { signal: AbortSignal.timeout(5000) });
+      if (!queueResponse.ok) throw new Error(`HTTP ${queueResponse.status}`);
+      const queue = await queueResponse.json();
+      const running = Array.isArray(queue?.queue_running) ? queue.queue_running.length : 0;
+      const pending = Array.isArray(queue?.queue_pending) ? queue.queue_pending.length : 0;
+      if (running || pending) {
+        return res.status(409).json({
+          error: `Restart blocked: ComfyUI has ${running} running and ${pending} pending prompt(s). Finish or cancel them first.`
+        });
+      }
+    } catch (error) {
+      return res.status(503).json({ error: `Could not verify the ComfyUI queue safely: ${String(error.message || error)}` });
+    }
+  }
+
+  comfyRestarting = true;
+  comfyRestartState = {
+    status: "restarting",
+    startedAt: new Date().toISOString(),
+    finishedAt: null,
+    error: null,
+    detail: null
+  };
+  const powershell = path.join(process.env.SystemRoot || "C:\\Windows", "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+  void execFileAsync(powershell, [
+      "-NoProfile",
+      "-ExecutionPolicy", "Bypass",
+      "-File", COMFY_RESTART_SCRIPT
+    ], {
+      cwd: path.dirname(COMFY_RESTART_SCRIPT),
+      windowsHide: true,
+      timeout: 180000,
+      maxBuffer: 1024 * 1024
+    })
+    .then(async ({ stdout }) => {
+      if (!await comfyAlive()) throw new Error("The restart helper exited, but ComfyUI did not pass its health check.");
+      let detail = null;
+      try { detail = JSON.parse(String(stdout || "").trim().split(/\r?\n/).filter(Boolean).at(-1) || "null"); } catch {}
+      comfyRestartState = {
+        ...comfyRestartState,
+        status: "ready",
+        finishedAt: new Date().toISOString(),
+        error: null,
+        detail
+      };
+    })
+    .catch((error) => {
+      comfyRestartState = {
+        ...comfyRestartState,
+        status: "error",
+        finishedAt: new Date().toISOString(),
+        error: `Dedicated ComfyUI restart failed: ${String(error.message || error)}`,
+        detail: null
+      };
+    })
+    .finally(() => { comfyRestarting = false; });
+
+  return res.status(202).json({ ok: true, restarting: true, comfyUrl: COMFY_URL, state: comfyRestartState });
+});
+
+app.get("/api/system/comfy/restart/status", async (req, res) => {
+  if (!isLoopbackRequest(req)) {
+    return res.status(403).json({ error: "ComfyUI restart status is available only from this computer." });
+  }
+  return res.json({ ...comfyRestartState, restarting: comfyRestarting, comfy: await comfyAlive(), comfyUrl: COMFY_URL });
+});
+
 app.get("/api/screenplay/health", async (_req, res) => {
   res.json(await screenplayModelHealth(5000));
+});
+
+app.post("/api/lm-studio/load-screenplay-model", async (req, res) => {
+  if (!isLoopbackRequest(req)) {
+    return res.status(403).json({ error: "The screenplay model can be loaded only from this computer." });
+  }
+  if (!fs.existsSync(LMS_EXECUTABLE)) {
+    return res.status(503).json({ error: `LM Studio CLI was not found at ${LMS_EXECUTABLE}` });
+  }
+  const current = await screenplayModelHealth(5000);
+  if (current.online && current.modelAvailable) {
+    return res.json({ ok: true, alreadyLoaded: true, model: SCREENPLAY_MODEL });
+  }
+  try {
+    await execFileAsync(LMS_EXECUTABLE, [
+      "load", SCREENPLAY_MODEL,
+      "--identifier", SCREENPLAY_MODEL,
+      "--gpu", "0.2",
+      "--context-length", "32768",
+      "--parallel", "1",
+      "--ttl", "3600",
+      "--yes"
+    ], {
+      timeout: 180000,
+      windowsHide: true,
+      maxBuffer: 1024 * 1024
+    });
+    const ready = await screenplayModelHealth(10000);
+    if (!ready.online || !ready.modelAvailable) {
+      throw new Error("LM Studio finished loading, but the pinned model is not available through its API.");
+    }
+    return res.json({ ok: true, alreadyLoaded: false, model: SCREENPLAY_MODEL });
+  } catch (error) {
+    return res.status(503).json({ error: `Could not load the pinned Qwen screenplay model: ${String(error.message || error)}` });
+  }
+});
+
+// ---------- embedded Pi ComfyUI orchestrator ----------
+app.use("/api/pi", (req, res, next) => {
+  const remote = String(req.socket.remoteAddress || "").toLowerCase();
+  if (remote === "127.0.0.1" || remote === "::1" || remote === "::ffff:127.0.0.1") return next();
+  res.status(403).json({ error: "The embedded Pi agent is available only from this computer." });
+});
+
+app.put("/api/pi/context", (req, res) => {
+  try {
+    res.json({ context: premierePiAgent.updateContext(req.body || {}) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.get("/api/pi/status", async (_req, res) => {
+  res.json(await premierePiAgent.status());
+});
+
+app.get("/api/pi/events", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders?.();
+  const unsubscribe = premierePiAgent.subscribe(res);
+  const heartbeat = setInterval(() => res.write(`: heartbeat ${Date.now()}\n\n`), 15000);
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    unsubscribe();
+  });
+});
+
+app.post("/api/pi/prompt", async (req, res) => {
+  try {
+    const result = await premierePiAgent.prompt(req.body?.message, req.body?.context);
+    res.json({ ...result, model: PREMIERE_PI_MODEL, orchestrator: true, sameModelWorker: true });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.post("/api/pi/abort", async (_req, res) => {
+  try {
+    res.json(await premierePiAgent.abort());
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
 });
 
 // ---------- projects ----------
@@ -186,7 +388,10 @@ app.post("/api/projects", (req, res) => {
 
 app.get("/api/projects/:slug", (req, res) => {
   try {
-    const project = loadProject(req.params.slug);
+    const activeAssetIds = new Set(listJobs().filter((job) =>
+      job.projectSlug === req.params.slug && job.type === "generate_asset" && ["queued", "running", "cancelling"].includes(job.status)
+    ).map((job) => job.refs?.assetId).filter(Boolean));
+    const project = reconcileAssetGenerationState(loadProject(req.params.slug), activeAssetIds);
     for (const asset of project.assets?.items || []) asset.approvalCurrent = assetApprovalCurrent(project, asset);
     res.json({ project });
   } catch (e) {
@@ -796,6 +1001,7 @@ app.patch("/api/projects/:slug/assets/:assetId", async (req, res) => {
     const beforeFingerprint = assetGenerationFingerprint(asset);
     const allowed = ["name", "variant", "prompt", "sampleText", "workflowId", "seed", "durationSec", "bpm", "status", "dependencies", "continuity"];
     for (const key of allowed) if (Object.prototype.hasOwnProperty.call(req.body || {}, key)) asset[key] = req.body[key];
+    asset.prompt = withAssetPromptHeader(asset, asset.prompt);
     if (asset.workflowId && !ASSET_WORKFLOWS.some((workflow) => workflow.id === asset.workflowId)) {
       return res.status(400).json({ error: `Unknown asset workflow: ${asset.workflowId}` });
     }
@@ -863,10 +1069,19 @@ app.post("/api/projects/:slug/assets/:assetId/generate", async (req, res) => {
     if (!assetManifestCurrent(project)) return res.status(409).json({ error: "The production asset manifest is stale. Refresh Assets from the approved screenplay before generating." });
     const asset = project.assets?.items?.find((item) => item.id === req.params.assetId);
     if (!asset) return res.status(404).json({ error: "Asset not found" });
+    const existingJob = listJobs().find((job) =>
+      job.projectSlug === project.slug &&
+      job.type === "generate_asset" &&
+      job.refs?.assetId === asset.id &&
+      ["queued", "running", "cancelling"].includes(job.status)
+    );
+    if (existingJob) return res.json({ project, job: existingJob, alreadyQueued: true });
     const catalog = await getAssetWorkflowCatalog();
     const state = catalog.find((workflow) => workflow.id === asset.workflowId);
     if (!state?.ready) return res.status(409).json({ error: state?.reason || "The selected workflow is not ready" });
     if (state.availableNow === false) return res.status(409).json({ error: state.runtimeWarning || "The selected workflow is waiting for GPU memory" });
+    const validation = await validateAssetWorkflow(project, asset);
+    if (!validation.ready) return res.status(409).json({ error: `Workflow validation failed: ${validation.errors.slice(0, 8).join("; ")}` });
     asset.status = "queued";
     asset.approval = null;
     asset.approvalCurrent = false;
@@ -896,13 +1111,27 @@ app.post("/api/projects/:slug/assets/generate-all", async (req, res) => {
     if (!assetManifestCurrent(project)) return res.status(409).json({ error: "The production asset manifest is stale. Refresh Assets from the approved screenplay before generating." });
     if (!project.assets?.items?.length) return res.status(400).json({ error: "Build the asset manifest first" });
     const requested = new Set(Array.isArray(req.body?.assetIds) ? req.body.assetIds : []);
+    if (!requested.size) return res.status(400).json({ error: "Select at least one asset. This endpoint never queues the entire manifest implicitly." });
+    const activeAssetIds = new Set(listJobs()
+      .filter((job) =>
+        job.projectSlug === project.slug &&
+        job.type === "generate_asset" &&
+        ["queued", "running", "cancelling"].includes(job.status)
+      )
+      .map((job) => job.refs?.assetId)
+      .filter(Boolean));
     const catalog = await getAssetWorkflowCatalog();
     const ready = new Set(catalog.filter((workflow) => workflow.ready && workflow.availableNow !== false).map((workflow) => workflow.id));
     const targets = project.assets.items.filter((asset) =>
-      (!requested.size || requested.has(asset.id)) &&
+      requested.has(asset.id) &&
+      !activeAssetIds.has(asset.id) &&
       ready.has(asset.workflowId) &&
       (req.body?.regenerate || !["generated", "ready-for-shot"].includes(asset.status))
     );
+    for (const asset of targets) {
+      const validation = await validateAssetWorkflow(project, asset);
+      if (!validation.ready) return res.status(409).json({ error: `${asset.name}: ${validation.errors.slice(0, 8).join("; ")}` });
+    }
     for (const asset of targets) {
       asset.status = "queued";
       asset.approval = null;
@@ -922,6 +1151,85 @@ app.post("/api/projects/:slug/assets/generate-all", async (req, res) => {
         }
       }));
     res.json({ project, jobs, queued: jobs.length, skipped: project.assets.items.length - targets.length });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.post("/api/projects/:slug/assets/stop-generation", (req, res) => {
+  try {
+    loadProject(req.params.slug);
+    const result = cancelAssetJobs(req.params.slug, req.body?.assetId || null);
+    const project = loadProject(req.params.slug);
+    res.json({ ok: true, ...result, project, jobs: listJobs() });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.get("/api/projects/:slug/assets/enhance-prompts", (req, res) => {
+  try {
+    loadProject(req.params.slug);
+    res.json({
+      ok: true,
+      grokAvailable: grokCliAvailable(),
+      enhance: getPromptEnhanceStatus(req.params.slug)
+    });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.post("/api/projects/:slug/assets/enhance-prompts", (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    if (!screenplayApprovalCurrent(project)) {
+      return res.status(409).json({ error: "Approve the current screenplay revision before enhancing asset prompts." });
+    }
+    if (!assetManifestCurrent(project)) {
+      return res.status(409).json({ error: "The production asset manifest is stale. Refresh Assets from the approved screenplay first." });
+    }
+    if (!project.assets?.items?.length) {
+      return res.status(400).json({ error: "Build the asset manifest before enhancing prompts." });
+    }
+    if (!grokCliAvailable()) {
+      return res.status(503).json({ error: "Grok Build CLI was not found. Install Grok Build and ensure `~/.grok/bin/grok` is available, or set GROK_EXECUTABLE." });
+    }
+    const current = getPromptEnhanceStatus(project.slug);
+    if (current.active) {
+      return res.status(409).json({ error: "A Grok prompt enhance run is already active for this project.", enhance: current });
+    }
+
+    const assetIds = Array.isArray(req.body?.assetIds) ? req.body.assetIds.filter(Boolean) : null;
+    const concurrency = Number(req.body?.concurrency) || undefined;
+
+    // Fire-and-forget parallel Grok agents; client polls status + reloads project.
+    startPromptEnhance(project, { assetIds, concurrency }).catch((error) => {
+      console.error("[prompt-enhance]", project.slug, error);
+    });
+
+    res.status(202).json({
+      ok: true,
+      message: assetIds?.length
+        ? `Enhancing ${assetIds.length} selected asset prompt(s) with parallel Grok agents…`
+        : `Enhancing all ${project.assets.items.length} asset prompts with parallel Grok agents…`,
+      enhance: getPromptEnhanceStatus(project.slug),
+      grokAvailable: true
+    });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.post("/api/projects/:slug/assets/enhance-prompts/stop", (req, res) => {
+  try {
+    loadProject(req.params.slug);
+    const stopped = cancelPromptEnhance(req.params.slug);
+    res.json({
+      ok: true,
+      stopped,
+      enhance: getPromptEnhanceStatus(req.params.slug)
+    });
   } catch (e) {
     res.status(400).json({ error: String(e.message) });
   }
@@ -950,6 +1258,30 @@ app.post("/api/projects/:slug/assets/:assetId/promote", (req, res) => {
 
 // ---------- media import ----------
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
+
+app.post("/api/projects/:slug/assets/:assetId/import-image", upload.single("file"), (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    if (!assetManifestCurrent(project)) return res.status(409).json({ error: "Approve the screenplay and refresh its asset manifest before importing an asset version." });
+    const asset = project.assets?.items?.find((item) => item.id === req.params.assetId);
+    if (!asset) return res.status(404).json({ error: "Asset not found" });
+    if (!req.file?.buffer?.length) return res.status(400).json({ error: "Image file required" });
+    const supported = new Map([
+      ["image/png", ".png"],
+      ["image/jpeg", ".jpg"],
+      ["image/webp", ".webp"]
+    ]);
+    const extension = supported.get(String(req.file.mimetype || "").toLowerCase());
+    if (!extension) return res.status(415).json({ error: "Use a PNG, JPEG, or WebP image." });
+    res.json(registerDirectorAssetImage(project, asset, {
+      buffer: req.file.buffer,
+      extension,
+      sourceFileName: req.file.originalname
+    }));
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
 
 app.post("/api/projects/:slug/import-frame", (req, res) => {
   try {

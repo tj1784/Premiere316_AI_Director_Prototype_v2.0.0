@@ -1,0 +1,339 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: extra-gate-faces\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nCrowd/creature guard: transfer only staging energy, chiaroscuro, atmosphere, and live-action realism. Do not reuse reference faces, bodies, demons, pleading hands, costumes, or crowd arrangement.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nDAMNED FACES CARVED INTO THE GATE — PRODUCTION REFERENCE: CROWD OR CREATURE DESIGN, SCALE, VARIATION, AND CONTINUITY.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nCinematic production reference for the damned faces carved into Hell’s Gate, the colossal fortress doors of fused iron and bone that stand roughly one hundred feet tall and sixty feet wide at the center of Hell’s fortress. This asset isolates the living surface of the gate itself: not the full architectural wide shot, not the free souls of the inner chamber, but the thousands of faces of the damned that form the metal-and-bone skin of the doors—eternal damnation frozen into material, later awakened when divine power cracks the seal.\n\nThe gate surface is a composite of blackened iron plates and pale fused bone, welded and hammered together over millennia into a continuous bas-relief of torment. Iron reads as ancient forge metal: deep pitting, flaking rust blooms of dark red-brown, cold gray where corrosion has not yet claimed the plate, hairline stress fractures, and hammered scale that catches raking light. Bone appears as yellowed ivory, scorched cream, and greasy off-white ribs, jaw fragments, and long bones sunk flush into the iron so that skeletal structure and metal share one continuous plane. Corroded bronze fittings and rivet heads stud the field at irregular intervals. Thin rivulets of dried blood and a dark viscous residue track down the carvings like petrified tears, pooling in eye sockets and open mouths. No modern fasteners, no machine-milled edges, no logos, no readable inscriptions of any kind.\n\nAcross this surface, densely packed human faces emerge in high bas-relief and half-sunk relief, scale ranging from larger-than-life near the camera to smaller clusters receding into the mid-field so the eye never finds empty metal. Every face has only one face on the front of the head—never a second face on the rear of a skull or helmet, never dual-faced anatomy. Ages and types vary within a biblical-epic ethnographic range: bearded elders, hollow-cheeked men and women, gaunt youths, open-mouthed screamers and locked-jaw grimaces, brows knotted in agony, eyelids half-lidded in exhausted despair. Mouths are open in silent screams that have lasted millennia—tongues, teeth, and throat cavities carved deep enough that cold blue torch light falls into hollows. Some faces are pure iron with bone teeth; others show bone cheekbones fused to iron brow ridges; a few appear nearly alive, skin-like metal with subsurface cold sheen, still clearly sculptural and fused to the door. Expressions must stay reverent biblical horror, not gore-porn: suffering, terror, and trapped will, without gratuitous mutilation or camp fantasy.\n\nPrimary production state for this sheet is the threshold moment of awakening, still locked to screenplay continuity. Most of the field remains frozen carving—hard metal and bone, silent, millennia-still. In a focused cluster nearer the lens and along spiderweb fractures that begin to glow with inner golden fire, several faces are mid-transition: eyelids quiver, pupils catch a wet glint, mouths start to part as if drawing first sound, and the iron surface around their lips softens into the suggestion of living flesh without fully leaving the material of the gate. This is the exact beat after Jesus places His wounded, bleeding hand upon the cold iron and cracks appear, when carved faces begin to move and their screams become real voices crying to be broken free—yet the image freezes the micro-instant before full animation floods the entire door. Faint hairline fractures radiate across plates, edges of the cracks edged with warm amber-gold luminescence (divine intrusion ~6500K) bleeding through from within the metal, contrasting the ambient hell palette.\n\nEnvironment context is the fortress side of the gate only, cropped as a tight surface study: no full door height required in frame, no guardians dominating, no Jesus portrait. Optional soft out-of-focus suggestion of black stone architecture and blue torch flame far at the edge of frame is acceptable if it sells depth. Atmosphere holds thick smoke and fine ash particles drifting past the carvings, volumetric shafts of cold blue torch light (~2000K, royal blue flame quality) raking across relief at a steep side angle so every ridge of brow, nostril, and open lip throws a hard micro-shadow. A low red underglow (~3500K) from below the frame lifts chin planes and throat cavities. Where golden fracture light appears, it is local and surgical—never a full day exterior, never pure white blowout that erases material.\n\nCamera: photoreal live-action biblical epic, 2.39:1 cinematic widescreen feel. Medium-close to close surface study with an approximate 50–85mm portrait-length compression so faces feel dense and monumental; slight low raking angle emphasizing height of relief; shallow depth of field with a razor plane of focus on a primary cluster of three to five faces, surrounding faces falling into soft sculptural blur while remaining readable as more of the same damnation field. Exact anatomy on every face, clean non-deformed hands only if any carved hands appear in peripheral bas-relief scenes of torment; prefer faces as the dominant subject. Texture priority: iron corrosion micro-detail, bone porosity, dried blood film, ash settling in eye sockets, metal speculars under blue key, warm gold speculars along active cracks.\n\nColor grade: deep crimson accents (#8B0000 range) in blood residue and far underglow, obsidian blacks (#0A0A0A) in recesses, cold blue torch key cutting the metal, local ethereal gold and amber only in the fracture lines and the barely-awakening eyes. Overall look is photorealistic live-action production reference for a biblical epic—physically coherent lighting, consistent materials and scale, no illustration, no anime, no cartoon CGI sheen.\n\nContinuity locks: gate materials always iron fused with bone; faces of the damned form the surface of Hell’s Gate specifically (distinct from the hopeful wall faces embedded in the descent shaft); blue torches until full fortress transformation later in the story—this asset remains pre-shatter / early-crack; dried blood and dark viscous tear-tracks present; mouths open in millennia-long silent scream language, with selective faces just beginning to live and cry out; one face only on the front of each head; no modern objects, no logos, no text, no watermarks, no UI, no borders, no captions. Sacred tone: terrifying, ancient, and theologically weighty—the prison door of Hades made of the faces of the damned, about to fail under the Living One’s hand.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/crowds-creatures/extra-gate-faces/extra-gate-faces_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 144524042627543900
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  }
+}

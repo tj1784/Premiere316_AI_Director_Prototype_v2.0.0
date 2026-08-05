@@ -45,6 +45,7 @@ $arguments = @(
   "ComfyUI-Pixaroma",
   "ComfyUI-Qwen-TTS",
   "comfyui-easy-use",
+  "pulid_comfyui",
   "comfyui_layerstyle",
   "sineforge_workflow_bridge"
 )

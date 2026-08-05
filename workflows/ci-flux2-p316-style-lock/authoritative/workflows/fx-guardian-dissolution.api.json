@@ -1,0 +1,377 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: fx-guardian-dissolution\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nAtmosphere/VFX guard: transfer only light falloff, particle behavior, haze density, ember/gold color relationships, and cinematic exposure. Keep the effect content and compositing requirements controlled by this row.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nFX-GUARDIAN-DISSOLUTION — PRODUCTION REFERENCE: CINEMATIC VFX, PARTICLES, LIGHT, TRANSFORMATION, AND MOTION REFERENCE.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nCinematic VFX production still from the biblical epic JESUS: THE HARROWING OF HELL capturing the exact screenplay beat when Hell's Gate shatters and the Guardians are destroyed: towering rank-and-file Guardians and their leader are thrown backward by the divine blast, armor cracking like eggshells, bodies dissolving into smoke and ash mid-air. Freeze the peak of dissolution—not before impact and not after pure emptiness—so armor, flesh-void silhouette, ash, and smoke all coexist in one readable frame.\n\nSubject and action: several towering Guardians (approximately seven to eight feet tall) reeling away from the shattered iron-and-bone gate plane at frame left or midground. Bodies arc backward in violent recoil; boots leave the black stone; spears and weapons tumble from loosening gauntlets. Armor of corroded black iron—pitted plates, battle scars, dried blood stains, horned or crest-broken helmets—splits along seams as if eggshells under pressure: fissures glow briefly with dying red embers, then plates peel, crumble, and lift into the air as charcoal flakes. Under the armor there is no ordinary anatomy: hollow socketed forms collapsing into denser particulate, the burning red fire in hollow eye sockets guttering from fierce crimson to weak orange sparks then snuffing into dark voids. Material transformation is staged and legible—intact plate at the extremities, mid-body becoming granular ash and grey-black powder, upper torso and helmet regions already streaming into columns of thick smoke. Fine ash drifts like volcanic dust; larger plate shards spin with residual red underglow; denser smoke rises in vertical ribbons and curls that still vaguely retain the silhouette of a horned helm or raised spear before dispersing.\n\nEnvironment context: interior approach to Hell's Fortress gate cathedral—black stone pillars, smoke-stained ceiling, iron-and-bone gate remnants exploding outward behind the Guardians as molten-edged fragments and bone shards. Cold blue torch flames still burn on wall sconces at the edges of frame (pre-transformation hell palette), their ~2000K cyan-blue light competing with the flood of golden divine radiance pouring through the breach. Floor is cracked obsidian and black stone littered with ash drifts, scattered corroded plate fragments, and dark viscous drips from fallen spears. Atmosphere thick with mixed particulates: blue-grey fortress smoke, warm golden volumetric god rays, and guardian-specific ash clouds of charcoal, bone-dust white, and rust-red iron oxide.\n\nLighting and color: key light is hard-edged golden divine flood (~6500K pure white core, amber and gold edges #FFD700 / #FFBF00) blasting through the shattered gate from the left or center-rear, rim-lighting dissolving armor edges and catching every ash flake as glittering motes. Secondary fill is residual cold blue torch light from fortress walls, painting the far side of dissolving figures and the deep shadows of pillars. Occasional dying red underglow (~3500K) still bleeds from cracking armor seams and snuffing eye-fires. Color grade locks the beat of divine intrusion into hell: deep crimson and obsidian blacks of the fortress giving way to ethereal golds and pure white radiance, blue torch pockets remaining as contrast anchors. Volumetric rays cut through ash like shafts through cathedral dust; slight heat shimmer near the gate breach; no modern lens flares, no graphic overlays.\n\nCamera and craft: 2.39:1 cinematic widescreen, medium-wide to wide production reference framing that keeps multiple Guardians readable in mid-dissolution plus the gate breach light source. Approximately 35–50mm anamorphic feel, slight low angle to preserve the Guardians' towering scale even as they collapse, shallow-to-medium depth of field with sharp focus on the nearest dissolving figure's cracking breastplate and ash stream while background pillars fall softer. Practical particulate density high but not opaque—silhouette of at least one full guardian form still readable through smoke. Photoreal live-action VFX plate quality, physically coherent materials (iron corrosion, ash grain, smoke density, volumetric light), exact anatomy of armor construction before it fails, clean readable hands and gauntlets mid-release. Sacred biblical epic tone: awe and judgment, not gore-porn or campy fantasy. Continuity locks: Guardians wear corroded black iron armor with red-fire hollow eyes; they dissolve to smoke and ash when defeated after the gate shatters; hell torches remain blue in this beat; gate materials are iron-and-bone fusion fragments only. No modern objects, no logos, no readable text, no watermarks, no UI, no borders, no captions. One face only on the front of any remaining head silhouette; never a rear face. Single continuous production still optimized as a reusable FX reference for ash-smoke dissolution, armor shell-crack, and divine-blast recoil.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/atmosphere-vfx/fx-guardian-dissolution/fx-guardian-dissolution_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 882488315900114000
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "63": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "2X DETAIL UPSCALER"
+    }
+  },
+  "64": {
+    "inputs": {
+      "upscale_model": [
+        "63",
+        0
+      ],
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "2X UPSCALE"
+    }
+  },
+  "65": {
+    "inputs": {
+      "filename_prefix": "Premiere316/atmosphere-vfx/fx-guardian-dissolution/fx-guardian-dissolution_2x",
+      "images": [
+        "64",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE 2X FINAL"
+    }
+  }
+}

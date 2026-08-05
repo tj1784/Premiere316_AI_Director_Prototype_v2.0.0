@@ -27,7 +27,7 @@ import {
   probeMedia,
   renderMasterBookend
 } from "./ffmpeg.js";
-import { assetApprovalCurrent, generateAssetJob } from "./assets.js";
+import { assetApprovalCurrent, generateAssetJob, restoreCancelledAsset } from "./assets.js";
 import { projectDir } from "./paths.js";
 import {
   BOOKEND_DURATION_SEC,
@@ -38,6 +38,8 @@ import {
 
 const jobs = [];
 let running = false;
+let activeJob = null;
+let activeAbortController = null;
 
 function persistJobLedger(projectSlug) {
   if (!projectSlug) return;
@@ -81,6 +83,15 @@ export function listJobs() {
 }
 
 export function enqueue(job) {
+  if (job?.type === "generate_asset" && job?.projectSlug && job?.refs?.assetId) {
+    const existing = jobs.find((candidate) =>
+      candidate.projectSlug === job.projectSlug &&
+      candidate.type === "generate_asset" &&
+      candidate.refs?.assetId === job.refs.assetId &&
+      ["queued", "running", "cancelling"].includes(candidate.status)
+    );
+    if (existing) return existing;
+  }
   const j = {
     id: `job_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     status: "queued",
@@ -103,11 +114,34 @@ export function cancelJob(id) {
   if (!j) return false;
   if (j.status === "queued") {
     j.status = "cancelled";
+    j.stage = "Stopped";
     j.finishedAt = new Date().toISOString();
+    if (j.type === "generate_asset") restoreCancelledAsset(j.projectSlug, j.refs?.assetId);
     persistJobLedger(j.projectSlug);
     return true;
   }
+  if (j.status === "running" && j.type === "generate_asset" && activeJob?.id === j.id) {
+    j.status = "cancelling";
+    j.stage = "Stopping generation…";
+    persistJobLedger(j.projectSlug);
+    activeAbortController?.abort();
+    return true;
+  }
   return false;
+}
+
+export function cancelAssetJobs(projectSlug, assetId = null) {
+  const targets = jobs.filter((job) =>
+    job.projectSlug === projectSlug &&
+    job.type === "generate_asset" &&
+    ["queued", "running", "cancelling"].includes(job.status) &&
+    (!assetId || job.refs?.assetId === assetId)
+  );
+  let stopped = 0;
+  for (const job of targets) {
+    if (job.status === "cancelling" || cancelJob(job.id)) stopped += 1;
+  }
+  return { stopped, jobIds: targets.map((job) => job.id) };
 }
 
 async function pump() {
@@ -115,6 +149,9 @@ async function pump() {
   const next = jobs.find((j) => j.status === "queued");
   if (!next) return;
   running = true;
+  activeJob = next;
+  activeAbortController = new AbortController();
+  Object.defineProperty(next, "signal", { value: activeAbortController.signal, configurable: true });
   next.status = "running";
   next.progress = 0;
   persistJobLedger(next.projectSlug);
@@ -125,17 +162,25 @@ async function pump() {
     else if (next.type === "generate_asset") await generateAssetJob(next);
     else if (next.type === "build_master") await buildMaster(next);
     else throw new Error(`Unknown job type: ${next.type}`);
+    if (next.signal.aborted || next.status === "cancelling") {
+      const error = new Error("Generation stopped by director");
+      error.code = "GENERATION_CANCELLED";
+      throw error;
+    }
     next.status = "done";
     next.stage = "Complete";
     next.progress = 1;
   } catch (e) {
-    next.status = "error";
-    next.stage = "Failed";
-    next.error = String(e.message || e);
-    console.error("[queue]", next.label, e);
+    const cancelled = e?.code === "GENERATION_CANCELLED" || next.signal?.aborted || next.status === "cancelling";
+    next.status = cancelled ? "cancelled" : "error";
+    next.stage = cancelled ? "Stopped" : "Failed";
+    next.error = cancelled ? null : String(e.message || e);
+    if (!cancelled) console.error("[queue]", next.label, e);
   } finally {
     next.finishedAt = new Date().toISOString();
     persistJobLedger(next.projectSlug);
+    activeJob = null;
+    activeAbortController = null;
     running = false;
     setImmediate(pump);
   }
@@ -143,6 +188,7 @@ async function pump() {
 
 async function runAndFetch(job, prompt, destDir, destName) {
   const outputs = await runPrompt(prompt, {
+    signal: job.signal,
     onProgress: ({ value, max }) => {
       if (max) job.progress = Math.min(0.86, 0.08 + (value / max) * 0.78);
     }

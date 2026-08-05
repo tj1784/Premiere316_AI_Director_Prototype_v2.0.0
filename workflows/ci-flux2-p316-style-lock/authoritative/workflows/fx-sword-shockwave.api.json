@@ -1,0 +1,421 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: fx-sword-shockwave\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nAtmosphere/VFX guard: transfer only light falloff, particle behavior, haze density, ember/gold color relationships, and cinematic exposure. Keep the effect content and compositing requirements controlled by this row.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested golden luminous-VFX behavior only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nFX-SWORD-SHOCKWAVE — PRODUCTION REFERENCE: CINEMATIC VFX, PARTICLES, LIGHT, TRANSFORMATION, AND MOTION REFERENCE.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nCinematic biblical epic production still of the Sword of Light shockwave at the climax of the Harrowing of Hell, frozen the instant Jesus drives the radiant blade into the floor of Hell's vast inner chamber and a circular divine blast radiates outward. Photoreal live-action, not illustration, not CGI cartoon. Aspect ratio 2.39:1 widescreen.\n\nLead subject is the expanding shockwave: a luminous annular pressure front of pure golden-white divine radiance, three to eight meters in radius, expanding low across the black stone floor like a ring of molten gold and white light. The wave front is thick, volumetric, and physical—rippled concentric rings of compressed air, gold dust, ash, and luminous particulate with hard specular highlights. Inside the ring a translucent golden wash paints the floor; ahead of it untransformed hell holds deep crimson underglow and cold blue torch pools. Fine cracks spiderweb from the impact in radial and concentric fractures; stone dust and black grit lift in a low rolling sheet; small obsidian chips hang mid-bounce in the blast zone.\n\nAt the epicenter stands Jesus Christ, about thirty, Mediterranean olive skin, athletic muscular build not exaggerated, roughly five feet ten inches, long dark brown-black hair with complete crown and rear coverage, dark brown eyes of infinite compassion and absolute authority, calm certainty not rage. White linen ankle-length robe, leather cord belt, rough leather sandals; blood continuity locked at both wrists and the side wound, optional faint forehead marks from the crown of thorns. Right hand grips the simple leather-wrapped hilt of the Sword of Light; the blade is pure golden divine radiance, not forged metal, tip buried so a blinding white-gold starburst marks the contact point. Decisive downward strike pose—shoulders set, weight driven through the blade—robe hem and hair faintly pushed outward by the first pressure of the wave. One face only on the front of the head.\n\nEnvironment: Hell's inner chamber mid-transformation—vaulted ceiling hundreds of feet high, massive black stone pillars trembling, distant columns beginning to lean; blue hell-torches still burn at the far periphery while golden light from the shockwave overtakes their cold ~2000K cast. Freed pale souls only as soft out-of-focus silhouettes at the edges, never competing with the FX; broken chains vibrate in the air; smoke ceiling above; poison haze pushed outward in a ring, cleaner warmer air inside the expanding circle.\n\nLighting: hard key from sword impact and wave front at roughly 6500K pure white mixed with ethereal gold #FFD700 and warm amber #FFBF00; volumetric god rays scything from the strike; soft red underglow #8B0000 and obsidian blacks #0A0A0A on far walls; cold blue torch rim on distant pillars. Camera: dramatic low three-quarter wide angle approximately 24–35mm, level horizon, medium depth of field with impact zone and leading shockwave edge razor sharp, far pillars soft. Color grade: deep crimsons and obsidian blacks colliding with invading ethereal golds; high cinematic contrast; subtle filmic grain.\n\nTextures: granular stone dust, floating ash, golden light motes, heat-shimmer refraction along the wave front, micro-sparks of divine radiance, linen weave, leather grain on the hilt, subsurface skin on hands under golden key. Continuity locks: same Sword of Light leather-wrapped hilt and pure golden radiance blade; same blood map on wrists and side; same white robe; hell torches still blue until full transformation; chamber still largely black stone with only the first gold wash and white-marble suggestion inside the shock ring. Sacred triumphant biblical epic tone, physically coherent energy without gore spectacle. No modern elements, no logos, no watermarks, no borders, no captions, no readable text, no UI, single face only on the front of the head.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/atmosphere-vfx/fx-sword-shockwave/fx-sword-shockwave_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "69",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 532008666398142700
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "63": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "2X DETAIL UPSCALER"
+    }
+  },
+  "64": {
+    "inputs": {
+      "upscale_model": [
+        "63",
+        0
+      ],
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "2X UPSCALE"
+    }
+  },
+  "65": {
+    "inputs": {
+      "filename_prefix": "Premiere316/atmosphere-vfx/fx-sword-shockwave/fx-sword-shockwave_2x",
+      "images": [
+        "64",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE 2X FINAL"
+    }
+  },
+  "66": {
+    "inputs": {
+      "image": "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "67": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.45,
+      "image": [
+        "66",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "68": {
+    "inputs": {
+      "pixels": [
+        "67",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "69": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "68",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

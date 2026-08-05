@@ -1,0 +1,383 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: ward-guardians\nWorkflow profile: 4X3 (4:3)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nWardrobe guard: transfer only textile rendering, light response, practical aging, and filmic material quality. Do not introduce white burial linen, blood, sandals, or a body identity unless this row explicitly requires them.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested production-sheet spacing/readability only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nRANK-AND-FILE CORRODED ARMOR VARIANTS — PRODUCTION REFERENCE: COSTUME CONSTRUCTION, MATERIALS, FIT, DAMAGE, AND CONTINUITY.\n\nCreate a four-view cinematic character ingredients sheet showing the same person in frontal three-quarter portrait, full-body, side profile, and rear-head/costume view. Lock facial identity, age, ethnicity, hairline, complete crown and rear hair, costume construction, body proportions, hands, scars, wounds, and carried props across every panel. One face exists only on the front of the head. Photorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nFour-view cinematic wardrobe ingredients sheet for the RANK-AND-FILE GUARDIANS of Hell's Gate—the anonymous squad of towering wardens who stand before the iron-and-bone Gate in the fortress cathedral, raise dripping spears as one when the ground trembles, and later are thrown backward when the Gate shatters, their armor cracking like eggshells before they dissolve into smoke and ash. This is a production costume construction reference for the shared armor family worn by multiple identical-in-class extras, not a portrait of the singular Guardian Leader with the horned crest. Present the same rank-and-file Guardian armor identity locked across four panels: (1) frontal three-quarter upper-body and head armor close enough to read metal, leather, and hollow-eye fire, (2) full-body standing pose with spear, (3) pure side profile silhouette, and (4) rear-head and rear-armor construction view. Frame as a wardrobe isolation sheet: the suit is worn by a matching towering silent silhouette whose face is secondary to costume—one face only on the front of the head, never a second face on the back of the helmet or skull—so the sheet reads as armor design first.\n\nArmor family and material language: heavy corroded black iron plate over dark under-layers, the same material world as Hell's fortress and Gate—obsidian blacks, deep crimsons, dried blood, and blue-torch cold light—but deliberately less ornate and less unique than the Guardian Leader's champion set. Rank armor is mass-produced by eternity rather than singular: overlapping breastplate segments, spaulders, faulds, greaves, and gauntlets hammered from black iron that has oxidized for millennia into pitted, flaking corrosion, verdigris-dark edges, and cratered surface scars from ancient battles. Metal reads physically real—matte scorch, edge highlight only where blue torch rims catch raised ridges, no polished chrome, no fantasy glow metal. Rivets are thick and irregular; straps are blackened leather cracked and fused to plate by heat and age; under the plates hang rough dark-chain or scale mail that clinks in shadow. Dried blood is baked into creases at neck seal, underarms, and knee joints—old brown-black residue, not fresh gore spectacle. Surface carries ash dust and fine black grit from the fortress floor, as if these suits never leave the Gate.\n\nHelmet and head continuity for the rank squad: closed or semi-closed bascinet-like or ancient war-helm forms without the Leader's tall horned crest. Crestless or with only a low broken ridge, bent nasal, or simple dented comb so the Leader remains visually unique when both appear in the same wide shot. Hollow eye sockets are the defining face of the suit: empty voids filled with burning red fire—embers, not human irises—glowing from within the helmet darkness. The red-fire eyes must lock across every panel as the primary identity signal of all Guardians. No readable glyphs, runes-as-text, emblems, or modern military insignia on the helm. Rear-head panel shows full helmet crown, nape plate, and rear neck seal continuous and solid—one face only on the front; the back of the head is only armor metal and shadow, never a second face or carved visage on the rear.\n\nVariant system within one family (show as coherent variants of the same suit language, not random unrelated designs): Variant A—heavier chest mass, thicker spaulders, shorter spear; Variant B—slightly leaner plate silhouette with more visible mail at joints and a taller spear shaft; Variant C—scarred asymmetrical damage (one spaulder half-broken, breastplate gashed, greave patched with darker iron). All variants share black-iron corrosion palette, red hollow-eye fire, crestless rank helms, and spear primary weapon so they read as a small squad of rank-and-file Guardians, not additional champions.\n\nSpear as carried wardrobe prop (screenplay-locked for rank Guardians): long ancient war spears, iron or blackened-bone shafts, leaf or barbed heads, points and shafts dripping a dark viscous living substance that hangs and slowly moves as if thick tar mixed with shadow—wet sheen under blue torch, dull black under ambient fortress gloom. Rank Guardians raise spears as a unit; do not give them the Leader's massive two-handed sword as primary identity. Hands in gauntlets grip spears with physically correct weight and scale; clean articulation of fingers inside heavy gloves, no deformed anatomy.\n\nSilhouette and scale: towering figures roughly seven to nearly eight feet—imposing, slightly elongated presence under cathedral vaults, but the Leader remains the tallest and most massive when both share frame. Broad shoulders, heavy plate mass, elongated shadow-throwing profile against blue torch walls. Full-body panel: upright sentinel stance before an implied Gate, feet planted on black stone, spear vertical or slightly angled, ready but not mid-combat frenzy. Side profile: pure armor contour, spear line, crestless helm outline. Rear view: backplate seams, cape-less or short ragged dark cloak option if used, spine ridge of plates, continuous helmet rear—no rear face.\n\nEnvironment and lighting for the sheet (wardrobe still, Hell fortress beat, pre-shatter): soft isolation against a dark void or minimal black-stone fortress backdrop with cold blue torch light approximately 2000K as key from one side and deep crimson underglow approximately 3500K from below, matching the initial Hell realm color arc—deep crimsons (#8B0000), obsidian blacks (#0A0A0A), cold blue torch accents (#4169E1), red underglow on armor belly and greaves. Optional faint gold rim only as distant divine intrusion edge light, never full transformed-hell gold fire. Physically coherent volumetric smoke and fine ash motes; metal subsurface corrosion; leather dryness; red fire in sockets casting subtle red bounce on cheek plates and nasal. Photoreal live-action biblical epic costume department reference, not illustration, not anime, not video-game concept gloss, not campy demon cosplay.\n\nCamera and presentation: multi-panel ingredients sheet on a single frame, consistent scale ruler feel across panels without visible numbers or labels, medium-telephoto clarity for metal micro-texture, shallow depth of field on portrait panel, full figure readable on body panel, 2.39:1 cinematic sensibility where framing allows. Color grade locks to Hell initial state: crushed blacks, controlled blue torch highlights, red eye accents, no modern white studio bounce. Atmosphere: dry heat, poison air, dust, distant chain scrapes implied only visually by grit and grit-scuffed greaves.\n\nContinuity locks repeated for production: rank-and-file only—crestless or low-ridge helms, never the Leader's tall horned crest; spears dripping dark living substance; hollow sockets with burning red fire; corroded black iron with dried blood and battle scars; armor state intact for the standing-before-the-Gate beat (pre eggshell-crack dissolution); same family materials as Leader but simpler mass-production silhouettes; one face only on the front of the head; no modern objects, no logos, no watermarks, no borders, no captions, no readable text, no UI, no brand marks. Sacred-tone biblical epic supernatural drama—reverent dread and ancient malice, not gore pornography. Keep hands anatomically correct inside gauntlets, armor physically wearable and consistent panel-to-panel, and the rear costume view fully resolving helmet crown and plate construction so the squad can be matched in wide fortress shots when they turn as one.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/wardrobe/ward-guardians/ward-guardians_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "59",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 588317005399029400
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 1536,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1536 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 32,
+      "width": 2048,
+      "height": 1536
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "56": {
+    "inputs": {
+      "image": "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "57": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.35,
+      "image": [
+        "56",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "58": {
+    "inputs": {
+      "pixels": [
+        "57",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "59": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "58",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

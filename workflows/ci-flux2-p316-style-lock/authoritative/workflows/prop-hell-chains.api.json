@@ -1,0 +1,377 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: prop-hell-chains\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nProp/artifact guard: transfer only material response, patina, highlight rolloff, and photographic presentation. Do not add a glowing sword, sacred symbols, blood, or human hands unless this row explicitly requires them.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nANCIENT BINDING CHAINS — PRODUCTION REFERENCE: HERO PROP DESIGN, CONSTRUCTION, MATERIALS, SCALE, AND CONTINUITY.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nAncient binding chains of Hell—instruments of bondage that hold the righteous dead in the inner prison cavern of the fortress of the dead—presented as a photoreal live-action biblical-epic production prop reference for JESUS: THE HARROWING OF HELL. The complete object is a heavy industrial-spiritual restraint system built from thick hand-forged iron, not modern factory chain: large oval and elongated D-shaped links roughly two to three inches in major diameter, stock thickness near half an inch, each link slightly irregular from hammer work and centuries of strain. Surfaces show extreme age: deep pitting, flaking black scale, orange-brown corrosion blooms, greenish mineral crust in crevices, and matte dried blood stains that have sunk into the rust like old varnish. Where links have rubbed for ages, polished contact edges glint cold blue-steel under raking light. Weld scars and peened joints read as primitive smith-work, never machine-welded; a few links bear faint chisel nicks and stress hairlines ready to fail. Intermittent iron manacles and wrist cuffs interrupt the run—thick cuffs with crude pin hinges, interior surfaces worn smooth by pale flesh, exterior caked with oxide and dark residue. Occasional vertical hangers and ceiling-eye rings of the same material imply the chamber’s suspension grid: vertical drops spaced like a vast cage, horizontal runs that once held bodies at six-foot intervals across a cavern sized for ten thousand souls.\n\nShow the prop in a coherent multi-state production still that remains one complete, readable object arrangement on a dark stone or void-backed reference stage: (1) INTACT and TENSIONED—long taut runs pulled nearly straight, links locked under eternal weight, manacles closed, hanging taut from a heavy ceiling ring with a slight catenary sag only at mid-span; (2) STRESS and SNAPPING—mid-chain fracture captured at the instant of liberation, one or two links bursting open with hairline cracks, sharp fracture faces bright against black rust, adjacent links jerking, flecks of rust and iron dust suspended in air; (3) FALLEN and BROKEN—loose coils and heaps of broken chain on black stone floor, open manacles empty, scattered links, ends still smoking with residual heat or dust, no living figure required. Prefer the hero composition as a tight three-quarter product-style view of a primary chain run with manacle in sharp focus, with secondary broken and fallen lengths arranged nearby so all material states read clearly without clutter.\n\nLighting is hell-realm before full transformation: cold blue torch key around 2000K from one side, faint crimson underglow from the floor plane, deep obsidian blacks in the voids, subtle rim light catching pitted metal edges so every pit and blood film is tactile. Optional thin veil of smoke and ash particles for atmosphere, never obscuring metal detail. Shallow to moderate depth of field isolates the hero links while keeping the complete prop system legible. Color grade: deep crimsons, obsidian blacks, cold blue speculars, rust oranges, dried-blood browns—no modern chrome, no stainless, no plastic coatings, no padlocks with brand shapes, no bar codes, no logos, no readable inscriptions or runes as text.\n\nMaterials continuity locks: iron and oxide only; corroded and bloodstained throughout; same link scale usable for wide shots of the chain grid and for extreme close-ups of a single link about to break when Jesus walks among the souls and every bond snaps at once like thunder. Sacred biblical-epic tone—horror of bondage without gore-porn; the weight of sin made metal, moments before divine freedom. No modern objects, no people required in frame, no hands unless purely for scale as clean production grip hands optional and preferably omitted, one continuous physical material language, complete object visible.\n\nNeutral production reference framing, the complete object visible, accurate materials and scale, no labels or text.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/props-artifacts/prop-hell-chains/prop-hell-chains_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 873007886570109400
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 32,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "63": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "2X DETAIL UPSCALER"
+    }
+  },
+  "64": {
+    "inputs": {
+      "upscale_model": [
+        "63",
+        0
+      ],
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "2X UPSCALE"
+    }
+  },
+  "65": {
+    "inputs": {
+      "filename_prefix": "Premiere316/props-artifacts/prop-hell-chains/prop-hell-chains_2x",
+      "images": [
+        "64",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE 2X FINAL"
+    }
+  }
+}

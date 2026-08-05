@@ -1,0 +1,377 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: location-hells-gate-the-fortress-entrance-close-up-detail\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nLocation guard: transfer only color, light behavior, haze, scale language, and material realism. Do not copy the reference cave, Hell gate, fortress geometry, crowds, or blocking unless this row explicitly requires those elements.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nHELL'S GATE - THE FORTRESS ENTRANCE — CLOSE-UP DETAIL: CINEMATIC ENVIRONMENT, SCALE, LIGHTING, MATERIALS, AND CONTINUITY.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nCinematic extreme close-up production detail of Hell's Gate surface in the intact fortress-entrance state, before divine contact and before any spiderweb fracture. The frame is filled almost entirely by a single panel zone of the colossal double doors—part of the hundred-foot-tall, sixty-foot-wide barrier of fused iron and bone that seals the cathedral of suffering. Primary subject is one large carved face of the damned rising from the metal: a life-sized or slightly oversized human visage wrought into the gate as permanent architecture, frozen mid-scream for millennia, mouth stretched open in a silent eternal cry, eyes hollowed into deep shadowed sockets that still hold the ghost of awareness. The face is not a living person and not a separate sculpture bolted on; it is continuous material with the door—iron that has grown bone and bone that has been forged into iron until the two are inseparable. Cheek planes show pitted black iron with flaking rust-red oxide, hairline stress marks, and irregular patches where pale bone plates emerge through the metal like ribs and skull fragments fused flush into the surface. Teeth within the open mouth are a hybrid of corroded iron points and yellowed bone roots. The brow is heavy and ancient; the jaw is clenched open by the metal's own geometry; fine tool scars and hammer marks from an unknown infernal craft remain visible under centuries of decay.\n\nSurrounding that hero face, secondary relief carvings pack every inch of remaining surface: nested scenes of eternal damnation stacked in high and low relief—smaller damned faces crowding the edges of the frame, twisted limbs half-sunk into the plate, processions of the condemned locked in silent ranks, each mouth a dark cavity, each eye a recessed void. No readable text, no lettering, no heraldic logos; only figurative torment carved into material. Material language is exact: primary blackened iron with deep corrosion pitting, blistered scale, and cold sheen where moisture still clings; secondary fused bone composite—dense ivory and ash-gray ossified matter bonded into the iron matrix; accents of corroded bronze fittings at a nearby hinge edge or reinforcing stud, green-black verdigris and dried blood-brown crust. Dried blood stains map irregularly across the reliefs like old varnish. A dark viscous substance—thick, tar-like, living-looking but not modern oil—weeps slowly from the corners of the open mouths and from seams where bone meets iron, running down the metal like black tears, catching cold light as glossy rivulets before thickening into matte crusts at the lower edge of frame.\n\nState is intact and oppressive: the gate has not yet cracked under the Living One's hand; the carved faces are still frozen sculpture, not yet animated into audible screams. Continuity lock: iron-and-bone fusion only; hell realm initial palette of deep crimsons and obsidian blacks with cold blue torch influence; no golden divine light yet dominating the surface, no white marble transformation, no molten shatter fragments. Atmosphere near the surface is cold and stale—fine ash dust settled in the recessed eye sockets and mouth cavities, thin smoke drifting across the metal in lazy horizontal bands, microscopic grit on every horizontal ledge of the carving. Temperature read as chill: blue torch light at roughly two thousand Kelvin skims the high points of the relief while a faint red underglow from far below the gate line kisses the lower recesses at warmer three-thousand-five-hundred Kelvin, creating a dual-temperature raking key that sculpts every groove.\n\nCamera and optics: tight macro-to-close cinematic framing on the hero damned face, approximately eighty-five to one hundred thirty-five millimeter equivalent portrait telephoto compression, camera parallel to the gate plane or with a very slight low bias so the open mouth dominates the lower third and the hollow eyes hold the upper third. Aspect ratio two-point-three-nine to one cinematic widescreen, shallow depth of field with the sharpest plane locked on the bridge of the nose, lips, and nearest cheek iron texture; secondary faces and peripheral damnation carvings fall into soft but still readable bokeh without becoming abstract mush. Extreme micro-detail: individual corrosion pits, hairline fractures that do not yet form the later spiderweb of divine fracture light, bone grain where ossified material breaks the iron skin, and the wet edge of each dark drip. Volumetric haze in the air between lens and gate catches blue torch scatter; tiny ash motes hang in the shallow focus plane.\n\nColor grade for the hell-initial beat: crushed blacks of obsidian (#0A0A0A territory), deep crimson shadow spill (#8B0000 hints in recesses), cold royal-blue torch edge light (#4169E1 cool cast on metal highlights), muted bone ivory and ash gray in fused ossature, dried-blood brown and oxidized iron rust as secondary accents. No pure white divine keys, no dawn gold, no modern industrial paint. Texture language remains photoreal live-action—practical set-piece metal and bone, subsurface cold hardness, wet specular streaks on the viscous drips, dry matte powder in the sockets. Sacred biblical-epic tone of horror and weight without gore-porn excess: the terror is architectural and spiritual, millennia of silence pressed into material, a fortress door that is itself a prison of faces.\n\nComposition keeps the hero face as the single clear focal subject; surrounding faces are denser background relief only, never competing as a second portrait subject. One face identity is resolved clearly on the front of the carved head; no rear face, no dual-face glitch, no modern objects, no chains hanging into this tight crop unless a single ancient corroded link is barely suggested at the extreme edge as gate hardware. No logos, captions, watermarks, borders, UI, or written characters anywhere in frame. Photorealistic live-action biblical epic production reference of Hell's Gate surface detail—iron fused with bone, corroded bronze accents, dried blood, dark viscous tears, cold blue raking torch light, red underglow, ash and smoke, shallow cinematic depth of field locked on one eternally screaming carved face of the damned in the intact fortress entrance state.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/locations/location-hells-gate-the-fortress-entrance-close-up-detail/location-hells-gate-the-fortress-entrance-close-up-detail_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 634957965665432400
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "63": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "2X DETAIL UPSCALER"
+    }
+  },
+  "64": {
+    "inputs": {
+      "upscale_model": [
+        "63",
+        0
+      ],
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "2X UPSCALE"
+    }
+  },
+  "65": {
+    "inputs": {
+      "filename_prefix": "Premiere316/locations/location-hells-gate-the-fortress-entrance-close-up-detail/location-hells-gate-the-fortress-entrance-close-up-detail_2x",
+      "images": [
+        "64",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE 2X FINAL"
+    }
+  }
+}

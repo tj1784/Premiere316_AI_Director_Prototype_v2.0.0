@@ -888,6 +888,18 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
           <span className={store.health.comfy ? "good" : "bad"}><i /> ComfyUI <b>{store.health.comfy ? (store.health.capabilities?.dedicatedComfyUI ? "Dedicated · 8190" : "Connected") : "Offline"}</b></span>
           <span className={runningJobs.length ? "working" : "good"}><i /> Queue <b>{runningJobs.length ? `${runningJobs.length} Active` : "Idle"}</b></span>
           <span className={store.health.ffmpeg ? "good" : "bad"}><i /> FFmpeg <b>{store.health.ffmpeg ? "Ready" : "Missing"}</b></span>
+          <button
+            className="system-restart-button"
+            type="button"
+            disabled={!store.health.capabilities?.dedicatedComfyRestart || store.comfyRestartBusy || store.health.comfyRestarting || Boolean(runningJobs.length)}
+            title={runningJobs.length ? "Finish or stop active generation jobs before restarting ComfyUI." : "Safely restart Premiere316's dedicated ComfyUI on port 8190."}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (window.confirm("Restart the dedicated ComfyUI engine on port 8190? The button is safe only while the generation queue is idle.")) store.restartComfyUI();
+            }}
+          >
+            {store.comfyRestartBusy || store.health.comfyRestarting ? "RESTARTING…" : "↻ RESTART COMFYUI"}
+          </button>
         </aside>
       </section>
     </main>

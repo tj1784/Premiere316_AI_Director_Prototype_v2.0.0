@@ -1,0 +1,377 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: extra-righteous-souls\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nCrowd/creature guard: transfer only staging energy, chiaroscuro, atmosphere, and live-action realism. Do not reuse reference faces, bodies, demons, pleading hands, costumes, or crowd arrangement.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nFREED RIGHTEOUS SOULS — PRODUCTION REFERENCE: CROWD OR CREATURE DESIGN, SCALE, VARIATION, AND CONTINUITY.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nEpic cinematic wide production reference of the FREED RIGHTEOUS SOULS — the mass crowd of the captive righteous of all ages at the exact instant of liberation inside Hell's inner prison chamber, after the chains have broken all at once. Hundreds in the midground, thousands receding into depth, with density suggesting capacity toward ten thousand across the vast cavern floor and along the pillar rows. This is a crowd-and-density design plate for the biblical epic JESUS: THE HARROWING OF HELL, photoreal live-action, not illustration, not fantasy cartoon.\n\nMoment and emotional state: the cascade of snapping iron has just echoed like thunder. Corroded bloodstained chains hang slack from wrists, ankles, and pillar rings or lie in broken heaps on the black stone floor. Every soul is pale and thin from centuries of waiting, skin almost translucent under cold residue light, dust and fine ash coating hair, shoulders, and garments. Eyes that were dull an instant ago now ignite with recognition and impossible hope as divine golden light floods through the shattered gate entrance behind camera-right, washing warm amber across faces and lifting the poison gloom. Bodies lean toward the light; some kneel weeping, some stand with mouths open in silent praise, some reach trembling hands upward, some help neighbors rise. No frenzy, no modern panic — ancient, reverent, collective awakening after endless ages of bondage.\n\nDemographic mix and age tiers (extras only; do not portrait-lock named patriarchs as the sole focus): men and women of many ancient Near Eastern, Mediterranean, and Levantine lineages; elderly with white and silver hair and deep weathered faces; middle-aged; younger adults who still look aged by imprisonment; a few adolescent silhouettes deeper in the crowd. Facial structure variety is broad but period-authentic: sunken cheeks, high cheekbones, full beards on many men, long hair on women often matted with dust, tears cutting clean paths through grime on cheeks. Hands are thin, clean anatomy, fingers open or clasped; no modern jewelry, no watches, no glasses.\n\nWardrobe tiers and materials: rough-spun earth-tone linen and undyed wool in dusty browns, ochres, faded umber, bone-white, and ash-grey; thin patched robes, simple tunics belted with frayed cord, ankle-length shifts, rough cloaks, shepherd-style wraps, and worn sandals or bare feet blackened with dust. Fabric weave is coarse and period-correct, threadbare at elbows and hems, stained with age but not theatrical gore. Occasional faded indigo or muted faded blue among denser groups for visual rhythm without royal spotlight. No crowns, no plate armor, no modern clothing, no synthetic sheen. Hair and cloth catch faint subsurface and edge light as golden rays pass through smoke.\n\nDensity and staging tiers: FOREGROUND — a sparse arc of eight to twelve fully readable figures at three-quarter and full body, mid-rise from kneeling or just standing free, broken chain links still hooked on wrists or falling away, faces turned toward the incoming light, tears and dust readable; MIDGROUND — packed clusters between black stone pillars, dozens of overlapping silhouettes in layered depth, some still half-suspended as last chain segments drop; BACKGROUND — hundreds dissolving into atmospheric fog and smoke, a sea of pale forms and raised arms receding toward the far walls of the five-hundred-by-four-hundred-foot chamber scale, ceiling lost three hundred feet up in smoke. Pillar rhythm (dozens of massive columns) frames lanes of souls like a dark cathedral nave filling with life.\n\nEnvironment continuity: Hell's inner chamber still mostly black stone and cold blue torch pools at the outer edges, but advancing divine gold and warm amber (#FFD700 / #FFBF00 / pure white god-ray cores at roughly 6500K) flood from the gate breach, turning ash particles into floating sparks of light. Residual blue torch light ~2000K remains only in deep shadow pockets for contrast. Volumetric rays cut through thick atmospheric fog; fine dust, ash, and chain-debris particles hang in air. Floor: cracked black stone with scattered iron links, blood-dark stains on metal only, no modern debris. Air transition feel: poison gloom yielding to warm perfume light without visible modern effects hardware.\n\nCamera and lens: 2.39:1 cinematic widescreen; roughly 35–40mm wide anamorphic feel for epic crowd scale with mild edge falloff; slight low-mid angle emphasizing rising bodies and vertical pillar architecture; deep focus through midground with gentle atmospheric softness in far distance; physically coherent live-action lighting, exact human anatomy, clean hands, consistent figure scale across the field.\n\nColor grade: deep crimson and obsidian shadow residual (#8B0000 / #0A0A0A) yielding to warm gold, amber, and soft white divine key; pale flesh and dusty linen as midtone anchors; cool blue rim only where old hell-light still lingers. Sacred biblical epic tone — liberation and awe, not gore-porn or camp fantasy.\n\nContinuity locks: chains are ancient corroded iron, bloodstained and recently broken in a mass simultaneous release; souls are pale thin prisoners becoming ignited by light; blue hell-torches only at chamber edges until full transformation later; no named hero close-ups required — this plate is the RIGHTEOUS CROWD EXTRA design: demographic mix, wardrobe tiers, and density tiers for hundreds to thousands. Repeat: pale thin righteous of all ages, chains broken all at once, eyes dull then ignited, earth-tone rough linen and wool, tears through dust, hands reaching toward divine golden light flooding Hell's prison cavern.\n\nHard constraints: one face only on the front of each head; no rear faces; no modern objects, logos, text, watermarks, UI, borders, captions, or readable writing; no celebrity likenesses; photoreal live-action production reference only.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/crowds-creatures/extra-righteous-souls/extra-righteous-souls_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 1082527455814977000
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "63": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "2X DETAIL UPSCALER"
+    }
+  },
+  "64": {
+    "inputs": {
+      "upscale_model": [
+        "63",
+        0
+      ],
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "2X UPSCALE"
+    }
+  },
+  "65": {
+    "inputs": {
+      "filename_prefix": "Premiere316/crowds-creatures/extra-righteous-souls/extra-righteous-souls_2x",
+      "images": [
+        "64",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE 2X FINAL"
+    }
+  }
+}

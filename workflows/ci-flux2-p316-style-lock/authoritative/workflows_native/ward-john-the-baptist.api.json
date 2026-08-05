@@ -1,0 +1,383 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: ward-john-the-baptist\nWorkflow profile: 4X3 (4:3)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nWardrobe guard: transfer only textile rendering, light response, practical aging, and filmic material quality. Do not introduce white burial linen, blood, sandals, or a body identity unless this row explicitly requires them.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested production-sheet spacing/readability only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nROUGH ANIMAL-SKIN GARMENTS — PRODUCTION REFERENCE: COSTUME CONSTRUCTION, MATERIALS, FIT, DAMAGE, AND CONTINUITY.\n\nCreate a four-view cinematic character ingredients sheet showing the same person in frontal three-quarter portrait, full-body, side profile, and rear-head/costume view. Lock facial identity, age, ethnicity, hairline, complete crown and rear hair, costume construction, body proportions, hands, scars, wounds, and carried props across every panel. One face exists only on the front of the head. Photorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nFour-view cinematic wardrobe and costume isolation sheet for John the Baptist's rough animal-skin garments as worn in JESUS: THE HARROWING OF HELL during the liberation of the righteous in Hell's inner chamber. Present the costume as a production ingredients reference: the same complete garment ensemble shown across frontal three-quarter worn view, full-body worn view, side profile worn view, and rear-head and rear-costume construction view. Prefer the garments worn on a thin gaunt Mediterranean male silhouette matching John the Baptist's body proportions so fabric hang, stress folds, and exposure of lean limbs remain accurate; optional soft mannequin-neutral underform is acceptable only if it preserves identical scale and drape. One face exists only on the front of the head when a face is visible; never place a face on the rear of the head. Photoreal live-action biblical epic tone, not illustration, not fantasy armor fashion, not modern outdoor-brand survival gear.\n\nPrimary garment identity: desert prophet animal-skin clothing typical of the wilderness forerunner—coarse camel-hair and mixed wild-animal pelts roughly stitched into a sleeveless or short-sleeved tunic-cloak that reaches mid-calf to ankle when hanging, irregular hem, open at the sides for movement. The outer face of the hide retains a dry, sun-scorched hair pile in mixed dusty browns, charcoal, dirty ochre, and faded dun—never glossy fur-coat luxury. Hair direction is uneven and matted from age and imprisonment dust; sparse bald patches reveal raw tanned leather underneath where friction and centuries of wear have abraded the pile. Underside of the skins, visible at rolled edges, neck opening, and side slits, shows crude vegetable-tanned leather in dull tan-gray, cracked along flex lines, with faint residual grease bloom and ash grime rather than clean new leather.\n\nConstruction details locked across all panels: hand-pierced sinew or gut stitching with irregular stitch length; overlapping hide panels joined at shoulders and side seams without modern machine precision; crude rawhide lacing at one shoulder and along a side vent; no metal hardware, no buttons, no zippers, no rivets, no logos. A simple leather cord or narrow rawhide girdle cinches the waist—dark, oil-darkened, frayed at the knot ends—binding the skins close to a hollowed torso so the garment bags slightly above and below the belt like desert ascetic dress. No jewelry, no amulets, no pouches, no staff, no water skin, no sandals in this wardrobe lock unless required only as optional barefoot continuity for the worn silhouette: accessories stripped to essentials; feet may remain bare to emphasize imprisonment destitution.\n\nWear and dual-imprisonment continuity: the costume must read as extremely worn from two successive captivities—first Herod's earthly prison, then the spiritual bondage of Hades. Edges are shredded and thinned to near translucency in places; fiber hair is caked with pale gray dust, dried mineral grit, and faint tear-salt tracks at the upper chest and shoulder where the wearer's face and hair have rested. Dark soot and cold-blue ash from Hell's torch environment cling in seams and under the belt. Mild bloodless abrasion stains and long-term grime, not fresh gore. The skins hang loosely on a skeletal-thin frame (target body about 5'10\" / 178 cm, emaciated ascetic build), exposing thin arms, prominent collarbones, and lean lower legs—fabric never tailored fashionably; it hangs by weight and survival necessity.\n\nDifferentiation from Elijah's animal skins (critical continuity): John's ensemble is more camel-hair and desert-forerunner in character—drier, more uniform dusty brown-dun palette, tighter waist girdle, less wild layered pelt drama, more monkish wilderness austerity. Avoid giving John the same heavy multi-species layered wild-beast wrap and fiery elder-prophet bulk associated with Elijah. John's skins feel thinner, more prison-ravaged, stripped of prophetic theatrical bulk; they communicate the last forerunner who prepared the way, now gaunt from dual captivity, awaiting vindication.\n\nMulti-view panel requirements: (1) Frontal three-quarter worn portrait framing from mid-thigh up—show neck opening, chest hang, belt knot, matted pile texture, and how skins sit on a thin torso; hair and beard of the wearer may appear matted dark with dust and tears for identity lock, but the costume remains the hero subject. (2) Full-body standing worn view—complete silhouette, irregular hem, bare lean legs or minimal foot treatment, proportions locked, slight contrapposto or quiet standing liberation stance with arms free of chains. (3) Side profile—depth of hair pile, shoulder seam bulk, how the belt cinches the hollow midsection, rear cape-like fall of longer hide panels. (4) Rear-head and rear-costume view—complete rear hair coverage if head is shown, uninterrupted hide construction across the back, no second face, stitching lines, dust strata, and how the garment falls from shoulders without modern tailoring darts.\n\nLighting and material response: soft physically coherent studio-to-set hybrid key, warm key around 4500–5000K with cool fill suggestion of residual Hell blue torch ambience ~2000K so the skins read correctly for the liberation beat without pure black crush. Emphasize micro-specular response on dry hair tips, matte leather undersides, and dusty matte absorption on abraded zones. Subtle volumetric haze optional but keep focus on fabric and hide readability. Color grade: dusty earth browns, desaturated ochres, cold ash grays, faint warm amber rim as divine light begins to reach the freed prophet—consistent with inner-chamber transition from crimson-obsidian Hell toward golden intrusion.\n\nCamera and production language: multi-panel ingredients sheet composition, each panel orthographically clear enough for VFX and costume continuity matching, approximately 50–85mm portrait equivalent feel per panel, shallow enough depth for texture but full garment readable, 2.39:1 overall sheet feel or clean multi-panel grid without borders, captions, labels, arrows, logos, watermarks, or any written graphical elements. Exact anatomy where body shows, clean hands if hands appear, consistent scale and materials across every panel. No modern objects, no synthetic outdoor fabric, no fleece techwear, no printed patterns, no brand tags, no readable text woven into skins.\n\nContinuity locks restated: rough animal-skin desert prophet garments for John the Baptist only; camel-hair and hide mix; rawhide/leather waist girdle; extreme dual-imprisonment wear; dust, tears residue, Hell ash; no accessories; differentiated from Elijah; photoreal live-action biblical epic; single face only on the front of the head; no modern elements, no logos, no text overlays, no watermarks, no borders.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/wardrobe/ward-john-the-baptist/ward-john-the-baptist_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "59",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 262335454039237280
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 1536,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1536 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 32,
+      "width": 2048,
+      "height": 1536
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "56": {
+    "inputs": {
+      "image": "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "57": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.35,
+      "image": [
+        "56",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "58": {
+    "inputs": {
+      "pixels": [
+        "57",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "59": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "58",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

@@ -1,0 +1,383 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: artifact-sword-of-light-christs-weapon-close-up\nWorkflow profile: 2X3_VERTICAL (2:3)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nProp/artifact guard: transfer only material response, patina, highlight rolloff, and photographic presentation. Do not add a glowing sword, sacred symbols, blood, or human hands unless this row explicitly requires them.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested golden luminous-VFX behavior only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nSWORD OF LIGHT - CHRIST'S WEAPON — CLOSE-UP: HERO PROP DESIGN, CONSTRUCTION, MATERIALS, SCALE, AND CONTINUITY.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nHero close-up production reference of the Sword of Light—Christ’s weapon during the Harrowing of Hell—framed so the complete weapon is legible from pommel through tip as a sacred artifact of pure divine authority. The blade is not forged steel: it is a rigid, sword-shaped mass of pure golden divine radiance, denser along a luminous core that reads like a spine of white-gold light (#FFD700 into near-white ~6500K at the edge of the edge), tapering into a clean double-edged silhouette with a modest classical point. Along the edge, the light cuts the surrounding darkness as if darkness were cloth—thin black smoke and cold blue hell torch spill (#4169E1, ~2000K) peel away from the blade in faint volumetric ribbons without becoming modern VFX noise. The blade surface is translucent-solid: soft internal god-ray filaments, faint heat shimmer without fire, no runes, no glyphs, no inscriptions, no ornamental etching. Crossguard is simple and humble—short straight quillons of aged bronze-toned metal with a soft matte patina, not jeweled, not dragon-carved, not fantasy overbuilt—bridging mortal craft and uncreated light. Grip is a simple leather-wrapped hilt of rough dark-brown leather cord, hand-worn, slightly shiny at the contact points, leather fibers and stitch gaps readable, communicating human touch upon divine power; pommel is a modest rounded metal endcap, unadorned, weight-balanced for one-handed use. Overall length reads roughly Roman short-to-mid sword scale (about two to two-and-a-half feet blade plus hilt), proportioned for Jesus’ athletic Mediterranean hand, not a greatsword, not a glowing lightsaber cylinder, not a crystal fantasy glaive. Optional continuity contact: a single clean adult male right hand grips the leather-wrapped hilt mid-frame—Mediterranean olive skin, strong calm fingers, dried blood map at the wrist from the crucifixion nail wound (continuity lock with Jesus’ blood map), no rings, no modern jewelry—creating a soft golden halo where blade light wraps the knuckles and leather. Environment context is shallow: deep crimson-obsidian hell fortress air (#8B0000 / #0A0A0A) with faint blue torch underglow and residual ash motes, pushed back by the sword’s own key light so the weapon remains the sole luminous hero subject. Camera: macro-to-close cinematic still, roughly 85–100mm equivalent, three-quarter angle along the blade axis for full object readability, shallow depth of field with tack-sharp focus on leather grain and the luminous blade core, soft falloff into dark atmosphere, 2.39:1 cinematic framing feel without letterbox graphics. Lighting physics: the blade is the primary key—warm ethereal gold and pure white divine radiance with gentle rim spill on the bronze guard and leather; fill is minimal cool ambient from hell so materials stay tactile; no pure black void that erases form, no daylight sun, no modern studio softboxes. Color grade: ethereal golds, warm amber accents, crushed blacks with residual blue hell spill at the periphery. Texture and atmosphere: leather pores, cord wrap ridges, metal micro-scratches on the guard, particulate ash catching gold light, subtle volumetric bloom restrained for photoreal live-action biblical epic tone—reverent, not gore, not comic-book energy blades. Continuity locks: same simple leather-wrapped hilt, same pure golden radiance blade (never steel, never iron, never bone), same humble unadorned construction across all Jesus sword appearances—descent, beacon among chained souls, raised high for “Death, where is your sting?”, ground strike shockwave, and ascent held high leading the freed. Constraints as positive framing: complete object visible, accurate materials and scale, photoreal live-action production reference, physically coherent light, no modern objects, no logos, no readable text, no captions, no watermarks, no borders, no UI, no celebrity likeness, sacred biblical epic tone.\n\nNeutral production reference framing, the complete object visible, accurate materials and scale, no labels or text.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/props-artifacts/artifact-sword-of-light-christs-weapon-close-up/artifact-sword-of-light-christs-weapon-close-up_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "59",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 1152662244973648100
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 1360,
+      "height": 2048,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "1360x2048 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 32,
+      "width": 1360,
+      "height": 2048
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "56": {
+    "inputs": {
+      "image": "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "57": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.45,
+      "image": [
+        "56",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "58": {
+    "inputs": {
+      "pixels": [
+        "57",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "59": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "58",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

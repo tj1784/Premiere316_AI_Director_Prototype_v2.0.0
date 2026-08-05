@@ -4,6 +4,9 @@ import ProjectGate from "./components/ProjectGate";
 import CreativeWorkspace from "./components/CreativeWorkspace";
 import ScreenplayWorkspace from "./components/ScreenplayWorkspace";
 import AssetsWorkspace from "./components/AssetsWorkspace";
+import PiExpertDock from "./components/PiExpertDock";
+
+type ActivePage = "project-gate" | "screenplay" | "assets" | "media" | "edit" | "generate" | "master" | "export";
 
 function portLabel(url: string | undefined, fallback: number) {
   if (!url) return `:${fallback}`;
@@ -17,7 +20,8 @@ function portLabel(url: string | undefined, fallback: number) {
 
 export default function App() {
   const store = useStore();
-  const [workspace, setWorkspace] = useState<"edit" | "screenplay" | "assets">("edit");
+  const [activePage, setActivePage] = useState<ActivePage>("edit");
+  const [piOpen, setPiOpen] = useState(false);
 
   useEffect(() => {
     store.refreshHealth();
@@ -33,7 +37,7 @@ export default function App() {
     };
   }, []);
 
-  if (!store.project) return <ProjectGate />;
+  if (!store.project) return <><ProjectGate /><PiExpertDock activePage="project-gate" open={piOpen} onOpenChange={setPiOpen} /></>;
 
   const projectJobs = store.jobs.filter((job) => job.projectSlug === store.project.slug);
   const running = projectJobs.filter((job) => job.status === "running" || job.status === "queued").length;
@@ -56,25 +60,39 @@ export default function App() {
         </button>
 
         <nav className="primary-nav" aria-label="Workspace navigation">
-          <button className={workspace === "screenplay" ? "active" : ""} onClick={() => setWorkspace("screenplay")}>Screenplay</button>
-          <button className={workspace === "assets" ? "active" : ""} onClick={() => setWorkspace("assets")}>Assets</button>
-          <button onClick={() => { setWorkspace("edit"); store.setWorkbench("guide"); }}>Media</button>
-          <button className={workspace === "edit" ? "active" : ""} onClick={() => { setWorkspace("edit"); store.setWorkbench("prompt"); }}>Edit</button>
-          <button onClick={() => { setWorkspace("edit"); store.setWorkbench("guide"); }}>Generate</button>
-          <button onClick={() => { setWorkspace("edit"); store.setWorkbench("master"); }}>Master</button>
-          <button onClick={() => { setWorkspace("edit"); store.setWorkbench("master"); }}>Export</button>
+          <button className={activePage === "screenplay" ? "active" : ""} onClick={() => setActivePage("screenplay")}>Screenplay</button>
+          <button className={activePage === "assets" ? "active" : ""} onClick={() => setActivePage("assets")}>Assets</button>
+          <button className={activePage === "media" ? "active" : ""} onClick={() => { setActivePage("media"); store.setWorkbench("guide"); }}>Media</button>
+          <button className={activePage === "edit" ? "active" : ""} onClick={() => { setActivePage("edit"); store.setWorkbench("prompt"); }}>Edit</button>
+          <button className={activePage === "generate" ? "active" : ""} onClick={() => { setActivePage("generate"); store.setWorkbench("guide"); }}>Generate</button>
+          <button className={activePage === "master" ? "active" : ""} onClick={() => { setActivePage("master"); store.setWorkbench("master"); }}>Master</button>
+          <button className={activePage === "export" ? "active" : ""} onClick={() => { setActivePage("export"); store.setWorkbench("master"); }}>Export</button>
         </nav>
 
         <div className="header-actions">
           <span className={`connection-pill ${store.health.comfy ? "online" : "offline"}`}>
             <span className="connection-dot" />
             {store.health.comfy
-              ? store.health.capabilities?.dedicatedComfyUI
-                ? "Dedicated ComfyUI Connected · 8190"
-                : "ComfyUI Connected"
+              ? `ComfyUI Connected ${portLabel(store.health.comfyUrl, 8188)}`
               : `ComfyUI Offline ${portLabel(store.health.comfyUrl, 8190)}`}
           </span>
-          {workspace === "screenplay" ? (
+          <button
+            className="pi-header-button"
+            disabled={store.comfyRestartBusy || store.health.comfyRestarting || running > 0 || !store.health.capabilities?.dedicatedComfyRestart}
+            title={running
+              ? "Finish or stop active generation jobs before restarting ComfyUI."
+              : store.health.capabilities?.dedicatedComfyRestart
+                ? `Safely restart Premiere316's routed ComfyUI ${portLabel(store.health.comfyUrl, 8188)}.`
+                : "The local ComfyUI restart helper is unavailable."}
+            onClick={() => {
+              if (window.confirm(`Restart ComfyUI ${portLabel(store.health.comfyUrl, 8188)} now? The generation queue must be idle.`)) {
+                void store.restartComfyUI();
+              }
+            }}
+          >
+            {store.comfyRestartBusy || store.health.comfyRestarting ? "RESTARTING…" : "↻ RESTART COMFYUI"}
+          </button>
+          {activePage === "screenplay" ? (
             <span className={`connection-pill ${store.health.screenplayModelAvailable ? "online" : "offline"}`} title={store.health.screenplayModel}>
               <span className="connection-dot" />
               {store.health.screenplayModelAvailable ? "LM Studio · Qwen 40B" : "LM Studio model offline"}
@@ -82,6 +100,7 @@ export default function App() {
           ) : null}
           <button className="icon-button" title="Save project" onClick={() => store.saveProject()}>⌘S</button>
           <button className="icon-button" title="Render queue">◫{running ? <em>{running}</em> : null}</button>
+          <button className={`pi-header-button ${piOpen ? "active" : ""}`} title="Open Pi ComfyUI Expert" onClick={() => setPiOpen((value) => !value)}><span>π</span> Pi Expert</button>
           <button className="icon-button" title="Settings">⚙</button>
           <span className="avatar">TJ</span>
         </div>
@@ -95,11 +114,12 @@ export default function App() {
         </button>
       )}
 
-      {workspace === "screenplay"
-        ? <ScreenplayWorkspace onOpenEditor={() => setWorkspace("edit")} onOpenAssets={() => setWorkspace("assets")} />
-        : workspace === "assets"
-          ? <AssetsWorkspace onOpenEditor={() => setWorkspace("edit")} />
-          : <CreativeWorkspace onOpenAssets={() => setWorkspace("assets")} />}
+      {activePage === "screenplay"
+        ? <ScreenplayWorkspace onOpenEditor={() => setActivePage("edit")} onOpenAssets={() => setActivePage("assets")} />
+        : activePage === "assets"
+          ? <AssetsWorkspace onOpenEditor={() => setActivePage("edit")} />
+          : <CreativeWorkspace onOpenAssets={() => setActivePage("assets")} />}
+      <PiExpertDock activePage={activePage} open={piOpen} onOpenChange={setPiOpen} />
     </div>
   );
 }

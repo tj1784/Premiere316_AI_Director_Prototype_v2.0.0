@@ -10,6 +10,18 @@ import {
 } from "./comfy.js";
 import { loadProject, mediaDir, registerFrame, saveProject } from "./projects.js";
 import { projectDir } from "./paths.js";
+import {
+  STYLE_FLUX_CLIP,
+  STYLE_FLUX_MODEL,
+  STYLE_FLUX_VAE,
+  STYLE_LOCK_WORKFLOWS,
+  STYLE_UPSCALER,
+  applyStyleLockToAsset,
+  compileStyleLockWorkflow,
+  isAuthoritativeStyleLockAsset,
+  isStyleLockWorkflow,
+  styleLockWorkflowIdForAsset
+} from "./style-lock.js";
 
 const KREA_MODEL = "krea2\\krea2_turbo_fp8_scaled.safetensors";
 const KREA_CLIP = "qwen3vl_4b_fp8_scaled.safetensors";
@@ -23,13 +35,14 @@ const ACE_CLIP_LARGE = "qwen_4b_ace15.safetensors";
 const ACE_VAE = "ace_1.5_vae.safetensors";
 
 export const ASSET_WORKFLOWS = [
+  ...STYLE_LOCK_WORKFLOWS,
   {
     id: "krea2-character-ingredients-fp8",
     label: "Krea 2 Character Ingredients · FP8",
     mediaType: "image",
     model: "Krea 2 Turbo FP8 + Qwen3-VL 4B FP8",
     purpose: "Identity-locked character reference sheets with face, profile, full-body, costume, hair, and rear-head coverage.",
-    requiredNodes: ["UNETLoader", "CLIPLoader", "CLIPTextEncode", "ComfyUI-Krea2T-Enhancer", "KSampler", "VAEDecodeTiled", "SaveImage"],
+    requiredNodes: ["UNETLoader", "CLIPLoader", "CLIPTextEncode", "KSampler", "VAEDecode", "SaveImage"],
     requiredModels: [KREA_MODEL, KREA_CLIP, KREA_VAE]
   },
   {
@@ -38,7 +51,7 @@ export const ASSET_WORKFLOWS = [
     mediaType: "image",
     model: "Krea 2 Turbo FP8 + Qwen3-VL 4B FP8",
     purpose: "Locations, props, VFX references, continuity states, and first/middle/last guide images.",
-    requiredNodes: ["UNETLoader", "CLIPLoader", "CLIPTextEncode", "ComfyUI-Krea2T-Enhancer", "KSampler", "VAEDecodeTiled", "SaveImage"],
+    requiredNodes: ["UNETLoader", "CLIPLoader", "CLIPTextEncode", "KSampler", "VAEDecode", "SaveImage"],
     requiredModels: [KREA_MODEL, KREA_CLIP, KREA_VAE]
   },
   {
@@ -102,6 +115,71 @@ const CATEGORY_LABELS = {
   graphic: "Graphics"
 };
 
+function promptHeaderSubject(asset) {
+  const id = String(asset?.id || "");
+  const rawName = String(asset?.name || asset?.id || "Production Asset")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // The screenplay's internal role label is "JESUS - The Harrower", but the
+  // copyable production prompts should name the subject plainly and
+  // consistently for every model/provider.
+  if (/jesus-the-harrower/i.test(id) || /^jesus\s*-\s*the harrower$/i.test(rawName)) {
+    return "JESUS CHRIST";
+  }
+  if (/^ward-jesus-/i.test(id)) {
+    const garment = rawName.replace(/^jesus\s+/i, "").trim();
+    return garment ? `JESUS CHRIST — ${garment}` : "JESUS CHRIST";
+  }
+  return rawName;
+}
+
+function promptHeaderSummary(asset) {
+  const category = String(asset?.category || "asset").toLowerCase();
+  const variant = String(asset?.variant || "Production Reference")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (category === "character") {
+    if (/close[- ]?up/i.test(variant)) return `${variant}: facial identity, expression, and cinematic lighting reference`;
+    if (/action|pose/i.test(variant)) return `${variant}: heroic body language, wardrobe, anatomy, and motion reference`;
+    return `${variant}: four-view identity, anatomy, costume, and continuity reference`;
+  }
+  if (category === "location") return `${variant}: cinematic environment, scale, lighting, materials, and continuity`;
+  if (category === "artifact") return `${variant}: hero prop design, construction, materials, scale, and continuity`;
+  if (category === "wardrobe") return `${variant}: costume construction, materials, fit, damage, and continuity`;
+  if (category === "atmosphere") return `${variant}: cinematic VFX, particles, light, transformation, and motion reference`;
+  if (category === "guide-frame") return `${variant}: cinematic composition, story state, and shot-continuity guide`;
+  if (category === "extra") return `${variant}: crowd or creature design, scale, variation, and continuity`;
+  if (category === "voice") return `${variant}: performance, tone, pacing, diction, and vocal continuity`;
+  if (category === "sound") return `${variant}: diegetic sound design, dynamics, spatial scale, and texture`;
+  if (category === "music") return `${variant}: musical arc, orchestration, tempo, dynamics, and mix direction`;
+  if (category === "graphic") return `${variant}: final title card with exact deterministic typography`;
+  return `${variant}: production generation direction and continuity reference`;
+}
+
+export function assetPromptHeader(asset) {
+  const subject = promptHeaderSubject(asset);
+  const summary = promptHeaderSummary(asset);
+  return `${subject} — ${summary}.`.replace(/\.{2,}$/, ".").toLocaleUpperCase("en-US");
+}
+
+export function withAssetPromptHeader(asset, prompt) {
+  const nextHeader = assetPromptHeader(asset);
+  const previousHeader = String(asset?.promptHeader || "").trim();
+  let body = String(prompt || "").replace(/\r\n/g, "\n").trim();
+  const firstBreak = body.indexOf("\n");
+  const firstLine = (firstBreak >= 0 ? body.slice(0, firstBreak) : body).trim();
+
+  // Idempotently replace a prior managed header instead of stacking another
+  // one every time a manifest is refreshed or an enhanced prompt is applied.
+  if (firstLine === nextHeader || (previousHeader && firstLine === previousHeader)) {
+    body = firstBreak >= 0 ? body.slice(firstBreak + 1).trimStart() : "";
+  }
+  asset.promptHeader = nextHeader;
+  return body ? `${nextHeader}\n\n${body}` : nextHeader;
+}
+
 function slugify(value) {
   return String(value || "asset")
     .toLowerCase()
@@ -132,7 +210,9 @@ function assetId(category, name, variant = "primary") {
   return `${category}-${slugify(name)}-${slugify(variant)}`;
 }
 
-function visualWorkflow(category, variant) {
+function visualWorkflow(category, variant, name = "", id = "") {
+  const styleLockId = styleLockWorkflowIdForAsset({ category, variant, name, id, mediaType: "image" });
+  if (styleLockId) return styleLockId;
   if (category === "artifact") return "flux2-klein-9b-prop-fp8";
   if (["character", "wardrobe"].includes(category) && /appearance|primary|identity|reference/i.test(variant)) {
     return "krea2-character-ingredients-fp8";
@@ -182,7 +262,7 @@ function explicitVisualAssets(markdown) {
         sourceSection: "Asset Generation Prompts",
         status: "planned",
         reviewState: "explicit-prompt",
-        workflowId: visualWorkflow(category, variant),
+        workflowId: visualWorkflow(category, variant, current.name, assetId(category, current.name, variant)),
         dependencies: [],
         versions: [],
         activeVersion: 0
@@ -274,7 +354,7 @@ function sectionedVisualAssets(markdown) {
         sourceSection: headings[index][1].trim(),
         status: "planned",
         reviewState: "explicit-prompt",
-        workflowId: visualWorkflow(category, variant),
+        workflowId: visualWorkflow(category, variant, parsed.name, id),
         dependencies: [],
         versions: [],
         activeVersion: 0
@@ -324,7 +404,7 @@ function stableIdAssets(markdown, items) {
       const name = match[2].trim();
       const continuity = match[3].split(/\r?\n/)
         .map((line) => line.replace(/^\s*[├└]──\s*/, "").trim())
-        .filter(Boolean);
+        .filter((line) => Boolean(line) && !/^(?:```|---|═+)$/.test(line));
       const existing = items.filter((item) => item.sourceAssetId === sourceAssetId);
       if (existing.length) {
         for (const item of existing) item.continuity = [...new Set([...(item.continuity || []), ...continuity])];
@@ -344,7 +424,7 @@ function stableIdAssets(markdown, items) {
         sourceSection: heading,
         status: "planned",
         reviewState: "continuity-bible",
-        workflowId: visualWorkflow(category, variant),
+        workflowId: visualWorkflow(category, variant, name, sourceAssetId),
         dependencies: [],
         continuity,
         versions: [],
@@ -593,7 +673,7 @@ function addReviewAssets(items, breakdown) {
         sourceSection: "Structured screenplay review",
         status: "planned",
         reviewState: String(spec.status || spec.visual_prompt_status || "review-added"),
-        workflowId: visualWorkflow(category, variant),
+        workflowId: visualWorkflow(category, variant, name, String(spec.asset_id || "").toLowerCase()),
         dependencies,
         continuity,
         reviewDetails: spec,
@@ -694,6 +774,7 @@ function preserveAssetState(next, previous) {
     return {
       ...item,
       prompt: old.prompt ?? item.prompt,
+      promptHeader: old.promptHeader ?? item.promptHeader,
       sampleText: old.sampleText ?? item.sampleText,
       status: old.status || item.status,
       seed: old.seed ?? item.seed,
@@ -718,6 +799,10 @@ export function buildAssetPackage(markdown, { productionBreakdown = null, previo
   const deduped = resolveAssetDependencies(applyContinuityDependencies(unique));
   const sameRevision = previous?.screenplayHash === screenplayHash;
   const preserved = preserveAssetState(deduped, sameRevision ? previous : null);
+  for (const item of preserved) {
+    item.prompt = withAssetPromptHeader(item, item.prompt);
+    applyStyleLockToAsset(item);
+  }
   const counts = preserved.reduce((acc, item) => {
     acc[item.category] = (acc[item.category] || 0) + 1;
     return acc;
@@ -741,7 +826,9 @@ export function buildAssetPackage(markdown, { productionBreakdown = null, previo
 function enumValues(objectInfo, className, inputName) {
   const entry = objectInfo?.[className]?.input;
   const definition = entry?.required?.[inputName] || entry?.optional?.[inputName];
-  return Array.isArray(definition?.[0]) ? definition[0] : [];
+  if (Array.isArray(definition?.[0])) return definition[0];
+  if (Array.isArray(definition?.[1]?.options)) return definition[1].options;
+  return [];
 }
 
 function workflowReadiness(workflow, objectInfo) {
@@ -750,6 +837,17 @@ function workflowReadiness(workflow, objectInfo) {
   }
   const missingNodes = workflow.requiredNodes.filter((node) => !objectInfo?.[node]);
   if (missingNodes.length) return { ready: false, reason: `Missing nodes: ${missingNodes.join(", ")}` };
+  if (isStyleLockWorkflow(workflow.id)) {
+    const missing = [
+      enumValues(objectInfo, "UNETLoader", "unet_name").includes(STYLE_FLUX_MODEL) ? null : STYLE_FLUX_MODEL,
+      enumValues(objectInfo, "CLIPLoader", "clip_name").includes(STYLE_FLUX_CLIP) ? null : STYLE_FLUX_CLIP,
+      enumValues(objectInfo, "VAELoader", "vae_name").includes(STYLE_FLUX_VAE) ? null : STYLE_FLUX_VAE,
+      enumValues(objectInfo, "UpscaleModelLoader", "model_name").includes(STYLE_UPSCALER) ? null : STYLE_UPSCALER
+    ].filter(Boolean);
+    return missing.length
+      ? { ready: false, reason: `Style-Lock workflow found; local models missing: ${missing.join(", ")}` }
+      : { ready: true, reason: "Style-Lock presets, references, and local FLUX.2 models installed" };
+  }
   if (workflow.id.startsWith("krea2")) {
     const missing = [
       enumValues(objectInfo, "UNETLoader", "unet_name").includes(KREA_MODEL) ? null : KREA_MODEL,
@@ -768,9 +866,18 @@ function workflowReadiness(workflow, objectInfo) {
   }
   if (workflow.id === "qwen3-tts-voice-design-1.7b") {
     const root = "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\qwen-tts\\Qwen3-TTS-12Hz-1.7B-VoiceDesign";
-    return fs.existsSync(path.join(root, "model.safetensors"))
-      ? { ready: true, reason: "Installed locally" }
-      : { ready: false, reason: "Qwen3-TTS 1.7B VoiceDesign weights are not installed" };
+    const configFile = path.join(root, "config.json");
+    if (!fs.existsSync(path.join(root, "model.safetensors")) || !fs.existsSync(configFile)) {
+      return { ready: false, reason: "Qwen3-TTS 1.7B VoiceDesign weights/config are not installed" };
+    }
+    try {
+      const config = JSON.parse(fs.readFileSync(configFile, "utf8"));
+      return config?.model_type
+        ? { ready: true, reason: "Installed locally with a recognized model_type" }
+        : { ready: false, reason: "Qwen VoiceDesign is blocked: config.json has no model_type for the installed loader" };
+    } catch {
+      return { ready: false, reason: "Qwen VoiceDesign is blocked: config.json is invalid" };
+    }
   }
   if (workflow.id === "ace-step-1.5-xl-turbo") {
     const missing = [
@@ -804,6 +911,7 @@ function gpuState() {
 }
 
 function vramFloor(workflowId) {
+  if (isStyleLockWorkflow(workflowId)) return 22;
   if (workflowId.startsWith("krea2")) return 18;
   if (workflowId === "flux2-klein-9b-prop-fp8") return 19;
   if (workflowId === "qwen3-tts-voice-design-1.7b") return 5;
@@ -940,6 +1048,27 @@ export function assetVersionFilesCurrent(project, asset) {
   }
 }
 
+function assetHasCurrentGeneratedVersion(project, asset) {
+  const active = activeAssetVersion(asset);
+  const revision = screenplayHash(project);
+  const generationFingerprint = assetGenerationFingerprint(asset);
+  return Boolean(
+    active &&
+    revision &&
+    active.assetFingerprint === generationFingerprint &&
+    active.screenplayRevision === revision &&
+    active.manifestScreenplayHash === project?.assets?.screenplayHash &&
+    active.workflowId === asset.workflowId &&
+    String(active.workflowHash || "") === String(asset.workflowHash || "") &&
+    assetVersionFilesCurrent(project, asset)
+  );
+}
+
+function restoredAssetStatus(project, asset) {
+  if (!assetHasCurrentGeneratedVersion(project, asset)) return "planned";
+  return asset.workflowId === "ltx-2.3-native-audio" ? "ready-for-shot" : "generated";
+}
+
 export function assetApprovalCurrent(project, asset) {
   const revision = screenplayHash(project);
   const approval = asset?.approval;
@@ -972,7 +1101,7 @@ function seededInt(asset) {
 }
 
 function kreaResolution(asset, project) {
-  if (asset.workflowId === "krea2-character-ingredients-fp8") return { width: 1536, height: 1024 };
+  if (asset.workflowId === "krea2-character-ingredients-fp8") return { width: 1024, height: 1024 };
   if (["atmosphere", "wardrobe"].includes(asset.category)) return { width: 768, height: 768 };
   const ratio = (project.settings?.width || 1280) / (project.settings?.height || 720);
   return ratio > 2 ? { width: 1024, height: 432 } : { width: 896, height: 512 };
@@ -987,17 +1116,11 @@ function kreaPrompt(project, asset) {
     "3": { class_type: "CLIPTextEncode", inputs: { text: asset.prompt, clip: ["2", 0] } },
     "4": { class_type: "ConditioningZeroOut", inputs: { conditioning: ["3", 0] } },
     "5": { class_type: "EmptySD3LatentImage", inputs: { width, height, batch_size: 1 } },
-    "6": { class_type: "ComfyUI-Krea2T-Enhancer", inputs: { model: ["1", 0], enabled: true, strength: asset.workflowId === "krea2-character-ingredients-fp8" ? 0.1 : 0.5, debug: false } },
-    "7": { class_type: "KSampler", inputs: { model: ["6", 0], seed, steps: 35, cfg: 8, sampler_name: "er_sde", scheduler: "simple", positive: ["3", 0], negative: ["4", 0], latent_image: ["5", 0], denoise: 1 } },
+    "7": { class_type: "KSampler", inputs: { model: ["1", 0], seed, steps: 8, cfg: 1, sampler_name: "euler", scheduler: "simple", positive: ["3", 0], negative: ["4", 0], latent_image: ["5", 0], denoise: 1 } },
     "8": { class_type: "VAELoader", inputs: { vae_name: KREA_VAE } },
-    "9": { class_type: "VAEDecodeTiled", inputs: { samples: ["7", 0], vae: ["8", 0], tile_size: 512, overlap: 64, temporal_size: 64, temporal_overlap: 8 } },
+    "9": { class_type: "VAEDecode", inputs: { samples: ["7", 0], vae: ["8", 0] } },
     "10": { class_type: "SaveImage", inputs: { images: ["9", 0], filename_prefix: `premiere316/${project.slug}/assets/${asset.id}` } }
   };
-  if (asset.workflowId === "krea2-cinematic-still-fp8") {
-    prompt["11"] = { class_type: "LatentUpscaleBy", inputs: { samples: ["7", 0], upscale_method: "nearest-exact", scale_by: 1.5 } };
-    prompt["12"] = { class_type: "KSampler", inputs: { model: ["1", 0], seed: seed + 1, steps: 4, cfg: 1, sampler_name: "euler", scheduler: "simple", positive: ["3", 0], negative: ["4", 0], latent_image: ["11", 0], denoise: 0.4 } };
-    prompt["9"].inputs.samples = ["12", 0];
-  }
   return prompt;
 }
 
@@ -1060,11 +1183,38 @@ function acePrompt(project, asset) {
 }
 
 export function compileAssetWorkflow(project, asset) {
+  if (isStyleLockWorkflow(asset.workflowId)) return compileStyleLockWorkflow(project, asset, seededInt(asset));
   if (asset.workflowId.startsWith("krea2")) return kreaPrompt(project, asset);
   if (asset.workflowId === "flux2-klein-9b-prop-fp8") return fluxPrompt(project, asset);
   if (asset.workflowId === "qwen3-tts-voice-design-1.7b") return voicePrompt(project, asset);
   if (asset.workflowId === "ace-step-1.5-xl-turbo") return acePrompt(project, asset);
   return null;
+}
+
+export async function validateAssetWorkflow(project, asset) {
+  const prompt = compileAssetWorkflow(project, asset);
+  if (!prompt) return { ready: true, errors: [] };
+  const objectInfo = await getObjectInfo(true);
+  const errors = [];
+  for (const [nodeId, node] of Object.entries(prompt)) {
+    const schema = objectInfo?.[node?.class_type];
+    if (!schema) {
+      errors.push(`${nodeId} ${node?.class_type}: node is not installed`);
+      continue;
+    }
+    for (const [inputName, definition] of Object.entries(schema?.input?.required || {})) {
+      const value = node?.inputs?.[inputName];
+      if (value == null || value === "") {
+        errors.push(`${nodeId} ${node.class_type}: missing required input ${inputName}`);
+        continue;
+      }
+      const allowed = Array.isArray(definition?.[0]) ? definition[0] : null;
+      if (allowed && !Array.isArray(value) && !allowed.includes(value)) {
+        errors.push(`${nodeId} ${node.class_type}: unavailable ${inputName}=${value}`);
+      }
+    }
+  }
+  return { ready: errors.length === 0, errors };
 }
 
 export function saveAssetPackageFiles(project, { productionBreakdown = null, reviewMarkdown = "" } = {}) {
@@ -1077,6 +1227,8 @@ export function saveAssetPackageFiles(project, { productionBreakdown = null, rev
   if (reviewMarkdown) fs.writeFileSync(path.join(production, "screenplay-review.md"), String(reviewMarkdown));
   fs.writeFileSync(path.join(workflows, "asset-workflow-catalog.json"), JSON.stringify(ASSET_WORKFLOWS, null, 2));
   for (const asset of project.assets?.items || []) {
+    if (!isAuthoritativeStyleLockAsset(asset.id)) asset.prompt = withAssetPromptHeader(asset, asset.prompt);
+    applyStyleLockToAsset(asset);
     const compiled = compileAssetWorkflow(project, asset);
     const filename = `${asset.id}.${compiled ? "api" : "recipe"}.json`;
     asset.workflowSnapshot = `workflows/${filename}`;
@@ -1099,6 +1251,22 @@ export function saveAssetPackageFiles(project, { productionBreakdown = null, rev
   }
   for (const asset of project.assets?.items || []) {
     const current = assetApprovalCurrent(project, asset);
+    const active = activeAssetVersion(asset);
+    const generationFingerprint = assetGenerationFingerprint(asset);
+    asset.generationFingerprint = generationFingerprint;
+    asset.activeVersionCurrent = Boolean(
+      active?.assetFingerprint &&
+      active.assetFingerprint === generationFingerprint &&
+      active.screenplayRevision === screenplayHash(project) &&
+      active.manifestScreenplayHash === project.assets?.screenplayHash &&
+      active.workflowId === asset.workflowId &&
+      String(active.workflowHash || "") === String(asset.workflowHash || "")
+    );
+    if (
+      asset.mediaType === "image" &&
+      !asset.activeVersionCurrent &&
+      !["queued", "generating"].includes(String(asset.status || ""))
+    ) asset.status = "planned";
     if (asset.approval && !current) asset.approval = null;
     asset.approvalCurrent = current;
   }
@@ -1138,7 +1306,10 @@ async function generateBuiltInAsset(project, asset, version) {
   fs.mkdirSync(destination, { recursive: true });
   if (asset.workflowId === "premiere316-title-card") {
     const file = `${asset.id}.v${version}.svg`;
-    const title = svgEscape(asset.prompt || project.name);
+    // The generation prompt now carries a production heading. Render only the
+    // exact title value so deterministic typography never leaks prompt metadata
+    // onto the card or misspells the approved project title.
+    const title = svgEscape(asset.variant || project.name);
     fs.writeFileSync(path.join(destination, file), `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="804" viewBox="0 0 1920 804"><rect width="1920" height="804" fill="#050609"/><text x="960" y="390" text-anchor="middle" fill="#f5f1e8" font-family="Georgia,serif" font-size="74" letter-spacing="5">${title}</text><text x="960" y="470" text-anchor="middle" fill="#a79b83" font-family="Arial,sans-serif" font-size="22" letter-spacing="9">A PREMIERE316 PRODUCTION</text></svg>`);
     return [file];
   }
@@ -1193,6 +1364,7 @@ async function generateAssetJobInner(job) {
   } else {
     job.stage = `Generating with ${workflow.model}`;
     const outputs = await runPrompt(prompt, {
+      signal: job.signal,
       onProgress: ({ value, max }) => {
         if (max) job.progress = Math.min(0.9, 0.08 + (value / max) * 0.82);
       }
@@ -1267,8 +1439,9 @@ export async function generateAssetJob(job) {
       const failedProject = loadProject(job.projectSlug);
       const failedAsset = failedProject.assets?.items?.find((item) => item.id === job.refs?.assetId);
       if (failedAsset) {
-        failedAsset.status = "error";
-        failedAsset.lastError = String(error?.message || error);
+        const cancelled = error?.code === "GENERATION_CANCELLED" || job.signal?.aborted || job.status === "cancelling";
+        failedAsset.status = restoredAssetStatus(failedProject, failedAsset);
+        failedAsset.lastError = cancelled ? null : String(error?.message || error);
         failedAsset.updatedAt = new Date().toISOString();
         saveAssetPackageFiles(failedProject);
         saveProject(failedProject);
@@ -1276,6 +1449,83 @@ export async function generateAssetJob(job) {
     } catch {}
     throw error;
   }
+}
+
+export function restoreCancelledAsset(projectSlug, assetId) {
+  const project = loadProject(projectSlug);
+  const asset = project.assets?.items?.find((item) => item.id === assetId);
+  if (!asset) return project;
+  asset.status = restoredAssetStatus(project, asset);
+  asset.lastError = null;
+  asset.updatedAt = new Date().toISOString();
+  saveAssetPackageFiles(project);
+  saveProject(project);
+  return project;
+}
+
+export function registerDirectorAssetImage(project, asset, { buffer, extension = ".png", sourceFileName = "director-import.png" }) {
+  if (!asset || asset.mediaType !== "image") throw new Error("The selected asset does not accept image versions");
+  if (!Buffer.isBuffer(buffer) || !buffer.length) throw new Error("The imported image is empty");
+  const safeExtension = [".png", ".jpg", ".jpeg", ".webp"].includes(String(extension).toLowerCase())
+    ? String(extension).toLowerCase()
+    : ".png";
+  const version = nextVersion(asset);
+  const file = `${asset.id}.v${version}${safeExtension}`;
+  const destination = mediaDir(project, "assets");
+  fs.mkdirSync(destination, { recursive: true });
+  fs.writeFileSync(path.join(destination, file), buffer);
+  const screenplayRevision = screenplayHash(project);
+  const generationFingerprint = assetGenerationFingerprint(asset);
+  const workflowSnapshot = archiveWorkflowSnapshot(project, asset, version);
+  asset.versions = asset.versions || [];
+  asset.versions.push({
+    v: version,
+    files: [file],
+    file,
+    mediaType: "image",
+    workflowId: asset.workflowId,
+    model: "Director-supplied reference image",
+    prompt: asset.prompt,
+    sampleText: asset.sampleText || "",
+    durationSec: null,
+    bpm: null,
+    seed: null,
+    workflowHash: asset.workflowHash || null,
+    workflowSnapshot: workflowSnapshot.file,
+    workflowSnapshotHash: workflowSnapshot.sha256,
+    assetFingerprint: generationFingerprint,
+    screenplayRevision,
+    manifestScreenplayHash: project.assets?.screenplayHash || screenplayRevision,
+    fileHashes: generatedFileHashes(project, [file]),
+    provenanceType: "director-import",
+    sourceFileName: path.basename(sourceFileName),
+    createdAt: new Date().toISOString()
+  });
+  asset.activeVersion = version;
+  asset.status = "generated";
+  asset.approval = null;
+  asset.approvalCurrent = false;
+  asset.lastError = null;
+  asset.updatedAt = new Date().toISOString();
+  saveAssetPackageFiles(project);
+  saveProject(project);
+  return { project, asset, version: asset.versions[asset.versions.length - 1] };
+}
+
+export function reconcileAssetGenerationState(project, activeAssetIds = new Set()) {
+  let changed = false;
+  for (const asset of project.assets?.items || []) {
+    if (!["queued", "generating"].includes(asset.status) || activeAssetIds.has(asset.id)) continue;
+    asset.status = restoredAssetStatus(project, asset);
+    asset.lastError = null;
+    asset.updatedAt = new Date().toISOString();
+    changed = true;
+  }
+  if (changed) {
+    saveAssetPackageFiles(project);
+    saveProject(project);
+  }
+  return project;
 }
 
 export function promoteAssetToFrame(project, asset) {

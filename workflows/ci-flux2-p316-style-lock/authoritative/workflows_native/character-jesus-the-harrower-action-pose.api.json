@@ -1,0 +1,427 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: character-jesus-the-harrower-action-pose\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nCharacter guard: the row alone defines identity, age, ethnicity, anatomy, hair, scars, costume, wounds, pose, and carried objects. Never turn a non-Jesus character into a Jesus lookalike.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested ivory-linen/blood material behavior only; explicitly requested golden luminous-VFX behavior only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nJESUS CHRIST — ACTION POSE: HEROIC BODY LANGUAGE, WARDROBE, ANATOMY, AND MOTION REFERENCE.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nDynamic cinematic action still of Jesus Christ the Harrower at the decisive moment before Hell's Gate, photoreal live-action biblical epic, single hero figure as primary subject. He stands centered in the approach before the colossal fortress entrance: an iron-and-bone Gate roughly one hundred feet tall and sixty feet wide, its surface a fused lattice of corroded black iron plates and pale bone ribs, carved with hundreds of damned faces frozen in silent agony, corroded bronze fittings and dried blood along the seams. The Gate fills the upper background like a dark cathedral wall; blue hell-torches along black stone pillars cast cold ~2000K light that pools as elongated shadows on the ash-strewn floor while a low red underglow ~3500K crawls from cracks in the stone.\n\nJesus is approximately thirty years of age, height about five feet ten inches, athletic muscular build without bodybuilder exaggeration, Mediterranean olive skin with realistic pores, fine facial hair stubble along the jaw, and living human warmth under divine illumination. Long dark brown to black hair covers the full crown and rear of the head in thick waves that lift and stream backward in a divine wind; no second face exists anywhere on the skull—one face only on the front of the head. Dark brown eyes hold infinite compassion fused with absolute authority: calm certainty beyond anger or cruel triumph, lids slightly narrowed as if measuring eternity. Subtle dried blood at the forehead from the crown of thorns; both wrists show open crucifixion wounds with fresh blood tracking down the forearms onto the white linen; a spear wound in the right side of the torso stains the robe in a dark crimson bloom that spreads into the weave.\n\nCostume continuity: simple white linen ankle-length robe, coarse handwoven texture with vertical folds, hem brushing rough leather sandals; a leather cord belt cinches the waist; the fabric is dusted with ash at the lower hem and stained only at wrists and side as specified, never modern, never ornate. In his raised right hand he holds the Sword of Light—a blade of pure golden divine radiance rather than forged metal, luminous from hilt to tip, edges soft with corona, simple leather-wrapped hilt gripped firmly, the light of the blade cutting the surrounding darkness as if darkness were cloth. His left arm extends forward and slightly downward, open palm and fingers reaching not in desperation but in sovereign invitation toward pale chained figures barely visible through the gate's iron lattice and the deep shadow beyond—trapped souls whose outlines press against darkness with impossible hope.\n\nPose and action: powerful yet measured warrior-prophet stance, feet planted wide on cracked black stone, weight forward into the right leg, torso upright with absolute certainty, shoulders squared, head lifted slightly as golden light pours from above and from his own presence. The white robe billows and snaps in a sacred wind that moves only around him, linen translucent at the edges where divine radiance rims the fabric. Golden radiance #FFD700 and warm amber #FFBF00 emanate from his body and sword, pushing back deep crimsons #8B0000 and obsidian blacks #0A0A0A of the fortress; volumetric god rays ~6500K descend from the shaft high above and collide with cold blue torch light, creating layered atmospheric beams that cut through thick smoke, floating ash, and fine black dust. Sparks of dying embers drift in the mid-ground; heat shimmer rises near the sword blade; the Gate's nearest iron plates show the first hairline fractures beginning to glow with inner fire, foreshadowing the shatter without yet exploding.\n\nEnvironment context locks: Hell's fortress cathedral of suffering—black stone pillars, smoke ceiling, blue torches only (not yet transformed to gold), Guardians may appear as distant silhouettes in corroded armor at the periphery, small in scale to emphasize Jesus' command of the space, their red-fire eyes tiny points of counter-light, spears held but already failing against the advancing gold. No modern objects, no logos, no readable text, no watermarks, no UI, no borders, no captions. Camera: dramatic low-angle hero composition, approximately 24mm wide-angle lens for grandeur and vertical scale of the Gate, slight Dutch neutrality avoided—horizon level, deep focus with Jesus sharp and the Gate immense behind him, controlled depth of field keeping facial identity and sword readable while background faces on the Gate remain textural not portrait-sharp. Aspect ratio 2.39:1 cinematic widescreen. Color grade: ethereal golds and pure white divine core on the figure, bruised purple-black and cold blue at the margins, red underglow on the floor, smoke layered in cool-to-warm transition where light invades shadow. Skin subsurface scattering under gold key; linen weave micro-detail; iron corrosion and bone porosity on the Gate; ash motes catching rim light. Tone remains reverent biblical epic—victory as sacred authority, never gore-porn or camp fantasy. Continuity locks repeated: blood map on both wrists, side wound, optional forehead; white linen robe with leather cord belt and rough sandals; sword of pure golden light with leather-wrapped hilt; one face only on the front of the head; complete crown and rear hair coverage; photorealistic live-action production reference quality, physically coherent lighting, exact anatomy, clean hands with visible nail beds and blood at the wrists, consistent human scale against the hundred-foot Gate.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/characters/character-jesus-the-harrower-action-pose/character-jesus-the-harrower-action-pose_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "63",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 84816376301124830
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 32,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "56": {
+    "inputs": {
+      "image": "CI_STYLE_REF_04_IVORY_LINEN_BLOOD_MATERIAL_DETAIL_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "57": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.55,
+      "image": [
+        "56",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "58": {
+    "inputs": {
+      "pixels": [
+        "57",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "59": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "58",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  },
+  "60": {
+    "inputs": {
+      "image": "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "61": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.45,
+      "image": [
+        "60",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "62": {
+    "inputs": {
+      "pixels": [
+        "61",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "63": {
+    "inputs": {
+      "conditioning": [
+        "59",
+        0
+      ],
+      "latent": [
+        "62",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

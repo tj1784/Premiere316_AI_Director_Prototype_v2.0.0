@@ -1,0 +1,383 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: ward-david\nWorkflow profile: 4X3 (4:3)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nWardrobe guard: transfer only textile rendering, light response, practical aging, and filmic material quality. Do not introduce white burial linen, blood, sandals, or a body identity unless this row explicitly requires them.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested production-sheet spacing/readability only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nFADED ROYAL BLUE AND GOLD-THREAD GARMENTS — PRODUCTION REFERENCE: COSTUME CONSTRUCTION, MATERIALS, FIT, DAMAGE, AND CONTINUITY.\n\nCreate a four-view cinematic character ingredients sheet showing the same person in frontal three-quarter portrait, full-body, side profile, and rear-head/costume view. Lock facial identity, age, ethnicity, hairline, complete crown and rear hair, costume construction, body proportions, hands, scars, wounds, and carried props across every panel. One face exists only on the front of the head. Photorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nFour-view cinematic wardrobe isolation sheet for King David’s faded royal blue and gold-thread garments as worn in Hell’s inner chamber at the moment of liberation. Treat this as a production costume construction reference for the biblical epic JESUS: THE HARROWING OF HELL: the same complete outfit locked across frontal three-quarter, full-body, side profile, and rear costume views, displayed on a neutral matching male silhouette matching David’s canon build—middle-aged Levantine king, approximately 5'8\" (173 cm), athletic with noble upright posture—so fabric drape, layering, belt line, sleeve geometry, hem length, and wear maps stay identical in every panel. One face only on the front of the head if any head is visible; prioritize garment construction, not portrait performance. Photoreal live-action film wardrobe reference, not illustration, not fashion catalog glamour, not fantasy armor cosplay.\n\nPrimary garment: an ankle-length royal tunic of once-rich indigo-to-royal-blue linen-wool blend, now severely faded by centuries of dry imprisonment into muted blue-grey and desaturated teal-blue patches where the dye has broken down. The fabric is handwoven plain weave with slight irregular thread thickness; surface shows thinning at elbows, underarms, and across the chest where chains have rubbed; fine horizontal stress lines and soft vertical drape folds hang with the weight of aged cloth rather than crisp new garment volume. Sparse remnant gold-thread embroidery still clings along the neckline band, cuff edges, and a narrow vertical panel from chest to hem—once continuous geometric and vine motifs suggesting royal psalm-court ornament, now broken, tarnished, and partially unthreaded so only intermittent dull gold glints remain under light. Embroidery metal is true metal filament, oxidized to brownish gold, never shiny modern Lurex.\n\nSecondary layer: a lighter open over-robe or short mantle of faded deep blue with residual gold selvage trim, draped over one shoulder in a restrained kingly manner rather than full priestly bulk; cloth is thinner and more frayed than the under-tunic, edges soft-frayed rather than clean-cut, with small moth-like gaps and dust-embedded fibers. A simple wide woven sash or leather-and-cloth cord belt cinches at the natural waist, dyed a once-rich darker blue now nearly charcoal-brown where sweat and ash have stained; the belt knot sits slightly off-center with centuries of habitual wear. No crown, no breastplate, no modern jewelry—regality survives only in cut, residual color, and the ghost of gold thread.\n\nFootwear and extremities: rough soft leather sandals with thin straps, cracked and pale with age, dust-powdered; feet and lower shins show pale prisoner’s skin contrast against the blue hem. Sleeves end mid-forearm or just above the wrist, allowing clean, anatomically correct hands with natural knuckles and nails—no modern rings. Optional continuity prop presence only if it does not steal wardrobe focus: a small ancient wooden harp may hang at the left hip on a worn leather strap, strings broken and silent, wood darkened and dry—kept secondary to costume construction.\n\nMaterial and wear continuity locks: royal blue dye map is uneven—deeper blue remains in protected folds under the arms and inside the mantle, while outer surfaces are bleached, ash-dusted, and chain-polished to near slate; gold thread densest at neck and hem remnants, almost gone at high-abrasion zones; fine ash and iron-oxide dust lodge in weave valleys; fabric translucency increases where cloth is thinnest against backlight; no blood of crucifixion on this costume (that belongs to Jesus alone); no guardian corrosion slime; no modern zippers, plastic, logos, printed text, or machine stitching.\n\nPose and presentation per panel: (1) frontal three-quarter—torso and full garment layers readable, neckline embroidery band and belt knot clear, mantle drape over one shoulder, hem at ankles, soft natural stance of a freed king still regaining dignity; (2) full-body—entire silhouette from head to sandals, proportions locked, blue-gold residual palette readable at distance, posture upright and noble though cloth hangs thin; (3) side profile—layer stack of mantle over tunic, sleeve length, belt thickness, sandal profile, and how gold thread catches rim light along the vertical embroidery panel; (4) rear costume view—complete rear of tunic and mantle, no face on the back of the head, full crown/rear hair coverage if head included, rear belt crossing, seam construction, and how faded blue reads without frontal gold accents. Same garment identity locked across all four panels.\n\nEnvironment and lighting: neutral dark hell-chamber production bay or soft black-stone void so costume color is unambiguous; key light warm amber divine spill approximately 4500–5500K from upper left as if Jesus’s liberation light has just entered the chamber, with cooler residual blue-torch fill ~2000K from the right for hell continuity; gentle rim separating blue cloth from background; subsurface softness in linen folds; volumetric dust motes in the warm key; no pure darkness that swallows blue, no pure white studio blowout. Color grade: muted royal blue and residual gold against warm amber key and cool blue fill, desaturated prison-wear realism with sacred dignity, aspect-friendly 2.39:1 panel framing within the ingredients sheet.\n\nCamera and craft: medium-long costume photography language equivalent to 50–85mm portrait lenses for face-inclusive panels and 35–50mm for full-body, shallow-to-moderate depth of field keeping fabric weave sharp on the primary plane, physically coherent scale, clean hands, exact anatomy, photoreal textile micro-detail (individual thread, fray ends, oxidized gold filament). Sacred biblical-epic tone—reverent, restrained, kingly poverty after ages of waiting—not fashion editorial, not gore, not campy fantasy royalty.\n\nHard negatives as positive constraints: no modern clothing, no logos, no readable text, no watermarks, no captions, no borders, no UI, no plastic, no synthetic sheen, no second face on the rear of the head, no crown of thorns or crucifixion blood map on David’s wardrobe, no identical animal-skin look shared with Elijah or John the Baptist, no bright unfaded pure cobalt or chrome gold that breaks the faded continuity. Repeat continuity: faded royal blue linen-wool tunic with remnant gold-thread embroidery, worn thin from centuries, mantle and belt still suggesting kingship, same construction locked in every view.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/wardrobe/ward-david/ward-david_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "59",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 469950043047170050
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 1536,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1536 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 32,
+      "width": 2048,
+      "height": 1536
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "56": {
+    "inputs": {
+      "image": "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "57": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.35,
+      "image": [
+        "56",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "58": {
+    "inputs": {
+      "pixels": [
+        "57",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "59": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "58",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

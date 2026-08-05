@@ -1,0 +1,377 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: atmosphere-hells-smoke-and-ash-atmospheric-elements-variation-1\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nAtmosphere/VFX guard: transfer only light falloff, particle behavior, haze density, ember/gold color relationships, and cinematic exposure. Keep the effect content and compositing requirements controlled by this row.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nHELL'S SMOKE AND ASH - ATMOSPHERIC ELEMENTS — VARIATION 1: CINEMATIC VFX, PARTICLES, LIGHT, TRANSFORMATION, AND MOTION REFERENCE.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nCinematic atmospheric production still of Hell's prison cavern air itself as the primary subject: thick black smoke and fine gray ash suspended in layered density across a vast subterranean cathedral of suffering. The moment is the divine intrusion beat just after Hell's Gate has shattered—cold spiritual darkness still owns most of the volume, yet pure golden radiance has begun to flood through a distant breach, so particulate matter becomes a living light map between two kingdoms.\n\nSmoke behavior is physically coherent and stratified. Near the black stone floor, denser ground-hugging smoke crawls in slow viscous sheets, charcoal black with deep crimson undertones (#8B0000 bleed from residual underglow), like heavy incense of centuries of torment. Mid-air, the smoke thins into translucent veils of soot-gray and iron-black, rolling in soft vertical columns that catch and scatter light. Higher still, toward a ceiling lost three hundred feet above in smoke and shadow, the mass becomes a roof of murk that swallows architecture, only suggesting the silhouettes of massive supporting pillars—forty-eight black stone columns implied as dark vertical interruptions rather than sharp-edged subjects. The air feels oppressive and weight-bearing, a spiritual darkness given physical body, yet not opaque solid black: depth is readable through successive planes of haze.\n\nAsh is the second actor. Fine gray and pale cinder particles hang nearly weightless, mixed with coarser black flakes and occasional ember-warm flecks of dying residual heat from the fortress's original cold fire. Some ash falls slowly like black snow, echoing the dust that once sifted from the ceiling when the ground trembled; other particles hang suspended, illuminated edge-on so each grain becomes a tiny specular point. Where guardian armor has already dissolved after the gate's destruction, residual wisps of smoke and ash still curl with a faintly humanoid memory—brief, dissolving columns that fray into pure particulate, never solid figures, never readable faces, only the after-image of defeated iron turning to dust.\n\nLighting is dual-source and transitional, matching the master color arc. Cold blue hell-torch light at roughly 2000K (#4169E1 cold royal blue) still cuts through the fog in discrete shafts and pools: isolated cones of frigid illumination that carve soft-edged volumes in the gloom, rim-lighting smoke edges with cyan-blue, never warming the scene. Deep crimson underglow at about 3500K seeps from floor cracks and distant furnace vents, staining the lowest smoke layers blood-dark. Against this, ethereal gold (#FFD700) and warm amber (#FFBF00) divine radiance pours through the shattered-gate direction as volumetric god rays at roughly 6500K pure white core with golden edges. Where golden beams strike ash and smoke, particles ignite into brilliant sparkling dust—paths of illumination that cross cold blue pools, creating hard color contrast without merging into muddy purple: blue volumes remain cold on one side of frame; gold volumes advance on the other. No full transformation yet—black stone and poison air still dominate; the gold is intrusion, not victory completed.\n\nEnvironment context remains Hell's fortress interior: black stone pillars, iron-and-bone gate wreckage suggested only as jagged silhouettes at the far light source, blue torches still burning on walls until the later transformation beat. Scale is monumental—an air volume hundreds of feet deep—so the atmosphere feels cathedral-sized. Camera: 35mm to 50mm cinematic still on a 2.39:1 widescreen frame, slightly low or eye-level horizon through the haze, deep focus enough to stack multiple planes of smoke density, subtle atmospheric perspective, physically coherent volumetric lighting, no modern lenses brands or equipment visible. Color grade: deep crimsons, obsidian blacks (#0A0A0A), cold blue torch accents, and invading ethereal golds; photoreal live-action biblical epic production reference, not illustration, not CGI cartoon, not fantasy concept art stylization.\n\nTexture and material truth: soot that would stain linen, ash grit that would catch in hair, moisture-free dry heat mixed with cold drafts, visible Brownian drift in the finer dust, soft falloff at light shaft edges, realistic Mie scattering in thick smoke. Continuity locks: hell torches remain blue in this beat; divine light is golden intrusion through the shattered gate; no readable text, logos, captions, watermarks, borders, or UI; no modern objects, no electric lights, no industrial smokestacks; no characters as primary subjects—if any silhouette appears it is distant and secondary only; one face only on the front of any head if a figure is barely implied, never rear faces; sacred tone, oppressive then pierced by hope, never gore-porn. Pure atmospheric VFX reference plate of hell's smoke and ash under dual cold-blue and invading-gold illumination.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/atmosphere-vfx/atmosphere-hells-smoke-and-ash-atmospheric-elements-variation-1/atmosphere-hells-smoke-and-ash-atmospheric-elements-variation-1_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 649316850311940400
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "63": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "2X DETAIL UPSCALER"
+    }
+  },
+  "64": {
+    "inputs": {
+      "upscale_model": [
+        "63",
+        0
+      ],
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "2X UPSCALE"
+    }
+  },
+  "65": {
+    "inputs": {
+      "filename_prefix": "Premiere316/atmosphere-vfx/atmosphere-hells-smoke-and-ash-atmospheric-elements-variation-1/atmosphere-hells-smoke-and-ash-atmospheric-elements-variation-1_2x",
+      "images": [
+        "64",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE 2X FINAL"
+    }
+  }
+}

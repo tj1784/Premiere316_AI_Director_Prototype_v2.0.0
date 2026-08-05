@@ -1,0 +1,339 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: extra-guardians\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nCrowd/creature guard: transfer only staging energy, chiaroscuro, atmosphere, and live-action realism. Do not reuse reference faces, bodies, demons, pleading hands, costumes, or crowd arrangement.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nRANK-AND-FILE GUARDIANS — PRODUCTION REFERENCE: CROWD OR CREATURE DESIGN, SCALE, VARIATION, AND CONTINUITY.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nA small squad of rank-and-file Guardians of Hell stands before the massive iron-and-bone Gate inside Hell's fortress cathedral—production design reference for reusable extras, not the named Guardian Leader. Five to seven towering warriors, each roughly seven to seven-and-a-half feet tall, broader and denser than human soldiers yet clearly subordinate in scale and heraldry to the eight-foot Champion who is absent from this frame. They form a shallow defensive arc three to four paces before the Gate, spears upright or angled slightly forward, boots planted on black basalt paving veined with dying red embers. Bodies face mostly camera-right toward an approaching threat they have already sensed, helmeted heads turning as one with mechanical unity, shoulders squared, stance braced for first contact.\n\nEach Guardian wears a full suit of heavily corroded black iron plate armor—ancient, battle-scarred, never polished. Breastplates show deep gouges, hammer dents, and patches of flaking scale where oxidation has eaten through; pauldrons are asymmetrical from centuries of repair with mismatched plates; greaves and vambraces are caked with dried dark blood and ash grit. Rivets are blackened; leather straps beneath the iron are cracked and darkened like burnt hide. Helmets are closed or half-closed iron casques with simple ridge crests or broken nubs—deliberately without the Leader's grand horned crest so the squad reads as rank-and-file. Through the eye slits, hollow sockets burn with living red fire, not organic eyes: ember-bright cores that cast thin crimson rims across cheek plates and spear shafts. One face only exists on the front of each head; no rear faces, no dual faces, no extra mouths on helmets.\n\nHands are gauntleted, fingers thick and purposeful, gripping tall war spears taller than the wearers. Spear shafts are dark ironwood or blackened ash wood bound with corroded iron rings; spearheads are elongated leaf-shaped blades of pitted black iron, edges chipped, tips still lethal. From each blade tip and lower edge drips a dark viscous living substance—tar-black with a slow oily sheen, hanging in heavy droplets that stretch and fall as if slightly aware, staining the paving with small spreading pools. A few spears are raised higher in readiness; others rest at a lower guard angle. Continuity lock for weapon family: rank Guardians carry spears only in this asset (not the Leader's optional two-handed sword), matching the screenplay moment when the squad raises spears as Jesus descends.\n\nPhysique under armor is brute and eternal—broad shoulders, thick necks, heavy stance—suggesting undead or demonic sentinels rather than living men. Where any strip of skin or neck is briefly visible at a joint, it is ashen-grey, desiccated, almost charcoal-dusted, never healthy flesh. No modern tactical gear, no logos, no readable insignia, no runes that form legible text.\n\nEnvironment: Hell's fortress approach to the Gate. Behind the squad looms the Gate itself—one hundred feet tall by sixty wide, iron fused with pale bone, surface carved with the open-mouthed faces of the damned in silent millennial screams; corroded bronze fittings; dried blood in the seams. Beyond and beside the Gate rise black stone pillars and cathedral walls of suffering, ceiling lost in a smoke canopy. Blue torches on iron wall brackets burn cold blue flame near 2000K, casting elongated guardian shadows toward camera and onto the Gate base; a low red underglow near 3500K seeps from floor cracks and ember veins. Palette is deep crimson #8B0000, obsidian black #0A0A0A, cold royal-blue torch light #4169E1, and red-fire eye accents. Atmospheric haze: fine black ash motes, thin poison-smoke drift, faint heat shimmer above the dripping spear ichor. No golden divine light yet—this is the pre-arrival fortress state, dread fully intact, before the Harrower's radiance pushes the shadows back.\n\nCamera and framing: photoreal live-action biblical epic production still, 2.39:1 widescreen. Medium-wide to wide lens feel approximately 35–40mm, eye-level to slight low angle so the squad towers over the viewer without fisheye distortion. Depth of field keeps the front rank sharp with the Gate softly massive behind them; background pillars fall gently out of focus. Physically coherent torch key from sides and rear, weak fill from floor ember underglow, specular hits on wet spear ichor and dented iron. Film-grain subtle, no illustration look, no CGI cartoon sheen, no anime stylization. Clean anatomy inside the armor silhouettes; gauntleted hands coherent and gripping correctly.\n\nPose and story beat lock: screenplay beat of the fortress reveal and the turn-as-one before Jesus is fully seen—Guardians sensing the intrusion, spears ready, eternal hatred still confident, not yet thrown back or dissolving. Do not show ash-dissolve, cracked eggshell armor explosion, or blinding gold flood in this reference; those belong to the dissolution FX beat. This asset is the intact hostile squad for cutaways, reaction plates, and continuity matching across the Gate confrontation.\n\nSquad variation limits for reuse: helmet ridge vs. broken-crest variants; slight height differences within 7–7.5 ft; one figure with a more damaged left pauldron; one with heavier dried-blood streaking on the breastplate; spear-raise angles staggered for visual rhythm; all share the same corroded black iron family, red-fire hollow eyes, and living dark drip on spear blades so they read as one faction. No celebrity likenesses. No modern objects, firearms, electricity, or contemporary metalwork. No captions, logos, watermarks, borders, UI, or written elements of any kind. Sacred biblical-epic tone—hellish sentinels of a supernatural prison, reverent production design, not gore-porn or campy fantasy. Continuity reminder: towering corroded armor, spears dripping dark living substance, hollow sockets filled with red fire, blue torches until later transformation, Gate iron-and-bone fusion always visible in background, one face only on the front of each head.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/crowds-creatures/extra-guardians/extra-guardians_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 1057898949567796200
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  }
+}

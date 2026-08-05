@@ -1,0 +1,383 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: guide-frame-first-frame-the-descent-begins-variation-1\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nGuide-frame guard: the screenplay beat and this row determine camera position, lens, blocking, composition, and action. References may influence only grade, exposure, atmosphere, texture, and production-value feel.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested golden luminous-VFX behavior only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nFIRST FRAME - THE DESCENT BEGINS — VARIATION 1: CINEMATIC COMPOSITION, STORY STATE, AND SHOT-CONTINUITY GUIDE.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nCinematic epic first frame establishing shot for JESUS: THE HARROWING OF HELL — the exact moment the descent begins. Camera is suspended high above a barren Judean desert plateau at night, looking almost straight down into a newly opened vertical wound in the earth, then tilting just enough to read the night sky and the lip of the fissure in the same 2.39:1 widescreen composition. The ground has cracked open not with chaotic violence but with deliberate purpose: a clean vertical shaft roughly forty feet in diameter at the surface, its rim a jagged crown of fractured sandstone, basalt, and packed desert crust, edges still dusted with rising grit as if the earth only now finished splitting. Below the rim the walls plunge into absolute depth, cut from pure black obsidian glass that swallows light, veined with thin dying embers the color of cooling iron — faint crimson-orange filaments crawling through stone like the last heartbeat of a dying forge. Embedded in those walls, half-fused with the rock as if imprisoned for ages, ancient human faces press outward: men and women of many ages, eyes wide, mouths closed or barely parted, expressions of impossible hope rather than torment, watching upward toward the surface and the approaching light. One face only on the front of each head; no rear faces, no double faces, no deformities beyond the solemn captivity of being sealed into stone.\n\nAbove the fissure, the sky is a bruised canvas of deep purple and near-black, heavy with spiritual tension. Stars pulse erratically, some bright then dim, as if the cosmos itself is holding its breath. Cold starlight at approximately 5000K rims the desert dunes and the broken earth around the shaft with a thin, silvery chill. No moon is required; the drama is in the vertical void and the first intrusion of the divine. From high above the mouth of the wound, pure golden god rays — ethereal gold near #FFD700 blended with warm amber #FFBF00 and a core of clean white radiance near 6500K — begin to stream downward into the shaft. These are not sunlight and not torchlight: older, denser, volumetric beams that cut through hanging smoke, ash, and fine desert dust, each ray a visible path of illumination carving the darkness. The gold does not yet flood the abyss; it is the beginning of descent, the first golden intrusion into hellish black, pushing back the upper shadows while the lower shaft remains a bottomless well of obsidian and ember.\n\nAtmospheric layers fill the column of air: thick particulate smoke and ash drifting slowly, grit kicked from the rim catching the golden beams, faint red underglow from the dying wall-embers mixing with the descending gold so the mid-shaft color grade moves from cold starlit purple-black at the surface, through deep crimson and obsidian blacks, into emerging ethereal gold where the rays strike. Subtle volumetric fog softens distant wall faces so scale feels infinite; nearer faces along the upper third of the shaft remain readable, pale skin tones against black glass, eyes reflecting pinpricks of gold. Texture everywhere is photoreal and tactile: fractured desert crust with mineral sparkle under starlight, glass-smooth and razor-edged obsidian facets, ember veins with micro-cracks glowing, stone dust motes in god rays, subsurface skin softness on the trapped faces without gore-porn or campy fantasy excess. Sacred biblical-epic tone — reverent, monumental, spiritually charged.\n\nCamera language: ultra-wide cinematic still, approximately 24–35mm spherical equivalent on a large-format sensor feel, slight high-angle looking down into the shaft with enough sky and desert rim in frame to establish place and scale; deep focus across the fissure mouth with gradual falloff into the infinite dark below; anamorphic 2.39:1 widescreen framing; physically coherent lighting with clear key from the descending divine rays, cold starlight fill on the desert surface, red-ember practical accents on the walls, and soft bounce off dust. No human figures standing at the rim in this first frame — the subject is the wound itself, the watching faces, and the first golden light announcing that the King of Kings has come. Continuity locks: surface fissure diameter about forty feet; walls obsidian with dying embers; trapped soul faces looking upward with hope; night desert with bruised purple-black sky and erratic stars; divine gold only beginning to stream down, not full fortress transformation yet; hell still dark below; no modern objects, vehicles, power lines, cameras, UI, logos, captions, watermarks, borders, or readable text of any kind. Photoreal live-action production reference quality, exact anatomy on every face, clean hands if any hands are visible at all, consistent materials and scale, single coherent moment of sacred dread giving way to hope as the descent begins.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/guide-frames/guide-frame-first-frame-the-descent-begins-variation-1/guide-frame-first-frame-the-descent-begins-variation-1_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "59",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 617621408084238700
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "56": {
+    "inputs": {
+      "image": "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "57": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.45,
+      "image": [
+        "56",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "58": {
+    "inputs": {
+      "pixels": [
+        "57",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "59": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "58",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

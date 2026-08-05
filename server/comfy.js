@@ -6,7 +6,7 @@ import path from "path";
 import crypto from "crypto";
 import { workflowPath } from "./paths.js";
 
-export const COMFY_URL = (process.env.COMFY_URL || "http://127.0.0.1:8190").replace(/\/+$/, "");
+export const COMFY_URL = (process.env.COMFY_URL || "http://127.0.0.1:8188").replace(/\/+$/, "");
 
 let objectInfoCache = null;
 let objectInfoAt = 0;
@@ -192,7 +192,14 @@ export async function uploadImage(filePath, subfolder = "cineforge") {
 // Submit + track a prompt. onProgress({value,max,nodeTitle}) called during run.
 // Returns history outputs object.
 // ---------------------------------------------------------------------------
-export async function runPrompt(promptGraph, { onProgress, onBeat } = {}) {
+export function generationCancelledError(message = "Generation stopped by director") {
+  const error = new Error(message);
+  error.code = "GENERATION_CANCELLED";
+  return error;
+}
+
+export async function runPrompt(promptGraph, { onProgress, onBeat, signal } = {}) {
+  if (signal?.aborted) throw generationCancelledError();
   const clientId = crypto.randomUUID();
   const body = JSON.stringify({ prompt: promptGraph, client_id: clientId });
   const ws = new WebSocket(`${COMFY_URL.replace(/^http/, "ws")}/ws?clientId=${clientId}`);
@@ -216,13 +223,30 @@ export async function runPrompt(promptGraph, { onProgress, onBeat } = {}) {
 
   const outputs = await new Promise((resolve, reject) => {
     let settled = false;
+    let abortHandler = null;
     const finish = (fn, arg) => {
       if (!settled) {
         settled = true;
+        if (signal && abortHandler) signal.removeEventListener("abort", abortHandler);
         try { ws.close(); } catch {}
         fn(arg);
       }
     };
+    abortHandler = async () => {
+      // Delete if it is still pending, then interrupt if it is already executing.
+      // Premiere316 serializes GPU work, so the active prompt belongs to this job.
+      await Promise.allSettled([
+        fetch(`${COMFY_URL}/queue`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ delete: [prompt_id] })
+        }),
+        fetch(`${COMFY_URL}/interrupt`, { method: "POST" })
+      ]);
+      finish(reject, generationCancelledError());
+    };
+    if (signal) signal.addEventListener("abort", abortHandler, { once: true });
+    if (signal?.aborted) return void abortHandler();
     ws.on("message", async (raw, isBinary) => {
       if (onBeat) try { onBeat(); } catch {}
       if (isBinary) return;

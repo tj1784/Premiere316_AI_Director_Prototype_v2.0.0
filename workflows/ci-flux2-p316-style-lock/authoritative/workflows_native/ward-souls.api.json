@@ -1,0 +1,383 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: ward-souls\nWorkflow profile: 4X3 (4:3)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nWardrobe guard: transfer only textile rendering, light response, practical aging, and filmic material quality. Do not introduce white burial linen, blood, sandals, or a body identity unless this row explicitly requires them.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested production-sheet spacing/readability only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nMOURNFUL PRISON GARMENTS FOR FREED-SOUL CROWD — PRODUCTION REFERENCE: COSTUME CONSTRUCTION, MATERIALS, FIT, DAMAGE, AND CONTINUITY.\n\nCreate a four-view cinematic character ingredients sheet showing the same person in frontal three-quarter portrait, full-body, side profile, and rear-head/costume view. Lock facial identity, age, ethnicity, hairline, complete crown and rear hair, costume construction, body proportions, hands, scars, wounds, and carried props across every panel. One face exists only on the front of the head. Photorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nFour-view cinematic wardrobe ingredients sheet for the mournful prison garments worn by the anonymous freed-soul crowd in Hell's inner chamber during the liberation sequence of JESUS: THE HARROWING OF HELL. Present the same core costume system as a production construction reference: frontal three-quarter worn presentation on a pale thin biblical-period figure silhouette, full-body standing pose showing complete garment drape from shoulders to ankles, side profile clarifying layer thickness and silhouette collapse from centuries of stillness, and rear-head/costume view locking rear neckline, shoulder seams, hanging fabric folds, and the back of the head with complete crown-and-rear hair coverage only—never a second face. One face exists only on the front of the head. This is the unified crowd wardrobe language for hundreds to thousands of righteous souls suspended in chains, not the unique hero costumes of Adam, Eve, Moses, David, Elijah, John the Baptist, or Abraham; keep the look generic, humble, and interchangeable across extras while remaining photoreal live-action biblical epic costume craft.\n\nPrimary garment: a simple ankle-length or mid-calf rough-spun tunic of ancient natural fiber, hand-loomed coarse linen or undyed wool-linen blend in mournful earth tones—dusty ash-beige, dried clay, faded umber, pale bone-gray, and muted taupe. Fabric hand is dry, brittle at the edges, and worn paper-thin over the shoulders, elbows, and mid-torso where chains and centuries of pressure have abraded the weave. Visible open plain weave with irregular yarn thickness; some panels show pulled threads, moth-like voids, and frayed hems that hang unevenly. Construction is primitive and pre-industrial: hand-stitched side seams with uneven vegetable-dyed thread, squared neckline or shallow V without ornament, short or three-quarter sleeves that hang loose on thin arms, no embroidery, no royal colors, no animal skins, no metal jewelry, no belts of status. Optional secondary layer on a minority of variants: a thin sleeveless over-wrap or shoulder drape of the same exhausted fiber family, equally dust-laden, used only as crowd variety not as character branding.\n\nWear and imprisonment continuity: garments are saturated with fine grey-brown dust and ash from the prison cavern floor and air; darker smear tracks at wrists, ankles, and mid-ribs where corroded iron chain links once pressed and rubbed; faint iron-oxide rust transfer stains at contact points; no fresh blood gore—only ancient dried discoloration. Fabric clings slightly to pale thin bodies from moisture and age rather than flowing with luxury; when chains break and souls stand free, the cloth falls in exhausted vertical folds, heavy with dust, catching divine warm amber light in the thinned translucent areas. Bare feet preferred for most extras; if any soft leather or woven-fiber foot wraps appear, they must be shredded, colorless, and nearly destroyed—never modern footwear. Hands clean of props except optional remnant chain-link contact marks on fabric, not held weapons or symbols reserved for named prophets and kings.\n\nCrowd material system and demographic range: present the wardrobe as a coherent kit that can dress male and female adult extras across ages, with slight length and sleeve variants only—never modern cuts, never contemporary costume silhouette. Palette locked to desaturated earth and ash so that when golden divine radiance floods the chamber, the garments remain humble and sorrowful until illuminated, then pick up soft amber rims and warm highlights without becoming white or golden themselves. Differentiate only by wear pattern and dust density, not by color hierarchy; the crowd must read as one suffering people, pale and thin, eyes once dull now igniting, bodies still clothed in the same mournful prison cloth that marked centuries of waiting.\n\nEnvironment context for the sheet: neutral production reference atmosphere with subtle hell-chamber memory—soft cold blue torch fill at roughly 2000K mixed with a warmer amber key suggesting the moment of liberation light, volumetric haze of fine dust, black stone or dark seamless studio ground so fabric edges and frays read clearly. Photoreal textile micro-detail: individual yarn fibers, broken selvedge, dust particles in weave pockets, subtle subsurface scattering on pale skin at neck and wrists where fabric gaps, clean anatomical hands gripping nothing or lightly holding the garment edge for construction clarity.\n\nCamera and presentation: multi-panel wardrobe ingredients layout equivalent to four consistent views under matched scale, 85mm portrait intimacy for the three-quarter torso panel and 50mm full-body for complete silhouette, shallow depth of field on weave texture where useful, overall 2.39:1 cinematic widescreen production framing sensibility without letterbox graphics. Color grade: cold blue shadow residual from Hell torches against warm amber liberation key; desaturated earth garments; no modern objects, no logos, no text, no captions, no watermarks, no borders, no UI. Sacred biblical epic tone—reverent, mournful, hopeful—never camp fantasy, never gore spectacle. Continuity lock repeated: same rough-spun earth-tone prison cloth family for all anonymous freed souls; worn thin by millennia; dust and chain-contact stains only; no royal blue/gold, no animal skins, no white divine robe reserved for Christ; one face only on the front of any head in the sheet; physically coherent materials and lighting throughout.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/wardrobe/ward-souls/ward-souls_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "59",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 415153829184401600
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 1536,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1536 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 32,
+      "width": 2048,
+      "height": 1536
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "56": {
+    "inputs": {
+      "image": "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "57": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.35,
+      "image": [
+        "56",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "58": {
+    "inputs": {
+      "pixels": [
+        "57",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "59": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "58",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

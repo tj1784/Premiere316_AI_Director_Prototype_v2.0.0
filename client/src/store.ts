@@ -44,6 +44,10 @@ type Store = {
   screenplayBusy: boolean;
   assetBusy: boolean;
   gpuHandoffBusy: boolean;
+  comfyRestartBusy: boolean;
+  screenplayModelLoadBusy: boolean;
+  promptEnhanceBusy: boolean;
+  promptEnhance: any | null;
   assetWorkflows: any[];
   lmStudioGpu: any | null;
   activeWorkbench: "guide" | "prompt" | "score" | "master";
@@ -64,6 +68,8 @@ type Store = {
   setWorkbench: (tab: Store["activeWorkbench"]) => void;
 
   refreshHealth: () => Promise<void>;
+  restartComfyUI: () => Promise<void>;
+  loadScreenplayModel: () => Promise<void>;
   refreshProjects: () => Promise<void>;
   refreshQueue: () => Promise<void>;
   createProject: (name: string) => Promise<void>;
@@ -91,7 +97,11 @@ type Store = {
   approveAsset: (assetId: string) => Promise<void>;
   generateAsset: (assetId: string) => Promise<void>;
   generateAssets: (assetIds?: string[], regenerate?: boolean) => Promise<void>;
+  stopAssetGeneration: (assetId?: string) => Promise<void>;
   promoteAsset: (assetId: string) => Promise<void>;
+  refreshPromptEnhance: () => Promise<void>;
+  enhanceAssetPrompts: (assetIds?: string[], concurrency?: number) => Promise<void>;
+  stopPromptEnhance: () => Promise<void>;
 
   attachGuide: (clipId: string, body: any) => Promise<void>;
   patchGuide: (clipId: string, guideId: string, body: any) => Promise<void>;
@@ -130,6 +140,10 @@ export const useStore = create<Store>((set, get) => ({
   screenplayBusy: false,
   assetBusy: false,
   gpuHandoffBusy: false,
+  comfyRestartBusy: false,
+  screenplayModelLoadBusy: false,
+  promptEnhanceBusy: false,
+  promptEnhance: null,
   assetWorkflows: [],
   lmStudioGpu: null,
   activeWorkbench: "guide",
@@ -197,6 +211,67 @@ export const useStore = create<Store>((set, get) => ({
       set({ health: { comfy: false, ffmpeg: false, capabilities: {} } });
     }
   },
+  restartComfyUI: async () => {
+    if (get().comfyRestartBusy) return;
+    set({ comfyRestartBusy: true, error: null });
+    try {
+      await api("/api/system/comfy/restart", {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      const deadline = Date.now() + 180000;
+      let completed = false;
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => window.setTimeout(resolve, 750));
+        let status: any;
+        try {
+          status = await api("/api/system/comfy/restart/status");
+        } catch {
+          // A desktop launcher may replace the Premiere316 web process while
+          // ComfyUI boots. Keep polling until the local server reconnects.
+          continue;
+        }
+        set({ health: { ...get().health, comfy: Boolean(status.comfy), comfyRestarting: Boolean(status.restarting) } });
+        if (status.status === "error") throw new Error(status.error || "Dedicated ComfyUI restart failed");
+        if ((status.status === "ready" || status.status === "idle") && status.comfy) {
+          completed = true;
+          break;
+        }
+      }
+      if (!completed) throw new Error("Dedicated ComfyUI did not reconnect within three minutes.");
+    } catch (error: any) {
+      set({ error: String(error.message) });
+    } finally {
+      await get().refreshHealth();
+      set({ comfyRestartBusy: false });
+    }
+  },
+  loadScreenplayModel: async () => {
+    if (get().screenplayModelLoadBusy) return;
+    set({ screenplayModelLoadBusy: true, error: null });
+    try {
+      await api("/api/lm-studio/load-screenplay-model", {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      const deadline = Date.now() + 180000;
+      let ready = false;
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => window.setTimeout(resolve, 1000));
+        await get().refreshHealth();
+        if (get().health.lmStudio && get().health.screenplayModelAvailable) {
+          ready = true;
+          break;
+        }
+      }
+      if (!ready) throw new Error("The pinned Qwen screenplay model did not become ready within three minutes.");
+    } catch (error: any) {
+      set({ error: String(error.message || error) });
+    } finally {
+      await get().refreshHealth();
+      set({ screenplayModelLoadBusy: false });
+    }
+  },
   refreshProjects: async () => {
     try {
       const json = await api("/api/projects");
@@ -215,7 +290,7 @@ export const useStore = create<Store>((set, get) => ({
       if (!project) return;
       const completed = next.some((job: any) => {
         const old = previous.find((item: any) => item.id === job.id);
-        return job.projectSlug === project.slug && job.status === "done" && old?.status !== "done";
+        return job.projectSlug === project.slug && ["done", "error", "cancelled"].includes(job.status) && old?.status !== job.status;
       });
       if (completed) await get().reloadProject();
     } catch {
@@ -583,6 +658,22 @@ export const useStore = create<Store>((set, get) => ({
       throw error;
     }
   },
+  stopAssetGeneration: async (assetId) => {
+    const project = get().project;
+    if (!project) return;
+    try {
+      const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/assets/stop-generation`, {
+        method: "POST",
+        body: JSON.stringify(assetId ? { assetId } : {})
+      });
+      set({ project: json.project, jobs: json.jobs || get().jobs });
+      await get().reloadProject();
+      await get().refreshQueue();
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    }
+  },
   promoteAsset: async (assetId) => {
     const project = get().project;
     if (!project) return;
@@ -597,6 +688,57 @@ export const useStore = create<Store>((set, get) => ({
         })
       });
       set({ project: json.project, selFrameFile: json.frame?.file || get().selFrameFile });
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    }
+  },
+  refreshPromptEnhance: async () => {
+    const project = get().project;
+    if (!project) return;
+    try {
+      const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/assets/enhance-prompts`);
+      const enhance = json.enhance || null;
+      const active = Boolean(enhance?.active || ["queued", "running", "cancelling"].includes(String(enhance?.status || "")));
+      set({ promptEnhance: enhance, promptEnhanceBusy: active });
+      if (active || enhance?.status === "done") {
+        // Reload project so inspector prompts update as agents apply results.
+        await get().reloadProject();
+      }
+    } catch (error: any) {
+      // Status polling should not spam the global error banner for transient failures.
+      console.warn("prompt enhance status", error?.message || error);
+    }
+  },
+  enhanceAssetPrompts: async (assetIds = [], concurrency) => {
+    const project = get().project;
+    if (!project) return;
+    set({ promptEnhanceBusy: true, error: null });
+    try {
+      const body: any = {};
+      if (Array.isArray(assetIds) && assetIds.length) body.assetIds = assetIds;
+      if (concurrency) body.concurrency = concurrency;
+      const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/assets/enhance-prompts`, {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+      set({ promptEnhance: json.enhance || null, promptEnhanceBusy: true });
+      await get().refreshPromptEnhance();
+    } catch (error: any) {
+      set({ error: String(error.message), promptEnhanceBusy: false });
+      throw error;
+    }
+  },
+  stopPromptEnhance: async () => {
+    const project = get().project;
+    if (!project) return;
+    try {
+      const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/assets/enhance-prompts/stop`, {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      set({ promptEnhance: json.enhance || null });
+      await get().refreshPromptEnhance();
     } catch (error: any) {
       set({ error: String(error.message) });
       throw error;

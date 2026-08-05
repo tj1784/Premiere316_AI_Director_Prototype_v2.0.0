@@ -1,0 +1,383 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: character-guardian-leader-hells-champion-appearance\nWorkflow profile: 4X3 (4:3)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nCharacter guard: the row alone defines identity, age, ethnicity, anatomy, hair, scars, costume, wounds, pose, and carried objects. Never turn a non-Jesus character into a Jesus lookalike.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested production-sheet spacing/readability only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nGUARDIAN LEADER - HELL'S CHAMPION — APPEARANCE: FOUR-VIEW IDENTITY, ANATOMY, COSTUME, AND CONTINUITY REFERENCE.\n\nCreate a four-view cinematic character ingredients sheet showing the same person in frontal three-quarter portrait, full-body, side profile, and rear-head/costume view. Lock facial identity, age, ethnicity, hairline, complete crown and rear hair, costume construction, body proportions, hands, scars, wounds, and carried props across every panel. One face exists only on the front of the head. Photorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nHell's Guardian Leader — Hell's Champion, primary character ingredients sheet for the biblical epic JESUS: THE HARROWING OF HELL. Photoreal live-action production reference of a single continuous demonic warden identity, not illustration, not CGI cartoon, not anime.\n\nIdentity and stature: towering champion of the damned, approximately eight feet tall (about 244 cm), massive muscular physique built for brute force and eternal siege duty. Timeless age appearance, neither young nor old — a war-scarred immortal enforcer of the underworld gate. Body proportions deliberately oversized relative to human scale: broad shoulders, thick neck, barrel chest, heavy forearms, and wide stance that reads as immovable fortress muscle under armor. Skin, where visible at jaw, throat, and gaps in plate, is ashen-grey with a sickly cool undertone, cracked like old leather, dusted with fine black grit and dried blood flecks. Dark matted hair and ragged beard strands emerge from under the helmet rim and cheek guards, oily and soot-caked, never clean, never styled. One face only on the front of the head: a weathered, brutal face partially framed by the open helmet — hollow eye sockets filled with living burning red fire that glows from within the skull cavities like furnace embers; no pupils, no white sclera, only deep red-orange flame light. The mouth is a hard line of eternal hatred with the first fracture of dawning terror, lips cracked, teeth yellowed and uneven where briefly visible. No second face on the rear of the head; rear views show only helmet, neck armor, and matted hair escaping the nape.\n\nArmor — ward of the Guardian Leader: full plate harness of corroded black iron, centuries of oxidation turned to deep charcoal, rust-brown scabs, and pitted obsidian black. Extreme age and battle damage everywhere: deep scratches, gouges, hammer dents, edge chips, and seams crusted with dried blood in dark brown-black layers. Breastplate heavy and layered, with vertical ridges and overlapping scales at the midriff; pauldrons massive and angular, one slightly more crushed than the other from an ancient blow; articulated gauntlets with clawed fingertip plates stained black; greaves and sabatons that look forged for trampling. Decorative language is infernal and ancient, never modern military: hammered raised ribs, faintly carved damned-face reliefs worn almost smooth, rivets and leather straps blackened and frayed. Optional horned crest helmet as the signature silhouette — tall central crest with two lateral horn-like flanges suggesting demonic origin, crest edges corroded and chipped, cheek guards framing the fire-eyed face, open nasal or visor gap that keeps the burning sockets readable. Interior of helmet rims show soot and heat discoloration. No polish, no parade shine — only siege-worn black iron, dried blood, and ash dust.\n\nCarried weapon continuity lock (screenplay-primary): a towering guardian spear held as the champion's primary arm — long black-iron shaft, barbed or leaf-bladed head, surface corroded and battle-scarred, the blade and tip dripping a dark viscous living substance that hangs in slow tar-like strands and beads, never clean steel. Grip wraps of blackened leather, hands locked in a two-handed ready grip for the full-body and three-quarter panels. Rank guardians share the same spear language; the leader's spear is longer, heavier, and more scarred, matching the prop-guardian-spear dependency and the beat where this spear turns to ash in his hands when Christ looks at him. Do not invent modern weapons, firearms, or chrome.\n\nPose and emotional state across the four locked views: frontal three-quarter portrait shows the horned helmet, fire-socket eyes, hatred-to-terror expression, upper torso armor, and spear shaft rising past the frame edge; full-body shows the full eight-foot mass, grounded stance before Hell's Gate context (implied black stone floor, cold blue torch spill at the edges of the frame only as soft environmental color, not a full location plate), spear vertical or slightly angled as if barring passage; side profile locks helmet horn silhouette, chest depth, gauntlet shape, and spear length; rear-head/costume view locks crest from behind, nape hair, backplate seams, cape-less or ragged black iron cloak remnant if any, no face on the rear. Expression continuity: eternal hatred with dawning terror — the moment before authority collapses, not comic fear, not gore-porn snarl.\n\nEnvironment context for production lighting only: Hell's fortress approach before the hundred-foot iron-and-bone Gate — deep crimsons (#8B0000 range), obsidian blacks (#0A0A0A), cold blue torch light approximately 2000K (#4169E1 cool spill) as weak fill and rim, red underglow approximately 3500K from subterranean heat. Volumetric black smoke and fine ash motes in the air. No golden divine key light yet — this sheet captures the champion before dissolution, still armored and armed.\n\nLighting and camera language: dramatic low-angle production photography feel to emphasize towering power without caricature; soft key from cold blue torch left, warmer red underglow from floor level, thin rim separating black iron from black void; shallow depth of field on portrait panel only, sharper full-body for costume lock; cinematic anamorphic 2.39:1 sensibility across panels as a multi-view ingredients sheet, physically coherent scale, exact anatomy in hands and joints, clean readable silhouette. Photoreal subsurface on ashen skin patches; micro-specular on wet dark drips on the spear; matte corrosion on iron.\n\nColor grade: deep crimsons and obsidian blacks with red fire-eye accents and cool blue torch spill; desaturated flesh; no golden heaven grade on this asset.\n\nTexture and atmosphere: smoke haze, ash dust on pauldrons, dried blood crust in plate seams, viscous drip on spear head, heat shimmer barely suggested in the eye-fire, moisture-free dry hell air. Materials concrete: corroded black iron, leather straps, dried blood, ash, bone-adjacent carving wear on plates, dark living tar-like substance on the weapon.\n\nHard constraints repeated for continuity: one face only on the front of the head; hollow sockets with burning red fire as the eye identity lock; horned crest helmet and battle-scarred black iron armor consistent in every panel; spear as primary carried weapon matching screenplay ash-dissolve beat; towering eight-foot scale locked; no modern objects, no logos, no text, no watermarks, no borders, no captions, no readable inscriptions, no UI. Sacred biblical epic tone — reverent supernatural drama, photoreal live-action warden of Hell, not campy fantasy mascot and not gratuitous gore.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/characters/character-guardian-leader-hells-champion-appearance/character-guardian-leader-hells-champion-appearance_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "59",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 644532722646251600
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 1536,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1536 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 32,
+      "width": 2048,
+      "height": 1536
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "56": {
+    "inputs": {
+      "image": "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "57": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.35,
+      "image": [
+        "56",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "58": {
+    "inputs": {
+      "pixels": [
+        "57",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "59": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "58",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

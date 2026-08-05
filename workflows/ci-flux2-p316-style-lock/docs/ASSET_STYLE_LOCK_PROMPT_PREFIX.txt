@@ -1,0 +1,2 @@
+STYLE-ONLY IMAGE REFERENCE LOCK — Premiere316
+Use the ComfyUI image references only for art direction: sacred cinematic realism, warm divine-gold light, dark smoky umber shadows, ember haze, live-action camera language, realistic material physics, detailed texture, and restrained film grain. Do not copy content, identity, wardrobe, wounds, props, locations, crowds, gates, or layout from the references unless this exact row prompt requests them.

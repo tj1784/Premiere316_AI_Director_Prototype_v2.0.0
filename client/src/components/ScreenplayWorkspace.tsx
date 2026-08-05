@@ -286,6 +286,15 @@ export default function ScreenplayWorkspace({ onOpenEditor, onOpenAssets }: { on
         <div className={`screenplay-model-card ${modelReady ? "ready" : "offline"}`}>
           <i />
           <div><b>{modelReady ? "Exact model ready" : "Model unavailable"}</b><small>{MODEL}</small></div>
+          {!modelReady ? (
+            <button
+              className="button secondary"
+              disabled={store.screenplayModelLoadBusy}
+              onClick={() => void store.loadScreenplayModel()}
+            >
+              {store.screenplayModelLoadBusy ? "Loading Qwen 40B…" : "Load Qwen 40B & Reconnect"}
+            </button>
+          ) : null}
         </div>
         <div className="screenplay-form-scroll">
           <label>Story brief<textarea rows={7} value={concept} onChange={(event) => setConcept(event.target.value)} /></label>

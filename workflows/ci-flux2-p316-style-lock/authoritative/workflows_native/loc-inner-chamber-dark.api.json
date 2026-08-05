@@ -1,0 +1,339 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: loc-inner-chamber-dark\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nLocation guard: transfer only color, light behavior, haze, scale language, and material realism. Do not copy the reference cave, Hell gate, fortress geometry, crowds, or blocking unless this row explicitly requires those elements.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nHELL'S INNER CHAMBER, INITIAL STATE — PRODUCTION REFERENCE: CINEMATIC ENVIRONMENT, SCALE, LIGHTING, MATERIALS, AND CONTINUITY.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nCinematic epic ultra-wide establishing shot of Hell's Inner Chamber in its initial dark prison state: the vast subterranean heart of Hell's fortress, a cathedral of captivity carved from living black stone. The chamber measures approximately five hundred feet long by four hundred feet wide with a ceiling rising three hundred feet into smoke-choked darkness, a scale that swallows human figures into near-insignificance. Forty-eight colossal pillars of obsidian-black basalt and fused volcanic stone march in rigorous rows across the floor, each pillar thick as a siege tower, surfaces scarred with ancient tool marks, dried blood stains, and hairline fractures that bleed faint red underglow from deep within the rock. The pillar bases are ringed with corroded iron manacles and chain anchors set into the stone; capital tops dissolve into a ceiling lost in layered smoke, ash, and shadow where architecture becomes pure void.\n\nAcross the chamber a dense three-dimensional grid of hell-chains fills the air and floor like a lethal forest. Corroded iron links, blackened and bloodstained, hang from wall brackets, pillar rings, and ceiling fixtures, suspending and binding thousands of pale thin souls in staggered tiers from near ground level up into the mid-heights of the chamber. Some captives stand upright on the stone floor, shackled at wrists, ankles, and throats; others hang partially suspended like marionettes, weight sagging against the metal, heads bowed after centuries of waiting. The chain metal shows pitted corrosion, brown-black rust blooms, and dark dried blood crusted into link joints; occasional links glisten with a cold oily sheen as if the metal itself were half-alive. The full population suggests ten thousand or more righteous dead held since the ages began—faces gaunt, skin ashen-pale with a cold blue-gray undertone, bodies thin but not cartoonishly skeletal, eyes dull with long endurance, garments reduced to rough earth-tone rags, faded linen, and worn animal-hide scraps. No modern fabrics. Hands and feet are clean in anatomy, fingers articulated, no extra limbs. Each figure has a single face only on the front of the head.\n\nBlue torches are fixed at regular intervals along the walls and on iron brackets bolted to pillar flanks. Their cold blue flame burns at roughly two thousand Kelvin color temperature, a royal-blue to cobalt fire that does not warm the stone. Each torch casts elongated dancing shadows of chains and bodies across the floor like grasping hands. Between torch pools the chamber sinks into deep obsidian black. A faint red underglow—deep crimson near three thousand five hundred Kelvin—seeps from floor cracks and the interiors of fractured pillars, staining the lowest air with a sick blood-light that never becomes true warmth. The overall color grade is deep crimson number eight-B-zero-zero-zero-zero against pure obsidian black number zero-A-zero-A-zero-A, with cold blue torch accents near number four-one-six-nine-E-one; no golden divine radiance dominates this beat yet—this is the prison before transformation, black stone still black, blue flame still blue, poison air still heavy.\n\nAtmosphere is thick with hanging particulate: ash motes, fine stone dust, and a low-lying fog of vapor that softens distant ranks of captives into silhouettes, creating successive layers of depth that sell the enormous volume. The air reads as dead and cold; no perfume, no warm amber. Far end of the chamber may show a massive architectural opening or archway toward the shattered gate approach, with only a weak edge of cooler or slightly brighter spill just beginning to kiss the nearest pillars—subtle, not yet the full golden flood of divine intrusion—so the composition remains firmly the dark initial state. Floor is uneven black stone paving, cracked and blood-darkened in places, wet-looking in torch reflections. Walls rise as sheer cliff-faces of the same black stone, studded with more chain rings and recessed niches where additional captives wait in shadow.\n\nCamera: extreme wide establishing frame in two-point-three-nine-to-one cinematic widescreen aspect, roughly twenty-four to thirty-five millimeter anamorphic equivalent lens, low-to-mid eye height or slightly elevated for architectural read of the full pillar grid and chain canopy, deep focus so both near chains and far ranks remain legible, subtle atmospheric haze falloff into the smoke ceiling. Composition emphasizes overwhelming scale: foreground chain links and a few nearest pale captives for human scale, midground dense forest of shackled figures and pillars, background lost in smoke and torch-punctuated darkness. Physically coherent torch key lighting with soft red underglow fill and no modern practicals. Texture priority on basalt grain, corroded iron, pale skin subsurface coolness, frayed ancient cloth, ash in air, and volumetric blue torch smoke. Sacred biblical-epic tone—reverent, vast, tragic captivity—not gore spectacle, not fantasy game environment, not cartoon CGI. Photoreal live-action production reference as if photographed on a massive practical set with controlled atmospheric effects. Continuity locks: Hell torches remain blue; stone remains black; chains intact and holding; no white marble, no golden fire, no staircase of light yet; no modern objects, no logos, no readable text, no watermarks, no UI, no borders, no captions. Single face only on the front of every head. No celebrity likenesses. Maintain production-scale realism suitable for matching later transformation plates of the same chamber in white marble and golden fire.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/locations/loc-inner-chamber-dark/loc-inner-chamber-dark_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 1120974281206537200
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  }
+}

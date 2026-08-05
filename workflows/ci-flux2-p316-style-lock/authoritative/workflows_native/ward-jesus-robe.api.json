@@ -1,0 +1,427 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: ward-jesus-robe\nWorkflow profile: 4X3 (4:3)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nWardrobe guard: transfer only textile rendering, light response, practical aging, and filmic material quality. Do not introduce white burial linen, blood, sandals, or a body identity unless this row explicitly requires them.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested ivory-linen/blood material behavior only; explicitly requested production-sheet spacing/readability only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nJESUS CHRIST — WHITE LINEN ROBE — PRODUCTION REFERENCE: COSTUME CONSTRUCTION, MATERIALS, FIT, DAMAGE, AND CONTINUITY.\n\nCreate a four-view cinematic character ingredients sheet showing the same person in frontal three-quarter portrait, full-body, side profile, and rear-head/costume view. Lock facial identity, age, ethnicity, hairline, complete crown and rear hair, costume construction, body proportions, hands, scars, wounds, and carried props across every panel. One face exists only on the front of the head. Photorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nFour-view cinematic wardrobe isolation sheet for the primary garment of Jesus the Harrower in the biblical epic JESUS: THE HARROWING OF HELL: a simple white linen ankle-length robe, presented as a production costume construction reference. Frame as a costume/wardrobe ingredients board: the same garment shown consistently across frontal three-quarter worn view, full-body front worn view, side profile worn view, and rear full-length costume view, with optional close isolation of hem, sleeves, and blood maps. Prefer the robe worn on a matching Mediterranean male silhouette matching Jesus canon (~5'10\", athletic not exaggerated, olive skin) so drape, length, and sleeve fall read true to body; alternate panels may show the garment alone on a neutral matte mannequin only if silhouette scale remains locked. One face exists only on the front of the head in any human-worn panel; no second face on the rear of the head.\n\nGarment identity and construction: undyed pure white linen, handwoven plain weave with visible irregular thread thickness of period-accurate first-century Palestinian textile craft—slightly coarse yet fine enough to take soft folds and translucent edge glow under strong backlight. Ankle-length primary robe reaching the tops of rough leather sandals when worn, with modest ease through the body rather than a fitted cut. Wide straight sleeves ending mid-forearm to just above the wrist so the crucifixion wrist wounds and blood stains remain fully visible on the skin and staining the cuff edges. Soft V-shaped or gently scooped neckline without elaborate collar, embroidery, jewelry, or modern closures—no zippers, buttons, snaps, logos, or machine hems. Side seams and underarm construction simple and hand-stitched; tiny irregular hand stitches may catch light but must never read as printed pattern. Hem is slightly uneven from wear and travel, dust-kissed along the lowest edge where desert grit and hell ash have dark-grayed the pure white into a thin soiled band. The fabric holds memory of long wear: soft vertical drape lines, faint crease maps at elbows and knees, and gentle billow volume that can catch divine wind during action without looking theatrical costume polyester.\n\nBlood continuity stain map (lock exactly across every panel): dried and semi-dried blood at both wrists—irregular reddish-brown to deep crimson stains on the inner and outer sleeve edges where blood ran from nail wounds, with small droplet trails that wicked into the linen weave; a distinct side-wound stain on the right torso of the robe (viewer-left when facing the figure), an irregular vertical-to-diagonal blotch where the spear wound bled through, darker at the center and feathering outward into the weave as capillary absorption; optional faint brownish transfer near the upper chest/shoulder from handling or descent; no gore excess, no arterial spray patterns, sacred restraint—blood is evidence of sacrifice, not horror spectacle. Repeat the same wrist and side stain placements in every view so the damage map never jumps. Subtle ash-gray and smoke smudges along lower hem and trailing edge from hell fortress air; faint golden light absorption quality in the white cloth when illuminated by divine radiance so fibers catch warm amber and pure white highlights without becoming metallic or CGI glow fabric.\n\nBelt relationship: a simple leather cord belt cinches the waist loosely, gathering vertical folds of linen into soft vertical pleats; the robe is designed to read with that belt present for silhouette truth, but the hero subject remains the linen garment itself. Sandals may appear at the ankles for length reference only—rough leather straps—not as primary subject. No sword required in wardrobe panels; hands may hang relaxed or lightly hold fabric to show sleeve fall. Hair of the worn-silhouette model: long dark brown/black with complete crown and rear-head coverage so rear costume views show hair over shoulders and back of robe, never a face on the back of the head.\n\nMaterial physics and light response: linen subsurface scatter and edge translucency under rim light; matte fiber body with soft specular only on raised weave ridges; folds cast soft self-shadows; when divine-light illuminated, cool-white base takes warm gold (#FFD700 / #FFBF00) key from above-front and soft fill from below without crushing the blood stains into black. Photoreal textile photography quality—visible individual threads at close detail, realistic wear, no plastic sheen, no anime cel shading, no illustration linework.\n\nPose and panel layout intent: frontal three-quarter worn portrait emphasizing neckline, upper blood maps, and sleeve cuffs; full-body front showing complete ankle length, belt gather, hem soil band, and side-wound stain placement; true side profile showing sleeve cylinder, drape depth, and how the robe hangs from shoulder to ankle; rear costume view locking back seam, shoulder fall, hair-over-robe, and absence of any facial features on the rear of the head. Neutral seamless production backdrop in muted warm gray or soft charcoal, studio key at ~5600K with gentle divine-warm rim option, physically coherent soft shadows, consistent scale across panels. Camera language: 50–85mm equivalent compression for flattering costume read, shallow-to-medium depth of field that keeps garment construction sharp, production-reference stills not fashion editorial glamour. Color grade: pure linen white against restrained neutral ground; blood as restrained iron-red browns and deep crimson; optional soft golden rim for divine-light-illuminated state continuity. Atmosphere: clean wardrobe reference with optional faint volumetric dust motes, no smoke choking the fabric read, no modern objects, no mannequin brand logos, no hang tags, no measurement rulers with readable numbers, no captions, no text, no watermarks, no borders, no UI. Photorealistic live-action biblical epic production wardrobe reference—reverent, period-true, continuity-locked for the Harrowing of Hell.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/wardrobe/ward-jesus-robe/ward-jesus-robe_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "63",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 273547476340817400
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 1536,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1536 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 32,
+      "width": 2048,
+      "height": 1536
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "56": {
+    "inputs": {
+      "image": "CI_STYLE_REF_04_IVORY_LINEN_BLOOD_MATERIAL_DETAIL_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "57": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.55,
+      "image": [
+        "56",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "58": {
+    "inputs": {
+      "pixels": [
+        "57",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "59": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "58",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  },
+  "60": {
+    "inputs": {
+      "image": "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "61": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.35,
+      "image": [
+        "60",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "62": {
+    "inputs": {
+      "pixels": [
+        "61",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "63": {
+    "inputs": {
+      "conditioning": [
+        "59",
+        0
+      ],
+      "latent": [
+        "62",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

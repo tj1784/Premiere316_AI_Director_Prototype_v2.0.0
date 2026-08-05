@@ -1,0 +1,45 @@
+{
+  "generated_at": "2026-08-05T07:21:47Z",
+  "manifest": {
+    "rows": 97,
+    "columns": 37,
+    "unique_asset_ids": 97,
+    "image_rows": 67,
+    "audio_rows": 14,
+    "sound_instruction_rows": 15,
+    "graphic_rows": 1,
+    "missing_generation_prompts": 0
+  },
+  "workflow_routing": {
+    "4X3": 23,
+    "2P39X1": 37,
+    "2X3_VERTICAL": 7
+  },
+  "style_reference_assignments": {
+    "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png": 67,
+    "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png": 67,
+    "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png": 67,
+    "CI_STYLE_REF_04_IVORY_LINEN_BLOOD_MATERIAL_DETAIL_OPTIONAL.png": 4,
+    "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png": 13,
+    "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png": 21
+  },
+  "workflow_snapshots": {
+    "max_quality": 67,
+    "native": 67,
+    "missing": [],
+    "hash_mismatches": []
+  },
+  "continuity_repairs": [
+    "artifact-sword-of-light-christs-weapon-close-up",
+    "prop-hell-gate",
+    "prop-hell-chains",
+    "prop-guardian-spear"
+  ],
+  "validation": {
+    "csv_round_trip": true,
+    "xlsx_export": true,
+    "no_error_tokens": true,
+    "source_prompts_preserved": true,
+    "active_version_fields_preserved": true
+  }
+}

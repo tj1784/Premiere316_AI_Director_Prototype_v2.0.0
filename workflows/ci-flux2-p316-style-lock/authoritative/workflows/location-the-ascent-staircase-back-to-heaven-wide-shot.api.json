@@ -1,0 +1,421 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: location-the-ascent-staircase-back-to-heaven-wide-shot\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nLocation guard: transfer only color, light behavior, haze, scale language, and material realism. Do not copy the reference cave, Hell gate, fortress geometry, crowds, or blocking unless this row explicitly requires those elements.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain; explicitly requested golden luminous-VFX behavior only.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nTHE ASCENT - STAIRCASE BACK TO HEAVEN — WIDE SHOT: CINEMATIC ENVIRONMENT, SCALE, LIGHTING, MATERIALS, AND CONTINUITY.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nEpic biblical wide shot of the Ascent: a monumental staircase of pure white and living gold light rising from the transformed inner chamber of Hell toward a distant breach of heaven, captured at the exact moment Jesus leads the freed souls upward after His victory over death. The staircase is not carved stone alone but architecture of radiance — broad luminous steps of condensed white light veined with warm amber and gold (#FFD700, #FFBF00), each tread thick enough for a procession, edges softly ethereal yet solid enough to bear weight, ascending in a long continuous spiral-ramp hybrid that climbs through a vast vertical shaft where black hell-stone has already turned to polished white marble. From a dramatic low wide angle near the chamber floor, the stair recedes upward into brilliant height, converging toward a brilliant aperture of pure sky-light far above where the former fissure now pours daylight and celestial gold into the abyss.\n\nAt the head of the procession, Jesus — Mediterranean man about thirty, roughly five-foot-ten, athletic and muscular without exaggeration — walks deliberately upward, back three-quarter to camera so his leadership reads clearly, sword of pure golden light held high in his right hand, blade of divine radiance casting long volumetric god-rays down the stairwell. His white linen ankle-length robe hangs with soft natural drape and faint fabric translucency where backlight rakes the cloth; leather cord belt; rough leather sandals on the luminous steps. Continuity blood map locked: dried and fresh blood at both wrists and a wound at the side of the torso; optional faint marks at the forehead from a crown of thorns. Long dark brown-black hair with complete crown and rear coverage; single face only on the front of the head; dark brown eyes not facing camera fully, posture calm, measured, absolute certainty — he does not look back toward Hell. Presence of sacred triumph without frenzy or cruelty.\n\nDirectly behind him, Adam and Eve lead the river of the redeemed, hand in hand — ancient weathered first man with white frost hair and beard in rough-spun earth-tone garments worn thin, tears still cutting clean paths through dust on his face; ancient first woman with long white hair and earth-tone linen, trembling yet resolute. Behind them a continuous procession of the righteous fills the lower and mid stairs: Abraham elderly and dignified in shepherd garments; Moses lean and elderly with long white beard and wooden staff; David middle-aged with long dark hair and beard in faded royal blue and gold remnants, broken-string harp carried carefully; Elijah in animal skins with intense prophetic bearing; John the Baptist gaunt and thin in rough skins with matted dark hair and dust; hundreds more pale freed souls in simple ancient garments ascending as a river of light, chains gone, bodies thin but upright, faces lifted toward the light above. Scale reads thousands of lives rising — denser crowd lower on the stairs, thinning into a luminous stream higher up — never modern clothing, never anachronistic props.\n\nEnvironment is Hell after transformation, not destruction: surrounding chamber architecture of white marble where black stone once stood; former blue torches now burn as golden fire in wall sconces and along distant pillar bases; warm amber perfume-air haze instead of poison smoke; shattered remnants of the iron-and-bone gate visible only as distant broken silhouette far below and behind the base of the stair, already fading into light. Distant pillars rise like cathedral colonnades, marble polished and catching gold spill. Far above, the vertical shaft opens toward heaven: cool white-blue celestial aperture mixed with warm sunrise gold, pure divine radiance flooding down in thick volumetric beams that cut through residual shadow and drifting motes of golden dust and soft ash dissolving into light. At the extreme lower periphery, residual deep crimson and obsidian darkness still cling in corners — the last bruise of the old hell realm — overpowered by the ascending gold-white key light.\n\nLighting hierarchy: primary key is the staircase itself and the heaven aperture above at roughly 6500K pure white divine radiance mixed with 4500–5500K warm amber gold; soft fill from golden wall fire ~3500K; gentle rim light outlining figures from the stair glow so silhouettes read against brilliance without clipping into pure white; volumetric god rays, light shafts, and gentle bloom on metal-free sacred surfaces; no harsh modern spotlights. Color grade for the transformed-ascent beat: white marble, ethereal golds (#FFD700), warm amber (#FFBF00), pure white radiance, residual deep crimson only at the extreme margins, soft lavender-purple atmospheric transition near the upper breach where night-earth becomes dawn. Texture and atmosphere: marble veining, linen weave, rough wool and animal-skin costumes, skin subsurface warmth, particulate gold dust, thin perfume haze, distant dissolving ash, no gore focus, no body horror — sacred liberation tone.\n\nCamera: ultra-wide cinematic production still, approximately 24–35mm spherical feel on large-format cinema capture, dramatic low angle from near the base of the stair looking steeply upward along the ascent, deep focus so both foreground marble floor edge and distant heavenly aperture hold readable detail, slight atmospheric perspective fading figures into light higher up, 2.39:1 anamorphic widescreen framing, heroic epic composition with strong vertical thrust and leading lines of the stair converging toward heaven. Physically coherent scale: chamber feels hundreds of feet high; stair width accommodates a mass procession; Jesus slightly separated as clear visual leader at the front of the line.\n\nContinuity locks: staircase of pure white and gold light after the sword-shockwave transformation; hell stone already becoming white marble; blue flame already golden; Jesus blood map wrists and side; white linen robe; sword of pure golden light raised; Adam and Eve first behind Him; procession of patriarchs and righteous ascending; Jesus does not look back; one face only on the front of every head; no modern objects, no logos, no text, no captions, no watermarks, no borders, no UI. Photorealistic live-action biblical epic production reference — reverent, triumphant, cinematic, not illustration, not anime, not CGI cartoon, not fantasy camp.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/locations/location-the-ascent-staircase-back-to-heaven-wide-shot/location-the-ascent-staircase-back-to-heaven-wide-shot_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "69",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 778184400519887400
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "63": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "2X DETAIL UPSCALER"
+    }
+  },
+  "64": {
+    "inputs": {
+      "upscale_model": [
+        "63",
+        0
+      ],
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "2X UPSCALE"
+    }
+  },
+  "65": {
+    "inputs": {
+      "filename_prefix": "Premiere316/locations/location-the-ascent-staircase-back-to-heaven-wide-shot/location-the-ascent-staircase-back-to-heaven-wide-shot_2x",
+      "images": [
+        "64",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE 2X FINAL"
+    }
+  },
+  "66": {
+    "inputs": {
+      "image": "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png"
+    },
+    "class_type": "LoadImage"
+  },
+  "67": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 0.45,
+      "image": [
+        "66",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "68": {
+    "inputs": {
+      "pixels": [
+        "67",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "69": {
+    "inputs": {
+      "conditioning": [
+        "55",
+        0
+      ],
+      "latent": [
+        "68",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent"
+  }
+}

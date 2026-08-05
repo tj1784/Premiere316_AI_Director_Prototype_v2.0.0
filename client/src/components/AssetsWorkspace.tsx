@@ -30,6 +30,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 function activeFile(asset: any) {
+  if (asset?.activeVersionCurrent === false) return null;
   const version = (asset?.versions || []).find((item: any) => Number(item.v) === Number(asset.activeVersion));
   return version?.file || version?.files?.[0] || null;
 }
@@ -83,18 +84,25 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
   const [selectedId, setSelectedId] = useState<string | null>(assets[0]?.id || null);
   const [checked, setChecked] = useState<string[]>([]);
   const [confirmGpuHandoff, setConfirmGpuHandoff] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const [queueing, setQueueing] = useState(false);
   const selected = assets.find((asset: any) => asset.id === selectedId) || assets[0] || null;
   const [prompt, setPrompt] = useState(selected?.prompt || "");
   const [sampleText, setSampleText] = useState(selected?.sampleText || "");
 
-  useEffect(() => { store.refreshAssetWorkflows(); }, []);
+  useEffect(() => { store.refreshAssetWorkflows(); store.refreshPromptEnhance(); }, []);
   useEffect(() => {
     if (!selectedId || !assets.some((asset: any) => asset.id === selectedId)) setSelectedId(assets[0]?.id || null);
   }, [project?.assets?.generatedAt, assets.length]);
   useEffect(() => {
     setPrompt(selected?.prompt || "");
     setSampleText(selected?.sampleText || "");
-  }, [selected?.id, selected?.updatedAt]);
+  }, [selected?.id, selected?.updatedAt, selected?.promptEnhancedAt, selected?.prompt, selected?.sampleText]);
+  useEffect(() => {
+    if (!store.promptEnhanceBusy) return;
+    const timer = window.setInterval(() => { store.refreshPromptEnhance(); }, 4000);
+    return () => window.clearInterval(timer);
+  }, [store.promptEnhanceBusy]);
 
   const categories = useMemo(() => {
     const map = new Map<string, { key: string; label: string; count: number }>();
@@ -107,11 +115,14 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
   }, [assets]);
 
   const visible = category === "all" ? assets : assets.filter((asset: any) => asset.category === category);
+  const visibleIds = visible.map((asset: any) => asset.id);
+  const allVisibleChecked = Boolean(visibleIds.length && visibleIds.every((id: string) => checked.includes(id)));
   const generated = assets.filter((asset: any) => ["generated", "ready-for-shot"].includes(asset.status)).length;
   const readyWorkflows = store.assetWorkflows.filter((workflow: any) => workflow.ready);
   const availableWorkflows = readyWorkflows.filter((workflow: any) => workflow.availableNow !== false);
   const waitingWorkflows = readyWorkflows.filter((workflow: any) => workflow.availableNow === false);
-  const queued = store.jobs.filter((job: any) => job.projectSlug === project.slug && job.type === "generate_asset" && ["queued", "running"].includes(job.status)).length;
+  const activeAssetJobs = store.jobs.filter((job: any) => job.projectSlug === project.slug && job.type === "generate_asset" && ["queued", "running", "cancelling"].includes(job.status));
+  const queued = activeAssetJobs.length;
   const issues = project.assets?.review?.issues || [];
   const selectedWorkflow = selected ? (store.assetWorkflows.find((workflow: any) => workflow.id === selected.workflowId) || selected.workflow) : null;
   const selectedApproved = selected ? assetApproved(project, selected) : false;
@@ -144,6 +155,23 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
     const workflow = store.assetWorkflows.find((item: any) => item.id === asset?.workflowId) || asset?.workflow;
     return Boolean(workflow?.ready && workflow?.availableNow === false && /GPU handoff required/i.test(String(workflow?.runtimeWarning || workflow?.reason || "")));
   });
+  const selectedJob = selected ? activeAssetJobs.find((job: any) => job.refs?.assetId === selected.id) : null;
+  const enhance = store.promptEnhance;
+  const enhanceActive = Boolean(store.promptEnhanceBusy || enhance?.active || ["queued", "running", "cancelling"].includes(String(enhance?.status || "")));
+  const enhanceProgress = enhance?.total
+    ? `${Number(enhance.completed || 0)}/${Number(enhance.total)}`
+    : null;
+
+  const stopGeneration = async (assetId?: string) => {
+    const scope = assetId ? "this asset" : `all ${activeAssetJobs.length} active asset jobs`;
+    if (!window.confirm(`Stop ${scope}? The active ComfyUI prompt will be interrupted and queued assets will be removed.`)) return;
+    setStopping(true);
+    try {
+      await store.stopAssetGeneration(assetId);
+    } finally {
+      setStopping(false);
+    }
+  };
 
   const releaseLmStudioGpu = async () => {
     await store.handoffLmStudioGpu();
@@ -151,7 +179,25 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
   };
 
   const toggleChecked = (id: string) => {
-    setChecked((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+    const removing = checked.includes(id);
+    setChecked((current) => removing ? current.filter((item) => item !== id) : [...current, id]);
+    if (removing && activeAssetJobs.some((job: any) => job.refs?.assetId === id && job.status === "queued")) {
+      void store.stopAssetGeneration(id);
+    }
+  };
+
+  const toggleSelectAllVisible = () => {
+    setChecked((current) => {
+      const visibleSet = new Set(visibleIds);
+      if (allVisibleChecked) {
+        const queuedVisible = activeAssetJobs
+          .filter((job: any) => job.status === "queued" && visibleSet.has(job.refs?.assetId))
+          .map((job: any) => job.refs.assetId);
+        for (const assetId of new Set(queuedVisible)) void store.stopAssetGeneration(assetId);
+        return current.filter((id) => !visibleSet.has(id));
+      }
+      return [...new Set([...current, ...visibleIds])];
+    });
   };
 
   const chooseCategory = (key: string) => {
@@ -163,6 +209,15 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
   const saveSelected = async () => {
     if (!selected) return;
     await store.patchAsset(selected.id, { prompt, sampleText });
+  };
+
+  const runPromptEnhance = async () => {
+    if (!manifestCurrent || enhanceActive) return;
+    const scope = checked.length
+      ? `${checked.length} selected asset${checked.length === 1 ? "" : "s"}`
+      : `all ${assets.length} assets`;
+    if (!window.confirm(`Enhance prompts for ${scope} with parallel Grok agents?\n\nThis rewrites generation direction from the approved screenplay for Krea 2 Turbo (max detail). Live project prompts update as agents finish.`)) return;
+    await store.enhanceAssetPrompts(checked.length ? checked : []);
   };
 
   if (!assets.length) {
@@ -254,10 +309,73 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
             <small>{visible.length} shown · {readyWorkflows.length}/{store.assetWorkflows.length || project.assets.catalog?.length || 0} installed · {availableWorkflows.length} available now{waitingWorkflows.length ? ` · ${waitingWorkflows.length} waiting for GPU` : ""}</small>
           </div>
           <div className="asset-toolbar-actions">
+            <button
+              className="secondary-action"
+              disabled={!visible.length}
+              onClick={toggleSelectAllVisible}
+              title={category === "all" ? "Select every production asset" : `Select every visible ${category} asset`}
+            >
+              {allVisibleChecked ? `Clear Selection (${visible.length})` : `Select All (${visible.length})`}
+            </button>
             <button className="secondary-action" onClick={() => store.buildAssets({})} disabled={store.assetBusy || !approved}>{store.assetBusy ? "Refreshing…" : "Refresh from Screenplay"}</button>
-            <button className="primary-action" disabled={!checked.length || !manifestCurrent || checkedGpuBlocked} onClick={() => store.generateAssets(checked)}>{!approved ? "Approval Required" : !manifestCurrent ? "Refresh Required" : checkedGpuBlocked ? "GPU Handoff Required" : checked.length ? `Queue Selected (${checked.length})` : "Select Assets"}</button>
+            <button
+              className="prompt-enhance-action"
+              disabled={!manifestCurrent || enhanceActive || !assets.length}
+              title={checked.length ? `Enhance prompts for ${checked.length} selected assets with parallel Grok agents` : "Enhance every asset prompt with parallel Grok agents (Krea 2 Turbo detail)"}
+              onClick={runPromptEnhance}
+            >
+              {enhanceActive
+                ? `✦ Enhancing… ${enhanceProgress || ""}`.trim()
+                : checked.length
+                  ? `✦ Enhance Prompts (${checked.length})`
+                  : "✦ Enhance Prompts"}
+            </button>
+            {enhanceActive ? (
+              <button className="stop-generation-action" onClick={() => store.stopPromptEnhance()}>■ Stop Enhance</button>
+            ) : null}
+            <button className="stop-generation-action" disabled={!queued || stopping} onClick={() => stopGeneration()}>{stopping ? "Stopping…" : queued ? `■ Stop All Generation (${queued})` : "■ Stop Generation · Queue Idle"}</button>
+            <button className="primary-action" disabled={queueing || !checked.length || !manifestCurrent || checkedGpuBlocked} onClick={async () => { if (queueing) return; setQueueing(true); try { await store.generateAssets([...new Set(checked)]); } finally { setQueueing(false); } }}>{queueing ? "Queueing Once…" : !approved ? "Approval Required" : !manifestCurrent ? "Refresh Required" : checkedGpuBlocked ? "GPU Handoff Required" : checked.length ? `Queue Selected (${new Set(checked).size})` : "Select Assets"}</button>
           </div>
         </header>
+
+        {activeAssetJobs.length ? (
+          <details className="asset-review-banner asset-live-queue" open>
+            <summary>
+              <span>◫</span>
+              <b>Generation Queue · {activeAssetJobs.length} unique asset{activeAssetJobs.length === 1 ? "" : "s"}</b>
+              <small>{activeAssetJobs.filter((job: any) => job.status === "running").length} running · {activeAssetJobs.filter((job: any) => job.status === "queued").length} waiting</small>
+            </summary>
+            <div>
+              {activeAssetJobs.map((job: any, index: number) => {
+                const queuedAsset = assets.find((asset: any) => asset.id === job.refs?.assetId);
+                return (
+                  <p key={job.id}>
+                    <strong>{index + 1}. {queuedAsset?.name || job.label}</strong>
+                    {queuedAsset?.variant ? ` · ${queuedAsset.variant}` : ""}
+                    <small> {String(job.status).toUpperCase()}</small>
+                    {job.status === "queued" ? <button className="secondary-action" onClick={() => void store.cancelJob(job.id)}>Remove</button> : null}
+                  </p>
+                );
+              })}
+            </div>
+          </details>
+        ) : null}
+
+        {enhance && (enhanceActive || enhance.status === "done" || enhance.status === "error" || enhance.status === "cancelled") ? (
+          <div className={`asset-enhance-banner ${enhance.status === "error" ? "error" : enhanceActive ? "running" : "done"}`} role="status" aria-live="polite">
+            <span>✦</span>
+            <div>
+              <b>{enhanceActive ? "GROK AGENTS ENHANCING PROMPTS" : enhance.status === "error" ? "PROMPT ENHANCE FINISHED WITH ERRORS" : enhance.status === "cancelled" ? "PROMPT ENHANCE CANCELLED" : "PROMPT ENHANCE COMPLETE"}</b>
+              <small>
+                {enhance.message || enhance.stage || "Running parallel Grok agents…"}
+                {enhanceProgress ? ` · ${enhanceProgress}` : ""}
+                {enhance.failed ? ` · ${enhance.failed} failed` : ""}
+                {enhance.concurrency ? ` · concurrency ${enhance.concurrency}` : ""}
+              </small>
+            </div>
+            {enhanceActive ? <progress max={Math.max(1, Number(enhance.total) || 1)} value={Number(enhance.completed) || 0} /> : null}
+          </div>
+        ) : null}
 
         {issues.length ? (
           <details className="asset-review-banner">
@@ -286,6 +404,7 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
                 </div>
                 <div className="asset-card-copy">
                   <small>{asset.categoryLabel} · {asset.variant}</small>
+                  <code className="asset-id">ID · {asset.id}</code>
                   <h3>{asset.name}</h3>
                   <p>{asset.prompt}</p>
                   <div title={liveWorkflow?.runtimeWarning || liveWorkflow?.reason}><span className={workflowReady && workflowAvailable ? "ready" : workflowReady ? "waiting" : "blocked"}>{workflowReady && workflowAvailable ? "●" : "○"}</span>{liveWorkflow?.label || asset.workflowId}</div>
@@ -303,6 +422,7 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
             <AssetPreview project={project} asset={selected} large />
             <div className="asset-inspector-scroll">
               <section className="asset-provenance">
+                <div className="asset-id-row"><span>Asset ID</span><code>{selected.id}</code></div>
                 <div><span>Workflow</span><b>{selected.workflow?.label || selected.workflowId}</b></div>
                 <div><span>Model</span><b>{selected.workflow?.model || "Project-native"}</b></div>
                 <div><span>Snapshot</span><b>{selected.workflowSnapshot || "Built in"}</b></div>
@@ -312,7 +432,26 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
               {selected.sampleText != null ? (
                 <label className="asset-field"><span>Audition Line</span><textarea rows={3} value={sampleText} onChange={(event) => setSampleText(event.target.value)} /></label>
               ) : null}
-              <label className="asset-field"><span>Generation Prompt / Direction</span><textarea rows={10} value={prompt} onChange={(event) => setPrompt(event.target.value)} /></label>
+              <label className="asset-field">
+                <span>
+                  Generation Prompt / Direction
+                  {selected.promptEnhancement ? <em className="asset-prompt-badge">Grok enhanced</em> : null}
+                </span>
+                <textarea rows={10} value={prompt} onChange={(event) => setPrompt(event.target.value)} />
+              </label>
+              {!enhanceActive ? (
+                <button
+                  className="secondary-action asset-enhance-one"
+                  disabled={!manifestCurrent}
+                  onClick={async () => {
+                    if (!selected) return;
+                    if (!window.confirm(`Enhance only “${selected.name}” with a Grok agent?`)) return;
+                    await store.enhanceAssetPrompts([selected.id]);
+                  }}
+                >
+                  ✦ Enhance This Prompt
+                </button>
+              ) : null}
               {selected.continuity?.length ? <section className="asset-continuity"><h3>Continuity Locks</h3>{(Array.isArray(selected.continuity) ? selected.continuity : [selected.continuity]).map((line: string, index: number) => <p key={index}>✓ {line}</p>)}</section> : null}
               {selected.dependencies?.length ? <section className="asset-continuity"><h3>Dependencies</h3><p>{selected.dependencies.join(" · ")}</p></section> : null}
               <section className="asset-version-list">
@@ -322,8 +461,9 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
               </section>
             </div>
             <footer>
+              {selectedJob ? <button className="stop-generation-action" disabled={stopping} onClick={() => stopGeneration(selected.id)}>{stopping ? "Stopping…" : selectedJob.status === "queued" ? "■ Remove from Queue" : "■ Stop This Asset"}</button> : null}
               <button className="secondary-action" disabled={!directionDirty} onClick={saveSelected}>{directionDirty ? "Save Direction" : "Direction Saved"}</button>
-              {selected.versions?.length ? <button className={selectedApproved ? "secondary-action" : "primary-action"} disabled={selectedApproved || !manifestCurrent || directionDirty} title={directionDirty ? "Save the direction, then generate and review a fresh version before approval." : undefined} onClick={() => store.approveAsset(selected.id)}>{directionDirty ? "Save direction first" : selectedApproved ? `✓ Approved v${selected.activeVersion}` : `Approve v${selected.activeVersion}`}</button> : null}
+              {selected.versions?.length ? <button className={selectedApproved ? "secondary-action" : "primary-action"} disabled={selectedApproved || selected.activeVersionCurrent === false || !manifestCurrent || directionDirty} title={selected.activeVersionCurrent === false ? "This is a historical version from older direction. Generate a fresh version before approval." : directionDirty ? "Save the direction, then generate and review a fresh version before approval." : undefined} onClick={() => store.approveAsset(selected.id)}>{selected.activeVersionCurrent === false ? "Generate fresh version to approve" : directionDirty ? "Save direction first" : selectedApproved ? `✓ Approved v${selected.activeVersion}` : `Approve v${selected.activeVersion}`}</button> : null}
               {selected.mediaType === "image" && activeFile(selected) ? <button className="secondary-action" disabled={!selectedApproved || selectedInProjectBin} onClick={() => store.promoteAsset(selected.id)}>{selectedInProjectBin ? "✓ In Project Bin" : "Add Approved to Project Bin"}</button> : null}
               <button className="primary-action" title={selectedGpuHandoff ? "The screenplay is approved. Use the GPU handoff banner above to unload Qwen before generating this asset." : undefined} disabled={!manifestCurrent || selectedWorkflow?.ready === false || selectedWorkflow?.availableNow === false || ["queued", "generating"].includes(selected.status)} onClick={async () => { await saveSelected(); await store.generateAsset(selected.id); }}>
                 {!approved ? "Approval Required" : !manifestCurrent ? "Refresh Required" : selectedGpuHandoff ? "GPU Busy — Use Handoff Above" : selected.status === "queued" ? "Queued" : selected.status === "generating" ? "Generating…" : selected.versions?.length ? "Generate New Version" : "Generate Asset"}

@@ -1,0 +1,377 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: location-the-descent-vertical-shaft-to-hell-vertical-shot\nWorkflow profile: 2X3_VERTICAL (2:3)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nLocation guard: transfer only color, light behavior, haze, scale language, and material realism. Do not copy the reference cave, Hell gate, fortress geometry, crowds, or blocking unless this row explicitly requires those elements.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nTHE DESCENT - VERTICAL SHAFT TO HELL — VERTICAL SHOT: CINEMATIC ENVIRONMENT, SCALE, LIGHTING, MATERIALS, AND CONTINUITY.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nCinematic vertical descent production still looking straight down into the wound in the earth: the vertical shaft that opens from the desert surface and plummets toward Hell. Camera is locked overhead, axis aligned with the shaft’s center, so the circular mouth of the fissure fills the upper frame as a dark well of infinite depth. At the surface rim, cracked desert crust and fractured basalt lip catch a thin wash of cold starlight around five thousand Kelvin, a bruised purple-black night sky only faintly suggested at the extreme edges of the circle. The shaft mouth is approximately forty feet in diameter, large enough for a figure to fall through as if swallowed by purpose rather than accident. Below that rim the geometry becomes a seamless cylindrical throat of glossy black obsidian stone, polished in places by ancient pressure, fractured in others into sharp plate seams that run vertically into darkness.\n\nThe walls are veined with dying embers: thin filaments and hairline cracks of smoldering crimson and dull orange (#8B0000 fading toward ash gray) that pulse weakly as if residual heat were bleeding out of the rock. These embers do not roar; they expire. Between the ember veins, ancient faces press outward from within the stone itself—half-relief, half-imprisoned flesh-memory—features of trapped souls fused into the obsidian. Each face has only one face on the front of the head, anatomically correct, never rear-facing. Eyes are wide, mouths parted or sealed in long silence, skin tones desaturated and dusted with stone grit, expressions held between agony and impossible hope as they look upward toward the light entering from above. Some faces are deeper in the wall, almost sculptural bas-relief; others seem to push harder, cheekbones and brows catching glints of descending gold. The faces continue at irregular intervals down the shaft walls, denser in the mid-depths, fading into silhouette as depth increases, never cartoonish, always photoreal human features embedded in volcanic glass.\n\nFrom the open mouth above, divine golden light streams downward in volumetric god rays—ethereal gold (#FFD700) and warm amber (#FFBF00) with pure white cores—cutting through suspended ash, fine dust, and thin smoke. The rays are not a full noon sun; they are older radiance, sacred intrusion, roughly six thousand five hundred Kelvin at their purest cores, softening to amber as they mix with residual hell heat near the walls. Particulate matter hangs in the column of air: micro ash flakes, fine desert grit falling from the broken rim, sparse glowing cinders, and vapor that catches each ray into visible shafts of illumination. Mid-descent the light is mixed—cold blue-black shadow pockets along the obsidian face, red underglow from dying embers, and the descending gold rivalling both. Toward the unseeable bottom the shaft darkens into pure depth: not a visible floor, only a spiritual plunge, a vanishing point of black that reads as infinite journey between realms rather than a measured mine.\n\nAtmosphere is thick but legible. Smoke drifts in slow vertical currents, illuminated only where the god rays strike. Moisture sheen on some obsidian facets creates specular highlights; matte soot dulls others. Texture hierarchy is clear: glassy black rock, ember cracks with subsurface heat glow, mineral dust, soft ash haze, and the pale, stone-bound flesh of the wall faces. Color grade follows the biblical epic arc for this beat—obsidian blacks (#0A0A0A), deep crimsons in the dying veins, cold residual blue in the deepest shadow wells, then ethereal gold and warm amber as the primary key from above. No blue hell-torches are present in this shaft environment; those belong to the fortress below. No modern machinery, scaffolding, cables, railings, cameras, logos, or text appear anywhere.\n\nCamera and optics: true top-down vertical axis, slight wide-to-normal feel approximately twenty-four to thirty-five millimeter equivalent looking down a deep well, deep depth of field so both the fractured rim and mid-shaft faces remain readable, with the absolute bottom falling soft into black. Aspect framing for cinematic production still at two point three nine to one widescreen, composition centered on the shaft circle with asymmetric ember veins and face clusters breaking pure symmetry for living production energy. Subtle lens bloom only where the purest white cores of the god rays hit densest ash; otherwise physically coherent live-action lighting. Scale is readable through the forty-foot diameter of the mouth, the human size of the embedded faces, and the vast empty column of air.\n\nEmotional and narrative lock for continuity: this is the camera’s descent with the King of Kings after the desert ground has cracked open with purpose—the vertical wound into darkness where a low voice has declared the King of Kings has come, and where a wordless chorus will begin to find the words of chains breaking and gates falling. The image must feel like mid-journey: light already invading from above, Hell still waiting below, the trapped wall-souls watching upward with impossible hope. Repeat continuity anchors: forty-foot surface diameter, obsidian walls veined with dying embers, ancient faces pressing from stone with single frontal faces only, divine golden volumetric light streaming down, ash and smoke in the column, infinite depth with no visible floor, photoreal live-action biblical epic tone, no modern objects, no readable text, captions, watermarks, borders, UI, or logos.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/locations/location-the-descent-vertical-shaft-to-hell-vertical-shot/location-the-descent-vertical-shaft-to-hell-vertical-shot_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 746996664272350000
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 1360,
+      "height": 2048,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "1360x2048 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 1360,
+      "height": 2048
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "63": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "2X DETAIL UPSCALER"
+    }
+  },
+  "64": {
+    "inputs": {
+      "upscale_model": [
+        "63",
+        0
+      ],
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "2X UPSCALE"
+    }
+  },
+  "65": {
+    "inputs": {
+      "filename_prefix": "Premiere316/locations/location-the-descent-vertical-shaft-to-hell-vertical-shot/location-the-descent-vertical-shaft-to-hell-vertical-shot_2x",
+      "images": [
+        "64",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE 2X FINAL"
+    }
+  }
+}

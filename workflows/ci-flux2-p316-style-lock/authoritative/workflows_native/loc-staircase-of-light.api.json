@@ -1,0 +1,339 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: loc-staircase-of-light\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nLocation guard: transfer only color, light behavior, haze, scale language, and material realism. Do not copy the reference cave, Hell gate, fortress geometry, crowds, or blocking unless this row explicitly requires those elements.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nASCENT STAIRCASE TOWARD HEAVEN — PRODUCTION REFERENCE: CINEMATIC ENVIRONMENT, SCALE, LIGHTING, MATERIALS, AND CONTINUITY.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nEpic cinematic production reference of the Staircase of Light at the climax of JESUS: THE HARROWING OF HELL — the divine ascent path that opens after Christ strikes the floor of Hell's Inner Chamber and the fortress transforms. The hero subject is a vast luminous staircase of pure white and gold light rising from the transformed cavern floor and climbing infinitely upward through a breach in the vaulted ceiling toward heaven, forming a living road of radiance back to life and freedom.\n\nArchitecture and material nature of the staircase: the steps are not carved stone alone but solid light given form — broad, deep, perfectly regular risers that glow from within with cool pure white core radiance (#FFFFFF into soft ivory) edged and underlit by warm ethereal gold (#FFD700) and amber (#FFBF00). Each tread seems slightly translucent, as if forged from condensed sunrise, with soft volumetric bloom at every edge. Where the staircase meets the floor, white marble — newly transformed from former black hell-stone — fans outward in clean, luminous slabs still faintly warm from the shockwave of transformation. Marble veins catch gold light; residual micro-cracks from the sword impact still glow faintly like cooled metal. The staircase is immense in scale: wide enough for a procession of hundreds walking side by side, each step roughly human-height in riser mass so that climbing feels ceremonial and epic rather than ordinary architecture. The flight curves gently as it rises, then straightens into a near-vertical corridor of light that pierces the roof of Hell and continues into an open column of sky-bound radiance, suggesting infinite ascent without modern structural supports, railings, or handrails — sacred geometry only.\n\nChamber context at the base (transformed state continuity): Hell's Inner Chamber has already undergone the biblical transformation — former black stone pillars and walls now white marble veined with pale gold; former cold blue torches now burn as golden fire in wall niches and along the chamber edges; poison atmosphere replaced by warm amber perfume haze. Ceiling height still reads as cathedral-scale (hundreds of feet). At the far lower periphery, shattered remnants of the iron-and-bone gate world and broken corroded chains lie discarded on marble, already losing relevance as light claims the space. Distant golden flames cast soft dancing fill onto marble floors. Smoke that once choked the prison has become thin luminous vapor, drifting slowly upward and catching god rays.\n\nThe path of light itself: from the chamber floor the staircase launches through a clean geometric wound in reality — a vertical shaft of pure radiance cutting remaining upper darkness. Volumetric divine god rays (~6500K pure white mixed with warm gold shafts) stream both upward toward heaven and downward into the chamber, creating reciprocal illumination. Particle atmosphere includes fine luminous dust, soft ash flecks still settling from the fortress shockwave, and faint golden motes like suspended pollen of glory. The upper terminus of the staircase dissolves into brilliant white-gold open light — not a painted sky set, but blinding sacred aperture suggesting Earth dawn and heavenly return beyond the frame.\n\nOptional scale and story figures (secondary, small in frame, never the primary subject): far below and mid-ascent, a solemn procession of freed pale righteous souls begins the climb — thin ancient figures in rough earth-tone and faded biblical garments, some hand in hand. At the head of the line, a distant silhouetted figure of Jesus in white ankle-length linen robe leads upward, sword of pure golden light held high so the blade becomes a vertical accent of divine fire against the white steps; blood continuity only as tiny dark accents at wrists and side if readable at distance, never graphic. Adam and Eve may be readable as the first pair immediately behind him; further figures suggest Abraham, Moses with a slender wooden staff, David with a small broken harp silhouette, Elijah, John the Baptist, and a river of countless souls. Faces remain small, dignified, and photoreal — no caricature, no rear faces, one face only on the front of each head. Prefer the staircase environment to dominate composition; figures supply human scale and narrative beat of \"Come with me.\"\n\nCamera and framing: dramatic low-angle wide shot looking up the staircase from near chamber floor level, 2.39:1 cinematic widescreen, roughly 24–35mm wide spherical anamorphic-feeling lens with gentle barrel and strong perspective compression of the rising steps. Foreground lower third holds a few glowing marble steps and soft gold fire reflection; midground carries the procession and the first great rise of light-stairs; background and upper frame are pure ascending radiance and the breach into heaven. Deep focus for location-plate clarity with slight atmospheric haze falloff toward the brightest upper light. Subtle filmic grain, high dynamic range that preserves detail in both pure white step cores and warm marble shadows. Physically coherent caustics and bounce light: white steps cast cool fill upward onto robes and faces; gold underglow warms marble and the undersides of steps.\n\nLighting design: key is divine radiance from the staircase itself (dominant practical and motivated source); fill is warm amber bounce from transformed golden fires along chamber walls (~3500–4500K); rim and back light are pure white god rays from the heavenly aperture above (~6500K). No cold blue hell torch light remains in this plate — that continuity belongs only to pre-transformation assets. Color grade for this beat: ethereal golds, pure whites, warm amber, white marble, residual soft charcoal only in deepest peripheral recesses of the transformed chamber. Overall emotional register is liberation, triumph, sacred elevation, and irreversible victory over death — reverent biblical epic, not fantasy camp or horror gore.\n\nTexture and atmosphere: marble subsurface sheen; light-steps with soft internal bloom and hard geometric edges; thin perfume haze; volumetric shafts; faint residual dust; photoreal fabric and skin only where figures appear; no plastic CGI sheen. Continuity locks: staircase of pure white/gold light; chamber already transformed to white marble and golden fire; path opens upward from Inner Chamber after the sword shockwave; no iron gate intact in the primary climb path; no blue torches; photoreal live-action biblical epic production reference look.\n\nHard constraints: no modern objects, scaffolding, cables, cameras, logos, watermarks, captions, borders, UI, signage, readable text, or written graphical elements of any kind. No anachronistic architecture. No rear faces. Sacred tone throughout. Single cohesive location hero plate of the ascent staircase toward Heaven at the moment the path is open and the freed begin their climb home.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/locations/loc-staircase-of-light/loc-staircase-of-light_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 753518403102318700
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  }
+}

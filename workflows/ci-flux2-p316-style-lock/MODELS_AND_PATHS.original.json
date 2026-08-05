@@ -1,0 +1,38 @@
+{
+  "package": "CI_FLUX2_P316_StyleLock_Asset_Workflow_Package",
+  "intent": "Generate Premiere316 image assets with the same cinematic art direction while using references only as style plates.",
+  "models": {
+    "diffusion_models": "ComfyUI/models/diffusion_models/flux2_dev_fp8mixed.safetensors",
+    "text_encoders": "ComfyUI/models/text_encoders/mistral_3_small_flux2_fp8.safetensors",
+    "vae": "ComfyUI/models/vae/flux2-vae.safetensors",
+    "upscale_models": "ComfyUI/models/upscale_models/RealESRGAN_x2plus.pth"
+  },
+  "style_references": [
+    "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png",
+    "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png",
+    "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png",
+    "CI_STYLE_REF_04_IVORY_LINEN_BLOOD_MATERIAL_DETAIL_OPTIONAL.png",
+    "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png",
+    "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+  ],
+  "workflows": [
+    "CI_FLUX2_P316_STYLE_ONLY_ASSET_4X3_MAX.json",
+    "CI_FLUX2_P316_STYLE_ONLY_ASSET_16X9_MAX.json",
+    "CI_FLUX2_P316_STYLE_ONLY_ASSET_2X3_VERTICAL_MAX.json"
+  ],
+  "image_categories_supported": [
+    "Characters",
+    "Wardrobe",
+    "Locations",
+    "Props and artifacts",
+    "Crowds and extras",
+    "Atmosphere and VFX",
+    "Guide frames",
+    "Graphics"
+  ],
+  "audio_categories_supported_by_prompt_bridge": [
+    "Voices",
+    "Sound design",
+    "Music"
+  ]
+}

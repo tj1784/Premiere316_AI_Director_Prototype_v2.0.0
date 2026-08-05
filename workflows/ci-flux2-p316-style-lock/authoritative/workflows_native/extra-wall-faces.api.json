@@ -1,0 +1,339 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: extra-wall-faces\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nCrowd/creature guard: transfer only staging energy, chiaroscuro, atmosphere, and live-action realism. Do not reuse reference faces, bodies, demons, pleading hands, costumes, or crowd arrangement.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nANCIENT FACES EMBEDDED IN SHAFT WALLS — PRODUCTION REFERENCE: CROWD OR CREATURE DESIGN, SCALE, VARIATION, AND CONTINUITY.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nReusable environmental identity and texture bank for the ancient faces of trapped souls embedded in the vertical descent shaft walls during the Harrowing of Hell. Photoreal live-action biblical epic production reference, framed as a cinematic close-to-medium environmental still of the shaft interior rather than a character portrait sheet.\n\nSubject identity and spiritual state: These are righteous and waiting souls of the ages partially imprisoned within the living stone of Hell’s approach—neither fully free bodies nor mere bas-relief carvings. Faces of many ages and ethnicities of the ancient Near East, Mediterranean, and broader biblical world press outward from black glass-like rock as if the wall itself were soft and they were straining toward air. Expressions read as centuries of suffering broken by sudden impossible hope: eyes wide and wet, brows lifted, mouths parted in silent prayer or half-formed awe, not demonic agony and not the frozen screams of the gate carvings. Skin is pale, dusted, ash-grey and cool olive with subtle subsurface life; lips cracked; cheeks hollow but not cartoon-skeletal; fine freckles of mineral grit and dried salt tears. Hair varies—white frost strands, matted dark curls, thin grey plaits, bald crowns—all partially fused into stone so strands become veins of mineral and ember. Beards and brows catch faint ember light. Every face has only one face on the front of the head; no rear faces, no double heads, no surreal multi-face mutations.\n\nIntegration with the wall: Obsidian shaft surface, glossy and fractured, deep black (#0A0A0A) with blue-black sheen, veined with dying embers like cooling lava seams in deep crimson and dull orange that glow faintly between faces. Flesh and stone merge at temples, jawlines, and necks—smooth continuous transitions, no hard CGI cutouts. Some faces emerge only as cheek and eye; others push forehead, nose, and open hand against the glass-rock as if trying to break through. Fingers and partial palms appear beside a few faces, nails worn, fingertips whitened with pressure, still human and anatomically clean. Mineral crust, fine ash, and hairline stress cracks radiate around each face. Embers pulse weakly in the seams, not full fire, suggesting residual heat of the underworld rather than active blaze.\n\nScale and composition density: Environmental crowd texture for a roughly 40-foot-diameter vertical shaft—faces distributed at irregular vertical intervals, some large in near field, others receding smaller into curved wall depth, creating a sense of infinite descent. Cluster rhythm: dense clusters of three to five faces, then sparse gaps of pure obsidian, then solitary elder face watching alone. Faces oriented mostly upward along the shaft axis, eyes tracking toward the light source above, as if sensing the King’s descent. This asset is a reusable identity bank for shaft walls, fissure interiors, and descent plates—not the iron-and-bone gate surface and not the free-standing chained souls of the inner chamber.\n\nPose, action, and exact screenplay moment: The camera has entered the wound in the earth; divine golden radiance begins to stream down the shaft while hell residual light still lingers in the stone. Faces press against the walls watching upward, eyes wide with impossible hope—the first human reaction to the coming of the Living One before the gate is even reached. No full bodies hanging free; no chains here; no guardians. Only wall-bound witnesses and the vertical cathedral of stone.\n\nEnvironment context: Interior of the vertical descent shaft / fissure approach to Hell’s fortress. Curved black stone walls rising out of frame above and below, atmospheric depth suggesting indeterminate spiritual depth. Thin ash and smoke drift in the open air of the shaft; fine particulates catch light. Distant suggestion of deeper crimson darkness below and a brighter opening above. Cold residual hell underglow at ~3500K in red seams; cold blue spectral reflections ~2000K on wet-looking obsidian facets; divine key light from above at warm ethereal gold ~6500K cutting volumetric god rays that rake across cheekbones and eyes.\n\nLighting: Strong directional key from above—soft-edged golden god rays piercing the shaft, catching moisture on eyes and ridges of foreheads, creating specular highlights on glass-obsidian and warm rim light on the upper edges of noses and brows. Fill is minimal, cool, and blue-black from wall bounce. Ember underglow paints lower jawlines and nostrils with faint red. Rim separation between flesh and stone via thin golden edge light. Avoid pure black voids without detail; keep readable facial form. Volumetric haze makes rays visible; no modern lens flares or branded glass effects.\n\nCamera and framing: Approximately 35–50mm spherical cinematic still on a three-quarter view of a curved wall section in 2.39:1 widescreen, slight low angle looking up the shaft so faces gaze toward camera-left-up or camera-center-up into the descending light. Medium-close environmental plate with one or two hero faces sharp in the near mid-ground and additional faces falling into soft focus along the curve. Shallow-to-moderate depth of field: iris open enough for multiple readable faces, not single portrait isolation. Physically coherent perspective on a cylindrical shaft wall. Clean production framing, no letterbox bars burned in, no UI.\n\nColor grade and texture: Master hell-descent palette—obsidian blacks, deep crimsons in ember veins, cold blue speculars, ethereal gold intrusion from above. Skin: pale desaturated flesh with cool undertones, subtle warm gold kiss only where divine rays strike. Wet tear tracks and dust paths on cheeks. Micro detail: pores, fine facial hair, mineral bloom, hairline cracks in stone, ember glass bubbles in rock, subtle condensation on cooler facial planes. Fabric is almost absent—only rare frayed linen edge or burial-cloth fragment fused into stone near a shoulder suggestion, earth-tone and ancient, never modern cloth.\n\nContinuity locks: Wall composition is always obsidian with embedded living faces of trapped souls (not iron, not bone, not marble until later fortress transformation). Faces watch upward with hope—distinct from gate faces that are carved damned mouths open in millennia-long silent screams on iron-and-bone. No blue torch sconces required on this plate; residual ember veins and descending divine gold define light. No modern objects, tools, helmets, glasses, logos, readable inscriptions, tattoos with modern style, or contemporary jewelry. Sacred reverent biblical-epic tone: suffering and hope, not gore-porn or body-horror excess. Photoreal live-action production reference language; natural human anatomy; clean hands where visible; consistent scale of adult human faces relative to a massive shaft wall.\n\nNegative constraints stated positively: single face only on the front of each head; no text, captions, watermarks, borders, logos, or graphical overlays; no anime, illustration, or CGI cartoon look; no modern cameras or brand names; no free-floating disembodied heads detached from stone; no demonic horns or guardian armor on these souls.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/crowds-creatures/extra-wall-faces/extra-wall-faces_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 903061354775234200
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  }
+}

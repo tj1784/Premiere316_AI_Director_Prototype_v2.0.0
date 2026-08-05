@@ -1,0 +1,339 @@
+{
+  "6": {
+    "inputs": {
+      "text": "PREMIERE316 STYLE-ONLY IMAGE REFERENCE CONTROL — V2\nAsset ID: fx-chains-mass-break\nWorkflow profile: 2P39X1 (2.39:1)\nReference mode: ART DIRECTION ONLY — NO SUBJECT OR DESIGN TRANSFER.\n\nThe loaded images are non-content style plates. The asset prompt below is the sole authority for subject, identity, age, ethnicity, anatomy, wardrobe design, prop design, environment geometry, creatures, crowd population, pose, action, camera composition, wounds, blood placement, text, and all story content.\n\nALLOWED TRANSFER ONLY: overall palette; contrast curve; key/fill/rim relationship; volumetric-light behavior; atmosphere density; material highlight and shadow response; lens/exposure language; practical texture fidelity; cinematic depth; restrained film grain.\n\nFORBIDDEN TRANSFER: faces or facial geometry; body identity or proportions; hairstyles; costume silhouettes; wounds or blood maps; weapons or props; architecture or set geography; creature designs; crowd layout; pose; framing; four-panel layout; lettering; logos; or any recognizable object from a reference, unless the asset prompt itself explicitly requests that exact element.\n\nAtmosphere/VFX guard: transfer only light falloff, particle behavior, haze density, ember/gold color relationships, and cinematic exposure. Keep the effect content and compositing requirements controlled by this row.\n\nActive plate roles: warm-gold lighting and highlight rolloff; smoky umber shadow palette and ember atmosphere; abstract filmic tonal/material response and restrained grain.\nWhen a reference conflicts with the row prompt, ignore the reference and obey the row prompt.\n\nAUTHORITATIVE ASSET PROMPT\n--------------------------\nFX-CHAINS-MASS-BREAK — PRODUCTION REFERENCE: CINEMATIC VFX, PARTICLES, LIGHT, TRANSFORMATION, AND MOTION REFERENCE.\n\nPhotorealistic live-action production reference, physically coherent lighting, exact anatomy, clean hands, consistent scale and materials, no captions, no logos, no watermarks, no borders, and no written or graphical elements.\n\nCinematic biblical epic VFX production still of the mass chain-break liberation inside Hell's inner prison chamber during the Harrowing of Hell, frozen at the exact thunderous instant when every bond fails at once. Not one chain, not a sequential release—thousands of ancient iron chains rupturing simultaneously across a vast cavern so the frame becomes a storm of metal, light, and freed limbs.\n\nSubject and action: A dense three-dimensional web of corroded iron chain links—horizontal runs at roughly six-foot vertical intervals, vertical drops from a smoke-lost ceiling at wide spacing—fills mid-ground and depth like a shattered cage mid-collapse. In the frozen peak of the break, links snap at weld scars and thinnest corroded points; open C-shaped halves spring apart; whole segments whip free and hang mid-air; heavy coils uncoil and fall in staggered arcs toward the black stone floor. Fine metallic dust, rust flakes, and dried blood scale explode outward from fracture points as bright golden micro-sparks and white-hot fracture flashes along break edges, suggesting divine force shearing eternal iron rather than ordinary metal fatigue. Some chains still grip pale thin wrists and ankles for a fraction of a frame, skin indented and dust-caked where manacles have bitten for centuries, then the cuffs crack and drop away as hands open toward light.\n\nChain material continuity: Thick heavy iron links, roughly palm-wide and finger-thick, blackened with millennia of oxidation, pitted orange-brown rust, verdigris in crevices, dried blood stains and dark residue fused into the metal, scale and scorch marks from cold blue torch heat. No modern alloy sheen, no chrome, no clean workshop steel—only ancient forged prison iron that has never been cleaned. Manacle rings, bolts, and ceiling anchors shatter with the same divine violence; broken pin heads and sheared rivets tumble among the links.\n\nEnvironment: Hell's inner chamber—cathedral-scale underground prison, ceiling height lost in smoke and shadow (~300 feet sense of vertical scale), black stone pillars in a distant grid, floor of scarred basalt and ash. Background souls appear as soft pale silhouettes mid-liberation: thin bodies, earth-tone rags, white hair on the nearest elders, faces turning from dull centuries of waiting into sudden ignition of hope as light reaches their eyes—kept soft and secondary so the chain storm remains the hero subject. Blue torch flames still burn in far recesses as cold ~2000K pools, already being overrun by advancing golden radiance pouring from the shattered gate direction off-frame, so cold blue underlight and warm divine key fight across the same metal surfaces.\n\nLighting: Primary key is ethereal golden divine light (#FFD700 / warm amber #FFBF00, roughly 6500K god-ray quality) raking through the chamber as volumetric shafts cut smoke and ash, catching every flying link edge with hard specular glints and rim fire. Secondary fill remains residual hell cold blue from distant torches, painting the undersides of falling chains and the far pillars. Fracture flashes are brief white-gold starbursts along snap points. Soft bloom on brightest metal without cartoon lens flare. Volumetric dust and ash make every ray tangible.\n\nCamera and composition: Epic wide-to-medium cinematic production frame, approximately 24–35mm anamorphic feel, 2.39:1 aspect, low-to-eye-level slight upward angle so the cascade of chains reads as a cathedral-height waterfall of iron. Deep focus through mid-ground chain storm with selective softness on extreme foreground flying links and far pillars; parallax layers of chains at multiple depths. Motion-implied freeze: links blurred only at the tips of the fastest arcs, most metal razor-sharp so material detail reads for VFX reference. No modern equipment, no crew, no logos.\n\nColor grade: Transition beat—deep crimson and obsidian blacks in residual shadow zones; cold blue torch accents; invading ethereal golds and warm amber on freed metal and skin; pure white divine core in the strongest shafts. Overall photoreal live-action biblical epic, physically coherent metal physics, sacred tone of liberation not gore spectacle.\n\nAtmosphere and texture: Thick hanging smoke, ash motes, rust powder, and moisture on colder stone; sound-implied visual rhythm of simultaneous snaps—clusters of breaks staggered across the frame so the eye reads cascade and thunder, not a flat pop. Continuity locks: chains are the same instruments of bondage as close-up prop reference (corroded, bloodstained, heavy); chamber still pre-full marble transformation (black stone dominant, gold invading); mass break happens all at once where divine presence passes.\n\nConstraints: Photoreal live-action production reference only; no illustration, no anime, no CGI cartoon look; no modern objects, clothing, tools, or architecture; no readable text, captions, logos, watermarks, borders, or UI; exact anatomy on any visible hands and faces; one face only on the front of each head; no rear faces; keep sacred reverent biblical epic tone.",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "P316 STYLE-ONLY ASSET PROMPT"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "DECODE NATIVE IMAGE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "Premiere316/atmosphere-vfx/fx-chains-mass-break/fx-chains-mass-break_native",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "SAVE NATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX.2 VAE"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2-dev.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX.2 DEV"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "MAX QUALITY GENERATION"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "EULER"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "conditioning": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "STYLE-ONLY MULTI-REFERENCE GUIDER ACTIVE REFS 1-3"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 843860186730203900
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "SEED"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 4,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "GUIDANCE 3.7"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "FLUX.2 TEXT ENCODER"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "26",
+        0
+      ],
+      "latent": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "40": {
+    "inputs": {
+      "pixels": [
+        "41",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 1"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "42",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 1"
+    }
+  },
+  "42": {
+    "inputs": {
+      "image": "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 1 GOLDEN LIGHT"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "39",
+        0
+      ],
+      "latent": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 2"
+    }
+  },
+  "45": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "46",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 2"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 2 SMOKE EMBER"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": 2048,
+      "height": 864,
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "2048x1152 LATENT"
+    }
+  },
+  "48": {
+    "inputs": {
+      "steps": 30,
+      "width": 2048,
+      "height": 864
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "28 STEPS"
+    }
+  },
+  "52": {
+    "inputs": {
+      "image": "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  },
+  "53": {
+    "inputs": {
+      "upscale_method": "area",
+      "megapixels": 1,
+      "image": [
+        "52",
+        0
+      ],
+      "resolution_steps": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "SCALE STYLE REF 3"
+    }
+  },
+  "54": {
+    "inputs": {
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "ENCODE STYLE REF 3"
+    }
+  },
+  "55": {
+    "inputs": {
+      "conditioning": [
+        "43",
+        0
+      ],
+      "latent": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "STYLE REF 3 FILMIC SKIN LINEN"
+    }
+  }
+}

@@ -47,7 +47,7 @@ A polished Premiere-style video-generation workspace that drives the supplied **
 
 ### Included demo
 
-The package includes a populated **Harrowing of Hell** project with the completed ten-minute screenplay, structured production review, 96-asset production library, guide media, a generated score, synchronized sound-direction assets, a deterministic title card, and enabled 30-second opening/credit master bookends. Use the screenplay's LTX Shot Planner when you are ready to create or refresh timeline clips.
+The package includes a populated **Harrowing of Hell** project with the completed ten-minute screenplay, structured production review, 97-asset production library, guide media, a generated score, synchronized sound-direction assets, a deterministic title card, and enabled 30-second opening/credit master bookends. Use the screenplay's LTX Shot Planner when you are ready to create or refresh timeline clips.
 
 ### Screenplay studio
 
@@ -65,10 +65,23 @@ The package includes a populated **Harrowing of Hell** project with the complete
 
 The included *Jesus: The Harrowing of Hell* screenplay has been imported into `projects/harrowing_of_hell/screenplay.md` and remains editable in the Screenplay workspace.
 
+### Pi ComfyUI Expert orchestrator
+
+- The same **Pi ComfyUI Expert** launched by `C:\Users\Blokey\Desktop\Pi ComfyUI Expert.lnk` is embedded as a persistent dock on Projects, Screenplay, Assets, Media, Edit, Generate, Master, and Export.
+- Premiere316 publishes an authoritative live context snapshot whenever the visible page, project, active workbench, selected clip/guide/range, playhead, render queue, ComfyUI state, LM Studio state, browser focus, or tab visibility changes. The snapshot is also attached to every queued worker task, so later navigation cannot rewrite the context under an already-submitted request.
+- The parent is pinned to `lmstudio/qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive`. Every actionable request is mechanically hard-routed through `/run premiere-worker` before the parent can answer; delegation is not left to model discretion.
+- `premiere-worker` is pinned to that same model at **high** thinking, receives forked conversation/page context, owns all reads, web research, commands, edits, and validation, and has `maxSubagentDepth: 0`, so it cannot become another orchestrator.
+- The host serializes requests through one worker-first queue, validates the terminal worker name, exit code, completion state, model and output, and only then starts the parent synthesis pass. During synthesis, all parent tools are disabled; the parent can review and explain the worker result but cannot secretly edit files or launch a substitute worker.
+- The dock streams the parent response, displays Worker/Supervising/Ready state, exposes queued corrections and Stop, and retains one persistent Pi session. `pi-web-access` supplies the worker's internet-search and fetch tools.
+- The desktop shortcut uses the same isolated profile and same globally discoverable `premiere-worker`. In standalone TUI mode, natural-language requests are intercepted by the profile's host orchestrator extension and hard-routed to the worker before the parent synthesis turn. Slash commands remain available normally.
+
 ### Asset Foundry
 
 - **Assets** is a dedicated workspace immediately after Screenplay, with category navigation, production coverage, review decisions, asset cards, a provenance inspector, continuity locks, dependencies, version history, and serialized generation controls.
-- The completed Harrowing screenplay currently resolves to **96 project assets**: characters, wardrobes, locations, props, crowds/creatures, atmosphere/VFX states, guide frames, voices, sound directions, music cues, and graphics.
+- The completed Harrowing screenplay currently resolves to **97 project assets**: characters, wardrobes, locations, props, crowds/creatures, atmosphere/VFX states, guide frames, voices, sound directions, music cues, and graphics.
+- Visual assets are routed through the installed **CI FLUX.2 Premiere316 Style-Lock** package: general production assets use 4:3, locations/crowds/atmosphere/guide frames use 16:9, and characters/wardrobe/hero props use 2:3 vertical. The default batch references are the abstracted `CI_STYLE_REF_01` through `CI_STYLE_REF_03` art-direction plates; optional references 04–06 remain bypassed unless explicitly enabled.
+- Only Jesus's primary identity sheet uses the retained Jesus-only workflow and its identity/layout/costume references. Unrelated assets never inherit Jesus's face, clothing, wounds, sword, or scene content.
+- The package's FLUX.2 loader names are adapted to the locally installed `flux2-dev.safetensors`, `mistral_3_small_flux2_fp4_mixed.safetensors`, `flux2-vae.safetensors`, and `RealESRGAN_x2plus.pth`; the transformer is cast to FP8 at runtime. Each visual workflow saves a native image and a 2× upscaled output.
 - Structured review metadata is merged into explicit screenplay prompts. Jesus's canonical face, complete crown/rear hair, wound map, robe state, hands, and single-front-face rule are visible as continuity locks instead of being discarded during parsing.
 - Every asset stores a project-local workflow snapshot and SHA-256 hash under `projects/<slug>/workflows`; the production manifest and review live under `projects/<slug>/production`.
 - Model routing is curated for the installed machine: Krea 2 FP8 character ingredients, Krea 2 FP8 cinematic stills, Flux 2 Klein 9B FP8 props, Qwen3-TTS 1.7B voices, LTX 2.3 synchronized shot audio, and a deterministic SVG title compositor.
@@ -88,6 +101,7 @@ The included *Jesus: The Harrowing of Hell* screenplay has been imported into `p
 - The bundled dedicated **BlokeyUI** instance (started automatically on `http://127.0.0.1:8190`)
 - The custom nodes and models referenced by the included LTX workflow
 - **LM Studio** running its OpenAI-compatible local server on `http://127.0.0.1:1234/v1`, with the pinned Qwen 3.6 40B screenplay model loaded
+- For the Pi Expert dock/shortcut, the installed `qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive` LM Studio model must be loaded; parent and worker never silently fall back to another model
 
 Environment overrides:
 
@@ -191,6 +205,7 @@ The included **guide-image generator** and **musical-score generator** are local
 client/                    React workspace
 client/dist/               Prebuilt portable browser client
 server/index.js            Express API
+server/pi-agent.js         Persistent Pi RPC, live page context, forced same-model worker queue, and validation
 server/queue.js            Render, guide, score, assembly, and master jobs
 server/timeline.js         LTX range compiler and Prompt Relay serialization
 server/comfy.js            ComfyUI graph conversion and API client
@@ -210,6 +225,8 @@ scripts/build-portable.mjs Native-binary-free production build
 - Browser load at 1920×1200: pass, zero console errors.
 - LM Studio health and exact pinned-model discovery: pass.
 - Exact-model live completion: pass.
+- Pi Expert live page-context publication on all eight app pages: pass.
+- Server-enforced `premiere-worker` delegation, exact same-model/high-thinking telemetry, terminal-result validation, and tool-locked parent synthesis: pass.
 - Streamed screenplay conversation and exact-text correction application: pass.
 - Revision-bound approval rejection/approval/asset-build round trip: pass.
 - 96-asset extraction with 18 screenplay-review decisions and zero duplicate IDs: pass.
