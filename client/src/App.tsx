@@ -27,13 +27,16 @@ export default function App() {
     store.refreshHealth();
     store.refreshProjects();
     store.refreshQueue();
+    store.refreshH3Diagnostics();
     const requestedProject = new URLSearchParams(window.location.search).get("project");
     if (requestedProject) store.openProject(requestedProject);
     const healthTimer = window.setInterval(store.refreshHealth, 10000);
     const queueTimer = window.setInterval(store.refreshQueue, 1600);
+    const h3Timer = window.setInterval(store.refreshH3Diagnostics, 15000);
     return () => {
       window.clearInterval(healthTimer);
       window.clearInterval(queueTimer);
+      window.clearInterval(h3Timer);
     };
   }, []);
 
@@ -70,6 +73,18 @@ export default function App() {
         </nav>
 
         <div className="header-actions">
+          <button
+            className="premiere-restart-button"
+            disabled={store.premiereRestartBusy || !store.health.capabilities?.premiereRestart}
+            title="Restart the Premiere316 app server on port 8789, reconnect, and reload this page."
+            onClick={() => {
+              if (window.confirm("Restart Premiere316 now? The app will reconnect and reload automatically.")) {
+                void store.restartPremiere316();
+              }
+            }}
+          >
+            {store.premiereRestartBusy ? "RESTARTING APP…" : "↻ RESTART PREMIERE316"}
+          </button>
           <span className={`connection-pill ${store.health.comfy ? "online" : "offline"}`}>
             <span className="connection-dot" />
             {store.health.comfy

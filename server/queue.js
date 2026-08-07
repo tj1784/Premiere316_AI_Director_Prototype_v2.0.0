@@ -11,6 +11,19 @@ import {
 } from "./comfy.js";
 import { fillI2vPrompt, clampDuration, framesOf } from "./timeline.js";
 import {
+  H3_DISPLAY_NAME,
+  H3_FPS,
+  H3_MODE_FIRST,
+  H3_MODE_REFERENCE,
+  H3_MODES,
+  H3_MODEL_FILES,
+  buildH3Workflow,
+  compileH3Prompt,
+  h3Diagnostics,
+  h3Dimensions,
+  randomH3Seed
+} from "./h3.js";
+import {
   loadProject,
   saveProject,
   findClip,
@@ -40,6 +53,7 @@ const jobs = [];
 let running = false;
 let activeJob = null;
 let activeAbortController = null;
+const COMFY_PROMPT_JOB_TYPES = new Set(["render_range", "render_h3_range", "generate_asset"]);
 
 function persistJobLedger(projectSlug) {
   if (!projectSlug) return;
@@ -120,9 +134,9 @@ export function cancelJob(id) {
     persistJobLedger(j.projectSlug);
     return true;
   }
-  if (j.status === "running" && j.type === "generate_asset" && activeJob?.id === j.id) {
+  if (j.status === "running" && COMFY_PROMPT_JOB_TYPES.has(j.type) && activeJob?.id === j.id) {
     j.status = "cancelling";
-    j.stage = "Stopping generation…";
+    j.stage = "Stopping ComfyUI prompt…";
     persistJobLedger(j.projectSlug);
     activeAbortController?.abort();
     return true;
@@ -157,6 +171,7 @@ async function pump() {
   persistJobLedger(next.projectSlug);
   try {
     if (next.type === "render_range") await renderRange(next);
+    else if (next.type === "render_h3_range") await renderH3Range(next);
     else if (next.type === "assemble_clip") await assembleClipJob(next);
     else if (next.type === "generate_score") await generateScore(next);
     else if (next.type === "generate_asset") await generateAssetJob(next);
@@ -272,6 +287,12 @@ function validateQueuedRender(project, clip, refs) {
   const current = currentGuideBindings(project, clip);
   if (JSON.stringify(current) !== JSON.stringify(refs.guideBindings || [])) {
     throw new Error("Render cancelled because its approved guide versions changed after it was queued");
+  }
+}
+
+function validateQueuedClipFingerprint(project, clip, refs) {
+  if (!refs?.clipFingerprint || refs.clipFingerprint !== renderFingerprint(project, clip)) {
+    throw new Error("Render cancelled because the clip direction or generation settings changed after it was queued");
   }
 }
 
@@ -398,6 +419,208 @@ async function renderRange(job) {
   }
   saveProject(fresh);
   job.result = { clipId: freshClip.id, rangeVersion, file: trimmedName };
+  job.progress = 0.98;
+}
+
+function h3ModeInfo(mode) {
+  return H3_MODES[mode] || H3_MODES[H3_MODE_FIRST];
+}
+
+function h3AnchorsForRange(guides, mode, rangeStartFrame, rangeEndFrame, totalFrames) {
+  const info = h3ModeInfo(mode);
+  const sorted = (guides || [])
+    .filter((guide) => guide?.comfyFile)
+    .map((guide) => ({ ...guide, frame: Math.max(0, Math.round(Number(guide.frame) || 0)) }))
+    .sort((a, b) => a.frame - b.frame);
+  const first =
+    sorted.filter((guide) => guide.frame <= rangeStartFrame).at(-1) ||
+    sorted.find((guide) => guide.role === "first" || guide.frame === 0) ||
+    sorted[0] ||
+    null;
+  const explicitLast = sorted.find((guide) => guide.role === "last" || guide.frame >= totalFrames - 1) || null;
+  const afterRange = sorted.find((guide) => guide.frame >= Math.max(rangeStartFrame, rangeEndFrame - 1)) || null;
+  const last = info.needsLast
+    ? (afterRange || explicitLast)
+    : (afterRange || explicitLast || sorted.at(-1) || null);
+  if (info.needsFirst && !first?.comfyFile) throw new Error(`${info.label} needs an approved first-frame guide.`);
+  if (info.needsLast && !last?.comfyFile) throw new Error(`${info.label} needs an approved last-frame guide.`);
+  return { first, last };
+}
+
+async function renderH3Range(job) {
+  const project = loadProject(job.projectSlug);
+  const clip = findClip(project, job.refs.clipId);
+  if (!clip) throw new Error("Clip not found");
+  const mode = job.refs.h3Mode || H3_MODE_FIRST;
+  const modeInfo = h3ModeInfo(mode);
+  if (modeInfo.needsFirst || modeInfo.needsLast) validateQueuedRender(project, clip, job.refs);
+  else validateQueuedClipFingerprint(project, clip, job.refs);
+
+  const projectFps = project.settings.fps || 24;
+  const totalFrames = clipTotalFrames(project, clip);
+  const rangeStartFrame = Math.max(0, Math.min(totalFrames - 1, Number(job.refs.startFrame) || 0));
+  const rangeEndFrame = Math.max(
+    rangeStartFrame + 1,
+    Math.min(totalFrames, Number(job.refs.endFrame) || totalFrames)
+  );
+  const requestedSeconds = (rangeEndFrame - rangeStartFrame) / projectFps;
+  if (requestedSeconds > 15.001) {
+    throw new Error(`${H3_DISPLAY_NAME} jobs must be split to ${15}s or less before queueing; received ${requestedSeconds.toFixed(2)}s.`);
+  }
+  const version = nextVersion(clip.rangeVersions || []);
+  const baseName = `${clip.name}_h3_${String(rangeStartFrame).padStart(5, "0")}-${String(rangeEndFrame).padStart(5, "0")}_v${String(version).padStart(2, "0")}`;
+  job.label = `${H3_DISPLAY_NAME} ${clip.name} · ${rangeStartFrame}–${rangeEndFrame}f`;
+  job.stage = "Checking MiniMax H3 backend";
+  job.progress = 0.03;
+
+  const diagnostics = await h3Diagnostics();
+  const modeReady = mode === H3_MODE_REFERENCE ? diagnostics.ref2vaReady : diagnostics.fl2vaReady;
+  if (!modeReady) {
+    const details = [
+      ...(diagnostics.actionableErrors || []),
+      ...(mode === H3_MODE_REFERENCE ? diagnostics.warnings || [] : [])
+    ].filter(Boolean);
+    throw new Error(`${H3_DISPLAY_NAME} ${modeInfo.label} is not ready: ${details.join(" ") || "see diagnostics panel"}`);
+  }
+
+  job.stage = "Uploading approved H3 anchors";
+  job.progress = 0.06;
+  const guides = await uploadClipGuides(project, clip);
+  const anchors = h3AnchorsForRange(guides, mode, rangeStartFrame, rangeEndFrame, totalFrames);
+
+  const aspect = job.refs.h3Aspect || project.settings?.aspectRatio || `${project.settings.width || 1344}:${project.settings.height || 768}`;
+  const dimensions = h3Dimensions({
+    aspect,
+    width: project.settings.width || 1344,
+    height: project.settings.height || 768,
+    quality: job.refs.h3Quality || "full"
+  });
+  const seed = randomH3Seed(job.refs.seed ?? clip.seed);
+
+  job.stage = "Compiling MiniMax H3 prompt";
+  job.progress = 0.1;
+  const compiled = compileH3Prompt({
+    project,
+    clip,
+    mode,
+    rangeStartFrame,
+    rangeEndFrame,
+    audioMode: job.refs.h3AudioMode || "mixed"
+  });
+  const objectInfo = await getObjectInfo();
+  const workflow = buildH3Workflow({
+    objectInfo,
+    mode,
+    promptText: compiled.prompt,
+    width: dimensions.width,
+    height: dimensions.height,
+    frames: compiled.timing.resolvedFrames,
+    seed,
+    filenamePrefix: `premiere316/${project.slug}/${baseName}_raw`,
+    firstFrameComfyFile: anchors.first?.comfyFile,
+    lastFrameComfyFile: anchors.last?.comfyFile,
+    references: job.refs.references || [],
+    refImageSize: job.refs.refImageSize || "match"
+  });
+  if (workflow.warnings?.length) console.warn("[render_h3_range] conversion warnings:", workflow.warnings);
+
+  job.stage = "Generating MiniMax H3 video + native audio";
+  const rawFiles = await runAndFetch(job, workflow.prompt, mediaDir(project, "clips"), `${baseName}_raw`);
+  const rawVideoName = rawFiles.find((file) => /\.(mp4|webm|mov|mkv)$/i.test(file));
+  if (!rawVideoName) throw new Error("ComfyUI returned files, but none was an H3 video");
+
+  job.stage = "Conforming H3 output to timeline range";
+  job.progress = 0.9;
+  const rawPath = path.join(mediaDir(project, "clips"), rawVideoName);
+  const conformedName = `${baseName}_exact.mp4`;
+  const conformedPath = path.join(mediaDir(project, "clips"), conformedName);
+  await trimVideoToFrames(rawPath, conformedPath, compiled.timing.conformedFrames, H3_FPS);
+  const rawInfo = await probeMedia(rawPath).catch(() => null);
+  const conformedInfo = await probeMedia(conformedPath).catch(() => null);
+
+  const fresh = loadProject(project.slug);
+  const freshClip = findClip(fresh, clip.id);
+  if (!freshClip) throw new Error("Clip disappeared while rendering");
+  if (modeInfo.needsFirst || modeInfo.needsLast) validateQueuedRender(fresh, freshClip, job.refs);
+  else validateQueuedClipFingerprint(fresh, freshClip, job.refs);
+  if (nextVersion(freshClip.rangeVersions || []) !== version) {
+    throw new Error("H3 output was retained but not registered because another clip version completed during generation");
+  }
+
+  const rangeVersion = {
+    v: version,
+    file: conformedName,
+    rawFile: rawVideoName,
+    name: baseName,
+    provider: "minimax_h3_local",
+    source: "minimax-h3-range-render",
+    h3Mode: mode,
+    startFrame: compiled.rangeStartFrame,
+    endFrame: compiled.rangeEndFrame,
+    requestedFrames: rangeEndFrame - rangeStartFrame,
+    generationFrames: compiled.timing.resolvedFrames,
+    h3Timing: compiled.timing,
+    fps: H3_FPS,
+    width: dimensions.width,
+    height: dimensions.height,
+    seed,
+    segmentIds: job.refs.segmentIds || [],
+    active: true,
+    createdAt: new Date().toISOString(),
+    prompt: compiled.prompt,
+    workflow: {
+      sourceTemplate: workflow.sourceTemplate,
+      semanticSlots: workflow.semanticSlots,
+      modelFiles: {
+        diffusion: H3_MODEL_FILES[workflow.family].filename,
+        textEncoder: H3_MODEL_FILES.textEncoder.filename,
+        videoVae: H3_MODEL_FILES.videoVae.filename,
+        audioVae: H3_MODEL_FILES.audioVae.filename
+      }
+    },
+    mediaInfo: {
+      raw: rawInfo,
+      conformed: conformedInfo
+    }
+  };
+  freshClip.rangeVersions = freshClip.rangeVersions || [];
+  for (const old of freshClip.rangeVersions) {
+    if (old.startFrame === rangeVersion.startFrame && old.endFrame === rangeVersion.endFrame) old.active = false;
+  }
+  freshClip.rangeVersions.push(rangeVersion);
+
+  const selected = new Set(job.refs.segmentIds || []);
+  for (const segment of freshClip.segments || []) {
+    if (selected.has(segment.id) || (segment.startFrame >= rangeStartFrame && segment.endFrame <= rangeEndFrame)) {
+      segment.dirty = false;
+    }
+  }
+
+  if (rangeStartFrame === 0 && rangeEndFrame === totalFrames) {
+    const fullVersion = nextVersion(freshClip.versions || []);
+    freshClip.versions = freshClip.versions || [];
+    freshClip.versions.push({
+      v: fullVersion,
+      file: conformedName,
+      rawFile: rawVideoName,
+      name: `${freshClip.name}_h3_v${String(fullVersion).padStart(2, "0")}`,
+      createdAt: new Date().toISOString(),
+      source: "minimax-h3-full-range-render",
+      requestedFrames: rangeEndFrame - rangeStartFrame,
+      generationFrames: compiled.timing.resolvedFrames,
+      h3Mode: mode,
+      fps: H3_FPS,
+      width: dimensions.width,
+      height: dimensions.height,
+      seed
+    });
+    freshClip.activeVersion = fullVersion;
+    freshClip.status = "done";
+  } else {
+    freshClip.status = (freshClip.segments || []).every((segment) => segment.dirty === false) ? "ranges-ready" : "partial";
+  }
+  saveProject(fresh);
+  job.result = { clipId: freshClip.id, rangeVersion, file: conformedName, rawFile: rawVideoName };
   job.progress = 0.98;
 }
 

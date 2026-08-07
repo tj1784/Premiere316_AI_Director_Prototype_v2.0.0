@@ -3,9 +3,9 @@ $ErrorActionPreference = "Stop"
 $appRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $appUrl = "http://127.0.0.1:8789/"
 $healthUrl = "http://127.0.0.1:8789/api/health"
-$comfyUrl = "http://127.0.0.1:8188"
+$comfyUrl = "http://127.0.0.1:8190"
 $comfyHealthUrl = "$comfyUrl/system_stats"
-$engineLauncher = Join-Path $appRoot "BlokeyUI\start_premiere316_engine.ps1" # Routes to C:\Users\Blokey\Documents\Sineforge\BlokeyUI
+$engineLauncher = Join-Path $appRoot "BlokeyUI\start_premiere316_engine.ps1"
 
 function Test-Premiere316 {
   try {
@@ -33,22 +33,6 @@ if (-not (Test-Premiere316ComfyUI)) {
     -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$engineLauncher`"") `
     -WorkingDirectory (Split-Path -Parent $engineLauncher) `
     -WindowStyle Hidden
-
-  for ($attempt = 0; $attempt -lt 240; $attempt++) {
-    Start-Sleep -Milliseconds 500
-    if (Test-Premiere316ComfyUI) { break }
-  }
-}
-
-if (-not (Test-Premiere316ComfyUI)) {
-  Add-Type -AssemblyName PresentationFramework
-  [System.Windows.MessageBox]::Show(
-    "The routed Sineforge BlokeyUI engine could not start on port 8188.",
-    "Premiere316 AI Director",
-    "OK",
-    "Error"
-  ) | Out-Null
-  exit 1
 }
 
 if (-not (Test-Premiere316)) {

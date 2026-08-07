@@ -1,0 +1,325 @@
+[
+  {
+    "family": "ci-flux2-p316-style-lock",
+    "mediaType": "image",
+    "model": "FLUX.2 Dev · runtime FP8 cast + Mistral 3 Small FLUX.2 FP4",
+    "requiredNodes": [
+      "UNETLoader",
+      "CLIPLoader",
+      "CLIPTextEncode",
+      "FluxGuidance",
+      "ReferenceLatent",
+      "EmptyFlux2LatentImage",
+      "Flux2Scheduler",
+      "SamplerCustomAdvanced",
+      "VAEDecode",
+      "UpscaleModelLoader",
+      "ImageUpscaleWithModel",
+      "SaveImage"
+    ],
+    "requiredModels": [
+      "flux2-dev.safetensors",
+      "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "flux2-vae.safetensors",
+      "RealESRGAN_x2plus.pth"
+    ],
+    "activeStyleReferences": [
+      "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png",
+      "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png",
+      "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    ],
+    "optionalStyleReferences": [
+      "CI_STYLE_REF_04_IVORY_LINEN_BLOOD_MATERIAL_DETAIL_OPTIONAL.png",
+      "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png",
+      "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+    ],
+    "outputMode": "native-and-2x",
+    "id": "ci-flux2-p316-style-only-2p39x1-max",
+    "label": "FLUX2 2.39",
+    "aspectRatio": "2.39:1",
+    "template": "CI_FLUX2_P316_STYLE_ONLY_ASSET_2P39X1_API_2X.json",
+    "purpose": "Authoritative cinematic production assets using the package's 2.39:1 route."
+  },
+  {
+    "family": "ci-flux2-p316-style-lock",
+    "mediaType": "image",
+    "model": "FLUX.2 Dev · runtime FP8 cast + Mistral 3 Small FLUX.2 FP4",
+    "requiredNodes": [
+      "UNETLoader",
+      "CLIPLoader",
+      "CLIPTextEncode",
+      "FluxGuidance",
+      "ReferenceLatent",
+      "EmptyFlux2LatentImage",
+      "Flux2Scheduler",
+      "SamplerCustomAdvanced",
+      "VAEDecode",
+      "UpscaleModelLoader",
+      "ImageUpscaleWithModel",
+      "SaveImage"
+    ],
+    "requiredModels": [
+      "flux2-dev.safetensors",
+      "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "flux2-vae.safetensors",
+      "RealESRGAN_x2plus.pth"
+    ],
+    "activeStyleReferences": [
+      "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png",
+      "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png",
+      "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    ],
+    "optionalStyleReferences": [
+      "CI_STYLE_REF_04_IVORY_LINEN_BLOOD_MATERIAL_DETAIL_OPTIONAL.png",
+      "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png",
+      "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+    ],
+    "outputMode": "native-and-2x",
+    "id": "ci-flux2-p316-style-only-4x3-max",
+    "label": "FLUX2 4:3",
+    "aspectRatio": "4:3",
+    "template": "CI_FLUX2_P316_STYLE_ONLY_ASSET_4X3_API_2X.json",
+    "purpose": "General production assets using abstract art-direction references without identity or content transfer."
+  },
+  {
+    "family": "ci-flux2-p316-style-lock",
+    "mediaType": "image",
+    "model": "FLUX.2 Dev · runtime FP8 cast + Mistral 3 Small FLUX.2 FP4",
+    "requiredNodes": [
+      "UNETLoader",
+      "CLIPLoader",
+      "CLIPTextEncode",
+      "FluxGuidance",
+      "ReferenceLatent",
+      "EmptyFlux2LatentImage",
+      "Flux2Scheduler",
+      "SamplerCustomAdvanced",
+      "VAEDecode",
+      "UpscaleModelLoader",
+      "ImageUpscaleWithModel",
+      "SaveImage"
+    ],
+    "requiredModels": [
+      "flux2-dev.safetensors",
+      "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "flux2-vae.safetensors",
+      "RealESRGAN_x2plus.pth"
+    ],
+    "activeStyleReferences": [
+      "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png",
+      "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png",
+      "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    ],
+    "optionalStyleReferences": [
+      "CI_STYLE_REF_04_IVORY_LINEN_BLOOD_MATERIAL_DETAIL_OPTIONAL.png",
+      "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png",
+      "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+    ],
+    "outputMode": "native-and-2x",
+    "id": "ci-flux2-p316-style-only-16x9-max",
+    "label": "FLUX2 16:9",
+    "aspectRatio": "16:9",
+    "template": "CI_FLUX2_P316_STYLE_ONLY_ASSET_16X9_API_2X.json",
+    "purpose": "Guide frames, locations, crowds, and atmosphere/VFX with widescreen cinematic continuity."
+  },
+  {
+    "family": "ci-flux2-p316-style-lock",
+    "mediaType": "image",
+    "model": "FLUX.2 Dev · runtime FP8 cast + Mistral 3 Small FLUX.2 FP4",
+    "requiredNodes": [
+      "UNETLoader",
+      "CLIPLoader",
+      "CLIPTextEncode",
+      "FluxGuidance",
+      "ReferenceLatent",
+      "EmptyFlux2LatentImage",
+      "Flux2Scheduler",
+      "SamplerCustomAdvanced",
+      "VAEDecode",
+      "UpscaleModelLoader",
+      "ImageUpscaleWithModel",
+      "SaveImage"
+    ],
+    "requiredModels": [
+      "flux2-dev.safetensors",
+      "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "flux2-vae.safetensors",
+      "RealESRGAN_x2plus.pth"
+    ],
+    "activeStyleReferences": [
+      "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png",
+      "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png",
+      "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    ],
+    "optionalStyleReferences": [
+      "CI_STYLE_REF_04_IVORY_LINEN_BLOOD_MATERIAL_DETAIL_OPTIONAL.png",
+      "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png",
+      "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+    ],
+    "outputMode": "native-and-2x",
+    "id": "ci-flux2-p316-style-only-2x3-vertical-max",
+    "label": "FLUX2 2:3",
+    "aspectRatio": "2:3",
+    "template": "CI_FLUX2_P316_STYLE_ONLY_ASSET_2X3_VERTICAL_API_2X.json",
+    "purpose": "Character, wardrobe, and hero-prop studies using style plates only."
+  },
+  {
+    "family": "ci-flux2-p316-style-lock",
+    "mediaType": "image",
+    "model": "FLUX.2 Dev · runtime FP8 cast + Mistral 3 Small FLUX.2 FP4",
+    "requiredNodes": [
+      "UNETLoader",
+      "CLIPLoader",
+      "CLIPTextEncode",
+      "FluxGuidance",
+      "ReferenceLatent",
+      "EmptyFlux2LatentImage",
+      "Flux2Scheduler",
+      "SamplerCustomAdvanced",
+      "VAEDecode",
+      "UpscaleModelLoader",
+      "ImageUpscaleWithModel",
+      "SaveImage"
+    ],
+    "requiredModels": [
+      "flux2-dev.safetensors",
+      "mistral_3_small_flux2_fp4_mixed.safetensors",
+      "flux2-vae.safetensors",
+      "RealESRGAN_x2plus.pth"
+    ],
+    "activeStyleReferences": [
+      "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png",
+      "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png",
+      "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png"
+    ],
+    "optionalStyleReferences": [
+      "CI_STYLE_REF_04_IVORY_LINEN_BLOOD_MATERIAL_DETAIL_OPTIONAL.png",
+      "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png",
+      "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png"
+    ],
+    "outputMode": "native-and-2x",
+    "id": "ci-flux2-jesus-only-character-sheet-4x3-max",
+    "label": "Jesus Sheet",
+    "aspectRatio": "4:3",
+    "template": "CI_FLUX2_P316_STYLE_ONLY_ASSET_4X3_API_2X.json",
+    "purpose": "Jesus primary four-view character sheet using the original identity, layout, and costume references.",
+    "identityReferences": [
+      "CI_REF_01_LAYOUT.png",
+      "CI_REF_02_FACE.png",
+      "CI_REF_03_COSTUME_BODY.png"
+    ]
+  },
+  {
+    "id": "krea2-character-ingredients-fp8",
+    "label": "Krea Char FP8",
+    "mediaType": "image",
+    "model": "Krea 2 Turbo FP8 + Qwen3-VL 4B FP8",
+    "purpose": "Identity-locked character reference sheets with face, profile, full-body, costume, hair, and rear-head coverage.",
+    "requiredNodes": [
+      "UNETLoader",
+      "CLIPLoader",
+      "CLIPTextEncode",
+      "KSampler",
+      "VAEDecode",
+      "SaveImage"
+    ],
+    "requiredModels": [
+      "krea2\\krea2_turbo_fp8_scaled.safetensors",
+      "qwen3vl_4b_fp8_scaled.safetensors",
+      "qwen_image_vae.safetensors"
+    ]
+  },
+  {
+    "id": "krea2-cinematic-still-fp8",
+    "label": "Krea Still FP8",
+    "mediaType": "image",
+    "model": "Krea 2 Turbo FP8 + Qwen3-VL 4B FP8",
+    "purpose": "Locations, props, VFX references, continuity states, and first/middle/last guide images.",
+    "requiredNodes": [
+      "UNETLoader",
+      "CLIPLoader",
+      "CLIPTextEncode",
+      "KSampler",
+      "VAEDecode",
+      "SaveImage"
+    ],
+    "requiredModels": [
+      "krea2\\krea2_turbo_fp8_scaled.safetensors",
+      "qwen3vl_4b_fp8_scaled.safetensors",
+      "qwen_image_vae.safetensors"
+    ]
+  },
+  {
+    "id": "flux2-klein-9b-prop-fp8",
+    "label": "Flux2 Prop FP8",
+    "mediaType": "image",
+    "model": "Flux 2 Klein 9B FP8 Distilled + Qwen 3 8B FP8",
+    "purpose": "Clean artifact, weapon, prop, and material reference plates with precise construction details.",
+    "requiredNodes": [
+      "UNETLoader",
+      "CLIPLoader",
+      "CLIPTextEncode",
+      "EmptyFlux2LatentImage",
+      "KSampler",
+      "VAEDecode",
+      "SaveImage"
+    ],
+    "requiredModels": [
+      "flux2\\flux-2-klein-9b-fp8mixed.safetensors",
+      "qwen_3_8b_fp8mixed.safetensors",
+      "flux2-vae.safetensors"
+    ]
+  },
+  {
+    "id": "qwen3-tts-voice-design-1.7b",
+    "label": "Qwen3 TTS",
+    "mediaType": "audio",
+    "model": "Qwen3-TTS 12Hz 1.7B VoiceDesign",
+    "purpose": "Local character voice auditions and dialogue stems from production voice direction.",
+    "requiredNodes": [
+      "FB_Qwen3TTSVoiceDesign",
+      "SaveAudioMP3"
+    ],
+    "requiredModels": [
+      "Qwen3-TTS-12Hz-1.7B-VoiceDesign"
+    ]
+  },
+  {
+    "id": "ace-step-1.5-xl-turbo",
+    "label": "ACE-Step",
+    "mediaType": "audio",
+    "model": "ACE-Step 1.5 XL Turbo BF16 + Qwen 4B/0.6B",
+    "purpose": "Project score themes and musical cue stems.",
+    "requiredNodes": [
+      "DualCLIPLoader",
+      "TextEncodeAceStepAudio1.5",
+      "EmptyAceStep1.5LatentAudio",
+      "VAEDecodeAudio",
+      "SaveAudioMP3"
+    ],
+    "requiredModels": [
+      "acestep\\acestep_v1.5_xl_turbo_bf16.safetensors",
+      "qwen_0.6b_ace15.safetensors",
+      "qwen_4b_ace15.safetensors",
+      "ace_1.5_vae.safetensors"
+    ]
+  },
+  {
+    "id": "ltx-2.3-native-audio",
+    "label": "LTX Audio",
+    "mediaType": "instruction",
+    "model": "LTX-2.3 Director FP8",
+    "purpose": "Diegetic ambience, foley, impacts, and vocal texture generated in sync with the final video shot.",
+    "requiredNodes": [],
+    "requiredModels": []
+  },
+  {
+    "id": "premiere316-title-card",
+    "label": "Title Card",
+    "mediaType": "graphic",
+    "model": "Deterministic SVG compositor",
+    "purpose": "Exact typography without diffusion-model spelling artifacts.",
+    "requiredNodes": [],
+    "requiredModels": []
+  }
+]

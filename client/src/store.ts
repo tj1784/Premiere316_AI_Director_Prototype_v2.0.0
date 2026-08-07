@@ -45,11 +45,15 @@ type Store = {
   assetBusy: boolean;
   gpuHandoffBusy: boolean;
   comfyRestartBusy: boolean;
+  premiereRestartBusy: boolean;
   screenplayModelLoadBusy: boolean;
   promptEnhanceBusy: boolean;
   promptEnhance: any | null;
   assetWorkflows: any[];
   lmStudioGpu: any | null;
+  h3Diagnostics: any | null;
+  h3Busy: boolean;
+  h3Mode: "t2v" | "first_frame" | "last_frame" | "first_last" | "reference";
   activeWorkbench: "guide" | "prompt" | "score" | "master";
 
   setError: (error: string | null) => void;
@@ -68,7 +72,10 @@ type Store = {
   setWorkbench: (tab: Store["activeWorkbench"]) => void;
 
   refreshHealth: () => Promise<void>;
+  refreshH3Diagnostics: (force?: boolean) => Promise<void>;
+  setH3Mode: (mode: Store["h3Mode"]) => void;
   restartComfyUI: () => Promise<void>;
+  restartPremiere316: () => Promise<void>;
   loadScreenplayModel: () => Promise<void>;
   refreshProjects: () => Promise<void>;
   refreshQueue: () => Promise<void>;
@@ -93,7 +100,11 @@ type Store = {
   refreshAssetWorkflows: () => Promise<void>;
   handoffLmStudioGpu: () => Promise<void>;
   buildAssets: (body?: any) => Promise<void>;
+  createAsset: (body: any) => Promise<any>;
   patchAsset: (assetId: string, body: any) => Promise<void>;
+  uploadAssetImage: (assetId: string, file: File) => Promise<any>;
+  uploadAssetAudio: (assetId: string, file: File) => Promise<any>;
+  deleteAsset: (assetId: string) => Promise<void>;
   approveAsset: (assetId: string) => Promise<void>;
   generateAsset: (assetId: string) => Promise<void>;
   generateAssets: (assetIds?: string[], regenerate?: boolean) => Promise<void>;
@@ -108,6 +119,7 @@ type Store = {
   deleteGuide: (clipId: string, guideId: string) => Promise<void>;
 
   renderSelection: (clipId?: string) => Promise<void>;
+  renderH3Selection: (clipId?: string, mode?: Store["h3Mode"]) => Promise<void>;
   renderDirty: (clipId?: string) => Promise<void>;
   renderAll: () => Promise<void>;
   renderAllDirty: () => Promise<void>;
@@ -141,11 +153,15 @@ export const useStore = create<Store>((set, get) => ({
   assetBusy: false,
   gpuHandoffBusy: false,
   comfyRestartBusy: false,
+  premiereRestartBusy: false,
   screenplayModelLoadBusy: false,
   promptEnhanceBusy: false,
   promptEnhance: null,
   assetWorkflows: [],
   lmStudioGpu: null,
+  h3Diagnostics: null,
+  h3Busy: false,
+  h3Mode: "first_frame",
   activeWorkbench: "guide",
 
   setError: (error) => set({ error }),
@@ -211,6 +227,22 @@ export const useStore = create<Store>((set, get) => ({
       set({ health: { comfy: false, ffmpeg: false, capabilities: {} } });
     }
   },
+  refreshH3Diagnostics: async (force = false) => {
+    try {
+      const json = await api(`/api/h3/diagnostics${force ? "?force=1" : ""}`);
+      set({ h3Diagnostics: json });
+    } catch (error: any) {
+      set({
+        h3Diagnostics: {
+          ready: false,
+          fl2vaReady: false,
+          ref2vaReady: false,
+          actionableErrors: [String(error.message || error)]
+        }
+      });
+    }
+  },
+  setH3Mode: (mode) => set({ h3Mode: mode }),
   restartComfyUI: async () => {
     if (get().comfyRestartBusy) return;
     set({ comfyRestartBusy: true, error: null });
@@ -244,6 +276,30 @@ export const useStore = create<Store>((set, get) => ({
     } finally {
       await get().refreshHealth();
       set({ comfyRestartBusy: false });
+    }
+  },
+  restartPremiere316: async () => {
+    if (get().premiereRestartBusy) return;
+    set({ premiereRestartBusy: true, error: null });
+    try {
+      await api("/api/system/premiere/restart", { method: "POST", body: JSON.stringify({}) });
+      const deadline = Date.now() + 60000;
+      let sawDisconnect = false;
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+        try {
+          const health = await api("/api/health");
+          if (sawDisconnect && health.app === "premiere316") {
+            window.location.reload();
+            return;
+          }
+        } catch {
+          sawDisconnect = true;
+        }
+      }
+      throw new Error("Premiere316 did not reconnect within one minute.");
+    } catch (error: any) {
+      set({ error: String(error.message), premiereRestartBusy: false });
     }
   },
   loadScreenplayModel: async () => {
@@ -598,6 +654,21 @@ export const useStore = create<Store>((set, get) => ({
       set({ assetBusy: false });
     }
   },
+  createAsset: async (body) => {
+    const project = get().project;
+    if (!project) return null;
+    try {
+      const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/assets`, {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+      set({ project: json.project });
+      return json.asset;
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    }
+  },
   patchAsset: async (assetId, body) => {
     const project = get().project;
     if (!project) return;
@@ -605,6 +676,54 @@ export const useStore = create<Store>((set, get) => ({
       const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/assets/${encodeURIComponent(assetId)}`, {
         method: "PATCH",
         body: JSON.stringify(body)
+      });
+      set({ project: json.project });
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    }
+  },
+  uploadAssetImage: async (assetId, file) => {
+    const project = get().project;
+    if (!project) return null;
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/assets/${encodeURIComponent(assetId)}/import-image`, {
+        method: "POST",
+        body: form
+      });
+      set({ project: json.project });
+      return json.asset;
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    }
+  },
+  uploadAssetAudio: async (assetId, file) => {
+    const project = get().project;
+    if (!project) return null;
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/assets/${encodeURIComponent(assetId)}/import-audio`, {
+        method: "POST",
+        body: form
+      });
+      set({ project: json.project });
+      return json.asset;
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    }
+  },
+  deleteAsset: async (assetId) => {
+    const project = get().project;
+    if (!project) return;
+    try {
+      const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/assets/${encodeURIComponent(assetId)}`, {
+        method: "DELETE",
+        body: JSON.stringify({ confirmation: assetId })
       });
       set({ project: json.project });
     } catch (error: any) {
@@ -805,6 +924,33 @@ export const useStore = create<Store>((set, get) => ({
       await get().refreshQueue();
     } catch (error: any) {
       set({ error: String(error.message) });
+    }
+  },
+  renderH3Selection: async (clipId, mode) => {
+    const project = get().project;
+    const id = clipId || get().selClipId;
+    if (!project || !id) return;
+    await get().saveProject();
+    set({ h3Busy: true, error: null });
+    try {
+      const body: any = { clipId: id, mode: mode || get().h3Mode };
+      const selected = get().selectedSegmentIds;
+      if (selected.length) body.segmentIds = selected;
+      else if (get().markInFrame != null && get().markOutFrame != null) {
+        body.startFrame = Math.min(get().markInFrame!, get().markOutFrame!);
+        body.endFrame = Math.max(get().markInFrame!, get().markOutFrame!);
+      }
+      const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/render-h3`, {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+      if (json.diagnostics) set({ h3Diagnostics: json.diagnostics });
+      await get().refreshQueue();
+    } catch (error: any) {
+      set({ error: String(error.message || error) });
+      await get().refreshH3Diagnostics(true);
+    } finally {
+      set({ h3Busy: false });
     }
   },
   renderDirty: async (clipId) => {

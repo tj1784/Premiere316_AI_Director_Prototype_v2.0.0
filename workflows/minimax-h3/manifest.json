@@ -1,0 +1,73 @@
+{
+  "provider": "minimax_h3_local",
+  "displayName": "MiniMax H3",
+  "source": "Official Comfy-Org workflow_templates MiniMax H3 templates",
+  "templates": {
+    "t2v": "video_minimax_h3_t2v.json",
+    "i2v": "video_minimax_h3_i2v.json",
+    "r2v": "video_minimax_h3_r2v.json"
+  },
+  "modes": {
+    "t2v": {
+      "family": "fl2va",
+      "nodeClass": "MiniMaxH3ImageToVideo",
+      "hardFirstFrame": false,
+      "hardLastFrame": false
+    },
+    "first_frame": {
+      "family": "fl2va",
+      "nodeClass": "MiniMaxH3ImageToVideo",
+      "hardFirstFrame": true,
+      "hardLastFrame": false
+    },
+    "last_frame": {
+      "family": "fl2va",
+      "nodeClass": "MiniMaxH3ImageToVideo",
+      "hardFirstFrame": false,
+      "hardLastFrame": true
+    },
+    "first_last": {
+      "family": "fl2va",
+      "nodeClass": "MiniMaxH3ImageToVideo",
+      "hardFirstFrame": true,
+      "hardLastFrame": true
+    },
+    "reference": {
+      "family": "ref2va",
+      "nodeClass": "MiniMaxH3ReferenceToVideo",
+      "hardFirstFrame": false,
+      "hardLastFrame": false,
+      "note": "Ref2VA references guide identity/style/motion/audio; they are not hard first/last-frame constraints."
+    }
+  },
+  "semanticSlots": {
+    "fl2va": {
+      "subgraph": "Image to Video (MiniMax H3)",
+      "h3": "104",
+      "unet": "6",
+      "clip": "13",
+      "videoVae": "11",
+      "audioVae": "24",
+      "noise": "15",
+      "createVideo": "91",
+      "saveVideo": "p316_h3_save"
+    },
+    "ref2va": {
+      "h3": "136",
+      "unet": "127",
+      "clip": "128",
+      "videoVae": "119",
+      "audioVae": "120",
+      "noise": "129",
+      "createVideo": "130",
+      "saveVideo": "92"
+    }
+  },
+  "technicalRules": {
+    "fps": 24,
+    "minSeconds": 4,
+    "maxSeconds": 15,
+    "frameFormula": "max(5, round(requestedSeconds * 24)) + (5 - (max(5, round(requestedSeconds * 24)) % 17)) % 17",
+    "dimensions": "Multiples of 32 within the 768p-class native pixel budget; 16:9 full is approximately 1344x768."
+  }
+}

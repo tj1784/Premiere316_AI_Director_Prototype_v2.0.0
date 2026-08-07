@@ -10,7 +10,8 @@
     "start": "node server/index.js",
     "dev": "node server/index.js",
     "build:vite": "vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:h3": "node --test tests/h3.test.mjs"
   },
   "dependencies": {
     "express": "^4.19.2",

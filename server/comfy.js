@@ -6,7 +6,7 @@ import path from "path";
 import crypto from "crypto";
 import { workflowPath } from "./paths.js";
 
-export const COMFY_URL = (process.env.COMFY_URL || "http://127.0.0.1:8188").replace(/\/+$/, "");
+export const COMFY_URL = (process.env.COMFY_URL || "http://127.0.0.1:8190").replace(/\/+$/, "");
 
 let objectInfoCache = null;
 let objectInfoAt = 0;

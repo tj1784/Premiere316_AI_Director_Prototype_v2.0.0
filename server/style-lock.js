@@ -147,7 +147,10 @@ function addLiveSchemaCompatibility(prompt) {
 function loadAuthoritativeAssetWorkflow(project, asset) {
   if (String(project?.slug || "") !== "harrowing_of_hell") return null;
   const row = authoritativeByAssetId.get(String(asset?.id || ""));
-  if (!row) throw new Error(`Authoritative production workflow is missing for image asset: ${asset?.id}`);
+  // The authoritative index covers the screenplay-derived 97-asset package.
+  // Director-created assets intentionally fall back to the selected reusable
+  // Style-Lock preset while indexed production assets keep their exact hash.
+  if (!row) return null;
   const relative = String(row.max_workflow_snapshot || "").replaceAll("/", path.sep);
   const source = path.resolve(authoritativePackageDir, relative);
   if (!source.startsWith(path.resolve(authoritativePackageDir) + path.sep) || !fs.existsSync(source)) {
@@ -210,7 +213,7 @@ export function applyStyleLockToAsset(asset) {
       const lock = "STYLE-ONLY REF LOCK: references control lighting, palette, texture, and cinematic art direction only; no content or identity borrowing.";
       if (!continuity.includes(lock)) asset.continuity = [...continuity, lock];
     }
-  } else if (["voice", "sound", "music"].includes(String(asset?.category || ""))) {
+  } else if (["sound", "music"].includes(String(asset?.category || ""))) {
     asset.prompt = insertAfterManagedHeader(asset.prompt, AUDIO_STYLE_BRIDGE_PROMPT);
   }
   return asset;

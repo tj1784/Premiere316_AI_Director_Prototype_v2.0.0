@@ -37,9 +37,16 @@ function roleLetter(role: string) {
 function jobStatusLabel(status: string) {
   if (status === "running") return "RUNNING";
   if (status === "queued") return "QUEUED";
+  if (status === "cancelling") return "STOPPING";
+  if (status === "cancelled") return "STOPPED";
   if (status === "done") return "DONE";
   if (status === "error") return "FAILED";
   return status?.toUpperCase?.() || "UNKNOWN";
+}
+
+function h3ResolvedFramesUi(requestedSeconds: number) {
+  const rounded = Math.max(5, Math.round(Math.max(0, requestedSeconds) * 24));
+  return rounded + ((5 - (rounded % 17) + 17) % 17);
 }
 
 function Waveform({ density = 120, variant = "audio" }: { density?: number; variant?: string }) {
@@ -136,6 +143,13 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
     ? Math.abs(selectedEndFrame - selectedStartFrame)
     : selectedClip ? Math.round(selectedClip.durationSec * fps) : 0;
   const generationFrames = requestedFrames > 0 ? Math.ceil((requestedFrames - 1) / 8) * 8 + 1 : 0;
+  const h3RequestedSeconds = requestedFrames ? requestedFrames / fps : selectedClip ? selectedClip.durationSec : 0;
+  const h3GenerationSeconds = Math.min(15, Math.max(4, h3RequestedSeconds || 0));
+  const h3ResolvedFrames = h3RequestedSeconds ? h3ResolvedFramesUi(h3GenerationSeconds) : 0;
+  const h3RawSeconds = h3ResolvedFrames ? h3ResolvedFrames / 24 : 0;
+  const selectedH3Mode = (store.h3Diagnostics?.modes || []).find((mode: any) => mode.id === store.h3Mode);
+  const h3ModeNeedsApprovedGuides = ["first_frame", "last_frame", "first_last"].includes(store.h3Mode);
+  const h3ModeReady = selectedH3Mode ? Boolean(selectedH3Mode.enabled) : store.h3Mode === "reference" ? Boolean(store.h3Diagnostics?.ref2vaReady) : Boolean(store.h3Diagnostics?.fl2vaReady);
 
   const latestSelectedRange = useMemo(() => {
     if (!selectedClip?.rangeVersions?.length) return null;
@@ -200,6 +214,16 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
   ].filter(Boolean))] : [];
   const selectedClipHasFirstGuide = Boolean(selectedClip?.guides?.some((guide: any) => guide.role === "first" || Number(guide.frame) === 0));
   const selectedClipGuidesApproved = Boolean(selectedClip && selectedClipHasFirstGuide && selectedClipGuideFiles.length && selectedClipGuideFiles.every((file: any) => frameIsApproved(file)));
+  const h3PrimaryIssue = !store.health.comfy
+    ? "ComfyUI is offline."
+    : !store.h3Diagnostics
+      ? "Checking MiniMax H3…"
+      : !h3ModeReady
+        ? (store.h3Diagnostics.actionableErrors?.[0] || selectedH3Mode?.disabledReason || "MiniMax H3 is not ready.")
+        : h3ModeNeedsApprovedGuides && !selectedClipGuidesApproved
+          ? "Use approved Asset Foundry first/last guides for this H3 mode."
+          : "";
+  const h3CanRender = Boolean(selectedClip && store.health.comfy && h3ModeReady && (!h3ModeNeedsApprovedGuides || selectedClipGuidesApproved) && !store.h3Busy);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -525,7 +549,12 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
                 )}
                 <div className="queue-job-foot">
                   <span>{job.status === "running" ? `${Math.round((job.progress || 0) * 100)}%` : job.status}</span>
-                  {job.status === "queued" ? <button onClick={() => store.cancelJob(job.id)}>Cancel</button> : null}
+                  {(job.status === "queued" || job.status === "running") ? (
+                    <button onClick={() => {
+                      if (job.status === "running" && !window.confirm("Stop the active ComfyUI generation now? This interrupts the current prompt.")) return;
+                      store.cancelJob(job.id);
+                    }}>{job.status === "running" ? "Stop" : "Cancel"}</button>
+                  ) : null}
                 </div>
                 {job.error ? <p>{job.error}</p> : null}
               </article>
@@ -554,6 +583,14 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
             Render Selection <span>⌄</span>
           </button>
           <button className="button secondary" disabled={!selectedClip || !store.health.comfy || !selectedClipGuidesApproved} onClick={() => selectedClip && store.renderDirty(selectedClip.id)}>Render Dirty</button>
+          <button
+            className="button secondary h3-toolbar-button"
+            disabled={!h3CanRender}
+            title={h3PrimaryIssue || `Render with ${selectedH3Mode?.label || "MiniMax H3"}`}
+            onClick={() => selectedClip && store.renderH3Selection(selectedClip.id)}
+          >
+            MiniMax H3
+          </button>
           <span className="toolbar-spacer" />
           <span className="zoom-label">−</span>
           <input type="range" min={12} max={120} value={store.pxPerSec} onChange={(event) => store.setPxPerSec(Number(event.target.value))} />
@@ -701,10 +738,41 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
                 <div><dt>LTX output</dt><dd>{generationFrames || 0} frames</dd></div>
               </dl>
             </div>
+            <div className={`h3-mini-panel ${h3ModeReady ? "ready" : "blocked"}`}>
+              <div className="h3-mini-heading">
+                <h4>MINIMAX H3 LOCAL</h4>
+                <button className="mini-icon" title="Recheck MiniMax H3 models and native nodes" onClick={() => store.refreshH3Diagnostics(true)}>↻</button>
+              </div>
+              <label>
+                Mode
+                <select value={store.h3Mode} onChange={(event) => store.setH3Mode(event.target.value as any)}>
+                  <option value="t2v">Text to Video</option>
+                  <option value="first_frame">First Frame to Video</option>
+                  <option value="last_frame">Last Frame to Video</option>
+                  <option value="first_last">First + Last Frame</option>
+                  <option value="reference">Reference to Video</option>
+                </select>
+              </label>
+              <dl>
+                <div><dt>Backend</dt><dd>{store.h3Diagnostics?.comfyVersion ? `Comfy ${store.h3Diagnostics.comfyVersion}` : "Checking"}</dd></div>
+                <div><dt>FL2VA</dt><dd>{store.h3Diagnostics?.fl2vaReady ? "Ready" : "Blocked"}</dd></div>
+                <div><dt>Ref2VA</dt><dd>{store.h3Diagnostics?.ref2vaReady ? "Ready" : "Missing/blocked"}</dd></div>
+                <div><dt>H3 raw</dt><dd>{h3ResolvedFrames ? `${h3ResolvedFrames}f · ${secondsLabel(h3RawSeconds)}` : "—"}</dd></div>
+              </dl>
+              {h3PrimaryIssue ? <p>{h3PrimaryIssue}</p> : <p>Ready: raw H3 MP4 is preserved, and an exact timeline copy is conformed after render.</p>}
+              <button
+                className="button primary"
+                disabled={!h3CanRender}
+                onClick={() => selectedClip && store.renderH3Selection(selectedClip.id)}
+              >
+                {store.h3Busy ? "Queueing H3…" : "Render Selected with H3"}
+              </button>
+            </div>
             <div className="timeline-actions">
               <h4>ACTIONS</h4>
               <button className="button primary" disabled={!selectedClip || !store.health.comfy || !selectedClipGuidesApproved} onClick={() => selectedClip && store.renderSelection(selectedClip.id)}>Render Selection</button>
               <button className="button secondary" disabled={!selectedClip || !store.health.comfy || !selectedClipGuidesApproved} onClick={() => selectedClip && store.renderDirty(selectedClip.id)}>Render Dirty</button>
+              <button className="button secondary" disabled={!h3CanRender} onClick={() => selectedClip && store.renderH3Selection(selectedClip.id)}>Render H3 Selection</button>
               <button className="button secondary" disabled={!selectedClip} onClick={() => selectedClip && store.assembleClip(selectedClip.id)}>Assemble Clip</button>
               <button className="button secondary" disabled={!selectedClip || !selectedFrameApproved} onClick={() => {
                  if (selectedClip && store.selFrameFile) store.attachGuide(selectedClip.id, { frameFile: store.selFrameFile, role: "first", frame: 0 });
@@ -886,6 +954,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
         <aside className="system-status">
           <h4>SYSTEM STATUS</h4>
           <span className={store.health.comfy ? "good" : "bad"}><i /> ComfyUI <b>{store.health.comfy ? (store.health.capabilities?.dedicatedComfyUI ? "Dedicated · 8190" : "Connected") : "Offline"}</b></span>
+          <span className={store.h3Diagnostics?.fl2vaReady ? "good" : "bad"}><i /> MiniMax H3 <b>{store.h3Diagnostics?.fl2vaReady ? "FL2VA Ready" : store.h3Diagnostics?.comfyVersion ? `Needs 0.30+ · ${store.h3Diagnostics.comfyVersion}` : "Checking"}</b></span>
           <span className={runningJobs.length ? "working" : "good"}><i /> Queue <b>{runningJobs.length ? `${runningJobs.length} Active` : "Idle"}</b></span>
           <span className={store.health.ffmpeg ? "good" : "bad"}><i /> FFmpeg <b>{store.health.ffmpeg ? "Ready" : "Missing"}</b></span>
           <button

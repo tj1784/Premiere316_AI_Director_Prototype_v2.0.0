@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { assetUrl, useStore } from "../store";
 
 const CATEGORY_ORDER = [
@@ -28,6 +28,101 @@ const CATEGORY_ICONS: Record<string, string> = {
   music: "♫",
   graphic: "T"
 };
+
+const CATEGORY_LABELS: Record<string, string> = {
+  character: "Characters",
+  wardrobe: "Wardrobe",
+  location: "Locations",
+  artifact: "Props & Artifacts",
+  extra: "Crowds & Creatures",
+  atmosphere: "Atmosphere & VFX",
+  "guide-frame": "Guide Frames",
+  voice: "Voices",
+  sound: "Sound Design",
+  music: "Music",
+  graphic: "Graphics"
+};
+
+const AUDIO_UPLOAD_CATEGORIES = new Set(["voice", "sound", "music"]);
+const AUDIO_ACCEPT = "audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/flac,audio/x-flac,audio/mp4,audio/aac,audio/ogg,application/ogg,.mp3,.wav,.flac,.m4a,.aac,.ogg";
+
+function acceptsAudioUpload(asset: any) {
+  return Boolean(asset && (asset.mediaType === "audio" || AUDIO_UPLOAD_CATEGORIES.has(String(asset.category || ""))));
+}
+
+function AssetEditorDialog({ mode, asset, workflows, busy, onCancel, onSubmit, onUploadImage, onUploadAudio }: {
+  mode: "create" | "edit";
+  asset?: any;
+  workflows: any[];
+  busy: boolean;
+  onCancel: () => void;
+  onSubmit: (body: any) => void;
+  onUploadImage?: (file: File) => void;
+  onUploadAudio?: (file: File) => void;
+}) {
+  const [name, setName] = useState(asset?.name || "");
+  const [variant, setVariant] = useState(asset?.variant || "Production Reference");
+  const [category, setCategory] = useState(asset?.category || "character");
+  const [workflowId, setWorkflowId] = useState(asset?.workflowId || "");
+  const [prompt, setPrompt] = useState(asset?.prompt || "");
+  const [sampleText, setSampleText] = useState(asset?.sampleText || "");
+  const [continuity, setContinuity] = useState((asset?.continuity || []).join("\n"));
+  const [dependencies, setDependencies] = useState((asset?.dependencies || []).join("\n"));
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+
+  return (
+    <div className="asset-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onCancel(); }}>
+      <form className="asset-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="asset-editor-title" onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit({
+          name,
+          variant,
+          category,
+          workflowId: workflowId || undefined,
+          prompt,
+          sampleText,
+          continuity: continuity.split(/\r?\n/).map((line) => line.trim()).filter(Boolean),
+          dependencies: dependencies.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+        });
+      }}>
+        <header>
+          <div><p className="eyebrow">ASSET FOUNDRY</p><h2 id="asset-editor-title">{mode === "create" ? "Create New Asset" : "Edit Asset Details"}</h2></div>
+          <button type="button" className="asset-dialog-close" aria-label="Close asset editor" onClick={onCancel} disabled={busy}>×</button>
+        </header>
+        <div className="asset-dialog-fields">
+          <label><span>Name</span><input data-testid="asset-name" required maxLength={160} value={name} onChange={(event) => setName(event.target.value)} placeholder="Production asset name" autoFocus /></label>
+          <label><span>Variant</span><input data-testid="asset-variant" required maxLength={120} value={variant} onChange={(event) => setVariant(event.target.value)} placeholder="Production Reference" /></label>
+          <label><span>Category</span><select data-testid="asset-category" value={category} onChange={(event) => { setCategory(event.target.value); if (mode === "create") setWorkflowId(""); }}>{CATEGORY_ORDER.map((key) => <option key={key} value={key}>{CATEGORY_LABELS[key]}</option>)}</select></label>
+          <label><span>Generation Workflow</span><select data-testid="asset-workflow" value={workflowId} onChange={(event) => setWorkflowId(event.target.value)}><option value="">Automatic category routing</option>{workflows.map((workflow) => <option key={workflow.id} value={workflow.id}>{workflow.label}{workflow.ready === false ? " — unavailable" : ""}</option>)}</select></label>
+          {mode === "edit" && asset?.mediaType === "image" && onUploadImage ? (
+            <section className="asset-upload-panel wide">
+              <div><span>UPLOAD IMAGE VERSION</span><small>PNG, JPEG, or WebP · imported as a new unapproved version</small></div>
+              <input data-testid="asset-image-file" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />
+              <button data-testid="asset-image-upload" type="button" className="primary-action" disabled={busy || !imageFile} onClick={() => { if (imageFile) onUploadImage(imageFile); }}>{busy ? "Uploading…" : "Upload Image"}</button>
+            </section>
+          ) : null}
+          {mode === "edit" && acceptsAudioUpload(asset) && onUploadAudio ? (
+            <section className="asset-upload-panel audio wide">
+              <div><span>UPLOAD AUDIO VERSION</span><small>MP3, WAV, FLAC, M4A, AAC, or OGG · imported as a playable asset version</small></div>
+              <input data-testid="asset-audio-file" type="file" accept={AUDIO_ACCEPT} onChange={(event) => setAudioFile(event.target.files?.[0] || null)} />
+              <button data-testid="asset-audio-upload" type="button" className="primary-action" disabled={busy || !audioFile} onClick={() => { if (audioFile) onUploadAudio(audioFile); }}>{busy ? "Uploading…" : "Upload Audio"}</button>
+            </section>
+          ) : null}
+          <label className="wide"><span>Generation Prompt / Direction {category === "voice" ? <small className={prompt.length > 1000 ? "asset-limit-error" : "asset-character-count"}>{prompt.length}/1000 · ElevenLabs Voice Design limit</small> : null}</span><textarea data-testid="asset-prompt" rows={8} maxLength={category === "voice" ? 1000 : undefined} value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Describe the exact production asset and continuity requirements." /></label>
+          {category === "voice" ? <label className="wide"><span>Audition Line</span><textarea rows={3} value={sampleText} onChange={(event) => setSampleText(event.target.value)} /></label> : null}
+          <label><span>Continuity Locks <small>one per line</small></span><textarea rows={4} value={continuity} onChange={(event) => setContinuity(event.target.value)} /></label>
+          <label><span>Dependencies <small>asset IDs, one per line</small></span><textarea rows={4} value={dependencies} onChange={(event) => setDependencies(event.target.value)} /></label>
+        </div>
+        <footer>
+          <small>{mode === "create" ? "A stable asset ID and workflow snapshot will be created automatically." : "Existing generated versions remain immutable; changed direction requires a fresh generation."}</small>
+          <button type="button" className="secondary-action" onClick={onCancel} disabled={busy}>Cancel</button>
+          <button data-testid="asset-submit" type="submit" className="primary-action" disabled={busy || !name.trim()}>{busy ? "Saving…" : mode === "create" ? "Create Asset" : "Save Details"}</button>
+        </footer>
+      </form>
+    </div>
+  );
+}
 
 function activeFile(asset: any) {
   if (asset?.activeVersionCurrent === false) return null;
@@ -69,7 +164,7 @@ function AssetPreview({ project, asset, large = false }: { project: any; asset: 
     );
   }
   const url = assetUrl(project.slug, file);
-  if (/\.(mp3|wav|flac|m4a|ogg)$/i.test(file)) {
+  if (/\.(mp3|wav|flac|m4a|aac|ogg)$/i.test(file)) {
     return <div className={`asset-audio-preview ${large ? "large" : ""}`}><span>♫</span><audio controls src={url} /></div>;
   }
   if (/\.(png|jpe?g|webp|gif|svg)$/i.test(file)) return <img className={`asset-image-preview ${large ? "large" : ""}`} src={url} alt={`${asset.name} ${asset.variant}`} />;
@@ -83,9 +178,14 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
   const [category, setCategory] = useState("all");
   const [selectedId, setSelectedId] = useState<string | null>(assets[0]?.id || null);
   const [checked, setChecked] = useState<string[]>([]);
+  const [assetSelectionAnchorId, setAssetSelectionAnchorId] = useState<string | null>(null);
   const [confirmGpuHandoff, setConfirmGpuHandoff] = useState(false);
   const [stopping, setStopping] = useState(false);
   const [queueing, setQueueing] = useState(false);
+  const [assetEditor, setAssetEditor] = useState<{ mode: "create" | "edit"; asset?: any } | null>(null);
+  const [assetEditorBusy, setAssetEditorBusy] = useState(false);
+  const assetImageInput = useRef<HTMLInputElement>(null);
+  const assetAudioInput = useRef<HTMLInputElement>(null);
   const selected = assets.find((asset: any) => asset.id === selectedId) || assets[0] || null;
   const [prompt, setPrompt] = useState(selected?.prompt || "");
   const [sampleText, setSampleText] = useState(selected?.sampleText || "");
@@ -156,6 +256,7 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
     return Boolean(workflow?.ready && workflow?.availableNow === false && /GPU handoff required/i.test(String(workflow?.runtimeWarning || workflow?.reason || "")));
   });
   const selectedJob = selected ? activeAssetJobs.find((job: any) => job.refs?.assetId === selected.id) : null;
+  const selectedAcceptsAudioUpload = acceptsAudioUpload(selected);
   const enhance = store.promptEnhance;
   const enhanceActive = Boolean(store.promptEnhanceBusy || enhance?.active || ["queued", "running", "cancelling"].includes(String(enhance?.status || "")));
   const enhanceProgress = enhance?.total
@@ -180,10 +281,31 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
 
   const toggleChecked = (id: string) => {
     const removing = checked.includes(id);
+    setAssetSelectionAnchorId(id);
     setChecked((current) => removing ? current.filter((item) => item !== id) : [...current, id]);
     if (removing && activeAssetJobs.some((job: any) => job.refs?.assetId === id && job.status === "queued")) {
       void store.stopAssetGeneration(id);
     }
+  };
+
+  const selectAssetCard = (event: React.MouseEvent<HTMLElement>, id: string) => {
+    setSelectedId(id);
+    if (event.shiftKey) {
+      const anchorIndex = visibleIds.indexOf(assetSelectionAnchorId || id);
+      const targetIndex = visibleIds.indexOf(id);
+      if (anchorIndex >= 0 && targetIndex >= 0) {
+        const [start, end] = anchorIndex <= targetIndex ? [anchorIndex, targetIndex] : [targetIndex, anchorIndex];
+        const range = visibleIds.slice(start, end + 1);
+        setChecked((current) => event.ctrlKey || event.metaKey ? [...new Set([...current, ...range])] : range);
+      }
+      return;
+    }
+    if (event.ctrlKey || event.metaKey) {
+      toggleChecked(id);
+      return;
+    }
+    setAssetSelectionAnchorId(id);
+    setChecked([id]);
   };
 
   const toggleSelectAllVisible = () => {
@@ -209,6 +331,56 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
   const saveSelected = async () => {
     if (!selected) return;
     await store.patchAsset(selected.id, { prompt, sampleText });
+  };
+
+  const submitAssetEditor = async (body: any) => {
+    if (!assetEditor) return;
+    setAssetEditorBusy(true);
+    try {
+      if (assetEditor.mode === "create") {
+        const created = await store.createAsset(body);
+        setCategory("all");
+        setSelectedId(created?.id || null);
+      } else if (assetEditor.asset) {
+        await store.patchAsset(assetEditor.asset.id, body);
+      }
+      setAssetEditor(null);
+    } finally {
+      setAssetEditorBusy(false);
+    }
+  };
+
+  const deleteSelected = async () => {
+    if (!selected) return;
+    const message = `Delete “${selected.name}” from the Asset Foundry?\n\nIts metadata, workflow snapshots, and generated files will be retained in recoverable project history.`;
+    if (!window.confirm(message)) return;
+    await store.deleteAsset(selected.id);
+    setChecked((current) => current.filter((id) => id !== selected.id));
+    setSelectedId(null);
+  };
+
+  const uploadAssetImage = async (file: File, assetId = selected?.id) => {
+    if (!assetId) return;
+    setAssetEditorBusy(true);
+    try {
+      await store.uploadAssetImage(assetId, file);
+      setAssetEditor(null);
+    } finally {
+      setAssetEditorBusy(false);
+      if (assetImageInput.current) assetImageInput.current.value = "";
+    }
+  };
+
+  const uploadAssetAudio = async (file: File, assetId = selected?.id) => {
+    if (!assetId) return;
+    setAssetEditorBusy(true);
+    try {
+      await store.uploadAssetAudio(assetId, file);
+      setAssetEditor(null);
+    } finally {
+      setAssetEditorBusy(false);
+      if (assetAudioInput.current) assetAudioInput.current.value = "";
+    }
   };
 
   const runPromptEnhance = async () => {
@@ -242,7 +414,9 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
           )}
           {!project.screenplay?.markdown ? <small>Generate or import a screenplay first.</small> : null}
           {!approved && project.screenplay?.markdown ? <small>Review the screenplay first. Approval is tied to this exact revision and is revoked by later edits.</small> : null}
+          <button className="secondary-action wide" onClick={() => setAssetEditor({ mode: "create" })}>+ Create Asset Manually</button>
         </section>
+        {assetEditor ? <AssetEditorDialog mode={assetEditor.mode} asset={assetEditor.asset} workflows={store.assetWorkflows} busy={assetEditorBusy} onCancel={() => setAssetEditor(null)} onSubmit={submitAssetEditor} onUploadImage={assetEditor.asset ? (file) => uploadAssetImage(file, assetEditor.asset.id) : undefined} onUploadAudio={assetEditor.asset ? (file) => uploadAssetAudio(file, assetEditor.asset.id) : undefined} /> : null}
       </main>
     );
   }
@@ -306,9 +480,10 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
           <div>
             <p className="eyebrow">PROJECT ASSETS</p>
             <h1>{category === "all" ? "Complete Production Library" : categories.find((item) => item.key === category)?.label}</h1>
-            <small>{visible.length} shown · {readyWorkflows.length}/{store.assetWorkflows.length || project.assets.catalog?.length || 0} installed · {availableWorkflows.length} available now{waitingWorkflows.length ? ` · ${waitingWorkflows.length} waiting for GPU` : ""}</small>
+            <small>{visible.length} shown · {readyWorkflows.length}/{store.assetWorkflows.length || project.assets.catalog?.length || 0} installed · {availableWorkflows.length} available now{waitingWorkflows.length ? ` · ${waitingWorkflows.length} waiting for GPU` : ""} · Ctrl/Cmd-click toggles · Shift-click selects a range</small>
           </div>
           <div className="asset-toolbar-actions">
+            <button data-testid="new-asset-button" className="primary-action" onClick={() => setAssetEditor({ mode: "create" })}>+ New Asset</button>
             <button
               className="secondary-action"
               disabled={!visible.length}
@@ -385,29 +560,30 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
         ) : null}
 
         <div className="asset-grid">
-          {visible.map((asset: any) => {
+          {visible.map((asset: any, assetIndex: number) => {
             const isSelected = selected?.id === asset.id;
             const isChecked = checked.includes(asset.id);
             const liveWorkflow = store.assetWorkflows.find((workflow: any) => workflow.id === asset.workflowId) || asset.workflow;
             const workflowReady = liveWorkflow?.ready !== false;
             const workflowAvailable = liveWorkflow?.availableNow !== false;
             return (
-              <article key={asset.id} className={`asset-card ${isSelected ? "selected" : ""}`} onClick={() => setSelectedId(asset.id)}>
+              <article key={asset.id} role="option" tabIndex={0} className={`asset-card ${isSelected ? "selected" : ""} ${isChecked ? "checked" : ""}`} aria-label={`${asset.name} — ${asset.variant}`} aria-selected={isChecked} onClick={(event) => selectAssetCard(event, asset.id)} onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                setSelectedId(asset.id);
+                toggleChecked(asset.id);
+              }}>
                 <div className="asset-card-preview">
                   <AssetPreview project={project} asset={asset} />
-                  <label className="asset-check" onClick={(event) => event.stopPropagation()}>
-                    <input type="checkbox" checked={isChecked} onChange={() => toggleChecked(asset.id)} />
-                    <span>✓</span>
-                  </label>
+                  <span className="asset-check" aria-hidden="true"><span>{isChecked ? "✓" : ""}</span></span>
                   <StatusPill status={asset.status} />
                   {assetApproved(project, asset) ? <span className="asset-approved-badge">✓ APPROVED v{asset.activeVersion}</span> : null}
-                </div>
-                <div className="asset-card-copy">
-                  <small>{asset.categoryLabel} · {asset.variant}</small>
-                  <code className="asset-id">ID · {asset.id}</code>
-                  <h3>{asset.name}</h3>
-                  <p>{asset.prompt}</p>
-                  <div title={liveWorkflow?.runtimeWarning || liveWorkflow?.reason}><span className={workflowReady && workflowAvailable ? "ready" : workflowReady ? "waiting" : "blocked"}>{workflowReady && workflowAvailable ? "●" : "○"}</span>{liveWorkflow?.label || asset.workflowId}</div>
+                  <div className="asset-card-label">
+                    <div><span>#{assetIndex + 1}</span><small>{asset.categoryLabel} · {asset.variant}</small></div>
+                    <h3>{asset.name}</h3>
+                    <code title={asset.id}>{asset.id}</code>
+                    <p title={liveWorkflow?.runtimeWarning || liveWorkflow?.reason}><i className={workflowReady && workflowAvailable ? "ready" : workflowReady ? "waiting" : "blocked"} />{liveWorkflow?.label || asset.workflowId}</p>
+                  </div>
                 </div>
               </article>
             );
@@ -418,7 +594,7 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
       <aside className="asset-inspector">
         {selected ? (
           <>
-            <header><div><p className="eyebrow">ASSET INSPECTOR</p><h2>{selected.name}</h2><small>{selected.variant}</small></div><StatusPill status={selected.status} /></header>
+            <header><div><p className="eyebrow">ASSET INSPECTOR</p><h2>{selected.name}</h2><small>{selected.variant}</small></div><div className="asset-inspector-heading-actions"><StatusPill status={selected.status} /><button data-testid="edit-asset-button" className="secondary-action" onClick={() => setAssetEditor({ mode: "edit", asset: selected })}>Edit</button></div></header>
             <AssetPreview project={project} asset={selected} large />
             <div className="asset-inspector-scroll">
               <section className="asset-provenance">
@@ -436,8 +612,9 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
                 <span>
                   Generation Prompt / Direction
                   {selected.promptEnhancement ? <em className="asset-prompt-badge">Grok enhanced</em> : null}
+                  {selected.category === "voice" ? <em className={prompt.length > 1000 ? "asset-limit-error" : "asset-character-count"}>{prompt.length}/1000 · ElevenLabs limit</em> : null}
                 </span>
-                <textarea rows={10} value={prompt} onChange={(event) => setPrompt(event.target.value)} />
+                <textarea rows={10} maxLength={selected.category === "voice" ? 1000 : undefined} value={prompt} onChange={(event) => setPrompt(event.target.value)} />
               </label>
               {!enhanceActive ? (
                 <button
@@ -461,6 +638,9 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
               </section>
             </div>
             <footer>
+              <button data-testid="delete-asset-button" className="danger-action" disabled={Boolean(selectedJob)} onClick={deleteSelected}>Delete</button>
+              {selected.mediaType === "image" ? <button data-testid="upload-asset-image-button" className="secondary-action asset-upload-action" disabled={Boolean(selectedJob) || assetEditorBusy} onClick={() => assetImageInput.current?.click()}>{assetEditorBusy ? "Uploading…" : "↑ Upload Image"}</button> : null}
+              {selectedAcceptsAudioUpload ? <button data-testid="upload-asset-audio-button" className="secondary-action asset-upload-action" disabled={Boolean(selectedJob) || assetEditorBusy} onClick={() => assetAudioInput.current?.click()}>{assetEditorBusy ? "Uploading…" : "Upload Audio"}</button> : null}
               {selectedJob ? <button className="stop-generation-action" disabled={stopping} onClick={() => stopGeneration(selected.id)}>{stopping ? "Stopping…" : selectedJob.status === "queued" ? "■ Remove from Queue" : "■ Stop This Asset"}</button> : null}
               <button className="secondary-action" disabled={!directionDirty} onClick={saveSelected}>{directionDirty ? "Save Direction" : "Direction Saved"}</button>
               {selected.versions?.length ? <button className={selectedApproved ? "secondary-action" : "primary-action"} disabled={selectedApproved || selected.activeVersionCurrent === false || !manifestCurrent || directionDirty} title={selected.activeVersionCurrent === false ? "This is a historical version from older direction. Generate a fresh version before approval." : directionDirty ? "Save the direction, then generate and review a fresh version before approval." : undefined} onClick={() => store.approveAsset(selected.id)}>{selected.activeVersionCurrent === false ? "Generate fresh version to approve" : directionDirty ? "Save direction first" : selectedApproved ? `✓ Approved v${selected.activeVersion}` : `Approve v${selected.activeVersion}`}</button> : null}
@@ -474,6 +654,9 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
       </aside>
 
       <button className="asset-open-editor" onClick={onOpenEditor}>Open Timeline →</button>
+      <input ref={assetImageInput} className="asset-hidden-file" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAssetImage(file); }} />
+      <input ref={assetAudioInput} className="asset-hidden-file" type="file" accept={AUDIO_ACCEPT} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAssetAudio(file); }} />
+      {assetEditor ? <AssetEditorDialog mode={assetEditor.mode} asset={assetEditor.asset} workflows={store.assetWorkflows} busy={assetEditorBusy} onCancel={() => setAssetEditor(null)} onSubmit={submitAssetEditor} onUploadImage={assetEditor.asset ? (file) => uploadAssetImage(file, assetEditor.asset.id) : undefined} onUploadAudio={assetEditor.asset ? (file) => uploadAssetAudio(file, assetEditor.asset.id) : undefined} /> : null}
     </main>
   );
 }

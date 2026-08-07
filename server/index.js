@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs";
 import crypto from "crypto";
 import multer from "multer";
-import { execFile } from "child_process";
+import { execFile, spawn } from "child_process";
 import { promisify } from "util";
 import { comfyAlive, COMFY_URL, getObjectInfo } from "./comfy.js";
 import {
@@ -30,6 +30,15 @@ import {
   framesOf,
   groupContiguousSegments
 } from "./timeline.js";
+import {
+  H3_DISPLAY_NAME,
+  H3_MODE_FIRST,
+  H3_MODE_REFERENCE,
+  H3_MODES,
+  compileH3Prompt,
+  h3Diagnostics,
+  splitH3Ranges
+} from "./h3.js";
 import { ffmpegAvailable, probeMedia } from "./ffmpeg.js";
 import { normalizeBookends } from "./bookends.js";
 import { PACKAGE_ROOT, PROJECTS_DIR, CLIENT_DIST, projectDir } from "./paths.js";
@@ -43,17 +52,23 @@ import {
 } from "./screenplay.js";
 import {
   ASSET_WORKFLOWS,
+  ASSET_CATEGORY_LABELS,
+  assetMediaType,
+  defaultAssetWorkflow,
   assetApprovalCurrent,
   assetGenerationFingerprint,
   assetVersionFingerprint,
   assetVersionFilesCurrent,
   buildAssetPackage,
+  createDirectorAsset,
   getAssetWorkflowCatalog,
   promoteAssetToFrame,
   saveAssetPackageFiles,
+  updateAssetManifestCounts,
   reconcileAssetGenerationState,
   withAssetPromptHeader,
   registerDirectorAssetImage,
+  registerDirectorAssetAudio,
   validateAssetWorkflow
 } from "./assets.js";
 import { premierePiAgent, PREMIERE_PI_MODEL } from "./pi-agent.js";
@@ -72,6 +87,8 @@ const execFileAsync = promisify(execFile);
 const LMS_EXECUTABLE = process.env.LMS_EXECUTABLE || path.join(process.env.USERPROFILE || "", ".lmstudio", "bin", "lms.exe");
 const GPU_HANDOFF_CONFIRMATION = "UNLOAD_QWEN_AND_CANCEL_ACTIVE_GENERATION";
 const COMFY_RESTART_SCRIPT = path.join(PACKAGE_ROOT, "BlokeyUI", "restart_premiere316_engine.ps1");
+const PREMIERE_RESTART_SCRIPT = path.join(PACKAGE_ROOT, "restart_premiere316_app.ps1");
+const PREMIERE_RESTART_HELPER = path.join(PACKAGE_ROOT, "scripts", "restart-premiere316.mjs");
 let comfyRestarting = false;
 let comfyRestartState = { status: "idle", startedAt: null, finishedAt: null, error: null, detail: null };
 
@@ -168,8 +185,9 @@ app.get("/api/health", async (_req, res) => {
       selectedRangeRender: true,
       guideUpload: false,
       ingredientsICLoRA: true,
-      dedicatedComfyUI: false,
-      dedicatedComfyRestart: process.platform === "win32" && /:8188$/.test(COMFY_URL) && fs.existsSync(COMFY_RESTART_SCRIPT),
+      dedicatedComfyUI: /:8190$/.test(COMFY_URL),
+      dedicatedComfyRestart: process.platform === "win32" && /:8190$/.test(COMFY_URL) && fs.existsSync(COMFY_RESTART_SCRIPT),
+      premiereRestart: process.platform === "win32" && fs.existsSync(PREMIERE_RESTART_HELPER),
       screenplayGeneration: screenplay.online && screenplay.modelAvailable,
       screenplayStreamingChat: screenplay.online && screenplay.modelAvailable,
       piExpertOrchestrator: true,
@@ -187,6 +205,29 @@ app.get("/api/health", async (_req, res) => {
   });
 });
 
+app.post("/api/system/premiere/restart", (req, res) => {
+  if (!isLoopbackRequest(req)) {
+    return res.status(403).json({ error: "Premiere316 can be restarted only from this computer." });
+  }
+  if (process.platform !== "win32" || !fs.existsSync(PREMIERE_RESTART_HELPER)) {
+    return res.status(501).json({ error: "The Premiere316 restart helper is unavailable on this installation." });
+  }
+  const child = spawn("powershell.exe", [
+    "-NoProfile",
+    "-ExecutionPolicy", "Bypass",
+    "-File", PREMIERE_RESTART_HELPER,
+    "-OldProcessId", String(process.pid)
+  ], {
+    cwd: PACKAGE_ROOT,
+    detached: true,
+    windowsHide: true,
+    stdio: "ignore"
+  });
+  child.unref();
+  res.status(202).json({ ok: true, restarting: true, port: Number(PORT) });
+  setTimeout(() => process.exit(0), 1500);
+});
+
 app.post("/api/system/comfy/restart", async (req, res) => {
   if (!isLoopbackRequest(req)) {
     return res.status(403).json({ error: "ComfyUI can be restarted only from this computer." });
@@ -197,8 +238,8 @@ app.post("/api/system/comfy/restart", async (req, res) => {
   } catch {
     return res.status(409).json({ error: `The configured ComfyUI URL is invalid: ${COMFY_URL}` });
   }
-  if (!(["127.0.0.1", "localhost"].includes(comfyUrl.hostname) && comfyUrl.port === "8188")) {
-    return res.status(409).json({ error: "Restart is available only for the routed local Sineforge ComfyUI on port 8188." });
+  if (!(["127.0.0.1", "localhost"].includes(comfyUrl.hostname) && comfyUrl.port === "8190")) {
+    return res.status(409).json({ error: "Restart is available only for Premiere316's dedicated ComfyUI on port 8190." });
   }
   if (process.platform !== "win32" || !fs.existsSync(COMFY_RESTART_SCRIPT)) {
     return res.status(501).json({ error: "The dedicated ComfyUI restart helper is unavailable on this installation." });
@@ -1001,6 +1042,22 @@ app.patch("/api/projects/:slug/assets/:assetId", async (req, res) => {
     const beforeFingerprint = assetGenerationFingerprint(asset);
     const allowed = ["name", "variant", "prompt", "sampleText", "workflowId", "seed", "durationSec", "bpm", "status", "dependencies", "continuity"];
     for (const key of allowed) if (Object.prototype.hasOwnProperty.call(req.body || {}, key)) asset[key] = req.body[key];
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, "category")) {
+      const category = String(req.body.category || "").trim();
+      if (!Object.prototype.hasOwnProperty.call(ASSET_CATEGORY_LABELS, category)) return res.status(400).json({ error: `Unknown asset category: ${category}` });
+      const changed = category !== asset.category;
+      asset.category = category;
+      asset.categoryLabel = ASSET_CATEGORY_LABELS[category];
+      asset.mediaType = assetMediaType(category);
+      if (changed && !Object.prototype.hasOwnProperty.call(req.body || {}, "workflowId")) {
+        asset.workflowId = defaultAssetWorkflow(category, asset.variant, asset.name, asset.id);
+      }
+    }
+    asset.name = String(asset.name || "").replace(/\s+/g, " ").trim().slice(0, 160);
+    asset.variant = String(asset.variant || "Production Reference").replace(/\s+/g, " ").trim().slice(0, 120) || "Production Reference";
+    if (!asset.name) return res.status(400).json({ error: "Asset name is required" });
+    asset.dependencies = Array.isArray(asset.dependencies) ? asset.dependencies.map((item) => String(item || "").trim()).filter(Boolean) : [];
+    asset.continuity = Array.isArray(asset.continuity) ? asset.continuity.map((item) => String(item || "").trim()).filter(Boolean) : [];
     asset.prompt = withAssetPromptHeader(asset, asset.prompt);
     if (asset.workflowId && !ASSET_WORKFLOWS.some((workflow) => workflow.id === asset.workflowId)) {
       return res.status(400).json({ error: `Unknown asset workflow: ${asset.workflowId}` });
@@ -1010,9 +1067,75 @@ app.patch("/api/projects/:slug/assets/:assetId", async (req, res) => {
     asset.workflow = state ? { id: state.id, label: state.label, model: state.model, ready: state.ready, availableNow: state.availableNow, reason: state.runtimeWarning || state.reason, gpu: state.gpu, minimumFreeVramGb: state.minimumFreeVramGb } : asset.workflow;
     if (assetGenerationFingerprint(asset) !== beforeFingerprint) asset.approval = null;
     asset.updatedAt = new Date().toISOString();
+    updateAssetManifestCounts(project.assets);
     saveAssetPackageFiles(project);
     saveProject(project);
     res.json({ project, asset });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.post("/api/projects/:slug/assets", async (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    if (!project.assets) {
+      project.assets = {
+        schemaVersion: 1,
+        screenplayHash: currentScreenplayRevision(project),
+        counts: {},
+        total: 0,
+        items: [],
+        deletedItems: []
+      };
+    }
+    project.assets.items ||= [];
+    const asset = createDirectorAsset(req.body || {}, project.assets.items);
+    project.assets.items.push(asset);
+    const catalog = await getAssetWorkflowCatalog();
+    const state = catalog.find((workflow) => workflow.id === asset.workflowId);
+    asset.workflow = state ? { id: state.id, label: state.label, model: state.model, ready: state.ready, availableNow: state.availableNow, reason: state.runtimeWarning || state.reason, gpu: state.gpu, minimumFreeVramGb: state.minimumFreeVramGb } : { id: asset.workflowId, label: asset.workflowId, ready: false, reason: "Unknown workflow" };
+    project.assets.catalog = catalog;
+    updateAssetManifestCounts(project.assets);
+    saveAssetPackageFiles(project);
+    saveProject(project);
+    res.status(201).json({ project, asset });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.delete("/api/projects/:slug/assets/:assetId", (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    const assets = project.assets?.items || [];
+    const index = assets.findIndex((item) => item.id === req.params.assetId);
+    if (index < 0) return res.status(404).json({ error: "Asset not found" });
+    const asset = assets[index];
+    if (String(req.body?.confirmation || "") !== asset.id) {
+      return res.status(400).json({ error: "Asset ID confirmation does not match" });
+    }
+    const activeJob = listJobs().find((job) => job.projectSlug === project.slug && job.type === "generate_asset" && job.refs?.assetId === asset.id && ["queued", "running", "cancelling"].includes(job.status));
+    if (activeJob) return res.status(409).json({ error: "Stop this asset's active generation job before deleting it." });
+    if ((project.frames || []).some((frame) => frame.assetId === asset.id)) {
+      return res.status(409).json({ error: "This asset is in the Project Bin. Remove its promoted frame before deleting the source asset." });
+    }
+    const deletedAt = new Date().toISOString();
+    project.assets.deletedItems ||= [];
+    project.assets.deletedItems.push({
+      id: asset.id,
+      deletedAt,
+      recoverable: true,
+      asset
+    });
+    project.assets.items.splice(index, 1);
+    for (const item of project.assets.items) {
+      if (Array.isArray(item.dependencies)) item.dependencies = item.dependencies.filter((id) => id !== asset.id);
+    }
+    updateAssetManifestCounts(project.assets);
+    saveAssetPackageFiles(project);
+    saveProject(project);
+    res.json({ project, deleted: { id: asset.id, deletedAt, recoverable: true } });
   } catch (e) {
     res.status(400).json({ error: String(e.message) });
   }
@@ -1258,6 +1381,27 @@ app.post("/api/projects/:slug/assets/:assetId/promote", (req, res) => {
 
 // ---------- media import ----------
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
+const AUDIO_UPLOAD_MIME_EXTENSIONS = new Map([
+  ["audio/mpeg", ".mp3"],
+  ["audio/mp3", ".mp3"],
+  ["audio/wav", ".wav"],
+  ["audio/x-wav", ".wav"],
+  ["audio/flac", ".flac"],
+  ["audio/x-flac", ".flac"],
+  ["audio/mp4", ".m4a"],
+  ["audio/x-m4a", ".m4a"],
+  ["audio/aac", ".aac"],
+  ["audio/ogg", ".ogg"],
+  ["application/ogg", ".ogg"]
+]);
+const AUDIO_UPLOAD_EXTENSIONS = new Set([".mp3", ".wav", ".flac", ".m4a", ".aac", ".ogg"]);
+
+function audioUploadExtension(file) {
+  const fromMime = AUDIO_UPLOAD_MIME_EXTENSIONS.get(String(file?.mimetype || "").toLowerCase());
+  if (fromMime) return fromMime;
+  const fromName = path.extname(String(file?.originalname || "")).toLowerCase();
+  return AUDIO_UPLOAD_EXTENSIONS.has(fromName) ? fromName : null;
+}
 
 app.post("/api/projects/:slug/assets/:assetId/import-image", upload.single("file"), (req, res) => {
   try {
@@ -1277,6 +1421,26 @@ app.post("/api/projects/:slug/assets/:assetId/import-image", upload.single("file
       buffer: req.file.buffer,
       extension,
       sourceFileName: req.file.originalname
+    }));
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.post("/api/projects/:slug/assets/:assetId/import-audio", upload.single("file"), (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    if (!assetManifestCurrent(project)) return res.status(409).json({ error: "Approve the screenplay and refresh its asset manifest before importing an asset version." });
+    const asset = project.assets?.items?.find((item) => item.id === req.params.assetId);
+    if (!asset) return res.status(404).json({ error: "Asset not found" });
+    if (!req.file?.buffer?.length) return res.status(400).json({ error: "Audio file required" });
+    const extension = audioUploadExtension(req.file);
+    if (!extension) return res.status(415).json({ error: "Use an MP3, WAV, FLAC, M4A, AAC, or OGG audio file." });
+    res.json(registerDirectorAssetAudio(project, asset, {
+      buffer: req.file.buffer,
+      extension,
+      sourceFileName: req.file.originalname,
+      contentType: req.file.mimetype || null
     }));
   } catch (e) {
     res.status(400).json({ error: String(e.message) });
@@ -1497,6 +1661,95 @@ function enqueueRanges(project, clip, ranges, prefix = "Render") {
   }));
 }
 
+function normalizeH3Mode(mode) {
+  return H3_MODES[mode] ? mode : H3_MODE_FIRST;
+}
+
+function h3ModeReady(diagnostics, mode) {
+  return mode === H3_MODE_REFERENCE ? diagnostics.ref2vaReady : diagnostics.fl2vaReady;
+}
+
+function h3ReadinessError(diagnostics, mode) {
+  const modeInfo = H3_MODES[mode] || H3_MODES[H3_MODE_FIRST];
+  const details = [
+    ...(diagnostics?.actionableErrors || []),
+    ...(mode === H3_MODE_REFERENCE ? diagnostics?.warnings || [] : [])
+  ].filter(Boolean);
+  return `${H3_DISPLAY_NAME} ${modeInfo.label} is not ready: ${details.join(" ") || "open MiniMax H3 diagnostics"}`;
+}
+
+function enqueueH3Ranges(project, clip, ranges, options = {}) {
+  const mode = normalizeH3Mode(options.mode);
+  const modeInfo = H3_MODES[mode] || H3_MODES[H3_MODE_FIRST];
+  let guideBindings = [];
+  if (modeInfo.needsFirst || modeInfo.needsLast) {
+    const guideCheck = canonicalGuideBindings(project, clip);
+    if (!guideCheck.ok) throw new Error(`MiniMax H3 preflight failed: ${guideCheck.error}. Use currently approved Asset Foundry guides for hard first/last-frame modes.`);
+    guideBindings = guideCheck.bindings;
+  }
+  const fps = project.settings?.fps || 24;
+  const clipFingerprint = clipRenderFingerprint(project, clip);
+  const splitRanges = splitH3Ranges(ranges, fps);
+  return splitRanges.map((range) => enqueue({
+    type: "render_h3_range",
+    projectSlug: project.slug,
+    label: `${H3_DISPLAY_NAME} ${clip.name}`,
+    refs: {
+      clipId: clip.id,
+      guideBindings,
+      clipFingerprint,
+      h3Mode: mode,
+      h3Quality: options.quality || "full",
+      h3Aspect: options.aspect || project.settings?.aspectRatio || `${project.settings?.width || 1344}:${project.settings?.height || 768}`,
+      h3AudioMode: options.audioMode || "mixed",
+      seed: options.seed,
+      references: Array.isArray(options.references) ? options.references : [],
+      refImageSize: options.refImageSize || "match",
+      ...range
+    }
+  }));
+}
+
+app.get("/api/h3/diagnostics", async (req, res) => {
+  try {
+    res.json(await h3Diagnostics({ force: req.query?.force === "1" || req.query?.force === "true" }));
+  } catch (e) {
+    res.status(503).json({ error: String(e.message || e) });
+  }
+});
+
+app.post("/api/projects/:slug/h3/preview", (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    const clip = findClip(project, req.body?.clipId);
+    if (!clip) return res.status(404).json({ error: "clip not found" });
+    const ids = req.body?.segmentIds || clip.segments.map((segment) => segment.id);
+    const range = groupContiguousSegments(clip.segments, ids)[0] || {
+      startFrame: 0,
+      endFrame: framesOf(clip.durationSec, project.settings.fps || 24)
+    };
+    const mode = normalizeH3Mode(req.body?.mode);
+    const compiled = compileH3Prompt({
+      project,
+      clip,
+      mode,
+      rangeStartFrame: range.startFrame,
+      rangeEndFrame: range.endFrame,
+      audioMode: req.body?.audioMode || "mixed",
+      referenceManifest: req.body?.references || []
+    });
+    res.json({
+      mode,
+      prompt: compiled.prompt,
+      timing: compiled.timing,
+      segmentCount: compiled.localSegments.length,
+      guideCount: compiled.localGuides.length
+    });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) });
+  }
+});
+
 app.post("/api/projects/:slug/render", (req, res) => {
   try {
     const project = loadProject(req.params.slug);
@@ -1552,6 +1805,70 @@ app.post("/api/projects/:slug/render", (req, res) => {
     res.json({ jobs: jobsOut });
   } catch (e) {
     res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.post("/api/projects/:slug/render-h3", async (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    const mode = normalizeH3Mode(req.body?.mode);
+    const diagnostics = await h3Diagnostics();
+    if (!h3ModeReady(diagnostics, mode)) {
+      return res.status(409).json({ error: h3ReadinessError(diagnostics, mode), diagnostics });
+    }
+    const { clipId, all, dirtyAll, dirty, segmentIds, startFrame, endFrame } = req.body || {};
+    const options = {
+      mode,
+      quality: req.body?.quality || "full",
+      aspect: req.body?.aspect,
+      audioMode: req.body?.audioMode || "mixed",
+      seed: req.body?.seed,
+      references: req.body?.references || [],
+      refImageSize: req.body?.refImageSize || "match"
+    };
+    const jobsOut = [];
+    if (all || dirtyAll) {
+      const targets = project.sequence.clips.filter((clip) => {
+        const needsRender = !dirtyAll || (clip.segments || []).some((segment) => segment.dirty !== false);
+        return needsRender;
+      });
+      for (const clip of targets) {
+        if (dirtyAll) {
+          const ids = (clip.segments || []).filter((segment) => segment.dirty !== false).map((segment) => segment.id);
+          const ranges = groupContiguousSegments(clip.segments, ids);
+          jobsOut.push(...enqueueH3Ranges(project, clip, ranges, options));
+        } else {
+          jobsOut.push(...enqueueH3Ranges(project, clip, [{
+            startFrame: 0,
+            endFrame: framesOf(clip.durationSec, project.settings.fps || 24),
+            segmentIds: (clip.segments || []).map((segment) => segment.id)
+          }], options));
+        }
+      }
+    } else {
+      if (!clipId) return res.status(400).json({ error: "clipId or all required" });
+      const clip = findClip(project, clipId);
+      if (!clip) return res.status(404).json({ error: "clip not found" });
+      let ranges = [];
+      if (startFrame != null && endFrame != null) {
+        const ids = (clip.segments || [])
+          .filter((segment) => segment.endFrame > Number(startFrame) && segment.startFrame < Number(endFrame))
+          .map((segment) => segment.id);
+        ranges = [{ startFrame: Number(startFrame), endFrame: Number(endFrame), segmentIds: ids }];
+      } else {
+        const ids = Array.isArray(segmentIds) && segmentIds.length
+          ? segmentIds
+          : dirty
+            ? (clip.segments || []).filter((segment) => segment.dirty !== false).map((segment) => segment.id)
+            : (clip.segments || []).map((segment) => segment.id);
+        ranges = groupContiguousSegments(clip.segments, ids);
+      }
+      if (!ranges.length) return res.status(400).json({ error: "No segments selected for MiniMax H3 rendering" });
+      jobsOut.push(...enqueueH3Ranges(project, clip, ranges, options));
+    }
+    res.json({ jobs: jobsOut, diagnostics });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) });
   }
 });
 

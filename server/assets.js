@@ -101,7 +101,7 @@ export const ASSET_WORKFLOWS = [
   }
 ];
 
-const CATEGORY_LABELS = {
+export const ASSET_CATEGORY_LABELS = {
   character: "Characters",
   location: "Locations",
   artifact: "Props & Artifacts",
@@ -113,6 +113,22 @@ const CATEGORY_LABELS = {
   sound: "Sound Design",
   music: "Music",
   graphic: "Graphics"
+};
+
+const CATEGORY_LABELS = ASSET_CATEGORY_LABELS;
+
+const CATEGORY_MEDIA_TYPES = {
+  character: "image",
+  location: "image",
+  artifact: "image",
+  atmosphere: "image",
+  "guide-frame": "image",
+  wardrobe: "image",
+  extra: "image",
+  voice: "audio",
+  sound: "instruction",
+  music: "audio",
+  graphic: "graphic"
 };
 
 function promptHeaderSubject(asset) {
@@ -180,6 +196,47 @@ export function withAssetPromptHeader(asset, prompt) {
   return body ? `${nextHeader}\n\n${body}` : nextHeader;
 }
 
+const ELEVENLABS_VOICE_DESIGN_PROMPTS = {
+  "voice-jesus-the-harrower-voice-design": "A male Mediterranean baritone in his early thirties: warm, grounded, compassionate, and unmistakably authoritative. Subtle Levantine inflection in clear English; open vowels, precise consonants, and calm deliberate pacing. The voice is fully human with a restrained sacred resonance—quiet commands remain immovable, while proclamations expand into supported power without shouting. Emotional center: infinite compassion joined to absolute certainty. Natural breath, intimate dry center, only a faint stone-chamber halo. Never theatrical, elderly, breathy-new-age, cartoonish, or a celebrity imitation.",
+  "voice-adam-first-man-freed-voice-design": "An ancient male bass-baritone worn thin by immeasurable waiting: weathered, dust-dry, fragile at the edges, yet carrying deep residual strength. Clear English with a soft ancient Near-Eastern color, elongated open vowels, and slow reverent pacing. Begin in barely voiced recognition, with audible breath and tears, then allow a small supported swell of grateful certainty. Intimate and human, never a generic old-man caricature, booming narrator, demon, or melodramatic sob. Natural close-mic grain with a restrained cavern halo.",
+  "voice-guardian-leader-hells-champion-voice-design": "A single male-coded supernatural jailer with an extremely deep, grinding bass. The timbre suggests basalt scraping against cold iron: dry, massive, deliberate, and ancient beyond human age, while every English word remains intelligible. Hard consonants land like decrees; dark vowels move slowly. Baseline emotion is absolute territorial command and hatred, with a barely perceptible fracture of dawning fear. Controlled low power, not screaming. No comedy, death-metal rasp, wet monster noises, robotic processing, or theatrical villain accent.",
+  "voice-lowell-bryan-style-chorus-divine-narration-voice-design": "A reverent mixed sacred narration chorus with a warm low male lead supported by blended adult voices. Clear English diction, measured biblical cadence, controlled vibrato, and a gradual arc from breath-soft awe to luminous triumphant authority. The ensemble should feel unified and cinematic rather than crowded: warm bass and alto foundation, restrained tenor brightness, natural choral depth, and no dominant celebrity identity. Sacred and emotionally sincere, never operatic excess, pop choir, gospel riffing, trailer shouting, or synthetic stacking.",
+  "voice-eve-voice-design": "An ancient female contralto: physically aged, tender, and emotionally luminous. Warm low register with a fine weathered grain, clear English, soft ancient Near-Eastern color, and slow reverent phrasing. Her first words tremble with disbelief and centuries of grief, then settle into relieved hope and maternal strength. Tears may gently catch the voice without obscuring diction. Human, intimate, and dignified—never frail caricature, modern conversational brightness, breathy fantasy maiden, melodramatic sobbing, or celebrity imitation.",
+  "voice-low-voice-voice-design": "One timeless male baritone narrator with warm low resonance, clear English diction, and measured ceremonial pacing. Begin intimate and breath-close, then expand naturally into authoritative sacred proclamation without shouting. The tone carries ancient certainty, reverence, and restrained triumph; vowels are open, consonants deliberate, and pauses meaningful. Keep a clean human center with a very light stone-space bloom. Not Jesus' character voice, not a choir, not a demon, not an elderly whisper, not a modern trailer announcer, and not a celebrity imitation.",
+  "voice-trapped-souls-voice-design": "A naturally layered ensemble of exhausted adult human voices—mixed genders and ages—with clear English emerging from centuries of whispered despair. Dry, fragile, breath-worn timbres begin scattered and distant, then gather into urgent astonished hope. Entries should overlap organically rather than move in perfect choir unison; near voices remain intelligible while farther voices create restrained cavern depth. Human prisoners only: no demonic growls, polished choir, electronic doubling, modern crowd chant, hysterical screaming, or added sound effects.",
+  "voice-voice-of-hell-voice-design": "A single nonhuman, masculine-coded voice representing the realm of Hell itself: immensely ancient, subterranean, and fully intelligible. A stable deep speaking core carries dark subharmonic weight, stone-cavern resonance, and a faint iron edge on consonants. Emotion is rage fused with irreversible defeat—vast and terrifying, but controlled enough to preserve every word. Slow, heavy phrasing with a hard onset and lingering low resonance. One identity, not a crowd. No cartoon demon, video-game boss, death-metal scream, robotic filter, wet growl, comedy, or celebrity imitation."
+};
+
+function trimVoicePrompt(text, limit) {
+  const source = String(text || "").replace(/\s+/g, " ").trim();
+  if (source.length <= limit) return source;
+  const clipped = source.slice(0, Math.max(0, limit - 1));
+  const boundary = Math.max(clipped.lastIndexOf(". "), clipped.lastIndexOf("; "), clipped.lastIndexOf(", "));
+  return `${(boundary > limit * 0.65 ? clipped.slice(0, boundary + 1) : clipped).trim()}…`;
+}
+
+export function normalizeVoiceDesignPrompt(asset, prompt = asset?.prompt) {
+  const original = String(prompt || "").replace(/\r\n/g, "\n").trim();
+  if (asset?.category !== "voice") return original;
+  const polluted = original.length > 1000 || /AUDIO STYLE BRIDGE|AUTHORITATIVE AUDIO PROMPT/i.test(original);
+  if (!polluted) {
+    const current = withAssetPromptHeader(asset, original);
+    return current.length <= 1000 ? current : trimVoicePrompt(current, 1000);
+  }
+  if (!asset.voicePromptArchive) asset.voicePromptArchive = original;
+  let body = ELEVENLABS_VOICE_DESIGN_PROMPTS[asset.id];
+  if (!body) {
+    const authoritative = original.split(/AUTHORITATIVE AUDIO PROMPT\s*-+/i).pop() || original;
+    body = trimVoicePrompt(authoritative.replace(/^.*?VOICE DESIGN[^.]*\.\s*/i, ""), 780);
+  }
+  asset.voiceDesignPlatform = "ElevenLabs Voice Design";
+  asset.voiceDesignLimit = 1000;
+  const header = assetPromptHeader(asset);
+  asset.promptHeader = header;
+  asset.prompt = `${header}\n\n${trimVoicePrompt(body, Math.max(0, 1000 - header.length - 2))}`;
+  return asset.prompt;
+}
+
 function slugify(value) {
   return String(value || "asset")
     .toLowerCase()
@@ -208,6 +265,76 @@ function categoryOf(heading) {
 
 function assetId(category, name, variant = "primary") {
   return `${category}-${slugify(name)}-${slugify(variant)}`;
+}
+
+export function assetMediaType(category) {
+  return CATEGORY_MEDIA_TYPES[category] || null;
+}
+
+export function defaultAssetWorkflow(category, variant, name, id) {
+  if (CATEGORY_MEDIA_TYPES[category] === "image") return visualWorkflow(category, variant, name, id);
+  if (category === "voice") return "qwen3-tts-voice-design-1.7b";
+  if (category === "music") return "ace-step-1.5-xl-turbo";
+  if (category === "sound") return "ltx-2.3-native-audio";
+  if (category === "graphic") return "premiere316-title-card";
+  return "krea2-cinematic-still-fp8";
+}
+
+function stringList(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item || "").trim()).filter(Boolean);
+  return String(value || "").split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean);
+}
+
+export function createDirectorAsset(input = {}, existingItems = []) {
+  const category = String(input.category || "character").trim();
+  if (!Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, category)) throw new Error(`Unknown asset category: ${category}`);
+  const name = String(input.name || "").replace(/\s+/g, " ").trim().slice(0, 160);
+  if (!name) throw new Error("Asset name is required");
+  const variant = String(input.variant || "Production Reference").replace(/\s+/g, " ").trim().slice(0, 120) || "Production Reference";
+  let id = assetId(category, name, variant);
+  const ids = new Set(existingItems.map((item) => item.id));
+  for (let suffix = 2; ids.has(id); suffix += 1) id = `${assetId(category, name, variant)}-${suffix}`;
+  const requestedWorkflow = String(input.workflowId || "").trim();
+  if (requestedWorkflow && !ASSET_WORKFLOWS.some((workflow) => workflow.id === requestedWorkflow)) {
+    throw new Error(`Unknown asset workflow: ${requestedWorkflow}`);
+  }
+  const asset = {
+    id,
+    category,
+    categoryLabel: CATEGORY_LABELS[category],
+    name,
+    variant,
+    mediaType: CATEGORY_MEDIA_TYPES[category],
+    prompt: String(input.prompt || "").trim(),
+    sourcePrompt: String(input.prompt || "").trim(),
+    sampleText: category === "voice" ? String(input.sampleText || "").trim() : undefined,
+    sourceSection: "Director-created asset",
+    status: "planned",
+    reviewState: "director-created",
+    workflowId: requestedWorkflow || defaultAssetWorkflow(category, variant, name, id),
+    dependencies: stringList(input.dependencies),
+    continuity: stringList(input.continuity),
+    durationSec: input.durationSec == null || input.durationSec === "" ? undefined : Number(input.durationSec),
+    bpm: input.bpm == null || input.bpm === "" ? undefined : Number(input.bpm),
+    versions: [],
+    activeVersion: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  asset.prompt = withAssetPromptHeader(asset, asset.prompt);
+  applyStyleLockToAsset(asset);
+  return asset;
+}
+
+export function updateAssetManifestCounts(assets) {
+  const items = assets?.items || [];
+  assets.counts = items.reduce((acc, item) => {
+    acc[item.category] = (acc[item.category] || 0) + 1;
+    return acc;
+  }, {});
+  assets.total = items.length;
+  assets.generatedAt = new Date().toISOString();
+  return assets;
 }
 
 function visualWorkflow(category, variant, name = "", id = "") {
@@ -773,9 +900,21 @@ function preserveAssetState(next, previous) {
     if (!old) return item;
     return {
       ...item,
+      name: old.name ?? item.name,
+      variant: old.variant ?? item.variant,
+      category: old.category ?? item.category,
+      categoryLabel: old.categoryLabel ?? item.categoryLabel,
+      mediaType: old.mediaType ?? item.mediaType,
       prompt: old.prompt ?? item.prompt,
       promptHeader: old.promptHeader ?? item.promptHeader,
       sampleText: old.sampleText ?? item.sampleText,
+      sourceSection: old.sourceSection ?? item.sourceSection,
+      reviewState: old.reviewState ?? item.reviewState,
+      workflowId: old.workflowId ?? item.workflowId,
+      dependencies: old.dependencies ?? item.dependencies,
+      continuity: old.continuity ?? item.continuity,
+      durationSec: old.durationSec ?? item.durationSec,
+      bpm: old.bpm ?? item.bpm,
       status: old.status || item.status,
       seed: old.seed ?? item.seed,
       versions: Array.isArray(old.versions) ? old.versions : [],
@@ -795,7 +934,10 @@ export function buildAssetPackage(markdown, { productionBreakdown = null, previo
   items.push(...audioCueAssets(productionBreakdown));
   items.push(...directAudioCueAssets(source));
   items.push(titleAsset(source));
-  const unique = [...new Map(items.map((item) => [item.id, item])).values()];
+  const manualItems = (previous?.items || []).filter((item) => item.reviewState === "director-created");
+  const deletedItems = Array.isArray(previous?.deletedItems) ? previous.deletedItems : [];
+  const deletedIds = new Set(deletedItems.map((entry) => entry?.asset?.id || entry?.id).filter(Boolean));
+  const unique = [...new Map([...items, ...manualItems].map((item) => [item.id, item])).values()].filter((item) => !deletedIds.has(item.id));
   const deduped = resolveAssetDependencies(applyContinuityDependencies(unique));
   const sameRevision = previous?.screenplayHash === screenplayHash;
   const preserved = preserveAssetState(deduped, sameRevision ? previous : null);
@@ -814,6 +956,7 @@ export function buildAssetPackage(markdown, { productionBreakdown = null, previo
     counts,
     total: preserved.length,
     items: preserved,
+    deletedItems,
     review: productionBreakdown ? {
       status: productionBreakdown.review_status,
       issues: productionBreakdown.missing_and_ambiguous_requirements || [],
@@ -1231,7 +1374,8 @@ export function saveAssetPackageFiles(project, { productionBreakdown = null, rev
   if (reviewMarkdown) fs.writeFileSync(path.join(production, "screenplay-review.md"), String(reviewMarkdown));
   fs.writeFileSync(path.join(workflows, "asset-workflow-catalog.json"), JSON.stringify(ASSET_WORKFLOWS, null, 2));
   for (const asset of project.assets?.items || []) {
-    if (!isAuthoritativeStyleLockAsset(asset.id)) asset.prompt = withAssetPromptHeader(asset, asset.prompt);
+    if (asset.category === "voice") asset.prompt = normalizeVoiceDesignPrompt(asset, asset.prompt);
+    else if (!isAuthoritativeStyleLockAsset(asset.id)) asset.prompt = withAssetPromptHeader(asset, asset.prompt);
     applyStyleLockToAsset(asset);
     const compiled = compileAssetWorkflow(project, asset);
     const filename = `${asset.id}.${compiled ? "api" : "recipe"}.json`;
@@ -1507,6 +1651,58 @@ export function registerDirectorAssetImage(project, asset, { buffer, extension =
   });
   asset.activeVersion = version;
   asset.status = "generated";
+  asset.approval = null;
+  asset.approvalCurrent = false;
+  asset.lastError = null;
+  asset.updatedAt = new Date().toISOString();
+  saveAssetPackageFiles(project);
+  saveProject(project);
+  return { project, asset, version: asset.versions[asset.versions.length - 1] };
+}
+
+export function registerDirectorAssetAudio(project, asset, { buffer, extension = ".mp3", sourceFileName = "director-import.mp3", contentType = null }) {
+  const category = String(asset?.category || "");
+  const acceptsAudio = asset?.mediaType === "audio" || ["voice", "sound", "music"].includes(category);
+  if (!asset || !acceptsAudio) throw new Error("The selected asset does not accept audio versions");
+  if (!Buffer.isBuffer(buffer) || !buffer.length) throw new Error("The imported audio is empty");
+  const safeExtension = [".mp3", ".wav", ".flac", ".m4a", ".aac", ".ogg"].includes(String(extension).toLowerCase())
+    ? String(extension).toLowerCase()
+    : ".mp3";
+  const version = nextVersion(asset);
+  const file = `${asset.id}.v${version}${safeExtension}`;
+  const destination = mediaDir(project, "assets");
+  fs.mkdirSync(destination, { recursive: true });
+  fs.writeFileSync(path.join(destination, file), buffer);
+  const screenplayRevision = screenplayHash(project);
+  const generationFingerprint = assetGenerationFingerprint(asset);
+  const workflowSnapshot = archiveWorkflowSnapshot(project, asset, version);
+  asset.versions = asset.versions || [];
+  asset.versions.push({
+    v: version,
+    files: [file],
+    file,
+    mediaType: "audio",
+    workflowId: asset.workflowId,
+    model: "Director-supplied audio upload",
+    prompt: asset.prompt,
+    sampleText: asset.sampleText || "",
+    durationSec: asset.durationSec ?? null,
+    bpm: asset.bpm ?? null,
+    seed: null,
+    workflowHash: asset.workflowHash || null,
+    workflowSnapshot: workflowSnapshot.file,
+    workflowSnapshotHash: workflowSnapshot.sha256,
+    assetFingerprint: generationFingerprint,
+    screenplayRevision,
+    manifestScreenplayHash: project.assets?.screenplayHash || screenplayRevision,
+    fileHashes: generatedFileHashes(project, [file]),
+    provenanceType: "director-audio-import",
+    sourceFileName: path.basename(sourceFileName),
+    contentType,
+    createdAt: new Date().toISOString()
+  });
+  asset.activeVersion = version;
+  asset.status = category === "sound" ? "ready-for-shot" : "generated";
   asset.approval = null;
   asset.approvalCurrent = false;
   asset.lastError = null;
