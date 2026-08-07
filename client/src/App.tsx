@@ -4,9 +4,10 @@ import ProjectGate from "./components/ProjectGate";
 import CreativeWorkspace from "./components/CreativeWorkspace";
 import ScreenplayWorkspace from "./components/ScreenplayWorkspace";
 import AssetsWorkspace from "./components/AssetsWorkspace";
+import StoryboardWorkspace from "./components/StoryboardWorkspace";
 import PiExpertDock from "./components/PiExpertDock";
 
-type ActivePage = "project-gate" | "screenplay" | "assets" | "media" | "edit" | "generate" | "master" | "export";
+type ActivePage = "project-gate" | "screenplay" | "storyboard" | "assets" | "media" | "edit" | "generate" | "master" | "export";
 
 function portLabel(url: string | undefined, fallback: number) {
   if (!url) return `:${fallback}`;
@@ -64,6 +65,7 @@ export default function App() {
 
         <nav className="primary-nav" aria-label="Workspace navigation">
           <button className={activePage === "screenplay" ? "active" : ""} onClick={() => setActivePage("screenplay")}>Screenplay</button>
+          <button className={activePage === "storyboard" ? "active" : ""} onClick={() => setActivePage("storyboard")}>Storyboard</button>
           <button className={activePage === "assets" ? "active" : ""} onClick={() => setActivePage("assets")}>Assets</button>
           <button className={activePage === "media" ? "active" : ""} onClick={() => { setActivePage("media"); store.setWorkbench("guide"); }}>Media</button>
           <button className={activePage === "edit" ? "active" : ""} onClick={() => { setActivePage("edit"); store.setWorkbench("prompt"); }}>Edit</button>
@@ -131,6 +133,8 @@ export default function App() {
 
       {activePage === "screenplay"
         ? <ScreenplayWorkspace onOpenEditor={() => setActivePage("edit")} onOpenAssets={() => setActivePage("assets")} />
+        : activePage === "storyboard"
+          ? <StoryboardWorkspace onOpenAssets={() => setActivePage("assets")} />
         : activePage === "assets"
           ? <AssetsWorkspace onOpenEditor={() => setActivePage("edit")} />
           : <CreativeWorkspace onOpenAssets={() => setActivePage("assets")} />}

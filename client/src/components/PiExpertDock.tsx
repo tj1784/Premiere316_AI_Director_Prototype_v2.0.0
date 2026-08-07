@@ -43,6 +43,7 @@ function pageLabel(page: string) {
   return ({
     "project-gate": "Projects",
     screenplay: "Screenplay",
+    storyboard: "Storyboard",
     assets: "Assets",
     media: "Media",
     edit: "Edit",
@@ -98,7 +99,8 @@ export default function PiExpertDock({
       clipCount: project.sequence?.clips?.length || 0,
       durationSec: project.sequence?.durationSec || 0,
       screenplayLoaded: Boolean(project.screenplay?.markdown),
-      productionAssetCount: project.assets?.items?.length || 0
+      productionAssetCount: project.assets?.items?.length || 0,
+      storyboardClipCount: Object.keys(store.storyboard?.clips || {}).length
     } : null,
     selection: {
       clipId: clip?.id || null,
@@ -107,6 +109,7 @@ export default function PiExpertDock({
       selectedGuideId: selectedGuide?.id || null,
       selectedGuideRole: selectedGuide?.role || null,
       selectedFrameFile: store.selFrameFile,
+      storyboardClipId: store.selectedStoryboardClipId,
       playheadFrame: store.playheadFrame,
       markInFrame: store.markInFrame,
       markOutFrame: store.markOutFrame
@@ -119,9 +122,9 @@ export default function PiExpertDock({
     }
   }), [
     activePage, tabId, focusVersion, project?.slug, project?.name, project?.updatedAt,
-    project?.sequence?.clips?.length, project?.sequence?.durationSec, project?.assets?.items?.length,
+    project?.sequence?.clips?.length, project?.sequence?.durationSec, project?.assets?.items?.length, store.storyboard,
     clip?.id, clip?.name, selectedGuide?.id, selectedGuide?.role, store.selectedSegmentIds.join("|"),
-    store.selFrameFile, store.playheadFrame, store.markInFrame, store.markOutFrame, store.activeWorkbench,
+    store.selFrameFile, store.selectedStoryboardClipId, store.playheadFrame, store.markInFrame, store.markOutFrame, store.activeWorkbench,
     store.jobs, store.health.comfy, store.health.comfyUrl, store.health.lmStudio
   ]);
 

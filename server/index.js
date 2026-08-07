@@ -78,6 +78,11 @@ import {
   grokCliAvailable,
   startPromptEnhance
 } from "./prompt-enhance.js";
+import {
+  loadStoryboard,
+  saveStoryboardTargetReferences,
+  storyboardSummary
+} from "./storyboard.js";
 
 const PORT = process.env.PORT || 8789;
 const app = express();
@@ -437,6 +442,30 @@ app.get("/api/projects/:slug", (req, res) => {
     res.json({ project });
   } catch (e) {
     res.status(404).json({ error: String(e.message) });
+  }
+});
+
+app.get("/api/projects/:slug/storyboard", (req, res) => {
+  try {
+    loadProject(req.params.slug);
+    const storyboard = loadStoryboard(req.params.slug);
+    res.json({ storyboard, summary: storyboardSummary(storyboard) });
+  } catch (e) {
+    res.status(404).json({ error: String(e.message) });
+  }
+});
+
+app.put("/api/projects/:slug/storyboard/targets/:targetKind/:targetId/references", (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    const result = saveStoryboardTargetReferences(req.params.slug, project, {
+      targetKind: req.params.targetKind,
+      targetId: req.params.targetId,
+      references: req.body?.references
+    });
+    res.json({ ...result, summary: storyboardSummary(result.storyboard) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
   }
 });
 

@@ -49,6 +49,16 @@ A polished Premiere-style video-generation workspace that drives the supplied **
 
 The package includes a populated **Harrowing of Hell** project with the completed ten-minute screenplay, structured production review, 97-asset production library, guide media, a generated score, synchronized sound-direction assets, a deterministic title card, and enabled 30-second opening/credit master bookends. Use the screenplay's LTX Shot Planner when you are ready to create or refresh timeline clips.
 
+### Production storyboard
+
+- A native **Storyboard** workspace organizes the Harrowing production as 10 chapters, 34 scenes, and 119 individually selectable 10–20 second clips (34:00 total).
+- Every clip includes its exact story beat, dialogue anchor, shot/lens, camera movement, transition, continuity locks, first-frame image prompt, negative prompt, LTX global video prompt, and three contiguous Prompt Relay segments.
+- The imported package contains 161 image-generation prompts: one first frame for every clip plus 42 additional segment images where composition or continuity needs a deliberate reset.
+- All 734 authored reference-map records remain preserved for audit (725 image-frame bindings plus nine text-segment continuity annotations). The UI also materializes the complete 987 effective image-guide references from the authoritative first-frame and segment prompt records, including intentionally pinned historical asset versions.
+- **Add References** opens a production asset browser with category navigation, search, image previews, multi-select, an exact-version selector, per-reference role, a selected-reference tray, and Apply/Cancel persistence scoped to the chosen image guide.
+- Storyboard references are planning inputs only. Video generation remains visibly blocked until required exact asset versions and generated image guides pass Asset Foundry approval, so a prompt package cannot bypass canonical provenance controls.
+- The source package is stored separately under `projects/<slug>/production/storyboard.json`; it loads only when the Storyboard tab is opened instead of inflating every project refresh.
+
 ### Screenplay studio
 
 - A dedicated **Screenplay** workspace creates complete cinematic production packages with the local LM Studio model selected by the project owner.
@@ -224,6 +234,7 @@ server/ffmpeg.js            Exact trimming, assembly, score mixing, fallbacks
 workflows/                 Supplied LTX Director workflow
 projects/                  Local project data, production manifests, workflow snapshots, and generated media
 scripts/build-portable.mjs Native-binary-free production build
+scripts/import-storyboard-package.mjs Resolve and import an app-native storyboard package
 ```
 
 ## Validation completed

@@ -11,7 +11,9 @@
     "dev": "node server/index.js",
     "build:vite": "vite build",
     "typecheck": "tsc --noEmit",
-    "test:h3": "node --test tests/h3.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "test:h3": "node --test tests/h3.test.mjs",
+    "test:storyboard": "node --test tests/storyboard.test.mjs"
   },
   "dependencies": {
     "express": "^4.19.2",

@@ -27,6 +27,8 @@ function currentClip(project: any, clipId: string | null) {
 
 type Store = {
   project: any | null;
+  storyboard: any | null;
+  storyboardSummary: any | null;
   projects: any[];
   health: any;
   jobs: any[];
@@ -36,12 +38,15 @@ type Store = {
   selectionAnchorId: string | null;
   selFrameFile: string | null;
   selectedGuideId: string | null;
+  selectedStoryboardClipId: string | null;
   playheadFrame: number;
   markInFrame: number | null;
   markOutFrame: number | null;
   pxPerSec: number;
   busy: boolean;
   screenplayBusy: boolean;
+  storyboardBusy: boolean;
+  storyboardSaving: boolean;
   assetBusy: boolean;
   gpuHandoffBusy: boolean;
   comfyRestartBusy: boolean;
@@ -60,6 +65,7 @@ type Store = {
   setSelClip: (id: string | null) => void;
   setSelFrame: (file: string | null) => void;
   setSelectedGuide: (id: string | null) => void;
+  setSelectedStoryboardClip: (id: string | null) => void;
   setSelectedSegments: (ids: string[], anchorId?: string | null) => void;
   toggleSegment: (id: string, additive?: boolean) => void;
   selectSegmentRange: (id: string) => void;
@@ -84,6 +90,8 @@ type Store = {
   closeProject: () => void;
   saveProject: () => Promise<void>;
   reloadProject: () => Promise<void>;
+  loadStoryboard: () => Promise<void>;
+  replaceStoryboardReferences: (targetKind: "frame", targetId: string, references: any[]) => Promise<void>;
   patchLocal: (fn: (project: any) => void) => void;
   patchClip: (clipId: string, body: any) => Promise<void>;
   deleteFrame: (frameId: string) => Promise<void>;
@@ -135,6 +143,8 @@ type Store = {
 
 export const useStore = create<Store>((set, get) => ({
   project: null,
+  storyboard: null,
+  storyboardSummary: null,
   projects: [],
   health: { comfy: false, ffmpeg: false, capabilities: {} },
   jobs: [],
@@ -144,12 +154,15 @@ export const useStore = create<Store>((set, get) => ({
   selectionAnchorId: null,
   selFrameFile: null,
   selectedGuideId: null,
+  selectedStoryboardClipId: null,
   playheadFrame: 0,
   markInFrame: null,
   markOutFrame: null,
   pxPerSec: 42,
   busy: false,
   screenplayBusy: false,
+  storyboardBusy: false,
+  storyboardSaving: false,
   assetBusy: false,
   gpuHandoffBusy: false,
   comfyRestartBusy: false,
@@ -178,6 +191,7 @@ export const useStore = create<Store>((set, get) => ({
   },
   setSelFrame: (file) => set({ selFrameFile: file }),
   setSelectedGuide: (id) => set({ selectedGuideId: id, activeWorkbench: "guide" }),
+  setSelectedStoryboardClip: (id) => set({ selectedStoryboardClipId: id }),
   setSelectedSegments: (ids, anchorId = null) => set({
     selectedSegmentIds: [...new Set(ids)],
     selectionAnchorId: anchorId ?? ids[ids.length - 1] ?? null,
@@ -359,6 +373,9 @@ export const useStore = create<Store>((set, get) => ({
       const json = await api("/api/projects", { method: "POST", body: JSON.stringify({ name }) });
       set({
         project: json.project,
+        storyboard: null,
+        storyboardSummary: null,
+        selectedStoryboardClipId: null,
         selClipId: null,
         selFrameFile: null,
         selectedSegmentIds: [],
@@ -378,6 +395,9 @@ export const useStore = create<Store>((set, get) => ({
       const first = json.project?.sequence?.clips?.[0] || null;
       set({
         project: json.project,
+        storyboard: null,
+        storyboardSummary: null,
+        selectedStoryboardClipId: null,
         selClipId: first?.id || null,
         selFrameFile: first?.firstFrame?.file || json.project?.frames?.[0]?.file || null,
         selectedSegmentIds: [],
@@ -395,6 +415,9 @@ export const useStore = create<Store>((set, get) => ({
   },
   closeProject: () => set({
     project: null,
+    storyboard: null,
+    storyboardSummary: null,
+    selectedStoryboardClipId: null,
     selClipId: null,
     selFrameFile: null,
     selectedSegmentIds: [],
@@ -421,6 +444,44 @@ export const useStore = create<Store>((set, get) => ({
       set({ project: json.project });
     } catch {
       // Keep the current local project when refresh fails.
+    }
+  },
+  loadStoryboard: async () => {
+    const project = get().project;
+    if (!project || get().storyboardBusy) return;
+    set({ storyboardBusy: true, error: null });
+    try {
+      const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/storyboard`);
+      const firstClipId = json.storyboard?.chapterOrder?.flatMap((chapterId: string) => {
+        const chapter = json.storyboard?.chapters?.[chapterId];
+        return (chapter?.sceneIds || []).flatMap((sceneId: string) => json.storyboard?.scenes?.[sceneId]?.clipIds || []);
+      })?.[0] || Object.keys(json.storyboard?.clips || {})[0] || null;
+      set({
+        storyboard: json.storyboard,
+        storyboardSummary: json.summary || null,
+        selectedStoryboardClipId: get().selectedStoryboardClipId || firstClipId
+      });
+    } catch (error: any) {
+      set({ storyboard: null, storyboardSummary: null, error: String(error.message) });
+    } finally {
+      set({ storyboardBusy: false });
+    }
+  },
+  replaceStoryboardReferences: async (targetKind, targetId, references) => {
+    const project = get().project;
+    if (!project || get().storyboardSaving) return;
+    set({ storyboardSaving: true, error: null });
+    try {
+      const json = await api(
+        `/api/projects/${encodeURIComponent(project.slug)}/storyboard/targets/${encodeURIComponent(targetKind)}/${encodeURIComponent(targetId)}/references`,
+        { method: "PUT", body: JSON.stringify({ references }) }
+      );
+      set({ storyboard: json.storyboard, storyboardSummary: json.summary || get().storyboardSummary });
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    } finally {
+      set({ storyboardSaving: false });
     }
   },
   patchLocal: (fn) => {
