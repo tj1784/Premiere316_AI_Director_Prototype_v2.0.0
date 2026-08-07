@@ -1159,6 +1159,16 @@ function generatedFileHashes(project, files) {
     .sort((left, right) => left.file.localeCompare(right.file));
 }
 
+function assetFileSlug(asset) {
+  const raw = String(asset?.fileSlug || asset?.id || "asset").trim();
+  return raw
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 64) || "asset";
+}
+
 export function assetVersionFingerprint(asset) {
   const active = activeAssetVersion(asset);
   if (!active) return null;
@@ -1452,8 +1462,9 @@ function svgEscape(text) {
 async function generateBuiltInAsset(project, asset, version) {
   const destination = mediaDir(project, "assets");
   fs.mkdirSync(destination, { recursive: true });
+  const fileBase = assetFileSlug(asset);
   if (asset.workflowId === "premiere316-title-card") {
-    const file = `${asset.id}.v${version}.svg`;
+    const file = `${fileBase}.v${version}.svg`;
     // The generation prompt now carries a production heading. Render only the
     // exact title value so deterministic typography never leaks prompt metadata
     // onto the card or misspells the approved project title.
@@ -1461,7 +1472,7 @@ async function generateBuiltInAsset(project, asset, version) {
     fs.writeFileSync(path.join(destination, file), `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="804" viewBox="0 0 1920 804"><rect width="1920" height="804" fill="#050609"/><text x="960" y="390" text-anchor="middle" fill="#f5f1e8" font-family="Georgia,serif" font-size="74" letter-spacing="5">${title}</text><text x="960" y="470" text-anchor="middle" fill="#a79b83" font-family="Arial,sans-serif" font-size="22" letter-spacing="9">A PREMIERE316 PRODUCTION</text></svg>`);
     return [file];
   }
-  const file = `${asset.id}.v${version}.audio-direction.txt`;
+  const file = `${fileBase}.v${version}.audio-direction.txt`;
   fs.writeFileSync(path.join(destination, file), `${asset.name}\n${asset.variant}\n\n${asset.prompt}\n`);
   return [file];
 }
@@ -1522,8 +1533,9 @@ async function generateAssetJobInner(job) {
     const destination = mediaDir(project, "assets");
     fs.mkdirSync(destination, { recursive: true });
     files = [];
+    const fileBase = assetFileSlug(runAsset);
     for (let index = 0; index < refs.length; index += 1) {
-      const basename = refs.length === 1 ? `${asset.id}.v${plannedVersion}` : `${asset.id}.v${plannedVersion}-${index + 1}`;
+      const basename = refs.length === 1 ? `${fileBase}.v${plannedVersion}` : `${fileBase}.v${plannedVersion}-${index + 1}`;
       files.push(await downloadOutput(refs[index], destination, basename));
     }
   }
@@ -1618,7 +1630,7 @@ export function registerDirectorAssetImage(project, asset, { buffer, extension =
     ? String(extension).toLowerCase()
     : ".png";
   const version = nextVersion(asset);
-  const file = `${asset.id}.v${version}${safeExtension}`;
+  const file = `${assetFileSlug(asset)}.v${version}${safeExtension}`;
   const destination = mediaDir(project, "assets");
   fs.mkdirSync(destination, { recursive: true });
   fs.writeFileSync(path.join(destination, file), buffer);
@@ -1669,7 +1681,7 @@ export function registerDirectorAssetAudio(project, asset, { buffer, extension =
     ? String(extension).toLowerCase()
     : ".mp3";
   const version = nextVersion(asset);
-  const file = `${asset.id}.v${version}${safeExtension}`;
+  const file = `${assetFileSlug(asset)}.v${version}${safeExtension}`;
   const destination = mediaDir(project, "assets");
   fs.mkdirSync(destination, { recursive: true });
   fs.writeFileSync(path.join(destination, file), buffer);

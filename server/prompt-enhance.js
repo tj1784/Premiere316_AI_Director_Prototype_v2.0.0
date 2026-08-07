@@ -232,13 +232,19 @@ function applyEnhancedToWorkflow(projectSlug, assetId, prompt, sampleText, sourc
 function applyAudioDirectionSidecar(projectSlug, assetId, prompt, sourcePrompt) {
   const mediaAssets = path.join(projectDir(projectSlug), "media", "assets");
   if (!fs.existsSync(mediaAssets)) return;
-  const files = fs.readdirSync(mediaAssets)
-    .filter((name) => name.startsWith(assetId) && name.endsWith(".audio-direction.txt"))
-    .sort()
-    .reverse();
-  if (!files[0]) return;
+  const files = new Set(fs.readdirSync(mediaAssets)
+    .filter((name) => name.startsWith(assetId) && name.endsWith(".audio-direction.txt")));
+  const project = readJson(path.join(projectDir(projectSlug), "project.json"), null);
+  const asset = project?.assets?.items?.find((item) => item.id === assetId);
+  for (const version of asset?.versions || []) {
+    for (const name of [version.file, ...(version.files || [])]) {
+      if (name && String(name).endsWith(".audio-direction.txt")) files.add(path.basename(String(name)));
+    }
+  }
+  const names = [...files].sort().reverse();
+  if (!names[0]) return;
   const body = `# Audio Direction — ${assetId}\n# Enhanced for production (Grok agents / LTX-native diegetic notes)\n\n${prompt}\n\n## Source body\n${sourcePrompt || ""}\n`;
-  fs.writeFileSync(path.join(mediaAssets, files[0]), body, "utf8");
+  fs.writeFileSync(path.join(mediaAssets, names[0]), body, "utf8");
 }
 
 export function applyEnhancedPrompts(project, enhancedDir, { assetIds = null } = {}) {
