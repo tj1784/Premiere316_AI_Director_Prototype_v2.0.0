@@ -103,6 +103,15 @@ The included *Jesus: The Harrowing of Hell* screenplay has been imported into `p
 - **LM Studio** running its OpenAI-compatible local server on `http://127.0.0.1:1234/v1`, with the pinned Qwen 3.6 40B screenplay model loaded
 - For the Pi Expert dock/shortcut, the installed `qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive` LM Studio model must be loaded; parent and worker never silently fall back to another model
 
+Required ComfyUI custom nodes for the dedicated BlokeyUI engine:
+
+- [ComfyUI-PlagueKind-Nodes](https://github.com/PlagueKind/Comfyui-PlagueKind-Nodes)
+- [ComfyUI-KJNodes](https://github.com/kijai/ComfyUI-KJNodes)
+- [rgthree-comfy](https://github.com/rgthree/rgthree-comfy)
+- [Nvidia_RTX_Nodes_ComfyUI](https://github.com/Comfy-Org/Nvidia_RTX_Nodes_ComfyUI)
+- [ComfyUI-VideoHelperSuite](https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite)
+- [SageAttention](https://github.com/thu-ml/SageAttention) installed into the bundled embedded Python environment
+
 Environment overrides:
 
 ```text
