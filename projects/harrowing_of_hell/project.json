@@ -2,7 +2,7 @@
   "slug": "harrowing_of_hell",
   "name": "Harrowing of Hell",
   "createdAt": "2026-08-04T20:15:23.256Z",
-  "updatedAt": "2026-08-07T08:45:47.004Z",
+  "updatedAt": "2026-08-17T11:14:21.928Z",
   "settings": {
     "fps": 24,
     "width": 1280,
@@ -12,6 +12,8 @@
     "minDurationSec": 2,
     "maxDurationSec": 30,
     "exportPreset": "H.264 (MP4)",
+    "skipScreenplay": false,
+    "skipApproval": false,
     "bookends": {
       "opening": {
         "enabled": true,
@@ -25,11 +27,25 @@
       }
     },
     "ingredients": {
-      "enabled": true,
+      "enabled": false,
       "modelStrength": 0.8,
       "guideStrength": 0.75,
       "attentionStrength": 0.7,
-      "maxImages": 3
+      "maxImages": 3,
+      "legacyDisabledReason": "LTX-2.3 Ingredients compatibility must not be assumed for the active LTX-2.5 T2V route."
+    },
+    "videoGenerationMode": "t2v_with_semantic_references",
+    "firstFrameGeneration": false,
+    "lastFrameGeneration": false,
+    "referenceRoot": "reference_assets",
+    "maxReferencesPerClip": 9,
+    "referenceResolver": {
+      "enabled": true,
+      "mode": "canonical_filename",
+      "strict": true,
+      "root": "reference_assets",
+      "maxImages": 9,
+      "temporalInsertion": false
     }
   },
   "frames": [],
@@ -12389,5 +12405,6 @@
         "deletedAt": "2026-08-05T00:39:43.113Z"
       }
     ]
-  }
+  },
+  "category": "feature"
 }

@@ -151,6 +151,13 @@ button { border: 0; }
 .project-tabs button.active { border-color: #393f49; color: white; background: #20252d; }
 .project-content { flex: 1; min-height: 0; overflow: auto; padding: 14px; scrollbar-color: #3d444f #11151a; }
 .project-empty { min-height: 220px; display: grid; place-items: center; padding: 40px; border: 1px dashed #303640; border-radius: 11px; color: var(--muted); text-align: center; font-size: 12px; }
+.reference-summary { margin-bottom: 10px; padding: 10px 12px; display: grid; gap: 3px; border: 1px solid #343b46; border-radius: 8px; background: #151a20; font-size: 10px; line-height: 1.45; }
+.reference-summary b { color: #e1e6ed; font-size: 11px; }
+.reference-summary span { color: var(--muted); }
+.reference-summary.ok { border-color: rgba(85,217,154,.34); background: rgba(85,217,154,.06); }
+.reference-summary.ok b { color: var(--green); }
+.reference-summary.bad { border-color: rgba(255,79,100,.35); background: rgba(255,79,100,.07); }
+.reference-summary.bad b { color: #ff9aa6; }
 .reference-warning { margin-bottom: 10px; padding: 10px 12px; border: 1px solid rgba(255,79,100,.35); border-radius: 8px; background: rgba(255,79,100,.07); color: #ff9aa6; font-size: 10px; line-height: 1.45; }
 .scene-list, .generated-list, .job-list { display: grid; gap: 8px; }
 .scene-card { min-height: 92px; padding: 8px; display: grid; grid-template-columns: 126px 1fr auto; align-items: center; gap: 11px; border: 1px solid var(--line); border-radius: 10px; background: #13171d; }
@@ -180,6 +187,7 @@ button { border: 0; }
 .media-card b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
 .media-card small { color: var(--muted); font-size: 8px; }
 .media-card > button { margin: 0 9px 9px; }
+.reference-conditioning-state { min-height: 30px; padding: 0 10px; display: flex; align-items: center; border-top: 1px solid var(--line); color: var(--green); background: rgba(85,217,154,.04); font-size: 9px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; }
 .generated-card { padding: 9px; display: grid; grid-template-columns: 190px 1fr; gap: 12px; border: 1px solid var(--line); border-radius: 10px; background: #13171d; }
 .generated-card video { width: 190px; height: 108px; border-radius: 7px; background: #06080a; object-fit: contain; }
 .generated-card > div { min-width: 0; align-self: center; display: grid; gap: 5px; }

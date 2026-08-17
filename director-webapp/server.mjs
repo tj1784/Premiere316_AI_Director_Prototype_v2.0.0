@@ -38,6 +38,7 @@ import {
   projectJobs,
   projectOverview,
   resolveProjectMedia,
+  resolveProjectReferenceMedia,
   sceneReferenceMedia,
   storyboardPlanFingerprint,
   syncWorkspaceToPremiere,
@@ -49,6 +50,12 @@ import { projectDir } from "../server/paths.js";
 import { registerStoryboardHandoffFrame } from "../server/storyboard-generation.js";
 import { concatPreparedVideosWithSoundtrack, probeMediaExact, trimVideoToFrames } from "../server/ffmpeg.js";
 import { ensureDirectoryMiddleware } from "./upload-dir.mjs";
+import {
+  PremiereApiError,
+  premiereApiBaseUrl,
+  queueSemanticT2VViaPremiere,
+  semanticT2VDelegationTarget
+} from "./premiere-api-delegation.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(HERE, "public");
@@ -70,6 +77,7 @@ const MUSIC_VIDEO_WORKFLOW = path.resolve(process.env.DIRECTOR_MUSIC_VIDEO_WORKF
 ));
 const HOST = "127.0.0.1";
 const PORT = Number(process.env.DIRECTOR_PORT || 8791);
+const PREMIERE_API_URL = premiereApiBaseUrl();
 const UPLOAD_DIR = path.join(os.tmpdir(), "premiere316-director-uploads");
 const COMFY_AUDIO_OUTPUT_ROOT = path.resolve(HERE, "..", "BlokeyUI", "ComfyUI", "output", "audio");
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -1614,6 +1622,17 @@ app.get("/api/premiere/media/:slug", (req, res) => {
   }
 });
 
+app.get("/api/premiere/references/:slug", (req, res) => {
+  try {
+    const file = resolveProjectReferenceMedia(req.params.slug, req.query.file);
+    res.setHeader("Cache-Control", "private, max-age=300");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.sendFile(file);
+  } catch (error) {
+    res.status(404).send(String(error.message || error));
+  }
+});
+
 function sendMusicVideoManifest(req, res) {
   try {
     const loaded = readMusicVideoManifest(req.params.slug, req.params.manifestId || req.query.manifestId || null);
@@ -1792,6 +1811,37 @@ app.post("/api/queue", async (req, res) => {
       workspace.premiere.storyboardUpdatedAt = synced.updatedAt;
       atomicWrite(STATE_FILE, workspace);
     }
+    const premiereDelegation = semanticT2VDelegationTarget({
+      mode,
+      workspace,
+      project: workspace.premiere?.projectSlug ? loadProject(workspace.premiere.projectSlug) : null
+    });
+    if (premiereDelegation) {
+      try {
+        const queued = await queueSemanticT2VViaPremiere({
+          baseUrl: PREMIERE_API_URL,
+          projectSlug: premiereDelegation.projectSlug,
+          videoPlanId: premiereDelegation.videoPlanId
+        });
+        const requestedFrames = Math.max(1, Number(workspace.timeline?.normalDurationFrames ?? workspace.stats?.durationFrames) || 1);
+        return res.status(202).json({
+          ok: true,
+          accepted: [{
+            promptId: queued.jobId,
+            number: null,
+            segmentId: null,
+            requestedFrames,
+            generationFrames: ltxFrameCount(requestedFrames),
+            generationFingerprint: workspace.premiere?.planFingerprint || null
+          }]
+        });
+      } catch (error) {
+        if (error instanceof PremiereApiError) {
+          return res.status(error.status).json({ error: error.message });
+        }
+        throw error;
+      }
+    }
     const preparedWorkspace = await prepareProjectMedia(workspace);
     const generationFingerprint = preparedWorkspace.premiere?.source === "storyboard"
       ? storyboardPlanFingerprint(preparedWorkspace.premiere.projectSlug, preparedWorkspace.premiere.clipId)
@@ -1872,6 +1922,7 @@ app.get("*", (_req, res) => res.sendFile(path.join(PUBLIC_DIR, "index.html")));
 const server = app.listen(PORT, HOST, () => {
   console.log(`[Director] LTX 2.5 Director Webapp: http://${HOST}:${PORT}`);
   console.log(`[Director] ComfyUI: ${comfyUrl()}`);
+  console.log(`[Director] Premiere API: ${PREMIERE_API_URL}`);
   console.log(`[Director] Source workflow: ${SOURCE_WORKFLOW}`);
 });
 

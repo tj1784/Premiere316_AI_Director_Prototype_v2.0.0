@@ -10,13 +10,15 @@ import {
   uploadImage
 } from "./comfy.js";
 import { loadProject, mediaDir } from "./projects.js";
-import { PACKAGE_ROOT } from "./paths.js";
+import { trimVideoToFrames } from "./ffmpeg.js";
+import { PACKAGE_ROOT, projectDir } from "./paths.js";
 import {
   loadStoryboard,
   saveStoryboard
 } from "./storyboard.js";
 
 export const STORYBOARD_KREA_WORKFLOW_ID = "premiere316-storyboard-krea2-reference-subgraphs";
+export const STORYBOARD_T2V_WORKFLOW_ID = "premiere316-storyboard-ltx25-t2v-semantic-reference";
 
 const SOURCE_WORKFLOW_NAME = "storyboard-krea2-reference-subgraphs.ui.json";
 const SOURCE_WORKFLOW_PATH = path.join(
@@ -24,6 +26,8 @@ const SOURCE_WORKFLOW_PATH = path.join(
   "workflows",
   SOURCE_WORKFLOW_NAME
 );
+const T2V_SOURCE_WORKFLOW_NAME = "storyboard-ltx25-t2v-semantic-reference.ui.json";
+const T2V_SOURCE_WORKFLOW_PATH = path.join(PACKAGE_ROOT, "workflows", T2V_SOURCE_WORKFLOW_NAME);
 const PUSH_WORKFLOW_DIR = path.join(
   PACKAGE_ROOT,
   "BlokeyUI",
@@ -39,6 +43,20 @@ const REFERENCE_NODE_START_ID = 10000;
 const REFERENCE_CONCAT_NODE_ID = 10020;
 const REFERENCE_LINK_START_ID = 91000;
 const MAX_STORYBOARD_REFERENCES = 20;
+const MAX_STORYBOARD_T2V_REFERENCES = 9;
+const T2V_GENERATION_MODE = "t2v_with_semantic_references";
+const T2V_WORKFLOW_PROFILE = "ltx-2.5-t2v-semantic-reference-resolver";
+const T2V_NATIVE_MODE = "LTX-2.5 Native T2V";
+// Premiere316LTXMasterControls currently exposes this legacy label as the
+// boolean that selects the Ingredients output branch. The compiled prompt
+// below replaces every legacy model/CLIP/VAE dependency in that branch with
+// the verified LTX-2.5 loaders before it can be submitted.
+const T2V_INGREDIENTS_SWITCH_MODE = "LTX-2.3 Ingredients";
+const T2V_REFERENCE_CONDITIONING = "ltx-2.5-ingredients-iclora";
+const T2V_INGREDIENTS_LORA = "LTX\\2.5\\ltx-2.3-22b-ic-lora-ingredients-0.9.safetensors";
+const T2V_CUSTOM_ASPECT = "Custom (multiples of 32)";
+const T2V_NO_ADAPTER = "None - no validated LTX-2.5 reference adapter installed";
+const VIDEO_FILE_RE = /\.(mp4|webm|mov|mkv)$/i;
 
 const VIRTUAL_NODE_TYPES = new Set([
   "Note",
@@ -101,6 +119,322 @@ function loadSourceWorkflowGraph() {
     throw new Error(`Storyboard Krea workflow is missing its reference/model subgraphs: ${SOURCE_WORKFLOW_PATH}`);
   }
   return graph;
+}
+
+function t2vSourceWorkflowHash() {
+  const buffer = fs.readFileSync(T2V_SOURCE_WORKFLOW_PATH);
+  return crypto.createHash("sha256").update(buffer).digest("hex");
+}
+
+function loadT2vSourceWorkflowGraph() {
+  if (!fs.existsSync(T2V_SOURCE_WORKFLOW_PATH)) {
+    throw new Error(`Storyboard LTX-2.5 T2V workflow is missing: ${T2V_SOURCE_WORKFLOW_PATH}`);
+  }
+  const graph = JSON.parse(fs.readFileSync(T2V_SOURCE_WORKFLOW_PATH, "utf8"));
+  if (!Array.isArray(graph.nodes) || !Array.isArray(graph.links)) {
+    throw new Error(`Storyboard LTX-2.5 T2V workflow is not a ComfyUI UI graph: ${T2V_SOURCE_WORKFLOW_PATH}`);
+  }
+  return graph;
+}
+
+function findVideoPlan(storyboard, videoPlanId) {
+  const videoPlan = storyboard?.videoPlans?.[videoPlanId];
+  if (!videoPlan) throw new Error(`Storyboard video plan not found: ${videoPlanId}`);
+  const clip = storyboard?.clips?.[videoPlan.clipId];
+  if (!clip) throw new Error(`Storyboard video plan ${videoPlanId} has no owning clip: ${videoPlan.clipId || "missing"}`);
+  if (clip.videoPlanId && clip.videoPlanId !== videoPlanId) {
+    throw new Error(`Storyboard clip ${clip.id} points to a different video plan: ${clip.videoPlanId}`);
+  }
+  return { videoPlan, clip };
+}
+
+function assertNoTemporalImageFields(value, label) {
+  if (!value || typeof value !== "object") return;
+  for (const key of [
+    "frameId",
+    "firstFrameId",
+    "lastFrameId",
+    "firstFrame",
+    "lastFrame",
+    "image",
+    "imagePath",
+    "inputImage",
+    "endImage",
+    "timedImage",
+    "timedImages"
+  ]) {
+    const candidate = value[key];
+    if (candidate !== undefined && candidate !== null && candidate !== "" && candidate !== false) {
+      throw new Error(`${label} contains forbidden temporal image field ${key}; true T2V plans must start from text`);
+    }
+  }
+}
+
+function assertTextOnlyT2vPlan(storyboard, videoPlan, clip) {
+  const mode = videoPlan.generationMode || clip.generationMode || storyboard.defaults?.generationMode;
+  if (mode !== T2V_GENERATION_MODE) {
+    throw new Error(`Storyboard video plan ${videoPlan.id} is not true T2V: expected ${T2V_GENERATION_MODE}, received ${mode || "missing"}`);
+  }
+  if (videoPlan.workflowProfileId !== T2V_WORKFLOW_PROFILE) {
+    throw new Error(`Storyboard video plan ${videoPlan.id} uses unsupported workflow profile ${videoPlan.workflowProfileId || "missing"}; expected ${T2V_WORKFLOW_PROFILE}`);
+  }
+  const frameIds = Object.keys(storyboard.frames || {});
+  if (frameIds.length) {
+    throw new Error(`Storyboard T2V package still contains ${frameIds.length} image-generation frame record(s); frames must be {}`);
+  }
+  assertNoTemporalImageFields(clip, `Storyboard clip ${clip.id}`);
+  assertNoTemporalImageFields(videoPlan, `Storyboard video plan ${videoPlan.id}`);
+
+  const segmentIds = Array.isArray(videoPlan.segmentIds) ? videoPlan.segmentIds : [];
+  for (const segmentId of segmentIds) {
+    const segment = storyboard.segments?.[segmentId];
+    if (!segment) throw new Error(`Storyboard video plan ${videoPlan.id} references missing text segment ${segmentId}`);
+    if (segment.type && segment.type !== "text") {
+      throw new Error(`Storyboard segment ${segmentId} has type ${segment.type}; true T2V accepts text segments only`);
+    }
+    assertNoTemporalImageFields(segment, `Storyboard segment ${segmentId}`);
+  }
+  for (const segment of videoPlan.timelineData?.segments || []) {
+    if (segment?.type && segment.type !== "text") {
+      throw new Error(`Storyboard video plan ${videoPlan.id} timeline contains non-text segment type ${segment.type}`);
+    }
+    assertNoTemporalImageFields(segment, `Storyboard video plan ${videoPlan.id} timeline segment ${segment?.id || "unknown"}`);
+  }
+}
+
+function normalizeReferenceFile(value) {
+  const source = String(value || "").trim().replace(/\\/g, "/");
+  if (!source) throw new Error("Storyboard semantic reference filename is empty");
+  if (source.includes("\0") || source.startsWith("/") || /^[a-zA-Z]:\//.test(source)) {
+    throw new Error(`Storyboard semantic reference must be relative to its declared reference root: ${source}`);
+  }
+  const normalized = path.posix.normalize(source).replace(/^\.\//, "");
+  if (normalized === ".." || normalized.startsWith("../")) {
+    throw new Error(`Storyboard semantic reference escapes its declared reference root: ${source}`);
+  }
+  return normalized;
+}
+
+function resolveProjectReferenceRoot(project, storyboard, videoPlan) {
+  const declared = String(videoPlan.referenceRoot || storyboard.defaults?.referenceRoot || "reference_assets").trim();
+  if (!declared || path.isAbsolute(declared) || /^[a-zA-Z]:[\\/]/.test(declared)) {
+    throw new Error(`Storyboard video plan ${videoPlan.id} referenceRoot must be a project-relative folder`);
+  }
+  const projectRoot = path.resolve(projectDir(project.slug));
+  const referenceRoot = path.resolve(projectRoot, declared);
+  if (referenceRoot !== projectRoot && !referenceRoot.startsWith(`${projectRoot}${path.sep}`)) {
+    throw new Error(`Storyboard video plan ${videoPlan.id} referenceRoot escapes the project folder`);
+  }
+  if (!fs.existsSync(referenceRoot) || !fs.statSync(referenceRoot).isDirectory()) {
+    throw new Error(`Storyboard semantic reference root is missing: ${referenceRoot}`);
+  }
+  return { declared: declared.replace(/\\/g, "/"), absolute: referenceRoot };
+}
+
+function loadCanonicalReferenceIndex(referenceRoot, videoPlanId) {
+  const indexPath = path.join(referenceRoot, "asset_index.json");
+  if (!fs.existsSync(indexPath) || !fs.statSync(indexPath).isFile()) {
+    throw new Error(`Storyboard video plan ${videoPlanId} requires canonical reference index: ${indexPath}`);
+  }
+  let index;
+  try {
+    index = JSON.parse(fs.readFileSync(indexPath, "utf8"));
+  } catch (error) {
+    throw new Error(`Storyboard canonical reference index is invalid JSON: ${indexPath} (${error.message})`);
+  }
+  if (!Array.isArray(index.assets)) throw new Error(`Storyboard canonical reference index has no assets array: ${indexPath}`);
+  const byCanonical = new Map();
+  for (const asset of index.assets) {
+    const canonical = normalizeReferenceFile(asset?.canonical);
+    if (byCanonical.has(canonical)) throw new Error(`Storyboard canonical reference index repeats ${canonical}`);
+    byCanonical.set(canonical, asset);
+  }
+  return {
+    index,
+    indexPath,
+    indexHash: crypto.createHash("sha256").update(fs.readFileSync(indexPath)).digest("hex"),
+    byCanonical
+  };
+}
+
+function t2vPlanBindings(storyboard, videoPlanId) {
+  return Object.values(storyboard.referenceBindings || {})
+    .filter((binding) => binding?.targetKind === "video_plan" && binding.targetId === videoPlanId)
+    .sort((left, right) => (Number(left.order) || 0) - (Number(right.order) || 0) || String(left.id).localeCompare(String(right.id)));
+}
+
+function sameStringSet(left, right) {
+  if (left.length !== right.length) return false;
+  const expected = [...left].sort();
+  const actual = [...right].sort();
+  return expected.every((value, index) => value === actual[index]);
+}
+
+function resolveT2vReferences(project, storyboard, videoPlan, clip) {
+  const root = resolveProjectReferenceRoot(project, storyboard, videoPlan);
+  const canonicalIndex = loadCanonicalReferenceIndex(root.absolute, videoPlan.id);
+  const bindings = t2vPlanBindings(storyboard, videoPlan.id);
+  const planFiles = (videoPlan.referenceFiles || clip.referenceFiles || []).map(normalizeReferenceFile);
+  const bindingFiles = bindings.map((binding) => normalizeReferenceFile(binding.canonicalFile || binding.sourceAssetFile));
+  if (planFiles.length && bindingFiles.length && !sameStringSet(planFiles, bindingFiles)) {
+    throw new Error(`Storyboard video plan ${videoPlan.id} referenceFiles do not match its video_plan reference bindings`);
+  }
+  const files = planFiles.length ? planFiles : bindingFiles;
+  const declaredReferenceCountValue = videoPlan.referenceCount ?? clip.referenceCount;
+  if (declaredReferenceCountValue !== undefined && declaredReferenceCountValue !== null) {
+    const declaredReferenceCount = Number(declaredReferenceCountValue);
+    if (!Number.isInteger(declaredReferenceCount) || declaredReferenceCount < 0) {
+      throw new Error(`Storyboard video plan ${videoPlan.id} has invalid referenceCount ${declaredReferenceCountValue}`);
+    }
+    if (declaredReferenceCount !== files.length) {
+      throw new Error(
+        `Storyboard video plan ${videoPlan.id} declares ${declaredReferenceCount} semantic references but resolves ${files.length} reference filenames`
+      );
+    }
+  }
+  const maxReferences = Math.min(
+    MAX_STORYBOARD_T2V_REFERENCES,
+    Math.max(0, Number(storyboard.defaults?.maxReferences) || MAX_STORYBOARD_T2V_REFERENCES),
+    Math.max(0, Number(canonicalIndex.index.maxReferences) || MAX_STORYBOARD_T2V_REFERENCES)
+  );
+  if (files.length > maxReferences) {
+    throw new Error(`Storyboard video plan ${videoPlan.id} has ${files.length} semantic references; the canonical resolver supports ${maxReferences}`);
+  }
+  if (new Set(files).size !== files.length) throw new Error(`Storyboard video plan ${videoPlan.id} repeats a semantic reference filename`);
+
+  const bindingByFile = new Map(bindings.map((binding) => [normalizeReferenceFile(binding.canonicalFile || binding.sourceAssetFile), binding]));
+  const references = files.map((canonical, index) => {
+    const asset = canonicalIndex.byCanonical.get(canonical);
+    if (!asset) throw new Error(`Storyboard video plan ${videoPlan.id} requests unindexed canonical reference: ${canonical}`);
+    const absolute = path.resolve(root.absolute, ...canonical.split("/"));
+    if (absolute !== root.absolute && !absolute.startsWith(`${root.absolute}${path.sep}`)) {
+      throw new Error(`Storyboard semantic reference escapes its declared root: ${canonical}`);
+    }
+    if (!fs.existsSync(absolute) || !fs.statSync(absolute).isFile()) {
+      throw new Error(`Storyboard canonical reference file is missing: ${canonical}`);
+    }
+    const buffer = fs.readFileSync(absolute);
+    const sha256 = crypto.createHash("sha256").update(buffer).digest("hex");
+    if (asset.sha256 && String(asset.sha256).toLowerCase() !== sha256) {
+      throw new Error(`Storyboard canonical reference hash mismatch: ${canonical}`);
+    }
+    if (Number.isFinite(Number(asset.bytes)) && Number(asset.bytes) !== buffer.byteLength) {
+      throw new Error(`Storyboard canonical reference byte count mismatch: ${canonical}`);
+    }
+    const binding = bindingByFile.get(canonical);
+    return {
+      id: binding?.id || `semantic-reference:${videoPlan.id}:${index + 1}`,
+      assetId: binding?.assetId || null,
+      canonical,
+      role: binding?.role || asset.role || "semantic_reference",
+      required: Boolean(binding?.required),
+      order: Number(binding?.order) || index + 1,
+      useMode: binding?.useMode || "semantic_reference",
+      targetKind: binding?.targetKind || "video_plan",
+      targetId: binding?.targetId || videoPlan.id,
+      cropRegion: binding?.cropRegion || null,
+      notes: binding?.notes || null,
+      resolverToken: binding?.resolverToken || null,
+      sha256,
+      bytes: buffer.byteLength
+    };
+  });
+  return {
+    root,
+    indexPath: canonicalIndex.indexPath,
+    indexHash: canonicalIndex.indexHash,
+    maxReferences,
+    references
+  };
+}
+
+/**
+ * Read-only bridge for consumers that need the exact canonical references for
+ * an explicit semantic T2V plan without building or queueing a ComfyUI graph.
+ * The underlying resolver validates containment, index membership, hashes and
+ * byte counts and does not mutate the project or storyboard objects.
+ */
+export function resolveStoryboardVideoPlanReferences(project, storyboard, videoPlanId) {
+  const { videoPlan, clip } = findVideoPlan(storyboard, videoPlanId);
+  const generationMode = videoPlan.generationMode || clip.generationMode || storyboard.defaults?.generationMode;
+  if (generationMode !== T2V_GENERATION_MODE) {
+    throw new Error(`Storyboard video plan ${videoPlan.id} is not an explicit semantic T2V plan`);
+  }
+  const state = resolveT2vReferences(project, storyboard, videoPlan, clip);
+  return {
+    generationMode,
+    referenceMode: videoPlan.referenceMode || clip.referenceMode || "semantic_reference_resolver",
+    referenceRoot: state.root.declared,
+    referenceFiles: state.references.map((reference) => reference.canonical),
+    referenceCount: state.references.length,
+    expectedReferenceCount: Number(videoPlan.referenceCount ?? clip.referenceCount ?? state.references.length),
+    resolvedReferenceCount: state.references.length,
+    maxReferences: state.maxReferences,
+    referenceIndexHash: state.indexHash,
+    references: state.references.map((reference) => ({ ...reference }))
+  };
+}
+
+function t2vAudioPlan(videoPlan, clip) {
+  return videoPlan.audioPlan || clip.audioPlan || {
+    mode: videoPlan.audioMode || "generated_ambience",
+    dialogueText: clip.dialogueAnchor || "",
+    instruction: clip.dialogueAnchor || ""
+  };
+}
+
+function assertRunnableT2vAudio(videoPlan, clip) {
+  const audioPlan = t2vAudioPlan(videoPlan, clip);
+  const mode = audioPlan.mode || videoPlan.audioMode || "generated_ambience";
+  if (mode === "generated_ambience") return audioPlan;
+  if (mode === "custom_dialogue_required") {
+    throw new Error(`Storyboard video plan ${videoPlan.id} requires an exact clip-length dialogue track before generation; voice identity references are not dialogue media`);
+  }
+  if (mode === "custom_track_post_mix") {
+    throw new Error(`Storyboard video plan ${videoPlan.id} requires authoritative external audio post-mix support, which is not wired into the T2V workflow yet`);
+  }
+  throw new Error(`Storyboard video plan ${videoPlan.id} uses unsupported audio mode: ${mode}`);
+}
+
+function seedForVideoPlan(videoPlan) {
+  const raw = Number(videoPlan.seed);
+  if (Number.isFinite(raw)) return Math.max(0, Math.floor(raw));
+  return parseInt(crypto.createHash("sha256").update(String(videoPlan.id || "video-plan")).digest("hex").slice(0, 12), 16);
+}
+
+function t2vPlanSettings(storyboard, videoPlan, clip) {
+  const fps = Number(videoPlan.fps || storyboard.defaults?.fps || 24);
+  // The package working canvas is an editorial target, not a safe native
+  // diffusion size. Plans without an explicit override use the validated
+  // LTX-2.5 latent-x2 preset; portrait/music-video plans keep their authored
+  // dimensions.
+  const width = Number(videoPlan.width || 768);
+  const height = Number(videoPlan.height || 320);
+  const authoredFrames = Math.round(Number(videoPlan.requestedFrames || clip.durationFrames));
+  const decodedTrim = Math.max(0, Math.round(Number(clip.trimDecodedFrames ?? storyboard.defaults?.decodedFrameTrim ?? 1)));
+  const generationFrames = Math.round(Number(videoPlan.generationFrames || clip.decodedFrames || authoredFrames + decodedTrim));
+  if (!Number.isFinite(fps) || fps <= 0) throw new Error(`Storyboard video plan ${videoPlan.id} has invalid fps`);
+  if (![width, height].every((value) => Number.isInteger(value) && value > 0 && value % 32 === 0)) {
+    throw new Error(`Storyboard video plan ${videoPlan.id} dimensions must be positive multiples of 32; received ${width}x${height}`);
+  }
+  if (!Number.isInteger(authoredFrames) || authoredFrames < 1) throw new Error(`Storyboard video plan ${videoPlan.id} has invalid authored frame count`);
+  if (!Number.isInteger(generationFrames) || generationFrames < authoredFrames) {
+    throw new Error(`Storyboard video plan ${videoPlan.id} generationFrames must be at least its authored frame count`);
+  }
+  if (generationFrames - authoredFrames !== decodedTrim) {
+    throw new Error(`Storyboard video plan ${videoPlan.id} decoded-frame contract is inconsistent: ${generationFrames} generated, ${authoredFrames} authored, ${decodedTrim} trimmed`);
+  }
+  return {
+    fps,
+    width,
+    height,
+    authoredFrames,
+    generationFrames,
+    decodedTrim,
+    durationSeconds: authoredFrames / fps,
+    seed: seedForVideoPlan(videoPlan),
+    latentX2: width % 64 === 0 && height % 64 === 0
+  };
 }
 
 function workflowContainers(graph) {
@@ -658,7 +992,16 @@ function attachReferenceImageNodes(graph, references) {
 
 export function flattenStoryboardWorkflowGraph(graph) {
   const definitions = workflowDefinitions(graph);
-  const containers = workflowContainers(graph);
+  const containers = [graph];
+  const reachableDefinitions = new Set();
+  for (let index = 0; index < containers.length; index += 1) {
+    for (const node of containers[index].nodes || []) {
+      const definition = definitions.get(node.type);
+      if (!definition || reachableDefinitions.has(definition.id)) continue;
+      reachableDefinitions.add(definition.id);
+      containers.push(definition);
+    }
+  }
   const instanceTypes = new Set(definitions.keys());
   const ordinaryNodes = [];
   const seenIds = new Set();
@@ -1158,6 +1501,582 @@ export function markStoryboardFrameGenerationFailed(slug, frameId, error) {
   frame.status = frame.generatedAssetVersionId ? "generated" : "ready_to_generate";
   frame.lastError = String(error?.message || error);
   frame.generationFailedAt = new Date().toISOString();
+  saveStoryboard(slug, next);
+  return next;
+}
+
+function t2vFilenamePrefix(project, clip) {
+  return `Premiere316/${safePart(project.slug)}/storyboard/${safePart(clip.id)}`;
+}
+
+function t2vDestinationBase(clip) {
+  return safePart(clip.id, "storyboard-video", 96);
+}
+
+function setT2vVideoCombine(graph, { fps, filenamePrefix }) {
+  const node = findNode(graph, 5928);
+  if (!node) throw new Error("Storyboard LTX-2.5 T2V workflow is missing final video node 5928");
+  node.widgets_values = {
+    ...(node.widgets_values && !Array.isArray(node.widgets_values) ? node.widgets_values : {}),
+    frame_rate: fps,
+    loop_count: 0,
+    filename_prefix: filenamePrefix,
+    format: "video/h264-mp4",
+    pix_fmt: "yuv420p",
+    crf: 19,
+    save_metadata: true,
+    trim_to_audio: false,
+    pingpong: false,
+    save_output: true
+  };
+}
+
+function setRequiredT2vNodeWidget(graph, nodeId, index, value) {
+  const node = setWidgetValue(graph, nodeId, index, value);
+  if (!node) throw new Error(`Storyboard LTX-2.5 T2V workflow is missing required node ${nodeId}`);
+  return node;
+}
+
+function assertT2vGraphContract(graph) {
+  for (const nodeId of [5905, 5955, 5956]) {
+    const node = findNode(graph, nodeId);
+    if (!node || node.widgets_values?.[0] !== false) {
+      throw new Error(`Storyboard LTX-2.5 T2V workflow temporal-image control ${nodeId} is not explicitly off`);
+    }
+  }
+  const resolver = findNode(graph, 5902);
+  if (!resolver || resolver.type !== "Premiere316AssetResolver") {
+    throw new Error("Storyboard LTX-2.5 T2V workflow is missing its canonical semantic-reference resolver");
+  }
+  const finalVideo = findNode(graph, 5928);
+  if (!finalVideo || finalVideo.type !== "VHS_VideoCombine") {
+    throw new Error("Storyboard LTX-2.5 T2V workflow is missing its final video output");
+  }
+  const referenceSheet = findNode(graph, 5915);
+  const icLoader = findNode(graph, 5914);
+  const icGuide = findNode(graph, 5919);
+  if (referenceSheet?.type !== "Premiere316ReferenceSheetBuilder"
+    || icLoader?.type !== "LTXICLoRALoaderModelOnly"
+    || icGuide?.type !== "LTXAddVideoICLoRAGuide") {
+    throw new Error("Storyboard LTX-2.5 T2V workflow is missing its Ingredients IC-LoRA conditioning branch");
+  }
+}
+
+function requiredApiNode(prompt, id, classType) {
+  const node = prompt[String(id)];
+  if (!node || node.class_type !== classType) {
+    throw new Error(`Storyboard LTX-2.5 T2V compiled prompt is missing ${classType} node ${id}`);
+  }
+  node.inputs ||= {};
+  return node;
+}
+
+function enableLtx25IngredientsConditioning(apiPrompt, built) {
+  const { settings } = built;
+  const model = requiredApiNode(apiPrompt, 5801, "UNETLoader");
+  const videoVae = requiredApiNode(apiPrompt, 5800, "VAELoader");
+  const audioVae = requiredApiNode(apiPrompt, 5799, "VAELoader");
+  const clip = requiredApiNode(apiPrompt, 5802, "CLIPLoader");
+  const master = requiredApiNode(apiPrompt, 5900, "Premiere316LTXMasterControls");
+  const resolver = requiredApiNode(apiPrompt, 5902, "Premiere316AssetResolver");
+  const promptBuilder = requiredApiNode(apiPrompt, 5903, "Premiere316LTXPromptBuilder");
+  const icLoader = requiredApiNode(apiPrompt, 5914, "LTXICLoRALoaderModelOnly");
+  const sheet = requiredApiNode(apiPrompt, 5915, "Premiere316ReferenceSheetBuilder");
+  const promptGuide = requiredApiNode(apiPrompt, 5916, "DenoLTXPromptGuide");
+  const videoLatent = requiredApiNode(apiPrompt, 5917, "EmptyLTXVLatentVideo");
+  const audioLatent = requiredApiNode(apiPrompt, 5918, "LTXVEmptyLatentAudio");
+  const icGuide = requiredApiNode(apiPrompt, 5919, "LTXAddVideoICLoRAGuide");
+  const videoVaeSwitch = requiredApiNode(apiPrompt, 5911, "LazySwitchKJ");
+  const audioVaeSwitch = requiredApiNode(apiPrompt, 5912, "LazySwitchKJ");
+  const imageSwitch = requiredApiNode(apiPrompt, 5921, "LazySwitchKJ");
+  const generatedAudioSwitch = requiredApiNode(apiPrompt, 5922, "LazySwitchKJ");
+  const videoDecode = requiredApiNode(apiPrompt, 5948, "LTXVTiledVAEDecode");
+  const audioDecode = requiredApiNode(apiPrompt, 5949, "LTXVAudioVAEDecode");
+  const finalScale = requiredApiNode(apiPrompt, 5936, "ImageScale");
+  const finalVideo = requiredApiNode(apiPrompt, 5928, "VHS_VideoCombine");
+
+  if (!built.references.length) {
+    // A package plan that explicitly declares referenceCount=0 is pure native
+    // T2V. Keep every lazy branch on the native LTX-2.5 path and prevent the
+    // resolver from inferring visual assets merely because their names occur
+    // in the authored text prompt.
+    master.inputs.reference_mode = T2V_NATIVE_MODE;
+    promptBuilder.inputs.reference_mode = T2V_NATIVE_MODE;
+    resolver.inputs.max_references = 0;
+    resolver.inputs.strict_mode = false;
+    resolver.inputs.explicit_references = "";
+    videoVaeSwitch.inputs.switch = false;
+    audioVaeSwitch.inputs.switch = false;
+    imageSwitch.inputs.switch = false;
+    generatedAudioSwitch.inputs.switch = false;
+    finalScale.inputs.width = settings.width;
+    finalScale.inputs.height = settings.height;
+    finalVideo.inputs.frame_rate = settings.fps;
+    return {
+      expected: 0,
+      resolved: 0,
+      injected: 0,
+      adapter: null,
+      model: model.inputs.unet_name,
+      clip: clip.inputs.clip_name,
+      videoVae: videoVae.inputs.vae_name,
+      audioVae: audioVae.inputs.vae_name,
+      resolverNodeId: "5902",
+      sheetNodeId: null,
+      guideNodeId: null
+    };
+  }
+
+  // Select the lazy Ingredients output without loading the legacy LTX-2.3
+  // preset. Every actual dependency is redirected to the native LTX-2.5
+  // transformer, projected Gemma 4 CLIP, and LTX-2.5 AV VAEs.
+  master.inputs.reference_mode = T2V_INGREDIENTS_SWITCH_MODE;
+  master.inputs.duration_seconds = settings.durationSeconds;
+  master.inputs.fps = settings.fps;
+  master.inputs.width = settings.width;
+  master.inputs.height = settings.height;
+  master.inputs.seed = settings.seed;
+  promptBuilder.inputs.reference_mode = T2V_INGREDIENTS_SWITCH_MODE;
+  promptBuilder.inputs.duration_seconds = settings.durationSeconds;
+  promptBuilder.inputs.fps = settings.fps;
+  promptBuilder.inputs.width = settings.width;
+  promptBuilder.inputs.height = settings.height;
+
+  icLoader.inputs.model = ["5801", 0];
+  icLoader.inputs.lora_name = T2V_INGREDIENTS_LORA;
+  icLoader.inputs.strength_model = 1.0;
+  sheet.inputs.reference_set = ["5902", 1];
+  sheet.inputs.width = settings.width;
+  sheet.inputs.height = settings.height;
+  sheet.inputs.frame_count = settings.generationFrames;
+  promptGuide.inputs.clip = ["5802", 0];
+  promptGuide.inputs.frame_rate = settings.fps;
+  videoLatent.inputs.width = settings.width;
+  videoLatent.inputs.height = settings.height;
+  videoLatent.inputs.length = settings.generationFrames;
+  audioLatent.inputs.audio_vae = ["5799", 0];
+  audioLatent.inputs.frames_number = settings.generationFrames;
+  audioLatent.inputs.frame_rate = settings.fps;
+  icGuide.inputs.vae = ["5800", 0];
+  icGuide.inputs.image = ["5915", 1];
+  icGuide.inputs.strength = 1.0;
+  icGuide.inputs.crop = "center";
+  icGuide.inputs.use_tiled_encode = settings.generationFrames > 121;
+  videoDecode.inputs.vae = ["5800", 0];
+  audioDecode.inputs.audio_vae = ["5799", 0];
+
+  // These switches remain lazy. Their true branches now point only to native
+  // LTX-2.5 dependencies and the IC-conditioned output.
+  videoVaeSwitch.inputs.on_true = ["5800", 0];
+  audioVaeSwitch.inputs.on_true = ["5799", 0];
+  imageSwitch.inputs.switch = true;
+  generatedAudioSwitch.inputs.switch = true;
+  finalScale.inputs.width = settings.width;
+  finalScale.inputs.height = settings.height;
+  finalVideo.inputs.frame_rate = settings.fps;
+
+  // Keep these bindings explicit so future workflow edits cannot silently
+  // downgrade the reference path back to prompt-text-only behavior.
+  if (icLoader.inputs.model[0] !== "5801"
+    || promptGuide.inputs.clip[0] !== "5802"
+    || icGuide.inputs.image[0] !== "5915"
+    || sheet.inputs.reference_set[0] !== "5902") {
+    throw new Error("Storyboard semantic references were resolved but not injected into the LTX-2.5 IC-LoRA branch");
+  }
+
+  return {
+    expected: built.references.length,
+    resolved: built.references.length,
+    injected: built.references.length,
+    adapter: T2V_INGREDIENTS_LORA,
+    model: model.inputs.unet_name,
+    clip: clip.inputs.clip_name,
+    videoVae: videoVae.inputs.vae_name,
+    audioVae: audioVae.inputs.vae_name,
+    resolverNodeId: "5902",
+    sheetNodeId: "5915",
+    guideNodeId: "5919"
+  };
+}
+
+export function buildStoryboardVideoPlanWorkflowGraph(project, storyboard, videoPlanId, options = {}) {
+  const { videoPlan, clip } = findVideoPlan(storyboard, videoPlanId);
+  assertTextOnlyT2vPlan(storyboard, videoPlan, clip);
+  const audioPlan = options.requireRunnableAudio ? assertRunnableT2vAudio(videoPlan, clip) : t2vAudioPlan(videoPlan, clip);
+  const referenceState = resolveT2vReferences(project, storyboard, videoPlan, clip);
+  const settings = t2vPlanSettings(storyboard, videoPlan, clip);
+  const prompt = String(videoPlan.globalPrompt || "").trim();
+  if (!prompt) throw new Error(`Storyboard video plan ${videoPlan.id} has no T2V globalPrompt`);
+  const negativePrompt = String(videoPlan.negativePrompt || "").trim();
+  const filenamePrefix = t2vFilenamePrefix(project, clip);
+  const explicitReferences = referenceState.references.map((reference) => reference.canonical).join("\n");
+  const hasSemanticReferences = referenceState.references.length > 0;
+  const graph = structuredClone(loadT2vSourceWorkflowGraph());
+
+  const master = findNode(graph, 5900);
+  if (!master) throw new Error("Storyboard LTX-2.5 T2V workflow is missing master controls node 5900");
+  master.widgets_values = [
+    T2V_NATIVE_MODE,
+    settings.durationSeconds,
+    settings.fps,
+    T2V_CUSTOM_ASPECT,
+    settings.width,
+    settings.height,
+    settings.seed,
+    settings.latentX2,
+    T2V_NO_ADAPTER
+  ];
+  master.title = `T2V MASTER — ${settings.width}x${settings.height} · ${settings.fps} fps · ${settings.authoredFrames} authored frames`;
+
+  setRequiredT2vNodeWidget(graph, 5901, 0, prompt);
+  const resolver = findNode(graph, 5902);
+  if (!resolver) throw new Error("Storyboard LTX-2.5 T2V workflow is missing asset resolver node 5902");
+  resolver.widgets_values = [
+    prompt,
+    referenceState.root.absolute,
+    hasSemanticReferences ? referenceState.maxReferences : 0,
+    hasSemanticReferences,
+    false,
+    "asset_index.json",
+    explicitReferences
+  ];
+  resolver.title = hasSemanticReferences
+    ? `SEMANTIC REFERENCES — ${referenceState.references.length}/${referenceState.maxReferences} exact canonical files`
+    : "PURE NATIVE T2V — no semantic references declared";
+
+  const audioInstruction = String(audioPlan.instruction || audioPlan.dialogueText || clip.dialogueAnchor || "").trim();
+  const generatedAudioReady = (audioPlan.mode || videoPlan.audioMode || "generated_ambience") === "generated_ambience";
+  const workflowAudioMode = generatedAudioReady ? "Generated Audio" : "Custom Replace";
+  const promptBuilder = findNode(graph, 5903);
+  if (!promptBuilder) throw new Error("Storyboard LTX-2.5 T2V workflow is missing prompt builder node 5903");
+  promptBuilder.widgets_values = [
+    prompt,
+    "",
+    T2V_NATIVE_MODE,
+    settings.durationSeconds,
+    settings.fps,
+    settings.width,
+    settings.height,
+    workflowAudioMode,
+    "",
+    audioInstruction,
+    audioInstruction,
+    "",
+    "",
+    Boolean(negativePrompt),
+    negativePrompt
+  ];
+
+  const audioModeControl = setRequiredT2vNodeWidget(graph, 5904, 0, workflowAudioMode);
+  if (generatedAudioReady) {
+    audioModeControl.title = "AUDIO MODE — Generated Audio";
+  } else {
+    audioModeControl.title = `AUDIO BLOCKED — ${audioPlan.mode}: install authoritative clip audio before Generate`;
+  }
+  setRequiredT2vNodeWidget(graph, 5905, 0, false);
+  setRequiredT2vNodeWidget(graph, 5955, 0, false);
+  setRequiredT2vNodeWidget(graph, 5956, 0, false);
+  const customAudioGate = findNode(graph, 5964);
+  if (customAudioGate?.type === "LazySwitchKJ") {
+    // Keep both inputs structurally valid. LazySwitchKJ evaluates only the
+    // branch selected by Premiere316AudioModeControl, so Generated Audio does
+    // not open the custom WAV while Custom Replace/Mix can still opt into it.
+    customAudioGate.mode = 0;
+    const customAudioLoader = findNode(graph, 5923);
+    if (customAudioLoader) customAudioLoader.mode = 0;
+  } else {
+    // Compatibility with older tracked workflows that predate the lazy gate.
+    disconnectInput(graph, 5924, "master_custom_track");
+    const unusedCustomAudio = findNode(graph, 5923);
+    if (unusedCustomAudio) unusedCustomAudio.mode = 4;
+  }
+  setT2vVideoCombine(graph, { fps: settings.fps, filenamePrefix });
+  assertT2vGraphContract(graph);
+
+  const sourceHash = t2vSourceWorkflowHash();
+  const referenceHash = hashJson(referenceState.references.map(({ canonical, sha256 }) => ({ canonical, sha256 })));
+  graph.extra = {
+    ...(graph.extra || {}),
+    premiere316: {
+      type: "storyboard-t2v-video-plan",
+      workflowId: STORYBOARD_T2V_WORKFLOW_ID,
+      projectSlug: project.slug,
+      clipId: clip.id,
+      videoPlanId: videoPlan.id,
+      generationMode: T2V_GENERATION_MODE,
+      workflowProfileId: T2V_WORKFLOW_PROFILE,
+      promptHash: crypto.createHash("sha256").update(prompt).digest("hex"),
+      negativePromptHash: crypto.createHash("sha256").update(negativePrompt).digest("hex"),
+      sourceWorkflow: T2V_SOURCE_WORKFLOW_NAME,
+      sourceWorkflowHash: sourceHash,
+      filenamePrefix,
+      settings,
+      referenceRoot: referenceState.root.declared,
+      referenceRootAbsolute: referenceState.root.absolute,
+      referenceIndex: path.basename(referenceState.indexPath),
+      referenceIndexHash: referenceState.indexHash,
+      referenceHash,
+      references: referenceState.references,
+      semanticReferenceConditioning: hasSemanticReferences ? T2V_REFERENCE_CONDITIONING : "none",
+      visualReferenceAdapter: hasSemanticReferences ? T2V_INGREDIENTS_LORA : null,
+      visualReferenceRuntimePatch: hasSemanticReferences ? "compiled-api-v1" : null,
+      temporalGuides: {
+        firstFrame: false,
+        lastFrame: false,
+        timedImages: false
+      },
+      audioMode: audioPlan.mode || videoPlan.audioMode || "generated_ambience",
+      audioRunnable: generatedAudioReady,
+      audioBlocker: generatedAudioReady ? null : String(audioPlan.instruction || "Authoritative external audio is required")
+    }
+  };
+
+  const executionGraph = flattenStoryboardWorkflowGraph(graph);
+  return {
+    graph,
+    executionGraph,
+    videoPlan,
+    clip,
+    prompt,
+    negativePrompt,
+    filenamePrefix,
+    settings,
+    references: referenceState.references,
+    referenceRoot: referenceState.root.absolute,
+    referenceIndexHash: referenceState.indexHash,
+    referenceHash,
+    audioPlan,
+    sourceWorkflowPath: T2V_SOURCE_WORKFLOW_PATH,
+    sourceWorkflowHash: sourceHash,
+    workflowHash: hashJson(graph)
+  };
+}
+
+function writeStoryboardVideoPlanWorkflow(slug, videoPlanId, built) {
+  const workflowName = `${safePart(slug)}__${safePart(videoPlanId)}__t2v.json`;
+  const workflowFile = path.join(PUSH_WORKFLOW_DIR, workflowName);
+  writeJsonAtomic(workflowFile, built.graph);
+  return { workflowName, workflowFile };
+}
+
+export function storyboardVideoPlanGenerationFingerprint(videoPlan, clip, built) {
+  return hashJson({
+    videoPlanId: videoPlan.id,
+    clipId: clip.id,
+    workflowId: STORYBOARD_T2V_WORKFLOW_ID,
+    workflowHash: built.workflowHash,
+    sourceWorkflowHash: built.sourceWorkflowHash,
+    prompt: built.prompt,
+    negativePrompt: built.negativePrompt,
+    settings: built.settings,
+    referenceIndexHash: built.referenceIndexHash,
+    referenceHash: built.referenceHash,
+    audioPlan: built.audioPlan
+  });
+}
+
+export async function compileStoryboardVideoPlanPrompt(project, storyboard, videoPlanId) {
+  const built = buildStoryboardVideoPlanWorkflowGraph(project, storyboard, videoPlanId, { requireRunnableAudio: true });
+  const objectInfo = await getObjectInfo();
+  const missing = missingRuntimeClasses(built.executionGraph, objectInfo);
+  if (missing.length) {
+    throw new Error(`Storyboard LTX-2.5 T2V workflow is not available in the active ComfyUI runtime; missing node classes: ${missing.join(", ")}. Restart only after the render queue is empty.`);
+  }
+  const converted = graphToApi({ nodes: built.executionGraph.nodes, links: built.executionGraph.links }, objectInfo);
+  if (converted.warnings?.length) {
+    throw new Error(`Storyboard LTX-2.5 T2V workflow could not compile cleanly: ${converted.warnings.join("; ")}`);
+  }
+  const referenceConditioning = enableLtx25IngredientsConditioning(converted.prompt, built);
+  const inputErrors = validateApiPromptRequiredInputs(converted.prompt, objectInfo);
+  if (inputErrors.length) {
+    throw new Error(`Storyboard LTX-2.5 T2V workflow is missing required API inputs after conversion: ${inputErrors.join(", ")}`);
+  }
+  return { ...built, apiPrompt: converted.prompt, referenceConditioning };
+}
+
+export async function downloadStoryboardVideoPlanWorkflow(slug, videoPlanId) {
+  const project = loadProject(slug);
+  const storyboard = loadStoryboard(slug);
+  const built = buildStoryboardVideoPlanWorkflowGraph(project, storyboard, videoPlanId);
+  return { ...built, workflowName: `${safePart(slug)}__${safePart(videoPlanId)}__t2v.json` };
+}
+
+export async function pushStoryboardVideoPlanToComfyUI(slug, videoPlanId) {
+  const project = loadProject(slug);
+  const storyboard = loadStoryboard(slug);
+  const built = buildStoryboardVideoPlanWorkflowGraph(project, storyboard, videoPlanId);
+  const written = writeStoryboardVideoPlanWorkflow(slug, videoPlanId, built);
+  return {
+    ok: true,
+    videoPlanId,
+    clipId: built.clip.id,
+    workflowId: STORYBOARD_T2V_WORKFLOW_ID,
+    ...written,
+    workflowLibraryFolder: PUSH_WORKFLOW_DIR,
+    sourceWorkflowPath: built.sourceWorkflowPath,
+    sourceWorkflowHash: built.sourceWorkflowHash,
+    workflowHash: built.workflowHash,
+    referenceCount: built.references.length,
+    filenamePrefix: built.filenamePrefix,
+    settings: built.settings
+  };
+}
+
+export function markStoryboardVideoPlanQueued(slug, videoPlanId) {
+  const project = loadProject(slug);
+  const storyboard = loadStoryboard(slug);
+  const built = buildStoryboardVideoPlanWorkflowGraph(project, storyboard, videoPlanId, { requireRunnableAudio: true });
+  const generationFingerprint = storyboardVideoPlanGenerationFingerprint(built.videoPlan, built.clip, built);
+  const next = structuredClone(storyboard);
+  const target = findVideoPlan(next, videoPlanId).videoPlan;
+  target.status = "queued";
+  target.lastError = null;
+  target.generationWorkflowId = STORYBOARD_T2V_WORKFLOW_ID;
+  target.generationWorkflowHash = built.workflowHash;
+  target.generationFingerprint = generationFingerprint;
+  target.generationQueuedAt = new Date().toISOString();
+  target.generationSeed = built.settings.seed;
+  target.generationSettings = built.settings;
+  next.clips[target.clipId].renderStatus = "queued";
+  saveStoryboard(slug, next);
+  return {
+    project,
+    storyboard: next,
+    videoPlan: target,
+    clip: next.clips[target.clipId],
+    workflowHash: built.workflowHash,
+    generationFingerprint,
+    seed: built.settings.seed,
+    settings: built.settings,
+    filenamePrefix: built.filenamePrefix
+  };
+}
+
+export function restoreStoryboardVideoPlanAfterCancellation(slug, videoPlanId) {
+  if (!slug || !videoPlanId) return null;
+  const storyboard = loadStoryboard(slug);
+  const next = structuredClone(storyboard);
+  const { videoPlan, clip } = findVideoPlan(next, videoPlanId);
+  videoPlan.status = videoPlan.generatedVersions?.length ? "generated" : "ready";
+  videoPlan.lastError = null;
+  videoPlan.generationQueuedAt = null;
+  clip.renderStatus = videoPlan.generatedVersions?.length ? "completed" : "not_started";
+  saveStoryboard(slug, next);
+  return next;
+}
+
+export async function generateStoryboardVideoPlanJob(job) {
+  const project = loadProject(job.projectSlug);
+  const storyboard = loadStoryboard(job.projectSlug);
+  const compiled = await compileStoryboardVideoPlanPrompt(project, storyboard, job.refs.videoPlanId);
+  const fingerprint = storyboardVideoPlanGenerationFingerprint(compiled.videoPlan, compiled.clip, compiled);
+  if (job.refs?.generationFingerprint && job.refs.generationFingerprint !== fingerprint) {
+    throw new Error("Storyboard T2V job cancelled because its prompt, semantic references, audio plan, or workflow changed after queueing");
+  }
+
+  job.label = `Generate storyboard T2V video · ${compiled.clip.id}`;
+  job.stage = "Generating LTX-2.5 text-to-video with Ingredients IC-LoRA references";
+  job.progress = 0.04;
+  const outputs = await runPrompt(compiled.apiPrompt, {
+    signal: job.signal,
+    onProgress: ({ value, max }) => {
+      if (max) job.progress = Math.min(0.88, 0.08 + (value / max) * 0.8);
+    }
+  });
+  const outputRefs = collectOutputFiles(outputs).filter((ref) => VIDEO_FILE_RE.test(String(ref.filename || "")));
+  if (outputRefs.length !== 1) {
+    throw new Error(`ComfyUI completed with ${outputRefs.length} video files; exactly one T2V output is required for deterministic registration`);
+  }
+
+  const freshProject = loadProject(job.projectSlug);
+  const fresh = loadStoryboard(job.projectSlug);
+  const latest = buildStoryboardVideoPlanWorkflowGraph(freshProject, fresh, job.refs.videoPlanId, { requireRunnableAudio: true });
+  const latestFingerprint = storyboardVideoPlanGenerationFingerprint(latest.videoPlan, latest.clip, latest);
+  if (latestFingerprint !== fingerprint) {
+    throw new Error("Storyboard T2V output was retained in ComfyUI but not registered because the video plan changed during generation");
+  }
+
+  const version = nextGeneratedVersion(latest.videoPlan);
+  const destination = mediaDir(freshProject, "storyboard");
+  fs.mkdirSync(destination, { recursive: true });
+  const base = t2vDestinationBase(latest.clip);
+  const rawFile = await downloadOutput(outputRefs[0], destination, `${base}.v${version}.decoded-raw`);
+  const finalFile = `${base}.v${version}.mp4`;
+  job.stage = `Trimming decoded video to ${latest.settings.authoredFrames} authored frames`;
+  job.progress = 0.92;
+  await trimVideoToFrames(
+    path.join(destination, rawFile),
+    path.join(destination, finalFile),
+    latest.settings.authoredFrames,
+    latest.settings.fps
+  );
+  try { fs.unlinkSync(path.join(destination, rawFile)); } catch {}
+
+  const next = structuredClone(fresh);
+  const { videoPlan: target, clip } = findVideoPlan(next, job.refs.videoPlanId);
+  target.generatedVersions = Array.isArray(target.generatedVersions) ? target.generatedVersions : [];
+  target.generatedVersions.push({
+    v: version,
+    files: [finalFile],
+    file: finalFile,
+    mediaType: "video",
+    workflowId: STORYBOARD_T2V_WORKFLOW_ID,
+    workflowHash: latest.workflowHash,
+    workflowSource: T2V_SOURCE_WORKFLOW_NAME,
+    sourceWorkflowHash: latest.sourceWorkflowHash,
+    generationFingerprint: fingerprint,
+    prompt: latest.prompt,
+    promptHash: crypto.createHash("sha256").update(latest.prompt).digest("hex"),
+    negativePrompt: latest.negativePrompt,
+    seed: latest.settings.seed,
+    width: latest.settings.width,
+    height: latest.settings.height,
+    fps: latest.settings.fps,
+    authoredFrames: latest.settings.authoredFrames,
+    decodedFrames: latest.settings.generationFrames,
+    trimmedDecodedFrames: latest.settings.decodedTrim,
+    semanticReferences: latest.references,
+    referenceConditioning: compiled.referenceConditioning,
+    referenceIndexHash: latest.referenceIndexHash,
+    referenceHash: latest.referenceHash,
+    filenamePrefix: latest.filenamePrefix,
+    fileHashes: generatedFileHashes(freshProject, [finalFile]),
+    createdAt: new Date().toISOString()
+  });
+  target.activeGeneratedVersion = version;
+  target.generatedFile = finalFile;
+  target.generatedInputPath = `media/storyboard/${finalFile}`;
+  target.inputHash = fingerprint;
+  target.status = "generated";
+  target.lastError = null;
+  target.generationCompletedAt = new Date().toISOString();
+  clip.renderStatus = "completed";
+  clip.generatedVideoPlanVersion = version;
+  saveStoryboard(job.projectSlug, next);
+  job.result = {
+    videoPlanId: target.id,
+    clipId: clip.id,
+    files: [finalFile],
+    version,
+    workflowHash: latest.workflowHash,
+    generationFingerprint: fingerprint,
+    authoredFrames: latest.settings.authoredFrames,
+    decodedFrames: latest.settings.generationFrames,
+    trimmedDecodedFrames: latest.settings.decodedTrim,
+    referenceConditioning: compiled.referenceConditioning
+  };
+  job.progress = 0.98;
+}
+
+export function markStoryboardVideoPlanGenerationFailed(slug, videoPlanId, error) {
+  if (!slug || !videoPlanId) return null;
+  const storyboard = loadStoryboard(slug);
+  const next = structuredClone(storyboard);
+  const { videoPlan, clip } = findVideoPlan(next, videoPlanId);
+  videoPlan.status = videoPlan.generatedVersions?.length ? "generated" : "ready";
+  videoPlan.lastError = String(error?.message || error);
+  videoPlan.generationFailedAt = new Date().toISOString();
+  clip.renderStatus = videoPlan.generatedVersions?.length ? "completed" : "not_started";
   saveStoryboard(slug, next);
   return next;
 }

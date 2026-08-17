@@ -44,8 +44,11 @@ import {
 import { assetApprovalCurrent, generateAssetJob, restoreCancelledAsset } from "./assets.js";
 import {
   generateStoryboardFrameJob,
+  generateStoryboardVideoPlanJob,
   markStoryboardFrameGenerationFailed,
-  restoreStoryboardFrameAfterCancellation
+  markStoryboardVideoPlanGenerationFailed,
+  restoreStoryboardFrameAfterCancellation,
+  restoreStoryboardVideoPlanAfterCancellation
 } from "./storyboard-generation.js";
 import { projectDir } from "./paths.js";
 import {
@@ -59,7 +62,13 @@ const jobs = [];
 let running = false;
 let activeJob = null;
 let activeAbortController = null;
-const COMFY_PROMPT_JOB_TYPES = new Set(["render_range", "render_h3_range", "generate_asset", "generate_storyboard_frame"]);
+const COMFY_PROMPT_JOB_TYPES = new Set([
+  "render_range",
+  "render_h3_range",
+  "generate_asset",
+  "generate_storyboard_frame",
+  "generate_storyboard_video_plan"
+]);
 
 function persistJobLedger(projectSlug) {
   if (!projectSlug) return;
@@ -121,6 +130,15 @@ export function enqueue(job) {
     );
     if (existing) return existing;
   }
+  if (job?.type === "generate_storyboard_video_plan" && job?.projectSlug && job?.refs?.videoPlanId) {
+    const existing = jobs.find((candidate) =>
+      candidate.projectSlug === job.projectSlug &&
+      candidate.type === "generate_storyboard_video_plan" &&
+      candidate.refs?.videoPlanId === job.refs.videoPlanId &&
+      ["queued", "running", "cancelling"].includes(candidate.status)
+    );
+    if (existing) return existing;
+  }
   const j = {
     id: `job_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     status: "queued",
@@ -147,6 +165,7 @@ export function cancelJob(id) {
     j.finishedAt = new Date().toISOString();
     if (j.type === "generate_asset") restoreCancelledAsset(j.projectSlug, j.refs?.assetId);
     if (j.type === "generate_storyboard_frame") restoreStoryboardFrameAfterCancellation(j.projectSlug, j.refs?.frameId);
+    if (j.type === "generate_storyboard_video_plan") restoreStoryboardVideoPlanAfterCancellation(j.projectSlug, j.refs?.videoPlanId);
     persistJobLedger(j.projectSlug);
     return true;
   }
@@ -192,6 +211,7 @@ async function pump() {
     else if (next.type === "generate_score") await generateScore(next);
     else if (next.type === "generate_asset") await generateAssetJob(next);
     else if (next.type === "generate_storyboard_frame") await generateStoryboardFrameJob(next);
+    else if (next.type === "generate_storyboard_video_plan") await generateStoryboardVideoPlanJob(next);
     else if (next.type === "build_master") await buildMaster(next);
     else throw new Error(`Unknown job type: ${next.type}`);
     if (next.signal.aborted || next.status === "cancelling") {
@@ -211,6 +231,12 @@ async function pump() {
       try {
         if (cancelled) restoreStoryboardFrameAfterCancellation(next.projectSlug, next.refs?.frameId);
         else markStoryboardFrameGenerationFailed(next.projectSlug, next.refs?.frameId, e);
+      } catch {}
+    }
+    if (next.type === "generate_storyboard_video_plan") {
+      try {
+        if (cancelled) restoreStoryboardVideoPlanAfterCancellation(next.projectSlug, next.refs?.videoPlanId);
+        else markStoryboardVideoPlanGenerationFailed(next.projectSlug, next.refs?.videoPlanId, e);
       } catch {}
     }
     if (!cancelled) console.error("[queue]", next.label, e);

@@ -4,11 +4,13 @@ import path from "path";
 import { findClip, listProjects, loadProject, mediaDir, saveProject, skipApproval } from "../server/projects.js";
 import { assetApprovalCurrent } from "../server/assets.js";
 import { projectDir } from "../server/paths.js";
+import { resolveStoryboardVideoPlanReferences } from "../server/storyboard-generation.js";
 import { loadStoryboard, saveStoryboard, storyboardPath, storyboardSummary } from "../server/storyboard.js";
 
 const IMAGE_RE = /\.(png|jpe?g|webp|gif|bmp|tiff?)$/i;
 const VIDEO_RE = /\.(mp4|mov|mkv|webm|m4v|avi)$/i;
 const AUDIO_RE = /\.(wav|mp3|m4a|aac|flac|ogg)$/i;
+const EXPLICIT_SEMANTIC_T2V = "t2v_with_semantic_references";
 
 function assertProjectSlug(slug) {
   const value = String(slug || "");
@@ -52,6 +54,58 @@ export function resolveProjectMedia(slug, relativeFile) {
   const realResolved = fs.realpathSync.native(resolved).toLowerCase();
   if (!realResolved.startsWith(`${realRoot}${path.sep}`.toLowerCase())) throw new Error("Project media path escaped through a filesystem link");
   return resolved;
+}
+
+function isStrictlyWithin(root, candidate) {
+  const relative = path.relative(root, candidate);
+  return Boolean(relative) && relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+}
+
+export function resolveProjectReferenceMedia(slug, referenceFile) {
+  slug = assertProjectSlug(slug);
+  const storyboard = readStoryboardMaybe(slug);
+  if (!storyboard) throw new Error(`Project storyboard not found: ${slug}`);
+  const declaredRoot = String(storyboard.defaults?.referenceRoot || "reference_assets").trim().replace(/\\/g, "/");
+  if (!declaredRoot || declaredRoot.startsWith("/") || /^[a-zA-Z]:\//.test(declaredRoot)) {
+    throw new Error("Project reference root must be project-relative");
+  }
+  const normalizedRoot = path.posix.normalize(declaredRoot).replace(/^\.\//, "").replace(/\/$/, "");
+  if (normalizedRoot === ".." || normalizedRoot.startsWith("../")) {
+    throw new Error("Project reference root escaped the project folder");
+  }
+
+  let supplied = String(referenceFile || "").trim().replace(/\\/g, "/");
+  if (!supplied || supplied.includes("\0") || supplied.startsWith("/") || /^[a-zA-Z]:\//.test(supplied)) {
+    throw new Error("Project reference path must be relative");
+  }
+  if (supplied.startsWith(`${normalizedRoot}/`)) supplied = supplied.slice(normalizedRoot.length + 1);
+  const canonical = path.posix.normalize(supplied).replace(/^\.\//, "");
+  if (!canonical || canonical === "." || canonical === ".." || canonical.startsWith("../")) {
+    throw new Error("Project reference path escaped the reference root");
+  }
+
+  const projectRoot = path.resolve(projectDir(slug));
+  const referenceRoot = path.resolve(projectRoot, ...normalizedRoot.split("/"));
+  if (!isStrictlyWithin(projectRoot, referenceRoot)) throw new Error("Project reference root escaped the project folder");
+  if (!fs.existsSync(referenceRoot) || !fs.statSync(referenceRoot).isDirectory()) {
+    throw new Error(`Project reference root not found: ${normalizedRoot}`);
+  }
+  const resolved = path.resolve(referenceRoot, ...canonical.split("/"));
+  if (!isStrictlyWithin(referenceRoot, resolved)) throw new Error("Project reference path escaped the reference root");
+  if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) {
+    throw new Error(`Project reference not found: ${canonical}`);
+  }
+
+  const realProjectRoot = fs.realpathSync.native(projectRoot);
+  const realReferenceRoot = fs.realpathSync.native(referenceRoot);
+  const realResolved = fs.realpathSync.native(resolved);
+  if (!isStrictlyWithin(realProjectRoot, realReferenceRoot)) {
+    throw new Error("Project reference root escaped through a filesystem link");
+  }
+  if (!isStrictlyWithin(realReferenceRoot, realResolved)) {
+    throw new Error("Project reference path escaped through a filesystem link");
+  }
+  return realResolved;
 }
 
 function versionFiles(version) {
@@ -192,6 +246,43 @@ function readStoryboardMaybe(slug) {
   return fs.existsSync(storyboardPath(slug)) ? loadStoryboard(slug) : null;
 }
 
+function normalizeSemanticReferenceFile(value) {
+  return String(value || "").trim().replace(/\\/g, "/").replace(/^\.\//, "");
+}
+
+function semanticT2vMetadata(storyboard, clip, plan) {
+  const generationMode = plan?.generationMode || clip?.generationMode || storyboard?.defaults?.generationMode || null;
+  if (generationMode !== EXPLICIT_SEMANTIC_T2V) return null;
+  const referenceFiles = Array.isArray(plan?.referenceFiles)
+    ? plan.referenceFiles.map(normalizeSemanticReferenceFile).filter(Boolean)
+    : Array.isArray(clip?.referenceFiles)
+      ? clip.referenceFiles.map(normalizeSemanticReferenceFile).filter(Boolean)
+      : [];
+  const bindings = Object.values(storyboard?.referenceBindings || {})
+    .filter((binding) => binding?.targetKind === "video_plan" && binding.targetId === plan?.id);
+  const bindingFiles = bindings
+    .map((binding) => normalizeSemanticReferenceFile(binding.canonicalFile || binding.sourceAssetFile))
+    .filter(Boolean);
+  const expectedCount = Number(plan?.referenceCount ?? clip?.referenceCount ?? referenceFiles.length);
+  const dropped = Array.isArray(plan?.droppedReferenceFiles) ? plan.droppedReferenceFiles : [];
+  const expected = [...referenceFiles].sort();
+  const actual = [...bindingFiles].sort();
+  const bindingsMatch = expected.length === actual.length && expected.every((file, index) => file === actual[index]);
+  return {
+    generationMode,
+    referenceMode: plan?.referenceMode || clip?.referenceMode || "semantic_reference_resolver",
+    referenceRoot: String(plan?.referenceRoot || storyboard?.defaults?.referenceRoot || "reference_assets").replace(/\\/g, "/"),
+    referenceFiles,
+    referenceCount: referenceFiles.length,
+    declarationsReady: Number.isInteger(expectedCount)
+      && expectedCount >= 0
+      && expectedCount === referenceFiles.length
+      && bindings.length === referenceFiles.length
+      && bindingsMatch
+      && dropped.length === 0
+  };
+}
+
 function orderedStoryboardClips(storyboard) {
   if (!storyboard) return [];
   const results = [];
@@ -210,6 +301,7 @@ function orderedStoryboardClips(storyboard) {
         const uniqueFrameIds = [...new Set(frameIds)];
         const frames = uniqueFrameIds.map((id) => storyboard.frames?.[id]).filter(Boolean);
         const generatedFrames = frames.filter((frame) => resolvedFrameMedia(storyboard.projectId, frame));
+        const semantic = semanticT2vMetadata(storyboard, clip, plan);
         results.push({
           id: clip.id,
           sceneId,
@@ -226,7 +318,12 @@ function orderedStoryboardClips(storyboard) {
           renderVersions: Array.isArray(plan?.generatedVersions) ? plan.generatedVersions.length : 0,
           frameCount: frames.length,
           generatedFrameCount: generatedFrames.length,
-          ready: uniqueFrameIds.length > 0 && frames.length === uniqueFrameIds.length && generatedFrames.length === uniqueFrameIds.length
+          generationMode: semantic?.generationMode || plan?.generationMode || clip.generationMode || null,
+          referenceMode: semantic?.referenceMode || plan?.referenceMode || clip.referenceMode || null,
+          referenceCount: semantic?.referenceCount ?? Number(plan?.referenceCount || clip.referenceCount || 0),
+          ready: semantic
+            ? semantic.declarationsReady
+            : uniqueFrameIds.length > 0 && frames.length === uniqueFrameIds.length && generatedFrames.length === uniqueFrameIds.length
         });
       }
     }
@@ -364,6 +461,84 @@ export function sceneReferenceMedia(slug, clipId) {
   const clip = storyboard?.clips?.[clipId];
   const plan = clip ? storyboard.videoPlans?.[clip.videoPlanId] : null;
   if (!clip || !plan) throw new Error(`Storyboard clip not found: ${clipId}`);
+  const semantic = semanticT2vMetadata(storyboard, clip, plan);
+  if (semantic) {
+    try {
+      const resolved = resolveStoryboardVideoPlanReferences(project, storyboard, plan.id);
+      const references = resolved.references
+        .map((reference) => ({
+          id: reference.id,
+          assetId: reference.assetId,
+          frameId: null,
+          targetKind: reference.targetKind,
+          targetId: reference.targetId,
+          name: reference.assetId || path.basename(reference.canonical),
+          category: reference.role,
+          role: reference.role,
+          required: reference.required,
+          useMode: reference.useMode,
+          order: reference.order,
+          version: null,
+          current: true,
+          approved: false,
+          verified: true,
+          mediaType: "image",
+          file: path.posix.join(resolved.referenceRoot, reference.canonical),
+          previewUrl: `/api/premiere/references/${encodeURIComponent(slug)}?file=${encodeURIComponent(reference.canonical)}`,
+          canonicalFile: reference.canonical,
+          referenceRoot: resolved.referenceRoot,
+          sha256: reference.sha256,
+          bytes: reference.bytes,
+          notes: reference.notes || "",
+          cropRegion: reference.cropRegion || "",
+          resolverToken: reference.resolverToken || ""
+        }))
+        .sort((left, right) => left.order - right.order || left.canonicalFile.localeCompare(right.canonicalFile));
+      return {
+        projectSlug: slug,
+        clipId,
+        videoPlanId: plan.id,
+        frameIds: [],
+        generationMode: resolved.generationMode,
+        referenceMode: resolved.referenceMode,
+        referenceRoot: resolved.referenceRoot,
+        referenceFiles: resolved.referenceFiles,
+        referenceCount: references.length,
+        expectedReferenceCount: resolved.expectedReferenceCount,
+        resolvedReferenceCount: references.length,
+        maxReferences: resolved.maxReferences,
+        referenceIndexHash: resolved.referenceIndexHash,
+        references,
+        invalidReferences: [],
+        referencesReady: references.length === resolved.expectedReferenceCount
+      };
+    } catch (error) {
+      return {
+        projectSlug: slug,
+        clipId,
+        videoPlanId: plan.id,
+        frameIds: [],
+        generationMode: semantic.generationMode,
+        referenceMode: semantic.referenceMode,
+        referenceRoot: semantic.referenceRoot,
+        referenceFiles: semantic.referenceFiles,
+        referenceCount: 0,
+        expectedReferenceCount: semantic.referenceCount,
+        resolvedReferenceCount: 0,
+        references: [],
+        invalidReferences: [{
+          id: `semantic-reference-error:${plan.id}`,
+          assetId: null,
+          targetKind: "video_plan",
+          targetId: plan.id,
+          role: "semantic_reference",
+          required: true,
+          reason: String(error.message || error)
+        }],
+        referencesReady: false
+      };
+    }
+  }
   const frameIds = [...new Set([clip.firstFrameId, ...(plan.segmentIds || []).map((id) => storyboard.segments?.[id]?.frameId)].filter(Boolean))];
   const assets = new Map((project.assets?.items || []).map((asset) => [asset.id, asset]));
   const references = [];
@@ -445,6 +620,7 @@ function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
   if (!clip) throw new Error(`Storyboard clip not found: ${clipId}`);
   const plan = storyboard.videoPlans?.[clip.videoPlanId];
   if (!plan) throw new Error(`Storyboard video plan not found: ${clip.videoPlanId}`);
+  const semantic = semanticT2vMetadata(storyboard, clip, plan);
   const fps = Math.max(1, Number(storyboard.defaults?.fps) || Number(project.settings?.fps) || 24);
   const timeline = clone(plan.timelineData || {});
   timeline.global_prompt = String(plan.globalPrompt || timeline.global_prompt || "");
@@ -507,6 +683,14 @@ function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
     videoPlanId: clip.videoPlanId,
     storyboardUpdatedAt: storyboard.updatedAt,
     planFingerprint: storyboardPlanFingerprintValue(storyboard, clip.id),
+    ...(semantic ? {
+      generationMode: semantic.generationMode,
+      referenceMode: semantic.referenceMode,
+      referenceRoot: semantic.referenceRoot,
+      referenceFiles: semantic.referenceFiles,
+      referenceCount: semantic.referenceCount,
+      expectedReferenceCount: semantic.referenceCount
+    } : {}),
     loadedAt: new Date().toISOString()
   };
   return next;

@@ -74,6 +74,8 @@ type Store = {
   storyboardBulkWorkflowNotice: string | null;
   storyboardFrameActions: Record<string, string>;
   storyboardFrameNotices: Record<string, string>;
+  storyboardVideoPlanActions: Record<string, string>;
+  storyboardVideoPlanNotices: Record<string, string>;
   assetBusy: boolean;
   gpuHandoffBusy: boolean;
   comfyConnectBusy: boolean;
@@ -121,12 +123,15 @@ type Store = {
   saveProject: () => Promise<void>;
   reloadProject: () => Promise<void>;
   loadStoryboard: () => Promise<void>;
-  replaceStoryboardReferences: (targetKind: "frame", targetId: string, references: any[]) => Promise<void>;
+  replaceStoryboardReferences: (targetKind: "frame" | "video_plan", targetId: string, references: any[]) => Promise<void>;
   pushAllStoryboardFrameWorkflowsToComfyUI: () => Promise<void>;
   pushStoryboardFrameToComfyUI: (frameId: string) => Promise<void>;
   downloadStoryboardFrameWorkflow: (frameId: string) => Promise<void>;
   generateStoryboardFrame: (frameId: string) => Promise<void>;
   replaceStoryboardFrameImage: (frameId: string, file: File) => Promise<void>;
+  pushStoryboardVideoPlanToComfyUI: (videoPlanId: string) => Promise<void>;
+  downloadStoryboardVideoPlanWorkflow: (videoPlanId: string) => Promise<void>;
+  generateStoryboardVideoPlan: (videoPlanId: string) => Promise<void>;
   patchLocal: (fn: (project: any) => void) => void;
   patchClip: (clipId: string, body: any) => Promise<void>;
   deleteFrame: (frameId: string) => Promise<void>;
@@ -202,6 +207,8 @@ export const useStore = create<Store>((set, get) => ({
   storyboardBulkWorkflowNotice: null,
   storyboardFrameActions: {},
   storyboardFrameNotices: {},
+  storyboardVideoPlanActions: {},
+  storyboardVideoPlanNotices: {},
   assetBusy: false,
   gpuHandoffBusy: false,
   comfyConnectBusy: false,
@@ -427,7 +434,10 @@ export const useStore = create<Store>((set, get) => ({
       });
       const storyboardCompleted = next.some((job: any) => {
         const old = previous.find((item: any) => item.id === job.id);
-        return job.projectSlug === project.slug && job.type === "generate_storyboard_frame" && ["done", "error", "cancelled"].includes(job.status) && old?.status !== job.status;
+        return job.projectSlug === project.slug
+          && ["generate_storyboard_frame", "generate_storyboard_video_plan"].includes(job.type)
+          && ["done", "error", "cancelled"].includes(job.status)
+          && old?.status !== job.status;
       });
       if (completed) await get().reloadProject();
       if (storyboardCompleted) await get().loadStoryboard();
@@ -445,6 +455,8 @@ export const useStore = create<Store>((set, get) => ({
         storyboardSummary: null,
         storyboardFrameActions: {},
         storyboardFrameNotices: {},
+        storyboardVideoPlanActions: {},
+        storyboardVideoPlanNotices: {},
         selectedStoryboardClipId: null,
         selClipId: null,
         selFrameFile: null,
@@ -489,6 +501,8 @@ export const useStore = create<Store>((set, get) => ({
         storyboardSummary: null,
         storyboardFrameActions: {},
         storyboardFrameNotices: {},
+        storyboardVideoPlanActions: {},
+        storyboardVideoPlanNotices: {},
         selectedStoryboardClipId: null,
         selClipId: first?.id || null,
         selFrameFile: first?.firstFrame?.file || json.project?.frames?.[0]?.file || null,
@@ -511,6 +525,8 @@ export const useStore = create<Store>((set, get) => ({
     storyboardSummary: null,
     storyboardFrameActions: {},
     storyboardFrameNotices: {},
+    storyboardVideoPlanActions: {},
+    storyboardVideoPlanNotices: {},
     selectedStoryboardClipId: null,
     selClipId: null,
     selFrameFile: null,
@@ -711,6 +727,91 @@ export const useStore = create<Store>((set, get) => ({
       const nextActions = { ...get().storyboardFrameActions };
       delete nextActions[frameId];
       set({ storyboardFrameActions: nextActions });
+    }
+  },
+  pushStoryboardVideoPlanToComfyUI: async (videoPlanId) => {
+    const project = get().project;
+    if (!project || get().storyboardVideoPlanActions[videoPlanId]) return;
+    set({
+      storyboardVideoPlanActions: { ...get().storyboardVideoPlanActions, [videoPlanId]: "Pushing…" },
+      error: null
+    });
+    try {
+      const json = await api(
+        `/api/projects/${encodeURIComponent(project.slug)}/storyboard/video-plans/${encodeURIComponent(videoPlanId)}/push-to-comfyui`,
+        { method: "POST", body: JSON.stringify({}) }
+      );
+      set({
+        storyboardVideoPlanNotices: {
+          ...get().storyboardVideoPlanNotices,
+          [videoPlanId]: `Pushed T2V workflow: ${json.workflowName || "Storyboard T2V workflow"}`
+        }
+      });
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    } finally {
+      const nextActions = { ...get().storyboardVideoPlanActions };
+      delete nextActions[videoPlanId];
+      set({ storyboardVideoPlanActions: nextActions });
+    }
+  },
+  downloadStoryboardVideoPlanWorkflow: async (videoPlanId) => {
+    const project = get().project;
+    if (!project || get().storyboardVideoPlanActions[videoPlanId]) return;
+    set({
+      storyboardVideoPlanActions: { ...get().storyboardVideoPlanActions, [videoPlanId]: "Downloading…" },
+      error: null
+    });
+    try {
+      const fallbackName = `${project.slug}__${videoPlanId}__t2v.json`;
+      const filename = await downloadFile(
+        `/api/projects/${encodeURIComponent(project.slug)}/storyboard/video-plans/${encodeURIComponent(videoPlanId)}/workflow`,
+        fallbackName
+      );
+      set({
+        storyboardVideoPlanNotices: {
+          ...get().storyboardVideoPlanNotices,
+          [videoPlanId]: `Downloaded T2V workflow: ${filename}`
+        }
+      });
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    } finally {
+      const nextActions = { ...get().storyboardVideoPlanActions };
+      delete nextActions[videoPlanId];
+      set({ storyboardVideoPlanActions: nextActions });
+    }
+  },
+  generateStoryboardVideoPlan: async (videoPlanId) => {
+    const project = get().project;
+    if (!project || get().storyboardVideoPlanActions[videoPlanId]) return;
+    set({
+      storyboardVideoPlanActions: { ...get().storyboardVideoPlanActions, [videoPlanId]: "Queueing…" },
+      error: null
+    });
+    try {
+      const json = await api(
+        `/api/projects/${encodeURIComponent(project.slug)}/storyboard/video-plans/${encodeURIComponent(videoPlanId)}/generate`,
+        { method: "POST", body: JSON.stringify({}) }
+      );
+      set({
+        storyboard: json.storyboard || get().storyboard,
+        storyboardSummary: json.summary || get().storyboardSummary,
+        storyboardVideoPlanNotices: {
+          ...get().storyboardVideoPlanNotices,
+          [videoPlanId]: `Queued T2V video${json.job?.id ? ` · ${json.job.id}` : ""}`
+        }
+      });
+      await get().refreshQueue();
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    } finally {
+      const nextActions = { ...get().storyboardVideoPlanActions };
+      delete nextActions[videoPlanId];
+      set({ storyboardVideoPlanActions: nextActions });
     }
   },
   patchLocal: (fn) => {

@@ -16,6 +16,7 @@ let premiereProjects = [];
 let premiereOverview = null;
 let premiereReferences = [];
 let premiereReferenceIssues = [];
+let premiereReferenceState = null;
 let projectTab = "scenes";
 let projectRefreshAt = 0;
 
@@ -59,6 +60,28 @@ const mediaUrl = (segment) => {
 const projectMediaUrl = (file) => premiereOverview?.project?.slug && file
   ? `/api/premiere/media/${encodeURIComponent(premiereOverview.project.slug)}?file=${encodeURIComponent(file)}`
   : "";
+const isSemanticReferenceScene = () => workspace?.premiere?.generationMode === "t2v_with_semantic_references";
+
+function semanticReferenceCounts() {
+  const resolved = premiereReferences.length;
+  const expectedList = premiereReferenceState?.expectedReferences
+    || premiereReferenceState?.referenceFiles
+    || workspace?.premiere?.referenceFiles;
+  const candidates = [
+    premiereReferenceState?.expectedReferenceCount,
+    premiereReferenceState?.referenceCount,
+    premiereReferenceState?.expectedCount,
+    workspace?.premiere?.expectedReferenceCount,
+    workspace?.premiere?.referenceCount,
+    Array.isArray(expectedList) ? expectedList.length : null
+  ];
+  const declared = candidates
+    .filter((value) => value !== null && value !== undefined && value !== "")
+    .map((value) => Number(value))
+    .find((value) => Number.isFinite(value) && value >= 0);
+  const expected = Math.max(resolved, declared ?? (resolved + premiereReferenceIssues.length));
+  return { resolved, expected };
+}
 
 function setStatus(message, tone = "neutral") {
   const element = document.querySelector("#status-message");
@@ -345,25 +368,47 @@ function renderProjectSelectors() {
   const queueScene = document.querySelector("#queue-scene");
   if (queueScene) {
     const segments = workspace.timeline?.segments || [];
+    const semanticReferenceScene = isSemanticReferenceScene();
     const hasGuide = segments.some((segment) => ["image", "video"].includes(segment.type) && (segment.projectMediaPath || segment.imageFile || segment.videoFile));
     const missingGuide = segments.some((segment) => segment.missingGuide);
     const missingReference = premiereReferenceIssues.some((reference) => reference.required);
+    const { resolved: resolvedReferences, expected: expectedReferences } = semanticReferenceCounts();
+    const semanticReferencesReady = premiereReferenceState?.referencesReady === true
+      && resolvedReferences === expectedReferences;
     const activeRender = Boolean((premiereOverview?.jobs || []).some((job) =>
-      job.type === "director_render"
-      && ["queued", "running"].includes(job.status)
-      && job.refs?.mode === "timeline"
-      && job.refs?.binding?.clipId === workspace?.premiere?.clipId
+      ["queued", "running", "cancelling"].includes(job.status)
+      && (
+        (job.type === "director_render"
+          && job.refs?.mode === "timeline"
+          && job.refs?.binding?.clipId === workspace?.premiere?.clipId)
+        || (job.type === "generate_storyboard_video_plan"
+          && (job.refs?.clipId === workspace?.premiere?.clipId
+            || job.refs?.videoPlanId === workspace?.premiere?.videoPlanId))
+      )
     ));
-    queueScene.disabled = !bound || !hasGuide || missingGuide || missingReference || activeRender;
+    const inputNotReady = semanticReferenceScene
+      ? !semanticReferencesReady || missingReference
+      : !hasGuide || missingGuide || missingReference;
+    queueScene.disabled = !bound || inputNotReady || activeRender;
     queueScene.title = !bound
       ? "Load a Premiere scene first"
       : activeRender
         ? "This scene already has an active Director render"
       : missingReference
-        ? "Restore every required approved project reference before rendering this scene"
-      : missingGuide
+        ? semanticReferenceScene
+          ? "Resolve every required semantic conditioning reference before rendering this scene"
+          : "Restore every required approved project reference before rendering this scene"
+      : semanticReferenceScene && !semanticReferencesReady
+        ? `Resolve this scene's semantic conditioning references before rendering (${resolvedReferences}/${expectedReferences})`
+      : !semanticReferenceScene && missingGuide
         ? "Generate or approve every required storyboard guide before rendering the full scene"
-        : "Generate this complete Premiere scene";
+      : !semanticReferenceScene && !hasGuide
+        ? "Add or approve a temporal image/video guide before rendering this scene"
+        : semanticReferenceScene
+          ? expectedReferences === 0
+            ? "Generate this explicit pure text-to-video scene"
+            : `Generate this text-to-video scene with ${resolvedReferences}/${expectedReferences} semantic conditioning references resolved`
+          : "Generate this complete Premiere scene";
   }
 }
 
@@ -379,7 +424,7 @@ function canImportProjectMedia(item) {
 }
 
 function projectMediaPreview(item) {
-  const source = projectMediaUrl(item.file);
+  const source = item.previewUrl || projectMediaUrl(item.file);
   if (item.mediaType === "image") return `<img src="${source}" alt="" loading="lazy" decoding="async" />`;
   if (item.mediaType === "video") return `<video src="${source}" preload="metadata" muted></video>`;
   if (item.mediaType === "audio") return `<span>♫</span>`;
@@ -431,21 +476,27 @@ function renderProjectDrawer() {
       ${projectMediaAction(item, project.slug)}
     </article>`).join("")}</div>` : `<div class="project-empty">No generated project assets are available.</div>`;
   } else if (projectTab === "references") {
+    const semanticReferenceScene = isSemanticReferenceScene();
+    const { resolved: resolvedReferences, expected: expectedReferences } = semanticReferenceCounts();
     const requiredIssues = premiereReferenceIssues.filter((item) => item.required).length;
     const optionalIssues = premiereReferenceIssues.length - requiredIssues;
+    const referenceLabel = semanticReferenceScene ? "semantic conditioning reference" : "reference";
     const issueSummary = [
-      requiredIssues ? `${requiredIssues} required reference${requiredIssues === 1 ? " is" : "s are"} unavailable` : "",
-      optionalIssues ? `${optionalIssues} optional reference${optionalIssues === 1 ? " is" : "s are"} unavailable` : ""
+      requiredIssues ? `${requiredIssues} required ${referenceLabel}${requiredIssues === 1 ? " is" : "s are"} unavailable` : "",
+      optionalIssues ? `${optionalIssues} optional ${referenceLabel}${optionalIssues === 1 ? " is" : "s are"} unavailable` : ""
     ].filter(Boolean).join("; ");
     const issueBanner = premiereReferenceIssues.length
       ? `<div class="reference-warning">${issueSummary}. ${escapeHtml(premiereReferenceIssues.map((item) => item.reason || "reference error").join(", "))}</div>`
       : "";
+    const conditioningSummary = semanticReferenceScene
+      ? `<div class="reference-summary ${requiredIssues || premiereReferenceState?.referencesReady !== true ? "bad" : "ok"}"><b>${resolvedReferences}/${expectedReferences} semantic conditioning refs resolved</b><span>${expectedReferences === 0 ? "This plan explicitly uses pure native text-to-video with no visual reference conditioning." : "Identity and design conditioning only. These assets are not temporal opening, ending, or storyboard guides."}</span></div>`
+      : "";
     content.innerHTML = workspace?.premiere?.projectSlug === project.slug && workspace?.premiere?.clipId
-      ? `${issueBanner}${premiereReferences.length ? `<div class="media-grid">${premiereReferences.map((item) => `<article class="media-card">
+      ? `${conditioningSummary}${issueBanner}${premiereReferences.length ? `<div class="media-grid">${premiereReferences.map((item) => `<article class="media-card">
         <div class="media-preview">${projectMediaPreview(item)}</div>
-        <div><span>${escapeHtml(item.role)} · v${item.version}${item.required ? " · required" : ""}</span><b title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</b><small>${item.approved ? "Approved exact version" : item.current ? "Current bound version" : "Pinned historical version"}</small></div>
-        <button data-add-project-media="${escapeHtml(item.file)}">Add guide</button>
-      </article>`).join("")}</div>` : `<div class="project-empty">This scene has no resolved project references.</div>`}`
+        <div><span>${escapeHtml(item.role)}${semanticReferenceScene ? " · semantic conditioning ref" : ` · v${item.version}`}${item.required ? " · required" : ""}</span><b title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</b><small>${item.approved ? "Approved exact version" : item.current ? "Current bound version" : "Pinned historical version"}</small></div>
+        ${semanticReferenceScene ? `<div class="reference-conditioning-state">Semantic conditioning ref</div>` : `<button data-add-project-media="${escapeHtml(item.file)}">Add guide</button>`}
+      </article>`).join("")}</div>` : `<div class="project-empty">This scene has no resolved ${semanticReferenceScene ? "semantic conditioning references" : "project references"}.</div>`}`
       : `<div class="project-empty">Load a scene to view its exact pinned references.</div>`;
   } else if (projectTab === "generated") {
     content.innerHTML = generatedVideos.length ? `<div class="generated-list">${generatedVideos.map((item) => `<article class="generated-card"><video src="${projectMediaUrl(item.file)}" controls preload="metadata"></video><div><b>${escapeHtml(item.clipId || item.name)}</b><span>${escapeHtml(item.name)}${item.version ? ` · v${item.version}` : ""}</span><small>${new Date(item.updatedAt).toLocaleString()}</small></div></article>`).join("")}</div>` : `<div class="project-empty">No generated videos are registered in this project yet.</div>`;
@@ -463,12 +514,15 @@ function openProjectDrawer(open) {
 
 async function loadPremiereReferences(slug, clipId) {
   premiereReferenceIssues = [];
+  premiereReferenceState = null;
   if (!slug || !clipId) return [];
   try {
     const result = await api(`/api/premiere/projects/${encodeURIComponent(slug)}/scenes/${encodeURIComponent(clipId)}/references`);
+    premiereReferenceState = result;
     premiereReferenceIssues = result.invalidReferences || [];
     return result.references || [];
   } catch (error) {
+    premiereReferenceState = { references: [], invalidReferences: [{ required: true, reason: error.message }] };
     premiereReferenceIssues = [{ required: true, reason: error.message }];
     return [];
   }
@@ -479,6 +533,7 @@ async function loadProjectOverview(slug, { preserveScene = true } = {}) {
     premiereOverview = null;
     premiereReferences = [];
     premiereReferenceIssues = [];
+    premiereReferenceState = null;
     localStorage.removeItem("premiere316.director.project");
     renderProjectSelectors();
     renderProjectDrawer();
@@ -486,9 +541,13 @@ async function loadProjectOverview(slug, { preserveScene = true } = {}) {
   }
   premiereOverview = await api(`/api/premiere/projects/${encodeURIComponent(slug)}`);
   localStorage.setItem("premiere316.director.project", slug);
-  premiereReferences = workspace?.premiere?.projectSlug === slug
-    ? await loadPremiereReferences(slug, workspace?.premiere?.clipId)
-    : [];
+  if (workspace?.premiere?.projectSlug === slug) {
+    premiereReferences = await loadPremiereReferences(slug, workspace?.premiere?.clipId);
+  } else {
+    premiereReferences = [];
+    premiereReferenceIssues = [];
+    premiereReferenceState = null;
+  }
   projectRefreshAt = Date.now();
   renderProjectSelectors();
   if (!preserveScene) {

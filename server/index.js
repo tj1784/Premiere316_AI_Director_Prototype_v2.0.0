@@ -94,10 +94,14 @@ import {
 } from "./storyboard.js";
 import {
   compileStoryboardFramePrompt,
+  compileStoryboardVideoPlanPrompt,
   downloadStoryboardFrameWorkflow,
+  downloadStoryboardVideoPlanWorkflow,
   markStoryboardFrameQueued,
+  markStoryboardVideoPlanQueued,
   pushAllStoryboardFrameWorkflowsToComfyUI,
   pushStoryboardFrameToComfyUI,
+  pushStoryboardVideoPlanToComfyUI,
   registerStoryboardFrameReplacement
 } from "./storyboard-generation.js";
 
@@ -218,6 +222,7 @@ app.get("/api/health", async (_req, res) => {
       assetApprovalGate: true,
       exactAssetVersionApproval: true,
       storyboardKreaImageGuides: true,
+      storyboardLtx25T2VVideoPlans: true,
       explicitLmStudioGpuHandoff: true,
       recoverableProjectBinTrash: true,
       guideGenerator: "asset-foundry-only",
@@ -567,6 +572,56 @@ app.get("/api/projects/:slug/storyboard/frames/:frameId/workflow", async (req, r
 app.post("/api/projects/:slug/storyboard/frames/:frameId/push-to-comfyui", async (req, res) => {
   try {
     res.json(await pushStoryboardFrameToComfyUI(req.params.slug, req.params.frameId));
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.get("/api/projects/:slug/storyboard/video-plans/:videoPlanId/workflow", async (req, res) => {
+  try {
+    const built = await downloadStoryboardVideoPlanWorkflow(req.params.slug, req.params.videoPlanId);
+    res
+      .type("application/json")
+      .attachment(built.workflowName)
+      .send(JSON.stringify(built.graph, null, 2));
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+async function pushStoryboardVideoPlanWorkflow(req, res) {
+  try {
+    res.json(await pushStoryboardVideoPlanToComfyUI(req.params.slug, req.params.videoPlanId));
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+}
+
+app.post("/api/projects/:slug/storyboard/video-plans/:videoPlanId/workflow", pushStoryboardVideoPlanWorkflow);
+app.post("/api/projects/:slug/storyboard/video-plans/:videoPlanId/push-to-comfyui", pushStoryboardVideoPlanWorkflow);
+
+app.post("/api/projects/:slug/storyboard/video-plans/:videoPlanId/generate", async (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    const storyboard = loadStoryboard(req.params.slug);
+    const compiled = await compileStoryboardVideoPlanPrompt(project, storyboard, req.params.videoPlanId);
+    const prepared = markStoryboardVideoPlanQueued(req.params.slug, req.params.videoPlanId);
+    const job = enqueue({
+      type: "generate_storyboard_video_plan",
+      projectSlug: req.params.slug,
+      label: `Generate storyboard T2V video · ${compiled.clip.id}`,
+      refs: {
+        videoPlanId: req.params.videoPlanId,
+        clipId: compiled.clip.id,
+        workflowId: compiled.graph.extra?.premiere316?.workflowId,
+        workflowHash: compiled.workflowHash,
+        generationFingerprint: prepared.generationFingerprint,
+        filenamePrefix: prepared.filenamePrefix,
+        seed: prepared.seed,
+        settings: prepared.settings
+      }
+    });
+    res.json({ storyboard: prepared.storyboard, summary: storyboardSummary(prepared.storyboard), job });
   } catch (e) {
     res.status(400).json({ error: String(e.message) });
   }

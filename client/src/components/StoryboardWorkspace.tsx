@@ -182,20 +182,135 @@ function FramePromptPanel({
   );
 }
 
+function usesSemanticT2V(clip: any, videoPlan: any) {
+  return clip?.generationMode === "t2v_with_semantic_references"
+    || videoPlan?.generationMode === "t2v_with_semantic_references"
+    || !clip?.firstFrameId;
+}
+
+function semanticReferenceFiles(clip: any, videoPlan: any, references: any[]) {
+  return [...new Set([
+    ...(videoPlan?.referenceFiles || []),
+    ...(clip?.referenceFiles || []),
+    ...(references || []).map((reference: any) => reference.canonicalFile || reference.sourceAssetFile)
+  ].map((file) => String(file || "").trim()).filter(Boolean))];
+}
+
+function T2VPlanPanel({
+  clip,
+  videoPlan,
+  references,
+  busyLabel,
+  notice,
+  onPush,
+  onDownload,
+  onGenerate
+}: {
+  clip: any;
+  videoPlan: any;
+  references: any[];
+  busyLabel?: string;
+  notice?: string;
+  onPush: (videoPlanId: string) => void;
+  onDownload: (videoPlanId: string) => void;
+  onGenerate: (videoPlanId: string) => void;
+}) {
+  const active = Boolean(busyLabel);
+  const files = semanticReferenceFiles(clip, videoPlan, references);
+  const referenceByFile = new Map(references.map((reference: any) => [
+    String(reference.canonicalFile || reference.sourceAssetFile || ""),
+    reference
+  ]));
+  const status = String(videoPlan?.status || clip?.renderStatus || "ready").replaceAll("_", " ");
+  return (
+    <section className="storyboard-frame-panel storyboard-t2v-plan-panel">
+      <header>
+        <div>
+          <p className="eyebrow">TEXT-TO-VIDEO PLAN</p>
+          <h2>LTX-2.5 T2V · semantic references</h2>
+          <small>{videoPlan?.id || "Missing video plan"}</small>
+        </div>
+        <div className="storyboard-frame-actions">
+          <span className={videoPlan?.status === "ready" ? "ready" : "blocked"}>{status}</span>
+          <button
+            type="button"
+            className="secondary-action storyboard-comfy-action"
+            data-testid="storyboard-push-t2v-to-comfyui"
+            data-video-plan-id={videoPlan?.id}
+            disabled={active || !videoPlan?.id}
+            onClick={() => onPush(videoPlan.id)}
+          >
+            {busyLabel === "Pushing…" ? busyLabel : "Push T2V Workflow"}
+          </button>
+          <button
+            type="button"
+            className="secondary-action storyboard-download-action"
+            data-testid="storyboard-download-t2v-workflow"
+            data-video-plan-id={videoPlan?.id}
+            disabled={active || !videoPlan?.id}
+            onClick={() => onDownload(videoPlan.id)}
+          >
+            {busyLabel === "Downloading…" ? busyLabel : "Download T2V Workflow"}
+          </button>
+          <button
+            type="button"
+            className="primary-action storyboard-generate-action"
+            data-testid="storyboard-generate-t2v-video"
+            data-video-plan-id={videoPlan?.id}
+            disabled={active || !videoPlan?.id}
+            onClick={() => onGenerate(videoPlan.id)}
+          >
+            {busyLabel === "Queueing…" ? busyLabel : "Generate T2V Video"}
+          </button>
+        </div>
+      </header>
+      <div className="storyboard-frame-status">
+        <span className={videoPlan?.status === "ready" ? "ready" : "waiting"} />
+        <b>{status}</b>
+        <small>Direct T2V · no opening, ending, handoff, or timed image guides</small>
+      </div>
+      {notice ? <div className="storyboard-frame-notice">{notice}</div> : null}
+      <section className="storyboard-reference-section">
+        <header>
+          <div><p className="eyebrow">SEMANTIC INPUTS</p><h3>{files.length} exact visual reference{files.length === 1 ? "" : "s"}</h3></div>
+          <CopyButton text={files.join("\n")} label="Copy reference paths" />
+        </header>
+        <div className="storyboard-frame-notice">References condition identity and design only. They are never inserted at frame zero or connected as temporal image guides.</div>
+        <div className="storyboard-reference-strip">
+          {files.map((file, index) => {
+            const reference = referenceByFile.get(file) as any;
+            return (
+              <article key={file} title={reference?.cropRegion || file}>
+                <div><div className="storyboard-reference-placeholder">{String(index + 1).padStart(2, "0")}</div><span className="approved">✓</span></div>
+                <b>{file}</b>
+                <small>{reference?.role || "semantic reference"}{reference?.cropRegion ? ` · ${reference.cropRegion}` : ""}</small>
+              </article>
+            );
+          })}
+          {!files.length ? <div className="storyboard-no-references">Pure T2V for this clip · no semantic image references assigned.</div> : null}
+        </div>
+      </section>
+    </section>
+  );
+}
+
 function fullClipPackage(storyboard: any, clip: any) {
   const frame = storyboard.frames?.[clip.firstFrameId];
   const video = storyboard.videoPlans?.[clip.videoPlanId];
+  const isT2V = usesSemanticT2V(clip, video);
   const segments = (video?.segmentIds || []).map((id: string) => storyboard.segments?.[id]).filter(Boolean);
   const sections = [
     `CLIP ${clip.id}`,
-    `BEAT\n${clip.beat}`,
-    `FIRST-FRAME PROMPT\n${frame?.prompt || ""}`,
-    `FIRST-FRAME NEGATIVE\n${frame?.negativePrompt || ""}`,
-    `LTX GLOBAL VIDEO PROMPT\n${video?.globalPrompt || ""}`
+    `BEAT\n${clip.beat}`
   ];
+  if (!isT2V) {
+    sections.push(`FIRST-FRAME PROMPT\n${frame?.prompt || ""}`);
+    sections.push(`FIRST-FRAME NEGATIVE\n${frame?.negativePrompt || ""}`);
+  }
+  sections.push(`${isT2V ? "LTX-2.5 T2V MASTER PROMPT" : "LTX GLOBAL VIDEO PROMPT"}\n${video?.globalPrompt || ""}`);
   for (const segment of segments) {
     sections.push(`SEGMENT ${segment.order} LOCAL VIDEO PROMPT\n${segment.prompt}`);
-    if (segment.frameId && segment.frameId !== clip.firstFrameId) {
+    if (!isT2V && segment.frameId && segment.frameId !== clip.firstFrameId) {
       const segmentFrame = storyboard.frames?.[segment.frameId];
       sections.push(`SEGMENT ${segment.order} IMAGE PROMPT\n${segmentFrame?.prompt || ""}`);
       sections.push(`SEGMENT ${segment.order} IMAGE NEGATIVE\n${segmentFrame?.negativePrompt || ""}`);
@@ -225,7 +340,17 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
         const scene = storyboard.scenes?.[sceneId];
         for (const clipId of scene?.clipIds || []) {
           const clip = storyboard.clips?.[clipId];
-          if (clip) records.push({ clip, chapter, scene, sequenceIndex: ++sequenceIndex });
+          if (clip) {
+            const videoPlan = storyboard.videoPlans?.[clip.videoPlanId];
+            records.push({
+              clip,
+              chapter,
+              scene,
+              videoPlan,
+              exactPrompt: String(videoPlan?.globalPrompt || ""),
+              sequenceIndex: ++sequenceIndex
+            });
+          }
         }
       }
     }
@@ -235,7 +360,7 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
   const filteredRecords = useMemo(() => clipRecords.filter((record) => {
     if (chapterFilter !== "all" && record.chapter.id !== chapterFilter) return false;
     if (!deferredQuery) return true;
-    return `${record.clip.id} ${record.clip.beat} ${record.clip.dialogueAnchor} ${record.scene.title} ${record.chapter.title}`.toLowerCase().includes(deferredQuery);
+    return `${record.clip.id} ${record.exactPrompt} ${record.clip.beat} ${record.clip.dialogueAnchor} ${record.scene.title} ${record.chapter.title}`.toLowerCase().includes(deferredQuery);
   }), [chapterFilter, clipRecords, deferredQuery]);
   const selectedRecord = clipRecords.find((record) => record.clip.id === store.selectedStoryboardClipId) || clipRecords[0] || null;
 
@@ -246,8 +371,16 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
   const fps = Number(storyboard.defaults?.fps || project.settings?.fps || 24);
   const firstFrame = storyboard.frames?.[clip.firstFrameId];
   const videoPlan = storyboard.videoPlans?.[clip.videoPlanId];
+  const isT2V = usesSemanticT2V(clip, videoPlan);
   const segments = (videoPlan?.segmentIds || []).map((id: string) => storyboard.segments?.[id]).filter(Boolean);
-  const additionalFrames = segments.filter((segment: any) => segment.frameId && segment.frameId !== clip.firstFrameId).length;
+  const additionalFrames = isT2V ? 0 : segments.filter((segment: any) => segment.frameId && segment.frameId !== clip.firstFrameId).length;
+  const videoPlanReferences = Object.values(storyboard.referenceBindings || {})
+    .filter((binding: any) => binding?.targetKind === "video_plan" && binding?.targetId === videoPlan?.id)
+    .sort((left: any, right: any) => Number(left.order || 0) - Number(right.order || 0));
+  const t2vPlanCount = Object.values(storyboard.clips || {}).filter((storyboardClip: any) => {
+    const plan = storyboard.videoPlans?.[storyboardClip.videoPlanId];
+    return usesSemanticT2V(storyboardClip, plan);
+  }).length;
   const targetFrame = pickerTarget ? storyboard.frames?.[pickerTarget.frameId] : null;
 
   return (
@@ -256,7 +389,7 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
         <header><div className="storyboard-mark">▦</div><div><p className="eyebrow">PRODUCTION BOARD</p><h2>Storyboard</h2><small>Chapter → scene → 10–20 second clips</small></div></header>
         <section className="storyboard-summary">
           <div><b>{store.storyboardSummary?.clips || clipRecords.length}</b><span>clips</span></div>
-          <div><b>{store.storyboardSummary?.frames || Object.keys(storyboard.frames || {}).length}</b><span>image prompts</span></div>
+          <div><b>{t2vPlanCount || store.storyboardSummary?.frames || Object.keys(storyboard.frames || {}).length}</b><span>{t2vPlanCount ? "T2V plans" : "image prompts"}</span></div>
           <div><b>{formatTimecode(storyboard.runtimeFrames, fps).slice(0, 8)}</b><span>runtime</span></div>
         </section>
         <label className="storyboard-search">Search clips<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Beat, dialogue, ID…" /></label>
@@ -271,34 +404,40 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
       </aside>
 
       <section className="storyboard-clip-index">
-        <header><div><p className="eyebrow">SHOT INDEX</p><h2>{chapterFilter === "all" ? "All chapters" : storyboard.chapters[chapterFilter]?.title}</h2></div><span>{filteredRecords.length} clips</span></header>
+        <header><div><p className="eyebrow">ZIP T2V PROMPTS</p><h2>{chapterFilter === "all" ? "All chapters" : storyboard.chapters[chapterFilter]?.title}</h2></div><span>{filteredRecords.length} prompts</span></header>
         <div className="storyboard-clip-list">
-          {filteredRecords.map((record) => <button key={record.clip.id} className={record.clip.id === clip.id ? "active" : ""} onClick={() => store.setSelectedStoryboardClip(record.clip.id)}><span className="storyboard-clip-number">{String(record.sequenceIndex).padStart(3, "0")}</span><span><small>{record.chapter.id} · SCENE {String(record.scene.number).padStart(2, "0")}</small><b>{record.scene.title}</b><p>{record.clip.beat}</p></span><em>{Math.round(record.clip.durationFrames / fps)}s</em></button>)}
+          {filteredRecords.map((record) => <button key={record.clip.id} className={record.clip.id === clip.id ? "active" : ""} onClick={() => store.setSelectedStoryboardClip(record.clip.id)}><span className="storyboard-clip-number">{String(record.sequenceIndex).padStart(3, "0")}</span><span><small>ZIP PROMPT · {record.clip.id}</small><b>{record.clip.id}.txt</b><p>{record.exactPrompt}</p></span><em>{Math.round(record.clip.durationFrames / fps)}s</em></button>)}
           {!filteredRecords.length ? <div className="storyboard-index-empty">No clips match the current filter.</div> : null}
         </div>
       </section>
 
       <section className="storyboard-detail">
         <header className="storyboard-detail-header">
-          <div><p className="eyebrow">{chapter.id} · SCENE {String(scene.number).padStart(2, "0")} · CLIP {String(sequenceIndex).padStart(3, "0")}</p><h1>{scene.title}</h1><p>{clip.beat}</p></div>
+          <div><p className="eyebrow">ZIP T2V PROMPT · {clip.id}</p><h1>{clip.id}.txt</h1></div>
           <div className="storyboard-detail-actions">
             <CopyButton text={fullClipPackage(storyboard, clip)} label="Copy full clip package" />
-            <button
-              type="button"
-              className="secondary-action"
-              data-testid="storyboard-push-all-workflows"
-              disabled={store.storyboardBulkWorkflowBusy}
-              onClick={() => void store.pushAllStoryboardFrameWorkflowsToComfyUI()}
-            >
-              {store.storyboardBulkWorkflowBusy ? "Pushing all 161…" : "Push all 161 workflows"}
-            </button>
+            {!isT2V ? (
+              <button
+                type="button"
+                className="secondary-action"
+                data-testid="storyboard-push-all-workflows"
+                disabled={store.storyboardBulkWorkflowBusy}
+                onClick={() => void store.pushAllStoryboardFrameWorkflowsToComfyUI()}
+              >
+                {store.storyboardBulkWorkflowBusy ? `Pushing all ${Object.keys(storyboard.frames || {}).length}…` : `Push all ${Object.keys(storyboard.frames || {}).length} workflows`}
+              </button>
+            ) : null}
             <button type="button" className="secondary-action" onClick={onOpenAssets}>Open Asset Foundry</button>
             {store.storyboardBulkWorkflowNotice ? <small className="storyboard-bulk-workflow-notice">{store.storyboardBulkWorkflowNotice}</small> : null}
           </div>
         </header>
 
         <div className="storyboard-detail-scroll">
-          <section className="storyboard-readiness-banner"><span>!</span><div><b>PROMPTS COMPLETE · IMAGE APPROVAL REQUIRED BEFORE VIDEO</b><small>The plan is render-aligned, but exact reference versions and generated image guides must pass Asset Foundry review before queueing.</small></div></section>
+          {isT2V ? (
+            <section className="storyboard-readiness-banner"><span>✓</span><div><b>T2V PLAN · SEMANTIC REFERENCES ONLY</b><small>This clip generates directly from text. Reference images control identity and design without becoming opening, ending, handoff, or timed video frames.</small></div></section>
+          ) : (
+            <section className="storyboard-readiness-banner"><span>!</span><div><b>PROMPTS COMPLETE · IMAGE APPROVAL REQUIRED BEFORE VIDEO</b><small>The plan is render-aligned, but exact reference versions and generated image guides must pass Asset Foundry review before queueing.</small></div></section>
+          )}
           <section className="storyboard-shot-metadata">
             <div><span>Timeline</span><b>{formatTimecode(clip.timelineStartFrame, fps)}</b></div>
             <div><span>Duration</span><b>{(clip.durationFrames / fps).toFixed(1)} sec · {clip.durationFrames} frames</b></div>
@@ -309,23 +448,36 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
           </section>
           <section className="storyboard-continuity-locks"><header><p className="eyebrow">CONTINUITY LOCKS</p><span>{clip.continuityLocks?.length || 0}</span></header><div>{(clip.continuityLocks || []).map((lock: string, index: number) => <span key={`${lock}-${index}`}>✓ {lock}</span>)}</div></section>
 
-          <FramePromptPanel
-            project={project}
-            frame={firstFrame}
-            label="First frame"
-            busyLabel={firstFrame?.id ? store.storyboardFrameActions[firstFrame.id] : undefined}
-            notice={firstFrame?.id ? store.storyboardFrameNotices[firstFrame.id] : undefined}
-            onPush={(frameId) => void store.pushStoryboardFrameToComfyUI(frameId)}
-            onDownload={(frameId) => void store.downloadStoryboardFrameWorkflow(frameId)}
-            onGenerate={(frameId) => void store.generateStoryboardFrame(frameId)}
-            onReplaceImage={(frameId, file) => void store.replaceStoryboardFrameImage(frameId, file)}
-            onAddReferences={(frameId, label) => setPickerTarget({ frameId, label: `${clip.id} · ${label}` })}
-          />
+          {isT2V ? (
+            <T2VPlanPanel
+              clip={clip}
+              videoPlan={videoPlan}
+              references={videoPlanReferences}
+              busyLabel={videoPlan?.id ? store.storyboardVideoPlanActions[videoPlan.id] : undefined}
+              notice={videoPlan?.id ? store.storyboardVideoPlanNotices[videoPlan.id] : undefined}
+              onPush={(videoPlanId) => void store.pushStoryboardVideoPlanToComfyUI(videoPlanId)}
+              onDownload={(videoPlanId) => void store.downloadStoryboardVideoPlanWorkflow(videoPlanId)}
+              onGenerate={(videoPlanId) => void store.generateStoryboardVideoPlan(videoPlanId)}
+            />
+          ) : firstFrame ? (
+            <FramePromptPanel
+              project={project}
+              frame={firstFrame}
+              label="First frame"
+              busyLabel={store.storyboardFrameActions[firstFrame.id]}
+              notice={store.storyboardFrameNotices[firstFrame.id]}
+              onPush={(frameId) => void store.pushStoryboardFrameToComfyUI(frameId)}
+              onDownload={(frameId) => void store.downloadStoryboardFrameWorkflow(frameId)}
+              onGenerate={(frameId) => void store.generateStoryboardFrame(frameId)}
+              onReplaceImage={(frameId, file) => void store.replaceStoryboardFrameImage(frameId, file)}
+              onAddReferences={(frameId, label) => setPickerTarget({ frameId, label: `${clip.id} · ${label}` })}
+            />
+          ) : null}
 
           <section className="storyboard-video-panel">
-            <header><div><p className="eyebrow">VIDEO GENERATION</p><h2>LTX Director · {Math.round(clip.durationFrames / fps)}-second silent picture pass</h2></div><div className="storyboard-workflow-chips"><span>24 FPS</span><span>8-frame grid</span><span>{segments.length} segments</span><span>Trim +{clip.trimDecodedFrames} decoded frame</span><span>Audio off</span></div></header>
-            <PromptBlock label="LTX GLOBAL VIDEO" title="Global video-generation prompt" prompt={videoPlan.globalPrompt} rows={12} />
-            <div className="storyboard-segment-heading"><div><p className="eyebrow">PROMPT RELAY</p><h3>{segments.length} contiguous segments · {additionalFrames} additional image reset{additionalFrames === 1 ? "" : "s"}</h3></div><small>{videoPlan.segmentLengths} frames</small></div>
+            <header><div><p className="eyebrow">VIDEO GENERATION</p><h2>{isT2V ? "LTX-2.5 native T2V" : "LTX Director"} · {Math.round(clip.durationFrames / fps)}-second {isT2V ? "direct generation" : "silent picture pass"}</h2></div><div className="storyboard-workflow-chips"><span>24 FPS</span><span>8-frame grid</span><span>{segments.length} segments</span><span>Trim +{clip.trimDecodedFrames} decoded frame</span><span>{isT2V ? String(videoPlan?.audioMode || clip.audioPlan?.mode || "authored audio").replaceAll("_", " ") : "Audio off"}</span></div></header>
+            <PromptBlock label={isT2V ? "LTX-2.5 T2V MASTER" : "LTX GLOBAL VIDEO"} title={isT2V ? "Text-to-video generation prompt" : "Global video-generation prompt"} prompt={videoPlan?.globalPrompt || ""} rows={12} />
+            <div className="storyboard-segment-heading"><div><p className="eyebrow">PROMPT RELAY</p><h3>{segments.length} contiguous segments{isT2V ? " · text-only timeline" : ` · ${additionalFrames} additional image reset${additionalFrames === 1 ? "" : "s"}`}</h3></div><small>{videoPlan?.segmentLengths || segments.map((segment: any) => segment.lengthFrames).join(",")} frames</small></div>
             <div className="storyboard-segment-list">
               {segments.map((segment: any) => {
                 const segmentFrame = segment.frameId ? storyboard.frames?.[segment.frameId] : null;
@@ -333,9 +485,9 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
                 const end = (segment.startFrame + segment.lengthFrames) / fps;
                 return (
                   <article key={segment.id} className={`storyboard-segment-card ${segment.type}`}>
-                    <header><span>{String(segment.order).padStart(2, "0")}</span><div><b>{start.toFixed(1)}–{end.toFixed(1)} seconds</b><small>{segment.lengthFrames} frames · {segment.type === "image" ? "image-guided" : "text continuation"}</small></div><CopyButton text={segment.prompt} label="Copy local prompt" /></header>
+                    <header><span>{String(segment.order).padStart(2, "0")}</span><div><b>{start.toFixed(1)}–{end.toFixed(1)} seconds</b><small>{segment.lengthFrames} frames · {isT2V ? "text-only continuation" : segment.type === "image" ? "image-guided" : "text continuation"}</small></div><CopyButton text={segment.prompt} label="Copy local prompt" /></header>
                     <p>{segment.prompt}</p>
-                    {segmentFrame && segmentFrame.id !== firstFrame.id ? (
+                    {!isT2V && segmentFrame && segmentFrame.id !== firstFrame?.id ? (
                       <FramePromptPanel
                         project={project}
                         frame={segmentFrame}
