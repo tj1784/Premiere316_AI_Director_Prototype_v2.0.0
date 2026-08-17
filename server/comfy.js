@@ -5,8 +5,10 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { workflowPath } from "./paths.js";
+import { resolveConfiguredComfyUrl } from "./comfy-config.js";
 
-export const COMFY_URL = (process.env.COMFY_URL || "http://127.0.0.1:8190").replace(/\/+$/, "");
+export const COMFY_URL = resolveConfiguredComfyUrl();
+process.env.COMFY_URL = COMFY_URL;
 
 let objectInfoCache = null;
 let objectInfoAt = 0;
@@ -41,6 +43,11 @@ const VIRTUAL_TYPES = new Set([
   "Mute / Bypass Repeater (rgthree)", "PixaromaNote", "PixaromaLabel",
   "GetNode", "SetNode"
 ]);
+
+const PIXAROMA_HIDDEN_STATE = Object.freeze({
+  PixaromaResolution: { input: "ResolutionState", property: "resolutionState" },
+  PixaromaSeed: { input: "SeedState", property: "seedState" }
+});
 
 function isWidgetInput(def) {
   // def = [typeOrOptions, config?]
@@ -150,6 +157,33 @@ export function graphToApi(graph, objectInfo) {
       if (widget && widgetVal !== undefined) {
         apiInputs[name] = widgetVal;
       }
+    }
+
+    // Pixaroma stores these values in the UI graph and injects them from its
+    // browser extension. Premiere316 compiles prompts server-side, so preserve
+    // the same explicit state without materializing unrelated magic inputs.
+    const hiddenState = PIXAROMA_HIDDEN_STATE[n.type];
+    if (hiddenState) {
+      const propertyValue = n.properties?.[hiddenState.property];
+      const widgetValue = Array.isArray(n.widgets_values)
+        ? n.widgets_values[0]
+        : n.widgets_values?.[hiddenState.input] ?? n.widgets_values?.[hiddenState.property];
+      const stateValue = propertyValue ?? widgetValue;
+      if (stateValue === undefined || stateValue === null || stateValue === "") {
+        warnings.push(`${n.type} (id ${n.id}) is missing ${hiddenState.input}`);
+      } else {
+        apiInputs[hiddenState.input] = typeof stateValue === "string" ? stateValue : JSON.stringify(stateValue);
+      }
+    }
+
+    // Dynamic nodes such as KJNodes ImageConcatMulti expose only their base
+    // sockets in /object_info. Preserve every additional linked graph input
+    // (image_3, image_4, ...), otherwise reference images silently disappear
+    // from the API payload even though they are visible in the UI workflow.
+    for (const [name, linkId] of linkedByName) {
+      if (Object.prototype.hasOwnProperty.call(apiInputs, name)) continue;
+      const resolved = resolveLink(linkId);
+      if (resolved) apiInputs[name] = resolved;
     }
     api[String(n.id)] = { class_type: n.type, inputs: apiInputs };
   }

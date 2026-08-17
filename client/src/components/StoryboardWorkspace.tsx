@@ -1,5 +1,5 @@
-import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { assetUrl, useStore } from "../store";
+import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { assetUrl, storyboardUrl, useStore } from "../store";
 import AssetReferencePicker from "./AssetReferencePicker";
 
 function formatTimecode(frames: number, fps: number) {
@@ -71,25 +71,107 @@ function FramePromptPanel({
   project,
   frame,
   label,
-  onAddReferences
+  busyLabel,
+  notice,
+  onAddReferences,
+  onPush,
+  onDownload,
+  onGenerate,
+  onReplaceImage
 }: {
   project: any;
   frame: any;
   label: string;
+  busyLabel?: string;
+  notice?: string;
   onAddReferences: (frameId: string, label: string) => void;
+  onPush: (frameId: string) => void;
+  onDownload: (frameId: string) => void;
+  onGenerate: (frameId: string) => void;
+  onReplaceImage: (frameId: string, file: File) => void;
 }) {
+  const replacementInput = useRef<HTMLInputElement>(null);
   const references = frame?.references || [];
   const approved = references.filter((binding: any) => {
     const asset = project.assets?.items?.find((item: any) => item.id === binding.assetId);
     return versionApproved(asset, Number(binding.assetVersion));
   }).length;
+  const generatedFile = frame?.generatedFile || frame?.generatedVersions?.find((version: any) => Number(version.v) === Number(frame?.activeGeneratedVersion))?.file || null;
+  const generatedVersion = frame?.generatedAssetVersionId || (frame?.activeGeneratedVersion ? `${frame.id}:v${frame.activeGeneratedVersion}` : null);
+  const active = Boolean(busyLabel);
   return (
     <section className="storyboard-frame-panel">
       <header>
         <div><p className="eyebrow">IMAGE GUIDE</p><h2>{label}</h2><small>{frame.expectedInputPath}</small></div>
-        <div className="storyboard-frame-actions"><span className={approved === references.length && references.length ? "ready" : "blocked"}>{approved}/{references.length} exact versions approved</span><button type="button" className="primary-action" onClick={() => onAddReferences(frame.id, label)}>＋ Add References</button></div>
+        <div className="storyboard-frame-actions">
+          <span className={approved === references.length && references.length ? "ready" : "blocked"}>{approved}/{references.length} exact versions approved</span>
+          <button
+            type="button"
+            className="secondary-action storyboard-comfy-action"
+            data-testid="storyboard-push-to-comfyui"
+            data-frame-id={frame.id}
+            disabled={active}
+            onClick={() => onPush(frame.id)}
+          >
+            {busyLabel === "Pushing…" ? busyLabel : "Push to ComfyUI"}
+          </button>
+          <button
+            type="button"
+            className="secondary-action storyboard-download-action"
+            data-testid="storyboard-download-workflow"
+            data-frame-id={frame.id}
+            disabled={active}
+            onClick={() => onDownload(frame.id)}
+          >
+            {busyLabel === "Downloading…" ? busyLabel : "Download Workflow"}
+          </button>
+          <button
+            type="button"
+            className="primary-action storyboard-generate-action"
+            data-testid="storyboard-generate-frame"
+            data-frame-id={frame.id}
+            disabled={active}
+            onClick={() => onGenerate(frame.id)}
+          >
+            {busyLabel === "Queueing…" ? busyLabel : "Generate"}
+          </button>
+          <button
+            type="button"
+            className="secondary-action storyboard-replace-image-action"
+            data-testid="storyboard-replace-image"
+            data-frame-id={frame.id}
+            disabled={active}
+            onClick={() => replacementInput.current?.click()}
+          >
+            {busyLabel === "Replacing…" ? busyLabel : generatedFile ? "Replace Image" : "Upload Image"}
+          </button>
+          <input
+            ref={replacementInput}
+            className="storyboard-hidden-file"
+            data-testid="storyboard-replace-image-input"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (file) onReplaceImage(frame.id, file);
+            }}
+          />
+          <button type="button" className="primary-action" disabled={active} onClick={() => onAddReferences(frame.id, label)}>＋ Add References</button>
+        </div>
       </header>
-      <div className="storyboard-frame-status"><span className={frame.status === "ready_to_generate" ? "ready" : "waiting"} /><b>{String(frame.status || "not started").replaceAll("_", " ")}</b><small>{frame.purpose === "first_frame" ? "Clip opening composition" : "Additional segment continuity reset"}</small></div>
+      <div className="storyboard-frame-status"><span className={["ready_to_generate", "generated"].includes(frame.status) ? "ready" : "waiting"} /><b>{String(frame.status || "not started").replaceAll("_", " ")}</b><small>{frame.purpose === "first_frame" ? "Clip opening composition" : "Additional segment continuity reset"}</small></div>
+      {(notice || frame.lastError) ? <div className={`storyboard-frame-notice ${frame.lastError ? "error" : ""}`}>{frame.lastError || notice}</div> : null}
+      {generatedFile ? (
+        <section className="storyboard-generated-guide">
+          <img src={storyboardUrl(project.slug, generatedFile)} alt={`${label} generated guide`} />
+          <div>
+            <p className="eyebrow">GENERATED IMAGE GUIDE</p>
+            <b>{generatedFile}</b>
+            <small>{generatedVersion || "Storyboard frame output"} · {frame.generationResolution?.width || "?"}×{frame.generationResolution?.height || "?"}</small>
+          </div>
+        </section>
+      ) : null}
       <PromptBlock label="FIRST-FRAME IMAGE GENERATION" title="Positive prompt" prompt={frame.prompt} rows={11} />
       <details className="storyboard-negative-prompt"><summary>Negative / avoid prompt <span>{frame.negativePrompt?.length || 0} characters</span></summary><div><CopyButton text={frame.negativePrompt || ""} /><p>{frame.negativePrompt}</p></div></details>
       <section className="storyboard-reference-section">
@@ -199,7 +281,20 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
       <section className="storyboard-detail">
         <header className="storyboard-detail-header">
           <div><p className="eyebrow">{chapter.id} · SCENE {String(scene.number).padStart(2, "0")} · CLIP {String(sequenceIndex).padStart(3, "0")}</p><h1>{scene.title}</h1><p>{clip.beat}</p></div>
-          <div className="storyboard-detail-actions"><CopyButton text={fullClipPackage(storyboard, clip)} label="Copy full clip package" /><button type="button" className="secondary-action" onClick={onOpenAssets}>Open Asset Foundry</button></div>
+          <div className="storyboard-detail-actions">
+            <CopyButton text={fullClipPackage(storyboard, clip)} label="Copy full clip package" />
+            <button
+              type="button"
+              className="secondary-action"
+              data-testid="storyboard-push-all-workflows"
+              disabled={store.storyboardBulkWorkflowBusy}
+              onClick={() => void store.pushAllStoryboardFrameWorkflowsToComfyUI()}
+            >
+              {store.storyboardBulkWorkflowBusy ? "Pushing all 161…" : "Push all 161 workflows"}
+            </button>
+            <button type="button" className="secondary-action" onClick={onOpenAssets}>Open Asset Foundry</button>
+            {store.storyboardBulkWorkflowNotice ? <small className="storyboard-bulk-workflow-notice">{store.storyboardBulkWorkflowNotice}</small> : null}
+          </div>
         </header>
 
         <div className="storyboard-detail-scroll">
@@ -214,7 +309,18 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
           </section>
           <section className="storyboard-continuity-locks"><header><p className="eyebrow">CONTINUITY LOCKS</p><span>{clip.continuityLocks?.length || 0}</span></header><div>{(clip.continuityLocks || []).map((lock: string, index: number) => <span key={`${lock}-${index}`}>✓ {lock}</span>)}</div></section>
 
-          <FramePromptPanel project={project} frame={firstFrame} label="First frame" onAddReferences={(frameId, label) => setPickerTarget({ frameId, label: `${clip.id} · ${label}` })} />
+          <FramePromptPanel
+            project={project}
+            frame={firstFrame}
+            label="First frame"
+            busyLabel={firstFrame?.id ? store.storyboardFrameActions[firstFrame.id] : undefined}
+            notice={firstFrame?.id ? store.storyboardFrameNotices[firstFrame.id] : undefined}
+            onPush={(frameId) => void store.pushStoryboardFrameToComfyUI(frameId)}
+            onDownload={(frameId) => void store.downloadStoryboardFrameWorkflow(frameId)}
+            onGenerate={(frameId) => void store.generateStoryboardFrame(frameId)}
+            onReplaceImage={(frameId, file) => void store.replaceStoryboardFrameImage(frameId, file)}
+            onAddReferences={(frameId, label) => setPickerTarget({ frameId, label: `${clip.id} · ${label}` })}
+          />
 
           <section className="storyboard-video-panel">
             <header><div><p className="eyebrow">VIDEO GENERATION</p><h2>LTX Director · {Math.round(clip.durationFrames / fps)}-second silent picture pass</h2></div><div className="storyboard-workflow-chips"><span>24 FPS</span><span>8-frame grid</span><span>{segments.length} segments</span><span>Trim +{clip.trimDecodedFrames} decoded frame</span><span>Audio off</span></div></header>
@@ -229,7 +335,20 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
                   <article key={segment.id} className={`storyboard-segment-card ${segment.type}`}>
                     <header><span>{String(segment.order).padStart(2, "0")}</span><div><b>{start.toFixed(1)}–{end.toFixed(1)} seconds</b><small>{segment.lengthFrames} frames · {segment.type === "image" ? "image-guided" : "text continuation"}</small></div><CopyButton text={segment.prompt} label="Copy local prompt" /></header>
                     <p>{segment.prompt}</p>
-                    {segmentFrame && segmentFrame.id !== firstFrame.id ? <FramePromptPanel project={project} frame={segmentFrame} label={`Additional image · segment ${String(segment.order).padStart(2, "0")}`} onAddReferences={(frameId, label) => setPickerTarget({ frameId, label: `${clip.id} · ${label}` })} /> : null}
+                    {segmentFrame && segmentFrame.id !== firstFrame.id ? (
+                      <FramePromptPanel
+                        project={project}
+                        frame={segmentFrame}
+                        label={`Additional image · segment ${String(segment.order).padStart(2, "0")}`}
+                        busyLabel={store.storyboardFrameActions[segmentFrame.id]}
+                        notice={store.storyboardFrameNotices[segmentFrame.id]}
+                        onPush={(frameId) => void store.pushStoryboardFrameToComfyUI(frameId)}
+                        onDownload={(frameId) => void store.downloadStoryboardFrameWorkflow(frameId)}
+                        onGenerate={(frameId) => void store.generateStoryboardFrame(frameId)}
+                        onReplaceImage={(frameId, file) => void store.replaceStoryboardFrameImage(frameId, file)}
+                        onAddReferences={(frameId, label) => setPickerTarget({ frameId, label: `${clip.id} · ${label}` })}
+                      />
+                    ) : null}
                   </article>
                 );
               })}

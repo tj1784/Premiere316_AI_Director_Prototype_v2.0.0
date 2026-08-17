@@ -1,0 +1,885 @@
+const app = document.querySelector("#app");
+
+let workspace = null;
+let sourceWorkflow = "";
+let health = null;
+let preflight = null;
+let pxPerSecond = 72;
+let playing = false;
+let playStartedAt = 0;
+let playStartFrame = 0;
+let playRaf = 0;
+let saveTimer = 0;
+let healthTimer = 0;
+let activePromptIds = [];
+let premiereProjects = [];
+let premiereOverview = null;
+let premiereReferences = [];
+let premiereReferenceIssues = [];
+let projectTab = "scenes";
+let projectRefreshAt = 0;
+
+const api = async (url, options = {}) => {
+  const response = await fetch(url, options);
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) throw new Error(`Director API returned ${contentType || "a non-JSON response"} for ${url}`);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || `${response.status} ${response.statusText}`);
+  return body;
+};
+
+const fps = () => Math.max(1, Number(workspace?.settings?.frameRate) || 24);
+const allSegments = () => [
+  ...(workspace?.timeline?.segments || []),
+  ...(workspace?.timeline?.audioSegments || []),
+  ...(workspace?.timeline?.motionSegments || [])
+];
+const totalFrames = () => Math.max(1, ...allSegments().map((segment) => Number(segment.start || 0) + Number(segment.length || 1)));
+const selected = () => allSegments().find((segment) => String(segment.id) === String(workspace?.selectedSegmentId)) || null;
+const pad = (value, size = 2) => String(value).padStart(size, "0");
+const formatTime = (seconds, precise = false) => {
+  const safe = Math.max(0, Number(seconds) || 0);
+  const minutes = Math.floor(safe / 60);
+  const secs = Math.floor(safe % 60);
+  if (!precise) return `${pad(minutes)}:${pad(secs)}`;
+  return `${pad(minutes)}:${pad(secs)}.${String(Math.floor((safe % 1) * 100)).padStart(2, "0")}`;
+};
+const frameToPx = (frame) => (Number(frame) / fps()) * pxPerSecond;
+const pxToFrame = (px) => Math.round((Number(px) / pxPerSecond) * fps());
+const escapeHtml = (value = "") => String(value)
+  .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+  .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+const mediaUrl = (segment) => {
+  if (segment.projectMediaPath && workspace?.premiere?.projectSlug) {
+    return `/api/premiere/media/${encodeURIComponent(workspace.premiere.projectSlug)}?file=${encodeURIComponent(segment.projectMediaPath)}`;
+  }
+  const file = segment.imageFile || segment.videoFile || segment.audioFile;
+  return file ? `/api/media?file=${encodeURIComponent(file)}` : "";
+};
+const projectMediaUrl = (file) => premiereOverview?.project?.slug && file
+  ? `/api/premiere/media/${encodeURIComponent(premiereOverview.project.slug)}?file=${encodeURIComponent(file)}`
+  : "";
+
+function setStatus(message, tone = "neutral") {
+  const element = document.querySelector("#status-message");
+  if (!element) return;
+  element.textContent = message;
+  element.dataset.tone = tone;
+}
+
+function toast(message, tone = "neutral") {
+  const root = document.querySelector("#toasts");
+  if (!root) return;
+  const item = document.createElement("div");
+  item.className = `toast ${tone}`;
+  item.textContent = message;
+  root.append(item);
+  setTimeout(() => item.remove(), 4200);
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  const badge = document.querySelector("#save-state");
+  if (badge) badge.textContent = "Saving…";
+  saveTimer = setTimeout(saveWorkspace, 320);
+}
+
+async function saveWorkspace() {
+  try {
+    const result = await api("/api/workspace", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ workspace })
+    });
+    workspace = result.workspace;
+    const badge = document.querySelector("#save-state");
+    if (badge) badge.textContent = "Saved";
+  } catch (error) {
+    const badge = document.querySelector("#save-state");
+    if (badge) badge.textContent = "Save failed";
+    toast(error.message, "error");
+  }
+}
+
+function shell() {
+  app.innerHTML = `
+    <main class="director-shell">
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark">D</span><div><strong>LTX 2.5 Director</strong><small>Focused timeline workspace</small></div></div>
+        <div class="project-context">
+          <label><span>PREMIERE PROJECT</span><select id="project-select"><option value="">Choose project…</option></select></label>
+          <label class="scene-picker"><span>SCENE / CLIP</span><select id="scene-select"><option value="">Choose scene…</option></select></label>
+          <button id="load-scene" class="context-btn" disabled>Load scene</button>
+          <button id="project-open" class="context-btn">Project media</button>
+        </div>
+        <div class="engine-strip">
+          <span id="engine-pill" class="engine-pill"><i></i><span>Checking 8188…</span></span>
+          <span id="save-state" class="save-state">Saved</span>
+          <button id="interrupt" class="ghost danger hidden">Stop render</button>
+          <button id="settings-open" class="icon-btn" title="Settings" aria-label="Open settings">⚙</button>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <div class="toolbar">
+          <button data-add="main" data-accept="image/*"><span>↥</span>Add Image</button>
+          <button id="add-text"><span>T</span>Add Text</button>
+          <button data-add="audio" data-accept="audio/*"><span>♫</span>Add Audio</button>
+          <button data-add="main" data-accept="video/*"><span>▣</span>Add Video</button>
+          <button data-add="motion" data-accept="image/*,video/*"><span>◇</span>Add IC Video</button>
+          <div class="toolbar-separator"></div>
+          <button id="queue-scene" class="primary"><span>▶</span>Generate scene</button>
+          <button id="queue-selected" title="Generate only the selected image/video segment">Queue selected</button>
+          <button id="queue-all" title="Queue every image/video segment separately">Queue segments</button>
+          <button id="save-premiere" title="Write Director prompt and timing edits to the selected Premiere scene" disabled>Save to Premiere</button>
+          <button id="delete-segment" class="danger-soft"><span>⌫</span>Delete</button>
+          <div class="toolbar-spacer"></div>
+          <button id="zoom-out" class="square" title="Zoom out">−</button>
+          <span id="zoom-label" class="zoom-label">100%</span>
+          <button id="zoom-in" class="square" title="Zoom in">+</button>
+          <input id="media-input" type="file" hidden />
+        </div>
+
+        <section class="timeline-frame">
+          <aside class="track-labels">
+            <div class="ruler-spacer"></div>
+            <div class="track-label"><b>MAIN</b><span>◉</span></div>
+            <div class="track-label"><b>AUDIO</b><span>◖</span></div>
+            <div class="track-label"><b>IC-LoRA</b><span>◉</span></div>
+          </aside>
+          <div id="timeline-scroll" class="timeline-scroll">
+            <div id="timeline-canvas" class="timeline-canvas">
+              <div id="ruler" class="ruler"></div>
+              <div id="main-track" class="track main-track" data-track="main"></div>
+              <div id="audio-track" class="track audio-track" data-track="audio"></div>
+              <div id="motion-track" class="track motion-track" data-track="motion"></div>
+              <div id="playhead" class="playhead"><span></span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="transport">
+          <div class="transport-left"><b id="timecode">00:00.00</b><span id="range-readout">Start 0.00 · End 0.00 · Length 0.00</span></div>
+          <div class="transport-center"><button id="play" class="transport-btn" title="Play">▶</button><button id="rewind" class="transport-btn" title="Return to start">↶</button><input id="scrubber" type="range" min="0" max="100" value="0" /></div>
+          <label class="strength-control">Guide strength <input id="guide-strength" type="number" min="0" max="2" step="0.05" value="1" /></label>
+        </section>
+
+        <section class="prompt-panel segment-panel">
+          <div class="panel-heading"><div><span class="eyebrow">SEGMENT PROMPT</span><strong id="segment-name">Select a segment</strong></div><div class="segment-metrics"><label>Start <input id="segment-start" type="number" min="0" step="0.01" /></label><label>Length <input id="segment-length" type="number" min="0.04" step="0.01" /></label></div></div>
+          <textarea id="segment-prompt" spellcheck="true" placeholder="Select a timeline segment to edit its prompt."></textarea>
+        </section>
+
+        <section class="prompt-panel global-panel">
+          <div class="panel-heading"><div><span class="eyebrow">GLOBAL PROMPT</span><strong>Applies to every segment</strong></div><span id="status-message" data-tone="neutral">Ready</span></div>
+          <textarea id="global-prompt" spellcheck="true"></textarea>
+        </section>
+      </section>
+
+      <div id="project-backdrop" class="settings-backdrop project-backdrop"></div>
+      <aside id="project-drawer" class="project-drawer" aria-hidden="true">
+        <div class="settings-head"><div><span class="eyebrow">PREMIERE316 PROJECT</span><h2 id="project-title">Project media</h2><small id="project-summary">Choose a project to browse its production media.</small></div><button id="project-close" class="icon-btn">×</button></div>
+        <nav class="project-tabs">
+          <button data-project-tab="scenes" class="active">Scenes</button>
+          <button data-project-tab="references">Scene references</button>
+          <button data-project-tab="approved">Approved media</button>
+          <button data-project-tab="library">Project library</button>
+          <button data-project-tab="generated">Generated videos</button>
+          <button data-project-tab="jobs">Generation status</button>
+        </nav>
+        <div id="project-content" class="project-content"><div class="project-empty">Choose a Premiere project above.</div></div>
+      </aside>
+
+      <div id="settings-backdrop" class="settings-backdrop"></div>
+      <aside id="settings" class="settings-drawer" aria-hidden="true">
+        <div class="settings-head"><div><span class="eyebrow">WORKFLOW SETTINGS</span><h2>LTX 2.5 execution</h2></div><button id="settings-close" class="icon-btn">×</button></div>
+        <div class="settings-body">
+          <section class="setting-section"><h3>Connection</h3><label class="wide">ComfyUI URL<input id="setting-comfy" type="url" /></label><div id="preflight-card" class="preflight-card">Checking compiled workflow…</div></section>
+          <section class="setting-section"><h3>Delivery</h3><div class="setting-grid"><label>Width<input id="setting-width" type="number" min="32" step="1" /></label><label>Height<input id="setting-height" type="number" min="32" step="1" /></label><label>FPS<input id="setting-fps" type="number" min="1" max="120" step="1" /></label><label>Divisible by<input id="setting-divisor" type="number" min="8" step="8" /></label></div><label class="wide">Resize method<select id="setting-resize"><option>maintain aspect ratio</option><option>crop</option><option>stretch</option><option>pad</option></select></label><label class="wide">Output prefix<input id="setting-prefix" type="text" /></label></section>
+          <section class="setting-section"><h3>Director tracks</h3><div class="toggle-list"><label><input id="setting-audio" type="checkbox" />Custom audio track</label><label><input id="setting-motion" type="checkbox" />IC-LoRA / motion track</label><label><input id="setting-inpaint" type="checkbox" />Inpaint audio</label><label><input id="setting-override" type="checkbox" />Override generated audio</label></div></section>
+          <section class="setting-section"><h3>Negative prompt</h3><textarea id="setting-negative" rows="8"></textarea></section>
+          <details class="advanced"><summary>Advanced workflow</summary><div class="advanced-copy"><b>Execution graph</b><p>The app compiles the supplied embedded subgraph into 30 native ComfyUI nodes. Model, projected Gemma 4, video/audio VAE, two-stage sampler, latent upscaler and tiled decode remain locked to the supplied workflow.</p><b>IC-LoRA source status</b><p class="warning-copy">The source IC-LoRA track is visible, but its guide/model sockets are not wired in the supplied workflow. The app preserves that behavior instead of silently changing the generation graph.</p><b>Source workflow</b><code id="source-path"></code></div></details>
+        </div>
+        <div class="settings-actions"><button id="export-workspace">Export workspace</button><button id="reset-workspace" class="danger-soft">Reset from source</button><button id="settings-done" class="primary">Done</button></div>
+      </aside>
+      <div id="toasts" class="toasts"></div>
+    </main>`;
+}
+
+function trackFor(segment) {
+  if (segment.type === "audio") return "audio";
+  if (segment.type === "motion_video" || segment.type === "motion_image") return "motion";
+  return "main";
+}
+
+function clipTitle(segment) {
+  if (segment.type === "text") return String(segment.prompt || "Text prompt").split("\n")[0].slice(0, 60) || "Text prompt";
+  return segment.fileName || String(segment.imageFile || segment.videoFile || segment.audioFile || "Media").split(/[\\/]/).pop();
+}
+
+function clipMarkup(segment, track) {
+  const isSelected = String(segment.id) === String(workspace.selectedSegmentId);
+  const left = frameToPx(segment.start);
+  const width = Math.max(28, frameToPx(segment.length));
+  const preview = track !== "audio" ? mediaUrl(segment) : "";
+  const prompt = String(segment.prompt || "").trim().split("\n").find(Boolean) || "";
+  return `<article class="clip ${track} ${segment.type === "text" ? "text" : ""} ${isSelected ? "selected" : ""}" data-id="${escapeHtml(segment.id)}" style="left:${left}px;width:${width}px">
+    ${preview ? `<img src="${preview}" alt="" loading="lazy" decoding="async" />` : ""}
+    <div class="clip-shade"></div><span class="clip-type">${track === "motion" ? "IC-LORA" : String(segment.type || "image").toUpperCase()}</span>
+    <b>${escapeHtml(clipTitle(segment))}</b>${prompt ? `<small>${escapeHtml(prompt)}</small>` : ""}<i class="resize-handle" title="Trim duration"></i>
+  </article>`;
+}
+
+function renderTimeline() {
+  const durationSeconds = totalFrames() / fps();
+  const width = Math.max(1180, durationSeconds * pxPerSecond + 100);
+  const canvas = document.querySelector("#timeline-canvas");
+  canvas.style.width = `${width}px`;
+  const ruler = document.querySelector("#ruler");
+  const tick = durationSeconds > 180 ? 20 : durationSeconds > 90 ? 10 : 5;
+  let marks = "";
+  for (let second = 0; second <= Math.ceil(durationSeconds / tick) * tick; second += tick) {
+    marks += `<span class="ruler-mark" style="left:${second * pxPerSecond}px"><i></i>${formatTime(second)}</span>`;
+  }
+  ruler.innerHTML = marks;
+  document.querySelector("#main-track").innerHTML = (workspace.timeline.segments || []).map((segment) => clipMarkup(segment, "main")).join("");
+  document.querySelector("#audio-track").innerHTML = (workspace.timeline.audioSegments || []).map((segment) => clipMarkup(segment, "audio")).join("");
+  document.querySelector("#motion-track").innerHTML = (workspace.timeline.motionSegments || []).map((segment) => clipMarkup(segment, "motion")).join("");
+  document.querySelector("#scrubber").max = String(totalFrames());
+  document.querySelector("#zoom-label").textContent = `${Math.round((pxPerSecond / 72) * 100)}%`;
+  updatePlayhead();
+  bindClipEvents();
+}
+
+function updatePlayhead() {
+  const frame = Math.max(0, Math.min(totalFrames(), Number(workspace.playheadFrame) || 0));
+  const playhead = document.querySelector("#playhead");
+  if (playhead) playhead.style.transform = `translateX(${frameToPx(frame)}px)`;
+  const scrubber = document.querySelector("#scrubber");
+  if (scrubber) scrubber.value = String(frame);
+  const timecode = document.querySelector("#timecode");
+  if (timecode) timecode.textContent = formatTime(frame / fps(), true);
+}
+
+function renderSelection() {
+  const segment = selected();
+  const prompt = document.querySelector("#segment-prompt");
+  const start = document.querySelector("#segment-start");
+  const length = document.querySelector("#segment-length");
+  const strength = document.querySelector("#guide-strength");
+  const deleteButton = document.querySelector("#delete-segment");
+  const queueButton = document.querySelector("#queue-selected");
+  prompt.disabled = !segment;
+  start.disabled = !segment;
+  length.disabled = !segment;
+  strength.disabled = !segment || trackFor(segment) === "audio";
+  deleteButton.disabled = !segment;
+  queueButton.disabled = !segment || ![undefined, "image", "video"].includes(segment?.type);
+  document.querySelector("#segment-name").textContent = segment ? clipTitle(segment) : "Select a segment";
+  prompt.value = segment?.prompt || "";
+  start.value = segment ? (Number(segment.start) / fps()).toFixed(2) : "";
+  length.value = segment ? (Number(segment.length) / fps()).toFixed(2) : "";
+  strength.value = segment ? Number(segment.guideStrength ?? segment.videoStrength ?? workspace.settings.guideStrength ?? 1).toFixed(2) : "1.00";
+  const begin = segment ? Number(segment.start) / fps() : 0;
+  const duration = segment ? Number(segment.length) / fps() : 0;
+  document.querySelector("#range-readout").textContent = `Start ${begin.toFixed(2)} · End ${(begin + duration).toFixed(2)} · Length ${duration.toFixed(2)}`;
+}
+
+function renderSettings() {
+  const settings = workspace.settings;
+  document.querySelector("#setting-comfy").value = settings.comfyUrl;
+  document.querySelector("#setting-width").value = settings.customWidth;
+  document.querySelector("#setting-height").value = settings.customHeight;
+  document.querySelector("#setting-fps").value = settings.frameRate;
+  document.querySelector("#setting-divisor").value = settings.divisibleBy;
+  document.querySelector("#setting-resize").value = settings.resizeMethod;
+  document.querySelector("#setting-prefix").value = settings.outputPrefix;
+  document.querySelector("#setting-audio").checked = settings.useCustomAudio;
+  document.querySelector("#setting-motion").checked = settings.useCustomMotion;
+  document.querySelector("#setting-inpaint").checked = settings.inpaintAudio;
+  document.querySelector("#setting-override").checked = settings.overrideAudio;
+  document.querySelector("#setting-negative").value = settings.negativePrompt;
+  document.querySelector("#source-path").textContent = sourceWorkflow;
+}
+
+function renderHealth() {
+  const pill = document.querySelector("#engine-pill");
+  if (!pill) return;
+  pill.classList.toggle("online", Boolean(health?.connected));
+  pill.classList.toggle("busy", Boolean(health?.queue?.running || health?.queue?.pending));
+  pill.querySelector("span").textContent = health?.connected
+    ? `8188 · ${health.queue.running ? "Rendering" : health.queue.pending ? `${health.queue.pending} queued` : "Ready"}`
+    : "8188 · Offline";
+  document.querySelector("#interrupt").classList.toggle("hidden", !health?.queue?.running);
+  const card = document.querySelector("#preflight-card");
+  if (card) {
+    card.className = `preflight-card ${preflight?.ok ? "ok" : preflight ? "bad" : ""}`;
+    card.textContent = preflight?.ok
+      ? `Ready · ${preflight.nodeCount} native nodes · output ${preflight.outputNodes.map((node) => node.id).join(", ")}${preflight.warnings?.length ? ` · ${preflight.warnings.length} source warning` : ""}`
+      : preflight?.error || "Checking compiled workflow…";
+  }
+}
+
+function sceneLabel(clip) {
+  return `H${String(clip.chapterNumber || 0).padStart(2, "0")} · S${String(clip.sceneNumber || 0).padStart(2, "0")} · ${clip.id} · ${clip.beat || clip.scene || "Scene"}`;
+}
+
+function renderProjectSelectors() {
+  const projectSelect = document.querySelector("#project-select");
+  const sceneSelect = document.querySelector("#scene-select");
+  if (!projectSelect || !sceneSelect) return;
+  const activeSlug = premiereOverview?.project?.slug || "";
+  const bindingMatchesProject = workspace?.premiere?.projectSlug === activeSlug;
+  projectSelect.innerHTML = `<option value="">Choose project…</option>${premiereProjects.map((project) => `<option value="${escapeHtml(project.slug)}" ${project.slug === activeSlug ? "selected" : ""}>${escapeHtml(project.name)}${project.storyboardClipCount ? ` · ${project.storyboardClipCount} scenes` : ""}</option>`).join("")}`;
+  const clips = premiereOverview?.storyboard?.clips || [];
+  const groups = new Map();
+  for (const clip of clips) {
+    const label = `${clip.chapterNumber}. ${clip.chapter} · ${clip.sceneNumber}. ${clip.scene}`;
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label).push(clip);
+  }
+  sceneSelect.innerHTML = `<option value="">Choose scene…</option>${[...groups.entries()].map(([label, values]) => `<optgroup label="${escapeHtml(label)}">${values.map((clip) => `<option value="${escapeHtml(clip.id)}" ${bindingMatchesProject && clip.id === workspace?.premiere?.clipId ? "selected" : ""}>${escapeHtml(clip.id)} · ${escapeHtml(String(clip.beat || "").slice(0, 92))}${clip.ready ? " · ready" : " · needs guide"}</option>`).join("")}</optgroup>`).join("")}`;
+  sceneSelect.disabled = !clips.length;
+  document.querySelector("#load-scene").disabled = !sceneSelect.value;
+  const bound = Boolean(bindingMatchesProject && workspace?.premiere?.clipId);
+  document.querySelector("#save-premiere").disabled = !bound;
+  const queueScene = document.querySelector("#queue-scene");
+  if (queueScene) {
+    const segments = workspace.timeline?.segments || [];
+    const hasGuide = segments.some((segment) => ["image", "video"].includes(segment.type) && (segment.projectMediaPath || segment.imageFile || segment.videoFile));
+    const missingGuide = segments.some((segment) => segment.missingGuide);
+    const missingReference = premiereReferenceIssues.some((reference) => reference.required);
+    const activeRender = Boolean((premiereOverview?.jobs || []).some((job) =>
+      job.type === "director_render"
+      && ["queued", "running"].includes(job.status)
+      && job.refs?.mode === "timeline"
+      && job.refs?.binding?.clipId === workspace?.premiere?.clipId
+    ));
+    queueScene.disabled = !bound || !hasGuide || missingGuide || missingReference || activeRender;
+    queueScene.title = !bound
+      ? "Load a Premiere scene first"
+      : activeRender
+        ? "This scene already has an active Director render"
+      : missingReference
+        ? "Restore every required approved project reference before rendering this scene"
+      : missingGuide
+        ? "Generate or approve every required storyboard guide before rendering the full scene"
+        : "Generate this complete Premiere scene";
+  }
+}
+
+function statusClass(status) {
+  if (["done", "completed", "generated", "approved", "ready", "rendered"].includes(status)) return "ok";
+  if (["queued", "running", "generating", "partial"].includes(status)) return "busy";
+  if (["error", "failed", "blocked"].includes(status)) return "bad";
+  return "neutral";
+}
+
+function canImportProjectMedia(item) {
+  return ["image", "video", "audio"].includes(item?.mediaType);
+}
+
+function projectMediaPreview(item) {
+  const source = projectMediaUrl(item.file);
+  if (item.mediaType === "image") return `<img src="${source}" alt="" loading="lazy" decoding="async" />`;
+  if (item.mediaType === "video") return `<video src="${source}" preload="metadata" muted></video>`;
+  if (item.mediaType === "audio") return `<span>♫</span>`;
+  return `<span>DOC</span>`;
+}
+
+function projectMediaAction(item, projectSlug) {
+  const importable = canImportProjectMedia(item);
+  const enabled = importable && workspace?.premiere?.projectSlug === projectSlug;
+  return `<button data-add-project-media="${escapeHtml(item.file)}" ${enabled ? "" : "disabled"}>${importable ? "Add guide" : "View only"}</button>`;
+}
+
+function renderProjectDrawer() {
+  const content = document.querySelector("#project-content");
+  if (!content) return;
+  for (const button of document.querySelectorAll("[data-project-tab]")) button.classList.toggle("active", button.dataset.projectTab === projectTab);
+  if (!premiereOverview) {
+    document.querySelector("#project-title").textContent = "Project media";
+    document.querySelector("#project-summary").textContent = "Choose a Premiere project to browse its production media.";
+    content.innerHTML = `<div class="project-empty">Choose a Premiere project above.</div>`;
+    return;
+  }
+  const { project, storyboard, approvedMedia = [], projectLibrary = [], generatedVideos = [], jobs = [] } = premiereOverview;
+  document.querySelector("#project-title").textContent = project.name;
+  document.querySelector("#project-summary").textContent = storyboard
+    ? `${storyboard.clips.length} storyboard scenes · ${approvedMedia.length} approved media · ${generatedVideos.length} generated videos`
+    : `${approvedMedia.length} approved media · no production storyboard yet`;
+  if (projectTab === "scenes") {
+    const frames = new Map((storyboard?.generatedFrames || []).map((frame) => [frame.ownerId, frame]));
+    content.innerHTML = storyboard?.clips?.length ? `<div class="scene-list">${storyboard.clips.map((clip) => {
+      const frame = frames.get(clip.id);
+      const isActive = workspace?.premiere?.projectSlug === project.slug && workspace?.premiere?.clipId === clip.id;
+      return `<article class="scene-card ${isActive ? "active" : ""}">
+        <div class="scene-thumb">${frame ? `<img src="${projectMediaUrl(frame.file)}" alt="" loading="lazy" decoding="async" />` : `<span>${clip.generatedFrameCount}/${clip.frameCount}<small>guides</small></span>`}</div>
+        <div class="scene-copy"><span class="scene-path">CH ${clip.chapterNumber} · SC ${clip.sceneNumber} · ${escapeHtml(clip.id)}</span><b>${escapeHtml(clip.beat || clip.scene)}</b><small>${escapeHtml(clip.chapter)} / ${escapeHtml(clip.scene)} · ${clip.durationSeconds.toFixed(1)}s</small><div><i class="status-tag ${statusClass(clip.renderStatus)}">${escapeHtml(clip.renderStatus)}</i><i class="status-tag ${clip.ready ? "ok" : "bad"}">${clip.ready ? "guides ready" : "guide required"}</i></div></div>
+        <button data-load-scene="${escapeHtml(clip.id)}">Load</button>
+      </article>`;
+    }).join("")}</div>` : `<div class="project-empty">This project does not have a production storyboard yet.</div>`;
+  } else if (projectTab === "approved") {
+    content.innerHTML = approvedMedia.length ? `<div class="media-grid">${approvedMedia.map((item) => `<article class="media-card">
+      <div class="media-preview">${projectMediaPreview(item)}</div>
+      <div><span>${escapeHtml(item.category)} · v${item.version}</span><b title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</b><small>${item.current ? "Current approved version" : "Approved historical version"}</small></div>
+      ${projectMediaAction(item, project.slug)}
+    </article>`).join("")}</div>` : `<div class="project-empty">No approved media is available for this project.</div>`;
+  } else if (projectTab === "library") {
+    content.innerHTML = projectLibrary.length ? `<div class="media-grid">${projectLibrary.map((item) => `<article class="media-card">
+      <div class="media-preview">${projectMediaPreview(item)}</div>
+      <div><span>${escapeHtml(item.category)} · v${item.version}</span><b title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</b><small>${item.approved ? "Approved" : escapeHtml(item.status || "Available project media")}</small></div>
+      ${projectMediaAction(item, project.slug)}
+    </article>`).join("")}</div>` : `<div class="project-empty">No generated project assets are available.</div>`;
+  } else if (projectTab === "references") {
+    const requiredIssues = premiereReferenceIssues.filter((item) => item.required).length;
+    const optionalIssues = premiereReferenceIssues.length - requiredIssues;
+    const issueSummary = [
+      requiredIssues ? `${requiredIssues} required reference${requiredIssues === 1 ? " is" : "s are"} unavailable` : "",
+      optionalIssues ? `${optionalIssues} optional reference${optionalIssues === 1 ? " is" : "s are"} unavailable` : ""
+    ].filter(Boolean).join("; ");
+    const issueBanner = premiereReferenceIssues.length
+      ? `<div class="reference-warning">${issueSummary}. ${escapeHtml(premiereReferenceIssues.map((item) => item.reason || "reference error").join(", "))}</div>`
+      : "";
+    content.innerHTML = workspace?.premiere?.projectSlug === project.slug && workspace?.premiere?.clipId
+      ? `${issueBanner}${premiereReferences.length ? `<div class="media-grid">${premiereReferences.map((item) => `<article class="media-card">
+        <div class="media-preview">${projectMediaPreview(item)}</div>
+        <div><span>${escapeHtml(item.role)} · v${item.version}${item.required ? " · required" : ""}</span><b title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</b><small>${item.approved ? "Approved exact version" : item.current ? "Current bound version" : "Pinned historical version"}</small></div>
+        <button data-add-project-media="${escapeHtml(item.file)}">Add guide</button>
+      </article>`).join("")}</div>` : `<div class="project-empty">This scene has no resolved project references.</div>`}`
+      : `<div class="project-empty">Load a scene to view its exact pinned references.</div>`;
+  } else if (projectTab === "generated") {
+    content.innerHTML = generatedVideos.length ? `<div class="generated-list">${generatedVideos.map((item) => `<article class="generated-card"><video src="${projectMediaUrl(item.file)}" controls preload="metadata"></video><div><b>${escapeHtml(item.clipId || item.name)}</b><span>${escapeHtml(item.name)}${item.version ? ` · v${item.version}` : ""}</span><small>${new Date(item.updatedAt).toLocaleString()}</small></div></article>`).join("")}</div>` : `<div class="project-empty">No generated videos are registered in this project yet.</div>`;
+  } else {
+    content.innerHTML = jobs.length ? `<div class="job-list">${jobs.map((job) => `<article class="job-card"><i class="status-dot ${statusClass(job.status)}"></i><div><b>${escapeHtml(job.label || job.type || "Generation")}</b><span>${escapeHtml(job.stage || job.status || "")}</span><small>${job.createdAt ? new Date(job.createdAt).toLocaleString() : ""}${job.error ? ` · ${escapeHtml(job.error)}` : ""}</small></div><em>${Math.round((Number(job.progress) || 0) * 100)}%</em></article>`).join("")}</div>` : `<div class="project-empty">No generation jobs have been recorded for this project.</div>`;
+  }
+  bindProjectContentEvents();
+}
+
+function openProjectDrawer(open) {
+  document.querySelector("#project-drawer").classList.toggle("open", open);
+  document.querySelector("#project-drawer").setAttribute("aria-hidden", String(!open));
+  document.querySelector("#project-backdrop").classList.toggle("open", open);
+}
+
+async function loadPremiereReferences(slug, clipId) {
+  premiereReferenceIssues = [];
+  if (!slug || !clipId) return [];
+  try {
+    const result = await api(`/api/premiere/projects/${encodeURIComponent(slug)}/scenes/${encodeURIComponent(clipId)}/references`);
+    premiereReferenceIssues = result.invalidReferences || [];
+    return result.references || [];
+  } catch (error) {
+    premiereReferenceIssues = [{ required: true, reason: error.message }];
+    return [];
+  }
+}
+
+async function loadProjectOverview(slug, { preserveScene = true } = {}) {
+  if (!slug) {
+    premiereOverview = null;
+    premiereReferences = [];
+    premiereReferenceIssues = [];
+    localStorage.removeItem("premiere316.director.project");
+    renderProjectSelectors();
+    renderProjectDrawer();
+    return;
+  }
+  premiereOverview = await api(`/api/premiere/projects/${encodeURIComponent(slug)}`);
+  localStorage.setItem("premiere316.director.project", slug);
+  premiereReferences = workspace?.premiere?.projectSlug === slug
+    ? await loadPremiereReferences(slug, workspace?.premiere?.clipId)
+    : [];
+  projectRefreshAt = Date.now();
+  renderProjectSelectors();
+  if (!preserveScene) {
+    document.querySelector("#scene-select").value = "";
+    document.querySelector("#load-scene").disabled = true;
+  }
+  renderProjectDrawer();
+}
+
+async function loadPremiereScene(clipId) {
+  const slug = premiereOverview?.project?.slug;
+  if (!slug || !clipId) return;
+  const switching = workspace?.premiere?.clipId && (workspace.premiere.clipId !== clipId || workspace.premiere.projectSlug !== slug);
+  if (switching && !confirm("Load this Premiere scene? Use ‘Save to Premiere’ first if you want to publish the current scene prompt and timing edits.")) return;
+  try {
+    setStatus(`Loading ${clipId} from Premiere…`, "busy");
+    const result = await api(`/api/premiere/projects/${encodeURIComponent(slug)}/load`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ clipId })
+    });
+    workspace = result.workspace;
+    premiereOverview = result.overview;
+    premiereReferences = await loadPremiereReferences(slug, clipId);
+    renderAll();
+    renderProjectDrawer();
+    setStatus(`${clipId} loaded from Premiere`, "ok");
+    toast(`Loaded ${clipId} with its approved storyboard guides`, "ok");
+  } catch (error) {
+    setStatus("Premiere scene load failed", "error");
+    toast(error.message, "error");
+  }
+}
+
+async function addProjectMedia(file) {
+  const slug = premiereOverview?.project?.slug;
+  if (!slug || workspace?.premiere?.projectSlug !== slug) return toast("Load a scene from this project first", "error");
+  try {
+    setStatus("Preparing approved media for ComfyUI…", "busy");
+    const result = await api(`/api/premiere/projects/${encodeURIComponent(slug)}/import-media`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ file })
+    });
+    const start = Math.round(workspace.playheadFrame || 0);
+    const base = {
+      id: result.id,
+      start,
+      length: fps() * 5,
+      fileName: result.fileName,
+      prompt: "",
+      projectMediaPath: result.projectMediaPath,
+      projectMediaBytes: result.projectMediaBytes,
+      projectMediaSha256: result.projectMediaSha256
+    };
+    if (result.mediaType === "audio") {
+      workspace.timeline.audioSegments.push({ ...base, type: "audio", audioFile: result.file, trimStart: 0, audioDurationFrames: base.length });
+    } else if (result.mediaType === "video") {
+      workspace.timeline.segments.push({ ...base, type: "video", videoFile: result.file, guideStrength: 1 });
+    } else if (result.mediaType === "image") {
+      workspace.timeline.segments.push({ ...base, type: "image", imageFile: result.file, guideStrength: 1 });
+    } else {
+      throw new Error("This project item cannot be used as a Director media guide");
+    }
+    workspace.selectedSegmentId = base.id;
+    renderAll();
+    scheduleSave();
+    setStatus("Project media added", "ok");
+  } catch (error) {
+    setStatus("Project media import failed", "error");
+    toast(error.message, "error");
+  }
+}
+
+async function saveToPremiere() {
+  await saveWorkspace();
+  try {
+    setStatus("Saving scene direction to Premiere…", "busy");
+    const result = await api("/api/premiere/sync", { method: "POST" });
+    premiereOverview = result.overview;
+    renderProjectDrawer();
+    setStatus("Saved to Premiere project", "ok");
+    toast(`Saved ${result.result.clipId} direction to Premiere`, "ok");
+  } catch (error) {
+    setStatus("Premiere save failed", "error");
+    toast(error.message, "error");
+  }
+}
+
+function bindProjectContentEvents() {
+  for (const button of document.querySelectorAll("[data-load-scene]")) button.onclick = () => loadPremiereScene(button.dataset.loadScene);
+  for (const button of document.querySelectorAll("[data-add-project-media]")) button.onclick = () => addProjectMedia(button.dataset.addProjectMedia);
+}
+
+async function loadPremiereProjects() {
+  const result = await api("/api/premiere/projects");
+  premiereProjects = result.projects || [];
+  const known = new Set(premiereProjects.map((project) => project.slug));
+  const candidates = [
+    workspace?.premiere?.projectSlug,
+    localStorage.getItem("premiere316.director.project"),
+    premiereProjects.some((project) => project.slug === "harrowing_of_hell") ? "harrowing_of_hell" : null,
+    premiereProjects[0]?.slug
+  ];
+  const preferred = candidates.find((slug) => slug && known.has(slug)) || null;
+  if (!preferred) localStorage.removeItem("premiere316.director.project");
+  renderProjectSelectors();
+  if (preferred) await loadProjectOverview(preferred);
+}
+
+function renderAll() {
+  document.querySelector("#global-prompt").value = workspace.timeline.global_prompt || "";
+  renderTimeline();
+  renderSelection();
+  renderSettings();
+  renderHealth();
+  renderProjectSelectors();
+}
+
+function findSegment(id) {
+  return allSegments().find((segment) => String(segment.id) === String(id));
+}
+
+function bindClipEvents() {
+  for (const element of document.querySelectorAll(".clip")) {
+    element.addEventListener("click", (event) => {
+      event.stopPropagation();
+      workspace.selectedSegmentId = element.dataset.id;
+      const segment = findSegment(element.dataset.id);
+      workspace.playheadFrame = Number(segment?.start) || 0;
+      renderTimeline();
+      renderSelection();
+      scheduleSave();
+    });
+    element.addEventListener("pointerdown", startClipDrag);
+  }
+}
+
+function startClipDrag(event) {
+  if (event.button !== 0) return;
+  const element = event.currentTarget;
+  const segment = findSegment(element.dataset.id);
+  if (!segment) return;
+  const resize = event.target.classList.contains("resize-handle");
+  const originX = event.clientX;
+  const originStart = Number(segment.start) || 0;
+  const originLength = Number(segment.length) || 1;
+  let deltaFrame = 0;
+  let raf = 0;
+  element.setPointerCapture(event.pointerId);
+  element.classList.add("dragging");
+
+  const move = (moveEvent) => {
+    deltaFrame = pxToFrame(moveEvent.clientX - originX);
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      if (resize) element.style.width = `${Math.max(28, frameToPx(Math.max(1, originLength + deltaFrame)))}px`;
+      else element.style.transform = `translateX(${frameToPx(Math.max(-originStart, deltaFrame))}px)`;
+    });
+  };
+  const up = () => {
+    element.classList.remove("dragging");
+    element.releasePointerCapture(event.pointerId);
+    element.removeEventListener("pointermove", move);
+    element.removeEventListener("pointerup", up);
+    element.removeEventListener("pointercancel", up);
+    if (resize) segment.length = Math.max(1, originLength + deltaFrame);
+    else segment.start = Math.max(0, originStart + deltaFrame);
+    workspace.playheadFrame = segment.start;
+    renderTimeline();
+    renderSelection();
+    scheduleSave();
+  };
+  element.addEventListener("pointermove", move);
+  element.addEventListener("pointerup", up);
+  element.addEventListener("pointercancel", up);
+}
+
+function openSettings(open) {
+  document.querySelector("#settings").classList.toggle("open", open);
+  document.querySelector("#settings").setAttribute("aria-hidden", String(!open));
+  document.querySelector("#settings-backdrop").classList.toggle("open", open);
+}
+
+function updateSetting(name, value) {
+  workspace.settings[name] = value;
+  scheduleSave();
+}
+
+function bindInputs() {
+  document.querySelector("#project-select").addEventListener("change", async (event) => {
+    try { await loadProjectOverview(event.target.value, { preserveScene: false }); }
+    catch (error) { toast(error.message, "error"); }
+  });
+  document.querySelector("#scene-select").addEventListener("change", (event) => { document.querySelector("#load-scene").disabled = !event.target.value; });
+  document.querySelector("#load-scene").onclick = () => loadPremiereScene(document.querySelector("#scene-select").value);
+  document.querySelector("#project-open").onclick = () => openProjectDrawer(true);
+  document.querySelector("#project-close").onclick = () => openProjectDrawer(false);
+  document.querySelector("#project-backdrop").onclick = () => openProjectDrawer(false);
+  for (const button of document.querySelectorAll("[data-project-tab]")) button.onclick = () => { projectTab = button.dataset.projectTab; renderProjectDrawer(); };
+  document.querySelector("#save-premiere").onclick = saveToPremiere;
+  document.querySelector("#settings-open").onclick = () => openSettings(true);
+  document.querySelector("#settings-close").onclick = () => openSettings(false);
+  document.querySelector("#settings-done").onclick = () => openSettings(false);
+  document.querySelector("#settings-backdrop").onclick = () => openSettings(false);
+  document.querySelector("#global-prompt").addEventListener("input", (event) => { workspace.timeline.global_prompt = event.target.value; scheduleSave(); });
+  document.querySelector("#segment-prompt").addEventListener("input", (event) => { const segment = selected(); if (segment) { segment.prompt = event.target.value; scheduleSave(); } });
+  document.querySelector("#segment-start").addEventListener("change", (event) => { const segment = selected(); if (segment) { segment.start = Math.max(0, Math.round(Number(event.target.value) * fps())); workspace.playheadFrame = segment.start; renderTimeline(); renderSelection(); scheduleSave(); } });
+  document.querySelector("#segment-length").addEventListener("change", (event) => { const segment = selected(); if (segment) { segment.length = Math.max(1, Math.round(Number(event.target.value) * fps())); renderTimeline(); renderSelection(); scheduleSave(); } });
+  document.querySelector("#guide-strength").addEventListener("change", (event) => { const segment = selected(); if (!segment) return; const value = Math.max(0, Math.min(2, Number(event.target.value) || 0)); if (trackFor(segment) === "motion") segment.videoStrength = value; else segment.guideStrength = value; scheduleSave(); });
+
+  const bindings = [
+    ["setting-comfy", "comfyUrl", (value) => value.trim().replace(/\/$/, "")],
+    ["setting-width", "customWidth", Number], ["setting-height", "customHeight", Number],
+    ["setting-fps", "frameRate", Number], ["setting-divisor", "divisibleBy", Number],
+    ["setting-resize", "resizeMethod", String], ["setting-prefix", "outputPrefix", String],
+    ["setting-negative", "negativePrompt", String]
+  ];
+  for (const [id, key, transform] of bindings) document.querySelector(`#${id}`).addEventListener("change", async (event) => {
+    updateSetting(key, transform(event.target.value));
+    if (key === "frameRate") { renderTimeline(); renderSelection(); }
+    if (key === "comfyUrl") {
+      await saveWorkspace();
+      preflight = null;
+      await refreshHealth(true);
+    }
+  });
+  for (const [id, key] of [["setting-audio", "useCustomAudio"], ["setting-motion", "useCustomMotion"], ["setting-inpaint", "inpaintAudio"], ["setting-override", "overrideAudio"]]) {
+    document.querySelector(`#${id}`).addEventListener("change", (event) => updateSetting(key, event.target.checked));
+  }
+
+  document.querySelector("#delete-segment").onclick = () => {
+    const id = workspace.selectedSegmentId;
+    if (!id) return;
+    for (const key of ["segments", "motionSegments", "audioSegments"]) workspace.timeline[key] = (workspace.timeline[key] || []).filter((segment) => String(segment.id) !== String(id));
+    workspace.selectedSegmentId = workspace.timeline.segments?.[0]?.id || null;
+    renderAll();
+    scheduleSave();
+  };
+
+  document.querySelector("#add-text").onclick = () => {
+    const segment = { id: `text_${Date.now().toString(36)}`, type: "text", start: Math.round(workspace.playheadFrame), length: fps() * 5, prompt: "New prompt beat" };
+    workspace.timeline.segments.push(segment);
+    workspace.selectedSegmentId = segment.id;
+    renderAll();
+    scheduleSave();
+    document.querySelector("#segment-prompt").focus();
+  };
+
+  const fileInput = document.querySelector("#media-input");
+  for (const button of document.querySelectorAll("[data-add]")) button.onclick = () => {
+    fileInput.accept = button.dataset.accept;
+    fileInput.dataset.track = button.dataset.add;
+    fileInput.value = "";
+    fileInput.click();
+  };
+  fileInput.onchange = async () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    const track = fileInput.dataset.track || "main";
+    setStatus(`Uploading ${file.name}…`, "busy");
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("track", track);
+      const result = await api("/api/upload", { method: "POST", body: form });
+      const base = { id: result.id, start: Math.round(workspace.playheadFrame), length: fps() * 5, fileName: result.fileName, prompt: "" };
+      if (track === "audio") workspace.timeline.audioSegments.push({ ...base, type: "audio", audioFile: result.file, trimStart: 0, audioDurationFrames: base.length });
+      else if (track === "motion") workspace.timeline.motionSegments.push({ ...base, type: "motion_video", isStaticImage: file.type.startsWith("image/"), videoFile: result.file, trimStart: 0, videoDurationFrames: base.length, videoStrength: 1, videoAttentionStrength: 0.65, resampleMode: "nearest" });
+      else workspace.timeline.segments.push({ ...base, type: file.type.startsWith("video/") ? "video" : "image", imageFile: result.file, guideStrength: 1 });
+      workspace.selectedSegmentId = result.id;
+      renderAll();
+      scheduleSave();
+      setStatus("Upload complete", "ok");
+    } catch (error) {
+      setStatus("Upload failed", "error");
+      toast(error.message, "error");
+    }
+  };
+
+  document.querySelector("#zoom-out").onclick = () => { pxPerSecond = Math.max(24, pxPerSecond / 1.25); renderTimeline(); };
+  document.querySelector("#zoom-in").onclick = () => { pxPerSecond = Math.min(220, pxPerSecond * 1.25); renderTimeline(); };
+  document.querySelector("#rewind").onclick = () => { workspace.playheadFrame = 0; updatePlayhead(); };
+  document.querySelector("#scrubber").oninput = (event) => { workspace.playheadFrame = Number(event.target.value); updatePlayhead(); };
+  document.querySelector("#play").onclick = togglePlay;
+  for (const track of document.querySelectorAll(".track")) track.addEventListener("pointerdown", (event) => {
+    if (event.target !== track) return;
+    const canvasRect = document.querySelector("#timeline-canvas").getBoundingClientRect();
+    workspace.playheadFrame = Math.max(0, pxToFrame(event.clientX - canvasRect.left));
+    updatePlayhead();
+  });
+  document.querySelector("#queue-selected").onclick = () => queue("selected");
+  document.querySelector("#queue-all").onclick = () => queue("segments");
+  document.querySelector("#queue-scene").onclick = () => queue("timeline");
+  document.querySelector("#interrupt").onclick = interrupt;
+  document.querySelector("#export-workspace").onclick = () => window.open("/api/export", "_blank");
+  document.querySelector("#reset-workspace").onclick = async () => {
+    if (!confirm("Reset all Director edits from the supplied workflow?")) return;
+    const result = await api("/api/reset", { method: "POST" });
+    workspace = result.workspace;
+    renderAll();
+    toast("Workspace reset from LTX2.5_DIRECTOR.json", "ok");
+  };
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.querySelector("#play").textContent = playing ? "Ⅱ" : "▶";
+  if (!playing) { cancelAnimationFrame(playRaf); return; }
+  playStartedAt = performance.now();
+  playStartFrame = Number(workspace.playheadFrame) || 0;
+  const tick = (now) => {
+    if (!playing) return;
+    workspace.playheadFrame = playStartFrame + ((now - playStartedAt) / 1000) * fps();
+    if (workspace.playheadFrame >= totalFrames()) { workspace.playheadFrame = 0; playStartedAt = now; playStartFrame = 0; }
+    updatePlayhead();
+    playRaf = requestAnimationFrame(tick);
+  };
+  playRaf = requestAnimationFrame(tick);
+}
+
+async function queue(mode) {
+  await saveWorkspace();
+  const button = document.querySelector(mode === "timeline" ? "#queue-scene" : mode === "selected" ? "#queue-selected" : "#queue-all");
+  const old = button.textContent;
+  button.disabled = true;
+  button.textContent = "Compiling…";
+  try {
+    const result = await api("/api/queue", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mode, segmentId: workspace.selectedSegmentId })
+    });
+    activePromptIds = result.accepted.map((item) => item.promptId);
+    const queuedMessage = `Queued ${activePromptIds.length} Director job${activePromptIds.length === 1 ? "" : "s"} on 8188`;
+    if (result.partial) {
+      toast(`${queuedMessage}; a later submission failed: ${result.error}`, "error");
+      setStatus(`Partially queued · ${activePromptIds.length} accepted`, "error");
+    } else {
+      toast(queuedMessage, "ok");
+      setStatus(`Queued ${activePromptIds.length} job${activePromptIds.length === 1 ? "" : "s"}`, "ok");
+    }
+    if (premiereOverview?.project?.slug) await loadProjectOverview(premiereOverview.project.slug);
+    refreshHealth(true);
+  } catch (error) {
+    toast(error.message, "error");
+    setStatus("Queue failed", "error");
+  } finally {
+    button.textContent = old;
+    renderProjectSelectors();
+  }
+}
+
+async function interrupt() {
+  if (!confirm("Stop the active ComfyUI render?")) return;
+  try { await api("/api/interrupt", { method: "POST" }); toast("Interrupt requested", "ok"); }
+  catch (error) { toast(error.message, "error"); }
+}
+
+async function refreshHealth(forcePreflight = false) {
+  clearTimeout(healthTimer);
+  try { health = await api("/api/health"); } catch (error) { health = { connected: false, error: error.message }; }
+  if (forcePreflight || !preflight) {
+    try { preflight = await api("/api/preflight"); } catch (error) { preflight = { ok: false, error: error.message }; }
+  }
+  const activeSlug = premiereOverview?.project?.slug;
+  const projectDrawerOpen = document.querySelector("#project-drawer")?.classList.contains("open");
+  const liveProjectTab = ["scenes", "generated", "jobs"].includes(projectTab);
+  if (activeSlug && Date.now() - projectRefreshAt > 6000 && ((projectDrawerOpen && liveProjectTab) || health?.queue?.running || health?.queue?.pending)) {
+    try {
+      premiereOverview = await api(`/api/premiere/projects/${encodeURIComponent(activeSlug)}`);
+      projectRefreshAt = Date.now();
+      renderProjectSelectors();
+      if (projectDrawerOpen && liveProjectTab) renderProjectDrawer();
+    } catch {}
+  }
+  renderHealth();
+  healthTimer = setTimeout(() => refreshHealth(false), health?.queue?.running || health?.queue?.pending ? 1500 : 5000);
+}
+
+async function boot() {
+  try {
+    const result = await api("/api/workspace");
+    workspace = result.workspace;
+    sourceWorkflow = result.sourceWorkflow;
+    shell();
+    bindInputs();
+    renderAll();
+    await loadPremiereProjects();
+    await refreshHealth(true);
+    setStatus("Ready", "ok");
+  } catch (error) {
+    app.innerHTML = `<div class="fatal"><h1>Director could not start</h1><p>${escapeHtml(error.message)}</p><button onclick="location.reload()">Try again</button></div>`;
+  }
+}
+
+boot();

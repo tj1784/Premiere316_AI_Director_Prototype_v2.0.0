@@ -27,7 +27,8 @@ import {
   loadProject,
   saveProject,
   findClip,
-  mediaDir
+  mediaDir,
+  skipApproval
 } from "./projects.js";
 import {
   trimVideoToFrames,
@@ -41,6 +42,11 @@ import {
   renderMasterBookend
 } from "./ffmpeg.js";
 import { assetApprovalCurrent, generateAssetJob, restoreCancelledAsset } from "./assets.js";
+import {
+  generateStoryboardFrameJob,
+  markStoryboardFrameGenerationFailed,
+  restoreStoryboardFrameAfterCancellation
+} from "./storyboard-generation.js";
 import { projectDir } from "./paths.js";
 import {
   BOOKEND_DURATION_SEC,
@@ -53,7 +59,7 @@ const jobs = [];
 let running = false;
 let activeJob = null;
 let activeAbortController = null;
-const COMFY_PROMPT_JOB_TYPES = new Set(["render_range", "render_h3_range", "generate_asset"]);
+const COMFY_PROMPT_JOB_TYPES = new Set(["render_range", "render_h3_range", "generate_asset", "generate_storyboard_frame"]);
 
 function persistJobLedger(projectSlug) {
   if (!projectSlug) return;
@@ -106,6 +112,15 @@ export function enqueue(job) {
     );
     if (existing) return existing;
   }
+  if (job?.type === "generate_storyboard_frame" && job?.projectSlug && job?.refs?.frameId) {
+    const existing = jobs.find((candidate) =>
+      candidate.projectSlug === job.projectSlug &&
+      candidate.type === "generate_storyboard_frame" &&
+      candidate.refs?.frameId === job.refs.frameId &&
+      ["queued", "running", "cancelling"].includes(candidate.status)
+    );
+    if (existing) return existing;
+  }
   const j = {
     id: `job_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     status: "queued",
@@ -131,6 +146,7 @@ export function cancelJob(id) {
     j.stage = "Stopped";
     j.finishedAt = new Date().toISOString();
     if (j.type === "generate_asset") restoreCancelledAsset(j.projectSlug, j.refs?.assetId);
+    if (j.type === "generate_storyboard_frame") restoreStoryboardFrameAfterCancellation(j.projectSlug, j.refs?.frameId);
     persistJobLedger(j.projectSlug);
     return true;
   }
@@ -175,6 +191,7 @@ async function pump() {
     else if (next.type === "assemble_clip") await assembleClipJob(next);
     else if (next.type === "generate_score") await generateScore(next);
     else if (next.type === "generate_asset") await generateAssetJob(next);
+    else if (next.type === "generate_storyboard_frame") await generateStoryboardFrameJob(next);
     else if (next.type === "build_master") await buildMaster(next);
     else throw new Error(`Unknown job type: ${next.type}`);
     if (next.signal.aborted || next.status === "cancelling") {
@@ -190,6 +207,12 @@ async function pump() {
     next.status = cancelled ? "cancelled" : "error";
     next.stage = cancelled ? "Stopped" : "Failed";
     next.error = cancelled ? null : String(e.message || e);
+    if (next.type === "generate_storyboard_frame") {
+      try {
+        if (cancelled) restoreStoryboardFrameAfterCancellation(next.projectSlug, next.refs?.frameId);
+        else markStoryboardFrameGenerationFailed(next.projectSlug, next.refs?.frameId, e);
+      } catch {}
+    }
     if (!cancelled) console.error("[queue]", next.label, e);
   } finally {
     next.finishedAt = new Date().toISOString();
@@ -238,15 +261,15 @@ function currentGuideBindings(project, clip) {
   return files.map((file) => {
     const frame = (project.frames || []).find((item) => item.file === file);
     const asset = project.assets?.items?.find((item) => item.id === frame?.assetId);
-    if (
-      !frame ||
+    if (!frame) throw new Error(`Render cancelled because guide media is missing: ${file}`);
+    if (!skipApproval(project) && (
       frame.source !== "asset-foundry-approved" ||
       !asset ||
       !assetApprovalCurrent(project, asset) ||
       Number(frame.assetVersion) !== Number(asset.activeVersion) ||
       frame.assetApprovalFingerprint !== asset.approval?.versionFingerprint ||
       frame.screenplayRevision !== asset.approval?.screenplayRevision
-    ) throw new Error(`Render cancelled because guide media is missing, stale, or no longer approved: ${frame?.name || file}`);
+    )) throw new Error(`Render cancelled because guide media is missing, stale, or no longer approved: ${frame?.name || file}`);
     return {
       file,
       frameId: frame.id,

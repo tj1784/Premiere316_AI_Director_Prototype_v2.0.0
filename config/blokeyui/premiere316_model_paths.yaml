@@ -7,7 +7,9 @@ premiere316_shared_models:
   diffusion_models: models/diffusion_models/
   unet: models/unet/
   loras: models/loras/
-  vae: models/vae/
+  vae: |
+    models/vae/
+    models/checkpoints/
   text_encoders: models/text_encoders/
   clip: models/text_encoders/
   latent_upscale_models: models/latent_upscale_models/

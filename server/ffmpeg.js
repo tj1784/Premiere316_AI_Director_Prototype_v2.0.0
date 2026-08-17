@@ -49,8 +49,27 @@ export async function probeMedia(file) {
   return { durationSec, video, audio, streams: data.streams || [] };
 }
 
+export async function probeMediaExact(file) {
+  const { stdout } = await run(FFPROBE, [
+    "-v", "error",
+    "-count_frames",
+    "-show_entries", "format=duration:stream=index,codec_type,width,height,r_frame_rate,avg_frame_rate,time_base,start_time,duration,nb_frames,nb_read_frames,sample_rate,channels",
+    "-of", "json",
+    file
+  ]);
+  const data = JSON.parse(stdout || "{}");
+  const durationSec = Number(data.format?.duration || 0);
+  for (const stream of data.streams || []) {
+    if ((!stream.nb_frames || stream.nb_frames === "N/A") && stream.nb_read_frames && stream.nb_read_frames !== "N/A") stream.nb_frames = stream.nb_read_frames;
+  }
+  const video = (data.streams || []).find((stream) => stream.codec_type === "video") || null;
+  const audio = (data.streams || []).find((stream) => stream.codec_type === "audio") || null;
+  return { durationSec, video, audio, streams: data.streams || [] };
+}
+
 export async function trimVideoToFrames(input, output, frames, fps) {
   const info = await probeMedia(input);
+  const duration = Math.max(1, Math.round(frames)) / Math.max(1, Number(fps) || 1);
   const args = ["-y", "-i", input];
   args.push("-map", "0:v:0", "-map", "0:a?");
   args.push(
@@ -61,8 +80,13 @@ export async function trimVideoToFrames(input, output, frames, fps) {
     "-crf", "18",
     "-pix_fmt", "yuv420p"
   );
-  if (info.audio) args.push("-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2");
-  args.push("-movflags", "+faststart", output);
+  if (info.audio) {
+    args.push(
+      "-af", `apad=whole_dur=${duration.toFixed(9)},atrim=0:${duration.toFixed(9)}`,
+      "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"
+    );
+  }
+  args.push("-t", duration.toFixed(9), "-movflags", "+faststart", output);
   await run(FFMPEG, args);
   return output;
 }
@@ -209,6 +233,66 @@ export async function concatPreparedVideos(inputs, output, expectedDurationSec =
         sum + (Number(info.video?.duration) || Number(info.durationSec) || 0), 0);
     }
     return await finalizeMasterMedia(joinedFile, output, duration);
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Join already-conformed picture-only shot files and lay the original
+ * soundtrack over the result once.  The video stream is copied, so a long
+ * sequential render does not suffer a second lossy picture encode.  Audio is
+ * encoded once to Premiere-compatible 48 kHz stereo AAC from the supplied
+ * source (FLAC in the music-video workflow).
+ */
+export async function concatPreparedVideosWithSoundtrack(inputs, soundtrack, output, {
+  frames,
+  fps,
+  audioStartFrame = 0,
+  audioBitrate = "320k"
+} = {}) {
+  if (!inputs.length) throw new Error("No prepared videos available to assemble");
+  for (const input of inputs) {
+    if (!input || !fs.existsSync(input)) throw new Error(`Prepared video missing: ${input || "unknown"}`);
+  }
+  if (!soundtrack || !fs.existsSync(soundtrack)) throw new Error(`Source soundtrack missing: ${soundtrack || "unknown"}`);
+  const safeFps = Math.max(1, Number(fps) || 24);
+  const safeFrames = Math.max(1, Math.round(Number(frames) || 1));
+  const duration = safeFrames / safeFps;
+  const audioStart = Math.max(0, Math.round(Number(audioStartFrame) || 0)) / safeFps;
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "p316-music-concat-"));
+  try {
+    const listFile = path.join(tempRoot, "concat.txt");
+    fs.writeFileSync(
+      listFile,
+      inputs.map((file) => `file '${String(file).replaceAll("'", "'\\''")}'`).join("\n")
+    );
+    const args = [
+      "-y",
+      "-f", "concat",
+      "-safe", "0",
+      "-i", listFile
+    ];
+    if (audioStart > 0) args.push("-ss", audioStart.toFixed(9));
+    args.push(
+      "-i", soundtrack,
+      "-map", "0:v:0",
+      "-map", "1:a:0",
+      "-map_metadata", "1",
+      "-frames:v", String(safeFrames),
+      "-r", String(safeFps),
+      "-c:v", "copy",
+      "-c:a", "aac",
+      "-b:a", String(audioBitrate || "320k"),
+      "-ar", "48000",
+      "-ac", "2",
+      "-af:a", `atrim=0:${duration.toFixed(9)},apad=whole_dur=${duration.toFixed(9)},asetpts=PTS-STARTPTS`,
+      "-t", duration.toFixed(9),
+      "-movflags", "+faststart+use_metadata_tags",
+      output
+    );
+    await run(FFMPEG, args);
+    return output;
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }

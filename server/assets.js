@@ -8,7 +8,7 @@ import {
   getObjectInfo,
   runPrompt
 } from "./comfy.js";
-import { loadProject, mediaDir, registerFrame, saveProject } from "./projects.js";
+import { loadProject, mediaDir, registerFrame, saveProject, skipApproval } from "./projects.js";
 import { projectDir } from "./paths.js";
 import {
   STYLE_FLUX_CLIP,
@@ -1223,6 +1223,7 @@ function restoredAssetStatus(project, asset) {
 }
 
 export function assetApprovalCurrent(project, asset) {
+  if (skipApproval(project)) return Boolean(asset);
   const revision = screenplayHash(project);
   const approval = asset?.approval;
   const active = activeAssetVersion(asset);
@@ -1482,11 +1483,11 @@ async function generateAssetJobInner(job) {
   const asset = project.assets?.items?.find((item) => item.id === job.refs.assetId);
   if (!asset) throw new Error("Asset not found");
   const currentRevision = screenplayHash(project);
-  if (
+  if (!skipApproval(project) && (
     !currentRevision ||
     project.screenplay?.approval?.status !== "approved" ||
     project.screenplay?.approval?.screenplayRevision !== currentRevision
-  ) throw new Error("Asset job cancelled because the screenplay revision is no longer approved");
+  )) throw new Error("Asset job cancelled because the screenplay revision is no longer approved");
   if (project.assets?.screenplayHash !== currentRevision) {
     throw new Error("Asset job cancelled because the asset manifest is stale for the approved screenplay");
   }
@@ -1544,13 +1545,13 @@ async function generateAssetJobInner(job) {
   const target = fresh.assets?.items?.find((item) => item.id === asset.id);
   if (!target) throw new Error("Asset disappeared while generation was running");
   const freshRevision = screenplayHash(fresh);
-  if (
+  if (!skipApproval(fresh) && (
     !freshRevision ||
     fresh.screenplay?.approval?.status !== "approved" ||
     fresh.screenplay?.approval?.screenplayRevision !== freshRevision ||
     freshRevision !== runRevision ||
     fresh.assets?.screenplayHash !== runManifestHash
-  ) throw new Error("Asset output was retained but not registered because the screenplay or asset manifest changed during generation");
+  )) throw new Error("Asset output was retained but not registered because the screenplay or asset manifest changed during generation");
   if (assetGenerationFingerprint(target) !== runFingerprint) {
     throw new Error("Asset output was retained but not registered because its prompt, workflow, or generation settings changed during generation");
   }
@@ -1741,14 +1742,14 @@ export function reconcileAssetGenerationState(project, activeAssetIds = new Set(
 }
 
 export function promoteAssetToFrame(project, asset) {
-  if (!assetApprovalCurrent(project, asset)) throw new Error("Approve this exact generated asset version before adding it to the Project Bin");
+  if (!skipApproval(project) && !assetApprovalCurrent(project, asset)) throw new Error("Approve this exact generated asset version before adding it to the Project Bin");
   const active = (asset.versions || []).find((version) => Number(version.v) === Number(asset.activeVersion));
   const sourceName = active?.file || active?.files?.[0];
   if (!sourceName || !/\.(png|jpe?g|webp)$/i.test(sourceName)) throw new Error("The active asset version is not a usable guide image");
   const source = path.join(mediaDir(project, "assets"), path.basename(sourceName));
   if (!fs.existsSync(source)) throw new Error("Asset file is missing");
   const extension = path.extname(sourceName).toLowerCase();
-  const identity = String(asset.approval.versionFingerprint || "").slice(0, 16);
+  const identity = String(asset.approval?.versionFingerprint || asset.id || "shorts").slice(0, 16);
   const safeAssetId = String(asset.id).replace(/[^a-zA-Z0-9_-]+/g, "-").slice(0, 64);
   const filename = `asset_${safeAssetId}_v${active.v}_${identity}${extension}`;
   fs.mkdirSync(mediaDir(project, "frames"), { recursive: true });

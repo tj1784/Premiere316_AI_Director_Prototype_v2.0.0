@@ -1,9 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { useStore } from "../store";
 
-export default function ProjectGate() {
+type Props = {
+  onConnectComfyUI?: () => void;
+};
+
+function comfyEndpointLabel(url?: string) {
+  if (!url) return "configured address";
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
+
+export default function ProjectGate({ onConnectComfyUI }: Props) {
   const store = useStore();
   const [name, setName] = useState("");
+  const [category, setCategory] = useState<"feature" | "shorts">("shorts");
 
   useEffect(() => {
     store.refreshProjects();
@@ -11,7 +25,7 @@ export default function ProjectGate() {
   }, []);
 
   const create = () => {
-    if (name.trim()) store.createProject(name.trim());
+    if (name.trim()) store.createProject(name.trim(), category);
   };
 
   return (
@@ -33,21 +47,36 @@ export default function ProjectGate() {
 
         <div className="gate-status-row">
           <span className={store.health.comfy ? "good" : "bad"}>
-            <i /> {store.health.capabilities?.dedicatedComfyUI ? "Dedicated ComfyUI" : "ComfyUI"} {store.health.comfy ? "connected · 8190" : "offline"}
+            <i /> {store.health.capabilities?.dedicatedComfyUI ? "Dedicated ComfyUI" : "ComfyUI"} {store.health.comfy ? `connected · ${comfyEndpointLabel(store.health.comfyUrl)}` : "offline"}
           </span>
           <span className={store.health.ffmpeg ? "good" : "bad"}>
             <i /> FFmpeg {store.health.ffmpeg ? "ready" : "not found"}
           </span>
+          {onConnectComfyUI ? (
+            <button className="button ghost" type="button" onClick={onConnectComfyUI}>
+              {store.health.comfy ? "Change ComfyUI" : "Connect ComfyUI"}
+            </button>
+          ) : null}
         </div>
 
         <div className="new-project-box">
-          <label htmlFor="project-name">Create a new film project</label>
+          <label htmlFor="project-name">Create a new project</label>
+          <div className="project-category-toggle" role="group" aria-label="Project category">
+            <button type="button" className={category === "feature" ? "active" : ""} onClick={() => setCategory("feature")}>
+              Feature
+              <small>Screenplay + approval</small>
+            </button>
+            <button type="button" className={category === "shorts" ? "active" : ""} onClick={() => setCategory("shorts")}>
+              Shorts
+              <small>9:16 · skip screenplay · no gate</small>
+            </button>
+          </div>
           <div className="gate-create-row">
             <input
               id="project-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Genesis Short Film"
+              placeholder={category === "shorts" ? "Harrowing stairs short" : "Genesis Short Film"}
               onKeyDown={(event) => {
                 if (event.key === "Enter") create();
               }}
@@ -73,7 +102,7 @@ export default function ProjectGate() {
               <span className="recent-icon">▶</span>
               <span className="recent-copy">
                 <b>{project.name}</b>
-                <small>{project.clipCount} clips · {project.masterCount || 0} masters</small>
+                <small>{project.category === "shorts" ? "Shorts · " : ""}{project.clipCount} clips · {project.masterCount || 0} masters</small>
               </span>
               <span className="recent-arrow">→</span>
             </button>

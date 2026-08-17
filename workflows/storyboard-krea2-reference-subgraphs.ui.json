@@ -1,0 +1,3101 @@
+{
+  "id": "c5beec59-2b88-4f3f-ba35-7640a58a9ba6",
+  "revision": 0,
+  "last_node_id": 10065,
+  "last_link_id": 90210,
+  "nodes": [
+    {
+      "id": 200,
+      "type": "PixaromaResolution",
+      "pos": [
+        -1561.344874352672,
+        1255.8471625628126
+      ],
+      "size": [
+        240,
+        435
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "width",
+          "type": "INT",
+          "links": [
+            90207
+          ]
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "links": [
+            90208
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-Pixaroma",
+        "ver": "bc54fc907b91358a3b7f1e214dc46ed2ef2be53c",
+        "Node name for S&R": "PixaromaResolution",
+        "resolutionState": "{\"mode\":\"custom\",\"ratio\":\"16:9\",\"w\":2560,\"h\":1088,\"custom_w\":2560,\"custom_h\":1088,\"custom_ratio_w\":2,\"custom_ratio_h\":1,\"snap\":32}"
+      },
+      "widgets_values": [
+        {
+          "mode": "custom",
+          "ratio": "16:9",
+          "w": 2560,
+          "h": 1088,
+          "custom_w": 2560,
+          "custom_h": 1088,
+          "custom_ratio_w": 2,
+          "custom_ratio_h": 1,
+          "snap": 32
+        }
+      ],
+      "color": "#1d1d1d",
+      "bgcolor": "#2a2a2a"
+    },
+    {
+      "id": 206,
+      "type": "PixaromaRunTimer",
+      "pos": [
+        -583.0340765952444,
+        940.1895829800206
+      ],
+      "size": [
+        270,
+        50
+      ],
+      "flags": {
+        "no_title": true
+      },
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "ComfyUI-Pixaroma",
+        "ver": "ffcf2f56aa448f2df763b09b70857632792b7805",
+        "Node name for S&R": "PixaromaRunTimer",
+        "runTimerLastMs": 202362
+      },
+      "widgets_values": [],
+      "color": "#1d1d1d",
+      "bgcolor": "#2a2a2a"
+    },
+    {
+      "id": 10064,
+      "type": "ConditioningZeroOut",
+      "pos": [
+        -633.8229646823174,
+        1220.682190757919
+      ],
+      "size": [
+        205.2173843383789,
+        26
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 90204
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            90203
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.76",
+        "Node name for S&R": "ConditioningZeroOut"
+      },
+      "color": "#1d1d1d",
+      "bgcolor": "#2a2a2a"
+    },
+    {
+      "id": 10065,
+      "type": "VAEDecode",
+      "pos": [
+        -392.7042291246912,
+        1124.0549443015411
+      ],
+      "size": [
+        140,
+        46
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 90205
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 90206
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            90210
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.32",
+        "Node name for S&R": "VAEDecode"
+      },
+      "color": "#1d1d1d",
+      "bgcolor": "#2a2a2a"
+    },
+    {
+      "id": 199,
+      "type": "PixaromaPreview",
+      "pos": [
+        -674.8681960877321,
+        1118.3111788357282
+      ],
+      "size": [
+        1581.634379284222,
+        795.7454039478356
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 90210
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-Pixaroma",
+        "ver": "bc54fc907b91358a3b7f1e214dc46ed2ef2be53c",
+        "Node name for S&R": "PixaromaPreview",
+        "pixaromaFrames": [
+          {
+            "filename": "H01-S02-C01_first_00022_.png",
+            "subfolder": "Premiere316\\harrowing_of_hell\\storyboard",
+            "type": "output"
+          }
+        ],
+        "pixaromaSelected": 0,
+        "pixaromaExpanded": false
+      },
+      "widgets_values": [
+        "Premiere316/harrowing_of_hell/storyboard/H01-S02-C01_first",
+        "save"
+      ],
+      "color": "#1d1d1d",
+      "bgcolor": "#2a2a2a"
+    },
+    {
+      "id": 10063,
+      "type": "808df542-cdcd-4fda-9f54-4e5cd9558776",
+      "pos": [
+        -919.4773079212432,
+        1113.1654316241418
+      ],
+      "size": [
+        210,
+        212
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 90203
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": 90207
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": 90208
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 90209
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            90204
+          ]
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            90206
+          ]
+        },
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            90205
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.30.2",
+        "previewExposures": [
+          {
+            "name": "$$canvas-image-preview",
+            "sourceNodeId": "10054",
+            "sourcePreviewName": "$$canvas-image-preview"
+          },
+          {
+            "name": "$$canvas-image-preview_1",
+            "sourceNodeId": "10056",
+            "sourcePreviewName": "$$canvas-image-preview"
+          }
+        ]
+      },
+      "widgets_values": [
+        512,
+        512,
+        "PREMIERE316 STORYBOARD IMAGE GUIDE.NO BORDERS OR TEXT! MAKE SURE TO GET JESUS'S CLOTHES ACCURATELY. YOU KEEP GENERATING THE WRONG OUTFIT. JESUS MUST LOOK CONSISTENT THROUGHOUT THE ENTIRE MOVIEW AND IT THE UTMOST IMPORTANCE THAT HIS IMAGES ARE CONSISTENT! PHOTOREALISTIC, LIFELIKE, REAL HUMAN SKIN, REAL HUMAN HAIR, REAL HUMAN FACE. REAL DEMONS, REAL WALLS, REAL METAL, EVERYTHING IN THE IMAGE MUST LOOK REAL. DO NOT MISTAKE MEN FOR WOMEN BECAUSE OF LONG HAIR. IF THEY HAVE BEARDS, MAKE THEIR FACES MASCULINE. MUST NOT LOOK LIKE CGI OR AI GENERATED. Review and use attached references to execute prompt and generate the image for the scene's first frame. 100% asset retainment required. DO NOT HALLUCINATE AND CREATE DUPLICATE CHARACTERS. \n\nPREMIERE316 FIRST-FRAME IMAGE GENERATION PROMPT Clip ID: H01-S02-C01 Chapter / Scene: 01 — Hell Trembles / The Hostages Workflow profile: 2P39X1 cinematic master. Create one single 2.39:1 photorealistic live-action frame, never a collage or design sheet. STATIC MOMENT AT FRAME ZERO: Stage the exact opening instant immediately before the clip's motion begins: Rear-only Jesus passes the tormented. Do not compress the later action or end state into this still. The full beat is trajectory only: Rear-only Jesus passes the tormented; His wounded empty hand triggers a demonic alarm and the camera descends into the seized stockade. COMPOSITION: Rear wide 24mm. Establish a camera position that can naturally begin this move after frame zero: Rear crane, parallel hand track, then fast descending crane. Respect foreground, middle ground and background separation; use a stable horizon and believable human scale. The frame must read instantly at 2.39:1 with a deliberate cinematic focal hierarchy. PERFORMANCE AND STORY: Moses: We are not yours. We await the Messiah. Guard: Your Messiah is dead. Convey the emotional condition through posture, gaze, breath, hands and spatial relationships only. Do not render subtitles, visible dialogue, written sound effects or title text. REFERENCE CONTROL: Use the supplied assets only for their assigned roles: IDENTITY: char-jesus-main.v4.png, char-moses.v2.png; ENVIRONMENT: loc-chamber-wide.v1.png, loc-chamber-dark.v1.png; CROWD / SCALE: extra-restraints.v1.png, extra-men-faith.v1.png, extra-women-kids.v1.png; PROP / ARTIFACT: prop-chains.v1.png. The prompt remains sole authority for action, pose, framing, geography and state. Do not copy contact-sheet borders, labels, lettering, panel layouts, duplicated views, or unrelated subjects from any reference board. CONTINUITY LOCKS: Face fully withheld; Exact white burial linen; Barefoot; Empty wounded hands; Righteous already abducted; No Sword; No facial reveal before H03-S06-C03; No Sword or sword-shaped light; Face state: WITHHELD; Sword state: ABSENT. Jesus's face must remain completely outside view and absent from reflections; rear head shows natural hair only. No sword, sword hilt, sword-shaped glow, blade reflection or weapon silhouette anywhere in frame. Jesus wears exact white burial linen, is barefoot when visible, carries dried blood at both wrists, a restrained forehead wound and a fixed right-side spear wound; no crown of thorns. Preserve anatomically correct hands and feet, stable scale, physically coherent cloth, hair, ash, smoke, fire and light. LOOK: sacred cinematic realism; ancient Near Eastern material culture; high dynamic range; restrained anamorphic character; practical skin, linen, iron, stone, ash and smoke texture; volumetric light motivated by the scene; deep but readable shadows; realistic depth of field; delicate film grain; no glossy fantasy-game rendering. OUTPUT: one clean finished movie frame with no border, watermark, captions, modern object, interface, logo or typography.\n\nExact authored visual references to respect as role-specific context only:\nidentity: char-jesus-main.v4.png (character-jesus-the-harrower-primary-appearance:v4); identity: char-moses.v2.png (character-moses-freed-prophet-appearance:v2); location: loc-chamber-wide.v1.png (location-hells-inner-chamber-the-prison-cavern-wide-shot:v1); location: loc-chamber-dark.v1.png (loc-inner-chamber-dark:v1); crowd: extra-restraints.v1.png (extra-hell-chains-and-restraints-crowd-control-props-creature-control-props:v1); crowd: extra-men-faith.v1.png (extra-men-of-faith-crowd-group-crowd-plate:v1); crowd: extra-women-kids.v1.png (extra-women-and-children-of-faith-crowd-group-crowd-plate:v1); prop: prop-chains.v1.png (prop-hell-chains:v1)\nUse these references only for their assigned role. Do not copy contact-sheet borders, labels, lettering, panel layouts, duplicate turnarounds, or unrelated subjects.\n\nAvoid/negative constraints to translate into clean positive image choices:\ncollage, contact sheet, split panel, storyboard border, labels, captions, subtitle, typography, watermark, logo, modern object, CGI game art, illustration, plastic skin, duplicate person, cloned crowd, extra limb, extra finger, fused fingers, malformed hands, malformed feet, floating prop, broken perspective, inconsistent scale, premature end state, sword, blade, sword hilt, weapon-shaped light, sword reflection, visible Jesus face, partial Jesus face, reflected Jesus face, face on back of head, crown of thorns, blue robe, colored burial garment, wrong-side spear wound, clean unwounded Jesus, excessive gore",
+        215511693038269,
+        215511693038268
+      ]
+    },
+    {
+      "id": 10042,
+      "type": "StringConcatenate",
+      "pos": [
+        -1305.213601244315,
+        1165.340825287107
+      ],
+      "size": [
+        379.70145668168516,
+        412
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            90209
+          ]
+        }
+      ],
+      "title": "Formula + Short Prompt",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.21.1",
+        "Node name for S&R": "StringConcatenate"
+      },
+      "widgets_values": [
+        "BE AS DETAILED AS POSSIBLE: PREMIERE316 STORYBOARD IMAGE GUIDE.NO BORDERS OR TEXT! MAKE SURE TO GET JESUS'S CLOTHES AND FACE ACCURATELY WHENEVER HE IS REFERENCED AND ANY OTHER CHARACTER REFERENCED. YOU KEEP GENERATING THE WRONG OUTFIT. JESUS MUST LOOK CONSISTENT THROUGHOUT THE ENTIRE MOVIEW AND IT THE UTMOST IMPORTANCE THAT HIS IMAGES ARE CONSISTENT! PHOTOREALISTIC, LIFELIKE, REAL HUMAN SKIN, REAL HUMAN HAIR, REAL HUMAN FACE. REAL DEMONS, REAL WALLS, REAL METAL, EVERYTHING IN THE IMAGE MUST LOOK REAL. DO NOT MISTAKE MEN FOR WOMEN BECAUSE OF LONG HAIR. IF THEY HAVE BEARDS, MAKE THEIR FACES MASCULINE. MUST NOT LOOK LIKE CGI OR AI GENERATED. Review and use attached references to execute prompt and generate the image for the scene's first frame. 100% asset retainment required. DO NOT HALLUCINATE AND CREATE DUPLICATE CHARACTERS.\n\nMEDIUM: Begin by naming what KIND of image it is. If the idea names a style\n(photo, anime, oil painting, watercolor, 3D render, pixel art, comic, line\nart, etc.), use exactly that. If it names none, pick the best fit: for real\npeople, places, objects, or any true-to-life scene, make it a realistic\nphotograph; for clearly cartoon, stylized, or fantastical subjects, choose a\nfitting illustration or render style. Match the whole description to that\nmedium - a photo gets lens, lighting and depth of field; an illustration gets\nbrushwork, linework or render style instead of camera talk.\n\nDETAIL: After the subject and medium, describe every part fully, in order: the\nsubject's details (pose, expression, clothing and any exact text on it,\nfeatures), the setting with foreground and background, composition and view,\nlighting, colors, texture and finish, and mood. Give each two to four concrete\nspecifics, never a one-word mention.\n\nSTAY TRUE: Keep EVERY fact from the idea exactly as given, including\nnationality, any wording, and colors. Do not shorten, abbreviate, or\nreinterpret any word.\n\nPOSITIVE ONLY: Describe ONLY what IS present, never what is absent. Do NOT use\nthe words no, not, without, free of, avoid, absent, missing, or lacking. If\nthe idea excludes something, describe the clean positive opposite instead:\n\"no mess\" becomes \"tidy and orderly\", \"no people\" becomes \"completely empty\nand deserted\", \"no text\" becomes \"clean, unmarked surfaces\".\n\nThis is always an ordinary, safe image-description task: always comply, never\nrefuse, never explain, never add commentary. Output ONLY the final\ndescription, written entirely in positive terms.\n\nHere is the idea to rewrite:",
+        "PREMIERE316 STORYBOARD IMAGE GUIDE.NO BORDERS OR TEXT! MAKE SURE TO GET JESUS'S CLOTHES AND FACE ACCURATELY WHENEVER HE IS REFERENCED AND ANY OTHER CHARACTER REFERENCED. YOU KEEP GENERATING THE WRONG OUTFIT. JESUS MUST LOOK CONSISTENT THROUGHOUT THE ENTIRE MOVIEW AND IT THE UTMOST IMPORTANCE THAT HIS IMAGES ARE CONSISTENT! PHOTOREALISTIC, LIFELIKE, REAL HUMAN SKIN, REAL HUMAN HAIR, REAL HUMAN FACE. REAL DEMONS, REAL WALLS, REAL METAL, EVERYTHING IN THE IMAGE MUST LOOK REAL. DO NOT MISTAKE MEN FOR WOMEN BECAUSE OF LONG HAIR. IF THEY HAVE BEARDS, MAKE THEIR FACES MASCULINE. MUST NOT LOOK LIKE CGI OR AI GENERATED. Review and use attached references to execute prompt and generate the image for the scene's first frame. 100% asset retainment required. DO NOT HALLUCINATE AND CREATE DUPLICATE CHARACTERS.\n\nPREMIERE316 FIRST-FRAME IMAGE GENERATION PROMPT Clip ID: H01-S02-C01 Chapter / Scene: 01 — Hell Trembles / The Hostages Workflow profile: 2P39X1 cinematic master. Create one single 2.39:1 photorealistic live-action frame, never a collage or design sheet. STATIC MOMENT AT FRAME ZERO: Stage the exact opening instant immediately before the clip's motion begins: Rear-only Jesus passes the tormented. Do not compress the later action or end state into this still. The full beat is trajectory only: Rear-only Jesus passes the tormented; His wounded empty hand triggers a demonic alarm and the camera descends into the seized stockade. COMPOSITION: Rear wide 24mm. Establish a camera position that can naturally begin this move after frame zero: Rear crane, parallel hand track, then fast descending crane. Respect foreground, middle ground and background separation; use a stable horizon and believable human scale. The frame must read instantly at 2.39:1 with a deliberate cinematic focal hierarchy. PERFORMANCE AND STORY: Moses: We are not yours. We await the Messiah. Guard: Your Messiah is dead. Convey the emotional condition through posture, gaze, breath, hands and spatial relationships only. Do not render subtitles, visible dialogue, written sound effects or title text. REFERENCE CONTROL: Use the supplied assets only for their assigned roles: IDENTITY: char-jesus-main.v4.png, char-moses.v2.png; ENVIRONMENT: loc-chamber-wide.v1.png, loc-chamber-dark.v1.png; CROWD / SCALE: extra-restraints.v1.png, extra-men-faith.v1.png, extra-women-kids.v1.png; PROP / ARTIFACT: prop-chains.v1.png. The prompt remains sole authority for action, pose, framing, geography and state. Do not copy contact-sheet borders, labels, lettering, panel layouts, duplicated views, or unrelated subjects from any reference board. CONTINUITY LOCKS: Face fully withheld; Exact white burial linen; Barefoot; Empty wounded hands; Righteous already abducted; No Sword; No facial reveal before H03-S06-C03; No Sword or sword-shaped light; Face state: WITHHELD; Sword state: ABSENT. Jesus's face must remain completely outside view and absent from reflections; rear head shows natural hair only. No sword, sword hilt, sword-shaped glow, blade reflection or weapon silhouette anywhere in frame. Jesus wears exact white burial linen, is barefoot when visible, carries dried blood at both wrists, a restrained forehead wound and a fixed right-side spear wound; no crown of thorns. Preserve anatomically correct hands and feet, stable scale, physically coherent cloth, hair, ash, smoke, fire and light. LOOK: sacred cinematic realism; ancient Near Eastern material culture; high dynamic range; restrained anamorphic character; practical skin, linen, iron, stone, ash and smoke texture; volumetric light motivated by the scene; deep but readable shadows; realistic depth of field; delicate film grain; no glossy fantasy-game rendering. OUTPUT: one clean finished movie frame with no border, watermark, captions, modern object, interface, logo or typography.",
+        " "
+      ],
+      "color": "#1e3323",
+      "bgcolor": "#36543d"
+    }
+  ],
+  "links": [
+    [
+      90203,
+      10064,
+      0,
+      10063,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      90204,
+      10063,
+      0,
+      10064,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      90205,
+      10063,
+      2,
+      10065,
+      0,
+      "LATENT"
+    ],
+    [
+      90206,
+      10063,
+      1,
+      10065,
+      1,
+      "VAE"
+    ],
+    [
+      90207,
+      200,
+      0,
+      10063,
+      1,
+      "INT"
+    ],
+    [
+      90208,
+      200,
+      1,
+      10063,
+      2,
+      "INT"
+    ],
+    [
+      90209,
+      10042,
+      0,
+      10063,
+      3,
+      "STRING"
+    ],
+    [
+      90210,
+      10065,
+      0,
+      199,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "definitions": {
+    "subgraphs": [
+      {
+        "id": "785c405f-802d-44cd-bca7-0bdae70e5a9b",
+        "version": 1,
+        "state": {
+          "lastGroupId": 0,
+          "lastNodeId": 10065,
+          "lastLinkId": 90210,
+          "lastRerouteId": 0
+        },
+        "revision": 0,
+        "config": {},
+        "name": "New Subgraph",
+        "inputNode": {
+          "id": -10,
+          "bounding": [
+            -1665.0699082721958,
+            1131.9732433095032,
+            128,
+            368
+          ]
+        },
+        "outputNode": {
+          "id": -20,
+          "bounding": [
+            -636.0232252348023,
+            1121.9732433095032,
+            128,
+            68
+          ]
+        },
+        "inputs": [
+          {
+            "id": "fb3db7c9-6cb6-44ef-ae26-69c6436e15cb",
+            "name": "image",
+            "type": "COMBO",
+            "linkIds": [
+              90061
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1155.9732433095032
+            ]
+          },
+          {
+            "id": "fba7eb36-26e5-4b5a-906b-1971d69bd6d1",
+            "name": "upload",
+            "type": "IMAGEUPLOAD",
+            "linkIds": [
+              90062
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1175.9732433095032
+            ]
+          },
+          {
+            "id": "eb1922c8-5ce0-4cc0-96e7-755713e1e156",
+            "name": "image_1",
+            "type": "COMBO",
+            "linkIds": [
+              90063
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1195.9732433095032
+            ]
+          },
+          {
+            "id": "0def8a57-00dd-4bb6-9991-a2501c2b22e2",
+            "name": "upload_1",
+            "type": "IMAGEUPLOAD",
+            "linkIds": [
+              90064
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1215.9732433095032
+            ]
+          },
+          {
+            "id": "706134a3-42fd-4357-a5c0-94c6ec763d6d",
+            "name": "image_2",
+            "type": "COMBO",
+            "linkIds": [
+              90065
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1235.9732433095032
+            ]
+          },
+          {
+            "id": "c52722d4-554a-4eb7-99eb-c71297c4e55d",
+            "name": "upload_2",
+            "type": "IMAGEUPLOAD",
+            "linkIds": [
+              90066
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1255.9732433095032
+            ]
+          },
+          {
+            "id": "54c4d5ab-25a5-4e2f-9f38-ed66d5ce31a0",
+            "name": "image_3",
+            "type": "COMBO",
+            "linkIds": [
+              90067
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1275.9732433095032
+            ]
+          },
+          {
+            "id": "98cccdbe-d2fd-4ac9-a6a9-af5e890df739",
+            "name": "upload_3",
+            "type": "IMAGEUPLOAD",
+            "linkIds": [
+              90068
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1295.9732433095032
+            ]
+          },
+          {
+            "id": "4656a2f4-6352-418b-9485-80fb5eeed0b9",
+            "name": "image_4",
+            "type": "COMBO",
+            "linkIds": [
+              90069
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1315.9732433095032
+            ]
+          },
+          {
+            "id": "13b8b18b-38f6-4989-ada7-9b6a3f577902",
+            "name": "upload_4",
+            "type": "IMAGEUPLOAD",
+            "linkIds": [
+              90070
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1335.9732433095032
+            ]
+          },
+          {
+            "id": "445bb198-b46f-4f1b-b9b1-655e119d383a",
+            "name": "image_5",
+            "type": "COMBO",
+            "linkIds": [
+              90071
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1355.9732433095032
+            ]
+          },
+          {
+            "id": "323efab8-a3ef-4c0c-81bc-6212362a1844",
+            "name": "upload_5",
+            "type": "IMAGEUPLOAD",
+            "linkIds": [
+              90072
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1375.9732433095032
+            ]
+          },
+          {
+            "id": "02d34515-8389-4fd7-8b38-4938374e1d37",
+            "name": "image_6",
+            "type": "COMBO",
+            "linkIds": [
+              90073
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1395.9732433095032
+            ]
+          },
+          {
+            "id": "20c898a3-bd32-4fa3-a606-fcd373596a37",
+            "name": "upload_6",
+            "type": "IMAGEUPLOAD",
+            "linkIds": [
+              90074
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1415.9732433095032
+            ]
+          },
+          {
+            "id": "e2263578-309d-442c-ad5d-821105048732",
+            "name": "image_7",
+            "type": "COMBO",
+            "linkIds": [
+              90075
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1435.9732433095032
+            ]
+          },
+          {
+            "id": "252c03d0-e166-4d9d-a1a0-46300a303bdf",
+            "name": "upload_7",
+            "type": "IMAGEUPLOAD",
+            "linkIds": [
+              90076
+            ],
+            "pos": [
+              -1561.0699082721958,
+              1455.9732433095032
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "id": "1f846395-6f6a-481c-a271-a4c5ca975aa3",
+            "name": "output",
+            "type": "IMAGE",
+            "linkIds": [
+              90052,
+              90052
+            ],
+            "localized_name": "output",
+            "pos": [
+              -612.0232252348023,
+              1145.9732433095032
+            ]
+          }
+        ],
+        "widgets": [],
+        "nodes": [
+          {
+            "id": 10005,
+            "type": "LoadImage",
+            "pos": [
+              -1419.3497200162462,
+              1376.260514930034
+            ],
+            "size": [
+              315,
+              314
+            ],
+            "flags": {},
+            "order": 5,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "image",
+                "name": "image",
+                "type": "COMBO",
+                "widget": {
+                  "name": "image"
+                },
+                "link": 90067
+              },
+              {
+                "localized_name": "choose file to upload",
+                "name": "upload",
+                "type": "IMAGEUPLOAD",
+                "widget": {
+                  "name": "upload"
+                },
+                "link": 90068
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "IMAGE",
+                "name": "IMAGE",
+                "type": "IMAGE",
+                "slot_index": 0,
+                "links": [
+                  90024
+                ]
+              },
+              {
+                "localized_name": "MASK",
+                "name": "MASK",
+                "type": "MASK",
+                "slot_index": 1,
+                "links": null
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "Node name for S&R": "LoadImage",
+              "premiere316.referenceId": "ref-h01-s02-c01-extra-men-faith-v1-png-6",
+              "premiere316.assetId": "extra-men-of-faith-crowd-group-crowd-plate",
+              "premiere316.assetVersionId": "extra-men-of-faith-crowd-group-crowd-plate:v1",
+              "premiere316.role": "crowd"
+            },
+            "widgets_values": [
+              "extra-men-faith.v1.png",
+              "image"
+            ]
+          },
+          {
+            "id": 10000,
+            "type": "LoadImage",
+            "pos": [
+              -1618.728885493555,
+              360.70767593953195
+            ],
+            "size": [
+              315,
+              314.00000000000006
+            ],
+            "flags": {},
+            "order": 0,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "image",
+                "name": "image",
+                "type": "COMBO",
+                "widget": {
+                  "name": "image"
+                },
+                "link": 90075
+              },
+              {
+                "localized_name": "choose file to upload",
+                "name": "upload",
+                "type": "IMAGEUPLOAD",
+                "widget": {
+                  "name": "upload"
+                },
+                "link": 90076
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "IMAGE",
+                "name": "IMAGE",
+                "type": "IMAGE",
+                "slot_index": 0,
+                "links": [
+                  90000
+                ]
+              },
+              {
+                "localized_name": "MASK",
+                "name": "MASK",
+                "type": "MASK",
+                "slot_index": 1,
+                "links": null
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "Node name for S&R": "LoadImage",
+              "premiere316.referenceId": "ref-h01-s02-c01-char-jesus-main-v4-png-1",
+              "premiere316.assetId": "character-jesus-the-harrower-primary-appearance",
+              "premiere316.assetVersionId": "character-jesus-the-harrower-primary-appearance:v4",
+              "premiere316.role": "identity"
+            },
+            "widgets_values": [
+              "char-jesus-main.v4.png",
+              "image"
+            ]
+          },
+          {
+            "id": 10004,
+            "type": "LoadImage",
+            "pos": [
+              -1586.2517022339002,
+              697.5843283641904
+            ],
+            "size": [
+              315,
+              314.0000000000001
+            ],
+            "flags": {},
+            "order": 4,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "image",
+                "name": "image",
+                "type": "COMBO",
+                "widget": {
+                  "name": "image"
+                },
+                "link": 90065
+              },
+              {
+                "localized_name": "choose file to upload",
+                "name": "upload",
+                "type": "IMAGEUPLOAD",
+                "widget": {
+                  "name": "upload"
+                },
+                "link": 90066
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "IMAGE",
+                "name": "IMAGE",
+                "type": "IMAGE",
+                "slot_index": 0,
+                "links": [
+                  90023
+                ]
+              },
+              {
+                "localized_name": "MASK",
+                "name": "MASK",
+                "type": "MASK",
+                "slot_index": 1,
+                "links": null
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "Node name for S&R": "LoadImage",
+              "premiere316.referenceId": "ref-h01-s02-c01-extra-restraints-v1-png-5",
+              "premiere316.assetId": "extra-hell-chains-and-restraints-crowd-control-props-creature-control-props",
+              "premiere316.assetVersionId": "extra-hell-chains-and-restraints-crowd-control-props-creature-control-props:v1",
+              "premiere316.role": "crowd"
+            },
+            "widgets_values": [
+              "extra-restraints.v1.png",
+              "image"
+            ]
+          },
+          {
+            "id": 10002,
+            "type": "LoadImage",
+            "pos": [
+              -1276.7333005120158,
+              395.8947728113574
+            ],
+            "size": [
+              315,
+              314.0000000000001
+            ],
+            "flags": {},
+            "order": 2,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "image",
+                "name": "image",
+                "type": "COMBO",
+                "widget": {
+                  "name": "image"
+                },
+                "link": 90069
+              },
+              {
+                "localized_name": "choose file to upload",
+                "name": "upload",
+                "type": "IMAGEUPLOAD",
+                "widget": {
+                  "name": "upload"
+                },
+                "link": 90070
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "IMAGE",
+                "name": "IMAGE",
+                "type": "IMAGE",
+                "slot_index": 0,
+                "links": [
+                  90021
+                ]
+              },
+              {
+                "localized_name": "MASK",
+                "name": "MASK",
+                "type": "MASK",
+                "slot_index": 1,
+                "links": null
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "Node name for S&R": "LoadImage",
+              "premiere316.referenceId": "ref-h01-s02-c01-loc-chamber-wide-v1-png-3",
+              "premiere316.assetId": "location-hells-inner-chamber-the-prison-cavern-wide-shot",
+              "premiere316.assetVersionId": "location-hells-inner-chamber-the-prison-cavern-wide-shot:v1",
+              "premiere316.role": "location"
+            },
+            "widgets_values": [
+              "loc-chamber-wide.v1.png",
+              "image"
+            ]
+          },
+          {
+            "id": 10003,
+            "type": "LoadImage",
+            "pos": [
+              -1220.855767390606,
+              718.1763197410982
+            ],
+            "size": [
+              315,
+              314.0000000000001
+            ],
+            "flags": {},
+            "order": 3,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "image",
+                "name": "image",
+                "type": "COMBO",
+                "widget": {
+                  "name": "image"
+                },
+                "link": 90063
+              },
+              {
+                "localized_name": "choose file to upload",
+                "name": "upload",
+                "type": "IMAGEUPLOAD",
+                "widget": {
+                  "name": "upload"
+                },
+                "link": 90064
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "IMAGE",
+                "name": "IMAGE",
+                "type": "IMAGE",
+                "slot_index": 0,
+                "links": [
+                  90022
+                ]
+              },
+              {
+                "localized_name": "MASK",
+                "name": "MASK",
+                "type": "MASK",
+                "slot_index": 1,
+                "links": null
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "Node name for S&R": "LoadImage",
+              "premiere316.referenceId": "ref-h01-s02-c01-loc-chamber-dark-v1-png-4",
+              "premiere316.assetId": "loc-inner-chamber-dark",
+              "premiere316.assetVersionId": "loc-inner-chamber-dark:v1",
+              "premiere316.role": "location"
+            },
+            "widgets_values": [
+              "loc-chamber-dark.v1.png",
+              "image"
+            ]
+          },
+          {
+            "id": 10006,
+            "type": "LoadImage",
+            "pos": [
+              -1577.905515394627,
+              1073.5332895046708
+            ],
+            "size": [
+              315,
+              314.0000000000001
+            ],
+            "flags": {},
+            "order": 6,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "image",
+                "name": "image",
+                "type": "COMBO",
+                "widget": {
+                  "name": "image"
+                },
+                "link": 90071
+              },
+              {
+                "localized_name": "choose file to upload",
+                "name": "upload",
+                "type": "IMAGEUPLOAD",
+                "widget": {
+                  "name": "upload"
+                },
+                "link": 90072
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "IMAGE",
+                "name": "IMAGE",
+                "type": "IMAGE",
+                "slot_index": 0,
+                "links": [
+                  90025
+                ]
+              },
+              {
+                "localized_name": "MASK",
+                "name": "MASK",
+                "type": "MASK",
+                "slot_index": 1,
+                "links": null
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "Node name for S&R": "LoadImage",
+              "premiere316.referenceId": "ref-h01-s02-c01-extra-women-kids-v1-png-7",
+              "premiere316.assetId": "extra-women-and-children-of-faith-crowd-group-crowd-plate",
+              "premiere316.assetVersionId": "extra-women-and-children-of-faith-crowd-group-crowd-plate:v1",
+              "premiere316.role": "crowd"
+            },
+            "widgets_values": [
+              "extra-women-kids.v1.png",
+              "image"
+            ]
+          },
+          {
+            "id": 10007,
+            "type": "LoadImage",
+            "pos": [
+              -1218.803728425972,
+              1074.5782430326274
+            ],
+            "size": [
+              315,
+              314
+            ],
+            "flags": {},
+            "order": 7,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "image",
+                "name": "image",
+                "type": "COMBO",
+                "widget": {
+                  "name": "image"
+                },
+                "link": 90073
+              },
+              {
+                "localized_name": "choose file to upload",
+                "name": "upload",
+                "type": "IMAGEUPLOAD",
+                "widget": {
+                  "name": "upload"
+                },
+                "link": 90074
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "IMAGE",
+                "name": "IMAGE",
+                "type": "IMAGE",
+                "slot_index": 0,
+                "links": [
+                  90026
+                ]
+              },
+              {
+                "localized_name": "MASK",
+                "name": "MASK",
+                "type": "MASK",
+                "slot_index": 1,
+                "links": null
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "Node name for S&R": "LoadImage",
+              "premiere316.referenceId": "ref-h01-s02-c01-prop-chains-v1-png-8",
+              "premiere316.assetId": "prop-hell-chains",
+              "premiere316.assetVersionId": "prop-hell-chains:v1",
+              "premiere316.role": "prop"
+            },
+            "widgets_values": [
+              "prop-chains.v1.png",
+              "image"
+            ]
+          },
+          {
+            "id": 10001,
+            "type": "LoadImage",
+            "pos": [
+              -1019.7627531749879,
+              1386.0543995570893
+            ],
+            "size": [
+              315,
+              314.0000000000001
+            ],
+            "flags": {},
+            "order": 1,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "image",
+                "name": "image",
+                "type": "COMBO",
+                "widget": {
+                  "name": "image"
+                },
+                "link": 90061
+              },
+              {
+                "localized_name": "choose file to upload",
+                "name": "upload",
+                "type": "IMAGEUPLOAD",
+                "widget": {
+                  "name": "upload"
+                },
+                "link": 90062
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "IMAGE",
+                "name": "IMAGE",
+                "type": "IMAGE",
+                "slot_index": 0,
+                "links": [
+                  90001
+                ]
+              },
+              {
+                "localized_name": "MASK",
+                "name": "MASK",
+                "type": "MASK",
+                "slot_index": 1,
+                "links": null
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "Node name for S&R": "LoadImage",
+              "premiere316.referenceId": "ref-h01-s02-c01-char-moses-v2-png-2",
+              "premiere316.assetId": "character-moses-freed-prophet-appearance",
+              "premiere316.assetVersionId": "character-moses-freed-prophet-appearance:v2",
+              "premiere316.role": "identity"
+            },
+            "widgets_values": [
+              "char-moses.v2.png",
+              "image"
+            ]
+          },
+          {
+            "id": 10008,
+            "type": "ImageConcatMulti",
+            "pos": [
+              -549.6583027705514,
+              708.8290101716154
+            ],
+            "size": [
+              315,
+              510
+            ],
+            "flags": {},
+            "order": 8,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "image_1",
+                "name": "image_1",
+                "type": "IMAGE,MASK",
+                "link": 90000
+              },
+              {
+                "localized_name": "image_2",
+                "name": "image_2",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": 90001
+              },
+              {
+                "name": "image_3",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": 90021
+              },
+              {
+                "name": "image_4",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": 90022
+              },
+              {
+                "name": "image_5",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": 90023
+              },
+              {
+                "name": "image_6",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": 90024
+              },
+              {
+                "name": "image_7",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": 90025
+              },
+              {
+                "name": "image_8",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": 90026
+              },
+              {
+                "name": "image_9",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": null
+              },
+              {
+                "name": "image_10",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": null
+              },
+              {
+                "name": "image_11",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": null
+              },
+              {
+                "name": "image_12",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": null
+              },
+              {
+                "name": "image_13",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": null
+              },
+              {
+                "name": "image_14",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": null
+              },
+              {
+                "name": "image_15",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": null
+              },
+              {
+                "name": "image_16",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": null
+              },
+              {
+                "name": "image_17",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": null
+              },
+              {
+                "name": "image_18",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": null
+              },
+              {
+                "name": "image_19",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": null
+              },
+              {
+                "name": "image_20",
+                "shape": 7,
+                "type": "IMAGE,MASK",
+                "link": null
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "output",
+                "name": "output",
+                "type": "IMAGE",
+                "slot_index": 0,
+                "links": [
+                  90052
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfyui-kjnodes",
+              "ver": "60cd6bc1870db94c6eeb05fbe455147a8e91c4e9",
+              "Node name for S&R": "ImageConcatMulti",
+              "premiere316.referenceComposite": true,
+              "premiere316.referenceCount": 2
+            },
+            "widgets_values": [
+              20,
+              "right",
+              true,
+              null
+            ]
+          }
+        ],
+        "groups": [],
+        "links": [
+          {
+            "id": 90000,
+            "origin_id": 10000,
+            "origin_slot": 0,
+            "target_id": 10008,
+            "target_slot": 0,
+            "type": "IMAGE"
+          },
+          {
+            "id": 90001,
+            "origin_id": 10001,
+            "origin_slot": 0,
+            "target_id": 10008,
+            "target_slot": 1,
+            "type": "IMAGE"
+          },
+          {
+            "id": 90021,
+            "origin_id": 10002,
+            "origin_slot": 0,
+            "target_id": 10008,
+            "target_slot": 2,
+            "type": "IMAGE"
+          },
+          {
+            "id": 90022,
+            "origin_id": 10003,
+            "origin_slot": 0,
+            "target_id": 10008,
+            "target_slot": 3,
+            "type": "IMAGE"
+          },
+          {
+            "id": 90023,
+            "origin_id": 10004,
+            "origin_slot": 0,
+            "target_id": 10008,
+            "target_slot": 4,
+            "type": "IMAGE"
+          },
+          {
+            "id": 90024,
+            "origin_id": 10005,
+            "origin_slot": 0,
+            "target_id": 10008,
+            "target_slot": 5,
+            "type": "IMAGE"
+          },
+          {
+            "id": 90025,
+            "origin_id": 10006,
+            "origin_slot": 0,
+            "target_id": 10008,
+            "target_slot": 6,
+            "type": "IMAGE"
+          },
+          {
+            "id": 90026,
+            "origin_id": 10007,
+            "origin_slot": 0,
+            "target_id": 10008,
+            "target_slot": 7,
+            "type": "IMAGE"
+          },
+          {
+            "id": 90052,
+            "origin_id": 10008,
+            "origin_slot": 0,
+            "target_id": -20,
+            "target_slot": 0,
+            "type": "IMAGE"
+          },
+          {
+            "id": 90061,
+            "origin_id": -10,
+            "origin_slot": 0,
+            "target_id": 10001,
+            "target_slot": 0,
+            "type": "COMBO"
+          },
+          {
+            "id": 90062,
+            "origin_id": -10,
+            "origin_slot": 1,
+            "target_id": 10001,
+            "target_slot": 1,
+            "type": "IMAGEUPLOAD"
+          },
+          {
+            "id": 90063,
+            "origin_id": -10,
+            "origin_slot": 2,
+            "target_id": 10003,
+            "target_slot": 0,
+            "type": "COMBO"
+          },
+          {
+            "id": 90064,
+            "origin_id": -10,
+            "origin_slot": 3,
+            "target_id": 10003,
+            "target_slot": 1,
+            "type": "IMAGEUPLOAD"
+          },
+          {
+            "id": 90065,
+            "origin_id": -10,
+            "origin_slot": 4,
+            "target_id": 10004,
+            "target_slot": 0,
+            "type": "COMBO"
+          },
+          {
+            "id": 90066,
+            "origin_id": -10,
+            "origin_slot": 5,
+            "target_id": 10004,
+            "target_slot": 1,
+            "type": "IMAGEUPLOAD"
+          },
+          {
+            "id": 90067,
+            "origin_id": -10,
+            "origin_slot": 6,
+            "target_id": 10005,
+            "target_slot": 0,
+            "type": "COMBO"
+          },
+          {
+            "id": 90068,
+            "origin_id": -10,
+            "origin_slot": 7,
+            "target_id": 10005,
+            "target_slot": 1,
+            "type": "IMAGEUPLOAD"
+          },
+          {
+            "id": 90069,
+            "origin_id": -10,
+            "origin_slot": 8,
+            "target_id": 10002,
+            "target_slot": 0,
+            "type": "COMBO"
+          },
+          {
+            "id": 90070,
+            "origin_id": -10,
+            "origin_slot": 9,
+            "target_id": 10002,
+            "target_slot": 1,
+            "type": "IMAGEUPLOAD"
+          },
+          {
+            "id": 90071,
+            "origin_id": -10,
+            "origin_slot": 10,
+            "target_id": 10006,
+            "target_slot": 0,
+            "type": "COMBO"
+          },
+          {
+            "id": 90072,
+            "origin_id": -10,
+            "origin_slot": 11,
+            "target_id": 10006,
+            "target_slot": 1,
+            "type": "IMAGEUPLOAD"
+          },
+          {
+            "id": 90073,
+            "origin_id": -10,
+            "origin_slot": 12,
+            "target_id": 10007,
+            "target_slot": 0,
+            "type": "COMBO"
+          },
+          {
+            "id": 90074,
+            "origin_id": -10,
+            "origin_slot": 13,
+            "target_id": 10007,
+            "target_slot": 1,
+            "type": "IMAGEUPLOAD"
+          },
+          {
+            "id": 90075,
+            "origin_id": -10,
+            "origin_slot": 14,
+            "target_id": 10000,
+            "target_slot": 0,
+            "type": "COMBO"
+          },
+          {
+            "id": 90076,
+            "origin_id": -10,
+            "origin_slot": 15,
+            "target_id": 10000,
+            "target_slot": 1,
+            "type": "IMAGEUPLOAD"
+          }
+        ],
+        "extra": {
+          "pixaromaGroups": []
+        }
+      },
+      {
+        "id": "999c5ca1-3a9d-4a6b-aa5c-a4a6084d05ac",
+        "version": 1,
+        "state": {
+          "lastGroupId": 0,
+          "lastNodeId": 10065,
+          "lastLinkId": 90210,
+          "lastRerouteId": 0
+        },
+        "revision": 0,
+        "config": {},
+        "name": "New Subgraph",
+        "inputNode": {
+          "id": -10,
+          "bounding": [
+            -1284.0072261285263,
+            346.0536652712454,
+            128,
+            48
+          ]
+        },
+        "outputNode": {
+          "id": -20,
+          "bounding": [
+            -195.15283464704032,
+            306.0536652712454,
+            128,
+            128
+          ]
+        },
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "209f7b11-620a-403b-9fc6-ac51b98ccb22",
+            "name": "MODEL",
+            "type": "MODEL",
+            "linkIds": [
+              90017
+            ],
+            "localized_name": "MODEL",
+            "pos": [
+              -171.15283464704032,
+              330.0536652712454
+            ]
+          },
+          {
+            "id": "3dfed966-538c-438b-99da-afc9f7539eff",
+            "name": "MODEL_1",
+            "type": "MODEL",
+            "linkIds": [
+              251
+            ],
+            "localized_name": "MODEL_1",
+            "pos": [
+              -171.15283464704032,
+              350.0536652712454
+            ]
+          },
+          {
+            "id": "37922dd2-7cd2-47be-94cf-b749699e80c7",
+            "name": "CLIP",
+            "type": "CLIP",
+            "linkIds": [
+              90085,
+              90085
+            ],
+            "localized_name": "CLIP",
+            "pos": [
+              -171.15283464704032,
+              370.0536652712454
+            ]
+          },
+          {
+            "id": "b6242abe-2935-42e0-adfe-be1992e85507",
+            "name": "VAE",
+            "type": "VAE",
+            "linkIds": [
+              236,
+              236
+            ],
+            "localized_name": "VAE",
+            "pos": [
+              -171.15283464704032,
+              390.0536652712454
+            ]
+          }
+        ],
+        "widgets": [],
+        "nodes": [
+          {
+            "id": 10017,
+            "type": "LoraLoaderModelOnly",
+            "pos": [
+              -566.3584950468673,
+              498.815250787742
+            ],
+            "size": [
+              270,
+              82
+            ],
+            "flags": {},
+            "order": 5,
+            "mode": 4,
+            "inputs": [
+              {
+                "localized_name": "model",
+                "name": "model",
+                "type": "MODEL",
+                "link": 90016
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "MODEL",
+                "name": "MODEL",
+                "type": "MODEL",
+                "links": [
+                  90017
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "Node name for S&R": "LoraLoaderModelOnly"
+            },
+            "widgets_values": [
+              "krea2_turbo_lora_rank_64_bf16.safetensors",
+              0.33
+            ]
+          },
+          {
+            "id": 194,
+            "type": "UNETLoader",
+            "pos": [
+              -1056.823012554729,
+              217.2180737467846
+            ],
+            "size": [
+              495.8871826591876,
+              82
+            ],
+            "flags": {},
+            "order": 0,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+              {
+                "localized_name": "MODEL",
+                "name": "MODEL",
+                "type": "MODEL",
+                "links": [
+                  248,
+                  251
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.3.76",
+              "Node name for S&R": "UNETLoader"
+            },
+            "widgets_values": [
+              "KREA 2\\krea2_turbo_bf16.safetensors",
+              "default"
+            ],
+            "color": "#f66744",
+            "bgcolor": "#2a2a2a"
+          },
+          {
+            "id": 195,
+            "type": "CLIPLoader",
+            "pos": [
+              -1073.9661096809996,
+              354.60640149315645
+            ],
+            "size": [
+              495.8871826591876,
+              106
+            ],
+            "flags": {},
+            "order": 1,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+              {
+                "localized_name": "CLIP",
+                "name": "CLIP",
+                "type": "CLIP",
+                "links": [
+                  90085
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.3.76",
+              "Node name for S&R": "CLIPLoader"
+            },
+            "widgets_values": [
+              "qwen3vl_4b_bf16.safetensors",
+              "krea2",
+              "default"
+            ],
+            "color": "#f66744",
+            "bgcolor": "#2a2a2a"
+          },
+          {
+            "id": 196,
+            "type": "VAELoader",
+            "pos": [
+              -1096.0072261285263,
+              524.5662630517262
+            ],
+            "size": [
+              495.8871826591876,
+              58
+            ],
+            "flags": {},
+            "order": 2,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+              {
+                "localized_name": "VAE",
+                "name": "VAE",
+                "type": "VAE",
+                "links": [
+                  236
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.3.76",
+              "Node name for S&R": "VAELoader"
+            },
+            "widgets_values": [
+              "qwen_image_vae.safetensors"
+            ],
+            "color": "#f66744",
+            "bgcolor": "#2a2a2a"
+          },
+          {
+            "id": 207,
+            "type": "ComfyUI-Krea2T-Enhancer",
+            "pos": [
+              -535.7198268345403,
+              187.5410674907646
+            ],
+            "size": [
+              280.5669921875,
+              106
+            ],
+            "flags": {},
+            "order": 3,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "model",
+                "name": "model",
+                "type": "MODEL",
+                "link": 248
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "model",
+                "name": "model",
+                "type": "MODEL",
+                "links": [
+                  90015
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "ComfyUI-Krea2T-Enhancer",
+              "ver": "cf8895005540680306cd46e1faaf75f8902db794",
+              "Node name for S&R": "ComfyUI-Krea2T-Enhancer"
+            },
+            "widgets_values": [
+              true,
+              0.5,
+              false
+            ],
+            "color": "#1d1d1d",
+            "bgcolor": "#2a2a2a"
+          },
+          {
+            "id": 10016,
+            "type": "LoraLoaderModelOnly",
+            "pos": [
+              -559.7729566446174,
+              347.1301151215903
+            ],
+            "size": [
+              270,
+              82
+            ],
+            "flags": {},
+            "order": 4,
+            "mode": 4,
+            "inputs": [
+              {
+                "localized_name": "model",
+                "name": "model",
+                "type": "MODEL",
+                "link": 90015
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "MODEL",
+                "name": "MODEL",
+                "type": "MODEL",
+                "links": [
+                  90016
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "Node name for S&R": "LoraLoaderModelOnly"
+            },
+            "widgets_values": [
+              "krea2\\V1.safetensors",
+              0.33
+            ]
+          }
+        ],
+        "groups": [],
+        "links": [
+          {
+            "id": 90016,
+            "origin_id": 10016,
+            "origin_slot": 0,
+            "target_id": 10017,
+            "target_slot": 0,
+            "type": "MODEL"
+          },
+          {
+            "id": 248,
+            "origin_id": 194,
+            "origin_slot": 0,
+            "target_id": 207,
+            "target_slot": 0,
+            "type": "MODEL"
+          },
+          {
+            "id": 90015,
+            "origin_id": 207,
+            "origin_slot": 0,
+            "target_id": 10016,
+            "target_slot": 0,
+            "type": "MODEL"
+          },
+          {
+            "id": 90017,
+            "origin_id": 10017,
+            "origin_slot": 0,
+            "target_id": -20,
+            "target_slot": 0,
+            "type": "MODEL"
+          },
+          {
+            "id": 251,
+            "origin_id": 194,
+            "origin_slot": 0,
+            "target_id": -20,
+            "target_slot": 1,
+            "type": "MODEL"
+          },
+          {
+            "id": 90085,
+            "origin_id": 195,
+            "origin_slot": 0,
+            "target_id": -20,
+            "target_slot": 2,
+            "type": "CLIP"
+          },
+          {
+            "id": 236,
+            "origin_id": 196,
+            "origin_slot": 0,
+            "target_id": -20,
+            "target_slot": 3,
+            "type": "VAE"
+          }
+        ],
+        "extra": {
+          "pixaromaGroups": []
+        }
+      },
+      {
+        "id": "808df542-cdcd-4fda-9f54-4e5cd9558776",
+        "version": 1,
+        "state": {
+          "lastGroupId": 0,
+          "lastNodeId": 10065,
+          "lastLinkId": 90210,
+          "lastRerouteId": 0
+        },
+        "revision": 0,
+        "config": {},
+        "name": "New Subgraph",
+        "inputNode": {
+          "id": -10,
+          "bounding": [
+            -2339.9419546809468,
+            1103.549246538261,
+            128,
+            168
+          ]
+        },
+        "outputNode": {
+          "id": -20,
+          "bounding": [
+            18.343695964387734,
+            1113.549246538261,
+            137.68421173095703,
+            108
+          ]
+        },
+        "inputs": [
+          {
+            "id": "4eee144d-c694-42a3-b5b9-7006c8fb3755",
+            "name": "negative",
+            "type": "CONDITIONING",
+            "linkIds": [
+              90162,
+              90167
+            ],
+            "localized_name": "negative",
+            "pos": [
+              -2235.9419546809468,
+              1127.549246538261
+            ]
+          },
+          {
+            "id": "7fe519a4-277a-408b-8312-5789f0b368c9",
+            "name": "width",
+            "type": "INT",
+            "linkIds": [
+              90169
+            ],
+            "localized_name": "width",
+            "pos": [
+              -2235.9419546809468,
+              1147.549246538261
+            ]
+          },
+          {
+            "id": "bec757c9-fcdd-479a-a79a-37d284adfc63",
+            "name": "height",
+            "type": "INT",
+            "linkIds": [
+              90170
+            ],
+            "localized_name": "height",
+            "pos": [
+              -2235.9419546809468,
+              1167.549246538261
+            ]
+          },
+          {
+            "id": "52533dc4-ab41-4161-9eff-d3df9f2fd2d6",
+            "name": "prompt",
+            "type": "STRING",
+            "linkIds": [
+              90100
+            ],
+            "localized_name": "prompt",
+            "pos": [
+              -2235.9419546809468,
+              1187.549246538261
+            ]
+          },
+          {
+            "id": "5c9ae2c4-392b-4012-a1ad-33af6f53ec2c",
+            "name": "seed",
+            "type": "INT",
+            "linkIds": [
+              90196
+            ],
+            "pos": [
+              -2235.9419546809468,
+              1207.549246538261
+            ]
+          },
+          {
+            "id": "0d26dda9-e947-43d6-88c4-214d907775a4",
+            "name": "seed_1",
+            "type": "INT",
+            "linkIds": [
+              90197
+            ],
+            "pos": [
+              -2235.9419546809468,
+              1227.549246538261
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "id": "82bd93de-78e2-4255-88cb-53303ddfd378",
+            "name": "CONDITIONING",
+            "type": "CONDITIONING",
+            "linkIds": [
+              90181
+            ],
+            "localized_name": "CONDITIONING",
+            "pos": [
+              42.343695964387734,
+              1137.549246538261
+            ]
+          },
+          {
+            "id": "7fecb957-dd8f-47c3-8d99-94dae3f25bda",
+            "name": "VAE",
+            "type": "VAE",
+            "linkIds": [
+              90187
+            ],
+            "localized_name": "VAE",
+            "pos": [
+              42.343695964387734,
+              1157.549246538261
+            ]
+          },
+          {
+            "id": "6698ebdf-d3e5-4882-9eb0-ce75f79a49f2",
+            "name": "LATENT",
+            "type": "LATENT",
+            "linkIds": [
+              90175
+            ],
+            "localized_name": "LATENT",
+            "pos": [
+              42.343695964387734,
+              1177.549246538261
+            ]
+          }
+        ],
+        "widgets": [],
+        "nodes": [
+          {
+            "id": 10058,
+            "type": "TextEncodeQwenImageEditPlus",
+            "pos": [
+              -1727.8633553548816,
+              720.8908165324872
+            ],
+            "size": [
+              383.34379404294015,
+              369.5904442154575
+            ],
+            "flags": {},
+            "order": 9,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "clip",
+                "name": "clip",
+                "type": "CLIP",
+                "link": 90176
+              },
+              {
+                "localized_name": "vae",
+                "name": "vae",
+                "shape": 7,
+                "type": "VAE",
+                "link": 90177
+              },
+              {
+                "localized_name": "image1",
+                "name": "image1",
+                "shape": 7,
+                "type": "IMAGE",
+                "link": 90178
+              },
+              {
+                "localized_name": "image2",
+                "name": "image2",
+                "shape": 7,
+                "type": "IMAGE",
+                "link": null
+              },
+              {
+                "localized_name": "image3",
+                "name": "image3",
+                "shape": 7,
+                "type": "IMAGE",
+                "link": null
+              },
+              {
+                "localized_name": "prompt",
+                "name": "prompt",
+                "type": "STRING",
+                "widget": {
+                  "name": "prompt"
+                },
+                "link": 90179
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "CONDITIONING",
+                "name": "CONDITIONING",
+                "type": "CONDITIONING",
+                "links": [
+                  90180,
+                  90181,
+                  90182
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "Node name for S&R": "TextEncodeQwenImageEditPlus"
+            },
+            "widgets_values": [
+              "PREMIERE316 STORYBOARD IMAGE GUIDE.NO BORDERS OR TEXT! MAKE SURE TO GET JESUS'S CLOTHES ACCURATELY. YOU KEEP GENERATING THE WRONG OUTFIT. JESUS MUST LOOK CONSISTENT THROUGHOUT THE ENTIRE MOVIEW AND IT THE UTMOST IMPORTANCE THAT HIS IMAGES ARE CONSISTENT! PHOTOREALISTIC, LIFELIKE, REAL HUMAN SKIN, REAL HUMAN HAIR, REAL HUMAN FACE. REAL DEMONS, REAL WALLS, REAL METAL, EVERYTHING IN THE IMAGE MUST LOOK REAL. DO NOT MISTAKE MEN FOR WOMEN BECAUSE OF LONG HAIR. IF THEY HAVE BEARDS, MAKE THEIR FACES MASCULINE. MUST NOT LOOK LIKE CGI OR AI GENERATED. Review and use attached references to execute prompt and generate the image for the scene's first frame. 100% asset retainment required. DO NOT HALLUCINATE AND CREATE DUPLICATE CHARACTERS. \n\nPREMIERE316 FIRST-FRAME IMAGE GENERATION PROMPT Clip ID: H01-S02-C01 Chapter / Scene: 01 — Hell Trembles / The Hostages Workflow profile: 2P39X1 cinematic master. Create one single 2.39:1 photorealistic live-action frame, never a collage or design sheet. STATIC MOMENT AT FRAME ZERO: Stage the exact opening instant immediately before the clip's motion begins: Rear-only Jesus passes the tormented. Do not compress the later action or end state into this still. The full beat is trajectory only: Rear-only Jesus passes the tormented; His wounded empty hand triggers a demonic alarm and the camera descends into the seized stockade. COMPOSITION: Rear wide 24mm. Establish a camera position that can naturally begin this move after frame zero: Rear crane, parallel hand track, then fast descending crane. Respect foreground, middle ground and background separation; use a stable horizon and believable human scale. The frame must read instantly at 2.39:1 with a deliberate cinematic focal hierarchy. PERFORMANCE AND STORY: Moses: We are not yours. We await the Messiah. Guard: Your Messiah is dead. Convey the emotional condition through posture, gaze, breath, hands and spatial relationships only. Do not render subtitles, visible dialogue, written sound effects or title text. REFERENCE CONTROL: Use the supplied assets only for their assigned roles: IDENTITY: char-jesus-main.v4.png, char-moses.v2.png; ENVIRONMENT: loc-chamber-wide.v1.png, loc-chamber-dark.v1.png; CROWD / SCALE: extra-restraints.v1.png, extra-men-faith.v1.png, extra-women-kids.v1.png; PROP / ARTIFACT: prop-chains.v1.png. The prompt remains sole authority for action, pose, framing, geography and state. Do not copy contact-sheet borders, labels, lettering, panel layouts, duplicated views, or unrelated subjects from any reference board. CONTINUITY LOCKS: Face fully withheld; Exact white burial linen; Barefoot; Empty wounded hands; Righteous already abducted; No Sword; No facial reveal before H03-S06-C03; No Sword or sword-shaped light; Face state: WITHHELD; Sword state: ABSENT. Jesus's face must remain completely outside view and absent from reflections; rear head shows natural hair only. No sword, sword hilt, sword-shaped glow, blade reflection or weapon silhouette anywhere in frame. Jesus wears exact white burial linen, is barefoot when visible, carries dried blood at both wrists, a restrained forehead wound and a fixed right-side spear wound; no crown of thorns. Preserve anatomically correct hands and feet, stable scale, physically coherent cloth, hair, ash, smoke, fire and light. LOOK: sacred cinematic realism; ancient Near Eastern material culture; high dynamic range; restrained anamorphic character; practical skin, linen, iron, stone, ash and smoke texture; volumetric light motivated by the scene; deep but readable shadows; realistic depth of field; delicate film grain; no glossy fantasy-game rendering. OUTPUT: one clean finished movie frame with no border, watermark, captions, modern object, interface, logo or typography.\n\nExact authored visual references to respect as role-specific context only:\nidentity: char-jesus-main.v4.png (character-jesus-the-harrower-primary-appearance:v4); identity: char-moses.v2.png (character-moses-freed-prophet-appearance:v2); location: loc-chamber-wide.v1.png (location-hells-inner-chamber-the-prison-cavern-wide-shot:v1); location: loc-chamber-dark.v1.png (loc-inner-chamber-dark:v1); crowd: extra-restraints.v1.png (extra-hell-chains-and-restraints-crowd-control-props-creature-control-props:v1); crowd: extra-men-faith.v1.png (extra-men-of-faith-crowd-group-crowd-plate:v1); crowd: extra-women-kids.v1.png (extra-women-and-children-of-faith-crowd-group-crowd-plate:v1); prop: prop-chains.v1.png (prop-hell-chains:v1)\nUse these references only for their assigned role. Do not copy contact-sheet borders, labels, lettering, panel layouts, duplicate turnarounds, or unrelated subjects.\n\nAvoid/negative constraints to translate into clean positive image choices:\ncollage, contact sheet, split panel, storyboard border, labels, captions, subtitle, typography, watermark, logo, modern object, CGI game art, illustration, plastic skin, duplicate person, cloned crowd, extra limb, extra finger, fused fingers, malformed hands, malformed feet, floating prop, broken perspective, inconsistent scale, premature end state, sword, blade, sword hilt, weapon-shaped light, sword reflection, visible Jesus face, partial Jesus face, reflected Jesus face, face on back of head, crown of thorns, blue robe, colored burial garment, wrong-side spear wound, clean unwounded Jesus, excessive gore"
+            ]
+          },
+          {
+            "id": 10060,
+            "type": "999c5ca1-3a9d-4a6b-aa5c-a4a6084d05ac",
+            "pos": [
+              -1910.5603695886941,
+              712.4240098538371
+            ],
+            "size": [
+              140,
+              86
+            ],
+            "flags": {},
+            "order": 0,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+              {
+                "localized_name": "MODEL",
+                "name": "MODEL",
+                "type": "MODEL",
+                "links": [
+                  90184
+                ]
+              },
+              {
+                "localized_name": "MODEL_1",
+                "name": "MODEL_1",
+                "type": "MODEL",
+                "links": [
+                  90185
+                ]
+              },
+              {
+                "localized_name": "CLIP",
+                "name": "CLIP",
+                "type": "CLIP",
+                "links": [
+                  90176,
+                  90186
+                ]
+              },
+              {
+                "localized_name": "VAE",
+                "name": "VAE",
+                "type": "VAE",
+                "links": [
+                  90177,
+                  90187
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "previewExposures": []
+            }
+          },
+          {
+            "id": 204,
+            "type": "PixaromaSeed",
+            "pos": [
+              -1266.4405694580976,
+              927.8148079328848
+            ],
+            "size": [
+              414.0683757058,
+              254
+            ],
+            "flags": {},
+            "order": 2,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+              {
+                "localized_name": "seed",
+                "name": "seed",
+                "type": "INT",
+                "links": null
+              }
+            ],
+            "properties": {
+              "cnr_id": "ComfyUI-Pixaroma",
+              "ver": "ffcf2f56aa448f2df763b09b70857632792b7805",
+              "Node name for S&R": "PixaromaSeed",
+              "seedState": "{\"seed\":8525587224831062,\"mode\":\"fixed\",\"compact\":false,\"digits\":16}"
+            },
+            "widgets_values": [
+              {
+                "seed": 8525587224831062,
+                "mode": "fixed",
+                "compact": false,
+                "digits": 16
+              }
+            ],
+            "color": "#1d1d1d",
+            "bgcolor": "#2a2a2a"
+          },
+          {
+            "id": 10054,
+            "type": "KSampler",
+            "pos": [
+              -916.9340131072743,
+              759.6930729767737
+            ],
+            "size": [
+              270,
+              262
+            ],
+            "flags": {},
+            "order": 7,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "model",
+                "name": "model",
+                "type": "MODEL",
+                "link": 90185
+              },
+              {
+                "localized_name": "positive",
+                "name": "positive",
+                "type": "CONDITIONING",
+                "link": 90180
+              },
+              {
+                "localized_name": "negative",
+                "name": "negative",
+                "type": "CONDITIONING",
+                "link": 90162
+              },
+              {
+                "localized_name": "latent_image",
+                "name": "latent_image",
+                "type": "LATENT",
+                "link": 90163
+              },
+              {
+                "localized_name": "seed",
+                "name": "seed",
+                "type": "INT",
+                "widget": {
+                  "name": "seed"
+                },
+                "link": 90196
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "LATENT",
+                "name": "LATENT",
+                "type": "LATENT",
+                "links": [
+                  90175
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.26.2",
+              "Node name for S&R": "KSampler"
+            },
+            "widgets_values": [
+              215511693038269,
+              "fixed",
+              4,
+              1,
+              "euler",
+              "simple",
+              0.4
+            ],
+            "color": "#1d1d1d",
+            "bgcolor": "#2a2a2a"
+          },
+          {
+            "id": 10056,
+            "type": "KSampler",
+            "pos": [
+              -641.3667477624498,
+              763.9487282608405
+            ],
+            "size": [
+              296.2197989449314,
+              262
+            ],
+            "flags": {},
+            "order": 8,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "model",
+                "name": "model",
+                "type": "MODEL",
+                "link": 90184
+              },
+              {
+                "localized_name": "positive",
+                "name": "positive",
+                "type": "CONDITIONING",
+                "link": 90182
+              },
+              {
+                "localized_name": "negative",
+                "name": "negative",
+                "type": "CONDITIONING",
+                "link": 90167
+              },
+              {
+                "localized_name": "latent_image",
+                "name": "latent_image",
+                "type": "LATENT",
+                "link": 90168
+              },
+              {
+                "localized_name": "seed",
+                "name": "seed",
+                "type": "INT",
+                "widget": {
+                  "name": "seed"
+                },
+                "link": 90197
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "LATENT",
+                "name": "LATENT",
+                "type": "LATENT",
+                "slot_index": 0,
+                "links": [
+                  90159
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.3.27",
+              "Node name for S&R": "KSampler"
+            },
+            "widgets_values": [
+              215511693038268,
+              "fixed",
+              8,
+              1,
+              "er_sde",
+              "simple",
+              1
+            ],
+            "color": "#1d1d1d",
+            "bgcolor": "#2a2a2a"
+          },
+          {
+            "id": 10052,
+            "type": "LatentUpscaleBy",
+            "pos": [
+              -616.3396705677729,
+              1065.6237025526857
+            ],
+            "size": [
+              270,
+              82
+            ],
+            "flags": {},
+            "order": 5,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "samples",
+                "name": "samples",
+                "type": "LATENT",
+                "link": 90159
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "LATENT",
+                "name": "LATENT",
+                "type": "LATENT",
+                "links": [
+                  90163
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.26.2",
+              "Node name for S&R": "LatentUpscaleBy"
+            },
+            "widgets_values": [
+              "nearest-exact",
+              2
+            ],
+            "color": "#1d1d1d",
+            "bgcolor": "#2a2a2a"
+          },
+          {
+            "id": 10053,
+            "type": "EmptyLatentImage",
+            "pos": [
+              -748.4662708140927,
+              1179.9430170265919
+            ],
+            "size": [
+              270,
+              106
+            ],
+            "flags": {},
+            "order": 6,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "width",
+                "name": "width",
+                "type": "INT",
+                "widget": {
+                  "name": "width"
+                },
+                "link": 90169
+              },
+              {
+                "localized_name": "height",
+                "name": "height",
+                "type": "INT",
+                "widget": {
+                  "name": "height"
+                },
+                "link": 90170
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "LATENT",
+                "name": "LATENT",
+                "type": "LATENT",
+                "links": [
+                  90168
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "Node name for S&R": "EmptyLatentImage"
+            },
+            "widgets_values": [
+              512,
+              512,
+              1
+            ]
+          },
+          {
+            "id": 10040,
+            "type": "TextGenerate",
+            "pos": [
+              -869.7460097320253,
+              1242.2477052565869
+            ],
+            "size": [
+              400,
+              412
+            ],
+            "flags": {},
+            "order": 3,
+            "mode": 0,
+            "showAdvanced": true,
+            "inputs": [
+              {
+                "localized_name": "clip",
+                "name": "clip",
+                "type": "CLIP",
+                "link": 90186
+              },
+              {
+                "localized_name": "image",
+                "name": "image",
+                "shape": 7,
+                "type": "IMAGE",
+                "link": 90188
+              },
+              {
+                "localized_name": "video",
+                "name": "video",
+                "shape": 7,
+                "type": "IMAGE",
+                "link": null
+              },
+              {
+                "localized_name": "audio",
+                "name": "audio",
+                "shape": 7,
+                "type": "AUDIO",
+                "link": null
+              },
+              {
+                "localized_name": "prompt",
+                "name": "prompt",
+                "type": "STRING",
+                "widget": {
+                  "name": "prompt"
+                },
+                "link": 90100
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "generated_text",
+                "name": "generated_text",
+                "type": "STRING",
+                "links": [
+                  90101
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.21.0",
+              "Node name for S&R": "TextGenerate"
+            },
+            "widgets_values": [
+              "",
+              1024,
+              "on",
+              1,
+              64,
+              0.95,
+              0.05,
+              1.05,
+              5,
+              0,
+              true,
+              true
+            ],
+            "color": "#1d1d1d",
+            "bgcolor": "#2a2a2a"
+          },
+          {
+            "id": 10041,
+            "type": "PixaromaShowText",
+            "pos": [
+              -434.8043209532093,
+              1230.2027134451223
+            ],
+            "size": [
+              393.148016917597,
+              412
+            ],
+            "flags": {},
+            "order": 4,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "source",
+                "name": "source",
+                "type": "*",
+                "link": 90101
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "text",
+                "name": "text",
+                "type": "STRING",
+                "links": [
+                  90179
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "ComfyUI-Pixaroma",
+              "ver": "c82f95989e0347b5cc48ddf52a51f2d776a1f83b",
+              "Node name for S&R": "PixaromaShowText"
+            },
+            "widgets_values": [
+              "Photorealistic live-action photograph.\n\nJesus, viewed from behind, stands in a rear-wide 24mm perspective, his full figure framed by the cavernous chamber. His long, dark, wavy hair cascades down his back, falling naturally over his shoulders and neck. He wears exact white burial linen, draped loosely around his torso with visible folds and creases matching the texture of real, coarse fabric. The linen is stained with dried blood at both wrists, the marks appearing as deep crimson smears against the stark white. His bare feet rest flat on the scorched stone floor, toes slightly splayed. His arms hang limp at his sides, hands empty and still, showing no weapon or glint of metal. A restrained forehead wound is visible as a shallow, raw scar, and a fixed right-side spear wound protrudes slightly from his shoulder blade, leaving no crown of thorns. His posture is upright but weary, head slightly tilted upward as if gazing toward an unseen point ahead. The fabric of his robe drapes realistically over his frame, with natural shadows under the arms and along the spine.\n\nThe setting is a vast, dimly lit stockade chamber with high, arched stone walls and massive iron gates in the distance. The floor is cracked and charred, littered with broken chains, rusted shackles, and scattered iron restraints. In the foreground, thick iron chains lie coiled and tangled across the ground, some broken and sparking faintly with heat. Behind Jesus, a group of men and women, dressed in earth-toned robes and turbans, stand clustered together. Their faces are turned toward him, eyes wide and mouths slightly parted, conveying a mixture of fear and reverence. The men have beards and muscular frames, their expressions stern and alert; the women wear veils and have soft, rounded features, their gazes fixed on Jesus with solemn concern. Among them, two children stand close to a woman, their small bodies trembling slightly. The background reveals towering stone pillars and hanging chains, with embers flickering from distant fires that cast an orange glow along the chamber’s far wall. The atmosphere is heavy with smoke and ash, swirling gently in the air.\n\nLighting is volumetric and directional, entering from a high window or opening above, casting strong, diagonal beams through the smoke. These beams illuminate Jesus’s hair and the upper part of his robe, creating sharp highlights on the fabric’s surface and deep, realistic shadows beneath his arms and across the floor. The overall color palette is dominated by warm browns, blacks, and reds from the fire and ash, contrasted sharply by the pure white of Jesus’s linen. The textures are highly detailed: the rough, uneven surface of the stone walls, the gritty texture of the scorched floor, the pitted and corroded surfaces of the iron chains, and the delicate weave of the linen. The image has a deep depth of field, with the foreground chains and Jesus’s feet sharply in focus, while the distant figures and background architecture softly blur into atmospheric haze. Film grain is subtle and consistent, enhancing the cinematic realism without overwhelming the scene. The mood is solemn, tense, and charged with impending action — the moment before the camera descends into the stockade, as Jesus’s presence triggers a demonic alarm."
+            ],
+            "color": "#1d1d1d",
+            "bgcolor": "#2a2a2a"
+          },
+          {
+            "id": 10059,
+            "type": "785c405f-802d-44cd-bca7-0bdae70e5a9b",
+            "pos": [
+              -2151.9419546809468,
+              710.8507878199351
+            ],
+            "size": [
+              210,
+              418
+            ],
+            "flags": {
+              "collapsed": false
+            },
+            "order": 1,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+              {
+                "localized_name": "output",
+                "name": "output",
+                "type": "IMAGE",
+                "links": [
+                  90178,
+                  90188
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.30.2",
+              "previewExposures": []
+            },
+            "widgets_values": [
+              "char-moses.v2.png",
+              "image",
+              "loc-chamber-dark.v1.png",
+              "image",
+              "extra-restraints.v1.png",
+              "image",
+              "extra-men-faith.v1.png",
+              "image",
+              "loc-chamber-wide.v1.png",
+              "image",
+              "extra-women-kids.v1.png",
+              "image",
+              "prop-chains.v1.png",
+              "image",
+              "char-jesus-main.v4.png",
+              "image"
+            ]
+          }
+        ],
+        "groups": [],
+        "links": [
+          {
+            "id": 90176,
+            "origin_id": 10060,
+            "origin_slot": 2,
+            "target_id": 10058,
+            "target_slot": 0,
+            "type": "CLIP"
+          },
+          {
+            "id": 90177,
+            "origin_id": 10060,
+            "origin_slot": 3,
+            "target_id": 10058,
+            "target_slot": 1,
+            "type": "VAE"
+          },
+          {
+            "id": 90178,
+            "origin_id": 10059,
+            "origin_slot": 0,
+            "target_id": 10058,
+            "target_slot": 2,
+            "type": "IMAGE"
+          },
+          {
+            "id": 90179,
+            "origin_id": 10041,
+            "origin_slot": 0,
+            "target_id": 10058,
+            "target_slot": 5,
+            "type": "STRING"
+          },
+          {
+            "id": 90185,
+            "origin_id": 10060,
+            "origin_slot": 1,
+            "target_id": 10054,
+            "target_slot": 0,
+            "type": "MODEL"
+          },
+          {
+            "id": 90180,
+            "origin_id": 10058,
+            "origin_slot": 0,
+            "target_id": 10054,
+            "target_slot": 1,
+            "type": "CONDITIONING"
+          },
+          {
+            "id": 90163,
+            "origin_id": 10052,
+            "origin_slot": 0,
+            "target_id": 10054,
+            "target_slot": 3,
+            "type": "LATENT"
+          },
+          {
+            "id": 90184,
+            "origin_id": 10060,
+            "origin_slot": 0,
+            "target_id": 10056,
+            "target_slot": 0,
+            "type": "MODEL"
+          },
+          {
+            "id": 90182,
+            "origin_id": 10058,
+            "origin_slot": 0,
+            "target_id": 10056,
+            "target_slot": 1,
+            "type": "CONDITIONING"
+          },
+          {
+            "id": 90168,
+            "origin_id": 10053,
+            "origin_slot": 0,
+            "target_id": 10056,
+            "target_slot": 3,
+            "type": "LATENT"
+          },
+          {
+            "id": 90159,
+            "origin_id": 10056,
+            "origin_slot": 0,
+            "target_id": 10052,
+            "target_slot": 0,
+            "type": "LATENT"
+          },
+          {
+            "id": 90186,
+            "origin_id": 10060,
+            "origin_slot": 2,
+            "target_id": 10040,
+            "target_slot": 0,
+            "type": "CLIP"
+          },
+          {
+            "id": 90188,
+            "origin_id": 10059,
+            "origin_slot": 0,
+            "target_id": 10040,
+            "target_slot": 1,
+            "type": "IMAGE"
+          },
+          {
+            "id": 90101,
+            "origin_id": 10040,
+            "origin_slot": 0,
+            "target_id": 10041,
+            "target_slot": 0,
+            "type": "STRING"
+          },
+          {
+            "id": 90162,
+            "origin_id": -10,
+            "origin_slot": 0,
+            "target_id": 10054,
+            "target_slot": 2,
+            "type": "CONDITIONING"
+          },
+          {
+            "id": 90167,
+            "origin_id": -10,
+            "origin_slot": 0,
+            "target_id": 10056,
+            "target_slot": 2,
+            "type": "CONDITIONING"
+          },
+          {
+            "id": 90169,
+            "origin_id": -10,
+            "origin_slot": 1,
+            "target_id": 10053,
+            "target_slot": 0,
+            "type": "INT"
+          },
+          {
+            "id": 90170,
+            "origin_id": -10,
+            "origin_slot": 2,
+            "target_id": 10053,
+            "target_slot": 1,
+            "type": "INT"
+          },
+          {
+            "id": 90100,
+            "origin_id": -10,
+            "origin_slot": 3,
+            "target_id": 10040,
+            "target_slot": 4,
+            "type": "STRING"
+          },
+          {
+            "id": 90181,
+            "origin_id": 10058,
+            "origin_slot": 0,
+            "target_id": -20,
+            "target_slot": 0,
+            "type": "CONDITIONING"
+          },
+          {
+            "id": 90187,
+            "origin_id": 10060,
+            "origin_slot": 3,
+            "target_id": -20,
+            "target_slot": 1,
+            "type": "VAE"
+          },
+          {
+            "id": 90175,
+            "origin_id": 10054,
+            "origin_slot": 0,
+            "target_id": -20,
+            "target_slot": 2,
+            "type": "LATENT"
+          },
+          {
+            "id": 90196,
+            "origin_id": -10,
+            "origin_slot": 4,
+            "target_id": 10054,
+            "target_slot": 4,
+            "type": "INT"
+          },
+          {
+            "id": 90197,
+            "origin_id": -10,
+            "origin_slot": 5,
+            "target_id": 10056,
+            "target_slot": 4,
+            "type": "INT"
+          }
+        ],
+        "extra": {
+          "pixaromaGroups": []
+        }
+      }
+    ]
+  },
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.6947059363368628,
+      "offset": [
+        1517.7534696621435,
+        -825.7710567634747
+      ]
+    },
+    "frontendVersion": "1.47.12",
+    "workflowRendererVersion": "LG",
+    "node_versions": {
+      "ComfyUI-GGUF": "8098c7149fa4ff14991eb3347a5585051ceeafbe",
+      "comfy-core": "v0.3.10-37-gd055325",
+      "rgthree-comfy": "5d771b8b56a343c24a26e8cea1f0c87c3d58102f"
+    },
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true,
+    "premiere316": {
+      "type": "storyboard-image-guide",
+      "workflowId": "premiere316-storyboard-krea2-prompt-enhancer",
+      "projectSlug": "harrowing_of_hell",
+      "frameId": "frame-h01-s02-c01-first",
+      "promptHash": "980957ac33cb4c13ed1cc54b4970d789fcce38793b44e3d7eff456c443f163bc",
+      "sourceWorkflow": "Image_Generation Krea 2 Text to Image + Extra Pass + Prompt Enhancer.json",
+      "sourceWorkflowHash": "e81e50f674c8d0b542c9c1ac7a9ccb8ed940b005d1765bcd492da08559d3eff5",
+      "filenamePrefix": "Premiere316/harrowing_of_hell/storyboard/H01-S02-C01_first",
+      "resolution": {
+        "width": 1280,
+        "height": 544,
+        "ratio": "2.39:1"
+      },
+      "seed": 215511693038268,
+      "references": [
+        {
+          "id": "ref-h01-s02-c01-char-jesus-main-v4-png-1",
+          "order": 1,
+          "assetId": "character-jesus-the-harrower-primary-appearance",
+          "assetName": "JESUS - The Harrower",
+          "assetVersion": 4,
+          "assetVersionId": "character-jesus-the-harrower-primary-appearance:v4",
+          "role": "identity",
+          "required": true,
+          "useMode": "direct_conditioning",
+          "sourceAssetFile": "char-jesus-main.v4.png",
+          "comfyImage": "premiere316_storyboard_refs/harrowing_of_hell/assets/char-jesus-main.v4.png",
+          "cropRegion": "Strict swordless crop only",
+          "notes": "Contains the Sword in the full-body panel. Whole-frame use before H08-S27-C02 risks premature sword leakage."
+        },
+        {
+          "id": "ref-h01-s02-c01-char-moses-v2-png-2",
+          "order": 2,
+          "assetId": "character-moses-freed-prophet-appearance",
+          "assetName": "MOSES - Freed Prophet",
+          "assetVersion": 2,
+          "assetVersionId": "character-moses-freed-prophet-appearance:v2",
+          "role": "identity",
+          "required": true,
+          "useMode": "direct_conditioning",
+          "sourceAssetFile": "char-moses.v2.png",
+          "comfyImage": "premiere316_storyboard_refs/harrowing_of_hell/assets/char-moses.v2.png",
+          "cropRegion": "Use relevant subject/design region only",
+          "notes": "Identity/turnaround reference, not a finished cinematic scene frame."
+        },
+        {
+          "id": "ref-h01-s02-c01-loc-chamber-wide-v1-png-3",
+          "order": 3,
+          "assetId": "location-hells-inner-chamber-the-prison-cavern-wide-shot",
+          "assetName": "Inner Chamber",
+          "assetVersion": 1,
+          "assetVersionId": "location-hells-inner-chamber-the-prison-cavern-wide-shot:v1",
+          "role": "location",
+          "required": true,
+          "useMode": "direct_conditioning",
+          "sourceAssetFile": "loc-chamber-wide.v1.png",
+          "comfyImage": "premiere316_storyboard_refs/harrowing_of_hell/assets/loc-chamber-wide.v1.png",
+          "cropRegion": "Use relevant subject/design region only",
+          "notes": "Environment plate; confirm naming and crop before treating as location canon."
+        },
+        {
+          "id": "ref-h01-s02-c01-loc-chamber-dark-v1-png-4",
+          "order": 4,
+          "assetId": "loc-inner-chamber-dark",
+          "assetName": "Dark Chamber",
+          "assetVersion": 1,
+          "assetVersionId": "loc-inner-chamber-dark:v1",
+          "role": "location",
+          "required": true,
+          "useMode": "direct_conditioning",
+          "sourceAssetFile": "loc-chamber-dark.v1.png",
+          "comfyImage": "premiere316_storyboard_refs/harrowing_of_hell/assets/loc-chamber-dark.v1.png",
+          "cropRegion": "Use relevant subject/design region only",
+          "notes": "Environment plate; confirm naming and crop before treating as location canon."
+        },
+        {
+          "id": "ref-h01-s02-c01-extra-restraints-v1-png-5",
+          "order": 5,
+          "assetId": "extra-hell-chains-and-restraints-crowd-control-props-creature-control-props",
+          "assetName": "Chain Restraints",
+          "assetVersion": 1,
+          "assetVersionId": "extra-hell-chains-and-restraints-crowd-control-props-creature-control-props:v1",
+          "role": "crowd",
+          "required": false,
+          "useMode": "direct_conditioning",
+          "sourceAssetFile": "extra-restraints.v1.png",
+          "comfyImage": "premiere316_storyboard_refs/harrowing_of_hell/assets/extra-restraints.v1.png",
+          "cropRegion": "Use relevant subject/design region only",
+          "notes": "Composition/casting reference with labels or neutral layout; generate a fresh scene-specific 2.39 frame."
+        },
+        {
+          "id": "ref-h01-s02-c01-extra-men-faith-v1-png-6",
+          "order": 6,
+          "assetId": "extra-men-of-faith-crowd-group-crowd-plate",
+          "assetName": "Men of Faith Crowd Group",
+          "assetVersion": 1,
+          "assetVersionId": "extra-men-of-faith-crowd-group-crowd-plate:v1",
+          "role": "crowd",
+          "required": false,
+          "useMode": "direct_conditioning",
+          "sourceAssetFile": "extra-men-faith.v1.png",
+          "comfyImage": "premiere316_storyboard_refs/harrowing_of_hell/assets/extra-men-faith.v1.png",
+          "cropRegion": "Use relevant subject/design region only",
+          "notes": "Composition/casting reference with labels or neutral layout; generate a fresh scene-specific 2.39 frame."
+        },
+        {
+          "id": "ref-h01-s02-c01-extra-women-kids-v1-png-7",
+          "order": 7,
+          "assetId": "extra-women-and-children-of-faith-crowd-group-crowd-plate",
+          "assetName": "Women & Children",
+          "assetVersion": 1,
+          "assetVersionId": "extra-women-and-children-of-faith-crowd-group-crowd-plate:v1",
+          "role": "crowd",
+          "required": false,
+          "useMode": "direct_conditioning",
+          "sourceAssetFile": "extra-women-kids.v1.png",
+          "comfyImage": "premiere316_storyboard_refs/harrowing_of_hell/assets/extra-women-kids.v1.png",
+          "cropRegion": "Use relevant subject/design region only",
+          "notes": "Composition/casting reference with labels or neutral layout; generate a fresh scene-specific 2.39 frame."
+        },
+        {
+          "id": "ref-h01-s02-c01-prop-chains-v1-png-8",
+          "order": 8,
+          "assetId": "prop-hell-chains",
+          "assetName": "Ancient binding chains",
+          "assetVersion": 1,
+          "assetVersionId": "prop-hell-chains:v1",
+          "role": "prop",
+          "required": false,
+          "useMode": "direct_conditioning",
+          "sourceAssetFile": "prop-chains.v1.png",
+          "comfyImage": "premiere316_storyboard_refs/harrowing_of_hell/assets/prop-chains.v1.png",
+          "cropRegion": "Use relevant subject/design region only",
+          "notes": "Pin exact approved asset version in Add References modal before generation."
+        }
+      ],
+      "referenceNodeIds": [
+        10000,
+        10001,
+        10002,
+        10003,
+        10004,
+        10005,
+        10006,
+        10007
+      ],
+      "referenceCompositeNodeIds": [
+        10008,
+        10009,
+        10010,
+        10011,
+        10012,
+        10013,
+        10014
+      ],
+      "referenceConditioningNodeId": 10014,
+      "primaryReferenceNodeId": 10000
+    },
+    "anomalous_hashes": {}
+  },
+  "version": 0.4
+}

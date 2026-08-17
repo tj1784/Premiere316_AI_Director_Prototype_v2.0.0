@@ -21,6 +21,22 @@ function slugify(name) {
     .slice(0, 64) || "project";
 }
 
+export function normalizeProjectCategory(value) {
+  return String(value || "feature").trim().toLowerCase() === "shorts" ? "shorts" : "feature";
+}
+
+export function isShortsProject(project) {
+  return normalizeProjectCategory(project?.category ?? project?.settings?.category) === "shorts";
+}
+
+export function skipApproval(project) {
+  return isShortsProject(project) || project?.settings?.skipApproval === true;
+}
+
+export function skipScreenplay(project) {
+  return isShortsProject(project) || project?.settings?.skipScreenplay === true;
+}
+
 function writeTextAtomic(file, text) {
   const temp = `${file}.${process.pid}.${crypto.randomUUID()}.tmp`;
   try {
@@ -41,6 +57,7 @@ export function ensureDirs(slug) {
     "media/clips",
     "media/audio",
     "media/assets",
+    "media/storyboard",
     "media/masters",
     "media/temp",
     "production",
@@ -69,22 +86,27 @@ function defaultScore() {
   };
 }
 
-export function emptyProject(name) {
+export function emptyProject(name, options = {}) {
   const slug = slugify(name);
+  const category = normalizeProjectCategory(options.category);
+  const shorts = category === "shorts";
   return {
     schemaVersion: 3,
     slug,
     name: name.trim(),
+    category,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     settings: {
       fps: DEFAULT_FPS,
-      width: 1280,
-      height: 720,
-      defaultDurationSec: DEFAULT_DURATION,
+      width: shorts ? 1080 : 1280,
+      height: shorts ? 1920 : 720,
+      defaultDurationSec: shorts ? 15 : DEFAULT_DURATION,
       segmentSec: DEFAULT_SEGMENT_SEC,
-      minDurationSec: 2,
+      minDurationSec: shorts ? 8 : 2,
       maxDurationSec: 30,
+      skipScreenplay: shorts,
+      skipApproval: shorts,
       ingredients: { ...DEFAULT_INGREDIENTS },
       exportPreset: "H.264 (MP4)",
       bookends: normalizeBookends(null, name)
@@ -183,20 +205,28 @@ function migrateClip(clip, project, idx) {
 
 export function migrateProject(project) {
   project.schemaVersion = 3;
+  project.category = normalizeProjectCategory(project.category ?? project.settings?.category);
   const previousSettings = project.settings || {};
+  const shorts = project.category === "shorts";
   project.settings = {
     fps: DEFAULT_FPS,
-    width: 1280,
-    height: 720,
-    defaultDurationSec: DEFAULT_DURATION,
+    width: shorts ? 1080 : 1280,
+    height: shorts ? 1920 : 720,
+    defaultDurationSec: shorts ? 15 : DEFAULT_DURATION,
     segmentSec: DEFAULT_SEGMENT_SEC,
-    minDurationSec: 2,
+    minDurationSec: shorts ? 8 : 2,
     maxDurationSec: 30,
     exportPreset: "H.264 (MP4)",
+    skipScreenplay: shorts,
+    skipApproval: shorts,
     ...previousSettings,
     ingredients: { ...DEFAULT_INGREDIENTS, ...(previousSettings.ingredients || {}) },
     bookends: normalizeBookends(previousSettings.bookends, project.name)
   };
+  if (shorts) {
+    project.settings.skipScreenplay = true;
+    project.settings.skipApproval = true;
+  }
   project.frames = Array.isArray(project.frames) ? project.frames : [];
   project.trash = project.trash && typeof project.trash === "object" ? project.trash : {};
   project.trash.frames = Array.isArray(project.trash.frames) ? project.trash.frames : [];
@@ -232,6 +262,7 @@ export function listProjects() {
         return {
           slug: p.slug,
           name: p.name,
+          category: p.category || "feature",
           updatedAt: p.updatedAt,
           clipCount: p.sequence?.clips?.length || 0,
           masterCount: p.masters?.length || 0
@@ -268,14 +299,14 @@ export function saveProject(project) {
   return project;
 }
 
-export function createProject(name) {
+export function createProject(name, options = {}) {
   if (!name?.trim()) throw new Error("name required");
   let slug = slugify(name);
   let n = 1;
   while (fs.existsSync(path.join(projectDir(slug), "project.json"))) {
     slug = `${slugify(name)}_${++n}`;
   }
-  const project = emptyProject(name);
+  const project = emptyProject(name, options);
   project.slug = slug;
   ensureDirs(slug);
   return saveProject(project);

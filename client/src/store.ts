@@ -12,7 +12,29 @@ async function api(path: string, opts: RequestInit = {}) {
   return json;
 }
 
-export function mediaUrl(slug: string, kind: "frames" | "clips" | "audio" | "assets" | "masters", file: string) {
+async function downloadFile(path: string, fallbackName: string) {
+  const response = await fetch(path);
+  if (!response.ok) {
+    const json = await response.json().catch(() => ({}));
+    throw new Error(json.error || response.statusText || "Download failed");
+  }
+  const disposition = response.headers.get("content-disposition") || "";
+  const encodedMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  const quotedMatch = disposition.match(/filename="([^"]+)"/i);
+  const plainMatch = disposition.match(/filename=([^;]+)/i);
+  const filename = decodeURIComponent(encodedMatch?.[1] || quotedMatch?.[1] || plainMatch?.[1]?.trim() || fallbackName);
+  const url = URL.createObjectURL(await response.blob());
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  return filename;
+}
+
+export function mediaUrl(slug: string, kind: "frames" | "clips" | "audio" | "assets" | "masters" | "storyboard", file: string) {
   return `/media/${encodeURIComponent(slug)}/${kind}/${encodeURIComponent(file)}`;
 }
 export function frameUrl(slug: string, file: string) { return mediaUrl(slug, "frames", file); }
@@ -20,6 +42,7 @@ export function clipUrl(slug: string, file: string) { return mediaUrl(slug, "cli
 export function audioUrl(slug: string, file: string) { return mediaUrl(slug, "audio", file); }
 export function assetUrl(slug: string, file: string) { return mediaUrl(slug, "assets", file); }
 export function masterUrl(slug: string, file: string) { return mediaUrl(slug, "masters", file); }
+export function storyboardUrl(slug: string, file: string) { return mediaUrl(slug, "storyboard", file); }
 
 function currentClip(project: any, clipId: string | null) {
   return project?.sequence?.clips?.find((clip: any) => clip.id === clipId) || null;
@@ -47,8 +70,13 @@ type Store = {
   screenplayBusy: boolean;
   storyboardBusy: boolean;
   storyboardSaving: boolean;
+  storyboardBulkWorkflowBusy: boolean;
+  storyboardBulkWorkflowNotice: string | null;
+  storyboardFrameActions: Record<string, string>;
+  storyboardFrameNotices: Record<string, string>;
   assetBusy: boolean;
   gpuHandoffBusy: boolean;
+  comfyConnectBusy: boolean;
   comfyRestartBusy: boolean;
   premiereRestartBusy: boolean;
   screenplayModelLoadBusy: boolean;
@@ -80,18 +108,25 @@ type Store = {
   refreshHealth: () => Promise<void>;
   refreshH3Diagnostics: (force?: boolean) => Promise<void>;
   setH3Mode: (mode: Store["h3Mode"]) => void;
+  configureComfyUI: (comfyUrl: string) => Promise<boolean>;
   restartComfyUI: () => Promise<void>;
   restartPremiere316: () => Promise<void>;
   loadScreenplayModel: () => Promise<void>;
   refreshProjects: () => Promise<void>;
   refreshQueue: () => Promise<void>;
-  createProject: (name: string) => Promise<void>;
+  createProject: (name: string, category?: string) => Promise<void>;
+  importFrame: (file: File) => Promise<void>;
   openProject: (slug: string) => Promise<void>;
   closeProject: () => void;
   saveProject: () => Promise<void>;
   reloadProject: () => Promise<void>;
   loadStoryboard: () => Promise<void>;
   replaceStoryboardReferences: (targetKind: "frame", targetId: string, references: any[]) => Promise<void>;
+  pushAllStoryboardFrameWorkflowsToComfyUI: () => Promise<void>;
+  pushStoryboardFrameToComfyUI: (frameId: string) => Promise<void>;
+  downloadStoryboardFrameWorkflow: (frameId: string) => Promise<void>;
+  generateStoryboardFrame: (frameId: string) => Promise<void>;
+  replaceStoryboardFrameImage: (frameId: string, file: File) => Promise<void>;
   patchLocal: (fn: (project: any) => void) => void;
   patchClip: (clipId: string, body: any) => Promise<void>;
   deleteFrame: (frameId: string) => Promise<void>;
@@ -163,8 +198,13 @@ export const useStore = create<Store>((set, get) => ({
   screenplayBusy: false,
   storyboardBusy: false,
   storyboardSaving: false,
+  storyboardBulkWorkflowBusy: false,
+  storyboardBulkWorkflowNotice: null,
+  storyboardFrameActions: {},
+  storyboardFrameNotices: {},
   assetBusy: false,
   gpuHandoffBusy: false,
+  comfyConnectBusy: false,
   comfyRestartBusy: false,
   premiereRestartBusy: false,
   screenplayModelLoadBusy: false,
@@ -257,6 +297,28 @@ export const useStore = create<Store>((set, get) => ({
     }
   },
   setH3Mode: (mode) => set({ h3Mode: mode }),
+  configureComfyUI: async (comfyUrl) => {
+    if (get().comfyConnectBusy) return false;
+    set({ comfyConnectBusy: true, error: null });
+    try {
+      const saved = await api("/api/settings/comfyui", {
+        method: "PUT",
+        body: JSON.stringify({ comfyUrl })
+      });
+      set({ health: { ...get().health, comfyUrl: saved.comfyUrl } });
+      if (saved.restartRequired) {
+        await get().restartPremiere316();
+      } else {
+        await get().refreshHealth();
+      }
+      return !get().error;
+    } catch (error: any) {
+      set({ error: String(error.message || error) });
+      return false;
+    } finally {
+      set({ comfyConnectBusy: false });
+    }
+  },
   restartComfyUI: async () => {
     if (get().comfyRestartBusy) return;
     set({ comfyRestartBusy: true, error: null });
@@ -299,11 +361,12 @@ export const useStore = create<Store>((set, get) => ({
       await api("/api/system/premiere/restart", { method: "POST", body: JSON.stringify({}) });
       const deadline = Date.now() + 60000;
       let sawDisconnect = false;
+      const acceptFastReconnectAt = Date.now() + 3500;
       while (Date.now() < deadline) {
         await new Promise((resolve) => window.setTimeout(resolve, 500));
         try {
           const health = await api("/api/health");
-          if (sawDisconnect && health.app === "premiere316") {
+          if ((sawDisconnect || Date.now() >= acceptFastReconnectAt) && health.app === "premiere316") {
             window.location.reload();
             return;
           }
@@ -362,19 +425,26 @@ export const useStore = create<Store>((set, get) => ({
         const old = previous.find((item: any) => item.id === job.id);
         return job.projectSlug === project.slug && ["done", "error", "cancelled"].includes(job.status) && old?.status !== job.status;
       });
+      const storyboardCompleted = next.some((job: any) => {
+        const old = previous.find((item: any) => item.id === job.id);
+        return job.projectSlug === project.slug && job.type === "generate_storyboard_frame" && ["done", "error", "cancelled"].includes(job.status) && old?.status !== job.status;
+      });
       if (completed) await get().reloadProject();
+      if (storyboardCompleted) await get().loadStoryboard();
     } catch {
       // Queue polling should never interrupt editing.
     }
   },
-  createProject: async (name) => {
+  createProject: async (name, category = "feature") => {
     set({ busy: true, error: null });
     try {
-      const json = await api("/api/projects", { method: "POST", body: JSON.stringify({ name }) });
+      const json = await api("/api/projects", { method: "POST", body: JSON.stringify({ name, category }) });
       set({
         project: json.project,
         storyboard: null,
         storyboardSummary: null,
+        storyboardFrameActions: {},
+        storyboardFrameNotices: {},
         selectedStoryboardClipId: null,
         selClipId: null,
         selFrameFile: null,
@@ -388,6 +458,26 @@ export const useStore = create<Store>((set, get) => ({
       set({ busy: false });
     }
   },
+  importFrame: async (file) => {
+    const project = get().project;
+    if (!project) return;
+    set({ error: null });
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/import-frame`, {
+        method: "POST",
+        body: form
+      });
+      set({
+        project: json.project,
+        selFrameFile: json.frame?.file || get().selFrameFile
+      });
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    }
+  },
   openProject: async (slug) => {
     set({ busy: true, error: null });
     try {
@@ -397,6 +487,8 @@ export const useStore = create<Store>((set, get) => ({
         project: json.project,
         storyboard: null,
         storyboardSummary: null,
+        storyboardFrameActions: {},
+        storyboardFrameNotices: {},
         selectedStoryboardClipId: null,
         selClipId: first?.id || null,
         selFrameFile: first?.firstFrame?.file || json.project?.frames?.[0]?.file || null,
@@ -417,6 +509,8 @@ export const useStore = create<Store>((set, get) => ({
     project: null,
     storyboard: null,
     storyboardSummary: null,
+    storyboardFrameActions: {},
+    storyboardFrameNotices: {},
     selectedStoryboardClipId: null,
     selClipId: null,
     selFrameFile: null,
@@ -482,6 +576,141 @@ export const useStore = create<Store>((set, get) => ({
       throw error;
     } finally {
       set({ storyboardSaving: false });
+    }
+  },
+  pushAllStoryboardFrameWorkflowsToComfyUI: async () => {
+    const project = get().project;
+    if (!project || get().storyboardBulkWorkflowBusy) return;
+    set({ storyboardBulkWorkflowBusy: true, storyboardBulkWorkflowNotice: null, error: null });
+    try {
+      const json = await api(
+        `/api/projects/${encodeURIComponent(project.slug)}/storyboard/workflows/push-all-to-comfyui`,
+        { method: "POST", body: JSON.stringify({}) }
+      );
+      set({
+        storyboardBulkWorkflowNotice: `Pushed ${json.workflowCount || 0} image-guide workflows to ComfyUI · ${json.uniqueReferenceFilesUploaded || 0} unique reference files staged`
+      });
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    } finally {
+      set({ storyboardBulkWorkflowBusy: false });
+    }
+  },
+  pushStoryboardFrameToComfyUI: async (frameId) => {
+    const project = get().project;
+    if (!project || get().storyboardFrameActions[frameId]) return;
+    set({
+      storyboardFrameActions: { ...get().storyboardFrameActions, [frameId]: "Pushing…" },
+      error: null
+    });
+    try {
+      const json = await api(
+        `/api/projects/${encodeURIComponent(project.slug)}/storyboard/frames/${encodeURIComponent(frameId)}/push-to-comfyui`,
+        { method: "POST", body: JSON.stringify({}) }
+      );
+      set({
+        storyboardFrameNotices: {
+          ...get().storyboardFrameNotices,
+          [frameId]: `Pushed workflow: ${json.workflowName || "Storyboard workflow"}`
+        }
+      });
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    } finally {
+      const nextActions = { ...get().storyboardFrameActions };
+      delete nextActions[frameId];
+      set({ storyboardFrameActions: nextActions });
+    }
+  },
+  downloadStoryboardFrameWorkflow: async (frameId) => {
+    const project = get().project;
+    if (!project || get().storyboardFrameActions[frameId]) return;
+    set({
+      storyboardFrameActions: { ...get().storyboardFrameActions, [frameId]: "Downloading…" },
+      error: null
+    });
+    try {
+      const fallbackName = `${project.slug}__${frameId}.json`;
+      const filename = await downloadFile(
+        `/api/projects/${encodeURIComponent(project.slug)}/storyboard/frames/${encodeURIComponent(frameId)}/workflow`,
+        fallbackName
+      );
+      set({
+        storyboardFrameNotices: {
+          ...get().storyboardFrameNotices,
+          [frameId]: `Downloaded workflow: ${filename}`
+        }
+      });
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    } finally {
+      const nextActions = { ...get().storyboardFrameActions };
+      delete nextActions[frameId];
+      set({ storyboardFrameActions: nextActions });
+    }
+  },
+  generateStoryboardFrame: async (frameId) => {
+    const project = get().project;
+    if (!project || get().storyboardFrameActions[frameId]) return;
+    set({
+      storyboardFrameActions: { ...get().storyboardFrameActions, [frameId]: "Queueing…" },
+      error: null
+    });
+    try {
+      const json = await api(
+        `/api/projects/${encodeURIComponent(project.slug)}/storyboard/frames/${encodeURIComponent(frameId)}/generate`,
+        { method: "POST", body: JSON.stringify({}) }
+      );
+      set({
+        storyboard: json.storyboard || get().storyboard,
+        storyboardSummary: json.summary || get().storyboardSummary,
+        storyboardFrameNotices: {
+          ...get().storyboardFrameNotices,
+          [frameId]: `Queued image guide${json.job?.id ? ` · ${json.job.id}` : ""}`
+        }
+      });
+      await get().refreshQueue();
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    } finally {
+      const nextActions = { ...get().storyboardFrameActions };
+      delete nextActions[frameId];
+      set({ storyboardFrameActions: nextActions });
+    }
+  },
+  replaceStoryboardFrameImage: async (frameId, file) => {
+    const project = get().project;
+    if (!project || get().storyboardFrameActions[frameId]) return;
+    set({
+      storyboardFrameActions: { ...get().storyboardFrameActions, [frameId]: "Replacing…" },
+      error: null
+    });
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const json = await api(
+        `/api/projects/${encodeURIComponent(project.slug)}/storyboard/frames/${encodeURIComponent(frameId)}/replace-image`,
+        { method: "POST", body: form }
+      );
+      set({
+        storyboard: json.storyboard || get().storyboard,
+        storyboardSummary: json.summary || get().storyboardSummary,
+        storyboardFrameNotices: {
+          ...get().storyboardFrameNotices,
+          [frameId]: `Replaced image guide: ${json.file || file.name}`
+        }
+      });
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    } finally {
+      const nextActions = { ...get().storyboardFrameActions };
+      delete nextActions[frameId];
+      set({ storyboardFrameActions: nextActions });
     }
   },
   patchLocal: (fn) => {

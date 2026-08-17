@@ -8,6 +8,11 @@ import { execFile, spawn } from "child_process";
 import { promisify } from "util";
 import { comfyAlive, COMFY_URL, getObjectInfo } from "./comfy.js";
 import {
+  isBundledComfyUrl,
+  normalizeComfyUrl,
+  saveConfiguredComfyUrl
+} from "./comfy-config.js";
+import {
   listProjects,
   createProject,
   loadProject,
@@ -20,7 +25,11 @@ import {
   findGuide,
   mediaDir,
   ensureDirs,
-  syncGuideAliases
+  syncGuideAliases,
+  skipApproval,
+  skipScreenplay,
+  isShortsProject,
+  normalizeProjectCategory
 } from "./projects.js";
 import { enqueue, listJobs, cancelJob, cancelAssetJobs } from "./queue.js";
 import {
@@ -83,6 +92,14 @@ import {
   saveStoryboardTargetReferences,
   storyboardSummary
 } from "./storyboard.js";
+import {
+  compileStoryboardFramePrompt,
+  downloadStoryboardFrameWorkflow,
+  markStoryboardFrameQueued,
+  pushAllStoryboardFrameWorkflowsToComfyUI,
+  pushStoryboardFrameToComfyUI,
+  registerStoryboardFrameReplacement
+} from "./storyboard-generation.js";
 
 const PORT = process.env.PORT || 8789;
 const app = express();
@@ -190,9 +207,9 @@ app.get("/api/health", async (_req, res) => {
       selectedRangeRender: true,
       guideUpload: false,
       ingredientsICLoRA: true,
-      dedicatedComfyUI: /:8190$/.test(COMFY_URL),
-      dedicatedComfyRestart: process.platform === "win32" && /:8190$/.test(COMFY_URL) && fs.existsSync(COMFY_RESTART_SCRIPT),
-      premiereRestart: process.platform === "win32" && fs.existsSync(PREMIERE_RESTART_HELPER),
+      dedicatedComfyUI: isBundledComfyUrl(COMFY_URL),
+      dedicatedComfyRestart: process.platform === "win32" && isBundledComfyUrl(COMFY_URL) && fs.existsSync(COMFY_RESTART_SCRIPT),
+      premiereRestart: fs.existsSync(PREMIERE_RESTART_HELPER),
       screenplayGeneration: screenplay.online && screenplay.modelAvailable,
       screenplayStreamingChat: screenplay.online && screenplay.modelAvailable,
       piExpertOrchestrator: true,
@@ -200,6 +217,7 @@ app.get("/api/health", async (_req, res) => {
       piExpertModel: PREMIERE_PI_MODEL,
       assetApprovalGate: true,
       exactAssetVersionApproval: true,
+      storyboardKreaImageGuides: true,
       explicitLmStudioGpuHandoff: true,
       recoverableProjectBinTrash: true,
       guideGenerator: "asset-foundry-only",
@@ -210,18 +228,60 @@ app.get("/api/health", async (_req, res) => {
   });
 });
 
+app.get("/api/settings/comfyui", async (req, res) => {
+  if (!isLoopbackRequest(req)) {
+    return res.status(403).json({ error: "ComfyUI connection settings are available only from this computer." });
+  }
+  return res.json({ comfyUrl: COMFY_URL, connected: await comfyAlive(), restartRequired: false });
+});
+
+app.put("/api/settings/comfyui", async (req, res) => {
+  if (!isLoopbackRequest(req)) {
+    return res.status(403).json({ error: "The ComfyUI address can be changed only from this computer." });
+  }
+  const activePremiereJobs = listJobs().filter((job) => ["queued", "running", "cancelling"].includes(String(job.status || "")));
+  if (activePremiereJobs.length) {
+    return res.status(409).json({
+      error: `Connection change blocked: Premiere316 has ${activePremiereJobs.length} queued or running generation job(s). Stop or finish them first.`
+    });
+  }
+
+  let candidate;
+  try {
+    candidate = normalizeComfyUrl(req.body?.comfyUrl ?? req.body?.url);
+  } catch (error) {
+    return res.status(400).json({ error: String(error.message || error) });
+  }
+
+  try {
+    const response = await fetch(`${candidate}/system_stats`, { signal: AbortSignal.timeout(7500) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const stats = await response.json();
+    if (!stats?.system) throw new Error("the server did not return ComfyUI system information");
+  } catch (error) {
+    return res.status(503).json({
+      error: `Could not connect to ComfyUI at ${candidate}: ${String(error.message || error)}`
+    });
+  }
+
+  try {
+    const comfyUrl = saveConfiguredComfyUrl(candidate);
+    return res.json({ ok: true, comfyUrl, connected: true, restartRequired: comfyUrl !== COMFY_URL });
+  } catch (error) {
+    return res.status(500).json({ error: `Could not save the ComfyUI address: ${String(error.message || error)}` });
+  }
+});
+
 app.post("/api/system/premiere/restart", (req, res) => {
   if (!isLoopbackRequest(req)) {
     return res.status(403).json({ error: "Premiere316 can be restarted only from this computer." });
   }
-  if (process.platform !== "win32" || !fs.existsSync(PREMIERE_RESTART_HELPER)) {
+  if (!fs.existsSync(PREMIERE_RESTART_HELPER)) {
     return res.status(501).json({ error: "The Premiere316 restart helper is unavailable on this installation." });
   }
-  const child = spawn("powershell.exe", [
-    "-NoProfile",
-    "-ExecutionPolicy", "Bypass",
-    "-File", PREMIERE_RESTART_HELPER,
-    "-OldProcessId", String(process.pid)
+  const child = spawn(process.execPath, [
+    PREMIERE_RESTART_HELPER,
+    String(process.pid)
   ], {
     cwd: PACKAGE_ROOT,
     detached: true,
@@ -243,7 +303,7 @@ app.post("/api/system/comfy/restart", async (req, res) => {
   } catch {
     return res.status(409).json({ error: `The configured ComfyUI URL is invalid: ${COMFY_URL}` });
   }
-  if (!(["127.0.0.1", "localhost"].includes(comfyUrl.hostname) && comfyUrl.port === "8190")) {
+  if (!isBundledComfyUrl(COMFY_URL)) {
     return res.status(409).json({ error: "Restart is available only for Premiere316's dedicated ComfyUI on port 8190." });
   }
   if (process.platform !== "win32" || !fs.existsSync(COMFY_RESTART_SCRIPT)) {
@@ -424,9 +484,9 @@ app.get("/api/projects", (_req, res) => res.json({ projects: listProjects() }));
 
 app.post("/api/projects", (req, res) => {
   try {
-    const { name } = req.body || {};
+    const { name, category } = req.body || {};
     if (!name?.trim()) return res.status(400).json({ error: "name required" });
-    res.json({ project: createProject(name.trim()) });
+    res.json({ project: createProject(name.trim(), { category }) });
   } catch (e) {
     res.status(400).json({ error: String(e.message) });
   }
@@ -469,6 +529,83 @@ app.put("/api/projects/:slug/storyboard/targets/:targetKind/:targetId/references
   }
 });
 
+const storyboardImageUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
+const STORYBOARD_IMAGE_EXTENSIONS = new Map([
+  ["image/png", ".png"],
+  ["image/jpeg", ".jpg"],
+  ["image/webp", ".webp"]
+]);
+
+app.post("/api/projects/:slug/storyboard/frames/:frameId/replace-image", storyboardImageUpload.single("file"), (req, res) => {
+  try {
+    if (!req.file?.buffer?.length) return res.status(400).json({ error: "Image file required" });
+    const extension = STORYBOARD_IMAGE_EXTENSIONS.get(String(req.file.mimetype || "").toLowerCase());
+    if (!extension) return res.status(415).json({ error: "Use a PNG, JPEG, or WebP image." });
+    const result = registerStoryboardFrameReplacement(req.params.slug, req.params.frameId, {
+      buffer: req.file.buffer,
+      extension,
+      sourceFileName: req.file.originalname
+    });
+    res.json({ ...result, summary: storyboardSummary(result.storyboard) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.get("/api/projects/:slug/storyboard/frames/:frameId/workflow", async (req, res) => {
+  try {
+    const built = await downloadStoryboardFrameWorkflow(req.params.slug, req.params.frameId);
+    res
+      .type("application/json")
+      .attachment(built.workflowName)
+      .send(JSON.stringify(built.graph, null, 2));
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.post("/api/projects/:slug/storyboard/frames/:frameId/push-to-comfyui", async (req, res) => {
+  try {
+    res.json(await pushStoryboardFrameToComfyUI(req.params.slug, req.params.frameId));
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.post("/api/projects/:slug/storyboard/workflows/push-all-to-comfyui", async (req, res) => {
+  try {
+    res.json(await pushAllStoryboardFrameWorkflowsToComfyUI(req.params.slug));
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.post("/api/projects/:slug/storyboard/frames/:frameId/generate", async (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    const storyboard = loadStoryboard(req.params.slug);
+    const compiled = await compileStoryboardFramePrompt(project, storyboard, req.params.frameId);
+    const prepared = markStoryboardFrameQueued(req.params.slug, req.params.frameId);
+    const job = enqueue({
+      type: "generate_storyboard_frame",
+      projectSlug: req.params.slug,
+      label: `Generate storyboard image · ${compiled.frame.ownerId || req.params.frameId}`,
+      refs: {
+        frameId: req.params.frameId,
+        workflowId: compiled.graph.extra?.premiere316?.workflowId,
+        workflowHash: compiled.workflowHash,
+        generationFingerprint: prepared.generationFingerprint,
+        filenamePrefix: prepared.filenamePrefix,
+        seed: prepared.seed,
+        resolution: prepared.resolution
+      }
+    });
+    res.json({ storyboard: prepared.storyboard, summary: storyboardSummary(prepared.storyboard), job });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
 app.put("/api/projects/:slug", (req, res) => {
   try {
     const existing = loadProject(req.params.slug);
@@ -481,6 +618,7 @@ app.put("/api/projects/:slug", (req, res) => {
       ...body,
       slug: existing.slug,
       createdAt: existing.createdAt,
+      category: existing.category || body.category || "feature",
       screenplay: existing.screenplay,
       assets: existing.assets,
       frames: existing.frames,
@@ -542,6 +680,7 @@ function currentScreenplayRevision(project) {
 }
 
 function screenplayApprovalCurrent(project) {
+  if (skipApproval(project) || skipScreenplay(project)) return true;
   const screenplay = project?.screenplay;
   const revision = currentScreenplayRevision(project);
   return Boolean(
@@ -560,7 +699,9 @@ function canonicalFrameCurrent(project, frameOrFile) {
   const frame = typeof frameOrFile === "string"
     ? (project.frames || []).find((item) => item.file === frameOrFile)
     : frameOrFile;
-  if (!frame || frame.source !== "asset-foundry-approved" || !frame.assetId) return false;
+  if (!frame) return false;
+  if (skipApproval(project)) return Boolean(frame.file);
+  if (frame.source !== "asset-foundry-approved" || !frame.assetId) return false;
   const asset = project.assets?.items?.find((item) => item.id === frame.assetId);
   return Boolean(
     asset &&
@@ -1476,9 +1617,25 @@ app.post("/api/projects/:slug/assets/:assetId/import-audio", upload.single("file
   }
 });
 
-app.post("/api/projects/:slug/import-frame", (req, res) => {
+app.post("/api/projects/:slug/import-frame", upload.single("file"), (req, res) => {
   try {
-    res.status(403).json({ error: "The canonical Project Bin accepts only generated, individually approved Asset Foundry versions. Generate and approve the asset, then use Add Approved to Project Bin." });
+    const project = loadProject(req.params.slug);
+    if (!skipApproval(project)) {
+      return res.status(403).json({ error: "The canonical Project Bin accepts only generated, individually approved Asset Foundry versions. Generate and approve the asset, then use Add Approved to Project Bin." });
+    }
+    if (!req.file?.buffer?.length) return res.status(400).json({ error: "Image file required" });
+    const mimeExt = new Map([["image/png", ".png"], ["image/jpeg", ".jpg"], ["image/webp", ".webp"]]);
+    const fromMime = mimeExt.get(String(req.file.mimetype || "").toLowerCase());
+    const fromName = path.extname(String(req.file.originalname || "")).toLowerCase();
+    const extension = fromMime || ([".png", ".jpg", ".jpeg", ".webp"].includes(fromName) ? fromName : null);
+    if (!extension) return res.status(415).json({ error: "Use a PNG, JPEG, or WebP image." });
+    const framesDir = mediaDir(project, "frames");
+    fs.mkdirSync(framesDir, { recursive: true });
+    const filename = `shorts_${Date.now()}${extension === ".jpeg" ? ".jpg" : extension}`;
+    fs.writeFileSync(path.join(framesDir, filename), req.file.buffer);
+    const frame = registerFrame(project, filename, req.file.originalname || filename, { source: "shorts-import" });
+    saveProject(project);
+    res.json({ project, frame });
   } catch (e) {
     res.status(400).json({ error: String(e.message) });
   }
@@ -1618,9 +1775,28 @@ app.post("/api/projects/:slug/clips/:clipId/guides", (req, res) => {
   }
 });
 
-app.post("/api/projects/:slug/clips/:clipId/guides/upload", (req, res) => {
+app.post("/api/projects/:slug/clips/:clipId/guides/upload", upload.single("file"), (req, res) => {
   try {
-    res.status(403).json({ error: "Direct guide uploads are locked. Generate and approve the image in Asset Foundry, add it to the Project Bin, then attach it to the clip." });
+    const project = loadProject(req.params.slug);
+    if (!skipApproval(project)) {
+      return res.status(403).json({ error: "Direct guide uploads are locked. Generate and approve the image in Asset Foundry, add it to the Project Bin, then attach it to the clip." });
+    }
+    const clip = findClip(project, req.params.clipId);
+    if (!clip) return res.status(404).json({ error: "clip not found" });
+    if (!req.file?.buffer?.length) return res.status(400).json({ error: "Image file required" });
+    const mimeExt = new Map([["image/png", ".png"], ["image/jpeg", ".jpg"], ["image/webp", ".webp"]]);
+    const fromMime = mimeExt.get(String(req.file.mimetype || "").toLowerCase());
+    const fromName = path.extname(String(req.file.originalname || "")).toLowerCase();
+    const extension = fromMime || ([".png", ".jpg", ".jpeg", ".webp"].includes(fromName) ? fromName : null);
+    if (!extension) return res.status(415).json({ error: "Use a PNG, JPEG, or WebP image." });
+    const framesDir = mediaDir(project, "frames");
+    fs.mkdirSync(framesDir, { recursive: true });
+    const filename = `shorts_guide_${Date.now()}${extension === ".jpeg" ? ".jpg" : extension}`;
+    fs.writeFileSync(path.join(framesDir, filename), req.file.buffer);
+    registerFrame(project, filename, req.file.originalname || filename, { source: "shorts-import" });
+    const guide = addGuide(project, clip, { ...req.body, file: filename, source: "shorts-import" });
+    saveProject(project);
+    res.json({ project, guide });
   } catch (e) {
     res.status(400).json({ error: String(e.message) });
   }
@@ -2027,7 +2203,7 @@ app.post("/api/queue/:id/cancel", (req, res) => res.json({ ok: cancelJob(req.par
 
 // ---------- media ----------
 app.get("/media/:slug/:kind/:file", (req, res) => {
-  const allowed = new Set(["frames", "clips", "audio", "assets", "masters"]);
+  const allowed = new Set(["frames", "clips", "audio", "assets", "storyboard", "masters"]);
   if (!allowed.has(req.params.kind)) return res.status(404).end();
   const file = path.basename(req.params.file);
   const disk = path.join(projectDir(req.params.slug), "media", req.params.kind, file);

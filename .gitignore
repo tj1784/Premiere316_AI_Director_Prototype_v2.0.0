@@ -18,6 +18,7 @@ MANIFEST.sha256
 .env
 .env.*
 !.env.example
+config/premiere316.local.json
 *.pem
 *.key
 *.pfx

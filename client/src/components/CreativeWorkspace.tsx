@@ -82,6 +82,8 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
   ) || null;
 
   const scoreUploadRef = useRef<HTMLInputElement>(null);
+  const shortsFrameRef = useRef<HTMLInputElement>(null);
+  const isShorts = project.category === "shorts" || project.settings?.skipApproval === true;
   const programVideoRef = useRef<HTMLVideoElement>(null);
   const masterVideoRef = useRef<HTMLVideoElement>(null);
   const [search, setSearch] = useState("");
@@ -188,7 +190,9 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
     const frame = typeof frameOrFile === "string"
       ? (project.frames || []).find((item: any) => item.file === frameOrFile)
       : frameOrFile;
-    if (!frame || frame.source !== "asset-foundry-approved" || !frame.assetId) return false;
+    if (!frame) return false;
+    if (isShorts) return Boolean(frame.file);
+    if (frame.source !== "asset-foundry-approved" || !frame.assetId) return false;
     const asset = project.assets?.items?.find((item: any) => item.id === frame.assetId);
     const active = asset?.versions?.find((version: any) => Number(version.v) === Number(asset.activeVersion));
     return Boolean(
@@ -846,7 +850,14 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
             <div className="generation-preview">
               {sourceSrc ? <img src={sourceSrc} alt="Generation reference" /> : <EmptyMonitor>Select a reference image</EmptyMonitor>}
               <span className={`generation-role ${roleClass(guideDraft.role)}`}>{roleLetter(guideDraft.role)}</span>
-              <button className="upload-tile" onClick={(event) => { event.stopPropagation(); onOpenAssets(); }} title="Create and approve an image in Asset Foundry"><span>▣</span>Create in Asset Foundry</button>
+              {isShorts ? (
+                <>
+                  <button className="upload-tile" onClick={(event) => { event.stopPropagation(); shortsFrameRef.current?.click(); }} title="Import a still into this shorts project"><span>▣</span>Import still</button>
+                  <input ref={shortsFrameRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void store.importFrame(file); event.target.value = ""; }} />
+                </>
+              ) : (
+                <button className="upload-tile" onClick={(event) => { event.stopPropagation(); onOpenAssets(); }} title="Create and approve an image in Asset Foundry"><span>▣</span>Create in Asset Foundry</button>
+              )}
             </div>
             <div className="generation-fields">
               <div className="field-row">

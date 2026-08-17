@@ -6,16 +6,17 @@ import ScreenplayWorkspace from "./components/ScreenplayWorkspace";
 import AssetsWorkspace from "./components/AssetsWorkspace";
 import StoryboardWorkspace from "./components/StoryboardWorkspace";
 import PiExpertDock from "./components/PiExpertDock";
+import ComfyConnectionDialog from "./components/ComfyConnectionDialog";
 
 type ActivePage = "project-gate" | "screenplay" | "storyboard" | "assets" | "media" | "edit" | "generate" | "master" | "export";
 
-function portLabel(url: string | undefined, fallback: number) {
-  if (!url) return `:${fallback}`;
+function endpointLabel(url: string | undefined, fallback: number) {
+  if (!url) return `127.0.0.1:${fallback}`;
   try {
     const parsed = new URL(url);
-    return parsed.port ? `:${parsed.port}` : `:${fallback}`;
+    return parsed.host || `127.0.0.1:${fallback}`;
   } catch {
-    return `:${fallback}`;
+    return url;
   }
 }
 
@@ -23,6 +24,7 @@ export default function App() {
   const store = useStore();
   const [activePage, setActivePage] = useState<ActivePage>("edit");
   const [piOpen, setPiOpen] = useState(false);
+  const [comfyDialogOpen, setComfyDialogOpen] = useState(false);
 
   useEffect(() => {
     store.refreshHealth();
@@ -41,8 +43,39 @@ export default function App() {
     };
   }, []);
 
-  if (!store.project) return <><ProjectGate /><PiExpertDock activePage="project-gate" open={piOpen} onOpenChange={setPiOpen} /></>;
+  const openComfyDialog = () => {
+    store.setError(null);
+    setComfyDialogOpen(true);
+  };
+  const connectComfyUI = async (comfyUrl: string) => {
+    const connected = await store.configureComfyUI(comfyUrl);
+    if (connected) setComfyDialogOpen(false);
+    return connected;
+  };
+  const startCurrentComfyUI = async () => {
+    await store.restartComfyUI();
+    const connected = Boolean(useStore.getState().health.comfy);
+    if (connected) setComfyDialogOpen(false);
+    return connected;
+  };
+  const comfyDialog = (
+    <ComfyConnectionDialog
+      open={comfyDialogOpen}
+      initialUrl={store.health.comfyUrl}
+      busy={store.comfyConnectBusy || store.comfyRestartBusy || store.premiereRestartBusy}
+      startingCurrent={store.comfyRestartBusy || store.health.comfyRestarting}
+      error={store.error}
+      onClose={() => setComfyDialogOpen(false)}
+      onConnect={connectComfyUI}
+      onStartCurrent={!store.health.comfy && store.health.capabilities?.dedicatedComfyRestart
+        ? startCurrentComfyUI
+        : undefined}
+    />
+  );
 
+  if (!store.project) return <><ProjectGate onConnectComfyUI={openComfyDialog} /><PiExpertDock activePage="project-gate" open={piOpen} onOpenChange={setPiOpen} />{comfyDialog}</>;
+
+  const isShorts = store.project.category === "shorts" || store.project.settings?.skipScreenplay === true;
   const projectJobs = store.jobs.filter((job) => job.projectSlug === store.project.slug);
   const running = projectJobs.filter((job) => job.status === "running" || job.status === "queued").length;
 
@@ -60,11 +93,12 @@ export default function App() {
         <button className="project-switcher" onClick={() => store.closeProject()}>
           <span className="muted">Project:</span>
           <b>{store.project.name}</b>
+          {isShorts ? <span className="muted"> · shorts</span> : null}
           <span className="chevron">⌄</span>
         </button>
 
         <nav className="primary-nav" aria-label="Workspace navigation">
-          <button className={activePage === "screenplay" ? "active" : ""} onClick={() => setActivePage("screenplay")}>Screenplay</button>
+          {isShorts ? null : <button className={activePage === "screenplay" ? "active" : ""} onClick={() => setActivePage("screenplay")}>Screenplay</button>}
           <button className={activePage === "storyboard" ? "active" : ""} onClick={() => setActivePage("storyboard")}>Storyboard</button>
           <button className={activePage === "assets" ? "active" : ""} onClick={() => setActivePage("assets")}>Assets</button>
           <button className={activePage === "media" ? "active" : ""} onClick={() => { setActivePage("media"); store.setWorkbench("guide"); }}>Media</button>
@@ -87,27 +121,42 @@ export default function App() {
           >
             {store.premiereRestartBusy ? "RESTARTING APP…" : "↻ RESTART PREMIERE316"}
           </button>
-          <span className={`connection-pill ${store.health.comfy ? "online" : "offline"}`}>
+          <span
+            className={`connection-pill ${store.health.comfy ? "online" : "offline"}`}
+            title={store.health.comfyUrl || "http://127.0.0.1:8188"}
+          >
             <span className="connection-dot" />
             {store.health.comfy
-              ? `ComfyUI Connected ${portLabel(store.health.comfyUrl, 8188)}`
-              : `ComfyUI Offline ${portLabel(store.health.comfyUrl, 8190)}`}
+              ? `ComfyUI Connected ${endpointLabel(store.health.comfyUrl, 8188)}`
+              : `ComfyUI Offline ${endpointLabel(store.health.comfyUrl, 8188)}`}
           </span>
           <button
             className="pi-header-button"
-            disabled={store.comfyRestartBusy || store.health.comfyRestarting || running > 0 || !store.health.capabilities?.dedicatedComfyRestart}
+            disabled={store.comfyConnectBusy || store.comfyRestartBusy || store.health.comfyRestarting || running > 0 || (store.health.comfy && !store.health.capabilities?.dedicatedComfyRestart)}
             title={running
-              ? "Finish or stop active generation jobs before restarting ComfyUI."
-              : store.health.capabilities?.dedicatedComfyRestart
-                ? `Safely restart Premiere316's routed ComfyUI ${portLabel(store.health.comfyUrl, 8188)}.`
-                : "The local ComfyUI restart helper is unavailable."}
+              ? "Finish or stop active generation jobs before changing or restarting ComfyUI."
+              : !store.health.comfy
+                ? "Enter the IP address and port of the ComfyUI Premiere316 should use."
+                : store.health.capabilities?.dedicatedComfyRestart
+                  ? `Safely restart Premiere316's routed ComfyUI ${endpointLabel(store.health.comfyUrl, 8188)}.`
+                  : "This connected ComfyUI can be changed in Settings, but it cannot be restarted from Premiere316."}
             onClick={() => {
-              if (window.confirm(`Restart ComfyUI ${portLabel(store.health.comfyUrl, 8188)} now? The generation queue must be idle.`)) {
+              if (!store.health.comfy) {
+                openComfyDialog();
+                return;
+              }
+              if (window.confirm(`Restart ComfyUI ${endpointLabel(store.health.comfyUrl, 8188)} now? The generation queue must be idle.`)) {
                 void store.restartComfyUI();
               }
             }}
           >
-            {store.comfyRestartBusy || store.health.comfyRestarting ? "RESTARTING…" : "↻ RESTART COMFYUI"}
+            {store.comfyConnectBusy
+              ? "CONNECTING…"
+              : store.comfyRestartBusy || store.health.comfyRestarting
+                ? "RESTARTING…"
+                : store.health.comfy
+                  ? "↻ RESTART COMFYUI"
+                  : "+ CONNECT COMFYUI"}
           </button>
           {activePage === "screenplay" ? (
             <span className={`connection-pill ${store.health.screenplayModelAvailable ? "online" : "offline"}`} title={store.health.screenplayModel}>
@@ -118,7 +167,7 @@ export default function App() {
           <button className="icon-button" title="Save project" onClick={() => store.saveProject()}>⌘S</button>
           <button className="icon-button" title="Render queue">◫{running ? <em>{running}</em> : null}</button>
           <button className={`pi-header-button ${piOpen ? "active" : ""}`} title="Open Pi ComfyUI Expert" onClick={() => setPiOpen((value) => !value)}><span>π</span> Pi Expert</button>
-          <button className="icon-button" title="Settings">⚙</button>
+          <button className="icon-button" title="ComfyUI connection settings" onClick={openComfyDialog}>⚙</button>
           <span className="avatar">TJ</span>
         </div>
       </header>
@@ -131,7 +180,7 @@ export default function App() {
         </button>
       )}
 
-      {activePage === "screenplay"
+      {activePage === "screenplay" && !isShorts
         ? <ScreenplayWorkspace onOpenEditor={() => setActivePage("edit")} onOpenAssets={() => setActivePage("assets")} />
         : activePage === "storyboard"
           ? <StoryboardWorkspace onOpenAssets={() => setActivePage("assets")} />
@@ -139,6 +188,7 @@ export default function App() {
           ? <AssetsWorkspace onOpenEditor={() => setActivePage("edit")} />
           : <CreativeWorkspace onOpenAssets={() => setActivePage("assets")} />}
       <PiExpertDock activePage={activePage} open={piOpen} onOpenChange={setPiOpen} />
+      {comfyDialog}
     </div>
   );
 }
