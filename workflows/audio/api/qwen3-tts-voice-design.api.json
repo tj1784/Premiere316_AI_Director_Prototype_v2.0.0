@@ -1,0 +1,49 @@
+{
+  "4": {
+    "class_type": "FB_Qwen3TTSVoiceDesign",
+    "inputs": {
+      "text": ["5", 0],
+      "instruct": ["6", 0],
+      "model_choice": "1.7B",
+      "device": "auto",
+      "precision": "bf16",
+      "language": "English",
+      "seed": 278513207691714,
+      "max_new_tokens": 2048,
+      "top_p": 0.8,
+      "top_k": 20,
+      "temperature": 1,
+      "repetition_penalty": 1.05,
+      "attention": "auto",
+      "unload_model_after_generate": false
+    }
+  },
+  "5": {
+    "class_type": "easy positive",
+    "inputs": {
+      "positive": "What’s up, I’m Pixaroma. In this workflow we design a custom voice. Instead of picking a preset speaker, you describe it."
+    }
+  },
+  "6": {
+    "class_type": "easy positive",
+    "inputs": {
+      "positive": "Male voice. Deep, modern YouTuber narrator. Confident and friendly. Medium pace, clear pronunciation. Slight smile. Close-mic studio sound, clean and crisp. Natural pauses."
+    }
+  },
+  "8": {
+    "class_type": "SaveAudioMP3",
+    "inputs": {
+      "audio": ["13", 0],
+      "filename_prefix": "audio/voice",
+      "quality": "V0"
+    }
+  },
+  "13": {
+    "class_type": "LayerUtility: PurgeVRAM V2",
+    "inputs": {
+      "anything": ["4", 0],
+      "purge_cache": true,
+      "purge_models": true
+    }
+  }
+}

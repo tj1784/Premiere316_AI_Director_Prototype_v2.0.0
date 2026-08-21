@@ -22,6 +22,42 @@ export async function comfyAlive() {
   }
 }
 
+export async function getComfySystemStats() {
+  const response = await fetch(`${COMFY_URL}/system_stats`, { signal: AbortSignal.timeout(5000) });
+  if (!response.ok) throw new Error(`ComfyUI system_stats failed: ${response.status}`);
+  return response.json();
+}
+
+export async function getComfyQueueState() {
+  const response = await fetch(`${COMFY_URL}/queue`, { signal: AbortSignal.timeout(5000) });
+  if (!response.ok) throw new Error(`ComfyUI queue failed: ${response.status}`);
+  const queue = await response.json();
+  return {
+    running: Array.isArray(queue?.queue_running) ? queue.queue_running.length : 0,
+    pending: Array.isArray(queue?.queue_pending) ? queue.queue_pending.length : 0,
+    raw: queue
+  };
+}
+
+export async function releaseComfyGpuMemory() {
+  const queue = await getComfyQueueState();
+  if (queue.running || queue.pending) {
+    const error = new Error(`ComfyUI is busy (${queue.running} running, ${queue.pending} pending); GPU memory cannot be released safely`);
+    error.code = "COMFY_QUEUE_BUSY";
+    error.statusCode = 409;
+    error.queue = { running: queue.running, pending: queue.pending };
+    throw error;
+  }
+  const response = await fetch(`${COMFY_URL}/free`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ unload_models: true, free_memory: true }),
+    signal: AbortSignal.timeout(30_000)
+  });
+  if (!response.ok) throw new Error(`ComfyUI GPU release failed: ${response.status}`);
+  return { released: true, queue: { running: 0, pending: 0 } };
+}
+
 export async function getObjectInfo(force = false) {
   if (!force && objectInfoCache && Date.now() - objectInfoAt < 5 * 60_000) return objectInfoCache;
   const r = await fetch(`${COMFY_URL}/object_info`, { signal: AbortSignal.timeout(30_000) });
@@ -232,7 +268,49 @@ export function generationCancelledError(message = "Generation stopped by direct
   return error;
 }
 
-export async function runPrompt(promptGraph, { onProgress, onBeat, signal } = {}) {
+function queuePromptIds(entries) {
+  return new Set((Array.isArray(entries) ? entries : [])
+    .map((entry) => Array.isArray(entry) ? entry[1] : entry?.prompt_id)
+    .filter(Boolean)
+    .map(String));
+}
+
+export async function cancelComfyPrompt(promptId, { baseUrl = COMFY_URL, fetchImpl = fetch } = {}) {
+  const id = String(promptId || "").trim();
+  if (!id) throw new Error("A ComfyUI prompt ID is required for cancellation");
+  const jobCancel = await fetchImpl(`${baseUrl}/api/jobs/${encodeURIComponent(id)}/cancel`, {
+    method: "POST",
+    signal: AbortSignal.timeout(10_000)
+  });
+  if (jobCancel.ok) return { method: "job-cancel" };
+  if (![404, 405].includes(jobCancel.status)) throw new Error(`ComfyUI job cancellation failed: ${jobCancel.status}`);
+
+  await fetchImpl(`${baseUrl}/queue`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ delete: [id] }),
+    signal: AbortSignal.timeout(10_000)
+  });
+  const queueResponse = await fetchImpl(`${baseUrl}/queue`, { signal: AbortSignal.timeout(10_000) });
+  if (!queueResponse.ok) throw new Error(`ComfyUI queue verification failed: ${queueResponse.status}`);
+  const queue = await queueResponse.json();
+  const runningIds = queuePromptIds(queue?.queue_running);
+  const pendingIds = queuePromptIds(queue?.queue_pending);
+  if (pendingIds.has(id)) throw new Error("ComfyUI did not remove the queued prompt");
+  if (runningIds.has(id)) {
+    const interrupt = await fetchImpl(`${baseUrl}/interrupt`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt_id: id }),
+      signal: AbortSignal.timeout(10_000)
+    });
+    if (!interrupt.ok) throw new Error(`ComfyUI targeted interruption failed: ${interrupt.status}`);
+    return { method: "targeted-interrupt" };
+  }
+  return { method: "pending-delete" };
+}
+
+export async function runPrompt(promptGraph, { onProgress, onBeat, onSubmitted, onStatus, signal } = {}) {
   if (signal?.aborted) throw generationCancelledError();
   const clientId = crypto.randomUUID();
   const body = JSON.stringify({ prompt: promptGraph, client_id: clientId });
@@ -254,6 +332,13 @@ export async function runPrompt(promptGraph, { onProgress, onBeat, signal } = {}
     throw new Error(`ComfyUI /prompt rejected: ${r.status} ${txt.slice(0, 2000)}`);
   }
   const { prompt_id } = await r.json();
+  if (!prompt_id) {
+    ws.close();
+    throw new Error("ComfyUI accepted the prompt without returning a prompt_id");
+  }
+  if (onSubmitted) {
+    try { onSubmitted({ promptId: String(prompt_id), clientId }); } catch {}
+  }
 
   const outputs = await new Promise((resolve, reject) => {
     let settled = false;
@@ -267,17 +352,12 @@ export async function runPrompt(promptGraph, { onProgress, onBeat, signal } = {}
       }
     };
     abortHandler = async () => {
-      // Delete if it is still pending, then interrupt if it is already executing.
-      // Premiere316 serializes GPU work, so the active prompt belongs to this job.
-      await Promise.allSettled([
-        fetch(`${COMFY_URL}/queue`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ delete: [prompt_id] })
-        }),
-        fetch(`${COMFY_URL}/interrupt`, { method: "POST" })
-      ]);
-      finish(reject, generationCancelledError());
+      try {
+        await cancelComfyPrompt(prompt_id);
+        finish(reject, generationCancelledError());
+      } catch (error) {
+        finish(reject, error);
+      }
     };
     if (signal) signal.addEventListener("abort", abortHandler, { once: true });
     if (signal?.aborted) return void abortHandler();
@@ -286,8 +366,11 @@ export async function runPrompt(promptGraph, { onProgress, onBeat, signal } = {}
       if (isBinary) return;
       let msg;
       try { msg = JSON.parse(raw.toString()); } catch { return; }
+      if (onStatus && msg?.data?.prompt_id === prompt_id) {
+        try { onStatus({ type: msg.type, data: msg.data }); } catch {}
+      }
       if (msg.type === "progress" && onProgress) {
-        onProgress({ value: msg.data.value, max: msg.data.max });
+        onProgress({ value: msg.data.value, max: msg.data.max, nodeId: msg.data.node || null, promptId: String(prompt_id) });
       }
       if (msg.type === "executing" && msg.data.prompt_id === prompt_id && msg.data.node === null) {
         // finished — pull history
@@ -297,7 +380,12 @@ export async function runPrompt(promptGraph, { onProgress, onBeat, signal } = {}
         } catch (e) { finish(reject, e); }
       }
       if (msg.type === "execution_error" && msg.data.prompt_id === prompt_id) {
-        finish(reject, new Error(`ComfyUI execution error in ${msg.data.node_type}: ${msg.data.exception_message}`));
+        const detail = msg.data.exception_message || msg.data.exception_type || "Unknown ComfyUI execution error";
+        const error = new Error(`ComfyUI execution error in ${msg.data.node_type || "unknown node"} (${msg.data.node_id || "unknown id"}): ${detail}`);
+        error.code = "COMFY_EXECUTION_ERROR";
+        error.comfy = msg.data;
+        error.promptId = String(prompt_id);
+        finish(reject, error);
       }
     });
     ws.on("error", (e) => finish(reject, e));

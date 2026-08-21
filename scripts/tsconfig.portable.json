@@ -8,6 +8,8 @@
     "outDir": "../client/dist/assets",
     "noEmit": false,
     "noEmitOnError": true,
+    "allowJs": true,
+    "checkJs": false,
     "declaration": false,
     "sourceMap": false
   },

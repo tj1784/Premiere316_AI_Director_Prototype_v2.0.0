@@ -37,11 +37,31 @@ export function skipScreenplay(project) {
   return isShortsProject(project) || project?.settings?.skipScreenplay === true;
 }
 
+const WINDOWS_ATOMIC_RENAME_RETRY_CODES = new Set(["EACCES", "EBUSY", "EPERM"]);
+
+function waitSync(milliseconds) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+}
+
 function writeTextAtomic(file, text) {
   const temp = `${file}.${process.pid}.${crypto.randomUUID()}.tmp`;
   try {
     fs.writeFileSync(temp, text);
-    fs.renameSync(temp, file);
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        fs.renameSync(temp, file);
+        break;
+      } catch (error) {
+        const retryable = process.platform === "win32"
+          && WINDOWS_ATOMIC_RENAME_RETRY_CODES.has(String(error?.code || ""))
+          && attempt < 8;
+        if (!retryable) throw error;
+        // Antivirus/indexer handles can briefly prevent MoveFileEx from
+        // replacing project.json. Keep the prepared temp file immutable and
+        // retry the atomic rename instead of falling back to a partial write.
+        waitSync(Math.min(250, 10 * (2 ** attempt)));
+      }
+    }
   } catch (error) {
     try { if (fs.existsSync(temp)) fs.unlinkSync(temp); } catch {}
     throw error;

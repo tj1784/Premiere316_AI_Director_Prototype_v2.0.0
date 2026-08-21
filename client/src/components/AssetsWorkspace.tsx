@@ -87,7 +87,7 @@ function AssetEditorDialog({ mode, asset, workflows, busy, onCancel, onSubmit, o
         });
       }}>
         <header>
-          <div><p className="eyebrow">ASSET FOUNDRY</p><h2 id="asset-editor-title">{mode === "create" ? "Create New Asset" : "Edit Asset Details"}</h2></div>
+          <div><p className="eyebrow">ASSET LIBRARY</p><h2 id="asset-editor-title">{mode === "create" ? "Create New Asset" : "Edit Asset Details"}</h2></div>
           <button type="button" className="asset-dialog-close" aria-label="Close asset editor" onClick={onCancel} disabled={busy}>×</button>
         </header>
         <div className="asset-dialog-fields">
@@ -109,7 +109,7 @@ function AssetEditorDialog({ mode, asset, workflows, busy, onCancel, onSubmit, o
               <button data-testid="asset-audio-upload" type="button" className="primary-action" disabled={busy || !audioFile} onClick={() => { if (audioFile) onUploadAudio(audioFile); }}>{busy ? "Uploading…" : "Upload Audio"}</button>
             </section>
           ) : null}
-          <label className="wide"><span>Generation Prompt / Direction {category === "voice" ? <small className={prompt.length > 1000 ? "asset-limit-error" : "asset-character-count"}>{prompt.length}/1000 · ElevenLabs Voice Design limit</small> : null}</span><textarea data-testid="asset-prompt" rows={8} maxLength={category === "voice" ? 1000 : undefined} value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Describe the exact production asset and continuity requirements." /></label>
+          <label className="wide"><span>Generation Prompt / Direction {category === "voice" ? <small className={prompt.length > 4000 ? "asset-limit-error" : "asset-character-count"}>{prompt.length}/4000 · Qwen VoiceDesign direction</small> : null}</span><textarea data-testid="asset-prompt" rows={8} maxLength={category === "voice" ? 4000 : undefined} value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Describe the exact production asset and continuity requirements." /></label>
           {category === "voice" ? <label className="wide"><span>Audition Line</span><textarea rows={3} value={sampleText} onChange={(event) => setSampleText(event.target.value)} /></label> : null}
           <label><span>Continuity Locks <small>one per line</small></span><textarea rows={4} value={continuity} onChange={(event) => setContinuity(event.target.value)} /></label>
           <label><span>Dependencies <small>asset IDs, one per line</small></span><textarea rows={4} value={dependencies} onChange={(event) => setDependencies(event.target.value)} /></label>
@@ -143,8 +143,7 @@ function assetApproved(project: any, asset: any) {
     String(asset.approval.workflowHash || "") === String(asset.workflowHash || "") &&
     active.workflowId === asset.workflowId &&
     String(active.workflowHash || "") === String(asset.workflowHash || "") &&
-    asset.approval.screenplayRevision === project?.screenplay?.revision &&
-    project?.assets?.screenplayHash === project?.screenplay?.revision
+    asset.approval.screenplayRevision === project?.screenplay?.revision
   );
 }
 
@@ -168,6 +167,7 @@ function AssetPreview({ project, asset, large = false }: { project: any; asset: 
     return <div className={`asset-audio-preview ${large ? "large" : ""}`}><span>♫</span><audio controls src={url} /></div>;
   }
   if (/\.(png|jpe?g|webp|gif|svg)$/i.test(file)) return <img className={`asset-image-preview ${large ? "large" : ""}`} src={url} alt={`${asset.name} ${asset.variant}`} />;
+  if (/\.(mp4|webm|mov|mkv|m4v)$/i.test(file)) return <video className={`asset-image-preview ${large ? "large" : ""}`} src={url} controls muted playsInline preload="metadata" aria-label={`${asset.name} ${asset.variant} video`} />;
   return <div className={`asset-placeholder ${large ? "large" : ""}`}><span>✓</span><small>{file}</small></div>;
 }
 
@@ -176,7 +176,8 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
   const project = store.project;
   const assets = project?.assets?.items || [];
   const [category, setCategory] = useState("all");
-  const [selectedId, setSelectedId] = useState<string | null>(assets[0]?.id || null);
+  const selectedId = store.selectedAssetId;
+  const setSelectedId = store.setSelectedAsset;
   const [checked, setChecked] = useState<string[]>([]);
   const [assetSelectionAnchorId, setAssetSelectionAnchorId] = useState<string | null>(null);
   const [confirmGpuHandoff, setConfirmGpuHandoff] = useState(false);
@@ -186,6 +187,7 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
   const [assetEditorBusy, setAssetEditorBusy] = useState(false);
   const assetImageInput = useRef<HTMLInputElement>(null);
   const assetAudioInput = useRef<HTMLInputElement>(null);
+  const assetIdKey = assets.map((asset: any) => asset.id).join("|");
   const selected = assets.find((asset: any) => asset.id === selectedId) || assets[0] || null;
   const [prompt, setPrompt] = useState(selected?.prompt || "");
   const [sampleText, setSampleText] = useState(selected?.sampleText || "");
@@ -193,7 +195,7 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
   useEffect(() => { store.refreshAssetWorkflows(); store.refreshPromptEnhance(); }, []);
   useEffect(() => {
     if (!selectedId || !assets.some((asset: any) => asset.id === selectedId)) setSelectedId(assets[0]?.id || null);
-  }, [project?.assets?.generatedAt, assets.length]);
+  }, [assetIdKey, selectedId]);
   useEffect(() => {
     setPrompt(selected?.prompt || "");
     setSampleText(selected?.sampleText || "");
@@ -236,11 +238,7 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
     project.screenplay?.approval?.status === "approved" &&
     project.screenplay?.approval?.screenplayRevision === project.screenplay?.revision
   );
-  const manifestCurrent = Boolean(
-    approved &&
-    project.assets?.screenplayHash &&
-    project.assets.screenplayHash === project.screenplay?.revision
-  );
+  const manifestCurrent = approved;
   const gpuHandoffWorkflow = store.assetWorkflows.find((workflow: any) =>
     workflow.ready && workflow.availableNow === false && /GPU handoff required/i.test(String(workflow.runtimeWarning || ""))
   );
@@ -352,7 +350,7 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
 
   const deleteSelected = async () => {
     if (!selected) return;
-    const message = `Delete “${selected.name}” from the Asset Foundry?\n\nIts metadata, workflow snapshots, and generated files will be retained in recoverable project history.`;
+    const message = `Retire “${selected.name}” from the Asset Library?\n\nIts metadata, workflow snapshots, and generated files will be retained in recoverable project history.`;
     if (!window.confirm(message)) return;
     await store.deleteAsset(selected.id);
     setChecked((current) => current.filter((id) => id !== selected.id));
@@ -398,10 +396,10 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
         <section className="assets-empty-card premium-panel">
           <div className="assets-empty-orbit"><span>✦</span></div>
           <p className="eyebrow">SCREENPLAY → PRODUCTION</p>
-          <h1>Build the Asset Foundry</h1>
+          <h1>Build the Asset Library</h1>
           <p>Premiere316 will turn the saved screenplay into characters, identity sheets, wardrobe, locations, props, VFX references, guide frames, voices, synchronized sound cues, score cues, and a deterministic title card.</p>
           <div className="assets-empty-models">
-            <span>Krea 2 FP8</span><span>Flux 2 Klein 9B</span><span>Qwen3-TTS 1.7B</span><span>LTX Native Audio</span>
+            <span>Krea 2 BF16</span><span>Flux 2 Klein 9B</span><span>Qwen3-TTS 1.7B</span><span>LTX Native Audio</span>
           </div>
           {!approved && project.screenplay?.markdown ? (
             <button className="primary-action wide asset-approve-action" disabled={store.screenplayBusy} onClick={() => store.approveScreenplay()}>
@@ -426,7 +424,7 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
       <aside className="asset-library-sidebar">
         <div className="asset-sidebar-heading">
           <span className="asset-foundry-mark">✦</span>
-          <div><h2>Asset Foundry</h2><small>{assets.length} production assets</small></div>
+          <div><h2>Asset Library</h2><small>{assets.length} production assets</small></div>
         </div>
         <button className={`asset-category ${category === "all" ? "active" : ""}`} onClick={() => chooseCategory("all")}>
           <span>▦</span><b>All Assets</b><em>{assets.length}</em>
@@ -612,9 +610,9 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
                 <span>
                   Generation Prompt / Direction
                   {selected.promptEnhancement ? <em className="asset-prompt-badge">Grok enhanced</em> : null}
-                  {selected.category === "voice" ? <em className={prompt.length > 1000 ? "asset-limit-error" : "asset-character-count"}>{prompt.length}/1000 · ElevenLabs limit</em> : null}
+                  {selected.category === "voice" ? <em className={prompt.length > 4000 ? "asset-limit-error" : "asset-character-count"}>{prompt.length}/4000 · Qwen VoiceDesign</em> : null}
                 </span>
-                <textarea rows={10} maxLength={selected.category === "voice" ? 1000 : undefined} value={prompt} onChange={(event) => setPrompt(event.target.value)} />
+                <textarea rows={10} maxLength={selected.category === "voice" ? 4000 : undefined} value={prompt} onChange={(event) => setPrompt(event.target.value)} />
               </label>
               {!enhanceActive ? (
                 <button

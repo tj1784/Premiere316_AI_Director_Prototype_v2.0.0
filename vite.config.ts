@@ -16,7 +16,11 @@ export default defineConfig({
     port: 5198,
     proxy: {
       "/api": "http://127.0.0.1:8789",
-      "/media": "http://127.0.0.1:8789"
+      "/media": "http://127.0.0.1:8789",
+      "/integrations/comfyui": {
+        target: "http://127.0.0.1:8789",
+        ws: true
+      }
     }
   }
 });

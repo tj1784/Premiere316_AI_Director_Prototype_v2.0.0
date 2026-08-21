@@ -76,3 +76,23 @@ export function isBundledComfyUrl(value) {
     return false;
   }
 }
+
+export function managedComfyProfile(value) {
+  try {
+    const parsed = new URL(normalizeComfyUrl(value));
+    if (parsed.protocol !== "http:"
+      || !isLocalAddress(parsed.hostname)
+      || (parsed.pathname !== "" && parsed.pathname !== "/")
+      || parsed.search
+      || parsed.hash) return null;
+    if (parsed.port === "8188") return "shared";
+    if (parsed.port === "8190") return "dedicated";
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function isManagedComfyUrl(value) {
+  return Boolean(managedComfyProfile(value));
+}

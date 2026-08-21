@@ -178,10 +178,9 @@ function assertTextOnlyT2vPlan(storyboard, videoPlan, clip) {
   if (videoPlan.workflowProfileId !== T2V_WORKFLOW_PROFILE) {
     throw new Error(`Storyboard video plan ${videoPlan.id} uses unsupported workflow profile ${videoPlan.workflowProfileId || "missing"}; expected ${T2V_WORKFLOW_PROFILE}`);
   }
-  const frameIds = Object.keys(storyboard.frames || {});
-  if (frameIds.length) {
-    throw new Error(`Storyboard T2V package still contains ${frameIds.length} image-generation frame record(s); frames must be {}`);
-  }
+  // Mixed storyboards are valid: another clip may use approved I2V guide
+  // frames while this selected plan remains true text-to-video. The checks
+  // below reject temporal image fields only on this clip and its segments.
   assertNoTemporalImageFields(clip, `Storyboard clip ${clip.id}`);
   assertNoTemporalImageFields(videoPlan, `Storyboard video plan ${videoPlan.id}`);
 
@@ -434,6 +433,102 @@ function t2vPlanSettings(storyboard, videoPlan, clip) {
     durationSeconds: authoredFrames / fps,
     seed: seedForVideoPlan(videoPlan),
     latentX2: width % 64 === 0 && height % 64 === 0
+  };
+}
+
+function t2vRelayGlobalPrompt(prompt) {
+  const source = String(prompt || "").trim();
+  const marker = /(?:^|\n)ACTION TIMELINE\s*\n/i.exec(source);
+  if (!marker) return source;
+
+  const sectionStart = marker.index + (source[marker.index] === "\n" ? 1 : 0);
+  const afterMarker = sectionStart + marker[0].replace(/^\n/, "").length;
+  const remainder = source.slice(afterMarker);
+  const nextSection = /\n(?:PERFORMANCE AND AUDIO|CONTINUITY LOCKS|VISUAL EXECUTION)\s*\n/i.exec(remainder);
+  const sectionEnd = nextSection ? afterMarker + nextSection.index : source.length;
+  const before = source.slice(0, sectionStart).trimEnd();
+  const after = source.slice(sectionEnd).trimStart();
+  return [
+    before,
+    "TEMPORAL PROMPT RELAY",
+    "The frame-specific actions are supplied separately by the Premiere316 Prompt Relay. Apply each local action only inside its assigned frame range; do not repeat the opening action across the full clip.",
+    after
+  ].filter(Boolean).join("\n\n").trim();
+}
+
+function t2vPromptRelaySchedule(storyboard, videoPlan, clip, settings) {
+  const segmentIds = Array.isArray(videoPlan.segmentIds) ? videoPlan.segmentIds : [];
+  if (!segmentIds.length) {
+    throw new Error(`Storyboard video plan ${videoPlan.id} has no Prompt Relay segments`);
+  }
+
+  const segments = segmentIds.map((segmentId, index) => {
+    const source = storyboard.segments?.[segmentId];
+    if (!source) throw new Error(`Storyboard video plan ${videoPlan.id} references missing Prompt Relay segment ${segmentId}`);
+    const start = Number(source.startFrame);
+    const length = Number(source.lengthFrames);
+    const prompt = String(source.prompt || "").trim();
+    if (!Number.isInteger(start) || start < 0 || !Number.isInteger(length) || length < 1) {
+      throw new Error(`Storyboard Prompt Relay segment ${segmentId} has invalid frame bounds`);
+    }
+    if (!prompt) throw new Error(`Storyboard Prompt Relay segment ${segmentId} has an empty prompt`);
+    if (prompt.includes("|")) {
+      throw new Error(`Storyboard Prompt Relay segment ${segmentId} contains the reserved | delimiter`);
+    }
+    return { source, id: segmentId, index, start, length, prompt };
+  });
+
+  let cursor = 0;
+  for (const segment of segments) {
+    if (segment.start !== cursor) {
+      throw new Error(
+        `Storyboard Prompt Relay segments for ${videoPlan.id} are not contiguous: expected frame ${cursor}, received ${segment.start} (${segment.id})`
+      );
+    }
+    cursor += segment.length;
+  }
+  if (cursor !== settings.authoredFrames) {
+    throw new Error(
+      `Storyboard Prompt Relay segments for ${videoPlan.id} cover ${cursor} frames; expected ${settings.authoredFrames}`
+    );
+  }
+
+  const globalPrompt = t2vRelayGlobalPrompt(videoPlan.globalPrompt);
+  if (!globalPrompt) throw new Error(`Storyboard video plan ${videoPlan.id} has no persistent Prompt Relay context`);
+  const localPrompts = segments.map((segment) => segment.prompt).join(" | ");
+  const segmentLengths = segments.map((segment) => segment.length).join(",");
+  const existingTimeline = videoPlan.timelineData && typeof videoPlan.timelineData === "object"
+    ? structuredClone(videoPlan.timelineData)
+    : {};
+  const existingById = new Map((existingTimeline.segments || []).map((segment) => [segment?.id, segment]));
+  const timelineData = {
+    ...existingTimeline,
+    mainTrackEnabled: true,
+    global_prompt: globalPrompt,
+    retakeMode: false,
+    normalStartFrame: 0,
+    normalDurationFrames: settings.authoredFrames,
+    segments: segments.map((segment) => ({
+      ...(existingById.get(segment.id) || {}),
+      id: segment.id,
+      start: segment.start,
+      length: segment.length,
+      prompt: segment.prompt,
+      type: "text",
+      isEndFrame: Boolean(segment.source.isEndFrame)
+    })),
+    motionSegments: Array.isArray(existingTimeline.motionSegments) ? existingTimeline.motionSegments : [],
+    audioSegments: Array.isArray(existingTimeline.audioSegments) ? existingTimeline.audioSegments : []
+  };
+
+  return {
+    globalPrompt,
+    localPrompts,
+    segmentLengths,
+    timelineData,
+    segmentCount: segments.length,
+    authoredFrames: settings.authoredFrames,
+    segments: segments.map(({ id, start, length, prompt }) => ({ id, start, length, prompt }))
   };
 }
 
@@ -1143,6 +1238,65 @@ function validateApiPromptRequiredInputs(apiPrompt, objectInfo) {
   return errors;
 }
 
+function validateApiPromptComboValues(apiPrompt, objectInfo) {
+  const errors = [];
+  for (const [nodeId, node] of Object.entries(apiPrompt || {})) {
+    const inputs = {
+      ...(objectInfo?.[node.class_type]?.input?.required || {}),
+      ...(objectInfo?.[node.class_type]?.input?.optional || {})
+    };
+    for (const [inputName, definition] of Object.entries(inputs)) {
+      const allowed = Array.isArray(definition?.[0]) ? definition[0] : null;
+      const value = node.inputs?.[inputName];
+      const linked = Array.isArray(value) && value.length === 2 && typeof value[0] === "string" && Number.isInteger(value[1]);
+      if (!allowed || value === undefined || value === null || linked) continue;
+      const encoded = JSON.stringify(value);
+      if (!allowed.some((candidate) => JSON.stringify(candidate) === encoded)) {
+        errors.push(`${nodeId} ${node.class_type}.${inputName}=${encoded} (not available in active combo)`);
+      }
+    }
+  }
+  return errors;
+}
+
+let storyboardRuntimeProbeGraphsCache = null;
+
+export function storyboardRuntimeProbeGraphs() {
+  if (!storyboardRuntimeProbeGraphsCache) {
+    storyboardRuntimeProbeGraphsCache = {
+      image: flattenStoryboardWorkflowGraph(loadSourceWorkflowGraph()),
+      video: flattenStoryboardWorkflowGraph(loadT2vSourceWorkflowGraph())
+    };
+  }
+  return storyboardRuntimeProbeGraphsCache;
+}
+
+export function validateStoryboardRuntimeGraph(executionGraph, objectInfo, { seed = 5 } = {}) {
+  if (!executionGraph || !Array.isArray(executionGraph.nodes)) {
+    return {
+      ready: false,
+      missingClasses: [],
+      conversionWarnings: ["The flattened execution graph is unavailable"],
+      missingInputs: [],
+      invalidComboValues: []
+    };
+  }
+  const missingClasses = missingRuntimeClasses(executionGraph, objectInfo);
+  const converted = graphToApi({ nodes: executionGraph.nodes, links: executionGraph.links }, objectInfo);
+  normalizeStoryboardApiPrompt(converted.prompt, seed);
+  const missingInputs = validateApiPromptRequiredInputs(converted.prompt, objectInfo);
+  const invalidComboValues = validateApiPromptComboValues(converted.prompt, objectInfo);
+  const conversionWarnings = converted.warnings || [];
+  return {
+    ready: !missingClasses.length && !conversionWarnings.length && !missingInputs.length && !invalidComboValues.length,
+    missingClasses,
+    conversionWarnings,
+    missingInputs,
+    invalidComboValues,
+    executableNodeCount: Object.keys(converted.prompt || {}).length
+  };
+}
+
 export function buildStoryboardFrameWorkflowGraph(project, storyboard, frameId, options = {}) {
   const frame = findFrame(storyboard, frameId);
   const graph = structuredClone(loadSourceWorkflowGraph());
@@ -1580,12 +1734,16 @@ function enableLtx25IngredientsConditioning(apiPrompt, built) {
   const master = requiredApiNode(apiPrompt, 5900, "Premiere316LTXMasterControls");
   const resolver = requiredApiNode(apiPrompt, 5902, "Premiere316AssetResolver");
   const promptBuilder = requiredApiNode(apiPrompt, 5903, "Premiere316LTXPromptBuilder");
+  const nativeNegative = requiredApiNode(apiPrompt, 5812, "DenoLTXPromptGuide");
   const icLoader = requiredApiNode(apiPrompt, 5914, "LTXICLoRALoaderModelOnly");
   const sheet = requiredApiNode(apiPrompt, 5915, "Premiere316ReferenceSheetBuilder");
   const promptGuide = requiredApiNode(apiPrompt, 5916, "DenoLTXPromptGuide");
   const videoLatent = requiredApiNode(apiPrompt, 5917, "EmptyLTXVLatentVideo");
   const audioLatent = requiredApiNode(apiPrompt, 5918, "LTXVEmptyLatentAudio");
   const icGuide = requiredApiNode(apiPrompt, 5919, "LTXAddVideoICLoRAGuide");
+  const director = requiredApiNode(apiPrompt, 5960, "LTXDirector");
+  const relayConditioning = requiredApiNode(apiPrompt, 5961, "LTXVConditioning");
+  const cfgGuider = requiredApiNode(apiPrompt, 5941, "CFGGuider");
   const videoVaeSwitch = requiredApiNode(apiPrompt, 5911, "LazySwitchKJ");
   const audioVaeSwitch = requiredApiNode(apiPrompt, 5912, "LazySwitchKJ");
   const imageSwitch = requiredApiNode(apiPrompt, 5921, "LazySwitchKJ");
@@ -1623,7 +1781,10 @@ function enableLtx25IngredientsConditioning(apiPrompt, built) {
       audioVae: audioVae.inputs.vae_name,
       resolverNodeId: "5902",
       sheetNodeId: null,
-      guideNodeId: null
+      guideNodeId: null,
+      promptRelayNodeId: "5960",
+      segmentCount: built.promptRelay.segmentCount,
+      segmentLengths: built.promptRelay.segmentLengths
     };
   }
 
@@ -1662,6 +1823,42 @@ function enableLtx25IngredientsConditioning(apiPrompt, built) {
   icGuide.inputs.strength = 1.0;
   icGuide.inputs.crop = "center";
   icGuide.inputs.use_tiled_encode = settings.generationFrames > 121;
+
+  // The semantic-reference branch must retain the exact Premiere segment
+  // schedule. The previous graph encoded one long string through node 5916,
+  // bypassing LTXDirector entirely, so the first authored action dominated the
+  // whole clip. Feed the IC-LoRA-patched model and base latent through Director
+  // first, then add the static Ingredients guide to its scheduled conditioning.
+  director.inputs.model = ["5914", 0];
+  director.inputs.clip = ["5802", 0];
+  director.inputs.optional_latent = ["5917", 0];
+  director.inputs.global_prompt = built.promptRelay.globalPrompt;
+  director.inputs.start_second = 0;
+  director.inputs.end_second = settings.durationSeconds;
+  director.inputs.duration_seconds = settings.durationSeconds;
+  director.inputs.start_frame = 0;
+  director.inputs.end_frame = settings.authoredFrames;
+  director.inputs.duration_frames = settings.authoredFrames;
+  director.inputs.timeline_data = JSON.stringify(built.promptRelay.timelineData);
+  director.inputs.local_prompts = built.promptRelay.localPrompts;
+  director.inputs.segment_lengths = built.promptRelay.segmentLengths;
+  director.inputs.epsilon = 0.001;
+  director.inputs.guide_strength = "";
+  director.inputs.use_custom_audio = false;
+  director.inputs.use_custom_motion = false;
+  director.inputs.inpaint_audio = false;
+  director.inputs.frame_rate = settings.fps;
+  director.inputs.custom_width = settings.width;
+  director.inputs.custom_height = settings.height;
+  relayConditioning.inputs.positive = ["5960", 1];
+  relayConditioning.inputs.negative = ["5812", 1];
+  relayConditioning.inputs.frame_rate = ["5960", 6];
+  icGuide.inputs.positive = ["5961", 0];
+  icGuide.inputs.negative = ["5961", 1];
+  icGuide.inputs.latent = ["5960", 2];
+  cfgGuider.inputs.model = ["5960", 0];
+  cfgGuider.inputs.positive = ["5919", 0];
+  cfgGuider.inputs.negative = ["5919", 1];
   videoDecode.inputs.vae = ["5800", 0];
   audioDecode.inputs.audio_vae = ["5799", 0];
 
@@ -1679,9 +1876,23 @@ function enableLtx25IngredientsConditioning(apiPrompt, built) {
   // downgrade the reference path back to prompt-text-only behavior.
   if (icLoader.inputs.model[0] !== "5801"
     || promptGuide.inputs.clip[0] !== "5802"
+    || nativeNegative.inputs.clip[0] !== "5802"
     || icGuide.inputs.image[0] !== "5915"
-    || sheet.inputs.reference_set[0] !== "5902") {
+    || sheet.inputs.reference_set[0] !== "5902"
+    || director.inputs.model[0] !== "5914"
+    || director.inputs.optional_latent[0] !== "5917"
+    || icGuide.inputs.positive[0] !== "5961"
+    || icGuide.inputs.latent[0] !== "5960"
+    || cfgGuider.inputs.model[0] !== "5960") {
     throw new Error("Storyboard semantic references were resolved but not injected into the LTX-2.5 IC-LoRA branch");
+  }
+  const compiledSegments = String(director.inputs.local_prompts || "").split("|").map((item) => item.trim()).filter(Boolean);
+  const compiledLengths = String(director.inputs.segment_lengths || "").split(",").map((item) => Number(item.trim()));
+  if (compiledSegments.length !== built.promptRelay.segmentCount
+    || compiledLengths.length !== built.promptRelay.segmentCount
+    || compiledLengths.some((value) => !Number.isInteger(value) || value < 1)
+    || compiledLengths.reduce((sum, value) => sum + value, 0) !== settings.authoredFrames) {
+    throw new Error("Storyboard Prompt Relay schedule was lost while compiling the LTX-2.5 IC-LoRA branch");
   }
 
   return {
@@ -1695,7 +1906,10 @@ function enableLtx25IngredientsConditioning(apiPrompt, built) {
     audioVae: audioVae.inputs.vae_name,
     resolverNodeId: "5902",
     sheetNodeId: "5915",
-    guideNodeId: "5919"
+    guideNodeId: "5919",
+    promptRelayNodeId: "5960",
+    segmentCount: built.promptRelay.segmentCount,
+    segmentLengths: built.promptRelay.segmentLengths
   };
 }
 
@@ -1707,6 +1921,7 @@ export function buildStoryboardVideoPlanWorkflowGraph(project, storyboard, video
   const settings = t2vPlanSettings(storyboard, videoPlan, clip);
   const prompt = String(videoPlan.globalPrompt || "").trim();
   if (!prompt) throw new Error(`Storyboard video plan ${videoPlan.id} has no T2V globalPrompt`);
+  const promptRelay = t2vPromptRelaySchedule(storyboard, videoPlan, clip, settings);
   const negativePrompt = String(videoPlan.negativePrompt || "").trim();
   const filenamePrefix = t2vFilenamePrefix(project, clip);
   const explicitReferences = referenceState.references.map((reference) => reference.canonical).join("\n");
@@ -1767,6 +1982,54 @@ export function buildStoryboardVideoPlanWorkflowGraph(project, storyboard, video
     negativePrompt
   ];
 
+  const director = findNode(graph, 5960);
+  if (!director || director.type !== "LTXDirector") {
+    throw new Error("Storyboard LTX-2.5 T2V workflow is missing LTX Director node 5960");
+  }
+  const directorTimeline = JSON.stringify(promptRelay.timelineData);
+  const directorWidgets = Array.isArray(director.widgets_values) ? [...director.widgets_values] : [];
+  directorWidgets[0] = 0;
+  directorWidgets[1] = settings.durationSeconds;
+  directorWidgets[2] = settings.durationSeconds;
+  directorWidgets[3] = 0;
+  directorWidgets[4] = settings.authoredFrames;
+  directorWidgets[5] = settings.authoredFrames;
+  directorWidgets[6] = directorTimeline;
+  directorWidgets[7] = promptRelay.localPrompts;
+  directorWidgets[8] = promptRelay.segmentLengths;
+  directorWidgets[9] = 0.001;
+  directorWidgets[10] = "";
+  directorWidgets[11] = false;
+  directorWidgets[12] = false;
+  directorWidgets[13] = false;
+  directorWidgets[14] = settings.fps;
+  directorWidgets[15] = "seconds";
+  directorWidgets[16] = settings.width;
+  directorWidgets[17] = settings.height;
+  director.widgets_values = directorWidgets;
+  director.properties = {
+    ...(director.properties || {}),
+    global_prompt: promptRelay.globalPrompt,
+    local_prompts: promptRelay.localPrompts,
+    segment_lengths: promptRelay.segmentLengths,
+    timeline_data: directorTimeline,
+    epsilon: 0.001,
+    start_second: 0,
+    end_second: settings.durationSeconds,
+    duration_seconds: settings.durationSeconds,
+    start_frame: 0,
+    end_frame: settings.authoredFrames,
+    duration_frames: settings.authoredFrames,
+    frame_rate: settings.fps,
+    custom_width: settings.width,
+    custom_height: settings.height,
+    use_custom_audio: false,
+    use_custom_motion: false,
+    inpaint_audio: false,
+    has_serialized_properties: true
+  };
+  director.title = `LTX DIRECTOR — ${promptRelay.segmentCount} scheduled prompts · ${promptRelay.segmentLengths}`;
+
   const audioModeControl = setRequiredT2vNodeWidget(graph, 5904, 0, workflowAudioMode);
   if (generatedAudioReady) {
     audioModeControl.title = "AUDIO MODE — Generated Audio";
@@ -1825,6 +2088,13 @@ export function buildStoryboardVideoPlanWorkflowGraph(project, storyboard, video
         lastFrame: false,
         timedImages: false
       },
+      promptRelay: {
+        nodeId: 5960,
+        segmentCount: promptRelay.segmentCount,
+        segmentLengths: promptRelay.segmentLengths,
+        authoredFrames: promptRelay.authoredFrames,
+        globalPromptHash: crypto.createHash("sha256").update(promptRelay.globalPrompt).digest("hex")
+      },
       audioMode: audioPlan.mode || videoPlan.audioMode || "generated_ambience",
       audioRunnable: generatedAudioReady,
       audioBlocker: generatedAudioReady ? null : String(audioPlan.instruction || "Authoritative external audio is required")
@@ -1841,6 +2111,7 @@ export function buildStoryboardVideoPlanWorkflowGraph(project, storyboard, video
     negativePrompt,
     filenamePrefix,
     settings,
+    promptRelay,
     references: referenceState.references,
     referenceRoot: referenceState.root.absolute,
     referenceIndexHash: referenceState.indexHash,

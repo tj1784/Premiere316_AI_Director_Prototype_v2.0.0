@@ -1,0 +1,78 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "stableaudio3\\stable_audio_3_medium.safetensors"
+    }
+  },
+  "4": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "t5gemma_b_b_ul2.safetensors",
+      "type": "stable_audio",
+      "device": "default"
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": ["14", 0],
+      "clip": ["4", 0]
+    }
+  },
+  "8": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": ["1", 0],
+      "seed": 128920449346267,
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "lcm",
+      "scheduler": "simple",
+      "positive": ["5", 0],
+      "negative": ["9", 0],
+      "latent_image": ["12", 0],
+      "denoise": 1
+    }
+  },
+  "9": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+      "conditioning": ["5", 0]
+    }
+  },
+  "10": {
+    "class_type": "VAEDecodeAudio",
+    "inputs": {
+      "samples": ["8", 0],
+      "vae": ["1", 2]
+    }
+  },
+  "11": {
+    "class_type": "SaveAudioMP3",
+    "inputs": {
+      "audio": ["10", 0],
+      "filename_prefix": "audio/stableaudio",
+      "quality": "V0"
+    }
+  },
+  "12": {
+    "class_type": "EmptyLatentAudio",
+    "inputs": {
+      "seconds": ["13", 1],
+      "batch_size": 1
+    }
+  },
+  "13": {
+    "class_type": "PixaromaNumber",
+    "inputs": {
+      "value": 30
+    }
+  },
+  "14": {
+    "class_type": "PixaromaText",
+    "inputs": {
+      "text": "Dark techno groove with saturated kick, modular bass sequence, metallic percussion, warehouse reverb, relentless energy."
+    }
+  }
+}

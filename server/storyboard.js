@@ -5,10 +5,50 @@ import { projectDir } from "./paths.js";
 
 const STORYBOARD_SCHEMA = "premiere316.storyboard.v1";
 const STORYBOARD_FILE = "storyboard.json";
+const PROJECT_FILE = "project.json";
+export const EXPLICIT_USER_REFERENCES_ONLY = "explicit_user_only";
+export const MAX_STORYBOARD_SEMANTIC_REFERENCES = 9;
 const IMAGE_FILE_RE = /\.(png|jpe?g|webp|gif|svg)$/i;
 const FRAME_ID_RE = /^frame-[a-z0-9][a-z0-9-]{1,127}$/;
 const SEGMENT_ID_RE = /^segment-[a-z0-9][a-z0-9-]{1,127}$/;
 const VIDEO_PLAN_ID_RE = /^video-[a-z0-9][a-z0-9-]{1,127}$/;
+// Keep this boundary aligned with director-webapp/premiere-api-delegation.mjs.
+// Storyboard bindings store the compiler's canonical role, while accepting its
+// documented aliases from API clients for backwards compatibility.
+const SEMANTIC_REFERENCE_ROLE_ALIASES = Object.freeze({
+  identity: "identity",
+  character: "identity",
+  face: "identity",
+  actor: "identity",
+  wardrobe: "wardrobe",
+  costume: "wardrobe",
+  clothing: "wardrobe",
+  location: "location",
+  environment: "location",
+  set: "location",
+  composition: "location",
+  prop: "prop",
+  artifact: "prop",
+  vehicle: "prop",
+  crowd: "crowd",
+  crowds: "crowd",
+  extra: "crowd",
+  extras: "crowd",
+  creature: "crowd",
+  atmosphere: "atmosphere",
+  atmosphere_vfx: "atmosphere",
+  vfx: "atmosphere",
+  lighting: "atmosphere",
+  style: "atmosphere"
+});
+
+export function canonicalStoryboardReferenceRole(value) {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  return SEMANTIC_REFERENCE_ROLE_ALIASES[normalized] || null;
+}
 
 function cleanId(value) {
   return String(value || "reference")
@@ -33,6 +73,106 @@ function writeJsonAtomic(file, value) {
 
 export function storyboardPath(slug) {
   return path.join(projectDir(slug), "production", STORYBOARD_FILE);
+}
+
+function projectReferencePolicy(slug) {
+  if (!slug) return null;
+  const file = path.join(projectDir(slug), PROJECT_FILE);
+  if (!fs.existsSync(file)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"))?.settings?.visualReferencePersistence || null;
+  } catch {
+    return null;
+  }
+}
+
+export function storyboardUsesExplicitUserReferences(storyboard, project = null) {
+  return storyboard?.defaults?.visualReferencePersistence === EXPLICIT_USER_REFERENCES_ONLY
+    || project?.settings?.visualReferencePersistence === EXPLICIT_USER_REFERENCES_ONLY
+    || (typeof project === "string" && projectReferencePolicy(project) === EXPLICIT_USER_REFERENCES_ONLY);
+}
+
+function bindingReferenceFile(binding) {
+  return String(binding?.canonicalFile || binding?.sourceAssetFile || "").replace(/\\/g, "/");
+}
+
+function bindingSort(left, right) {
+  return (Number(left?.order) || 0) - (Number(right?.order) || 0)
+    || String(left?.id || "").localeCompare(String(right?.id || ""));
+}
+
+/**
+ * Remove imported/derived visual bindings while retaining only references that
+ * were explicitly saved through the user reference editor. Temporal I2V guide
+ * media, prompts, voice references, and immutable generation provenance are
+ * intentionally outside this policy.
+ */
+export function enforceExplicitUserReferencePolicy(storyboard) {
+  const next = structuredClone(storyboard);
+  next.defaults = {
+    ...(next.defaults || {}),
+    visualReferencePersistence: EXPLICIT_USER_REFERENCES_ONLY
+  };
+  const userBindings = Object.values(next.referenceBindings || {})
+    .filter((binding) => binding?.persistenceOrigin === "user")
+    .sort(bindingSort);
+  next.referenceBindings = Object.fromEntries(userBindings.map((binding) => [binding.id, binding]));
+
+  for (const frame of Object.values(next.frames || {})) frame.references = [];
+  for (const clip of Object.values(next.clips || {})) {
+    clip.referenceFiles = [];
+    if (Object.hasOwn(clip, "referenceCount")) clip.referenceCount = 0;
+  }
+  for (const segment of Object.values(next.segments || {})) {
+    segment.referenceFiles = [];
+    if (Object.hasOwn(segment, "referenceCount")) segment.referenceCount = 0;
+  }
+  for (const plan of Object.values(next.videoPlans || {})) {
+    plan.referenceFiles = [];
+    plan.referenceCount = 0;
+    if (Array.isArray(plan.droppedReferenceFiles)) plan.droppedReferenceFiles = [];
+    for (const segment of plan.timelineData?.segments || []) {
+      segment.referenceFiles = [];
+      if (Object.hasOwn(segment, "referenceCount")) segment.referenceCount = 0;
+    }
+  }
+
+  const byTarget = new Map();
+  for (const binding of userBindings) {
+    const key = `${binding.targetKind}:${binding.targetId}`;
+    if (!byTarget.has(key)) byTarget.set(key, []);
+    byTarget.get(key).push(binding);
+  }
+  for (const bindings of byTarget.values()) bindings.sort(bindingSort);
+
+  for (const frame of Object.values(next.frames || {})) {
+    frame.references = (byTarget.get(`frame:${frame.id}`) || []).map((binding, index) => ({
+      ...binding,
+      order: index + 1
+    }));
+  }
+  for (const plan of Object.values(next.videoPlans || {})) {
+    const files = (byTarget.get(`video_plan:${plan.id}`) || []).map(bindingReferenceFile).filter(Boolean);
+    plan.referenceFiles = files;
+    plan.referenceCount = files.length;
+    const clip = next.clips?.[plan.clipId];
+    if (clip) {
+      clip.referenceFiles = [...files];
+      if (Object.hasOwn(clip, "referenceCount")) clip.referenceCount = files.length;
+    }
+  }
+  for (const segment of Object.values(next.segments || {})) {
+    const files = (byTarget.get(`segment:${segment.id}`) || []).map(bindingReferenceFile).filter(Boolean);
+    segment.referenceFiles = files;
+    if (Object.hasOwn(segment, "referenceCount")) segment.referenceCount = files.length;
+  }
+  return next;
+}
+
+function applyProjectReferencePolicy(slug, storyboard, project = null) {
+  return storyboardUsesExplicitUserReferences(storyboard, project || slug)
+    ? enforceExplicitUserReferencePolicy(storyboard)
+    : storyboard;
 }
 
 export function validateStoryboard(storyboard, projectSlug = null, { allowLegacyBindingTargets = false } = {}) {
@@ -69,14 +209,82 @@ export function validateStoryboard(storyboard, projectSlug = null, { allowLegacy
 export function loadStoryboard(slug) {
   const file = storyboardPath(slug);
   if (!fs.existsSync(file)) throw new Error(`Storyboard not found for project: ${slug}`);
-  return validateStoryboard(JSON.parse(fs.readFileSync(file, "utf8")), slug);
+  const storyboard = applyProjectReferencePolicy(slug, JSON.parse(fs.readFileSync(file, "utf8")));
+  return validateStoryboard(storyboard, slug);
 }
 
 export function saveStoryboard(slug, storyboard) {
-  const validated = validateStoryboard(storyboard, slug);
+  const governed = applyProjectReferencePolicy(slug, storyboard);
+  const validated = validateStoryboard(governed, slug);
   writeJsonAtomic(storyboardPath(slug), validated);
   return validated;
 }
+
+export function chapterKeyFromClipId(clipId) {
+  const match = String(clipId || "").toUpperCase().match(/^(H\d+|MV\d+)/);
+  return match ? match[1] : "";
+}
+
+export function clipMatchesGlobalScope(clip, boundClip, scope) {
+  if (!clip || !boundClip) return false;
+  if (scope === "project") return true;
+  if (scope === "clip") return String(clip.id) === String(boundClip.id);
+  if (scope === "scene") return Boolean(boundClip.sceneId) && String(clip.sceneId || "") === String(boundClip.sceneId);
+  if (scope === "chapter") {
+    const a = chapterKeyFromClipId(clip.id);
+    const b = chapterKeyFromClipId(boundClip.id);
+    return Boolean(a && b && a === b);
+  }
+  return String(clip.id) === String(boundClip.id);
+}
+
+export function applyGlobalPromptToScope(slug, clipId, text, scope = "clip") {
+  const storyboard = loadStoryboard(slug);
+  const bound = storyboard.clips?.[clipId];
+  if (!bound) throw new Error("Unknown clip " + clipId);
+  const normalized = String(text || "");
+  const scopeKey = ["clip", "scene", "chapter", "project"].includes(String(scope)) ? String(scope) : "clip";
+  let clips = 0;
+  let plans = 0;
+  let segments = 0;
+  for (const clip of Object.values(storyboard.clips || {})) {
+    if (!clipMatchesGlobalScope(clip, bound, scopeKey)) continue;
+    clips += 1;
+    const plan = storyboard.videoPlans?.[clip.videoPlanId];
+    if (!plan) continue;
+    plan.globalPrompt = normalized;
+    plan.global_prompt = normalized;
+    if (plan.timelineData && typeof plan.timelineData === "object") {
+      plan.timelineData.global_prompt = normalized;
+    }
+    plans += 1;
+    for (const segmentId of plan.segmentIds || []) {
+      const segment = storyboard.segments?.[segmentId];
+      if (!segment) continue;
+      segment.global_prompt = normalized;
+      segment.globalPrompt = normalized;
+      segments += 1;
+    }
+  }
+  if (scopeKey === "project") {
+    storyboard.defaults = storyboard.defaults || {};
+    storyboard.defaults.globalPrompt = normalized;
+    storyboard.defaults.global_prompt = normalized;
+  }
+  storyboard.updatedAt = new Date().toISOString();
+  saveStoryboard(slug, storyboard);
+  return {
+    projectSlug: slug,
+    clipId,
+    scope: scopeKey,
+    textChars: normalized.length,
+    clips,
+    plans,
+    segments,
+    updatedAt: storyboard.updatedAt
+  };
+}
+
 
 function targetExists(storyboard, targetKind, targetId) {
   if (targetKind === "frame") return FRAME_ID_RE.test(targetId) && Object.hasOwn(storyboard.frames, targetId);
@@ -97,7 +305,11 @@ function resolveReference(project, reference, targetKind, targetId, order, prese
   if (!version) throw new Error(`Asset ${asset.id} does not contain version ${requestedVersion}`);
   const file = versionFile(version);
   if (!file || !IMAGE_FILE_RE.test(file)) throw new Error(`Asset ${asset.id} v${requestedVersion} is not a visual reference`);
-  const role = String(reference.role || "reference").trim().slice(0, 64) || "reference";
+  const declaredRole = String(reference.role || "").trim();
+  const role = canonicalStoryboardReferenceRole(declaredRole);
+  if (!role) {
+    throw new Error(`Reference asset ${asset.id} has unsupported role ${declaredRole || "missing"}`);
+  }
   return {
     id: preservedId || `ref-${cleanId(targetId)}-${cleanId(asset.id)}-${order}`,
     assetId: asset.id,
@@ -117,30 +329,37 @@ function resolveReference(project, reference, targetKind, targetId, order, prese
     notes: String(reference.notes || "Pinned to an exact Asset Foundry version for reproducible generation."),
     pinnedActiveAtImport: typeof reference.pinnedActiveAtImport === "boolean"
       ? reference.pinnedActiveAtImport
-      : Number(asset.activeVersion) === requestedVersion
+      : Number(asset.activeVersion) === requestedVersion,
+    persistenceOrigin: "user"
   };
 }
 
 export function replaceStoryboardTargetReferences(storyboard, project, { targetKind, targetId, references }) {
-  validateStoryboard(storyboard, project.slug);
-  if (!targetExists(storyboard, targetKind, targetId)) {
+  const governed = applyProjectReferencePolicy(project.slug, storyboard, project);
+  validateStoryboard(governed, project.slug);
+  if (!targetExists(governed, targetKind, targetId)) {
     throw new Error(`Storyboard ${targetKind} target not found: ${targetId}`);
   }
   if (!Array.isArray(references)) throw new Error("references must be an array");
+  if (references.length > MAX_STORYBOARD_SEMANTIC_REFERENCES) {
+    throw new Error(
+      `Storyboard ${targetKind} target supports at most ${MAX_STORYBOARD_SEMANTIC_REFERENCES} visual references; received ${references.length}`
+    );
+  }
   const seenAssets = new Set();
   const resolved = [];
   for (const reference of references) {
     if (!reference?.assetId || seenAssets.has(reference.assetId)) continue;
     seenAssets.add(reference.assetId);
     const requestedId = String(reference.id || "");
-    const existing = requestedId ? storyboard.referenceBindings?.[requestedId] : null;
+    const existing = requestedId ? governed.referenceBindings?.[requestedId] : null;
     const preservedId = existing?.targetKind === targetKind && existing?.targetId === targetId && existing?.assetId === reference.assetId
       ? requestedId
       : null;
     const bindingOrder = preservedId && Number.isFinite(Number(existing.order)) ? Number(existing.order) : resolved.length + 1;
     resolved.push(resolveReference(project, reference, targetKind, targetId, bindingOrder, preservedId));
   }
-  const next = structuredClone(storyboard);
+  const next = structuredClone(governed);
   for (const [id, binding] of Object.entries(next.referenceBindings)) {
     if (binding?.targetKind === targetKind && binding?.targetId === targetId) delete next.referenceBindings[id];
   }

@@ -4,8 +4,29 @@ import path from "path";
 import { findClip, listProjects, loadProject, mediaDir, saveProject, skipApproval } from "../server/projects.js";
 import { assetApprovalCurrent } from "../server/assets.js";
 import { projectDir } from "../server/paths.js";
-import { resolveStoryboardVideoPlanReferences } from "../server/storyboard-generation.js";
 import { loadStoryboard, saveStoryboard, storyboardPath, storyboardSummary } from "../server/storyboard.js";
+import {
+  canonicalSemanticReferenceRole,
+  generateOptionForMode,
+  generateOptionsForContext,
+  HARROWING_AAA_I2V_GENERATE_OPTION,
+  LTX25_PREMIERE316_PROFILE,
+  PREMIERE_GENERATE_OPTIONS,
+  semanticT2vLockedForContext,
+  SEMANTIC_T2V_GENERATION_MODE
+} from "./premiere-api-delegation.mjs";
+import { applyContinuationHandoff } from "./segment-continuity.mjs";
+import { applyHarrowingGenLock } from "./workflow-compiler.mjs";
+import {
+  dialogueDirectionsForSegments,
+  isH03OrLaterClipId,
+  withGlobalDialogueContract
+} from "./dialogue-direction.mjs";
+import {
+  clipMediaCandidates,
+  discoverDirectorTakeFiles,
+  preferredClipMediaPath
+} from "./director-media-paths.mjs";
 
 const IMAGE_RE = /\.(png|jpe?g|webp|gif|bmp|tiff?)$/i;
 const VIDEO_RE = /\.(mp4|mov|mkv|webm|m4v|avi)$/i;
@@ -17,6 +38,28 @@ function assertProjectSlug(slug) {
   if (!/^[a-z0-9][a-z0-9_-]{0,95}$/i.test(value)) throw new Error("Invalid project slug");
   if (!fs.existsSync(path.join(projectDir(value), "project.json"))) throw new Error(`Project not found: ${value}`);
   return value;
+}
+
+
+function namedCharacterInPrompt(value) {
+  return /\b(jesus|christ|yeshua|messiah|savior|saviour)\b/i.test(String(value || ""));
+}
+
+function generalizeGlobalPrompt(value) {
+  const text = String(value || "");
+  if (!namedCharacterInPrompt(text)) return text;
+  return text
+    .split(/\r?\n/)
+    .filter((line) => !namedCharacterInPrompt(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+export function workspaceGlobalPrompt(value, generationMode) {
+  return generationMode === "i2v_segmented_first_frames"
+    ? String(value || "").trim()
+    : generalizeGlobalPrompt(value);
 }
 
 function clone(value) {
@@ -250,9 +293,8 @@ function normalizeSemanticReferenceFile(value) {
   return String(value || "").trim().replace(/\\/g, "/").replace(/^\.\//, "");
 }
 
-function semanticT2vMetadata(storyboard, clip, plan) {
+function planSemanticReferenceMetadata(storyboard, clip, plan) {
   const generationMode = plan?.generationMode || clip?.generationMode || storyboard?.defaults?.generationMode || null;
-  if (generationMode !== EXPLICIT_SEMANTIC_T2V) return null;
   const referenceFiles = Array.isArray(plan?.referenceFiles)
     ? plan.referenceFiles.map(normalizeSemanticReferenceFile).filter(Boolean)
     : Array.isArray(clip?.referenceFiles)
@@ -280,6 +322,203 @@ function semanticT2vMetadata(storyboard, clip, plan) {
       && bindings.length === referenceFiles.length
       && bindingsMatch
       && dropped.length === 0
+  };
+}
+
+function semanticT2vMetadata(storyboard, clip, plan) {
+  const metadata = planSemanticReferenceMetadata(storyboard, clip, plan);
+  return metadata.generationMode === EXPLICIT_SEMANTIC_T2V ? metadata : null;
+}
+
+function canonicalReferenceIndex(slug) {
+  const indexFile = resolveProjectReferenceMedia(slug, "asset_index.json");
+  let index;
+  try {
+    index = JSON.parse(fs.readFileSync(indexFile, "utf8"));
+  } catch (error) {
+    throw new Error(`Storyboard canonical reference index is invalid JSON: ${error.message}`);
+  }
+  if (!Array.isArray(index.assets)) throw new Error("Storyboard canonical reference index has no assets array");
+  const assets = new Map();
+  for (const asset of index.assets) {
+    const canonical = normalizeSemanticReferenceFile(asset?.canonical);
+    if (!canonical) throw new Error("Storyboard canonical reference index contains an empty filename");
+    if (assets.has(canonical)) throw new Error(`Storyboard canonical reference index repeats ${canonical}`);
+    assets.set(canonical, asset);
+  }
+  return {
+    assets,
+    maxReferences: Math.max(0, Number(index.maxReferences) || LTX25_PREMIERE316_PROFILE.maxSemanticReferences),
+    sha256: fileSha256(indexFile)
+  };
+}
+
+
+function resolveUserManagedAssetBinding(project, binding, { frameId = null, targetKind, targetId, indexPosition = 0 } = {}) {
+  const asset = (project.assets?.items || []).find((item) => item.id === binding.assetId);
+  const versionNumber = Number(binding.assetVersion || String(binding.assetVersionId || "").split(":v").at(-1) || 0);
+  const version = (asset?.versions || []).find((item) => Number(item.v) === versionNumber);
+  if (!asset || !version) throw new Error(`User-managed reference ${binding.id || binding.assetId || indexPosition + 1} has no pinned Asset Foundry version`);
+  const exactVersionFiles = versionFiles(version);
+  const sourceFile = binding.sourceAssetFile || version?.file || exactVersionFiles[0];
+  if (!sourceFile) throw new Error(`User-managed reference ${binding.id || asset.id} has no image file`);
+  if (binding.sourceAssetFile && !exactVersionFiles.some((file) => path.basename(file).toLowerCase() === path.basename(sourceFile).toLowerCase())) {
+    throw new Error(`User-managed reference ${binding.id || asset.id} is not part of its pinned Asset Foundry version`);
+  }
+  const relative = safeRelative(sourceFile).startsWith("media/") ? safeRelative(sourceFile) : `media/assets/${safeRelative(sourceFile)}`;
+  const disk = resolveProjectMedia(project.slug, relative);
+  const stat = fs.statSync(disk);
+  const expectedFile = (version.fileHashes || []).find((item) => path.basename(item.file || "").toLowerCase() === path.basename(sourceFile).toLowerCase()) || version.fileHashes?.[0];
+  const sha256 = cachedFileSha256(disk, stat);
+  if (expectedFile?.bytes && Number(expectedFile.bytes) !== stat.size) throw new Error(`User-managed reference ${binding.id || asset.id} has changed size`);
+  if (expectedFile?.sha256 && String(expectedFile.sha256).toLowerCase() !== sha256.toLowerCase()) throw new Error(`User-managed reference ${binding.id || asset.id} has changed content`);
+  const declaredRole = String(binding.role || "reference");
+  const role = canonicalSemanticReferenceRole(declaredRole);
+  if (!role) throw new Error(`User-managed reference ${binding.id || asset.id} has unsupported role ${declaredRole}`);
+  return {
+    id: binding.id || `user-reference:${targetId}:${indexPosition + 1}`,
+    assetId: asset.id,
+    frameId,
+    targetKind,
+    targetId,
+    name: asset.name || binding.sourceAssetKey || path.basename(sourceFile),
+    category: asset.categoryLabel || asset.category || declaredRole,
+    role,
+    declaredRole,
+    required: binding.required !== false,
+    useMode: binding.useMode || (targetKind === "video_plan" ? "semantic_reference" : "direct_conditioning"),
+    order: Number(binding.order) || indexPosition + 1,
+    version: versionNumber || Number(version.v) || 1,
+    assetVersion: versionNumber || Number(version.v) || 1,
+    current: Number(asset.activeVersion) === (versionNumber || Number(version.v)),
+    approved: asset.approval?.status === "approved" && Number(asset.approval?.activeVersion || asset.activeVersion) === (versionNumber || Number(version.v)),
+    verified: true,
+    mediaType: asset.mediaType || mediaKind(relative),
+    file: relative,
+    projectMediaPath: relative,
+    canonicalFile: binding.canonicalFile || sourceFile,
+    sha256,
+    bytes: stat.size,
+    notes: binding.notes || "",
+    cropRegion: binding.cropRegion || "",
+    persistenceOrigin: "user"
+  };
+}
+
+function resolvePlanSemanticReferences(project, storyboard, clip, plan) {
+  const metadata = planSemanticReferenceMetadata(storyboard, clip, plan);
+  const expectedReferenceCount = Number(plan?.referenceCount ?? clip?.referenceCount ?? metadata.referenceFiles.length);
+  if (!Number.isInteger(expectedReferenceCount) || expectedReferenceCount < 0) {
+    throw new Error(`Storyboard video plan ${plan.id} has invalid semantic referenceCount ${String(plan?.referenceCount ?? clip?.referenceCount)}`);
+  }
+  if (!metadata.declarationsReady) {
+    throw new Error(
+      `Storyboard video plan ${plan.id} semantic declarations disagree: `
+      + `${metadata.referenceFiles.length} files, ${expectedReferenceCount} expected, or its video_plan bindings do not match`
+    );
+  }
+  if (metadata.referenceFiles.length > LTX25_PREMIERE316_PROFILE.maxSemanticReferences) {
+    throw new Error(
+      `Storyboard video plan ${plan.id} declares ${metadata.referenceFiles.length} semantic references; `
+      + `${LTX25_PREMIERE316_PROFILE.id} supports ${LTX25_PREMIERE316_PROFILE.maxSemanticReferences}`
+    );
+  }
+  if (!metadata.referenceFiles.length) {
+    return {
+      ...metadata,
+      expectedReferenceCount,
+      resolvedReferenceCount: 0,
+      maxReferences: LTX25_PREMIERE316_PROFILE.maxSemanticReferences,
+      referenceIndexHash: null,
+      references: []
+    };
+  }
+
+  const bindings = Object.values(storyboard?.referenceBindings || {})
+    .filter((binding) => binding?.targetKind === "video_plan" && binding.targetId === plan.id);
+  const userManaged = bindings.length === metadata.referenceFiles.length
+    && bindings.every((binding) => binding?.persistenceOrigin === "user");
+  if (userManaged) {
+    const references = bindings
+      .slice()
+      .sort((left, right) => (Number(left?.order) || 0) - (Number(right?.order) || 0) || String(left?.id || "").localeCompare(String(right?.id || "")))
+      .map((binding, indexPosition) => resolveUserManagedAssetBinding(project, binding, {
+        targetKind: "video_plan",
+        targetId: plan.id,
+        indexPosition
+      }));
+    return {
+      ...metadata,
+      expectedReferenceCount,
+      resolvedReferenceCount: references.length,
+      maxReferences: LTX25_PREMIERE316_PROFILE.maxSemanticReferences,
+      referenceIndexHash: null,
+      references
+    };
+  }
+
+  const index = canonicalReferenceIndex(project.slug);
+  const maxReferences = Math.min(index.maxReferences, LTX25_PREMIERE316_PROFILE.maxSemanticReferences);
+  if (metadata.referenceFiles.length > maxReferences) {
+    throw new Error(`Storyboard video plan ${plan.id} exceeds the canonical ${maxReferences}-reference limit`);
+  }
+  const bindingByFile = new Map(bindings.map((binding) => [
+    normalizeSemanticReferenceFile(binding.canonicalFile || binding.sourceAssetFile),
+    binding
+  ]));
+  const references = metadata.referenceFiles.map((canonical, indexPosition) => {
+    const indexed = index.assets.get(canonical);
+    if (!indexed) throw new Error(`Storyboard video plan ${plan.id} requests unindexed semantic reference ${canonical}`);
+    const binding = bindingByFile.get(canonical);
+    if (!binding) throw new Error(`Storyboard video plan ${plan.id} has no video_plan binding for ${canonical}`);
+    const declaredRole = String(binding.role || indexed.role || "");
+    const role = canonicalSemanticReferenceRole(declaredRole);
+    if (!role) throw new Error(`Storyboard semantic reference ${canonical} has unsupported role ${declaredRole || "missing"}`);
+    const disk = resolveProjectReferenceMedia(project.slug, canonical);
+    const stat = fs.statSync(disk);
+    const sha256 = cachedFileSha256(disk, stat);
+    if (indexed.sha256 && String(indexed.sha256).toLowerCase() !== sha256.toLowerCase()) {
+      throw new Error(`Storyboard canonical reference hash mismatch: ${canonical}`);
+    }
+    if (Number.isFinite(Number(indexed.bytes)) && Number(indexed.bytes) !== stat.size) {
+      throw new Error(`Storyboard canonical reference byte count mismatch: ${canonical}`);
+    }
+    return {
+      id: binding.id || `semantic-reference:${plan.id}:${indexPosition + 1}`,
+      assetId: binding.assetId || null,
+      frameId: null,
+      targetKind: "video_plan",
+      targetId: plan.id,
+      name: binding.assetId || path.basename(canonical),
+      category: declaredRole || role,
+      role,
+      declaredRole,
+      required: binding.required !== false,
+      useMode: binding.useMode || "semantic_reference",
+      order: Number(binding.order) || indexPosition + 1,
+      version: null,
+      current: true,
+      approved: true,
+      verified: true,
+      mediaType: "image",
+      file: path.posix.join(metadata.referenceRoot, canonical),
+      previewUrl: `/api/premiere/references/${encodeURIComponent(project.slug)}?file=${encodeURIComponent(canonical)}`,
+      canonicalFile: canonical,
+      referenceRoot: metadata.referenceRoot,
+      sha256,
+      bytes: stat.size,
+      notes: binding.notes || "",
+      cropRegion: binding.cropRegion || "",
+      resolverToken: binding.resolverToken || ""
+    };
+  });
+  return {
+    ...metadata,
+    expectedReferenceCount,
+    resolvedReferenceCount: references.length,
+    maxReferences,
+    referenceIndexHash: index.sha256,
+    references
   };
 }
 
@@ -321,6 +560,7 @@ function orderedStoryboardClips(storyboard) {
           generationMode: semantic?.generationMode || plan?.generationMode || clip.generationMode || null,
           referenceMode: semantic?.referenceMode || plan?.referenceMode || clip.referenceMode || null,
           referenceCount: semantic?.referenceCount ?? Number(plan?.referenceCount || clip.referenceCount || 0),
+          planFingerprint: storyboardPlanFingerprintValue(storyboard, clip.id),
           ready: semantic
             ? semantic.declarationsReady
             : uniqueFrameIds.length > 0 && frames.length === uniqueFrameIds.length && generatedFrames.length === uniqueFrameIds.length
@@ -336,11 +576,11 @@ function scanGeneratedVideos(project, storyboard) {
   for (const clip of project.sequence?.clips || []) {
     for (const version of clip.versions || []) {
       if (!version.file) continue;
-      metadata.set(`media/clips/${version.file}`, { clipId: clip.id, clipName: clip.name, source: version.source || "clip", version: version.v });
+      metadata.set(takeMediaPath(version.file, { slug: project.slug, clipId: clip.id }), { clipId: clip.id, clipName: clip.name, source: version.source || "clip", version: version.v });
     }
     for (const version of clip.rangeVersions || []) {
       if (!version.file) continue;
-      metadata.set(`media/clips/${version.file}`, { clipId: clip.id, clipName: clip.name, source: "range", version: version.v });
+      metadata.set(takeMediaPath(version.file, { slug: project.slug, clipId: clip.id }), { clipId: clip.id, clipName: clip.name, source: "range", version: version.v });
     }
   }
   for (const plan of Object.values(storyboard?.videoPlans || {})) {
@@ -461,83 +701,56 @@ export function sceneReferenceMedia(slug, clipId) {
   const clip = storyboard?.clips?.[clipId];
   const plan = clip ? storyboard.videoPlans?.[clip.videoPlanId] : null;
   if (!clip || !plan) throw new Error(`Storyboard clip not found: ${clipId}`);
-  const semantic = semanticT2vMetadata(storyboard, clip, plan);
-  if (semantic) {
-    try {
-      const resolved = resolveStoryboardVideoPlanReferences(project, storyboard, plan.id);
-      const references = resolved.references
-        .map((reference) => ({
-          id: reference.id,
-          assetId: reference.assetId,
-          frameId: null,
-          targetKind: reference.targetKind,
-          targetId: reference.targetId,
-          name: reference.assetId || path.basename(reference.canonical),
-          category: reference.role,
-          role: reference.role,
-          required: reference.required,
-          useMode: reference.useMode,
-          order: reference.order,
-          version: null,
-          current: true,
-          approved: false,
-          verified: true,
-          mediaType: "image",
-          file: path.posix.join(resolved.referenceRoot, reference.canonical),
-          previewUrl: `/api/premiere/references/${encodeURIComponent(slug)}?file=${encodeURIComponent(reference.canonical)}`,
-          canonicalFile: reference.canonical,
-          referenceRoot: resolved.referenceRoot,
-          sha256: reference.sha256,
-          bytes: reference.bytes,
-          notes: reference.notes || "",
-          cropRegion: reference.cropRegion || "",
-          resolverToken: reference.resolverToken || ""
-        }))
-        .sort((left, right) => left.order - right.order || left.canonicalFile.localeCompare(right.canonicalFile));
-      return {
-        projectSlug: slug,
-        clipId,
-        videoPlanId: plan.id,
-        frameIds: [],
-        generationMode: resolved.generationMode,
-        referenceMode: resolved.referenceMode,
-        referenceRoot: resolved.referenceRoot,
-        referenceFiles: resolved.referenceFiles,
-        referenceCount: references.length,
-        expectedReferenceCount: resolved.expectedReferenceCount,
-        resolvedReferenceCount: references.length,
-        maxReferences: resolved.maxReferences,
-        referenceIndexHash: resolved.referenceIndexHash,
-        references,
-        invalidReferences: [],
-        referencesReady: references.length === resolved.expectedReferenceCount
-      };
-    } catch (error) {
-      return {
-        projectSlug: slug,
-        clipId,
-        videoPlanId: plan.id,
-        frameIds: [],
-        generationMode: semantic.generationMode,
-        referenceMode: semantic.referenceMode,
-        referenceRoot: semantic.referenceRoot,
-        referenceFiles: semantic.referenceFiles,
-        referenceCount: 0,
-        expectedReferenceCount: semantic.referenceCount,
-        resolvedReferenceCount: 0,
-        references: [],
-        invalidReferences: [{
-          id: `semantic-reference-error:${plan.id}`,
-          assetId: null,
-          targetKind: "video_plan",
-          targetId: plan.id,
-          role: "semantic_reference",
-          required: true,
-          reason: String(error.message || error)
-        }],
-        referencesReady: false
-      };
-    }
+  const semantic = planSemanticReferenceMetadata(storyboard, clip, plan);
+  let semanticState;
+  try {
+    semanticState = resolvePlanSemanticReferences(project, storyboard, clip, plan);
+  } catch (error) {
+    semanticState = {
+      ...semantic,
+      expectedReferenceCount: Number(plan.referenceCount ?? clip.referenceCount ?? semantic.referenceFiles.length) || 0,
+      resolvedReferenceCount: 0,
+      maxReferences: LTX25_PREMIERE316_PROFILE.maxSemanticReferences,
+      referenceIndexHash: null,
+      references: [],
+      error: String(error.message || error)
+    };
+  }
+  if (semantic.generationMode === EXPLICIT_SEMANTIC_T2V) {
+    const invalidReferences = semanticState.error ? [{
+      id: `semantic-reference-error:${plan.id}`,
+      assetId: null,
+      targetKind: "video_plan",
+      targetId: plan.id,
+      role: "semantic_reference",
+      required: true,
+      reason: semanticState.error
+    }] : [];
+    return {
+      projectSlug: slug,
+      clipId,
+      videoPlanId: plan.id,
+      storyboardUpdatedAt: storyboard.updatedAt,
+      planFingerprint: storyboardPlanFingerprintValue(storyboard, clip.id),
+      frameIds: [],
+      generationMode: semantic.generationMode,
+      referenceMode: semantic.referenceMode,
+      referenceRoot: semantic.referenceRoot,
+      referenceFiles: semantic.referenceFiles,
+      referenceCount: semanticState.references.length,
+      expectedReferenceCount: semanticState.expectedReferenceCount,
+      resolvedReferenceCount: semanticState.references.length,
+      maxReferences: semanticState.maxReferences,
+      referenceIndexHash: semanticState.referenceIndexHash,
+      references: semanticState.references,
+      semanticReferences: semanticState.references,
+      semanticReferenceRoles: semanticState.references.map((reference) => reference.role),
+      semanticReferencesReady: !semanticState.error
+        && semanticState.references.length === semanticState.expectedReferenceCount,
+      invalidReferences,
+      referencesReady: invalidReferences.length === 0
+        && semanticState.references.length === semanticState.expectedReferenceCount
+    };
   }
   const frameIds = [...new Set([clip.firstFrameId, ...(plan.segmentIds || []).map((id) => storyboard.segments?.[id]?.frameId)].filter(Boolean))];
   const assets = new Map((project.assets?.items || []).map((asset) => [asset.id, asset]));
@@ -591,6 +804,7 @@ export function sceneReferenceMedia(slug, clipId) {
         name: asset?.name || reference.sourceAssetKey || path.basename(sourceFile),
         category: asset?.categoryLabel || asset?.category || reference.role || "Reference",
         role: reference.role || "reference",
+        canonicalRole: canonicalSemanticReferenceRole(reference.role),
         required: Boolean(reference.required),
         useMode: reference.useMode || "reference",
         order: Number(reference.order) || 0,
@@ -600,19 +814,109 @@ export function sceneReferenceMedia(slug, clipId) {
         mediaType: asset?.mediaType || mediaKind(relative),
         file: relative,
         notes: reference.notes || "",
-        cropRegion: reference.cropRegion || ""
+        cropRegion: reference.cropRegion || "",
+        persistenceOrigin: reference.persistenceOrigin || null
       });
     }
   }
   references.sort((a, b) => a.frameId.localeCompare(b.frameId) || a.order - b.order || a.name.localeCompare(b.name));
+  if (semanticState.error) {
+    invalidReferences.push({
+      id: `semantic-reference-error:${plan.id}`,
+      assetId: null,
+      frameId: null,
+      targetKind: "video_plan",
+      targetId: plan.id,
+      role: "semantic_reference",
+      required: semantic.generationMode !== LTX25_PREMIERE316_PROFILE.generationMode,
+      reason: semanticState.error
+    });
+  }
+  const semanticReferencesReady = !semanticState.error
+    && semanticState.references.length === semanticState.expectedReferenceCount;
+  const requiredInvalid = invalidReferences.filter((reference) => {
+    if (reference.required !== true) return false;
+    if (semantic.generationMode === LTX25_PREMIERE316_PROFILE.generationMode
+      && reference.role === "semantic_reference") {
+      return false;
+    }
+    return true;
+  });
   return {
     projectSlug: slug,
     clipId,
+    videoPlanId: plan.id,
+    storyboardUpdatedAt: storyboard.updatedAt,
+    planFingerprint: storyboardPlanFingerprintValue(storyboard, clip.id),
     frameIds,
+    generationMode: semantic.generationMode,
+    referenceMode: semantic.referenceMode,
+    referenceRoot: semantic.referenceRoot,
+    referenceFiles: semantic.referenceFiles,
+    referenceCount: references.length,
+    expectedReferenceCount: references.length,
+    resolvedReferenceCount: references.length,
+    maxReferences: semanticState.maxReferences,
+    referenceIndexHash: semanticState.referenceIndexHash,
     references,
+    semanticReferences: semanticState.references,
+    semanticReferenceRoles: semanticState.references.map((reference) => reference.role),
+    semanticReferencesReady,
     invalidReferences,
-    referencesReady: !invalidReferences.some((reference) => reference.required)
+    referencesReady: requiredInvalid.length === 0
   };
+}
+
+export function workspaceWithRefreshedReferenceBinding(currentWorkspace, referenceState) {
+  const binding = currentWorkspace?.premiere;
+  if (binding?.source !== "storyboard" || !binding?.projectSlug || !binding?.clipId) {
+    throw new Error("Load a Premiere storyboard scene before refreshing its references");
+  }
+  if (String(binding.projectSlug) !== String(referenceState?.projectSlug)
+    || String(binding.clipId) !== String(referenceState?.clipId)) {
+    throw new Error("Reference refresh target does not match the currently bound Premiere storyboard scene");
+  }
+
+  const next = clone(currentWorkspace);
+  const segmentedI2v = referenceState.generationMode === "i2v_segmented_first_frames";
+  const semanticReferences = clone(segmentedI2v
+    ? (referenceState.references || [])
+    : (referenceState.semanticReferences || []));
+  const invalidReferences = Array.isArray(referenceState.invalidReferences)
+    ? referenceState.invalidReferences
+    : [];
+  const referenceFiles = segmentedI2v
+    ? semanticReferences.map((reference) => reference.file).filter(Boolean)
+    : clone(referenceState.referenceFiles || []);
+  const referenceCount = segmentedI2v
+    ? semanticReferences.length
+    : Number(referenceState.referenceCount ?? semanticReferences.length);
+  const expectedReferenceCount = segmentedI2v
+    ? semanticReferences.length
+    : Number(referenceState.expectedReferenceCount ?? referenceCount);
+  const semanticReferencesReady = segmentedI2v
+    ? Boolean(referenceState.referencesReady)
+    : Boolean(referenceState.semanticReferencesReady);
+
+  next.premiere = {
+    ...next.premiere,
+    generationMode: referenceState.generationMode || next.premiere.generationMode,
+    referenceMode: referenceState.referenceMode ?? null,
+    referenceRoot: referenceState.referenceRoot ?? null,
+    referenceFiles,
+    referenceCount,
+    expectedReferenceCount,
+    semanticReferences,
+    semanticReferenceRoles: semanticReferences.map((reference) => reference.role),
+    semanticReferencesReady,
+    semanticReferenceError: invalidReferences.length
+      ? invalidReferences.map((reference) => reference.reason || reference.id).filter(Boolean).join("; ") || "Reference validation failed"
+      : null,
+    referenceIndexHash: referenceState.referenceIndexHash ?? null,
+    storyboardUpdatedAt: referenceState.storyboardUpdatedAt,
+    planFingerprint: referenceState.planFingerprint
+  };
+  return next;
 }
 
 function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
@@ -621,9 +925,26 @@ function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
   const plan = storyboard.videoPlans?.[clip.videoPlanId];
   if (!plan) throw new Error(`Storyboard video plan not found: ${clip.videoPlanId}`);
   const semantic = semanticT2vMetadata(storyboard, clip, plan);
+  const planSemantic = planSemanticReferenceMetadata(storyboard, clip, plan);
+  const generationMode = plan.generationMode || clip.generationMode || storyboard.defaults?.generationMode || null;
+  const explicitFrameReferenceState = generationMode === "i2v_segmented_first_frames"
+    ? sceneReferenceMedia(project.slug, clipId)
+    : null;
+  let resolvedPlanSemantic = null;
+  let planSemanticError = null;
+  if (generationMode === LTX25_PREMIERE316_PROFILE.generationMode) {
+    try { resolvedPlanSemantic = resolvePlanSemanticReferences(project, storyboard, clip, plan); }
+    catch (error) { planSemanticError = String(error.message || error); }
+  }
   const fps = Math.max(1, Number(storyboard.defaults?.fps) || Number(project.settings?.fps) || 24);
   const timeline = clone(plan.timelineData || {});
-  timeline.global_prompt = String(plan.globalPrompt || timeline.global_prompt || "");
+  const segmentDialogueDirections = isH03OrLaterClipId(clip.id)
+    ? dialogueDirectionsForSegments(clip.dialogueAnchor, plan.segmentIds || [])
+    : new Map();
+  const storedGlobalPrompt = plan.globalPrompt || timeline.global_prompt || "";
+  timeline.global_prompt = isH03OrLaterClipId(clip.id)
+    ? withGlobalDialogueContract(storedGlobalPrompt)
+    : workspaceGlobalPrompt(storedGlobalPrompt, generationMode);
   timeline.segments = (plan.segmentIds || []).map((segmentId) => {
     const planned = storyboard.segments?.[segmentId];
     if (!planned) return null;
@@ -636,11 +957,19 @@ function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
       start: Number(planned.startFrame) || 0,
       length: Math.max(1, Number(planned.lengthFrames) || 1),
       prompt: String(planned.prompt || current.prompt || ""),
+      global_prompt: String(planned.global_prompt || current.global_prompt || ""),
       type: String(planned.type || current.type || (planned.frameId ? "image" : "text")),
       isEndFrame: Boolean(planned.isEndFrame),
       storyboardFrameId: planned.frameId || null,
       missingGuide: Boolean(planned.frameId && !generated)
     };
+    if (planned.mythicDialoguePass) segment.mythicDialoguePass = clone(planned.mythicDialoguePass);
+    else delete segment.mythicDialoguePass;
+    if (planned.correctedPass) segment.correctedPass = clone(planned.correctedPass);
+    else delete segment.correctedPass;
+    const dialogueDirection = segmentDialogueDirections.get(planned.id);
+    if (dialogueDirection) segment.dialogueDirection = dialogueDirection;
+    else delete segment.dialogueDirection;
     if (generated) {
       segment.projectMediaPath = generated.relative;
       segment.projectMediaBytes = generated.bytes;
@@ -652,6 +981,16 @@ function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
       delete segment.imageFile;
       delete segment.imageB64;
     }
+    const takes = ensureActiveTake(planned, { slug: project.slug, clipId });
+    const activeTake = activeTakeFromList(takes, planned.activeTakeId, planned.activeGeneratedVersion);
+    segment.generatedTakes = takes;
+    segment.activeTakeId = planned.activeTakeId || activeTake?.id || null;
+    segment.activeGeneratedVersion = planned.activeGeneratedVersion || activeTake?.v || null;
+    segment.activeTakeLocked = Boolean(planned.activeTakeLocked);
+    if (activeTake?.file) {
+      segment.activeTakeFile = takeMediaPath(activeTake.file, { slug: project.slug, clipId });
+    }
+    segment.useNextAsLastFrame = false;
     return segment;
   }).filter(Boolean);
   timeline.motionSegments = Array.isArray(timeline.motionSegments) ? timeline.motionSegments : [];
@@ -666,7 +1005,11 @@ function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
   next.settings.frameRate = fps;
   next.settings.customWidth = Math.max(32, Number(storyboard.defaults?.workingWidth) || Number(project.settings?.width) || next.settings.customWidth);
   next.settings.customHeight = Math.max(32, Number(storyboard.defaults?.workingHeight) || Number(project.settings?.height) || next.settings.customHeight);
-  next.settings.queueMode = "timeline";
+  next.settings.queueMode = generationMode === "i2v_segmented_first_frames" ? "segments" : "timeline";
+  if (generationMode === LTX25_PREMIERE316_PROFILE.generationMode) {
+    next.settings.generationProfile = LTX25_PREMIERE316_PROFILE.id;
+    next.settings.lengthModel = LTX25_PREMIERE316_PROFILE.lengthModel;
+  }
   next.settings.outputPrefix = `Premiere316/${project.slug}/director/${clip.id}`;
   next.stats = {
     durationFrames: timeline.normalDurationFrames,
@@ -681,6 +1024,37 @@ function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
     clipId: clip.id,
     sceneId: clip.sceneId,
     videoPlanId: clip.videoPlanId,
+    generationMode,
+    generateOptionId: generateOptionForMode(generationMode, plan.generateOptionId || clip.generateOptionId || storyboard.defaults?.generateOptionId, { projectSlug: project.slug, generationMode }).id,
+    generateOption: generateOptionForMode(generationMode, plan.generateOptionId || clip.generateOptionId || storyboard.defaults?.generateOptionId, { projectSlug: project.slug, generationMode }),
+    generateOptions: generateOptionsForContext({ projectSlug: project.slug, generationMode }),
+    ...(explicitFrameReferenceState ? {
+      referenceMode: "explicit_user_segment_references",
+      referenceFiles: explicitFrameReferenceState.references.map((reference) => reference.file),
+      referenceCount: explicitFrameReferenceState.references.length,
+      expectedReferenceCount: explicitFrameReferenceState.references.length,
+      semanticReferences: explicitFrameReferenceState.references,
+      semanticReferenceRoles: explicitFrameReferenceState.references.map((reference) => reference.role),
+      semanticReferencesReady: explicitFrameReferenceState.referencesReady,
+      semanticReferenceError: explicitFrameReferenceState.invalidReferences?.length
+        ? explicitFrameReferenceState.invalidReferences.map((reference) => reference.reason || reference.id).join("; ")
+        : null
+    } : {}),
+    ...(generationMode === LTX25_PREMIERE316_PROFILE.generationMode ? {
+      workflowProfileId: LTX25_PREMIERE316_PROFILE.id,
+      lengthModel: LTX25_PREMIERE316_PROFILE.lengthModel,
+      semanticConditioning: LTX25_PREMIERE316_PROFILE.semanticConditioning,
+      referenceMode: planSemantic.referenceMode,
+      referenceRoot: planSemantic.referenceRoot,
+      referenceFiles: planSemantic.referenceFiles,
+      referenceCount: planSemantic.referenceCount,
+      expectedReferenceCount: planSemantic.referenceCount,
+      semanticReferences: resolvedPlanSemantic?.references || [],
+      semanticReferenceRoles: (resolvedPlanSemantic?.references || []).map((reference) => reference.role),
+      semanticReferencesReady: Boolean(resolvedPlanSemantic)
+        && resolvedPlanSemantic.references.length === resolvedPlanSemantic.expectedReferenceCount,
+      semanticReferenceError: planSemanticError
+    } : {}),
     storyboardUpdatedAt: storyboard.updatedAt,
     planFingerprint: storyboardPlanFingerprintValue(storyboard, clip.id),
     ...(semantic ? {
@@ -693,6 +1067,7 @@ function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
     } : {}),
     loadedAt: new Date().toISOString()
   };
+  applyHarrowingGenLock(next);
   return next;
 }
 
@@ -753,6 +1128,97 @@ export function workspaceForProjectClip(baseWorkspace, slug, clipId) {
   const storyboard = readStoryboardMaybe(slug);
   if (storyboard?.clips?.[clipId]) return storyboardWorkspace(baseWorkspace, project, storyboard, clipId);
   return sequenceWorkspace(baseWorkspace, project, clipId);
+}
+
+export function boundStoryboardWorkspaceIsStale(workspace) {
+  const binding = workspace?.premiere;
+  if (!binding || binding.source !== "storyboard" || !binding.projectSlug || !binding.clipId) return false;
+  try {
+    return storyboardPlanFingerprint(binding.projectSlug, binding.clipId) !== binding.planFingerprint;
+  } catch {
+    return false;
+  }
+}
+
+export function refreshBoundWorkspaceFromStoryboard(workspace) {
+  const binding = workspace?.premiere;
+  if (!binding || binding.source !== "storyboard" || !binding.projectSlug || !binding.clipId) {
+    return { workspace, refreshed: false };
+  }
+  if (!boundStoryboardWorkspaceIsStale(workspace)) {
+    return { workspace, refreshed: false };
+  }
+  return {
+    workspace: workspaceForProjectClip(workspace, binding.projectSlug, binding.clipId),
+    refreshed: true
+  };
+}
+
+
+export function chapterKeyFromClipId(clipId) {
+  const match = String(clipId || "").toUpperCase().match(/^(H\d+|MV\d+)/);
+  return match ? match[1] : "";
+}
+
+export function clipMatchesGlobalScope(clip, boundClip, scope) {
+  if (!clip || !boundClip) return false;
+  if (scope === "project") return true;
+  if (scope === "clip") return String(clip.id) === String(boundClip.id);
+  if (scope === "scene") return Boolean(boundClip.sceneId) && String(clip.sceneId || "") === String(boundClip.sceneId);
+  if (scope === "chapter") {
+    const a = chapterKeyFromClipId(clip.id);
+    const b = chapterKeyFromClipId(boundClip.id);
+    return Boolean(a && b && a === b);
+  }
+  return String(clip.id) === String(boundClip.id);
+}
+
+export function applyGlobalPromptToScope(slug, clipId, text, scope = "clip") {
+  slug = assertProjectSlug(slug);
+  const storyboard = loadStoryboard(slug);
+  const bound = storyboard.clips?.[clipId];
+  if (!bound) throw new Error(`Unknown clip ${clipId}`);
+  const normalized = String(text || "");
+  const scopeKey = ["clip", "scene", "chapter", "project"].includes(String(scope)) ? String(scope) : "clip";
+  let clips = 0;
+  let plans = 0;
+  let segments = 0;
+  for (const clip of Object.values(storyboard.clips || {})) {
+    if (!clipMatchesGlobalScope(clip, bound, scopeKey)) continue;
+    clips += 1;
+    const plan = storyboard.videoPlans?.[clip.videoPlanId];
+    if (!plan) continue;
+    plan.globalPrompt = normalized;
+    plan.global_prompt = normalized;
+    if (plan.timelineData && typeof plan.timelineData === "object") {
+      plan.timelineData.global_prompt = normalized;
+    }
+    plans += 1;
+    for (const segmentId of plan.segmentIds || []) {
+      const segment = storyboard.segments?.[segmentId];
+      if (!segment) continue;
+      segment.global_prompt = normalized;
+      segment.globalPrompt = normalized;
+      segments += 1;
+    }
+  }
+  if (scopeKey === "project") {
+    storyboard.defaults = storyboard.defaults || {};
+    storyboard.defaults.globalPrompt = normalized;
+    storyboard.defaults.global_prompt = normalized;
+  }
+  storyboard.updatedAt = new Date().toISOString();
+  saveStoryboard(slug, storyboard);
+  return {
+    projectSlug: slug,
+    clipId,
+    scope: scopeKey,
+    textChars: normalized.length,
+    clips,
+    plans,
+    segments,
+    updatedAt: storyboard.updatedAt
+  };
 }
 
 export function syncWorkspaceToPremiere(workspace) {
@@ -887,6 +1353,16 @@ export function markDirectorRender(slug, binding, update) {
       plan.generatedInputPath = committedVersion.file;
       plan.status = "rendered";
     }
+    const committedTake = recordSegmentTake(storyboard, committedVersion, update.status, clip.id);
+    if (update.continuityHandoff && committedTake) {
+      update.continuityHandoff.commitResult = applyContinuationHandoff(storyboard, {
+        clipId: clip.id,
+        sourceSegmentId: committedVersion.segmentId,
+        sourcePromptId: committedVersion.comfyPromptId || committedVersion.promptId,
+        sourceTakeId: committedTake.id,
+        handoff: update.continuityHandoff
+      });
+    }
     if (update.status === "done" && (!update.promptId || plan.activeRenderPromptId === update.promptId)) {
       plan.activeRenderPromptId = null;
     }
@@ -916,12 +1392,12 @@ async function streamedFileSha256(file) {
   });
 }
 
-async function registeredRenderResult(slug, record, relativeFile, versionNumber) {
-  const relative = safeRelative(relativeFile).startsWith("media/")
-    ? safeRelative(relativeFile)
-    : `media/clips/${path.basename(String(relativeFile || ""))}`;
-  try {
-    const disk = resolveProjectMedia(slug, relative);
+async function registeredRenderResult(slug, record, relativeFile, versionNumber, clipId = "") {
+  const candidates = clipMediaCandidates(relativeFile, clipId);
+  let lastError = new Error("registered file path is missing or unsafe");
+  for (const relative of candidates) {
+    try {
+      const disk = resolveProjectMedia(slug, relative);
     const stat = fs.statSync(disk);
     if (!stat.isFile() || !stat.size) throw new Error("registered file is empty");
     const expected = (record?.fileHashes || []).find((item) =>
@@ -934,10 +1410,12 @@ async function registeredRenderResult(slug, record, relativeFile, versionNumber)
     if (expected?.sha256 && String(expected.sha256).toLowerCase() !== sha256.toLowerCase()) {
       throw new Error("registered file checksum does not match its Premiere provenance record");
     }
-    return { version: versionNumber, file: relative, disk, bytes: stat.size, sha256, valid: true, record };
-  } catch (error) {
-    return { version: versionNumber, file: relative, disk: null, valid: false, error: String(error.message || error), record };
+      return { version: versionNumber, file: relative, disk, bytes: stat.size, sha256, valid: true, record };
+    } catch (error) {
+      lastError = error;
+    }
   }
+  return { version: versionNumber, file: candidates[0] || "", disk: null, valid: false, error: String(lastError.message || lastError), record };
 }
 
 export async function findDirectorRenderByPrompt(slug, binding, promptId) {
@@ -950,18 +1428,18 @@ export async function findDirectorRenderByPrompt(slug, binding, promptId) {
     const plan = storyboard.videoPlans?.[clip?.videoPlanId];
     const version = (plan?.generatedVersions || []).find((item) => String(item.comfyPromptId || item.promptId || "") === expected);
     return version
-      ? await registeredRenderResult(slug, version, version.file || version.generatedInputPath || version.outputFile, Number(version.v) || 1)
+      ? await registeredRenderResult(slug, version, version.file || version.generatedInputPath || version.outputFile, Number(version.v) || 1, binding.clipId)
       : null;
   }
   const project = loadProject(slug);
   const clip = findClip(project, binding.clipId);
   const version = (clip?.versions || []).find((item) => String(item.promptId || item.comfyPromptId || "") === expected);
   return version
-    ? await registeredRenderResult(slug, version, version.file ? `media/clips/${version.file}` : "", Number(version.v) || 1)
+    ? await registeredRenderResult(slug, version, version.file || version.outputFile || "", Number(version.v) || 1, binding.clipId)
     : null;
 }
 
-function storyboardPlanFingerprintValue(storyboard, clipId) {
+export function storyboardPlanFingerprintValue(storyboard, clipId) {
   const clip = storyboard.clips?.[clipId];
   const plan = storyboard.videoPlans?.[clip?.videoPlanId];
   if (!clip || !plan) throw new Error(`Storyboard clip not found: ${clipId}`);
@@ -970,7 +1448,15 @@ function storyboardPlanFingerprintValue(storyboard, clipId) {
     ...(plan.segmentIds || []).map((id) => storyboard.segments?.[id]?.frameId)
   ].filter(Boolean))];
   const payload = {
-    clip: { id: clip.id, durationFrames: clip.durationFrames, firstFrameId: clip.firstFrameId, videoPlanId: clip.videoPlanId },
+    referencePolicy: storyboard.defaults?.visualReferencePersistence || null,
+    clip: {
+      id: clip.id,
+      durationFrames: clip.durationFrames,
+      firstFrameId: clip.firstFrameId,
+      videoPlanId: clip.videoPlanId,
+      referenceFiles: clip.referenceFiles || [],
+      referenceCount: Number(clip.referenceCount) || 0
+    },
     plan: {
       id: plan.id,
       globalPrompt: plan.globalPrompt,
@@ -979,7 +1465,9 @@ function storyboardPlanFingerprintValue(storyboard, clipId) {
       segmentIds: plan.segmentIds,
       localPrompts: plan.localPrompts,
       segmentLengths: plan.segmentLengths,
-      timelineData: plan.timelineData
+      timelineData: plan.timelineData,
+      referenceFiles: plan.referenceFiles || [],
+      referenceCount: Number(plan.referenceCount) || 0
     },
     segments: (plan.segmentIds || []).map((id) => storyboard.segments?.[id]),
     frames: frameIds.map((id) => {
@@ -991,9 +1479,13 @@ function storyboardPlanFingerprintValue(storyboard, clipId) {
         generatedFile: frame.generatedFile,
         inputHash: frame.inputHash,
         generationFingerprint: frame.generationFingerprint,
-        activeFileHashes: active?.fileHashes || []
+        activeFileHashes: active?.fileHashes || [],
+        references: frame.references || []
       } : null;
-    })
+    }),
+    referenceBindings: Object.values(storyboard.referenceBindings || {})
+      .filter((binding) => binding?.targetId === plan.id || frameIds.includes(binding?.targetId) || (plan.segmentIds || []).includes(binding?.targetId))
+      .sort((left, right) => String(left?.id || "").localeCompare(String(right?.id || "")))
   };
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
@@ -1009,3 +1501,212 @@ export function mediaKind(relative) {
   if (AUDIO_RE.test(relative)) return "audio";
   return "file";
 }
+
+function takeMediaPath(file, context = {}) {
+  return preferredClipMediaPath(file, context.clipId, context.slug ? projectDir(context.slug) : "");
+}
+
+function discoverDiskSegmentTakes(slug, clipId, segmentId) {
+  if (!slug || !clipId || !segmentId) return [];
+  const clipsDir = path.join(projectDir(slug), "media", "clips");
+  if (!fs.existsSync(clipsDir)) return [];
+  return discoverDirectorTakeFiles(clipsDir, clipId, segmentId)
+    .map(({ name, file }) => {
+      const match = name.match(/_director_v(\d+)\./i);
+      const token = match?.[1] || "";
+      const number = Number(token) || 0;
+      return {
+        id: token ? `take-v${token}` : `take-${path.basename(name, path.extname(name))}`,
+        v: number || null,
+        file,
+        previewFile: file,
+        source: "disk"
+      };
+    })
+    .sort((left, right) => (Number(left.v) || 0) - (Number(right.v) || 0) || String(left.id).localeCompare(String(right.id)));
+}
+
+function normalizeSegmentTakes(segment, context = {}) {
+  const versions = Array.isArray(segment?.generatedVersions) ? segment.generatedVersions.filter(Boolean) : [];
+  const takes = versions.map((version, index) => {
+    const number = Number(version.v) || index + 1;
+    return {
+      ...version,
+      id: version.id || `take-v${number}`,
+      v: number,
+      file: version.file || version.generatedInputPath || version.outputFile || null,
+      previewFile: takeMediaPath(version.file || version.generatedInputPath || version.outputFile || "", context)
+    };
+  });
+  const knownFiles = new Set(takes.map((take) => path.basename(String(take.previewFile || take.file || "")).toLowerCase()).filter(Boolean));
+  const knownIds = new Set(takes.map((take) => String(take.id)));
+  for (const disk of discoverDiskSegmentTakes(context.slug, context.clipId, segment?.id || context.segmentId)) {
+    const base = path.basename(disk.file).toLowerCase();
+    if (knownFiles.has(base)) continue;
+    let id = disk.id;
+    if (knownIds.has(id)) id = `take-file-${path.basename(disk.file, path.extname(disk.file))}`;
+    takes.push({ ...disk, id });
+    knownFiles.add(base);
+    knownIds.add(id);
+  }
+  return takes.sort((left, right) => (Number(left.v) || 0) - (Number(right.v) || 0) || String(left.id).localeCompare(String(right.id)));
+}
+
+function ensureActiveTake(segment, context = {}) {
+  const takes = normalizeSegmentTakes(segment, context);
+  if (!takes.length) return takes;
+  if (takes.length === 1) {
+    segment.activeTakeId = takes[0].id;
+    segment.activeGeneratedVersion = takes[0].v;
+    return takes;
+  }
+  if (!segment.activeTakeId && !segment.activeGeneratedVersion) {
+    const last = takes[takes.length - 1];
+    segment.activeTakeId = last.id;
+    segment.activeGeneratedVersion = last.v;
+  }
+  return takes;
+}
+
+function activeTakeFromList(takes, activeTakeId = null, activeVersion = null) {
+  if (!takes.length) return null;
+  return takes.find((take) => String(take.id) === String(activeTakeId))
+    || takes.find((take) => Number(take.v) === Number(activeVersion))
+    || takes[takes.length - 1];
+}
+
+function recordSegmentTake(storyboard, version, status, clipId = "") {
+  const segmentId = String(version?.segmentId || "");
+  const segment = storyboard?.segments?.[segmentId];
+  if (!segment || !version) return null;
+  segment.generatedVersions = Array.isArray(segment.generatedVersions) ? segment.generatedVersions : [];
+  const promptKey = String(version.comfyPromptId || version.promptId || "");
+  const duplicate = segment.generatedVersions.find((item) => String(item.comfyPromptId || item.promptId || "") === promptKey && promptKey);
+  const nextV = duplicate
+    ? Number(duplicate.v)
+    : Math.max(0, ...segment.generatedVersions.map((item) => Number(item.v) || 0)) + 1;
+  const take = {
+    ...version,
+    id: duplicate?.id || `take-v${nextV}`,
+    v: nextV,
+    file: takeMediaPath(version.file || version.generatedInputPath || version.outputFile || "", { slug: storyboard.projectId, clipId })
+  };
+  if (!duplicate) segment.generatedVersions.push(take);
+  else Object.assign(duplicate, take);
+  const takesNow = normalizeSegmentTakes(segment, { slug: storyboard.projectId, segmentId });
+  const locked = Boolean(segment.activeTakeLocked);
+  if (takesNow.length === 1 || (["done", "partial"].includes(String(status || "")) && !locked)) {
+    segment.activeGeneratedVersion = take.v;
+    segment.activeTakeId = take.id;
+  }
+  return take;
+}
+
+export function listSegmentTakes(slug, clipId, segmentId) {
+  slug = assertProjectSlug(slug);
+  const storyboard = loadStoryboard(slug);
+  if (!storyboard.clips?.[clipId]) throw new Error(`Storyboard clip not found: ${clipId}`);
+  const segment = storyboard.segments?.[segmentId];
+  if (!segment) throw new Error(`Storyboard segment not found: ${segmentId}`);
+  const takes = ensureActiveTake(segment, { slug, clipId, segmentId });
+  const active = activeTakeFromList(takes, segment.activeTakeId, segment.activeGeneratedVersion);
+  return {
+    projectSlug: slug,
+    clipId,
+    segmentId,
+    takes,
+    activeTakeId: active?.id || null,
+    activeGeneratedVersion: active?.v || null,
+    activeTakeLocked: Boolean(segment.activeTakeLocked)
+  };
+}
+
+export function activateSegmentTake(slug, clipId, segmentId, takeId) {
+  slug = assertProjectSlug(slug);
+  const storyboard = loadStoryboard(slug);
+  if (!storyboard.clips?.[clipId]) throw new Error(`Storyboard clip not found: ${clipId}`);
+  const segment = storyboard.segments?.[segmentId];
+  if (!segment) throw new Error(`Storyboard segment not found: ${segmentId}`);
+  const takes = normalizeSegmentTakes(segment, { slug, clipId, segmentId });
+  const take = takes.find((item) => String(item.id) === String(takeId) || String(item.v) === String(takeId));
+  if (!take) throw new Error(`Take not found: ${takeId}`);
+  segment.generatedVersions = Array.isArray(segment.generatedVersions) ? segment.generatedVersions : [];
+  if (!segment.generatedVersions.some((item) => String(item.id) === String(take.id) || path.basename(String(item.file || item.generatedInputPath || "")).toLowerCase() === path.basename(String(take.file || "")).toLowerCase())) {
+    segment.generatedVersions.push({
+      id: take.id,
+      v: take.v,
+      file: take.file,
+      generatedInputPath: take.file,
+      source: take.source || "disk"
+    });
+  }
+  segment.activeTakeId = take.id;
+  segment.activeGeneratedVersion = take.v;
+  segment.activeTakeLocked = true;
+  storyboard.updatedAt = new Date().toISOString();
+  saveStoryboard(slug, storyboard);
+  return {
+    projectSlug: slug,
+    clipId,
+    segmentId,
+    takes: normalizeSegmentTakes(segment, { slug, clipId, segmentId }),
+    activeTakeId: take.id,
+    activeGeneratedVersion: take.v,
+    activeTake: take,
+    activeTakeLocked: true
+  };
+}
+
+
+
+export function setSegmentTakeLock(slug, clipId, segmentId, locked) {
+  slug = assertProjectSlug(slug);
+  const storyboard = loadStoryboard(slug);
+  if (!storyboard.clips?.[clipId]) throw new Error(`Storyboard clip not found: ${clipId}`);
+  const segment = storyboard.segments?.[segmentId];
+  if (!segment) throw new Error(`Storyboard segment not found: ${segmentId}`);
+  segment.activeTakeLocked = Boolean(locked);
+  storyboard.updatedAt = new Date().toISOString();
+  saveStoryboard(slug, storyboard);
+  const takes = ensureActiveTake(segment, { slug, clipId, segmentId });
+  const active = activeTakeFromList(takes, segment.activeTakeId, segment.activeGeneratedVersion);
+  return {
+    projectSlug: slug,
+    clipId,
+    segmentId,
+    takes,
+    activeTakeId: active?.id || null,
+    activeGeneratedVersion: active?.v || null,
+    activeTakeLocked: Boolean(segment.activeTakeLocked)
+  };
+}
+
+export function setClipGenerateOption(slug, clipId, optionId) {
+  slug = assertProjectSlug(slug);
+  const option = generateOptionForMode(null, optionId);
+  if (!option || option.id !== optionId) throw new Error(`Unknown generate option: ${optionId}`);
+  const storyboard = loadStoryboard(slug);
+  const clip = storyboard.clips?.[clipId];
+  if (!clip) throw new Error(`Storyboard clip not found: ${clipId}`);
+  const plan = storyboard.videoPlans?.[clip.videoPlanId];
+  if (!plan) throw new Error(`Storyboard video plan not found: ${clip.videoPlanId}`);
+  const currentMode = plan.generationMode || clip.generationMode || storyboard.defaults?.generationMode || null;
+  if (option.generationMode === SEMANTIC_T2V_GENERATION_MODE
+    && semanticT2vLockedForContext({ projectSlug: slug, generationMode: currentMode })) {
+    throw new Error("Semantic T2V is locked on Harrowing AAA I2V. Queue All stays on segmented first-frame I2V.");
+  }
+  clip.generateOptionId = option.id;
+  plan.generateOptionId = option.id;
+  if (option.generationMode) {
+    clip.generationMode = option.generationMode;
+    plan.generationMode = option.generationMode;
+  }
+  if (!semanticT2vLockedForContext({ projectSlug: slug, generationMode: currentMode })) {
+    storyboard.defaults = { ...(storyboard.defaults || {}), generateOptionId: option.id };
+  }
+  storyboard.updatedAt = new Date().toISOString();
+  saveStoryboard(slug, storyboard);
+  return { projectSlug: slug, clipId, generateOption: option };
+}
+
+export { PREMIERE_GENERATE_OPTIONS, HARROWING_AAA_I2V_GENERATE_OPTION, generateOptionForMode };

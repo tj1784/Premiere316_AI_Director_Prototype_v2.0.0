@@ -1,0 +1,4 @@
+torch==2.8.0+cu128
+torchaudio==2.8.0+cu128
+transformers==4.57.3
+accelerate==1.12.0

@@ -3,12 +3,17 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import http from "node:http";
+import https from "node:https";
 import multer from "multer";
 import { execFile, spawn } from "child_process";
 import { promisify } from "util";
-import { comfyAlive, COMFY_URL, getObjectInfo } from "./comfy.js";
+import { Readable } from "node:stream";
+import { WebSocket, WebSocketServer } from "ws";
+import { comfyAlive, COMFY_URL, getComfyQueueState, getComfySystemStats, getObjectInfo } from "./comfy.js";
 import {
   isBundledComfyUrl,
+  managedComfyProfile,
   normalizeComfyUrl,
   saveConfiguredComfyUrl
 } from "./comfy-config.js";
@@ -31,7 +36,78 @@ import {
   isShortsProject,
   normalizeProjectCategory
 } from "./projects.js";
-import { enqueue, listJobs, cancelJob, cancelAssetJobs } from "./queue.js";
+import {
+  enqueue,
+  listJobs,
+  cancelJob,
+  cancelAssetJobs,
+  prepareLocalGpuRuntime,
+  prepareStandaloneQwenTtsRuntime
+} from "./queue.js";
+import { gpuLeaseStatus, GPU_RESOURCE_OWNERS } from "./gpu-resource-manager.js";
+import {
+  bindIndexTtsGenerationJob,
+  createIndexTtsGeneration,
+  getProjectSound,
+  indexTtsHealth,
+  registerIndexTtsVoiceReferenceFromFile,
+  resolveIndexTtsVoiceReference,
+  unloadIndexTtsModel,
+  validateIndexTtsVoiceReferenceFromFile
+} from "./index-tts.js";
+import {
+  bindQwenTtsGenerationJob,
+  createQwenTtsGeneration,
+  getProjectQwenSound,
+  loadQwenTtsModel,
+  qwenTtsHealth,
+  resolveQwenTtsVoiceReference,
+  unloadQwenTtsModel
+} from "./qwen-tts.js";
+import {
+  H02_EXTERNAL_PROJECT_SLUG,
+  isExternalQueueJobId,
+  readExternalH02DialogueCues
+} from "./external-h02-queue.js";
+import {
+  attachVoiceDesignAssetId,
+  attachVoiceDesignIndexTtsVoiceId,
+  bindVoiceDesignSessionJob,
+  buildVoiceDesignAssetHook,
+  buildVoiceDesignIndexTtsHook,
+  createVoiceDesignSession,
+  getProjectVoiceDesign,
+  loadQwenVoiceDesign,
+  qwenVoiceDesignHealth,
+  qwenVoiceDesignInstallStatus,
+  queueVoiceDesignRegeneration,
+  renameVoiceDesignAudition,
+  safeVoiceDesignProjectFile,
+  saveVoiceDesignVoice,
+  selectVoiceDesignAudition,
+  softDeleteVoiceDesignAudition,
+  unloadQwenVoiceDesign,
+  voiceDesignContainingFolder
+} from "./qwen-voice-design.js";
+import {
+  AUDIO_WORKFLOW_IMPORT_ROOT,
+  getAudioWorkflowCatalog,
+  getAudioWorkflowProfile,
+  importAudioWorkflow,
+  publicAudioWorkflowProfile,
+  rebindAudioWorkflowProfile,
+  renameAudioWorkflowProfile,
+  scanAudioWorkflowCandidates,
+  setAudioWorkflowEnabled
+} from "./audio-workflows.js";
+import {
+  buildAudioEditPlacement,
+  deleteProjectAudioAssetToTrash,
+  getProjectAudioState,
+  patchProjectAudioAsset,
+  performProjectAudioAssetAction
+} from "./audio-assets.js";
+import { prepareAudioGenerationRecords } from "./audio-generation.js";
 import {
   fillI2vPrompt,
   normalizeSegments,
@@ -51,6 +127,7 @@ import {
 import { ffmpegAvailable, probeMedia } from "./ffmpeg.js";
 import { normalizeBookends } from "./bookends.js";
 import { PACKAGE_ROOT, PROJECTS_DIR, CLIENT_DIST, projectDir } from "./paths.js";
+import { resolveProjectMediaFile } from "./media-path.js";
 import {
   SCREENPLAY_MODEL,
   screenplayModelHealth,
@@ -88,9 +165,23 @@ import {
   startPromptEnhance
 } from "./prompt-enhance.js";
 import {
+  PromptGenerationError,
+  createAndEnqueuePromptGeneration,
+  getPromptGenerationWorkflowCatalog,
+  promptComposerAssetProvenanceChanges
+} from "./prompt-generation.js";
+import {
+  AssetPromptAudioError,
+  combineAssetPromptWorkflowCatalog,
+  createAndEnqueueAssetPromptAudio,
+  getAssetPromptAudioWorkflowCatalog,
+  isAssetPromptAudioRequest
+} from "./asset-prompt-audio.js";
+import {
   loadStoryboard,
   saveStoryboardTargetReferences,
-  storyboardSummary
+  storyboardSummary,
+  applyGlobalPromptToScope
 } from "./storyboard.js";
 import {
   compileStoryboardFramePrompt,
@@ -104,23 +195,306 @@ import {
   pushStoryboardVideoPlanToComfyUI,
   registerStoryboardFrameReplacement
 } from "./storyboard-generation.js";
+import { startComfyOutputIngest } from "./comfy-output-ingest.js";
+import { readAaaWorkflow, writeAaaWorkflow, listWorkflows } from "./aaa-workflow.js";
+import {
+  editorWorkspace,
+  importEditorAudio,
+  loadEditDocument,
+  probeEditorMedia,
+  saveEditSequence
+} from "./sequence-editor.js";
+import {
+  characterAssetKey,
+  findCharacterVoiceAsset,
+  findImportedVoiceSource,
+  listAudacityVoiceSources,
+  resolveAudacityVoiceSource
+} from "./character-voices.js";
+import {
+  fixedUpstreamUrl,
+  fixedUpstreamWebSocketUrl,
+  isClientWorkspacePath,
+  isEmbeddedLocalServiceReferer,
+  isPermittedLocalGatewayRequest,
+  proxyResponseHeaders,
+  rewriteLocalServiceLocation,
+  sameLocalServiceEndpoint,
+  webSocketCloseArguments
+} from "./local-service-proxy.js";
 
 const PORT = process.env.PORT || 8789;
+const HOST = process.env.HOST || "127.0.0.1";
 const app = express();
+app.use("/integrations/comfyui", (req, res) => handleComfyGatewayRequest(req, res, "/integrations/comfyui"));
+app.use((req, res, next) => {
+  if (!isEmbeddedComfyRequest(req)) return next();
+  return handleComfyGatewayRequest(req, res, "/integrations/comfyui");
+});
 app.use(express.json({ limit: "100mb" }));
+
+async function handleComfyGatewayRequest(req, res, publicPrefix) {
+  try {
+    if (!isLoopbackRequest(req)) return res.status(403).send("The embedded ComfyUI gateway is available only on this computer.");
+    if (!isPermittedLocalGatewayRequest({ host: req.headers.host, origin: req.headers.origin, protocol: req.protocol })) {
+      return res.status(403).send("The embedded ComfyUI gateway requires a local same-origin request.");
+    }
+    if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+      if (String(req.headers["sec-fetch-site"] || "").toLowerCase() === "cross-site") return res.status(403).send("Cross-site ComfyUI mutations are blocked.");
+      const protectedIds = await protectedComfyPromptIds();
+      const pathname = new URL(req.url || "/", "http://premiere316.invalid").pathname;
+      const exactCancel = pathname.match(/^\/api\/jobs\/([^/]+)\/cancel$/);
+      const globalMutation = pathname === "/interrupt" || pathname === "/queue";
+      const launchesPrompt = pathname === "/prompt";
+      const activePremiereJob = listJobs().some((job) => ["running", "cancelling"].includes(String(job.status || "")));
+      const localVoiceLease = gpuLeaseStatus();
+      if (launchesPrompt && [GPU_RESOURCE_OWNERS.INDEX_TTS, GPU_RESOURCE_OWNERS.QWEN_TTS, GPU_RESOURCE_OWNERS.QWEN_VOICE_DESIGN].includes(localVoiceLease?.owner)) {
+        return res.status(409).json({ error: `Unload ${localVoiceLease.label || localVoiceLease.owner} before queueing a ComfyUI prompt on the shared GPU.` });
+      }
+      if ((globalMutation && (activePremiereJob || protectedIds.size)) || (exactCancel && protectedIds.has(decodeURIComponent(exactCancel[1])))) {
+        return res.status(409).json({ error: "This ComfyUI mutation could stop a Premiere316 or LTX Director-owned prompt. Cancel it from the workspace that queued it." });
+      }
+    }
+    if (["CONNECT", "TRACE"].includes(req.method)) return res.status(405).send("Unsupported gateway method.");
+    proxyRawHttp(req, res, COMFY_URL, publicPrefix);
+  } catch (error) {
+    res.status(502).json({ error: `Could not validate the shared ComfyUI queue: ${String(error.message || error)}` });
+  }
+}
+
+function isEmbeddedComfyRequest(req) {
+  return isEmbeddedLocalServiceReferer({ host: req.headers.host, referer: req.headers.referer, protocol: req.protocol });
+}
 
 const execFileAsync = promisify(execFile);
 const LMS_EXECUTABLE = process.env.LMS_EXECUTABLE || path.join(process.env.USERPROFILE || "", ".lmstudio", "bin", "lms.exe");
 const GPU_HANDOFF_CONFIRMATION = "UNLOAD_QWEN_AND_CANCEL_ACTIVE_GENERATION";
-const COMFY_RESTART_SCRIPT = path.join(PACKAGE_ROOT, "BlokeyUI", "restart_premiere316_engine.ps1");
+const COMFY_CONTROL_SCRIPTS = Object.freeze({
+  shared: path.join(PACKAGE_ROOT, "BlokeyUI", "restart_shared_engine.ps1"),
+  dedicated: path.join(PACKAGE_ROOT, "BlokeyUI", "restart_premiere316_engine.ps1")
+});
 const PREMIERE_RESTART_SCRIPT = path.join(PACKAGE_ROOT, "restart_premiere316_app.ps1");
 const PREMIERE_RESTART_HELPER = path.join(PACKAGE_ROOT, "scripts", "restart-premiere316.mjs");
+const DIRECTOR_SERVER = path.join(PACKAGE_ROOT, "director-webapp", "server.mjs");
+const DIRECTOR_URL = "http://127.0.0.1:8791";
 let comfyRestarting = false;
 let comfyRestartState = { status: "idle", startedAt: null, finishedAt: null, error: null, detail: null };
+let directorProcess = null;
+let directorStartPromise = null;
+const integratedDirectorPromptIds = new Set();
+
+function comfyControlScript(value = COMFY_URL) {
+  const profile = managedComfyProfile(value);
+  return profile ? COMFY_CONTROL_SCRIPTS[profile] : null;
+}
+
+function comfyQueuePromptIds(queue) {
+  return new Set([...(queue?.queue_running || []), ...(queue?.queue_pending || [])]
+    .map((entry) => Array.isArray(entry) ? entry[1] : entry?.prompt_id)
+    .filter(Boolean)
+    .map(String));
+}
+
+async function protectedComfyPromptIds() {
+  if (!integratedDirectorPromptIds.size) return new Set();
+  const queue = await getComfyQueueState();
+  const activeIds = comfyQueuePromptIds(queue.raw);
+  for (const id of [...integratedDirectorPromptIds]) if (!activeIds.has(String(id))) integratedDirectorPromptIds.delete(id);
+  return new Set([...integratedDirectorPromptIds].filter((id) => activeIds.has(String(id))).map(String));
+}
 
 function isLoopbackRequest(req) {
   const address = String(req.socket?.remoteAddress || "");
   return address === "127.0.0.1" || address === "::1" || address === "::ffff:127.0.0.1";
+}
+
+function requireLocalSameOriginMutation(req, res, next) {
+  const fetchSite = String(req.headers["sec-fetch-site"] || "").toLowerCase();
+  if (!isLoopbackRequest(req) || fetchSite === "cross-site" || !isPermittedLocalGatewayRequest({
+    host: req.headers.host,
+    origin: req.headers.origin,
+    protocol: req.protocol
+  })) {
+    return res.status(403).json({ error: "Premiere316 editor changes require a local same-origin request." });
+  }
+  return next();
+}
+
+function proxyRawHttp(req, res, upstreamBase, publicPrefix) {
+  const target = fixedUpstreamUrl(upstreamBase, req.url || "/");
+  const transport = target.protocol === "https:" ? https : http;
+  const headers = { ...req.headers, host: target.host, origin: target.origin, referer: `${target.origin}/` };
+  for (const name of [
+    "authorization",
+    "connection",
+    "cookie",
+    "keep-alive",
+    "proxy-authorization",
+    "te",
+    "trailers",
+    "transfer-encoding",
+    "upgrade",
+  ]) delete headers[name];
+
+  const upstream = transport.request(target, { method: req.method, headers }, (response) => {
+    res.status(response.statusCode || 502);
+    for (const [name, value] of Object.entries(proxyResponseHeaders(response.headers))) {
+      if (name.toLowerCase() === "location" && typeof value === "string") {
+        const rewritten = rewriteLocalServiceLocation(value, upstreamBase, publicPrefix);
+        if (!rewritten) {
+          response.resume();
+          return res.status(502).json({ error: "The local service tried to redirect outside its fixed gateway." });
+        }
+        res.setHeader(name, rewritten);
+      } else {
+        res.setHeader(name, value);
+      }
+    }
+    response.pipe(res);
+  });
+  upstream.setTimeout(30_000, () => upstream.destroy(new Error("Local service gateway timed out")));
+  req.once("aborted", () => upstream.destroy());
+  res.once("close", () => { if (!res.writableEnded) upstream.destroy(); });
+  upstream.on("error", (error) => {
+    if (!res.headersSent) res.status(502).json({ error: `Local service gateway failed: ${String(error.message || error)}` });
+    else res.destroy(error);
+  });
+  req.pipe(upstream);
+}
+
+async function directorRuntimeStatus() {
+  try {
+    const response = await fetch(`${DIRECTOR_URL}/api/health`, { signal: AbortSignal.timeout(1500) });
+    if (!response.ok) return { connected: false, compatible: false, health: null };
+    const health = await response.json();
+    return {
+      connected: true,
+      compatible: sameLocalServiceEndpoint(health?.comfyUrl, COMFY_URL),
+      health
+    };
+  } catch {
+    return { connected: false, compatible: false, health: null };
+  }
+}
+
+async function directorAlive() {
+  const status = await directorRuntimeStatus();
+  return status.connected && status.compatible;
+}
+
+async function ensureDirectorService() {
+  const existing = await directorRuntimeStatus();
+  if (existing.connected && existing.compatible) return true;
+  if (existing.connected) {
+    throw new Error(`LTX Director is connected to ${existing.health?.comfyUrl || "an unknown engine"}, but Premiere316 is configured for ${COMFY_URL}. Stop or reconfigure Director before integrating it.`);
+  }
+  if (directorStartPromise) return directorStartPromise;
+  directorStartPromise = (async () => {
+    if (!fs.existsSync(DIRECTOR_SERVER)) throw new Error("The repository LTX Director service is unavailable.");
+    directorProcess = spawn(process.execPath, [DIRECTOR_SERVER], {
+      cwd: PACKAGE_ROOT,
+      env: {
+        ...process.env,
+        DIRECTOR_PORT: "8791",
+        COMFY_URL,
+        PREMIERE_API_URL: `http://127.0.0.1:${PORT}`
+      },
+      stdio: "ignore",
+      windowsHide: true
+    });
+    directorProcess.once("error", () => { directorProcess = null; });
+    directorProcess.once("exit", () => { directorProcess = null; });
+    const deadline = Date.now() + 20_000;
+    while (Date.now() < deadline) {
+      if (await directorAlive()) return true;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    throw new Error("LTX Director did not become ready on 127.0.0.1:8791.");
+  })().finally(() => { directorStartPromise = null; });
+  return directorStartPromise;
+}
+
+async function proxyDirectorApi(req, res) {
+  try {
+    if (!isLoopbackRequest(req)) return res.status(403).json({ error: "LTX Director is available only on this computer." });
+    const suffix = String(req.params[0] || "").replace(/^\/+/, "");
+    if (req.method === "POST" && (suffix === "queue" || suffix === "push-to-comfyui")) {
+      try {
+        const localVoiceLease = gpuLeaseStatus();
+        if ([GPU_RESOURCE_OWNERS.INDEX_TTS, GPU_RESOURCE_OWNERS.QWEN_TTS, GPU_RESOURCE_OWNERS.QWEN_VOICE_DESIGN].includes(localVoiceLease?.owner)) {
+          return res.status(409).json({ error: `Unload ${localVoiceLease.label || localVoiceLease.owner} before queueing an LTX Director prompt on the shared GPU.` });
+        }
+        const { queueHellFromPremiere } = await import("./hell-comfy-push.js?t=" + Date.now());
+        const result = await queueHellFromPremiere(req.body || {});
+        for (const item of result.accepted || []) {
+          if (item?.promptId) integratedDirectorPromptIds.add(String(item.promptId));
+        }
+        return res.status(202).json({
+          ok: true,
+          accepted: (result.accepted || []).map((item) => ({
+            promptId: item.promptId,
+            number: item.number,
+            segmentId: item.segmentId || null
+          }))
+        });
+      } catch (error) {
+        return res.status(400).json({ error: String(error.message || error) });
+      }
+    }
+    const directorStatus = await directorRuntimeStatus();
+    if (!directorStatus.connected) return res.status(503).json({ error: "LTX Director is not running. Open Direct → LTX Director to start it." });
+    if (!directorStatus.compatible) return res.status(409).json({ error: `LTX Director uses ${directorStatus.health?.comfyUrl || "an unknown engine"}; Premiere316 uses ${COMFY_URL}. Align the engine settings before sharing its queue.` });
+    if (req.method === "POST" && suffix === "queue") {
+      const activePremiereJobs = listJobs().filter((job) => ["queued", "running", "cancelling"].includes(String(job.status || "")));
+      const comfyQueue = await getComfyQueueState();
+      if (activePremiereJobs.length || comfyQueue.running || comfyQueue.pending) {
+        return res.status(409).json({
+          error: `Shared GPU is busy: ${activePremiereJobs.length} Premiere job(s), ${comfyQueue.running} ComfyUI running, ${comfyQueue.pending} ComfyUI queued.`
+        });
+      }
+    }
+    if (req.method === "POST" && suffix === "interrupt") {
+      return res.status(409).json({ error: "Global interruption is disabled in the integrated workspace. Cancel the owning generation job instead." });
+    }
+
+    const target = fixedUpstreamUrl(DIRECTOR_URL, `/api/${suffix}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
+    const method = req.method || "GET";
+    const requestContentType = String(req.headers["content-type"] || "");
+    const hasBody = method !== "GET" && method !== "HEAD";
+    const jsonBody = hasBody && requestContentType.toLowerCase().includes("application/json");
+    const body = !hasBody ? undefined : jsonBody ? JSON.stringify(req.body ?? {}) : req;
+    const response = await fetch(target, {
+      method,
+      headers: {
+        accept: req.headers.accept || "*/*",
+        ...(hasBody && requestContentType ? { "content-type": requestContentType } : {}),
+        ...(hasBody && !jsonBody && req.headers["content-length"] ? { "content-length": req.headers["content-length"] } : {})
+      },
+      body,
+      ...(body === req ? { duplex: "half" } : {}),
+      signal: AbortSignal.timeout(120_000)
+    });
+    res.status(response.status);
+    for (const [name, value] of Object.entries(proxyResponseHeaders(Object.fromEntries(response.headers.entries())))) res.setHeader(name, value);
+    if (!response.body) return res.end();
+    if (method === "POST" && suffix === "queue" && String(response.headers.get("content-type") || "").includes("application/json")) {
+      const payload = await response.json();
+      for (const item of payload?.accepted || []) if (item?.promptId) integratedDirectorPromptIds.add(String(item.promptId));
+      return res.json(payload);
+    }
+    const upstreamBody = Readable.fromWeb(response.body);
+    upstreamBody.on("error", (streamError) => {
+      if (!res.headersSent) res.status(502).json({ error: `LTX Director gateway stream failed: ${String(streamError.message || streamError)}` });
+      else if (!res.destroyed) res.destroy(streamError);
+    });
+    res.once("close", () => {
+      if (!res.writableEnded && !upstreamBody.destroyed) upstreamBody.destroy();
+    });
+    upstreamBody.pipe(res);
+  } catch (error) {
+    if (!res.headersSent) res.status(502).json({ error: `LTX Director gateway failed: ${String(error.message || error)}` });
+    else res.destroy(error);
+  }
 }
 
 async function lmStudioGpuRuntime() {
@@ -191,11 +565,28 @@ function addGuide(project, clip, input) {
 
 // ---------- health ----------
 app.get("/api/health", async (_req, res) => {
-  const [comfy, ffmpeg, screenplay] = await Promise.all([
-    comfyAlive(),
+  const [comfyStats, comfyQueue, ffmpeg, screenplay] = await Promise.all([
+    getComfySystemStats().catch(() => null),
+    getComfyQueueState().catch(() => null),
     ffmpegAvailable(),
     screenplayModelHealth()
   ]);
+  const comfy = Boolean(comfyStats);
+  const device = comfyStats?.devices?.[0] || null;
+  const activePremiereJob = listJobs().find((job) => ["running", "cancelling"].includes(String(job.status || ""))) || null;
+  const gpuLease = gpuLeaseStatus();
+  const managedComfyScript = comfyControlScript();
+  const managedComfyControl = process.platform === "win32" && Boolean(managedComfyScript) && fs.existsSync(managedComfyScript);
+  const indexTts = indexTtsHealth();
+  const qwenTts = qwenTtsHealth();
+  const qwenVoiceDesign = {
+    ...qwenVoiceDesignHealth(),
+    gpu: device ? {
+      name: String(device.name || "GPU").replace(/^cuda:\d+\s*/i, ""),
+      totalVramBytes: Number(device.vram_total) || 0,
+      freeVramBytes: Number(device.vram_free) || 0
+    } : null
+  };
   res.json({
     comfy,
     comfyRestarting,
@@ -206,13 +597,38 @@ app.get("/api/health", async (_req, res) => {
     screenplayModelAvailable: screenplay.modelAvailable,
     screenplayModel: SCREENPLAY_MODEL,
     lmStudioUrl: screenplay.url,
+    comfyProxyReady: comfy,
+    comfyEmbedUrl: "/integrations/comfyui/",
+    comfyQueue: {
+      running: comfyQueue?.running || 0,
+      pending: comfyQueue?.pending || 0
+    },
+    gpu: device ? {
+      name: String(device.name || "GPU").replace(/^cuda:\d+\s*/i, ""),
+      totalBytes: Number(device.vram_total) || 0,
+      freeBytes: Number(device.vram_free) || 0,
+      usedBytes: Math.max(0, (Number(device.vram_total) || 0) - (Number(device.vram_free) || 0)),
+      leaseOwner: gpuLease?.label || activePremiereJob?.type || (comfyQueue?.running ? "ComfyUI workflow" : null),
+      leaseJobId: gpuLease?.jobId || activePremiereJob?.id || null,
+      leaseState: gpuLease?.state || null,
+      leaseWorkerPid: gpuLease?.workerPid || null
+    } : null,
+    providers: {
+      lmStudio: { available: screenplay.online, modelAvailable: screenplay.modelAvailable, url: screenplay.url },
+      comfyui: { available: comfy, url: COMFY_URL, proxy: "/integrations/comfyui/" },
+      qwenTts,
+      indexTts,
+      qwenVoiceDesign,
+      ffmpeg: { available: ffmpeg }
+    },
     app: "premiere316",
     capabilities: {
       selectedRangeRender: true,
       guideUpload: false,
       ingredientsICLoRA: true,
       dedicatedComfyUI: isBundledComfyUrl(COMFY_URL),
-      dedicatedComfyRestart: process.platform === "win32" && isBundledComfyUrl(COMFY_URL) && fs.existsSync(COMFY_RESTART_SCRIPT),
+      managedComfyControl,
+      dedicatedComfyRestart: managedComfyControl && isBundledComfyUrl(COMFY_URL),
       premiereRestart: fs.existsSync(PREMIERE_RESTART_HELPER),
       screenplayGeneration: screenplay.online && screenplay.modelAvailable,
       screenplayStreamingChat: screenplay.online && screenplay.modelAvailable,
@@ -228,9 +644,158 @@ app.get("/api/health", async (_req, res) => {
       guideGenerator: "asset-foundry-only",
       scoreGenerator: ffmpeg ? "prototype-fallback" : "unavailable",
       masterAssembly: ffmpeg,
-      deterministicMasterBookends: ffmpeg
+      deterministicMasterBookends: ffmpeg,
+      qwenTtsVoiceClone: qwenTts.ready,
+      indexTtsVoiceClone: indexTts.ready,
+      qwenVoiceDesign: qwenVoiceDesign.ready
     }
   });
+});
+
+app.get("/api/sound/index-tts/health", (_req, res) => {
+  res.json(indexTtsHealth());
+});
+
+app.get("/api/sound/qwen-tts/health", (_req, res) => {
+  res.json(qwenTtsHealth());
+});
+
+app.post("/api/sound/qwen-tts/load", requireLocalSameOriginMutation, async (_req, res) => {
+  try {
+    const active = listJobs().find((job) =>
+      ["queued", "running", "cancelling"].includes(String(job.status || "")) &&
+      /(?:qwen_tts|qwen_voice_design|index_tts|render_|generate_asset|generate_prompt_asset|generate_audio_workflow|generate_storyboard)/.test(String(job.type || ""))
+    );
+    if (active) return res.status(409).json({ error: "Wait for or cancel the active GPU job before loading standalone Qwen3-TTS.", job: active });
+    await prepareStandaloneQwenTtsRuntime();
+    await loadQwenTtsModel();
+    res.json({ ok: true, health: qwenTtsHealth() });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error), lease: error?.lease || gpuLeaseStatus() });
+  }
+});
+
+app.post("/api/sound/qwen-tts/unload", requireLocalSameOriginMutation, async (_req, res) => {
+  try {
+    const active = listJobs().find((job) =>
+      job.type === "generate_qwen_tts" && ["queued", "running", "cancelling"].includes(String(job.status || ""))
+    );
+    if (active) return res.status(409).json({ error: "Cancel the active Qwen3-TTS job before unloading its model.", job: active });
+    const result = await unloadQwenTtsModel();
+    res.json({ ok: true, ...result, health: qwenTtsHealth() });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error) });
+  }
+});
+
+async function qwenVoiceDesignStatusPayload() {
+  const [stats, health] = await Promise.all([
+    getComfySystemStats().catch(() => null),
+    Promise.resolve(qwenVoiceDesignHealth())
+  ]);
+  const device = stats?.devices?.[0] || null;
+  const installation = qwenVoiceDesignInstallStatus();
+  const installing = ["running", "starting"].includes(String(installation.status || "").toLowerCase());
+  return {
+    ...health,
+    state: installing ? "installing" : health.busy ? "generating" : health.loaded ? "loaded" : health.ready ? "unloaded" : "not-ready",
+    attentionBackend: health.attentionImplementation,
+    installation,
+    lease: gpuLeaseStatus(),
+    gpu: device ? {
+      name: String(device.name || "GPU").replace(/^cuda:\d+\s*/i, ""),
+      totalVramBytes: Number(device.vram_total) || 0,
+      freeVramBytes: Number(device.vram_free) || 0
+    } : null
+  };
+}
+
+app.get("/api/sound/qwen-voice-design/status", async (_req, res) => {
+  res.json({ status: await qwenVoiceDesignStatusPayload() });
+});
+
+app.post("/api/sound/qwen-voice-design/install", requireLocalSameOriginMutation, (req, res) => {
+  try {
+    const health = qwenVoiceDesignHealth();
+    if (health.ready && req.body?.force !== true) return res.json({ ready: true, health });
+    const job = enqueue({
+      type: "install_qwen_voice_design",
+      label: "Install pinned Qwen3-TTS VoiceDesign",
+      refs: { force: req.body?.force === true }
+    });
+    res.status(202).json({ job, status: qwenVoiceDesignInstallStatus() });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error) });
+  }
+});
+
+app.post("/api/sound/qwen-voice-design/load", requireLocalSameOriginMutation, async (_req, res) => {
+  try {
+    const active = listJobs().find((job) =>
+      ["queued", "running", "cancelling"].includes(String(job.status || "")) &&
+      /(?:qwen_voice_design|qwen_tts|index_tts|render_|generate_asset|generate_prompt_asset|generate_audio_workflow|generate_storyboard)/.test(String(job.type || ""))
+    );
+    if (active) return res.status(409).json({ error: "Wait for or cancel the active GPU job before loading Qwen VoiceDesign.", job: active });
+    await prepareLocalGpuRuntime(GPU_RESOURCE_OWNERS.QWEN_VOICE_DESIGN);
+    await loadQwenVoiceDesign();
+    res.json({ ok: true, status: await qwenVoiceDesignStatusPayload() });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error), lease: error?.lease || gpuLeaseStatus() });
+  }
+});
+
+app.post("/api/sound/qwen-voice-design/unload", requireLocalSameOriginMutation, async (_req, res) => {
+  try {
+    const active = listJobs().find((job) =>
+      job.type === "generate_qwen_voice_design" && ["queued", "running", "cancelling"].includes(String(job.status || ""))
+    );
+    if (active) return res.status(409).json({ error: "Cancel the active Qwen VoiceDesign job before unloading its model.", job: active });
+    const result = await unloadQwenVoiceDesign();
+    res.json({ ok: true, ...result, status: await qwenVoiceDesignStatusPayload() });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error) });
+  }
+});
+
+app.post("/api/sound/index-tts/unload", requireLocalSameOriginMutation, async (_req, res) => {
+  try {
+    const active = listJobs().find((job) =>
+      job.type === "generate_index_tts" && ["queued", "running", "cancelling"].includes(String(job.status || ""))
+    );
+    if (active) return res.status(409).json({ error: "Cancel the active IndexTTS job before unloading its model.", job: active });
+    const result = await unloadIndexTtsModel();
+    res.json({ ok: true, ...result, health: indexTtsHealth() });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error) });
+  }
+});
+
+app.get("/api/integrations/ltx/status", async (req, res) => {
+  if (!isLoopbackRequest(req)) return res.status(403).json({ error: "LTX Director is available only on this computer." });
+  const status = await directorRuntimeStatus();
+  res.json({ connected: status.connected, compatible: status.compatible, url: DIRECTOR_URL, health: status.health });
+});
+
+app.post("/api/integrations/ltx/start", async (req, res) => {
+  if (!isLoopbackRequest(req)) return res.status(403).json({ error: "LTX Director can be started only on this computer." });
+  res.json({ ok: true, connected: true, url: DIRECTOR_URL, skippedDirector: true });
+});
+
+app.all("/api/integrations/ltx/director/*", proxyDirectorApi);
+
+app.get("/api/aaa-workflow/library", (req, res) => {
+  try { res.json({ ok: true, ...listWorkflows(String(req.query.q || "")) }); }
+  catch (error) { res.status(500).json({ error: String(error.message || error) }); }
+});
+
+app.get("/api/aaa-workflow", (req, res) => {
+  try { res.json({ ok: true, workflow: readAaaWorkflow(String(req.query.rel || "")) }); }
+  catch (error) { res.status(500).json({ error: String(error.message || error) }); }
+});
+
+app.put("/api/aaa-workflow", (req, res) => {
+  try { res.json({ ok: true, workflow: writeAaaWorkflow(req.body || {}) }); }
+  catch (error) { res.status(400).json({ error: String(error.message || error) }); }
 });
 
 app.get("/api/settings/comfyui", async (req, res) => {
@@ -308,14 +873,15 @@ app.post("/api/system/comfy/restart", async (req, res) => {
   } catch {
     return res.status(409).json({ error: `The configured ComfyUI URL is invalid: ${COMFY_URL}` });
   }
-  if (!isBundledComfyUrl(COMFY_URL)) {
-    return res.status(409).json({ error: "Restart is available only for Premiere316's dedicated ComfyUI on port 8190." });
+  const controlScript = comfyControlScript(COMFY_URL);
+  if (!controlScript) {
+    return res.status(409).json({ error: "Start/restart is available only for this repository's local ComfyUI on port 8188 or 8190." });
   }
-  if (process.platform !== "win32" || !fs.existsSync(COMFY_RESTART_SCRIPT)) {
-    return res.status(501).json({ error: "The dedicated ComfyUI restart helper is unavailable on this installation." });
+  if (process.platform !== "win32" || !fs.existsSync(controlScript)) {
+    return res.status(501).json({ error: "The local ComfyUI start/restart helper is unavailable on this installation." });
   }
   if (comfyRestarting) {
-    return res.status(409).json({ error: "Dedicated ComfyUI is already restarting." });
+    return res.status(409).json({ error: "ComfyUI is already starting or restarting." });
   }
 
   const activePremiereJobs = listJobs().filter((job) => ["queued", "running", "cancelling"].includes(String(job.status || "")));
@@ -326,6 +892,7 @@ app.post("/api/system/comfy/restart", async (req, res) => {
   }
 
   const online = await comfyAlive();
+  const action = online ? "restart" : "start";
   if (online) {
     try {
       const queueResponse = await fetch(new URL("/queue", comfyUrl), { signal: AbortSignal.timeout(5000) });
@@ -345,7 +912,7 @@ app.post("/api/system/comfy/restart", async (req, res) => {
 
   comfyRestarting = true;
   comfyRestartState = {
-    status: "restarting",
+    status: action === "start" ? "starting" : "restarting",
     startedAt: new Date().toISOString(),
     finishedAt: null,
     error: null,
@@ -355,15 +922,15 @@ app.post("/api/system/comfy/restart", async (req, res) => {
   void execFileAsync(powershell, [
       "-NoProfile",
       "-ExecutionPolicy", "Bypass",
-      "-File", COMFY_RESTART_SCRIPT
+      "-File", controlScript
     ], {
-      cwd: path.dirname(COMFY_RESTART_SCRIPT),
+      cwd: path.dirname(controlScript),
       windowsHide: true,
       timeout: 180000,
       maxBuffer: 1024 * 1024
     })
     .then(async ({ stdout }) => {
-      if (!await comfyAlive()) throw new Error("The restart helper exited, but ComfyUI did not pass its health check.");
+      if (!await comfyAlive()) throw new Error(`The ${action} helper exited, but ComfyUI did not pass its health check.`);
       let detail = null;
       try { detail = JSON.parse(String(stdout || "").trim().split(/\r?\n/).filter(Boolean).at(-1) || "null"); } catch {}
       comfyRestartState = {
@@ -379,13 +946,13 @@ app.post("/api/system/comfy/restart", async (req, res) => {
         ...comfyRestartState,
         status: "error",
         finishedAt: new Date().toISOString(),
-        error: `Dedicated ComfyUI restart failed: ${String(error.message || error)}`,
+        error: `ComfyUI ${action} failed: ${String(error.message || error)}`,
         detail: null
       };
     })
     .finally(() => { comfyRestarting = false; });
 
-  return res.status(202).json({ ok: true, restarting: true, comfyUrl: COMFY_URL, state: comfyRestartState });
+  return res.status(202).json({ ok: true, action, restarting: true, comfyUrl: COMFY_URL, state: comfyRestartState });
 });
 
 app.get("/api/system/comfy/restart/status", async (req, res) => {
@@ -479,6 +1046,14 @@ app.post("/api/pi/prompt", async (req, res) => {
 app.post("/api/pi/abort", async (_req, res) => {
   try {
     res.json(await premierePiAgent.abort());
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.post("/api/pi/stop", async (_req, res) => {
+  try {
+    res.json(premierePiAgent.stop());
   } catch (e) {
     res.status(400).json({ error: String(e.message) });
   }
@@ -627,6 +1202,18 @@ app.post("/api/projects/:slug/storyboard/video-plans/:videoPlanId/generate", asy
   }
 });
 
+app.post("/api/projects/:slug/storyboard/global-prompt", (req, res) => {
+  try {
+    const { clipId, scope, text } = req.body || {};
+    if (!clipId) throw new Error("clipId is required");
+    const result = applyGlobalPromptToScope(req.params.slug, clipId, text, scope);
+    const storyboard = loadStoryboard(req.params.slug);
+    res.json({ result, storyboard, summary: storyboardSummary(storyboard) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
 app.post("/api/projects/:slug/storyboard/workflows/push-all-to-comfyui", async (req, res) => {
   try {
     res.json(await pushAllStoryboardFrameWorkflowsToComfyUI(req.params.slug));
@@ -676,6 +1263,7 @@ app.put("/api/projects/:slug", (req, res) => {
       category: existing.category || body.category || "feature",
       screenplay: existing.screenplay,
       assets: existing.assets,
+      sound: existing.sound,
       frames: existing.frames,
       trash: existing.trash,
       // Clip creation, guide attachment, rendered versions, and frame aliases
@@ -746,8 +1334,8 @@ function screenplayApprovalCurrent(project) {
 }
 
 function assetManifestCurrent(project) {
-  const revision = currentScreenplayRevision(project);
-  return Boolean(screenplayApprovalCurrent(project) && revision && project?.assets?.screenplayHash === revision);
+  if (skipApproval(project) || skipScreenplay(project)) return true;
+  return screenplayApprovalCurrent(project);
 }
 
 function canonicalFrameCurrent(project, frameOrFile) {
@@ -1129,6 +1717,185 @@ app.get("/api/asset-workflows", async (_req, res) => {
   }
 });
 
+app.get("/api/projects/:slug/character-voice-sources", (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    const catalog = listAudacityVoiceSources();
+    const characters = (project.assets?.items || []).filter((asset) => asset.category === "character");
+    const sources = catalog.sources.map((source) => {
+      const imported = findImportedVoiceSource(project, source);
+      const suggestions = characters.filter((asset) => characterAssetKey(asset) === source.characterKey);
+      return {
+        ...source,
+        previewUrl: `/api/projects/${encodeURIComponent(project.slug)}/character-voice-sources/${encodeURIComponent(source.id)}/audio`,
+        suggested: suggestions.length > 0,
+        suggestedCharacterAssetId: suggestions[0]?.id || null,
+        suggestedCharacterAssetIds: suggestions.map((asset) => asset.id),
+        alreadyImported: Boolean(imported),
+        existingAssetId: imported?.asset?.id || null,
+        existingAssetName: imported?.asset?.name || null,
+        existingVersion: imported?.version?.v ?? null
+      };
+    });
+    res.json({
+      root: catalog.root,
+      exists: catalog.exists,
+      sources,
+      unsupportedProjects: catalog.unsupportedProjects,
+      summary: {
+        audioFiles: sources.length,
+        alreadyImported: sources.filter((source) => source.alreadyImported).length,
+        suggested: sources.filter((source) => source.suggested).length,
+        unassigned: sources.filter((source) => !source.suggested).length
+      }
+    });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) });
+  }
+});
+
+app.get("/api/projects/:slug/character-voice-sources/:sourceId/audio", (req, res) => {
+  try {
+    loadProject(req.params.slug);
+    const source = resolveAudacityVoiceSource(req.params.sourceId);
+    if (!source) return res.status(404).json({ error: "The Audacity source changed or is no longer available. Rescan the folder." });
+    const contentTypes = new Map([
+      [".wav", "audio/wav"],
+      [".mp3", "audio/mpeg"],
+      [".flac", "audio/flac"],
+      [".m4a", "audio/mp4"],
+      [".aac", "audio/aac"],
+      [".ogg", "audio/ogg"]
+    ]);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.setHeader("Content-Type", contentTypes.get(source.extension) || "application/octet-stream");
+    res.setHeader("Content-Disposition", `inline; filename*=UTF-8''${encodeURIComponent(source.fileName)}`);
+    res.sendFile(source.absolute);
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) });
+  }
+});
+
+app.post("/api/projects/:slug/characters/:characterId/import-voice", (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    const character = project.assets?.items?.find((asset) => asset.id === req.params.characterId && asset.category === "character");
+    if (!character) return res.status(404).json({ error: "Character asset not found" });
+    const source = resolveAudacityVoiceSource(req.body?.sourceId);
+    if (!source) return res.status(409).json({ error: "The Audacity source changed or is no longer available. Rescan the folder before importing." });
+
+    const existing = findImportedVoiceSource(project, source);
+    if (existing) {
+      return res.json({
+        alreadyImported: true,
+        project,
+        asset: existing.asset,
+        version: existing.version,
+        message: `${source.fileName} is already stored as ${existing.asset.name} v${existing.version.v}.`
+      });
+    }
+    if (!assetManifestCurrent(project)) {
+      return res.status(409).json({ error: "Approve the screenplay and refresh its asset manifest before importing a voice version." });
+    }
+    if (source.characterKey !== characterAssetKey(character)) {
+      return res.status(409).json({ error: "This filename does not uniquely match the selected character. Use Add voice files in the Asset Library to make an explicit assignment." });
+    }
+    if (source.bytes > 128 * 1024 * 1024) return res.status(413).json({ error: "Voice source is larger than 128 MB." });
+
+    let voiceAsset = findCharacterVoiceAsset(project, character, req.body?.voiceAssetId || null);
+    if (voiceAsset && characterAssetKey(voiceAsset) !== characterAssetKey(character)) {
+      return res.status(409).json({ error: "The selected voice asset belongs to a different character." });
+    }
+    if (!voiceAsset) {
+      voiceAsset = createDirectorAsset({
+        category: "voice",
+        name: character.name,
+        variant: "Voice Design",
+        prompt: `Stable cinematic voice identity for ${character.name}. Preserve this imported performance as an immutable production reference.`,
+        sampleText: "The hour has come.",
+        workflowId: "qwen3-tts-voice-design-1.7b"
+      }, project.assets?.items || []);
+      project.assets.items.push(voiceAsset);
+      updateAssetManifestCounts(project.assets);
+    }
+
+    const characterKey = characterAssetKey(character);
+    voiceAsset.characterAssetId ||= character.id;
+    voiceAsset.links = [
+      ...(Array.isArray(voiceAsset.links) ? voiceAsset.links : []).filter((link) => link?.rel !== "character" || characterAssetKey(project.assets?.items?.find((asset) => asset.id === link.assetId)) !== characterKey),
+      { rel: "character", assetId: character.id }
+    ];
+    for (const sibling of project.assets?.items || []) {
+      if (sibling.category !== "character" || characterAssetKey(sibling) !== characterKey) continue;
+      sibling.links = [
+        ...(Array.isArray(sibling.links) ? sibling.links : []).filter((link) => link?.rel !== "voice-design"),
+        { rel: "voice-design", assetId: voiceAsset.id }
+      ];
+    }
+
+    const buffer = fs.readFileSync(source.absolute);
+    const actualHash = crypto.createHash("sha256").update(buffer).digest("hex");
+    if (actualHash !== source.sha256) return res.status(409).json({ error: "The Audacity source changed while it was being imported. Rescan and try again." });
+    const result = registerDirectorAssetAudio(project, voiceAsset, {
+      buffer,
+      extension: source.extension,
+      sourceFileName: source.fileName,
+      contentType: ({ ".wav": "audio/wav", ".mp3": "audio/mpeg", ".flac": "audio/flac", ".m4a": "audio/mp4", ".aac": "audio/aac", ".ogg": "audio/ogg" })[source.extension] || null
+    });
+    res.status(201).json({ ...result, alreadyImported: false, source: { id: source.id, fileName: source.fileName, sha256: source.sha256 } });
+  } catch (e) {
+    const message = String(e.message || e);
+    const status = /not a project voice asset|different character/i.test(message) ? 409 : 400;
+    res.status(status).json({ error: message });
+  }
+});
+
+app.get("/api/generation-workflows", async (req, res) => {
+  try {
+    const project = req.query?.project ? loadProject(String(req.query.project)) : null;
+    const [visualWorkflows, audioWorkflows] = await Promise.all([
+      getPromptGenerationWorkflowCatalog(),
+      getAssetPromptAudioWorkflowCatalog(project)
+    ]);
+    res.json({ workflows: combineAssetPromptWorkflowCatalog(visualWorkflows, audioWorkflows) });
+  } catch (e) {
+    res.status(e instanceof PromptGenerationError || e instanceof AssetPromptAudioError ? e.status : 400).json({
+      error: String(e.message || e),
+      ...(e?.code ? { code: e.code } : {})
+    });
+  }
+});
+
+app.post("/api/projects/:slug/prompt-generations", requireLocalSameOriginMutation, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const prepared = isAssetPromptAudioRequest(body)
+      ? await createAndEnqueueAssetPromptAudio(req.params.slug, body, {
+        getCatalogFn: getAssetPromptAudioWorkflowCatalog,
+        loadProjectFn: loadProject,
+        saveProjectFn: saveProject,
+        listJobsFn: listJobs,
+        enqueueFn: enqueue,
+        cancelJobFn: cancelJob
+      })
+      : await createAndEnqueuePromptGeneration(req.params.slug, body, {
+        getCatalogFn: getPromptGenerationWorkflowCatalog,
+        loadProjectFn: loadProject,
+        saveProjectFn: saveProject,
+        listJobsFn: listJobs,
+        enqueueFn: enqueue
+      });
+    res.status(prepared.alreadyQueued ? 200 : 202).json(prepared);
+  } catch (e) {
+    const status = e instanceof PromptGenerationError || e instanceof AssetPromptAudioError ? e.status : Number(e?.statusCode) || 400;
+    res.status(status).json({
+      error: String(e.message || e),
+      ...(e?.code ? { code: e.code } : {}),
+      ...(Array.isArray(e?.errors) ? { errors: e.errors } : {})
+    });
+  }
+});
+
 app.post("/api/lm-studio/gpu-handoff", async (req, res) => {
   try {
     if (!isLoopbackRequest(req)) {
@@ -1264,6 +2031,16 @@ app.patch("/api/projects/:slug/assets/:assetId", async (req, res) => {
     const project = loadProject(req.params.slug);
     const asset = project.assets?.items?.find((item) => item.id === req.params.assetId);
     if (!asset) return res.status(404).json({ error: "Asset not found" });
+    const promptComposerAsset = asset.generationComposer === true || asset.regenerationMode === "prompt-composer" || asset.source === "prompt-generation-composer";
+    const originalWorkflowId = asset.workflowId;
+    const immutableChanges = promptComposerAssetProvenanceChanges(asset, req.body || {});
+    if (immutableChanges.length) {
+      return res.status(409).json({
+        error: `Prompt-composer provenance is immutable (${immutableChanges.join(", ")}). Open the Prompt Composer to create a different generation.`,
+        code: "PROMPT_COMPOSER_PROVENANCE_IMMUTABLE",
+        fields: immutableChanges
+      });
+    }
     const beforeFingerprint = assetGenerationFingerprint(asset);
     const allowed = ["name", "variant", "prompt", "sampleText", "workflowId", "seed", "durationSec", "bpm", "status", "dependencies", "continuity"];
     for (const key of allowed) if (Object.prototype.hasOwnProperty.call(req.body || {}, key)) asset[key] = req.body[key];
@@ -1283,8 +2060,9 @@ app.patch("/api/projects/:slug/assets/:assetId", async (req, res) => {
     if (!asset.name) return res.status(400).json({ error: "Asset name is required" });
     asset.dependencies = Array.isArray(asset.dependencies) ? asset.dependencies.map((item) => String(item || "").trim()).filter(Boolean) : [];
     asset.continuity = Array.isArray(asset.continuity) ? asset.continuity.map((item) => String(item || "").trim()).filter(Boolean) : [];
-    asset.prompt = withAssetPromptHeader(asset, asset.prompt);
-    if (asset.workflowId && !ASSET_WORKFLOWS.some((workflow) => workflow.id === asset.workflowId)) {
+    if (!promptComposerAsset) asset.prompt = withAssetPromptHeader(asset, asset.prompt);
+    const unchangedPromptComposerWorkflow = promptComposerAsset && asset.workflowId === originalWorkflowId;
+    if (asset.workflowId && !ASSET_WORKFLOWS.some((workflow) => workflow.id === asset.workflowId) && !unchangedPromptComposerWorkflow) {
       return res.status(400).json({ error: `Unknown asset workflow: ${asset.workflowId}` });
     }
     const catalog = await getAssetWorkflowCatalog();
@@ -1413,10 +2191,13 @@ app.post("/api/projects/:slug/assets/:assetId/approve", (req, res) => {
 app.post("/api/projects/:slug/assets/:assetId/generate", async (req, res) => {
   try {
     const project = loadProject(req.params.slug);
-    if (!screenplayApprovalCurrent(project)) return res.status(409).json({ error: "Asset generation is locked until the current screenplay revision is approved." });
-    if (!assetManifestCurrent(project)) return res.status(409).json({ error: "The production asset manifest is stale. Refresh Assets from the approved screenplay before generating." });
     const asset = project.assets?.items?.find((item) => item.id === req.params.assetId);
     if (!asset) return res.status(404).json({ error: "Asset not found" });
+    if (asset.generationComposer === true || asset.regenerationMode === "prompt-composer" || asset.source === "prompt-generation-composer") {
+      return res.status(409).json({ error: "This output uses exact prompt-composer references and cannot use legacy Asset Generation. Open the Prompt Composer to generate another version." });
+    }
+    if (!screenplayApprovalCurrent(project)) return res.status(409).json({ error: "Asset generation is locked until the current screenplay revision is approved." });
+    if (!assetManifestCurrent(project)) return res.status(409).json({ error: "The production asset manifest is stale. Refresh Assets from the approved screenplay before generating." });
     const existingJob = listJobs().find((job) =>
       job.projectSlug === project.slug &&
       job.type === "generate_asset" &&
@@ -1460,6 +2241,15 @@ app.post("/api/projects/:slug/assets/generate-all", async (req, res) => {
     if (!project.assets?.items?.length) return res.status(400).json({ error: "Build the asset manifest first" });
     const requested = new Set(Array.isArray(req.body?.assetIds) ? req.body.assetIds : []);
     if (!requested.size) return res.status(400).json({ error: "Select at least one asset. This endpoint never queues the entire manifest implicitly." });
+    const promptComposerTargets = project.assets.items.filter((asset) =>
+      requested.has(asset.id) &&
+      (asset.generationComposer === true || asset.regenerationMode === "prompt-composer" || asset.source === "prompt-generation-composer")
+    );
+    if (promptComposerTargets.length) {
+      return res.status(409).json({
+        error: `Prompt Composer outputs cannot use legacy Asset Generation: ${promptComposerTargets.map((asset) => asset.name || asset.id).join(", ")}. Open the Prompt Composer to generate new versions.`
+      });
+    }
     const activeAssetIds = new Set(listJobs()
       .filter((job) =>
         job.projectSlug === project.slug &&
@@ -1606,6 +2396,23 @@ app.post("/api/projects/:slug/assets/:assetId/promote", (req, res) => {
 
 // ---------- media import ----------
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
+const editorAudioUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 128 * 1024 * 1024, files: 1 } });
+const indexTtsAudioUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 64 * 1024 * 1024, files: 1, fields: 12 }
+});
+const audioWorkflowUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 256 * 1024 * 1024, files: 1, fields: 16 }
+});
+const workflowJsonUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 16 * 1024 * 1024, files: 1, fields: 32 }
+});
+const qwenTtsAudioUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 64 * 1024 * 1024, files: 1, fields: 20 }
+});
 const AUDIO_UPLOAD_MIME_EXTENSIONS = new Map([
   ["audio/mpeg", ".mp3"],
   ["audio/mp3", ".mp3"],
@@ -1627,6 +2434,927 @@ function audioUploadExtension(file) {
   const fromName = path.extname(String(file?.originalname || "")).toLowerCase();
   return AUDIO_UPLOAD_EXTENSIONS.has(fromName) ? fromName : null;
 }
+
+const ACTIVE_VOICE_DESIGN_STATUSES = new Set(["queued", "loading", "generating", "cancelling"]);
+
+function voiceDesignAuditionContext(projectSlug, auditionId) {
+  const result = getProjectVoiceDesign(projectSlug, { persistMigration: false });
+  for (const session of result.voiceDesign.sessions || []) {
+    const audition = (session.auditions || []).find((entry) => entry.id === String(auditionId || ""));
+    if (audition) return { ...result, session, audition };
+  }
+  throw Object.assign(new Error("Qwen VoiceDesign audition not found"), { statusCode: 404 });
+}
+
+function publicVoiceDesignState(projectSlug, state) {
+  const output = structuredClone(state || {});
+  const savedByAudition = new Map((output.savedVoices || []).map((voice) => [voice.sourceAuditionId, voice]));
+  output.selectedByCharacter = { ...(output.defaultByCharacter || {}) };
+  output.sessions = (output.sessions || []).map((session) => ({
+    ...session,
+    auditions: (session.auditions || []).filter((audition) => !audition.deletedAt).map((audition) => {
+      const saved = savedByAudition.get(audition.id);
+      return {
+        ...audition,
+        nativeMediaUrl: audition.status === "done" && audition.nativeFile
+          ? `/api/projects/${encodeURIComponent(projectSlug)}/sound/voice-design/auditions/${encodeURIComponent(audition.id)}/native`
+          : null,
+        productionMediaUrl: audition.status === "done" ? audition.productionMediaUrl || null : null,
+        savedToLibrary: Boolean(saved),
+        savedVoiceId: saved?.id || null,
+        assetId: saved?.assetId || null,
+        indexTtsVoiceId: saved?.indexTtsVoiceId || null
+      };
+    })
+  }));
+  return output;
+}
+
+function voiceDesignCharacters(project) {
+  const items = project.assets?.items || [];
+  return items.filter((asset) => asset.category === "character").map((character) => {
+    let voiceAsset = null;
+    try { voiceAsset = findCharacterVoiceAsset(project, character); } catch {}
+    return {
+      ...character,
+      characterId: character.id,
+      voiceDescription: voiceAsset?.prompt || null,
+      voicePrompt: voiceAsset?.prompt || null,
+      sampleText: voiceAsset?.sampleText || null,
+      voiceAssetId: voiceAsset?.id || null
+    };
+  });
+}
+
+function reconcileInterruptedVoiceDesign(project, activeSessionIds) {
+  const state = project.sound?.voiceDesign;
+  if (!state?.sessions?.length) return false;
+  let changed = false;
+  const now = new Date().toISOString();
+  for (const session of state.sessions) {
+    if (!ACTIVE_VOICE_DESIGN_STATUSES.has(String(session.status || "")) || activeSessionIds.has(session.id)) continue;
+    session.status = "interrupted";
+    session.error = "Generation was interrupted before Premiere316 registered all audition outputs.";
+    session.updatedAt = now;
+    session.finishedAt = now;
+    for (const audition of session.auditions || []) {
+      if (!["queued", "loading", "generating", "cancelling"].includes(String(audition.status || ""))) continue;
+      audition.status = "interrupted";
+      audition.error = session.error;
+      audition.updatedAt = now;
+      audition.finishedAt = now;
+    }
+    changed = true;
+  }
+  if (changed) saveProject(project);
+  return changed;
+}
+
+function ensureVoiceAssetContainer(project) {
+  if (!project.assets || typeof project.assets !== "object") {
+    project.assets = {
+      schemaVersion: 1,
+      screenplayHash: currentScreenplayRevision(project),
+      counts: {},
+      total: 0,
+      items: [],
+      deletedItems: []
+    };
+  }
+  project.assets.items = Array.isArray(project.assets.items) ? project.assets.items : [];
+  project.assets.deletedItems = Array.isArray(project.assets.deletedItems) ? project.assets.deletedItems : [];
+  return project.assets;
+}
+
+async function saveVoiceDesignAuditionToAssetLibrary(projectSlug, sessionId, auditionId) {
+  const saved = saveVoiceDesignVoice(projectSlug, sessionId, auditionId);
+  const hook = buildVoiceDesignAssetHook(projectSlug, sessionId, auditionId);
+  const project = loadProject(projectSlug);
+  const assets = ensureVoiceAssetContainer(project);
+  const character = hook.characterId
+    ? assets.items.find((asset) => asset.id === hook.characterId && asset.category === "character") || null
+    : null;
+  let asset = saved.voice.assetId ? assets.items.find((entry) => entry.id === saved.voice.assetId && entry.category === "voice") : null;
+  if (!asset && character) asset = findCharacterVoiceAsset(project, character);
+  if (!asset) {
+    asset = createDirectorAsset({
+      category: "voice",
+      name: hook.voiceName,
+      variant: "Voice Design",
+      prompt: hook.prompt,
+      sampleText: hook.sampleText,
+      workflowId: "qwen3-tts-voice-design-1.7b"
+    }, assets.items);
+    assets.items.push(asset);
+  }
+  if (character) {
+    asset.characterAssetId = character.id;
+    asset.links = [
+      ...(Array.isArray(asset.links) ? asset.links : []).filter((link) => link?.rel !== "character"),
+      { rel: "character", assetId: character.id }
+    ];
+    character.links = [
+      ...(Array.isArray(character.links) ? character.links : []).filter((link) => link?.rel !== "voice-design"),
+      { rel: "voice-design", assetId: asset.id }
+    ];
+  }
+  asset.sampleText = hook.sampleText;
+  updateAssetManifestCounts(assets);
+
+  const existingVersion = (asset.versions || []).find((version) =>
+    version?.voiceDesign?.sourceAuditionId === auditionId &&
+    version?.voiceDesign?.sha256 === hook.metadata?.sha256
+  );
+  if (existingVersion) {
+    saveAssetPackageFiles(project);
+    saveProject(project);
+    const voice = attachVoiceDesignAssetId(projectSlug, saved.voice.id, asset.id);
+    return { project: loadProject(projectSlug), asset, version: existingVersion, voice, alreadySaved: true };
+  }
+
+  const buffer = fs.readFileSync(hook.sourceFile);
+  const result = registerDirectorAssetAudio(project, asset, {
+    buffer,
+    extension: ".wav",
+    sourceFileName: hook.sourceFileName,
+    contentType: hook.contentType,
+    metadata: {
+      ...hook.metadata,
+      assetId: asset.id,
+      model: hook.metadata?.modelId,
+      transcript: hook.metadata?.auditionTranscript,
+      provenanceType: "synthetic-designed-voice"
+    }
+  });
+  const voice = attachVoiceDesignAssetId(projectSlug, saved.voice.id, asset.id);
+  return { ...result, voice, alreadySaved: false };
+}
+
+function publicVoiceDesignSession(projectSlug, sessionId) {
+  const result = getProjectVoiceDesign(projectSlug, { persistMigration: false });
+  return publicVoiceDesignState(projectSlug, result.voiceDesign).sessions.find((session) => session.id === sessionId) || null;
+}
+
+app.get("/api/projects/:slug/sound", (req, res) => {
+  try {
+    const activeIndexGenerationIds = new Set(listJobs()
+      .filter((job) =>
+        job.projectSlug === req.params.slug &&
+        job.type === "generate_index_tts" &&
+        ["queued", "running", "cancelling"].includes(String(job.status || ""))
+      )
+      .map((job) => job.refs?.generationId)
+      .filter(Boolean));
+    const activeQwenGenerationIds = new Set(listJobs()
+      .filter((job) =>
+        job.projectSlug === req.params.slug &&
+        job.type === "generate_qwen_tts" &&
+        ["queued", "running", "cancelling"].includes(String(job.status || ""))
+      )
+      .map((job) => job.refs?.generationId)
+      .filter(Boolean));
+    const indexResult = getProjectSound(req.params.slug, activeIndexGenerationIds);
+    const qwenResult = getProjectQwenSound(req.params.slug, activeQwenGenerationIds);
+    const persistedDialogueCues = qwenResult.sound?.dialogueCues || [];
+    const externalDialogueCues = req.params.slug === H02_EXTERNAL_PROJECT_SLUG
+      ? readExternalH02DialogueCues()
+      : [];
+    // Once the validated masters have been imported, the project-owned rows
+    // are the durable source for Create Sound. A finished/stale external batch
+    // adapter may legitimately return no rows and must not hide those 34 cues.
+    const dialogueCues = externalDialogueCues.length
+      ? externalDialogueCues
+      : persistedDialogueCues;
+    res.json({
+      ...qwenResult,
+      sound: {
+        ...qwenResult.sound,
+        dialogueCues
+      },
+      dialogueCues,
+      health: {
+        ...qwenResult.health,
+        primaryProvider: "qwenTts",
+        providers: {
+          qwenTts: qwenResult.health,
+          indexTts: indexResult.health
+        },
+        qwenTts: qwenResult.health,
+        indexTts: indexResult.health
+      }
+    });
+  } catch (error) {
+    res.status(404).json({ error: String(error.message || error) });
+  }
+});
+
+app.get("/api/projects/:slug/sound/voice-design", async (req, res) => {
+  try {
+    const activeSessionIds = new Set(listJobs()
+      .filter((job) =>
+        job.projectSlug === req.params.slug &&
+        job.type === "generate_qwen_voice_design" &&
+        ["queued", "running", "cancelling"].includes(String(job.status || ""))
+      )
+      .map((job) => job.refs?.sessionId)
+      .filter(Boolean));
+    let result = getProjectVoiceDesign(req.params.slug);
+    if (reconcileInterruptedVoiceDesign(result.project, activeSessionIds)) result = getProjectVoiceDesign(req.params.slug, { persistMigration: false });
+    res.json({
+      voiceDesign: publicVoiceDesignState(req.params.slug, result.voiceDesign),
+      characters: voiceDesignCharacters(result.project),
+      health: { providers: { qwenVoiceDesign: await qwenVoiceDesignStatusPayload() } }
+    });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 404).json({ error: String(error.message || error) });
+  }
+});
+
+app.post("/api/projects/:slug/sound/voice-design/auditions", requireLocalSameOriginMutation, (req, res) => {
+  try {
+    const health = qwenVoiceDesignHealth();
+    if (!health.ready) return res.status(503).json({ error: health.reason, health });
+    const project = loadProject(req.params.slug);
+    const session = createVoiceDesignSession(project, req.body || {});
+    const job = enqueue({
+      type: "generate_qwen_voice_design",
+      projectSlug: project.slug,
+      label: `Voice Design · ${session.voiceName}`,
+      refs: { sessionId: session.id, characterId: session.characterId }
+    });
+    bindVoiceDesignSessionJob(project.slug, session.id, job.id);
+    res.status(202).json({ session: publicVoiceDesignSession(project.slug, session.id), job });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error) });
+  }
+});
+
+app.get("/api/projects/:slug/sound/voice-design/auditions/:auditionId/native", (req, res) => {
+  try {
+    const { project, audition } = voiceDesignAuditionContext(req.params.slug, req.params.auditionId);
+    if (audition.deletedAt) return res.status(404).json({ error: "Qwen VoiceDesign audition not found" });
+    if (audition.status !== "done" || !audition.nativeFile) return res.status(409).json({ error: "The native audition master is not ready" });
+    const file = safeVoiceDesignProjectFile(project.slug, audition.nativeFile, "production/qwen3-tts/voice-design/");
+    if (!fs.existsSync(file) || !fs.statSync(file).isFile()) return res.status(404).json({ error: "The native audition WAV is missing" });
+    res.type("audio/wav");
+    res.setHeader("Cache-Control", "private, no-cache");
+    res.sendFile(file);
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 404).json({ error: String(error.message || error) });
+  }
+});
+
+app.patch("/api/projects/:slug/sound/voice-design/auditions/:auditionId", requireLocalSameOriginMutation, (req, res) => {
+  try {
+    const context = voiceDesignAuditionContext(req.params.slug, req.params.auditionId);
+    if (["queued", "loading", "generating", "cancelling"].includes(String(context.audition.status || ""))) {
+      return res.status(409).json({ error: "Wait for or cancel this audition before renaming it." });
+    }
+    renameVoiceDesignAudition(context.project.slug, context.session.id, context.audition.id, req.body?.name);
+    res.json({ session: publicVoiceDesignSession(context.project.slug, context.session.id) });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error) });
+  }
+});
+
+app.delete("/api/projects/:slug/sound/voice-design/auditions/:auditionId", requireLocalSameOriginMutation, (req, res) => {
+  try {
+    const context = voiceDesignAuditionContext(req.params.slug, req.params.auditionId);
+    if (["queued", "loading", "generating", "cancelling"].includes(String(context.audition.status || ""))) {
+      return res.status(409).json({ error: "Cancel the active audition before removing it." });
+    }
+    softDeleteVoiceDesignAudition(context.project.slug, context.session.id, context.audition.id);
+    res.json({ removed: true, session: publicVoiceDesignSession(context.project.slug, context.session.id) });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error) });
+  }
+});
+
+app.post("/api/projects/:slug/sound/voice-design/auditions/:auditionId/:action", requireLocalSameOriginMutation, async (req, res) => {
+  try {
+    const context = voiceDesignAuditionContext(req.params.slug, req.params.auditionId);
+    const { project, session, audition } = context;
+    const action = String(req.params.action || "").toLowerCase();
+    if (action === "regenerate") {
+      const activeSessionJob = listJobs().find((job) =>
+        job.projectSlug === project.slug &&
+        job.type === "generate_qwen_voice_design" &&
+        job.refs?.sessionId === session.id &&
+        ["queued", "running", "cancelling"].includes(String(job.status || ""))
+      );
+      if (activeSessionJob) {
+        return res.status(409).json({
+          error: "Wait for or cancel the active Voice Design session before regenerating an audition.",
+          job: activeSessionJob
+        });
+      }
+      if (["queued", "loading", "generating", "cancelling"].includes(String(audition.status || ""))) {
+        return res.status(409).json({ error: "Wait for or cancel the active audition before regenerating it." });
+      }
+      const queued = queueVoiceDesignRegeneration(project.slug, session.id, audition.id, req.body || {});
+      const job = enqueue({
+        type: "generate_qwen_voice_design",
+        projectSlug: project.slug,
+        label: `Voice Design · ${session.voiceName} regeneration`,
+        refs: { sessionId: session.id, auditionId: queued.audition.id, characterId: session.characterId }
+      });
+      bindVoiceDesignSessionJob(project.slug, session.id, job.id);
+      return res.status(202).json({ session: publicVoiceDesignSession(project.slug, session.id), audition: queued.audition, job });
+    }
+    if (action === "select") {
+      selectVoiceDesignAudition(project.slug, session.id, audition.id);
+      const library = await saveVoiceDesignAuditionToAssetLibrary(project.slug, session.id, audition.id);
+      return res.json({ session: publicVoiceDesignSession(project.slug, session.id), voice: library.voice, asset: library.asset, version: library.version });
+    }
+    if (action === "save-to-library") {
+      const library = await saveVoiceDesignAuditionToAssetLibrary(project.slug, session.id, audition.id);
+      return res.json({ session: publicVoiceDesignSession(project.slug, session.id), voice: library.voice, asset: library.asset, version: library.version, alreadySaved: library.alreadySaved });
+    }
+    if (action === "send-to-index-tts") {
+      const hook = buildVoiceDesignIndexTtsHook(project.slug, session.id, audition.id);
+      const signal = hook.signalValidation || {};
+      const handoff = {
+        sourceFile: hook.sourceFile,
+        transcript: hook.transcript,
+        speaker: hook.speaker,
+        name: hook.voiceName,
+        characterId: hook.characterId,
+        sourceAuditionId: hook.sourceAuditionId,
+        sourceEngine: "Qwen3-TTS VoiceDesign",
+        sha256: hook.referenceSha256,
+        provenance: hook.provenance,
+        validation: {
+          valid: hook.quality?.passed === true,
+          clipping: Number(signal.clippingRatio) > 0.005 || Number(signal.peak) > 1.0001,
+          excessiveSilence: Number(signal.silenceRatio) > 0.8 || Number(signal.leadingSilenceSec) > 2 || Number(signal.trailingSilenceSec) > 2,
+          singleSpeaker: hook.singleSpeakerValidation === "trusted-generator-contract",
+          musicDetected: hook.noMusicValidation === "trusted-generator-contract" ? false : null
+        }
+      };
+      await validateIndexTtsVoiceReferenceFromFile(project.slug, handoff);
+      selectVoiceDesignAudition(project.slug, session.id, audition.id);
+      const library = await saveVoiceDesignAuditionToAssetLibrary(project.slug, session.id, audition.id);
+      const registered = await registerIndexTtsVoiceReferenceFromFile(project.slug, {
+        ...handoff,
+        assetId: library.asset.id
+      });
+      const voice = attachVoiceDesignIndexTtsVoiceId(project.slug, library.voice.id, registered.voice.id);
+      return res.json({
+        session: publicVoiceDesignSession(project.slug, session.id),
+        voiceId: registered.voice.id,
+        voice,
+        indexTtsVoice: registered.voice,
+        asset: library.asset
+      });
+    }
+    if (action === "open-folder") {
+      const folder = voiceDesignContainingFolder(project.slug, session.id, audition.id);
+      if (process.platform === "win32") await execFileAsync("explorer.exe", [folder], { windowsHide: false, timeout: 10_000 });
+      else if (process.platform === "darwin") await execFileAsync("open", [folder], { timeout: 10_000 });
+      else await execFileAsync("xdg-open", [folder], { timeout: 10_000 });
+      return res.json({ opened: true });
+    }
+    return res.status(404).json({ error: `Unknown Voice Design action: ${req.params.action}` });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error) });
+  }
+});
+
+function audioAssetMediaUrl(projectSlug, asset) {
+  const relative = String(asset?.media?.path || "").replace(/\\/g, "/").replace(/^\/+/, "");
+  if (!relative.startsWith("media/")) return null;
+  const mediaPath = relative.slice("media/".length).split("/").filter(Boolean).map(encodeURIComponent).join("/");
+  return mediaPath ? `/media/${encodeURIComponent(projectSlug)}/${mediaPath}` : null;
+}
+
+function publicProjectAudioAsset(projectSlug, asset) {
+  const media = asset?.media || {};
+  const provenance = asset?.provenance || {};
+  const workflow = provenance.workflow || {};
+  const parameters = provenance.parameters || {};
+  return {
+    ...asset,
+    mediaUrl: audioAssetMediaUrl(projectSlug, asset),
+    file: media.filename || (media.path ? path.basename(media.path) : null),
+    durationSec: media.durationSec ?? null,
+    sampleRate: media.sampleRate ?? null,
+    channels: media.channels ?? null,
+    bytes: media.bytes ?? null,
+    sha256: media.sha256 ?? null,
+    codec: media.codec ?? null,
+    format: media.format ?? null,
+    engine: provenance.engine || null,
+    modelFamily: provenance.modelFamily || null,
+    workflowProfileId: workflow.profileId || null,
+    profileId: workflow.profileId || null,
+    workflowName: workflow.profileId || null,
+    seed: parameters.seed ?? null,
+    prompt: provenance.prompt?.original || null,
+    allowedActions: [
+      asset?.category === "music" ? "save_ost" : "save_library",
+      "attach_clip",
+      "place_playhead"
+    ]
+  };
+}
+
+function audioCatalogForUi(catalog) {
+  return {
+    ...catalog,
+    profiles: (catalog.profiles || []).map((profile) => ({
+      ...profile,
+      capabilities: {
+        ...(profile.capabilities || {}),
+        variationCount: true,
+        // Keep enhancer IDs/readiness inspectable, but never advertise a
+        // callable control until /sound/develop-prompt exists.
+        promptEnhancement: false
+      }
+    }))
+  };
+}
+
+function receiveWorkflowJson(req, res, next) {
+  workflowJsonUpload.single("workflowFile")(req, res, (error) => {
+    if (!error) return next();
+    return res.status(error?.code === "LIMIT_FILE_SIZE" ? 413 : 400).json({
+      error: `Workflow JSON upload failed: ${String(error.message || error)}`,
+      code: error?.code || null
+    });
+  });
+}
+
+function parsedWorkflowManagementField(value, label) {
+  if (value == null || value === "") return undefined;
+  if (typeof value !== "string") return value;
+  try { return JSON.parse(value); }
+  catch { throw Object.assign(new Error(`${label} must be valid JSON`), { statusCode: 400, code: "AUDIO_WORKFLOW_JSON_INVALID" }); }
+}
+
+function audioWorkflowImportPayload(req, sourcePath) {
+  const manifest = parsedWorkflowManagementField(req.body?.manifest, "manifest") || {};
+  if (!manifest || Array.isArray(manifest) || typeof manifest !== "object") {
+    throw Object.assign(new Error("manifest must be a JSON object"), { statusCode: 400, code: "AUDIO_WORKFLOW_MANIFEST_INVALID" });
+  }
+  const body = { ...manifest, ...(req.body || {}) };
+  delete body.manifest;
+  for (const field of [
+    "inputNodeBindings", "bindings", "outputNodeBindings", "requiredCustomNodes", "requiredNodes",
+    "requiredModelFiles", "requiredModels", "supportedDurationRange", "duration", "capabilities", "outputFormats"
+  ]) {
+    const parsed = parsedWorkflowManagementField(body[field], field);
+    if (parsed !== undefined) body[field] = parsed;
+  }
+  const uploadedBaseName = req.file?.originalname
+    ? path.basename(String(req.file.originalname), path.extname(String(req.file.originalname)))
+    : null;
+  return {
+    ...body,
+    sourcePath,
+    id: body.id || body.profileId || uploadedBaseName,
+    displayName: body.displayName || body.name || uploadedBaseName,
+    // Imports always enter the registry disabled. Enabling is a separate,
+    // live-validated action so a copied graph can never become runnable just
+    // because an upload field said `enabled=true`.
+    enabled: false
+  };
+}
+
+async function importAudioWorkflowFromRequest(req) {
+  let stagedSource = null;
+  try {
+    if (req.file?.buffer?.length) {
+      if (path.extname(String(req.file.originalname || "")).toLowerCase() !== ".json") {
+        throw Object.assign(new Error("Workflow uploads must be JSON files"), { statusCode: 400, code: "AUDIO_WORKFLOW_FILE_TYPE_INVALID" });
+      }
+      try { JSON.parse(req.file.buffer.toString("utf8").replace(/^\uFEFF/, "")); }
+      catch (error) {
+        throw Object.assign(new Error(`Workflow upload is not valid JSON: ${error.message}`), { statusCode: 400, code: "AUDIO_WORKFLOW_JSON_INVALID" });
+      }
+      const stagingRoot = path.join(AUDIO_WORKFLOW_IMPORT_ROOT, ".staging");
+      fs.mkdirSync(stagingRoot, { recursive: true });
+      stagedSource = path.join(stagingRoot, `${crypto.randomUUID()}.json`);
+      fs.writeFileSync(stagedSource, req.file.buffer, { flag: "wx" });
+    }
+    const selectedSource = stagedSource || String(req.body?.sourcePath || req.body?.path || "").trim();
+    if (!selectedSource) {
+      throw Object.assign(new Error("Choose a workflowFile upload or provide sourcePath from the local workflow scan"), { statusCode: 400, code: "AUDIO_WORKFLOW_SOURCE_REQUIRED" });
+    }
+    if (path.extname(selectedSource).toLowerCase() !== ".json") {
+      throw Object.assign(new Error("sourcePath must select a JSON workflow"), { statusCode: 400, code: "AUDIO_WORKFLOW_FILE_TYPE_INVALID" });
+    }
+    return await importAudioWorkflow(audioWorkflowImportPayload(req, selectedSource));
+  } finally {
+    // This is only the exact app-created staging file. importAudioWorkflow has
+    // already copied it into the durable app-owned imports directory; neither
+    // a scanned source workflow nor a user's uploaded original is mutated.
+    if (stagedSource) try { if (fs.existsSync(stagedSource)) fs.unlinkSync(stagedSource); } catch {}
+  }
+}
+
+function audioWorkflowRouteError(res, error) {
+  return res.status(Number(error?.statusCode) || 400).json({
+    error: String(error.message || error),
+    code: error?.code || null,
+    profile: error?.profile ? publicAudioWorkflowProfile(error.profile) : undefined
+  });
+}
+
+app.get("/api/projects/:slug/sound/workflows", async (req, res) => {
+  try {
+    loadProject(req.params.slug);
+    const objectInfo = await getObjectInfo();
+    const [catalog, sound] = await Promise.all([
+      getAudioWorkflowCatalog({ objectInfo }),
+      Promise.resolve(getProjectAudioState(req.params.slug))
+    ]);
+    const registry = audioCatalogForUi(catalog);
+    res.json({
+      registry,
+      profiles: registry.profiles,
+      promptEnhancers: registry.promptEnhancers,
+      assets: (sound.assets || []).map((asset) => publicProjectAudioAsset(req.params.slug, asset)),
+      generations: sound.audioGenerations || [],
+      candidates: registry.excludedDiscoveries || [],
+      gpu: gpuLeaseStatus(),
+      management: {
+        scan: true,
+        validate: true,
+        import: true,
+        importWorkflow: true,
+        enableDisable: true,
+        rename: true,
+        rebind: true,
+        copyOnlyImport: true,
+        sourceWorkflowsImmutable: true,
+        routes: {
+          import: `/api/projects/${encodeURIComponent(req.params.slug)}/sound/workflows/import`,
+          enableDisable: `/api/projects/${encodeURIComponent(req.params.slug)}/sound/workflows/:profileId/enabled`,
+          rename: `/api/projects/${encodeURIComponent(req.params.slug)}/sound/workflows/:profileId/name`,
+          rebind: `/api/projects/${encodeURIComponent(req.params.slug)}/sound/workflows/:profileId/rebind`
+        }
+      }
+    });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error) });
+  }
+});
+
+app.post("/api/projects/:slug/sound/workflows/scan", requireLocalSameOriginMutation, receiveWorkflowJson, async (req, res) => {
+  try {
+    loadProject(req.params.slug);
+    if (req.file?.buffer?.length) {
+      const profile = await importAudioWorkflowFromRequest(req);
+      return res.status(201).json({
+        message: `${profile.displayName} was copied into the app-owned workflow registry in a disabled state. Validate it before enabling.`,
+        profile: publicAudioWorkflowProfile(profile),
+        copyOnly: true,
+        sourceWorkflowMutated: false
+      });
+    }
+    const candidates = scanAudioWorkflowCandidates();
+    res.json({ message: `Scanned ${candidates.length} local audio workflow candidate${candidates.length === 1 ? "" : "s"}.`, candidates });
+  } catch (error) {
+    audioWorkflowRouteError(res, error);
+  }
+});
+
+app.post("/api/projects/:slug/sound/workflows/validate", requireLocalSameOriginMutation, async (req, res) => {
+  try {
+    loadProject(req.params.slug);
+    const profile = await getAudioWorkflowProfile(req.body?.profileId, { forceObjectInfo: true });
+    res.json({ message: `${profile.displayName} is ${profile.readiness?.label || profile.readiness?.status || "validated"}.`, profile: publicAudioWorkflowProfile(profile) });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error), code: error?.code || null });
+  }
+});
+
+app.post("/api/projects/:slug/sound/workflows/import", requireLocalSameOriginMutation, receiveWorkflowJson, async (req, res) => {
+  try {
+    loadProject(req.params.slug);
+    const profile = await importAudioWorkflowFromRequest(req);
+    res.status(201).json({
+      message: `${profile.displayName} was copied into the app-owned workflow registry in a disabled state. Validate it before enabling.`,
+      profile: publicAudioWorkflowProfile(profile),
+      copyOnly: true,
+      sourceWorkflowMutated: false
+    });
+  } catch (error) {
+    audioWorkflowRouteError(res, error);
+  }
+});
+
+app.patch("/api/projects/:slug/sound/workflows/:profileId/enabled", requireLocalSameOriginMutation, async (req, res) => {
+  try {
+    loadProject(req.params.slug);
+    if (typeof req.body?.enabled !== "boolean") {
+      return res.status(400).json({ error: "enabled must be a boolean", code: "AUDIO_WORKFLOW_ENABLED_INVALID" });
+    }
+    const enabled = req.body.enabled;
+    if (enabled) {
+      const current = await getAudioWorkflowProfile(req.params.profileId, { forceObjectInfo: true });
+      const validationErrors = current.readiness?.errors || [];
+      const drift = current.readiness?.drift || [];
+      if (validationErrors.length || drift.length) {
+        return res.status(409).json({
+          error: `${current.displayName} cannot be enabled until validation and binding errors are resolved.`,
+          code: "AUDIO_WORKFLOW_NOT_READY",
+          profile: publicAudioWorkflowProfile(current)
+        });
+      }
+    }
+    const updatedManifest = setAudioWorkflowEnabled(req.params.profileId, enabled);
+    if (!enabled) {
+      return res.json({
+        message: `${updatedManifest.displayName || updatedManifest.id} is now disabled.`,
+        profile: publicAudioWorkflowProfile({
+          ...updatedManifest,
+          enabled: false,
+          readiness: { ...(updatedManifest.readiness || {}), enabled: false, status: "disabled", label: "Disabled", ready: false }
+        })
+      });
+    }
+    let profile;
+    try {
+      profile = await getAudioWorkflowProfile(req.params.profileId, { forceObjectInfo: true });
+    } catch (error) {
+      setAudioWorkflowEnabled(req.params.profileId, false);
+      throw error;
+    }
+    if (enabled && profile.readiness?.ready !== true) {
+      setAudioWorkflowEnabled(req.params.profileId, false);
+      profile = await getAudioWorkflowProfile(req.params.profileId, { forceObjectInfo: true });
+      return res.status(409).json({
+        error: `${profile.displayName} did not remain ready after the registry update and was left disabled.`,
+        code: "AUDIO_WORKFLOW_NOT_READY",
+        profile: publicAudioWorkflowProfile(profile)
+      });
+    }
+    res.json({
+      message: `${profile.displayName} is now enabled.`,
+      profile: publicAudioWorkflowProfile(profile)
+    });
+  } catch (error) {
+    audioWorkflowRouteError(res, error);
+  }
+});
+
+app.patch("/api/projects/:slug/sound/workflows/:profileId/name", requireLocalSameOriginMutation, async (req, res) => {
+  try {
+    loadProject(req.params.slug);
+    const profile = renameAudioWorkflowProfile(req.params.profileId, req.body?.displayName ?? req.body?.name);
+    res.json({ message: `Workflow renamed to ${profile.displayName}.`, profile: publicAudioWorkflowProfile(profile) });
+  } catch (error) {
+    audioWorkflowRouteError(res, error);
+  }
+});
+
+app.post("/api/projects/:slug/sound/workflows/:profileId/rebind", requireLocalSameOriginMutation, async (req, res) => {
+  try {
+    loadProject(req.params.slug);
+    const body = req.body && !Array.isArray(req.body) && typeof req.body === "object" ? req.body : {};
+    const profile = await rebindAudioWorkflowProfile(req.params.profileId, {
+      inputNodeBindings: body.inputNodeBindings ?? body.bindings,
+      outputNodeBindings: body.outputNodeBindings,
+      apiWorkflowPath: body.apiWorkflowPath,
+      apiWorkflow: body.apiWorkflow
+    });
+    res.json({
+      message: `${profile.displayName} was rebound using its app-owned API workflow and left disabled for explicit validation and enabling. The original source workflow was not changed.`,
+      profile: publicAudioWorkflowProfile(profile),
+      sourceWorkflowMutated: false
+    });
+  } catch (error) {
+    audioWorkflowRouteError(res, error);
+  }
+});
+
+app.post(
+  "/api/projects/:slug/sound/workflow-generations",
+  requireLocalSameOriginMutation,
+  (req, res, next) => audioWorkflowUpload.single("referenceFile")(req, res, (error) => {
+    if (!error) return next();
+    return res.status(error?.code === "LIMIT_FILE_SIZE" ? 413 : 400).json({ error: `Audio workflow upload failed: ${String(error.message || error)}` });
+  }),
+  async (req, res) => {
+    try {
+      let parameters = {};
+      try { parameters = JSON.parse(String(req.body?.parameters || "{}")); }
+      catch { return res.status(400).json({ error: "parameters must be valid JSON" }); }
+      if (!parameters || Array.isArray(parameters) || typeof parameters !== "object") return res.status(400).json({ error: "parameters must be a JSON object" });
+      if (req.file?.buffer?.length) return res.status(422).json({ error: "The selected enabled audio profiles do not expose reference-audio conditioning." });
+
+      const project = loadProject(req.params.slug);
+      const association = parameters.association && typeof parameters.association === "object" ? parameters.association : {};
+      const fps = Math.max(1, Number(project.settings?.fps) || 24);
+      const advanced = parameters.advanced && typeof parameters.advanced === "object" && !Array.isArray(parameters.advanced) ? parameters.advanced : {};
+      const request = {
+        ...parameters,
+        profileId: String(req.body?.profileId || ""),
+        category: String(req.body?.category || parameters.category || ""),
+        key: parameters.key ?? parameters.tonalCenter,
+        associations: {
+          projectSlug: req.params.slug,
+          chapterId: association.chapterId || null,
+          sceneId: association.sceneId || null,
+          clipId: association.clipId || null
+        },
+        editorial: {
+          targetInSec: association.inPointSec ?? null,
+          targetOutSec: association.outPointSec ?? null,
+          fadeInSec: association.fadeInSec ?? null,
+          fadeOutSec: association.fadeOutSec ?? null,
+          timelineStartSec: Number.isFinite(Number(association.playheadFrame)) ? Number(association.playheadFrame) / fps : null,
+          loop: parameters.loopable === true
+        },
+        parameters: advanced
+      };
+      delete request.association;
+      delete request.advanced;
+
+      const prepared = await prepareAudioGenerationRecords(req.params.slug, request);
+      const job = enqueue({
+        type: "generate_audio_workflow",
+        projectSlug: req.params.slug,
+        profileId: prepared.profileId,
+        generationIds: prepared.generationIds,
+        label: `Create Sound · ${parameters.name || parameters.title || prepared.profileId}`,
+        refs: {
+          profileId: prepared.profileId,
+          generationIds: prepared.generationIds,
+          category: request.category,
+          promptIds: {}
+        }
+      });
+      const state = getProjectAudioState(req.params.slug);
+      const generationIds = new Set(prepared.generationIds);
+      res.status(202).json({
+        job,
+        jobs: [job],
+        generations: (state.audioGenerations || []).filter((generation) => generationIds.has(generation.id))
+      });
+    } catch (error) {
+      res.status(Number(error?.statusCode) || 400).json({
+        error: String(error.message || error),
+        code: error?.code || null,
+        readiness: error?.readiness || null,
+        segmentPlan: error?.segmentPlan || null
+      });
+    }
+  }
+);
+
+app.patch("/api/projects/:slug/sound/assets/:assetId", requireLocalSameOriginMutation, (req, res) => {
+  try {
+    const asset = patchProjectAudioAsset(req.params.slug, req.params.assetId, req.body || {});
+    res.json({ asset: publicProjectAudioAsset(req.params.slug, asset) });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error), code: error?.code || null });
+  }
+});
+
+app.delete("/api/projects/:slug/sound/assets/:assetId", requireLocalSameOriginMutation, (req, res) => {
+  try {
+    const asset = deleteProjectAudioAssetToTrash(req.params.slug, req.params.assetId, { moveFile: true });
+    res.json({ deleted: asset, recoverable: true });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error), code: error?.code || null });
+  }
+});
+
+app.post("/api/projects/:slug/sound/assets/:assetId/actions", requireLocalSameOriginMutation, (req, res) => {
+  try {
+    const action = String(req.body?.action || "").trim().toLowerCase();
+    const payload = req.body?.payload && typeof req.body.payload === "object" ? req.body.payload : req.body || {};
+    let asset;
+    if (action === "save_ost" || action === "save_library") {
+      asset = performProjectAudioAssetAction(req.params.slug, req.params.assetId, "approve", { value: true });
+    } else if (action === "attach_clip") {
+      asset = performProjectAudioAssetAction(req.params.slug, req.params.assetId, "associate", {
+        associations: { clipId: payload.clipId || null }
+      });
+    } else if (action === "place_playhead") {
+      const project = loadProject(req.params.slug);
+      const fps = Math.max(1, Number(project.settings?.fps) || 24);
+      asset = performProjectAudioAssetAction(req.params.slug, req.params.assetId, "editorial", {
+        editorial: { timelineStartSec: Math.max(0, Number(payload.playheadFrame) || 0) / fps }
+      });
+    } else {
+      asset = performProjectAudioAssetAction(req.params.slug, req.params.assetId, action, payload);
+    }
+    res.json({ asset: publicProjectAudioAsset(req.params.slug, asset), placement: buildAudioEditPlacement(asset) });
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error), code: error?.code || null });
+  }
+});
+
+app.get("/api/projects/:slug/sound/index-tts/voices/:voiceId/reference", (req, res) => {
+  try {
+    const resolved = resolveIndexTtsVoiceReference(req.params.slug, req.params.voiceId);
+    res.type(resolved.voice.contentType || "audio/wav");
+    res.setHeader("Cache-Control", "private, no-cache");
+    res.sendFile(resolved.file);
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 404).json({ error: String(error.message || error) });
+  }
+});
+
+app.get("/api/projects/:slug/sound/qwen-tts/voices/:voiceId/reference", (req, res) => {
+  try {
+    const resolved = resolveQwenTtsVoiceReference(req.params.slug, req.params.voiceId);
+    res.type("audio/wav");
+    res.setHeader("Cache-Control", "private, no-cache");
+    res.sendFile(resolved.file);
+  } catch (error) {
+    res.status(Number(error?.statusCode) || 404).json({ error: String(error.message || error) });
+  }
+});
+
+app.post(
+  "/api/projects/:slug/sound/qwen-tts/generations",
+  requireLocalSameOriginMutation,
+  (req, res, next) => qwenTtsAudioUpload.single("referenceAudio")(req, res, (error) => {
+    if (!error) return next();
+    const tooLarge = error?.code === "LIMIT_FILE_SIZE";
+    return res.status(tooLarge ? 413 : 400).json({
+      error: tooLarge
+        ? "Qwen3-TTS reference WAV must be 64 MB or smaller."
+        : `Qwen3-TTS upload failed: ${String(error.message || error)}`
+    });
+  }),
+  async (req, res) => {
+    try {
+      const prepared = await createQwenTtsGeneration(req.params.slug, {
+        referenceAudio: req.file || null,
+        referenceTranscript: req.body?.referenceTranscript || req.body?.refText,
+        voiceId: req.body?.voiceId,
+        speaker: req.body?.speaker,
+        name: req.body?.name,
+        voiceName: req.body?.voiceName || req.body?.name,
+        text: req.body?.text,
+        style: req.body?.style,
+        language: req.body?.language,
+        seed: req.body?.seed,
+        topK: req.body?.topK,
+        topP: req.body?.topP,
+        temperature: req.body?.temperature,
+        repetitionPenalty: req.body?.repetitionPenalty,
+        maxNewTokens: req.body?.maxNewTokens
+      });
+      const job = enqueue({
+        type: "generate_qwen_tts",
+        projectSlug: prepared.project.slug,
+        label: `Create sound · ${prepared.generation.name}`,
+        refs: { generationId: prepared.generation.id, voiceId: prepared.voice.id }
+      });
+      const generation = bindQwenTtsGenerationJob(prepared.project.slug, prepared.generation.id, job.id);
+      res.status(202).json({ provider: "qwenTts", voice: prepared.voice, generation, job });
+    } catch (error) {
+      res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error) });
+    }
+  }
+);
+
+app.post(
+  "/api/projects/:slug/sound/index-tts/generations",
+  requireLocalSameOriginMutation,
+  (req, res, next) => indexTtsAudioUpload.single("referenceAudio")(req, res, (error) => {
+    if (!error) return next();
+    const tooLarge = error?.code === "LIMIT_FILE_SIZE";
+    return res.status(tooLarge ? 413 : 400).json({
+      error: tooLarge
+        ? "IndexTTS reference audio must be 64 MB or smaller."
+        : `IndexTTS upload failed: ${String(error.message || error)}`
+    });
+  }),
+  async (req, res) => {
+    try {
+      const prepared = await createIndexTtsGeneration(req.params.slug, {
+        referenceAudio: req.file || null,
+        voiceId: req.body?.voiceId,
+        speaker: req.body?.speaker,
+        name: req.body?.name,
+        voiceName: req.body?.voiceName || req.body?.name,
+        text: req.body?.text,
+        style: req.body?.style,
+        emotionWeight: req.body?.emotionWeight,
+        language: req.body?.language,
+        durationFactor: req.body?.durationFactor,
+        seed: req.body?.seed
+      });
+      const job = enqueue({
+        type: "generate_index_tts",
+        projectSlug: prepared.project.slug,
+        label: `Create sound · ${prepared.generation.name}`,
+        refs: { generationId: prepared.generation.id, voiceId: prepared.voice.id }
+      });
+      const generation = bindIndexTtsGenerationJob(prepared.project.slug, prepared.generation.id, job.id);
+      res.status(202).json({ voice: prepared.voice, generation, job });
+    } catch (error) {
+      res.status(Number(error?.statusCode) || 400).json({ error: String(error.message || error) });
+    }
+  }
+);
 
 app.post("/api/projects/:slug/assets/:assetId/import-image", upload.single("file"), (req, res) => {
   try {
@@ -2185,6 +3913,66 @@ app.post("/api/projects/:slug/preview-prompt", async (req, res) => {
   }
 });
 
+// ---------- sequence editor ----------
+app.get("/api/projects/:slug/editor", (req, res) => {
+  try {
+    res.json(editorWorkspace(req.params.slug));
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) });
+  }
+});
+
+app.put("/api/projects/:slug/editor/sequence", requireLocalSameOriginMutation, (req, res) => {
+  try {
+    const document = saveEditSequence(req.params.slug, req.body?.sequence, req.body?.expectedRevision);
+    res.json({ document });
+  } catch (e) {
+    const status = e?.code === "EDIT_REVISION_CONFLICT" ? 409 : 400;
+    res.status(status).json({ error: String(e.message || e), current: e?.current || undefined });
+  }
+});
+
+app.post("/api/projects/:slug/editor/media/probe", requireLocalSameOriginMutation, async (req, res) => {
+  try {
+    res.json({ results: await probeEditorMedia(req.params.slug, req.body?.files) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) });
+  }
+});
+
+app.post("/api/projects/:slug/editor/media/audio", requireLocalSameOriginMutation, editorAudioUpload.single("file"), async (req, res) => {
+  try {
+    res.json({ imported: await importEditorAudio(req.params.slug, req.file) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) });
+  }
+});
+
+app.post("/api/projects/:slug/editor/export", requireLocalSameOriginMutation, (req, res) => {
+  try {
+    const document = loadEditDocument(req.params.slug);
+    if (req.body?.revision != null && Number(req.body.revision) !== Number(document.revision)) {
+      return res.status(409).json({ error: `Save or reload the latest edit before exporting (current revision ${document.revision}).`, current: document });
+    }
+    if (!document.sequence?.videoClips?.length) return res.status(400).json({ error: "Add at least one video clip before exporting." });
+    const job = enqueue({
+      type: "build_edit_master",
+      projectSlug: document.projectSlug,
+      label: `Export edit · ${document.sequence.name}`,
+      refs: {
+        revision: document.revision,
+        sequenceId: document.sequence.id,
+        videoClips: document.sequence.videoClips.length,
+        audioClips: document.sequence.audioClips.length
+      },
+      sequenceSnapshot: document.sequence
+    });
+    res.json({ job, document });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) });
+  }
+});
+
 // ---------- score and master ----------
 app.post("/api/projects/:slug/score/upload", upload.single("file"), async (req, res) => {
   try {
@@ -2254,15 +4042,21 @@ app.post("/api/projects/:slug/master/build", (req, res) => {
 });
 
 app.get("/api/queue", (_req, res) => res.json({ jobs: listJobs() }));
-app.post("/api/queue/:id/cancel", (req, res) => res.json({ ok: cancelJob(req.params.id) }));
+app.post("/api/queue/:id/cancel", requireLocalSameOriginMutation, (req, res) => {
+  if (isExternalQueueJobId(req.params.id)) {
+    return res.status(409).json({
+      ok: false,
+      readOnly: true,
+      error: "This H02 Qwen job is managed by its standalone supervisor."
+    });
+  }
+  return res.json({ ok: cancelJob(req.params.id) });
+});
 
 // ---------- media ----------
-app.get("/media/:slug/:kind/:file", (req, res) => {
-  const allowed = new Set(["frames", "clips", "audio", "assets", "storyboard", "masters"]);
-  if (!allowed.has(req.params.kind)) return res.status(404).end();
-  const file = path.basename(req.params.file);
-  const disk = path.join(projectDir(req.params.slug), "media", req.params.kind, file);
-  if (!fs.existsSync(disk)) return res.status(404).end();
+app.get("/media/:slug/:kind/*", (req, res) => {
+  const disk = resolveProjectMediaFile(PROJECTS_DIR, req.params.slug, req.params.kind, req.params[0]);
+  if (!disk || !fs.existsSync(disk) || !fs.statSync(disk).isFile()) return res.status(404).end();
   res.sendFile(disk);
 });
 
@@ -2270,7 +4064,7 @@ app.get("/media/:slug/:kind/:file", (req, res) => {
 if (fs.existsSync(CLIENT_DIST)) {
   app.use(express.static(CLIENT_DIST));
   app.get("*", (req, res, next) => {
-    if (req.path.startsWith("/api") || req.path.startsWith("/media")) return next();
+    if (!isClientWorkspacePath(req.path)) return next();
     res.sendFile(path.join(CLIENT_DIST, "index.html"));
   });
 } else {
@@ -2282,8 +4076,74 @@ if (fs.existsSync(CLIENT_DIST)) {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`Premiere316 → http://127.0.0.1:${PORT}`);
+const comfySocketServer = new WebSocketServer({ noServer: true });
+const premiereServer = app.listen(PORT, HOST, () => {
+  console.log(`Premiere316 → http://${HOST}:${PORT}`);
   console.log(`  ComfyUI     → ${COMFY_URL}`);
   console.log(`  projects    → ${PROJECTS_DIR}`);
+  setTimeout(() => { try { startComfyOutputIngest(); } catch (e) { console.warn('[comfy-8188 ingest]', e); } }, 1500);
+});
+
+premiereServer.on("upgrade", (request, socket, head) => {
+  if (!isLoopbackRequest(request) || !isPermittedLocalGatewayRequest({
+    host: request.headers.host,
+    origin: request.headers.origin,
+    protocol: "http"
+  })) {
+    socket.destroy();
+    return;
+  }
+  let incoming;
+  try {
+    incoming = new URL(request.url || "/", `http://${request.headers.host || `${HOST}:${PORT}`}`);
+  } catch {
+    socket.destroy();
+    return;
+  }
+  const prefix = "/integrations/comfyui";
+  if (!incoming.pathname.startsWith(`${prefix}/`)) {
+    socket.destroy();
+    return;
+  }
+
+  const suffix = `${incoming.pathname.slice(prefix.length) || "/"}${incoming.search}`;
+  const target = fixedUpstreamWebSocketUrl(COMFY_URL, suffix);
+  comfySocketServer.handleUpgrade(request, socket, head, (client) => {
+    const protocolHeader = request.headers["sec-websocket-protocol"];
+    const protocols = typeof protocolHeader === "string"
+      ? protocolHeader.split(",").map((value) => value.trim()).filter(Boolean)
+      : [];
+    const options = { headers: { origin: new URL(COMFY_URL).origin } };
+    const upstream = protocols.length
+      ? new WebSocket(target, protocols, options)
+      : new WebSocket(target, options);
+    const pending = [];
+    const closePeer = (peer, code, reason) => {
+      if (peer.readyState === WebSocket.CONNECTING) return peer.terminate();
+      if (peer.readyState === WebSocket.OPEN) peer.close(...webSocketCloseArguments(code, reason));
+    };
+
+    client.on("message", (data, isBinary) => {
+      if (upstream.readyState === WebSocket.OPEN) upstream.send(data, { binary: isBinary });
+      else if (upstream.readyState === WebSocket.CONNECTING) pending.push([data, isBinary]);
+    });
+    upstream.on("open", () => {
+      for (const [data, isBinary] of pending.splice(0)) upstream.send(data, { binary: isBinary });
+    });
+    upstream.on("message", (data, isBinary) => {
+      if (client.readyState === WebSocket.OPEN) client.send(data, { binary: isBinary });
+    });
+    client.on("close", (code, reason) => {
+      closePeer(upstream, code, reason);
+    });
+    upstream.on("close", (code, reason) => {
+      closePeer(client, code, reason);
+    });
+    upstream.on("error", () => {
+      if (client.readyState === WebSocket.OPEN) client.close(1011, "ComfyUI gateway unavailable");
+    });
+    client.on("error", () => {
+      if (upstream.readyState === WebSocket.OPEN) upstream.close(1011, "Premiere316 client disconnected");
+    });
+  });
 });

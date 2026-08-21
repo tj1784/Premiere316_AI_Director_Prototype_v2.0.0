@@ -1,0 +1,36 @@
+{
+  "5": {
+    "class_type": "easy positive",
+    "inputs": {
+      "positive": "[A cheerful female voice with a joking, playful tone] [happy] I clicked one button, everything broke, and for a second .. [pause] I just stared at the screen! [pause], [laughing] [laughing] Honestly, it was kind of impressive."
+    }
+  },
+  "6": {
+    "class_type": "SaveAudioMP3",
+    "inputs": {
+      "audio": ["15", 0],
+      "filename_prefix": "audio/voice",
+      "quality": "V0"
+    }
+  },
+  "15": {
+    "class_type": "FishS2TTS",
+    "inputs": {
+      "model_path": "s2-pro-fp8",
+      "text": ["5", 0],
+      "language": "auto",
+      "device": "auto",
+      "precision": "auto",
+      "attention": "auto",
+      "max_new_tokens": 0,
+      "chunk_length": 200,
+      "temperature": 0.8,
+      "top_p": 0.8,
+      "repetition_penalty": 1.1,
+      "seed": 265423112,
+      "keep_model_loaded": true,
+      "offload_to_cpu": false,
+      "compile_model": false
+    }
+  }
+}

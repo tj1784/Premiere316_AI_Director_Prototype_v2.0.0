@@ -48,6 +48,26 @@ function currentClip(project: any, clipId: string | null) {
   return project?.sequence?.clips?.find((clip: any) => clip.id === clipId) || null;
 }
 
+function productionSelectionKey(slug: string) {
+  return `premiere316.production-selection.${slug}`;
+}
+
+function readProductionSelection(slug: string) {
+  try { return JSON.parse(localStorage.getItem(productionSelectionKey(slug)) || "{}"); }
+  catch { return {}; }
+}
+
+function persistProductionSelection(slug: string | undefined, patch: any) {
+  if (!slug) return;
+  try {
+    localStorage.setItem(productionSelectionKey(slug), JSON.stringify({
+      ...readProductionSelection(slug),
+      ...patch,
+      updatedAt: new Date().toISOString()
+    }));
+  } catch {}
+}
+
 type Store = {
   project: any | null;
   storyboard: any | null;
@@ -62,6 +82,9 @@ type Store = {
   selFrameFile: string | null;
   selectedGuideId: string | null;
   selectedStoryboardClipId: string | null;
+  selectedAssetId: string | null;
+  productionClipId: string | null;
+  productionClipSource: "sequence" | "storyboard" | null;
   playheadFrame: number;
   markInFrame: number | null;
   markOutFrame: number | null;
@@ -85,6 +108,9 @@ type Store = {
   promptEnhanceBusy: boolean;
   promptEnhance: any | null;
   assetWorkflows: any[];
+  generationWorkflows: any[];
+  promptGenerationBusy: boolean;
+  promptGenerationNotice: string | null;
   lmStudioGpu: any | null;
   h3Diagnostics: any | null;
   h3Busy: boolean;
@@ -96,6 +122,7 @@ type Store = {
   setSelFrame: (file: string | null) => void;
   setSelectedGuide: (id: string | null) => void;
   setSelectedStoryboardClip: (id: string | null) => void;
+  setSelectedAsset: (id: string | null) => void;
   setSelectedSegments: (ids: string[], anchorId?: string | null) => void;
   toggleSegment: (id: string, additive?: boolean) => void;
   selectSegmentRange: (id: string) => void;
@@ -132,6 +159,7 @@ type Store = {
   pushStoryboardVideoPlanToComfyUI: (videoPlanId: string) => Promise<void>;
   downloadStoryboardVideoPlanWorkflow: (videoPlanId: string) => Promise<void>;
   generateStoryboardVideoPlan: (videoPlanId: string) => Promise<void>;
+  saveStoryboardGlobalPrompt: (clipId: string, text: string, scope: "clip" | "scene" | "chapter" | "project") => Promise<any>;
   patchLocal: (fn: (project: any) => void) => void;
   patchClip: (clipId: string, body: any) => Promise<void>;
   deleteFrame: (frameId: string) => Promise<void>;
@@ -146,6 +174,8 @@ type Store = {
   buildScreenplayTimeline: (body?: any) => Promise<void>;
 
   refreshAssetWorkflows: () => Promise<void>;
+  refreshGenerationWorkflows: () => Promise<void>;
+  createPromptGeneration: (body: any) => Promise<any>;
   handoffLmStudioGpu: () => Promise<void>;
   buildAssets: (body?: any) => Promise<void>;
   createAsset: (body: any) => Promise<any>;
@@ -195,6 +225,9 @@ export const useStore = create<Store>((set, get) => ({
   selFrameFile: null,
   selectedGuideId: null,
   selectedStoryboardClipId: null,
+  selectedAssetId: null,
+  productionClipId: null,
+  productionClipSource: null,
   playheadFrame: 0,
   markInFrame: null,
   markOutFrame: null,
@@ -218,6 +251,9 @@ export const useStore = create<Store>((set, get) => ({
   promptEnhanceBusy: false,
   promptEnhance: null,
   assetWorkflows: [],
+  generationWorkflows: [],
+  promptGenerationBusy: false,
+  promptGenerationNotice: null,
   lmStudioGpu: null,
   h3Diagnostics: null,
   h3Busy: false,
@@ -228,17 +264,35 @@ export const useStore = create<Store>((set, get) => ({
   setSelClip: (id) => {
     const project = get().project;
     const clip = currentClip(project, id);
+    const storyboardHasClip = Boolean(id && get().storyboard?.clips?.[id]);
+    persistProductionSelection(project?.slug, { clipId: id, clipSource: id ? "sequence" : null });
     set({
       selClipId: id,
+      selectedStoryboardClipId: storyboardHasClip ? id : get().selectedStoryboardClipId,
       selectedSegmentIds: [],
       selectionAnchorId: null,
       selectedGuideId: clip?.guides?.[0]?.id || null,
-      selFrameFile: clip?.firstFrame?.file || get().selFrameFile
+      selFrameFile: clip?.firstFrame?.file || get().selFrameFile,
+      productionClipId: id,
+      productionClipSource: id ? "sequence" : null
     });
   },
   setSelFrame: (file) => set({ selFrameFile: file }),
   setSelectedGuide: (id) => set({ selectedGuideId: id, activeWorkbench: "guide" }),
-  setSelectedStoryboardClip: (id) => set({ selectedStoryboardClipId: id }),
+  setSelectedStoryboardClip: (id) => {
+    const sequenceHasClip = Boolean(id && currentClip(get().project, id));
+    persistProductionSelection(get().project?.slug, { clipId: id, clipSource: id ? "storyboard" : null });
+    set({
+      selectedStoryboardClipId: id,
+      selClipId: sequenceHasClip ? id : get().selClipId,
+      productionClipId: id,
+      productionClipSource: id ? "storyboard" : null
+    });
+  },
+  setSelectedAsset: (id) => {
+    persistProductionSelection(get().project?.slug, { assetId: id });
+    set({ selectedAssetId: id });
+  },
   setSelectedSegments: (ids, anchorId = null) => set({
     selectedSegmentIds: [...new Set(ids)],
     selectionAnchorId: anchorId ?? ids[ids.length - 1] ?? null,
@@ -494,7 +548,15 @@ export const useStore = create<Store>((set, get) => ({
     set({ busy: true, error: null });
     try {
       const json = await api(`/api/projects/${encodeURIComponent(slug)}`);
-      const first = json.project?.sequence?.clips?.[0] || null;
+      const savedSelection = readProductionSelection(slug);
+      const first = json.project?.sequence?.clips?.find((clip: any) => clip.id === savedSelection.clipId) || json.project?.sequence?.clips?.[0] || null;
+      const selectedAssetId = json.project?.assets?.items?.some((asset: any) => asset.id === savedSelection.assetId)
+        ? savedSelection.assetId
+        : json.project?.assets?.items?.[0]?.id || null;
+      const productionClipId = savedSelection.clipId || first?.id || null;
+      const productionClipSource = savedSelection.clipId
+        ? savedSelection.clipSource === "storyboard" ? "storyboard" : "sequence"
+        : first?.id ? "sequence" : null;
       set({
         project: json.project,
         storyboard: null,
@@ -503,8 +565,11 @@ export const useStore = create<Store>((set, get) => ({
         storyboardFrameNotices: {},
         storyboardVideoPlanActions: {},
         storyboardVideoPlanNotices: {},
-        selectedStoryboardClipId: null,
+        selectedStoryboardClipId: productionClipSource === "storyboard" ? productionClipId : null,
+        selectedAssetId,
         selClipId: first?.id || null,
+        productionClipId,
+        productionClipSource,
         selFrameFile: first?.firstFrame?.file || json.project?.frames?.[0]?.file || null,
         selectedSegmentIds: [],
         selectionAnchorId: null,
@@ -528,7 +593,10 @@ export const useStore = create<Store>((set, get) => ({
     storyboardVideoPlanActions: {},
     storyboardVideoPlanNotices: {},
     selectedStoryboardClipId: null,
+    selectedAssetId: null,
     selClipId: null,
+    productionClipId: null,
+    productionClipSource: null,
     selFrameFile: null,
     selectedSegmentIds: [],
     selectedGuideId: null
@@ -566,10 +634,17 @@ export const useStore = create<Store>((set, get) => ({
         const chapter = json.storyboard?.chapters?.[chapterId];
         return (chapter?.sceneIds || []).flatMap((sceneId: string) => json.storyboard?.scenes?.[sceneId]?.clipIds || []);
       })?.[0] || Object.keys(json.storyboard?.clips || {})[0] || null;
+      const selectedStoryboardClipId = get().selectedStoryboardClipId && json.storyboard?.clips?.[get().selectedStoryboardClipId]
+        ? get().selectedStoryboardClipId
+        : get().productionClipId && json.storyboard?.clips?.[get().productionClipId]
+          ? get().productionClipId
+          : firstClipId;
       set({
         storyboard: json.storyboard,
         storyboardSummary: json.summary || null,
-        selectedStoryboardClipId: get().selectedStoryboardClipId || firstClipId
+        selectedStoryboardClipId,
+        productionClipId: selectedStoryboardClipId,
+        productionClipSource: selectedStoryboardClipId ? "storyboard" : null
       });
     } catch (error: any) {
       set({ storyboard: null, storyboardSummary: null, error: String(error.message) });
@@ -814,6 +889,25 @@ export const useStore = create<Store>((set, get) => ({
       set({ storyboardVideoPlanActions: nextActions });
     }
   },
+  saveStoryboardGlobalPrompt: async (clipId, text, scope) => {
+    const project = get().project;
+    if (!project) throw new Error("No project loaded");
+    try {
+      const json = await api(
+        `/api/projects/${encodeURIComponent(project.slug)}/storyboard/global-prompt`,
+        { method: "POST", body: JSON.stringify({ clipId, text, scope }) }
+      );
+      set({
+        storyboard: json.storyboard || get().storyboard,
+        storyboardSummary: json.summary || get().storyboardSummary,
+        error: null
+      });
+      return json.result || {};
+    } catch (error) {
+      set({ error: String(error.message) });
+      throw error;
+    }
+  },
   patchLocal: (fn) => {
     const project = get().project;
     if (!project) return;
@@ -1007,6 +1101,40 @@ export const useStore = create<Store>((set, get) => ({
       set({ error: String(error.message) });
     }
   },
+  refreshGenerationWorkflows: async () => {
+    try {
+      const project = get().project;
+      const query = project?.slug ? `?project=${encodeURIComponent(project.slug)}` : "";
+      const json = await api(`/api/generation-workflows${query}`);
+      set({ generationWorkflows: json.workflows || [] });
+    } catch (error: any) {
+      set({ error: String(error.message) });
+    }
+  },
+  createPromptGeneration: async (body) => {
+    const project = get().project;
+    if (!project) return null;
+    set({ promptGenerationBusy: true, promptGenerationNotice: null, error: null });
+    try {
+      const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/prompt-generations`, {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+      set({
+        project: json.project || project,
+        promptGenerationNotice: json.alreadyQueued
+          ? "That exact prompt is already in the queue."
+          : `Queued ${json.generation?.outputMode || json.generation?.outputKind || "generation"} with ${(json.generation?.references || json.generation?.resolvedReferences || []).length} pinned reference(s).`
+      });
+      await get().refreshQueue();
+      return json;
+    } catch (error: any) {
+      set({ error: String(error.message), promptGenerationNotice: null });
+      throw error;
+    } finally {
+      set({ promptGenerationBusy: false });
+    }
+  },
   handoffLmStudioGpu: async () => {
     set({ gpuHandoffBusy: true, error: null });
     try {
@@ -1053,7 +1181,7 @@ export const useStore = create<Store>((set, get) => ({
         method: "POST",
         body: JSON.stringify(body)
       });
-      set({ project: json.project });
+      set({ project: json.project, selectedAssetId: json.asset?.id || get().selectedAssetId });
       return json.asset;
     } catch (error: any) {
       set({ error: String(error.message) });

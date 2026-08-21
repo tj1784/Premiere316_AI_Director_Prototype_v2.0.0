@@ -35,7 +35,7 @@
     ],
     "outputMode": "native-and-2x",
     "id": "ci-flux2-p316-style-only-2p39x1-max",
-    "label": "FLUX2 2.39",
+    "label": "CI FLUX.2 Style-Lock · 2.39:1 MAX",
     "aspectRatio": "2.39:1",
     "template": "CI_FLUX2_P316_STYLE_ONLY_ASSET_2P39X1_API_2X.json",
     "purpose": "Authoritative cinematic production assets using the package's 2.39:1 route."
@@ -76,7 +76,7 @@
     ],
     "outputMode": "native-and-2x",
     "id": "ci-flux2-p316-style-only-4x3-max",
-    "label": "FLUX2 4:3",
+    "label": "CI FLUX.2 Style-Lock · 4:3 MAX",
     "aspectRatio": "4:3",
     "template": "CI_FLUX2_P316_STYLE_ONLY_ASSET_4X3_API_2X.json",
     "purpose": "General production assets using abstract art-direction references without identity or content transfer."
@@ -117,7 +117,7 @@
     ],
     "outputMode": "native-and-2x",
     "id": "ci-flux2-p316-style-only-16x9-max",
-    "label": "FLUX2 16:9",
+    "label": "CI FLUX.2 Style-Lock · 16:9 MAX",
     "aspectRatio": "16:9",
     "template": "CI_FLUX2_P316_STYLE_ONLY_ASSET_16X9_API_2X.json",
     "purpose": "Guide frames, locations, crowds, and atmosphere/VFX with widescreen cinematic continuity."
@@ -158,7 +158,7 @@
     ],
     "outputMode": "native-and-2x",
     "id": "ci-flux2-p316-style-only-2x3-vertical-max",
-    "label": "FLUX2 2:3",
+    "label": "CI FLUX.2 Style-Lock · 2:3 Vertical MAX",
     "aspectRatio": "2:3",
     "template": "CI_FLUX2_P316_STYLE_ONLY_ASSET_2X3_VERTICAL_API_2X.json",
     "purpose": "Character, wardrobe, and hero-prop studies using style plates only."
@@ -199,7 +199,7 @@
     ],
     "outputMode": "native-and-2x",
     "id": "ci-flux2-jesus-only-character-sheet-4x3-max",
-    "label": "Jesus Sheet",
+    "label": "CI FLUX.2 · Jesus Identity Sheet 4:3 MAX",
     "aspectRatio": "4:3",
     "template": "CI_FLUX2_P316_STYLE_ONLY_ASSET_4X3_API_2X.json",
     "purpose": "Jesus primary four-view character sheet using the original identity, layout, and costume references.",
@@ -211,9 +211,9 @@
   },
   {
     "id": "krea2-character-ingredients-fp8",
-    "label": "Krea Char FP8",
+    "label": "Krea 2 Character Ingredients · BF16",
     "mediaType": "image",
-    "model": "Krea 2 Turbo FP8 + Qwen3-VL 4B FP8",
+    "model": "Krea 2 Turbo BF16 + Qwen3-VL 4B BF16",
     "purpose": "Identity-locked character reference sheets with face, profile, full-body, costume, hair, and rear-head coverage.",
     "requiredNodes": [
       "UNETLoader",
@@ -224,16 +224,16 @@
       "SaveImage"
     ],
     "requiredModels": [
-      "krea2\\krea2_turbo_fp8_scaled.safetensors",
-      "qwen3vl_4b_fp8_scaled.safetensors",
+      "KREA 2\\krea2_turbo_bf16.safetensors",
+      "qwen3vl_4b_bf16.safetensors",
       "qwen_image_vae.safetensors"
     ]
   },
   {
     "id": "krea2-cinematic-still-fp8",
-    "label": "Krea Still FP8",
+    "label": "Krea 2 Cinematic Still · BF16",
     "mediaType": "image",
-    "model": "Krea 2 Turbo FP8 + Qwen3-VL 4B FP8",
+    "model": "Krea 2 Turbo BF16 + Qwen3-VL 4B BF16",
     "purpose": "Locations, props, VFX references, continuity states, and first/middle/last guide images.",
     "requiredNodes": [
       "UNETLoader",
@@ -244,14 +244,14 @@
       "SaveImage"
     ],
     "requiredModels": [
-      "krea2\\krea2_turbo_fp8_scaled.safetensors",
-      "qwen3vl_4b_fp8_scaled.safetensors",
+      "KREA 2\\krea2_turbo_bf16.safetensors",
+      "qwen3vl_4b_bf16.safetensors",
       "qwen_image_vae.safetensors"
     ]
   },
   {
     "id": "flux2-klein-9b-prop-fp8",
-    "label": "Flux2 Prop FP8",
+    "label": "Flux 2 Klein 9B · Prop Studio",
     "mediaType": "image",
     "model": "Flux 2 Klein 9B FP8 Distilled + Qwen 3 8B FP8",
     "purpose": "Clean artifact, weapon, prop, and material reference plates with precise construction details.",
@@ -272,21 +272,18 @@
   },
   {
     "id": "qwen3-tts-voice-design-1.7b",
-    "label": "Qwen3 TTS",
+    "label": "Qwen3-TTS VoiceDesign · 1.7B",
     "mediaType": "audio",
     "model": "Qwen3-TTS 12Hz 1.7B VoiceDesign",
-    "purpose": "Local character voice auditions and dialogue stems from production voice direction.",
-    "requiredNodes": [
-      "FB_Qwen3TTSVoiceDesign",
-      "SaveAudioMP3"
-    ],
+    "purpose": "Standalone local character casting in Create Sound, with native WAV masters and IndexTTS handoff.",
+    "requiredNodes": [],
     "requiredModels": [
       "Qwen3-TTS-12Hz-1.7B-VoiceDesign"
     ]
   },
   {
     "id": "ace-step-1.5-xl-turbo",
-    "label": "ACE-Step",
+    "label": "ACE-Step 1.5 XL Turbo",
     "mediaType": "audio",
     "model": "ACE-Step 1.5 XL Turbo BF16 + Qwen 4B/0.6B",
     "purpose": "Project score themes and musical cue stems.",
@@ -306,7 +303,7 @@
   },
   {
     "id": "ltx-2.3-native-audio",
-    "label": "LTX Audio",
+    "label": "LTX 2.3 Native Shot Audio",
     "mediaType": "instruction",
     "model": "LTX-2.3 Director FP8",
     "purpose": "Diegetic ambience, foley, impacts, and vocal texture generated in sync with the final video shot.",
@@ -315,7 +312,7 @@
   },
   {
     "id": "premiere316-title-card",
-    "label": "Title Card",
+    "label": "Premiere316 Deterministic Title Card",
     "mediaType": "graphic",
     "model": "Deterministic SVG compositor",
     "purpose": "Exact typography without diffusion-model spelling artifacts.",

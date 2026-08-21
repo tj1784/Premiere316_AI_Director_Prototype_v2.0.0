@@ -6,6 +6,7 @@ import { spawnSync } from "node:child_process";
 import test from "node:test";
 import {
   concatPreparedVideosWithSoundtrack,
+  extractVideoFrameExact,
   ffmpegAvailable,
   probeMediaExact,
   trimVideoToFrames
@@ -15,6 +16,30 @@ function rate(value) {
   const [numerator, denominator = "1"] = String(value || "0").split("/").map(Number);
   return denominator ? numerator / denominator : 0;
 }
+
+test("extracts the exact zero-based N+1 continuation frame before editorial trim", async (context) => {
+  if (!(await ffmpegAvailable())) {
+    context.skip("ffmpeg is not available");
+    return;
+  }
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "p316-director-handoff-"));
+  const source = path.join(root, "nine-decoded-frames.mp4");
+  const handoff = path.join(root, "frame-0008.png");
+  try {
+    const fixture = spawnSync("ffmpeg", [
+      "-hide_banner", "-loglevel", "error", "-y",
+      "-f", "lavfi", "-i", "testsrc2=s=96x64:r=24",
+      "-frames:v", "9", "-an", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", source
+    ], { windowsHide: true, encoding: "utf8" });
+    assert.equal(fixture.status, 0, fixture.stderr);
+    await extractVideoFrameExact(source, handoff, 8);
+    const bytes = fs.readFileSync(handoff);
+    assert.deepEqual([...bytes.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+    await assert.rejects(() => extractVideoFrameExact(source, path.join(root, "missing.png"), 9), /not present/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test("conforms LTX video to exact Premiere frames while padding short audio", async (context) => {
   if (!(await ffmpegAvailable())) {

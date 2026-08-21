@@ -517,14 +517,36 @@ class PremierePiAgent {
     return { aborted: true };
   }
 
-  async status() {
-    try {
-      await this.verifyRuntime();
-      const rpc = await this.command({ type: "get_state" });
-      return { ...this.publicState(), rpc };
-    } catch (error) {
-      return { ...this.publicState(), lastError: error.message };
+  stop() {
+    this.taskQueue = [];
+    this.state.queuedTasks = 0;
+    if (this.currentTask) this.currentTask.cancelled = true;
+    const child = this.child;
+    this.child = null;
+    if (child && !child.killed) {
+      try { child.kill(); } catch {}
     }
+    this.currentAssistant = null;
+    this.currentTask = null;
+    this.rejectPending(new Error("Pi agent stopped."));
+    this.state = {
+      ...this.state,
+      running: false,
+      starting: false,
+      streaming: false,
+      workerActive: false,
+      activeTool: null,
+      phase: "stopped",
+      pid: null,
+      lastError: null
+    };
+    this.broadcastState();
+    return { stopped: true };
+  }
+
+  async status() {
+    // Do not auto-start. Opening Premiere used to boot the Pi agent + LM Studio model.
+    return this.publicState();
   }
 }
 

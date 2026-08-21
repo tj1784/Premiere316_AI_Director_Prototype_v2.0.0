@@ -2,12 +2,15 @@ import path from "path";
 import fs from "fs";
 import crypto from "crypto";
 import os from "os";
+import { execFile } from "node:child_process";
 import {
   uploadImage,
   runPrompt,
   downloadOutput,
   collectOutputFiles,
-  getObjectInfo
+  getObjectInfo,
+  getComfyQueueState,
+  releaseComfyGpuMemory
 } from "./comfy.js";
 import { fillI2vPrompt, clampDuration, framesOf } from "./timeline.js";
 import {
@@ -57,6 +60,37 @@ import {
   bookendDurationSec,
   normalizeBookends
 } from "./bookends.js";
+import { buildEditMasterJob } from "./sequence-editor.js";
+import { cancelIndexTtsGeneration, generateIndexTtsJob, unloadIndexTtsModel } from "./index-tts.js";
+import {
+  cancelQwenTtsGeneration,
+  cancelQwenTtsWorker,
+  generateQwenTtsJob,
+  unloadQwenTtsModel
+} from "./qwen-tts.js";
+import {
+  cancelQwenVoiceDesignInstall,
+  cancelQwenVoiceDesignWorker,
+  cancelVoiceDesignSession,
+  generateVoiceDesignJob,
+  installQwenVoiceDesignJob,
+  unloadQwenVoiceDesign
+} from "./qwen-voice-design.js";
+import {
+  acquireGpuLease,
+  gpuLeaseStatus,
+  releaseGpuLease,
+  updateGpuLease,
+  GPU_RESOURCE_OWNERS
+} from "./gpu-resource-manager.js";
+import {
+  generatePromptAssetJob,
+  markPromptGenerationFailed,
+  restorePromptGenerationAfterCancellation
+} from "./prompt-generation.js";
+import { finalizeAssetPromptAudioGeneration } from "./asset-prompt-audio.js";
+import { markAudioGenerationCancelled, markAudioGenerationFailed, runAudioGenerationJob } from "./audio-generation.js";
+import { isExternalQueueJobId, listExternalQueueJobs } from "./external-h02-queue.js";
 
 const jobs = [];
 let running = false;
@@ -66,8 +100,18 @@ const COMFY_PROMPT_JOB_TYPES = new Set([
   "render_range",
   "render_h3_range",
   "generate_asset",
+  "generate_prompt_asset",
+  "generate_audio_workflow",
   "generate_storyboard_frame",
   "generate_storyboard_video_plan"
+]);
+const LOCAL_PRIORITY_JOB_TYPES = new Set(["build_edit_master"]);
+const LOCAL_CANCELLABLE_JOB_TYPES = new Set([
+  "build_edit_master",
+  "generate_index_tts",
+  "generate_qwen_tts",
+  "generate_qwen_voice_design",
+  "install_qwen_voice_design"
 ]);
 
 function persistJobLedger(projectSlug) {
@@ -95,7 +139,7 @@ function persistJobLedger(projectSlug) {
 }
 
 export function listJobs() {
-  return jobs.slice(-120).map((j) => ({
+  const internalJobs = jobs.slice(-120).map((j) => ({
     id: j.id,
     projectSlug: j.projectSlug,
     type: j.type,
@@ -109,14 +153,86 @@ export function listJobs() {
     createdAt: j.createdAt,
     finishedAt: j.finishedAt
   }));
+  return [...internalJobs, ...listExternalQueueJobs()];
 }
 
 export function enqueue(job) {
+  if (job?.type === "generate_audio_workflow" && job?.projectSlug) {
+    const requestedIds = new Set([
+      ...(Array.isArray(job.generationIds) ? job.generationIds : []),
+      ...(Array.isArray(job.refs?.generationIds) ? job.refs.generationIds : [])
+    ].map(String));
+    const existing = jobs.find((candidate) => {
+      if (
+        candidate.projectSlug !== job.projectSlug ||
+        candidate.type !== "generate_audio_workflow" ||
+        !["queued", "running", "cancelling"].includes(candidate.status)
+      ) return false;
+      const candidateIds = [
+        ...(Array.isArray(candidate.generationIds) ? candidate.generationIds : []),
+        ...(Array.isArray(candidate.refs?.generationIds) ? candidate.refs.generationIds : [])
+      ].map(String);
+      return candidateIds.some((id) => requestedIds.has(id));
+    });
+    if (existing) return existing;
+  }
+  if (job?.type === "install_qwen_voice_design") {
+    const existing = jobs.find((candidate) =>
+      candidate.type === "install_qwen_voice_design" &&
+      ["queued", "running", "cancelling"].includes(candidate.status)
+    );
+    if (existing) return existing;
+  }
+  if (job?.type === "generate_qwen_voice_design" && job?.projectSlug && job?.refs?.sessionId) {
+    const existing = jobs.find((candidate) =>
+      candidate.projectSlug === job.projectSlug &&
+      candidate.type === "generate_qwen_voice_design" &&
+      candidate.refs?.sessionId === job.refs.sessionId &&
+      ["queued", "running", "cancelling"].includes(candidate.status)
+    );
+    if (existing) return existing;
+  }
+  if (job?.type === "generate_index_tts" && job?.projectSlug && job?.refs?.generationId) {
+    const existing = jobs.find((candidate) =>
+      candidate.projectSlug === job.projectSlug &&
+      candidate.type === "generate_index_tts" &&
+      candidate.refs?.generationId === job.refs.generationId &&
+      ["queued", "running", "cancelling"].includes(candidate.status)
+    );
+    if (existing) return existing;
+  }
+  if (job?.type === "generate_qwen_tts" && job?.projectSlug && job?.refs?.generationId) {
+    const existing = jobs.find((candidate) =>
+      candidate.projectSlug === job.projectSlug &&
+      candidate.type === "generate_qwen_tts" &&
+      candidate.refs?.generationId === job.refs.generationId &&
+      ["queued", "running", "cancelling"].includes(candidate.status)
+    );
+    if (existing) return existing;
+  }
+  if (job?.type === "build_edit_master" && job?.projectSlug && job?.refs?.revision != null) {
+    const existing = jobs.find((candidate) =>
+      candidate.projectSlug === job.projectSlug &&
+      candidate.type === "build_edit_master" &&
+      Number(candidate.refs?.revision) === Number(job.refs.revision) &&
+      ["queued", "running", "cancelling"].includes(candidate.status)
+    );
+    if (existing) return existing;
+  }
   if (job?.type === "generate_asset" && job?.projectSlug && job?.refs?.assetId) {
     const existing = jobs.find((candidate) =>
       candidate.projectSlug === job.projectSlug &&
       candidate.type === "generate_asset" &&
       candidate.refs?.assetId === job.refs.assetId &&
+      ["queued", "running", "cancelling"].includes(candidate.status)
+    );
+    if (existing) return existing;
+  }
+  if (job?.type === "generate_prompt_asset" && job?.projectSlug && job?.refs?.requestFingerprint) {
+    const existing = jobs.find((candidate) =>
+      candidate.projectSlug === job.projectSlug &&
+      candidate.type === "generate_prompt_asset" &&
+      candidate.refs?.requestFingerprint === job.refs.requestFingerprint &&
       ["queued", "running", "cancelling"].includes(candidate.status)
     );
     if (existing) return existing;
@@ -139,6 +255,9 @@ export function enqueue(job) {
     );
     if (existing) return existing;
   }
+  const privateSequenceSnapshot = job?.sequenceSnapshot;
+  const publicJob = { ...job };
+  delete publicJob.sequenceSnapshot;
   const j = {
     id: `job_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     status: "queued",
@@ -148,8 +267,11 @@ export function enqueue(job) {
     result: null,
     createdAt: new Date().toISOString(),
     finishedAt: null,
-    ...job
+    ...publicJob
   };
+  if (privateSequenceSnapshot) {
+    Object.defineProperty(j, "sequenceSnapshot", { value: privateSequenceSnapshot, configurable: true });
+  }
   jobs.push(j);
   persistJobLedger(j.projectSlug);
   pump();
@@ -157,6 +279,7 @@ export function enqueue(job) {
 }
 
 export function cancelJob(id) {
+  if (isExternalQueueJobId(id)) return false;
   const j = jobs.find((x) => x.id === id);
   if (!j) return false;
   if (j.status === "queued") {
@@ -164,15 +287,48 @@ export function cancelJob(id) {
     j.stage = "Stopped";
     j.finishedAt = new Date().toISOString();
     if (j.type === "generate_asset") restoreCancelledAsset(j.projectSlug, j.refs?.assetId);
+    if (j.type === "generate_prompt_asset") restorePromptGenerationAfterCancellation(j.projectSlug, j.refs?.generationId);
     if (j.type === "generate_storyboard_frame") restoreStoryboardFrameAfterCancellation(j.projectSlug, j.refs?.frameId);
     if (j.type === "generate_storyboard_video_plan") restoreStoryboardVideoPlanAfterCancellation(j.projectSlug, j.refs?.videoPlanId);
+    if (j.type === "generate_index_tts") cancelIndexTtsGeneration(j.projectSlug, j.refs?.generationId);
+    if (j.type === "generate_qwen_tts") cancelQwenTtsGeneration(j.projectSlug, j.refs?.generationId);
+    if (j.type === "generate_qwen_voice_design") cancelVoiceDesignSession(j.projectSlug, j.refs?.sessionId);
+    if (j.type === "generate_audio_workflow") {
+      const generationIds = Array.isArray(j.generationIds) ? j.generationIds : j.refs?.generationIds || [];
+      for (const generationId of generationIds) {
+        try { markAudioGenerationCancelled(j.projectSlug, generationId); } catch {}
+      }
+    }
+    if (j.refs?.promptGenerationId) {
+      try {
+        finalizeAssetPromptAudioGeneration(j.projectSlug, j.refs.promptGenerationId, {
+          status: "cancelled",
+          jobId: j.id
+        });
+      } catch {}
+    }
     persistJobLedger(j.projectSlug);
     return true;
   }
-  if (j.status === "running" && COMFY_PROMPT_JOB_TYPES.has(j.type) && activeJob?.id === j.id) {
+  const localJob = LOCAL_CANCELLABLE_JOB_TYPES.has(j.type);
+  const ownsRunningJob = activeJob?.id === j.id;
+  if (j.status === "running" && (COMFY_PROMPT_JOB_TYPES.has(j.type) || localJob) && ownsRunningJob) {
     j.status = "cancelling";
-    j.stage = "Stopping ComfyUI prompt…";
+    j.stage = COMFY_PROMPT_JOB_TYPES.has(j.type)
+      ? "Stopping ComfyUI prompt…"
+      : j.type === "generate_index_tts"
+        ? "Stopping IndexTTS generation…"
+        : j.type === "generate_qwen_tts"
+          ? "Stopping standalone Qwen3-TTS generation…"
+        : j.type === "generate_qwen_voice_design"
+          ? "Stopping Qwen VoiceDesign generation and releasing its model…"
+          : j.type === "install_qwen_voice_design"
+            ? "Stopping Qwen VoiceDesign installation…"
+        : "Stopping export…";
     persistJobLedger(j.projectSlug);
+    if (j.type === "install_qwen_voice_design") cancelQwenVoiceDesignInstall();
+    if (j.type === "generate_qwen_voice_design") cancelQwenVoiceDesignWorker();
+    if (j.type === "generate_qwen_tts") cancelQwenTtsWorker();
     activeAbortController?.abort();
     return true;
   }
@@ -195,7 +351,8 @@ export function cancelAssetJobs(projectSlug, assetId = null) {
 
 async function pump() {
   if (running) return;
-  const next = jobs.find((j) => j.status === "queued");
+  const next = jobs.find((job) => job.status === "queued" && LOCAL_PRIORITY_JOB_TYPES.has(job.type))
+    || jobs.find((job) => job.status === "queued");
   if (!next) return;
   running = true;
   activeJob = next;
@@ -205,24 +362,74 @@ async function pump() {
   next.progress = 0;
   persistJobLedger(next.projectSlug);
   try {
+    if (COMFY_PROMPT_JOB_TYPES.has(next.type)) await prepareGpuForComfy(next);
+    if (next.type === "generate_index_tts") {
+      await prepareLocalGpuRuntime(GPU_RESOURCE_OWNERS.INDEX_TTS, { job: next });
+    }
+    if (next.type === "generate_qwen_tts") {
+      await prepareStandaloneQwenTtsRuntime({ job: next });
+    }
+    if (next.type === "generate_qwen_voice_design") {
+      await prepareLocalGpuRuntime(GPU_RESOURCE_OWNERS.QWEN_VOICE_DESIGN, { job: next });
+    }
     if (next.type === "render_range") await renderRange(next);
     else if (next.type === "render_h3_range") await renderH3Range(next);
     else if (next.type === "assemble_clip") await assembleClipJob(next);
     else if (next.type === "generate_score") await generateScore(next);
     else if (next.type === "generate_asset") await generateAssetJob(next);
+    else if (next.type === "generate_prompt_asset") await generatePromptAssetJob(next);
     else if (next.type === "generate_storyboard_frame") await generateStoryboardFrameJob(next);
     else if (next.type === "generate_storyboard_video_plan") await generateStoryboardVideoPlanJob(next);
     else if (next.type === "build_master") await buildMaster(next);
+    else if (next.type === "build_edit_master") await buildEditMasterJob(next);
+    else if (next.type === "generate_index_tts") await generateIndexTtsJob(next);
+    else if (next.type === "generate_qwen_tts") await generateQwenTtsJob(next);
+    else if (next.type === "generate_qwen_voice_design") await generateVoiceDesignJob(next);
+    else if (next.type === "generate_audio_workflow") {
+      next.stage = "Submitting validated audio workflow";
+      next.result = await runAudioGenerationJob(next, {
+        signal: next.signal,
+        manageGpuLease: false,
+        onSubmitted: ({ generationId, promptId }) => {
+          next.refs = next.refs || {};
+          next.refs.promptIds = { ...(next.refs.promptIds || {}), [generationId]: promptId };
+          next.stage = `ComfyUI audio · ${promptId}`;
+          persistJobLedger(next.projectSlug);
+        },
+        onProgress: ({ ratio, nodeId, promptId }) => {
+          next.progress = Math.min(0.96, 0.04 + Math.max(0, Math.min(1, Number(ratio) || 0)) * 0.9);
+          next.stage = `Generating audio${nodeId ? ` · node ${nodeId}` : ""}${promptId ? ` · ${promptId}` : ""}`;
+        }
+      });
+    }
+    else if (next.type === "install_qwen_voice_design") await installQwenVoiceDesignJob(next, { force: next.refs?.force === true });
     else throw new Error(`Unknown job type: ${next.type}`);
     if (next.signal.aborted || next.status === "cancelling") {
       const error = new Error("Generation stopped by director");
       error.code = "GENERATION_CANCELLED";
       throw error;
     }
+    if (next.refs?.promptGenerationId) {
+      try {
+        finalizeAssetPromptAudioGeneration(next.projectSlug, next.refs.promptGenerationId, {
+          status: "generated",
+          jobId: next.id,
+          result: next.result
+        });
+      } catch (error) {
+        console.error("[queue] Could not finalize asset-prompt audio wrapper", error);
+      }
+    }
     next.status = "done";
     next.stage = "Complete";
     next.progress = 1;
   } catch (e) {
+    if (e?.code === "QUEUE_YIELD") {
+      next.status = "queued";
+      next.stage = "Waiting behind editor export";
+      next.error = null;
+      return;
+    }
     const cancelled = e?.code === "GENERATION_CANCELLED" || next.signal?.aborted || next.status === "cancelling";
     next.status = cancelled ? "cancelled" : "error";
     next.stage = cancelled ? "Stopped" : "Failed";
@@ -239,15 +446,303 @@ async function pump() {
         else markStoryboardVideoPlanGenerationFailed(next.projectSlug, next.refs?.videoPlanId, e);
       } catch {}
     }
+    if (next.type === "generate_prompt_asset") {
+      try {
+        if (cancelled) restorePromptGenerationAfterCancellation(next.projectSlug, next.refs?.generationId);
+        else markPromptGenerationFailed(next.projectSlug, next.refs?.generationId, e);
+      } catch {}
+    }
+    if (next.type === "generate_audio_workflow") {
+      const generationIds = Array.isArray(next.generationIds) ? next.generationIds : next.refs?.generationIds || [];
+      for (const generationId of generationIds) {
+        try {
+          if (cancelled) markAudioGenerationCancelled(next.projectSlug, generationId);
+          else markAudioGenerationFailed(next.projectSlug, generationId, e);
+        } catch {}
+      }
+    }
+    if (next.refs?.promptGenerationId) {
+      try {
+        finalizeAssetPromptAudioGeneration(next.projectSlug, next.refs.promptGenerationId, {
+          status: cancelled ? "cancelled" : "failed",
+          jobId: next.id,
+          error: e
+        });
+      } catch {}
+    }
     if (!cancelled) console.error("[queue]", next.label, e);
   } finally {
-    next.finishedAt = new Date().toISOString();
+    if (COMFY_PROMPT_JOB_TYPES.has(next.type)) {
+      if (gpuLeaseStatus()?.owner === GPU_RESOURCE_OWNERS.COMFYUI) {
+        updateGpuLease(GPU_RESOURCE_OWNERS.COMFYUI, {
+          jobId: null,
+          workerPid: null,
+          state: "resident-idle"
+        });
+      }
+    }
+    next.finishedAt = next.status === "queued" ? null : new Date().toISOString();
+    if (next.type === "build_edit_master" && next.status !== "queued") {
+      try { delete next.sequenceSnapshot; } catch {}
+    }
     persistJobLedger(next.projectSlug);
     activeJob = null;
     activeAbortController = null;
     running = false;
     setImmediate(pump);
   }
+}
+
+async function unloadLocalGpuOwner(owner) {
+  if (owner === GPU_RESOURCE_OWNERS.INDEX_TTS) {
+    await unloadIndexTtsModel({ timeoutMs: 10_000 });
+    return;
+  }
+  if (owner === GPU_RESOURCE_OWNERS.QWEN_VOICE_DESIGN) {
+    await unloadQwenVoiceDesign({ timeoutMs: 15_000 });
+    return;
+  }
+  if (owner === GPU_RESOURCE_OWNERS.QWEN_TTS) {
+    await unloadQwenTtsModel({ timeoutMs: 15_000 });
+  }
+}
+
+function comfyLeaseHasActiveWork(lease = gpuLeaseStatus()) {
+  return Boolean(
+    lease?.owner === GPU_RESOURCE_OWNERS.COMFYUI
+    && (lease.jobId || !["resident-idle", "idle"].includes(String(lease.state || "")))
+  );
+}
+
+const BYTES_PER_MIB = 1024 * 1024;
+const BYTES_PER_GIB = 1024 * BYTES_PER_MIB;
+
+export function qwenTtsMinimumFreeVramBytes(env = process.env) {
+  const explicitBytes = Number(env.QWEN_TTS_MIN_FREE_VRAM_BYTES);
+  if (Number.isFinite(explicitBytes) && explicitBytes > 0) return Math.trunc(explicitBytes);
+  const configuredGib = Number(env.QWEN_TTS_MIN_FREE_VRAM_GIB);
+  const gib = Number.isFinite(configuredGib) && configuredGib > 0 ? configuredGib : 8;
+  return Math.trunc(gib * BYTES_PER_GIB);
+}
+
+function qwenCudaDeviceIndex(env = process.env) {
+  const match = String(env.QWEN_TTS_DEVICE || "cuda:0").match(/(?:cuda:)?(\d+)/i);
+  return Math.max(0, Number.parseInt(match?.[1] || "0", 10) || 0);
+}
+
+export async function queryNvidiaGpuMemory(options = {}) {
+  const env = options.env || process.env;
+  const executable = String(env.NVIDIA_SMI_PATH || "nvidia-smi").trim() || "nvidia-smi";
+  const index = options.deviceIndex ?? qwenCudaDeviceIndex(env);
+  const stdout = await new Promise((resolve, reject) => {
+    execFile(executable, [
+      "-i", String(index),
+      "--query-gpu=index,memory.free,memory.total",
+      "--format=csv,noheader,nounits"
+    ], {
+      windowsHide: true,
+      timeout: Math.max(1_000, Number(options.timeoutMs) || 5_000),
+      maxBuffer: 64 * 1024,
+      env
+    }, (error, output) => {
+      if (error) return reject(error);
+      resolve(String(output || ""));
+    });
+  });
+  const fields = stdout.trim().split(/\r?\n/)[0]?.split(",").map((value) => value.trim()) || [];
+  const reportedIndex = Number.parseInt(fields[0], 10);
+  const freeMiB = Number(fields[1]);
+  const totalMiB = Number(fields[2]);
+  if (!Number.isInteger(reportedIndex) || !Number.isFinite(freeMiB) || !Number.isFinite(totalMiB) || freeMiB < 0 || totalMiB <= 0) {
+    throw new Error(`Could not parse nvidia-smi memory output: ${stdout.trim() || "empty output"}`);
+  }
+  return {
+    source: "nvidia-smi",
+    deviceIndex: reportedIndex,
+    freeMiB,
+    totalMiB,
+    freeBytes: Math.trunc(freeMiB * BYTES_PER_MIB),
+    totalBytes: Math.trunc(totalMiB * BYTES_PER_MIB)
+  };
+}
+
+export async function prepareStandaloneQwenTtsRuntime(options = {}) {
+  const job = options.job || {
+    signal: options.signal || null,
+    stage: "Preparing standalone Qwen3-TTS"
+  };
+  if (job.signal?.aborted) {
+    throw Object.assign(new Error("Qwen3-TTS load cancelled"), { code: "GENERATION_CANCELLED" });
+  }
+
+  const owner = GPU_RESOURCE_OWNERS.QWEN_TTS;
+  let existing = gpuLeaseStatus();
+  const idleComfyLease = existing?.owner === GPU_RESOURCE_OWNERS.COMFYUI
+    && ["resident-idle", "idle"].includes(String(existing.state || "").toLowerCase())
+    && !existing.jobId;
+  if (idleComfyLease) {
+    releaseGpuLease(GPU_RESOURCE_OWNERS.COMFYUI);
+    existing = null;
+  } else if (existing?.owner === GPU_RESOURCE_OWNERS.COMFYUI) {
+    const error = new Error("GPU is reserved by ComfyUI. Release that runtime before loading standalone Qwen3-TTS; this provider will not call ComfyUI or port 8188.");
+    error.code = "GPU_LEASE_BUSY";
+    error.statusCode = 409;
+    error.lease = existing;
+    throw error;
+  }
+  if (existing?.owner && existing.owner !== owner) {
+    job.stage = `Unloading ${existing.label || existing.owner}`;
+    await unloadLocalGpuOwner(existing.owner);
+  }
+  if (job.signal?.aborted) {
+    throw Object.assign(new Error("Qwen3-TTS load cancelled"), { code: "GENERATION_CANCELLED" });
+  }
+  const remaining = gpuLeaseStatus();
+  if (remaining?.owner && remaining.owner !== owner) {
+    const error = new Error(`GPU is still reserved by ${remaining.label || remaining.owner}`);
+    error.code = "GPU_LEASE_BUSY";
+    error.statusCode = 409;
+    error.lease = remaining;
+    throw error;
+  }
+  let gpuMemory = null;
+  const minimumFreeVramBytes = qwenTtsMinimumFreeVramBytes(options.env || process.env);
+  if (!remaining?.owner) {
+    job.stage = "Checking local GPU memory for standalone Qwen3-TTS";
+    const queryGpuMemory = typeof options.queryGpuMemory === "function"
+      ? options.queryGpuMemory
+      : () => queryNvidiaGpuMemory({ env: options.env || process.env });
+    try {
+      gpuMemory = await queryGpuMemory();
+    } catch (cause) {
+      const error = new Error(`Cannot verify safe free VRAM for standalone Qwen3-TTS: ${String(cause?.message || cause)}`);
+      error.code = "GPU_MEMORY_UNKNOWN";
+      error.statusCode = 503;
+      throw error;
+    }
+    if (!(Number(gpuMemory?.freeBytes) >= minimumFreeVramBytes)) {
+      const availableGib = Number(gpuMemory?.freeBytes || 0) / BYTES_PER_GIB;
+      const requiredGib = minimumFreeVramBytes / BYTES_PER_GIB;
+      const error = new Error(`Standalone Qwen3-TTS requires ${requiredGib.toFixed(1)} GiB free VRAM; nvidia-smi reports ${availableGib.toFixed(1)} GiB.`);
+      error.code = "GPU_VRAM_LOW";
+      error.statusCode = 409;
+      error.gpuMemory = gpuMemory;
+      error.minimumFreeVramBytes = minimumFreeVramBytes;
+      throw error;
+    }
+    acquireGpuLease(owner, {
+      label: "Qwen3-TTS Base",
+      jobId: options.job?.id || null,
+      state: options.job ? "reserved-for-generation" : "reserved-for-load"
+    });
+  } else if (remaining.owner === owner) {
+    updateGpuLease(owner, {
+      jobId: options.job?.id || null,
+      state: options.job ? "reserved-for-generation" : "reserved-for-load"
+    });
+  }
+  return {
+    ready: true,
+    owner,
+    lease: gpuLeaseStatus(),
+    usesComfyUi: false,
+    gpuMemory,
+    minimumFreeVramBytes
+  };
+}
+
+export async function prepareLocalGpuRuntime(owner, options = {}) {
+  const job = options.job || {
+    signal: options.signal || null,
+    stage: "Preparing local voice engine"
+  };
+  if (![GPU_RESOURCE_OWNERS.INDEX_TTS, GPU_RESOURCE_OWNERS.QWEN_VOICE_DESIGN].includes(owner)) {
+    throw new Error(`Unsupported local GPU owner: ${owner}`);
+  }
+  const sharedGpu = await waitForSharedGpu(job);
+  if (job.signal?.aborted) throw Object.assign(new Error("Local voice-engine load cancelled"), { code: "GENERATION_CANCELLED" });
+
+  const existing = gpuLeaseStatus();
+  if (existing?.owner && existing.owner !== owner && existing.owner !== GPU_RESOURCE_OWNERS.COMFYUI) {
+    job.stage = `Unloading ${existing.label || existing.owner}`;
+    await unloadLocalGpuOwner(existing.owner);
+  }
+
+  if (sharedGpu.comfyAvailable) {
+    job.stage = "Releasing idle ComfyUI models";
+    try {
+      await releaseComfyGpuMemory();
+    } catch (error) {
+      const offline = ["ECONNREFUSED", "ECONNRESET", "ENOTFOUND"].includes(String(error?.cause?.code || ""))
+        || /fetch failed/i.test(String(error?.message || ""));
+      if (!offline || comfyLeaseHasActiveWork()) throw error;
+      job.stage = "ComfyUI went offline; continuing with the standalone voice engine";
+    }
+  } else {
+    job.stage = "ComfyUI is offline; no shared models need releasing";
+  }
+  if (gpuLeaseStatus()?.owner === GPU_RESOURCE_OWNERS.COMFYUI) releaseGpuLease(GPU_RESOURCE_OWNERS.COMFYUI);
+
+  const remaining = gpuLeaseStatus();
+  if (remaining?.owner && remaining.owner !== owner) {
+    const error = new Error(`GPU is still reserved by ${remaining.label || remaining.owner}`);
+    error.code = "GPU_LEASE_BUSY";
+    error.statusCode = 409;
+    error.lease = remaining;
+    throw error;
+  }
+  if (remaining?.owner === owner) {
+    updateGpuLease(owner, {
+      jobId: options.job?.id || null,
+      state: options.job ? "reserved-for-generation" : "reserved-for-load"
+    });
+  }
+  return { ready: true, owner, lease: gpuLeaseStatus() };
+}
+
+async function prepareGpuForComfy(job) {
+  await waitForSharedGpu(job);
+  const existing = gpuLeaseStatus();
+  if (existing?.owner && existing.owner !== GPU_RESOURCE_OWNERS.COMFYUI) {
+    job.stage = `Unloading ${existing.label || existing.owner}`;
+    await unloadLocalGpuOwner(existing.owner);
+  }
+  acquireGpuLease(GPU_RESOURCE_OWNERS.COMFYUI, {
+    label: "ComfyUI / BlokeyUI",
+    jobId: job.id,
+    state: "generating"
+  });
+}
+
+async function waitForSharedGpu(job) {
+  let consecutiveFailures = 0;
+  while (!job.signal?.aborted) {
+    let queue;
+    try {
+      queue = await getComfyQueueState();
+      consecutiveFailures = 0;
+    } catch (error) {
+      consecutiveFailures += 1;
+      const definitelyOffline = ["ECONNREFUSED", "ECONNRESET", "ENOTFOUND"].includes(String(error?.cause?.code || ""))
+        || /fetch failed/i.test(String(error?.message || ""));
+      if (definitelyOffline && !comfyLeaseHasActiveWork()) {
+        return { comfyAvailable: false, error: String(error.message || error) };
+      }
+      job.stage = `Waiting for ComfyUI · ${String(error.message || error)}`;
+      if (consecutiveFailures >= 10) throw new Error(`ComfyUI remained unavailable while waiting for the shared GPU: ${String(error.message || error)}`);
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      continue;
+    }
+    if (!queue.running && !queue.pending) return { comfyAvailable: true, queue };
+    job.stage = `Waiting for shared GPU · ${queue.running} running · ${queue.pending} queued`;
+    if (jobs.some((candidate) => candidate.status === "queued" && LOCAL_PRIORITY_JOB_TYPES.has(candidate.type))) {
+      const error = new Error("Yielding the project queue to an editor export");
+      error.code = "QUEUE_YIELD";
+      throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+  throw Object.assign(new Error("Generation stopped while waiting for the shared GPU"), { code: "GENERATION_CANCELLED" });
 }
 
 async function runAndFetch(job, prompt, destDir, destName) {
@@ -274,6 +769,54 @@ function clipTotalFrames(project, clip) {
 
 function nextVersion(items = []) {
   return Math.max(0, ...items.map((x) => Number(x.v) || 0)) + 1;
+}
+
+export function sequenceClipChapterFolder(clip) {
+  for (const value of [clip?.chapterId, clip?.sceneId, clip?.id, clip?.name]) {
+    const match = String(value || "").match(/(?:^|[^a-z0-9])((?:H|MV)\d{2})(?=$|[^a-z0-9])/i);
+    if (match) return match[1].toUpperCase();
+  }
+  return null;
+}
+
+export function sequenceClipStoredFile(clip, fileName) {
+  const name = path.basename(String(fileName || ""));
+  if (!name) throw new Error("Clip media filename is required");
+  const chapter = sequenceClipChapterFolder(clip);
+  return chapter ? `${chapter}/${name}` : name;
+}
+
+function normalizeStoredClipFile(value) {
+  const relative = String(value || "")
+    .replaceAll("\\", "/")
+    .replace(/^media\/clips\//i, "")
+    .replace(/^\/+/, "");
+  if (
+    !relative
+    || relative.split("/").some((part) => !part || part === "." || part === "..")
+    || !/^(?:(?:H|MV)\d{2}\/)?[^/]+$/i.test(relative)
+  ) {
+    throw new Error(`Invalid project clip media path: ${value || "missing"}`);
+  }
+  return relative;
+}
+
+function clipMediaDisk(project, storedFile) {
+  const root = path.resolve(mediaDir(project, "clips"));
+  const relative = normalizeStoredClipFile(storedFile);
+  const disk = path.resolve(root, ...relative.split("/"));
+  if (!disk.startsWith(`${root}${path.sep}`)) throw new Error("Project clip media escaped its library root");
+  return disk;
+}
+
+function clipOutputDirectory(project, clip) {
+  const chapter = sequenceClipChapterFolder(clip);
+  return chapter ? path.join(mediaDir(project, "clips"), chapter) : mediaDir(project, "clips");
+}
+
+function clipComfyOutputPrefix(project, clip, baseName) {
+  const chapter = sequenceClipChapterFolder(clip);
+  return `premiere316/${project.slug}/${chapter ? `${chapter}/` : ""}${baseName}`;
 }
 
 function currentGuideBindings(project, clip) {
@@ -396,21 +939,23 @@ async function renderRange(job) {
     height: project.settings.height || 720,
     seed: clip.seed,
     ingredients: project.settings.ingredients,
-    filenamePrefix: `premiere316/${project.slug}/${baseName}`,
+    filenamePrefix: clipComfyOutputPrefix(project, clip, baseName),
     objectInfo: await getObjectInfo()
   });
   if (compiled.warnings?.length) console.warn("[render_range] conversion warnings:", compiled.warnings);
 
   job.stage = "Generating in ComfyUI";
-  const files = await runAndFetch(job, compiled.prompt, mediaDir(project, "clips"), baseName);
+  const outputDir = clipOutputDirectory(project, clip);
+  const files = await runAndFetch(job, compiled.prompt, outputDir, baseName);
   const videoName = files.find((f) => /\.(mp4|webm|mov|mkv)$/i.test(f));
   if (!videoName) throw new Error("ComfyUI returned files, but none was a video");
 
   job.stage = "Trimming to selected range";
   job.progress = 0.9;
-  const inputPath = path.join(mediaDir(project, "clips"), videoName);
+  const inputPath = path.join(outputDir, videoName);
   const trimmedName = `${baseName}_exact.mp4`;
-  const trimmedPath = path.join(mediaDir(project, "clips"), trimmedName);
+  const trimmedPath = path.join(outputDir, trimmedName);
+  const trimmedFile = sequenceClipStoredFile(clip, trimmedName);
   await trimVideoToFrames(inputPath, trimmedPath, compiled.requestedFrames, fps);
   if (path.resolve(inputPath) !== path.resolve(trimmedPath)) {
     try { fs.unlinkSync(inputPath); } catch {}
@@ -426,7 +971,7 @@ async function renderRange(job) {
 
   const rangeVersion = {
     v: version,
-    file: trimmedName,
+    file: trimmedFile,
     name: baseName,
     startFrame: compiled.rangeStartFrame,
     endFrame: compiled.rangeEndFrame,
@@ -454,7 +999,7 @@ async function renderRange(job) {
     freshClip.versions = freshClip.versions || [];
     freshClip.versions.push({
       v: fullVersion,
-      file: trimmedName,
+      file: trimmedFile,
       name: `${freshClip.name}_v${String(fullVersion).padStart(2, "0")}`,
       createdAt: new Date().toISOString(),
       source: "full-range-render",
@@ -467,7 +1012,7 @@ async function renderRange(job) {
     freshClip.status = (freshClip.segments || []).every((s) => s.dirty === false) ? "ranges-ready" : "partial";
   }
   saveProject(fresh);
-  job.result = { clipId: freshClip.id, rangeVersion, file: trimmedName };
+  job.result = { clipId: freshClip.id, rangeVersion, file: trimmedFile };
   job.progress = 0.98;
 }
 
@@ -565,7 +1110,7 @@ async function renderH3Range(job) {
     height: dimensions.height,
     frames: compiled.timing.resolvedFrames,
     seed,
-    filenamePrefix: `premiere316/${project.slug}/${baseName}_raw`,
+    filenamePrefix: clipComfyOutputPrefix(project, clip, `${baseName}_raw`),
     firstFrameComfyFile: anchors.first?.comfyFile,
     lastFrameComfyFile: anchors.last?.comfyFile,
     references: job.refs.references || [],
@@ -574,15 +1119,18 @@ async function renderH3Range(job) {
   if (workflow.warnings?.length) console.warn("[render_h3_range] conversion warnings:", workflow.warnings);
 
   job.stage = "Generating MiniMax H3 video + native audio";
-  const rawFiles = await runAndFetch(job, workflow.prompt, mediaDir(project, "clips"), `${baseName}_raw`);
+  const outputDir = clipOutputDirectory(project, clip);
+  const rawFiles = await runAndFetch(job, workflow.prompt, outputDir, `${baseName}_raw`);
   const rawVideoName = rawFiles.find((file) => /\.(mp4|webm|mov|mkv)$/i.test(file));
   if (!rawVideoName) throw new Error("ComfyUI returned files, but none was an H3 video");
 
   job.stage = "Conforming H3 output to timeline range";
   job.progress = 0.9;
-  const rawPath = path.join(mediaDir(project, "clips"), rawVideoName);
+  const rawPath = path.join(outputDir, rawVideoName);
+  const rawFile = sequenceClipStoredFile(clip, rawVideoName);
   const conformedName = `${baseName}_exact.mp4`;
-  const conformedPath = path.join(mediaDir(project, "clips"), conformedName);
+  const conformedPath = path.join(outputDir, conformedName);
+  const conformedFile = sequenceClipStoredFile(clip, conformedName);
   await trimVideoToFrames(rawPath, conformedPath, compiled.timing.conformedFrames, H3_FPS);
   const rawInfo = await probeMedia(rawPath).catch(() => null);
   const conformedInfo = await probeMedia(conformedPath).catch(() => null);
@@ -598,8 +1146,8 @@ async function renderH3Range(job) {
 
   const rangeVersion = {
     v: version,
-    file: conformedName,
-    rawFile: rawVideoName,
+    file: conformedFile,
+    rawFile,
     name: baseName,
     provider: "minimax_h3_local",
     source: "minimax-h3-range-render",
@@ -650,8 +1198,8 @@ async function renderH3Range(job) {
     freshClip.versions = freshClip.versions || [];
     freshClip.versions.push({
       v: fullVersion,
-      file: conformedName,
-      rawFile: rawVideoName,
+      file: conformedFile,
+      rawFile,
       name: `${freshClip.name}_h3_v${String(fullVersion).padStart(2, "0")}`,
       createdAt: new Date().toISOString(),
       source: "minimax-h3-full-range-render",
@@ -669,14 +1217,14 @@ async function renderH3Range(job) {
     freshClip.status = (freshClip.segments || []).every((segment) => segment.dirty === false) ? "ranges-ready" : "partial";
   }
   saveProject(fresh);
-  job.result = { clipId: freshClip.id, rangeVersion, file: conformedName, rawFile: rawVideoName };
+  job.result = { clipId: freshClip.id, rangeVersion, file: conformedFile, rawFile };
   job.progress = 0.98;
 }
 
 function activeClipFile(project, clip) {
   const active = (clip.versions || []).find((v) => Number(v.v) === Number(clip.activeVersion));
   if (!active?.file) return null;
-  const disk = path.join(mediaDir(project, "clips"), active.file);
+  const disk = clipMediaDisk(project, active.file);
   return fs.existsSync(disk) ? disk : null;
 }
 
@@ -689,7 +1237,7 @@ function activeFullVersion(project, clip) {
   const versions = clip.versions || [];
   const active = versions.find((v) => Number(v.v) === Number(clip.activeVersion)) || versions.at(-1);
   if (!active?.file) return null;
-  const file = path.join(mediaDir(project, "clips"), active.file);
+  const file = clipMediaDisk(project, active.file);
   return fs.existsSync(file) ? { ...active, file } : null;
 }
 
@@ -703,7 +1251,7 @@ function sourcePlanForClip(project, clip) {
       ...r,
       startFrame: Math.max(0, Math.min(total - 1, Math.round(Number(r.startFrame) || 0))),
       endFrame: Math.max(1, Math.min(total, Math.round(Number(r.endFrame) || total))),
-      diskFile: path.join(mediaDir(project, "clips"), r.file)
+      diskFile: clipMediaDisk(project, r.file)
     }))
     .filter((r) => r.endFrame > r.startFrame && fs.existsSync(r.diskFile))
     // An accepted/assembled full version is the new baseline. Only range renders
@@ -794,7 +1342,9 @@ async function assembleClipFile(project, clip, job = null) {
 
   const version = nextVersion(clip.versions || []);
   const name = `${clip.name}_v${String(version).padStart(2, "0")}.mp4`;
-  const output = path.join(mediaDir(project, "clips"), name);
+  const storedFile = sequenceClipStoredFile(clip, name);
+  const output = clipMediaDisk(project, storedFile);
+  fs.mkdirSync(path.dirname(output), { recursive: true });
   if (job) {
     job.stage = `Assembling ${clip.name}`;
     job.progress = 0.08;
@@ -822,7 +1372,7 @@ async function assembleClipFile(project, clip, job = null) {
   clip.versions = clip.versions || [];
   clip.versions.push({
     v: version,
-    file: name,
+    file: storedFile,
     name: path.parse(name).name,
     createdAt: new Date().toISOString(),
     source: "assembled-ranges",
@@ -845,7 +1395,10 @@ async function assembleClipJob(job) {
   if (!clip) throw new Error("Clip not found");
   job.label = `Assemble ${clip.name}`;
   const file = await assembleClipFile(project, clip, job);
-  job.result = { clipId: clip.id, file: path.basename(file) };
+  job.result = {
+    clipId: clip.id,
+    file: path.relative(mediaDir(project, "clips"), file).replaceAll("\\", "/")
+  };
 }
 
 async function generateScoreFile(project, job = null) {

@@ -45,7 +45,7 @@ function pageLabel(page: string) {
     screenplay: "Screenplay",
     storyboard: "Storyboard",
     assets: "Assets",
-    media: "Media",
+    direct: "Direct",
     edit: "Edit",
     generate: "Generate",
     master: "Master",
@@ -66,6 +66,7 @@ export default function PiExpertDock({
   const project = store.project;
   const clip = project?.sequence?.clips?.find((item: any) => item.id === store.selClipId) || null;
   const selectedGuide = clip?.guides?.find((item: any) => item.id === store.selectedGuideId) || null;
+  const selectedAsset = project?.assets?.items?.find((item: any) => item.id === store.selectedAssetId) || null;
   const [status, setStatus] = useState<PiStatus>({ phase: "starting", orchestrator: true, workerModelMatches: true });
   const [messages, setMessages] = useState<PiMessage[]>([]);
   const [input, setInput] = useState("");
@@ -88,7 +89,7 @@ export default function PiExpertDock({
     },
     page: activePage,
     pageLabel: pageLabel(activePage),
-    subview: activePage === "edit" || activePage === "media" || activePage === "generate" || activePage === "master" || activePage === "export"
+    subview: activePage === "edit" || activePage === "direct" || activePage === "generate" || activePage === "master" || activePage === "export"
       ? store.activeWorkbench
       : null,
     project: project ? {
@@ -110,6 +111,10 @@ export default function PiExpertDock({
       selectedGuideRole: selectedGuide?.role || null,
       selectedFrameFile: store.selFrameFile,
       storyboardClipId: store.selectedStoryboardClipId,
+      productionClipId: store.productionClipId,
+      productionClipSource: store.productionClipSource,
+      assetId: selectedAsset?.id || null,
+      assetName: selectedAsset?.name || null,
       playheadFrame: store.playheadFrame,
       markInFrame: store.markInFrame,
       markOutFrame: store.markOutFrame
@@ -118,14 +123,17 @@ export default function PiExpertDock({
       runningJobs: store.jobs.filter((job: any) => job.projectSlug === project?.slug && (job.status === "running" || job.status === "queued")).length,
       comfyConnected: Boolean(store.health.comfy),
       dedicatedComfyUrl: store.health.comfyUrl || null,
-      lmStudioConnected: Boolean(store.health.lmStudio)
+      lmStudioConnected: Boolean(store.health.lmStudio),
+      gpuLeaseOwner: store.health.gpu?.leaseOwner || null,
+      upstreamQueue: store.health.comfyQueue || null
     }
   }), [
     activePage, tabId, focusVersion, project?.slug, project?.name, project?.updatedAt,
     project?.sequence?.clips?.length, project?.sequence?.durationSec, project?.assets?.items?.length, store.storyboard,
     clip?.id, clip?.name, selectedGuide?.id, selectedGuide?.role, store.selectedSegmentIds.join("|"),
-    store.selFrameFile, store.selectedStoryboardClipId, store.playheadFrame, store.markInFrame, store.markOutFrame, store.activeWorkbench,
-    store.jobs, store.health.comfy, store.health.comfyUrl, store.health.lmStudio
+    store.selFrameFile, store.selectedStoryboardClipId, store.productionClipId, store.productionClipSource,
+    selectedAsset?.id, selectedAsset?.name, store.playheadFrame, store.markInFrame, store.markOutFrame, store.activeWorkbench,
+    store.jobs, store.health.comfy, store.health.comfyUrl, store.health.lmStudio, store.health.gpu, store.health.comfyQueue
   ]);
 
   contextRef.current = context;

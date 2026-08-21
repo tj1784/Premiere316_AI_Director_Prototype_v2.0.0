@@ -1,3 +1,14 @@
+import { createWorkspaceSaveQueue } from "./workspace-save-queue.mjs";
+import {
+  isVisualGenerationSegment,
+  orderedVisualSegments,
+  queueRequestBody,
+  segmentNeighborState,
+  segmentPromptPreview,
+  selectTimelineSegment,
+  shouldCommitSegmentDrag
+} from "./segment-queue-ui.mjs";
+
 const app = document.querySelector("#app");
 
 let workspace = null;
@@ -19,6 +30,9 @@ let premiereReferenceIssues = [];
 let premiereReferenceState = null;
 let projectTab = "scenes";
 let projectRefreshAt = 0;
+let timelinePreview = false;
+let previewIndex = 0;
+let libraryPanelMode = "takes";
 
 const api = async (url, options = {}) => {
   const response = await fetch(url, options);
@@ -28,6 +42,12 @@ const api = async (url, options = {}) => {
   if (!response.ok) throw new Error(body.error || `${response.status} ${response.statusText}`);
   return body;
 };
+
+const workspaceSaves = createWorkspaceSaveQueue((snapshot) => api("/api/workspace", {
+  method: "PUT",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ workspace: snapshot })
+}));
 
 const fps = () => Math.max(1, Number(workspace?.settings?.frameRate) || 24);
 const allSegments = () => [
@@ -60,7 +80,39 @@ const mediaUrl = (segment) => {
 const projectMediaUrl = (file) => premiereOverview?.project?.slug && file
   ? `/api/premiere/media/${encodeURIComponent(premiereOverview.project.slug)}?file=${encodeURIComponent(file)}`
   : "";
+
+const takeFile = (take) => take?.previewFile || take?.file || take?.generatedInputPath || take?.outputFile || "";
+const takePreviewUrl = (take) => {
+  const file = takeFile(take);
+  if (!file) return "";
+  if (workspace?.premiere?.projectSlug) {
+    return "/api/premiere/media/" + encodeURIComponent(workspace.premiere.projectSlug) + "?file=" + encodeURIComponent(file);
+  }
+  return "/api/media?file=" + encodeURIComponent(file);
+};
+const segmentTakes = (segment) => Array.isArray(segment?.generatedTakes) ? segment.generatedTakes.filter(Boolean) : [];
+const activeTakeOf = (segment) => {
+  const takes = segmentTakes(segment);
+  return takes.find((take) => String(take.id) === String(segment?.activeTakeId))
+    || takes.find((take) => Number(take.v) === Number(segment?.activeGeneratedVersion))
+    || takes.find((take) => takeFile(take))
+    || takes[0]
+    || null;
+};
+const visualPlaylist = () => (workspace?.timeline?.segments || [])
+  .filter((segment) => [undefined, "image", "video"].includes(segment?.type) && (Number(segment.length) || 0) > 0)
+  .slice()
+  .sort((left, right) => (Number(left.start) || 0) - (Number(right.start) || 0))
+  .map((segment) => {
+    const take = activeTakeOf(segment);
+    return { segment, take, url: take ? takePreviewUrl(take) : "" };
+  });
+const firstPlayablePreviewIndex = (playlist) => {
+  const index = playlist.findIndex((item) => item.url);
+  return index >= 0 ? index : 0;
+};
 const isSemanticReferenceScene = () => workspace?.premiere?.generationMode === "t2v_with_semantic_references";
+const isSegmentedI2vScene = () => workspace?.premiere?.generationMode === "i2v_segmented_first_frames";
 
 function semanticReferenceCounts() {
   const resolved = premiereReferences.length;
@@ -102,25 +154,30 @@ function toast(message, tone = "neutral") {
 
 function scheduleSave() {
   clearTimeout(saveTimer);
+  workspaceSaves.markChanged();
   const badge = document.querySelector("#save-state");
   if (badge) badge.textContent = "Saving…";
-  saveTimer = setTimeout(saveWorkspace, 320);
+  saveTimer = setTimeout(() => {
+    saveTimer = 0;
+    void saveWorkspace();
+  }, 320);
 }
 
-async function saveWorkspace() {
+async function saveWorkspace({ throwOnError = false } = {}) {
+  clearTimeout(saveTimer);
+  saveTimer = 0;
   try {
-    const result = await api("/api/workspace", {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ workspace })
-    });
-    workspace = result.workspace;
+    const saved = await workspaceSaves.save(workspace);
+    if (saved.current) workspace = saved.result.workspace;
     const badge = document.querySelector("#save-state");
-    if (badge) badge.textContent = "Saved";
+    if (badge) badge.textContent = saved.current ? "Saved" : "Saving…";
+    return saved.result;
   } catch (error) {
     const badge = document.querySelector("#save-state");
     if (badge) badge.textContent = "Save failed";
     toast(error.message, "error");
+    if (throwOnError) throw error;
+    return null;
   }
 }
 
@@ -152,8 +209,8 @@ function shell() {
           <button data-add="motion" data-accept="image/*,video/*"><span>◇</span>Add IC Video</button>
           <div class="toolbar-separator"></div>
           <button id="queue-scene" class="primary"><span>▶</span>Generate scene</button>
-          <button id="queue-selected" title="Generate only the selected image/video segment">Queue selected</button>
-          <button id="queue-all" title="Queue every image/video segment separately">Queue segments</button>
+          <button id="queue-selected" title="Generate only the selected segment for tuning">Tune selected segment</button>
+          <button id="queue-all" title="Submit one independent generation job for every image/video segment">Generate all separately</button>
           <button id="save-premiere" title="Write Director prompt and timing edits to the selected Premiere scene" disabled>Save to Premiere</button>
           <button id="delete-segment" class="danger-soft"><span>⌫</span>Delete</button>
           <div class="toolbar-spacer"></div>
@@ -163,6 +220,12 @@ function shell() {
           <input id="media-input" type="file" hidden />
         </div>
 
+        <div class="timeline-tools">
+          <button id="timeline-preview-toggle" type="button" class="timeline-toggle">Preview</button>
+          <small id="preview-readout">Timeline · click Preview to play assembled takes</small>
+        </div>
+
+        <div class="timeline-stage">
         <section class="timeline-frame">
           <aside class="track-labels">
             <div class="ruler-spacer"></div>
@@ -181,6 +244,13 @@ function shell() {
           </div>
         </section>
 
+
+        <section id="assembled-preview" class="assembled-preview hidden">
+          <video id="preview-video" muted playsinline></video>
+          <div id="preview-empty" class="preview-empty">This segment has no active take yet. Playback skips it.</div>
+          <small id="preview-caption"></small>
+        </section>
+        </div>
         <section class="transport">
           <div class="transport-left"><b id="timecode">00:00.00</b><span id="range-readout">Start 0.00 · End 0.00 · Length 0.00</span></div>
           <div class="transport-center"><button id="play" class="transport-btn" title="Play">▶</button><button id="rewind" class="transport-btn" title="Return to start">↶</button><input id="scrubber" type="range" min="0" max="100" value="0" /></div>
@@ -189,11 +259,38 @@ function shell() {
 
         <section class="prompt-panel segment-panel">
           <div class="panel-heading"><div><span class="eyebrow">SEGMENT PROMPT</span><strong id="segment-name">Select a segment</strong></div><div class="segment-metrics"><label>Start <input id="segment-start" type="number" min="0" step="0.01" /></label><label>Length <input id="segment-length" type="number" min="0.04" step="0.01" /></label></div></div>
+          <div class="segment-generation-controls">
+            <button id="generate-selected-segment" disabled>▶ Generate this segment</button>
+            <label class="neighbor-frame-control" title="Use the previous visual segment's image as this generation's opening frame">
+              <input id="use-previous-first-frame" type="checkbox" />
+              <span>Previous image → first frame<small id="previous-frame-source">No previous visual segment</small></span>
+            </label>
+            <label class="neighbor-frame-control" title="Use the next visual segment's image as this generation's ending frame">
+              <input id="use-next-last-frame" type="checkbox" />
+              <span>Next image → last frame<small id="next-frame-source">No next visual segment</small></span>
+            </label>
+          </div>
           <textarea id="segment-prompt" spellcheck="true" placeholder="Select a timeline segment to edit its prompt."></textarea>
         </section>
 
+        <section class="prompt-panel library-panel">
+          <div class="panel-heading"><div><span class="eyebrow">SEGMENT LIBRARY</span><strong id="library-segment">No selection</strong></div><div class="library-heading-actions"><button id="library-lock" type="button" class="timeline-toggle">Lock active</button><small id="library-count">0 takes</small></div></div>
+          <p class="library-help">Takes for the selected segment. Click to activate. One take is active by default. New takes become active unless locked.</p>
+          <div id="segment-library" class="library-grid"></div>
+        </section>
+
+
         <section class="prompt-panel global-panel">
-          <div class="panel-heading"><div><span class="eyebrow">GLOBAL PROMPT</span><strong>Applies to every segment</strong></div><span id="status-message" data-tone="neutral">Ready</span></div>
+          <div class="panel-heading"><div><span class="eyebrow">GLOBAL PROMPT</span><strong>Save to clip, scene, chapter, or project</strong></div><span id="status-message" data-tone="neutral">Ready</span></div>
+          <div class="global-scope-row">
+            <select id="global-prompt-scope">
+              <option value="clip">This clip (all its segments)</option>
+              <option value="scene">This scene (all clips in this S##)</option>
+              <option value="chapter">This chapter (all of this H##)</option>
+              <option value="project">Entire project</option>
+            </select>
+            <button id="save-global-prompt" type="button">Save global</button>
+          </div>
           <textarea id="global-prompt" spellcheck="true"></textarea>
         </section>
       </section>
@@ -244,11 +341,14 @@ function clipMarkup(segment, track) {
   const left = frameToPx(segment.start);
   const width = Math.max(28, frameToPx(segment.length));
   const preview = track !== "audio" ? mediaUrl(segment) : "";
-  const prompt = String(segment.prompt || "").trim().split("\n").find(Boolean) || "";
+  const fullPrompt = String(segment.prompt || "").replace(/\s+/g, " ").trim();
+  const prompt = segmentPromptPreview(segment);
+  const canGenerate = track === "main" && isVisualGenerationSegment(segment);
   return `<article class="clip ${track} ${segment.type === "text" ? "text" : ""} ${isSelected ? "selected" : ""}" data-id="${escapeHtml(segment.id)}" style="left:${left}px;width:${width}px">
     ${preview ? `<img src="${preview}" alt="" loading="lazy" decoding="async" />` : ""}
     <div class="clip-shade"></div><span class="clip-type">${track === "motion" ? "IC-LORA" : String(segment.type || "image").toUpperCase()}</span>
-    <b>${escapeHtml(clipTitle(segment))}</b>${prompt ? `<small>${escapeHtml(prompt)}</small>` : ""}<i class="resize-handle" title="Trim duration"></i>
+    ${canGenerate ? `<button type="button" class="clip-generate" data-generate-segment="${escapeHtml(segment.id)}" title="Generate only ${escapeHtml(segment.id)} for tuning" aria-label="Generate only ${escapeHtml(segment.id)} for tuning">▶ Tune</button>` : ""}
+    <b>${escapeHtml(clipTitle(segment))}</b>${prompt ? `<small title="${escapeHtml(fullPrompt)}">${escapeHtml(prompt)}</small>` : ""}<i class="resize-handle" title="Trim duration"></i>
   </article>`;
 }
 
@@ -283,20 +383,218 @@ function updatePlayhead() {
   if (timecode) timecode.textContent = formatTime(frame / fps(), true);
 }
 
+
+
+function setLibraryPanelMode(mode) {
+  libraryPanelMode = mode === "player" ? "player" : "takes";
+  const toggle = document.querySelector("#library-panel-toggle");
+  const grid = document.querySelector("#segment-library");
+  const player = document.querySelector("#library-scene-player");
+  if (toggle) toggle.textContent = libraryPanelMode === "player" ? "Takes" : "Scene player";
+  if (grid) grid.classList.toggle("hidden", libraryPanelMode === "player");
+  if (player) player.classList.toggle("hidden", libraryPanelMode !== "player");
+  if (libraryPanelMode === "player") playLibraryScene(true);
+}
+
+function playLibraryScene(reset) {
+  const video = document.querySelector("#library-scene-video");
+  const empty = document.querySelector("#library-scene-empty");
+  const caption = document.querySelector("#library-scene-caption");
+  if (!video) return;
+  const playlist = visualPlaylist().filter((item) => item.url);
+  if (!playlist.length) {
+    video.removeAttribute("src");
+    empty?.classList.remove("hidden");
+    if (caption) caption.textContent = "No active takes";
+    return;
+  }
+  empty?.classList.add("hidden");
+  if (reset || previewIndex >= playlist.length) previewIndex = 0;
+  const current = playlist[previewIndex] || playlist[0];
+  if (video.getAttribute("src") !== current.url) video.src = current.url;
+  if (caption) caption.textContent = (current.segment.id || "") + " · " + (current.take?.id || "take") + " · " + (previewIndex + 1) + "/" + playlist.length;
+  video.onended = () => {
+    previewIndex += 1;
+    if (previewIndex >= playlist.length) { previewIndex = 0; video.pause(); return; }
+    playLibraryScene(false);
+    video.play().catch(() => {});
+  };
+  if (reset) video.play().catch(() => {});
+}
+
+function setTimelinePreview(next) {
+  timelinePreview = Boolean(next);
+  const toggle = document.querySelector("#timeline-preview-toggle");
+  const frame = document.querySelector(".timeline-frame");
+  const preview = document.querySelector("#assembled-preview");
+  const readout = document.querySelector("#preview-readout");
+  if (toggle) toggle.textContent = timelinePreview ? "Timeline" : "Preview";
+  if (frame) frame.classList.toggle("hidden", timelinePreview);
+  if (preview) preview.classList.toggle("hidden", !timelinePreview);
+  if (readout) readout.textContent = timelinePreview ? "Preview · first existing take" : "Timeline · click Preview to play assembled takes";
+  if (timelinePreview) {
+    const playlist = visualPlaylist();
+    previewIndex = firstPlayablePreviewIndex(playlist);
+    const item = playlist[previewIndex];
+    if (item?.segment) workspace.playheadFrame = Number(item.segment.start) || 0;
+    syncAssembledPreview();
+  } else if (playing) {
+    togglePlay();
+  }
+}
+
+function syncAssembledPreview() {
+  const video = document.querySelector("#preview-video");
+  const empty = document.querySelector("#preview-empty");
+  const caption = document.querySelector("#preview-caption");
+  if (!video || !timelinePreview) return;
+  const playlist = visualPlaylist();
+  const frame = Number(workspace.playheadFrame) || 0;
+  let index = playlist.findIndex((item) => frame >= Number(item.segment.start || 0) && frame < Number(item.segment.start || 0) + Number(item.segment.length || 1));
+  if (index < 0) index = previewIndex;
+  if (!playlist[index]?.url) index = firstPlayablePreviewIndex(playlist);
+  previewIndex = index;
+  const current = playlist[index];
+  if (current?.url) {
+    if (video.getAttribute("src") !== current.url) video.src = current.url;
+    empty?.classList.add("hidden");
+    video.classList.remove("hidden");
+    const local = Math.max(0, (frame - Number(current.segment.start || 0)) / fps());
+    if (Math.abs((video.currentTime || 0) - local) > 0.25) {
+      try { video.currentTime = local; } catch {}
+    }
+    if (playing) video.play().catch(() => {});
+    else video.pause();
+    if (caption) caption.textContent = (current.segment.id || "") + " · " + (current.take?.id || "take") + " · " + playlist.filter((item) => item.url).length + "/" + playlist.length + " takes ready";
+  } else {
+    video.removeAttribute("src");
+    video.classList.add("hidden");
+    empty?.classList.remove("hidden");
+    if (caption) caption.textContent = "No generated takes yet";
+  }
+}
+
+function renderSegmentLibrary() {
+  const grid = document.querySelector("#segment-library");
+  const name = document.querySelector("#library-segment");
+  const count = document.querySelector("#library-count");
+  if (!grid) return;
+  const segment = selected();
+  const takes = segmentTakes(segment);
+  const active = activeTakeOf(segment);
+  if (name) name.textContent = segment ? (segment.id || clipTitle(segment)) : "No selection";
+  if (count) count.textContent = takes.length + " take" + (takes.length === 1 ? "" : "s") + (segment?.activeTakeLocked ? " · locked" : "");
+  const lockBtn = document.querySelector("#library-lock");
+  if (lockBtn) {
+    lockBtn.textContent = segment?.activeTakeLocked ? "Unlock" : "Lock active";
+    lockBtn.disabled = !segment || takes.length < 1;
+  }
+  if (!segment) {
+    grid.innerHTML = "<p class=\"library-empty\">Select a segment to see its takes.</p>";
+    return;
+  }
+  if (!takes.length) {
+    grid.innerHTML = "<p class=\"library-empty\">No generated takes yet</p>";
+    return;
+  }
+  grid.innerHTML = takes.map((take) => {
+    const isActive = String(take.id) === String(active?.id || segment.activeTakeId);
+    const url = takePreviewUrl(take);
+    return "<button type=\"button\" class=\"library-card" + (isActive ? " active" : "") + "\" data-activate-take=\"" + escapeHtml(String(take.id || take.v)) + "\">" +
+      "<div class=\"library-thumb\">" + (url ? "<video src=\"" + escapeHtml(url) + "\" muted playsinline preload=\"metadata\"></video>" : "<span>◇</span>") + "</div>" +
+      "<strong>" + escapeHtml(String(take.id || ("v" + take.v))) + "</strong>" +
+      "<small>" + (isActive ? "ACTIVE" : "Click to activate") + "</small></button>";
+  }).join("");
+  for (const button of grid.querySelectorAll("[data-activate-take]")) {
+    button.onclick = () => activateTake(button.dataset.activateTake);
+  }
+}
+
+async function refreshSegmentTakes(segment) {
+  const slug = workspace?.premiere?.projectSlug;
+  const clipId = workspace?.premiere?.clipId;
+  if (!segment?.id || !slug || !clipId) { renderSegmentLibrary(); return; }
+  try {
+    const result = await api("/api/premiere/projects/" + encodeURIComponent(slug) + "/scenes/" + encodeURIComponent(clipId) + "/segments/" + encodeURIComponent(segment.id) + "/takes");
+    segment.generatedTakes = result.takes || [];
+    segment.activeTakeId = result.activeTakeId;
+    segment.activeGeneratedVersion = result.activeGeneratedVersion;
+    segment.activeTakeLocked = Boolean(result.activeTakeLocked);
+  } catch {}
+  renderSegmentLibrary();
+  if (timelinePreview) syncAssembledPreview();
+}
+
+async function setSegmentLock(locked) {
+  const segment = selected();
+  const slug = workspace?.premiere?.projectSlug;
+  const clipId = workspace?.premiere?.clipId;
+  if (!segment?.id || !slug || !clipId) return;
+  try {
+    const result = await api("/api/premiere/projects/" + encodeURIComponent(slug) + "/scenes/" + encodeURIComponent(clipId) + "/segments/" + encodeURIComponent(segment.id) + "/takes/lock", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ locked: Boolean(locked) })
+    });
+    segment.activeTakeLocked = Boolean(result.activeTakeLocked);
+    renderSegmentLibrary();
+    toast(segment.activeTakeLocked ? "Active take locked" : "Active take unlocked — new gens will become active", "ok");
+  } catch (error) { toast(error.message, "error"); }
+}
+
+async function activateTake(takeId) {
+  const segment = selected();
+  const slug = workspace?.premiere?.projectSlug;
+  const clipId = workspace?.premiere?.clipId;
+  if (!segment?.id || !slug || !clipId || !takeId) return;
+  try {
+    const result = await api("/api/premiere/projects/" + encodeURIComponent(slug) + "/scenes/" + encodeURIComponent(clipId) + "/segments/" + encodeURIComponent(segment.id) + "/takes/activate", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ takeId })
+    });
+    segment.generatedTakes = result.takes || segment.generatedTakes;
+    segment.activeTakeId = result.activeTakeId;
+    segment.activeGeneratedVersion = result.activeGeneratedVersion;
+    segment.activeTakeFile = result.activeTake?.previewFile || result.activeTake?.file || null;
+    renderSegmentLibrary();
+    if (timelinePreview) syncAssembledPreview();
+    toast("Active take: " + (result.activeTakeId || takeId) + " on " + segment.id, "ok");
+  } catch (error) {
+    toast(error.message, "error");
+  }
+}
+
 function renderSelection() {
   const segment = selected();
+  const neighbors = segmentNeighborState(workspace, segment?.id);
   const prompt = document.querySelector("#segment-prompt");
   const start = document.querySelector("#segment-start");
   const length = document.querySelector("#segment-length");
   const strength = document.querySelector("#guide-strength");
   const deleteButton = document.querySelector("#delete-segment");
   const queueButton = document.querySelector("#queue-selected");
+  const generateButton = document.querySelector("#generate-selected-segment");
+  const previousToggle = document.querySelector("#use-previous-first-frame");
+  const nextToggle = document.querySelector("#use-next-last-frame");
+  const canGenerate = isVisualGenerationSegment(segment);
   prompt.disabled = !segment;
   start.disabled = !segment;
   length.disabled = !segment;
   strength.disabled = !segment || trackFor(segment) === "audio";
   deleteButton.disabled = !segment;
-  queueButton.disabled = !segment || ![undefined, "image", "video"].includes(segment?.type);
+  queueButton.disabled = !canGenerate;
+  generateButton.disabled = !canGenerate;
+  previousToggle.disabled = !canGenerate || !neighbors.canUsePreviousAsFirstFrame;
+  nextToggle.disabled = !canGenerate || !neighbors.canUseNextAsLastFrame;
+  previousToggle.checked = Boolean(canGenerate && neighbors.usePreviousAsFirstFrame);
+  nextToggle.checked = Boolean(canGenerate && neighbors.useNextAsLastFrame);
+  document.querySelector("#previous-frame-source").textContent = neighbors.previous
+    ? `${neighbors.canUsePreviousAsFirstFrame ? "Use" : "Unavailable"}: ${neighbors.previous.id} · ${clipTitle(neighbors.previous)}`
+    : "No previous visual segment";
+  document.querySelector("#next-frame-source").textContent = neighbors.next
+    ? `${neighbors.canUseNextAsLastFrame ? "Use" : "Unavailable"}: ${neighbors.next.id} · ${clipTitle(neighbors.next)}`
+    : "No next visual segment";
   document.querySelector("#segment-name").textContent = segment ? clipTitle(segment) : "Select a segment";
   prompt.value = segment?.prompt || "";
   start.value = segment ? (Number(segment.start) / fps()).toFixed(2) : "";
@@ -305,6 +603,7 @@ function renderSelection() {
   const begin = segment ? Number(segment.start) / fps() : 0;
   const duration = segment ? Number(segment.length) / fps() : 0;
   document.querySelector("#range-readout").textContent = `Start ${begin.toFixed(2)} · End ${(begin + duration).toFixed(2)} · Length ${duration.toFixed(2)}`;
+  renderSegmentLibrary();
 }
 
 function renderSettings() {
@@ -352,7 +651,13 @@ function renderProjectSelectors() {
   if (!projectSelect || !sceneSelect) return;
   const activeSlug = premiereOverview?.project?.slug || "";
   const bindingMatchesProject = workspace?.premiere?.projectSlug === activeSlug;
-  projectSelect.innerHTML = `<option value="">Choose project…</option>${premiereProjects.map((project) => `<option value="${escapeHtml(project.slug)}" ${project.slug === activeSlug ? "selected" : ""}>${escapeHtml(project.name)}${project.storyboardClipCount ? ` · ${project.storyboardClipCount} scenes` : ""}</option>`).join("")}`;
+  const listed = [...premiereProjects];
+  if (!listed.some((project) => project.slug === "harrowing_of_hell")) {
+    listed.unshift({ slug: "harrowing_of_hell", name: "Harrowing of Hell", storyboardClipCount: 153 });
+  } else {
+    listed.sort((a, b) => (a.slug === "harrowing_of_hell" ? -1 : b.slug === "harrowing_of_hell" ? 1 : 0));
+  }
+  projectSelect.innerHTML = `<option value="">Choose project…</option>${listed.map((project) => `<option value="${escapeHtml(project.slug)}" ${project.slug === activeSlug || (!activeSlug && project.slug === "harrowing_of_hell") ? "selected" : ""}>${escapeHtml(project.slug === "harrowing_of_hell" ? "Harrowing of Hell" : project.name)}${project.storyboardClipCount ? ` · ${project.storyboardClipCount} scenes` : ""}</option>`).join("")}`;
   const clips = premiereOverview?.storyboard?.clips || [];
   const groups = new Map();
   for (const clip of clips) {
@@ -368,10 +673,18 @@ function renderProjectSelectors() {
   const queueScene = document.querySelector("#queue-scene");
   if (queueScene) {
     const segments = workspace.timeline?.segments || [];
+    const generationSegments = orderedVisualSegments(workspace);
     const semanticReferenceScene = isSemanticReferenceScene();
+    const segmentedI2vScene = isSegmentedI2vScene();
+    const queueAll = document.querySelector("#queue-all");
+    if (queueAll) queueAll.classList.toggle("hidden", semanticReferenceScene);
     const hasGuide = segments.some((segment) => ["image", "video"].includes(segment.type) && (segment.projectMediaPath || segment.imageFile || segment.videoFile));
     const missingGuide = segments.some((segment) => segment.missingGuide);
-    const missingReference = premiereReferenceIssues.some((reference) => reference.required);
+    const missingReference = premiereReferenceIssues.some((reference) => {
+      if (!reference.required) return false;
+      if (segmentedI2vScene && reference.role === "semantic_reference") return false;
+      return true;
+    });
     const { resolved: resolvedReferences, expected: expectedReferences } = semanticReferenceCounts();
     const semanticReferencesReady = premiereReferenceState?.referencesReady === true
       && resolvedReferences === expectedReferences;
@@ -390,6 +703,10 @@ function renderProjectSelectors() {
       ? !semanticReferencesReady || missingReference
       : !hasGuide || missingGuide || missingReference;
     queueScene.disabled = !bound || inputNotReady || activeRender;
+    queueScene.dataset.mode = segmentedI2vScene ? "segments" : "timeline";
+    queueScene.textContent = segmentedI2vScene
+      ? `▶ Generate ${generationSegments.length} segment${generationSegments.length === 1 ? "" : "s"} separately`
+      : "▶ Generate scene";
     queueScene.title = !bound
       ? "Load a Premiere scene first"
       : activeRender
@@ -408,7 +725,9 @@ function renderProjectSelectors() {
           ? expectedReferences === 0
             ? "Generate this explicit pure text-to-video scene"
             : `Generate this text-to-video scene with ${resolvedReferences}/${expectedReferences} semantic conditioning references resolved`
-          : "Generate this complete Premiere scene";
+          : segmentedI2vScene
+            ? `Submit ${generationSegments.length} independent I2V jobs, one for each segment: ${generationSegments.map((segment) => segment.id).join(", ")}`
+            : "Generate this complete Premiere scene";
   }
 }
 
@@ -561,8 +880,7 @@ async function loadPremiereScene(clipId) {
   const slug = premiereOverview?.project?.slug;
   if (!slug || !clipId) return;
   const switching = workspace?.premiere?.clipId && (workspace.premiere.clipId !== clipId || workspace.premiere.projectSlug !== slug);
-  if (switching && !confirm("Load this Premiere scene? Use ‘Save to Premiere’ first if you want to publish the current scene prompt and timing edits.")) return;
-  try {
+    try {
     setStatus(`Loading ${clipId} from Premiere…`, "busy");
     const result = await api(`/api/premiere/projects/${encodeURIComponent(slug)}/load`, {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ clipId })
@@ -621,8 +939,8 @@ async function addProjectMedia(file) {
 }
 
 async function saveToPremiere() {
-  await saveWorkspace();
   try {
+    await saveWorkspace({ throwOnError: true });
     setStatus("Saving scene direction to Premiere…", "busy");
     const result = await api("/api/premiere/sync", { method: "POST" });
     premiereOverview = result.overview;
@@ -631,6 +949,36 @@ async function saveToPremiere() {
     toast(`Saved ${result.result.clipId} direction to Premiere`, "ok");
   } catch (error) {
     setStatus("Premiere save failed", "error");
+    toast(error.message, "error");
+  }
+}
+
+async function saveGlobalPrompt() {
+  const scope = document.querySelector("#global-prompt-scope")?.value || "clip";
+  const text = document.querySelector("#global-prompt")?.value || "";
+  const labels = {
+    clip: "this clip",
+    scene: "this entire scene",
+    chapter: "this entire chapter",
+    project: "the entire project"
+  };
+  if ((scope === "chapter" || scope === "project") && !window.confirm(`Save this global prompt to ${labels[scope]}? Local segment prompts stay unchanged.`)) {
+    return;
+  }
+  try {
+    if (workspace?.timeline) workspace.timeline.global_prompt = text;
+    await saveWorkspace({ throwOnError: true });
+    setStatus("Saving global prompt…", "busy");
+    const result = await api("/api/premiere/global-prompt", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ scope, text })
+    });
+    const applied = result.result || {};
+    setStatus(`Global saved to ${applied.scope || scope}`, "ok");
+    toast(`Saved global to ${applied.scope || scope}: ${applied.clips || 0} clips, ${applied.segments || 0} segments`, "ok");
+  } catch (error) {
+    setStatus("Global prompt save failed", "error");
     toast(error.message, "error");
   }
 }
@@ -658,8 +1006,11 @@ async function loadPremiereProjects() {
 
 function renderAll() {
   document.querySelector("#global-prompt").value = workspace.timeline.global_prompt || "";
+  const scopeSelect = document.querySelector("#global-prompt-scope");
+  if (scopeSelect) scopeSelect.value = workspace.settings?.globalPromptScope || scopeSelect.value || "clip";
   renderTimeline();
   renderSelection();
+  renderSegmentLibrary();
   renderSettings();
   renderHealth();
   renderProjectSelectors();
@@ -669,18 +1020,42 @@ function findSegment(id) {
   return allSegments().find((segment) => String(segment.id) === String(id));
 }
 
+function selectClip(segmentId, { save = true } = {}) {
+  const previousId = workspace?.selectedSegmentId;
+  const previousPlayhead = Number(workspace?.playheadFrame) || 0;
+  const segment = selectTimelineSegment(workspace, segmentId);
+  if (!segment) return null;
+  const changed = String(previousId) !== String(segment.id)
+    || previousPlayhead !== (Number(segment.start) || 0);
+  for (const clip of document.querySelectorAll(".clip")) {
+    clip.classList.toggle("selected", String(clip.dataset.id) === String(segment.id));
+  }
+  renderSelection();
+  updatePlayhead();
+  void refreshSegmentTakes(segment);
+  if (save && changed) scheduleSave();
+  return segment;
+}
+
 function bindClipEvents() {
   for (const element of document.querySelectorAll(".clip")) {
     element.addEventListener("click", (event) => {
       event.stopPropagation();
-      workspace.selectedSegmentId = element.dataset.id;
-      const segment = findSegment(element.dataset.id);
-      workspace.playheadFrame = Number(segment?.start) || 0;
-      renderTimeline();
-      renderSelection();
-      scheduleSave();
+      selectClip(element.dataset.id);
     });
     element.addEventListener("pointerdown", startClipDrag);
+  }
+  for (const button of document.querySelectorAll("[data-generate-segment]")) {
+    button.addEventListener("pointerdown", (event) => event.stopPropagation());
+    button.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      const segmentId = button.dataset.generateSegment;
+      const segment = findSegment(segmentId);
+      if (!isVisualGenerationSegment(segment)) return;
+      selectClip(segmentId, { save: false });
+      workspaceSaves.markChanged();
+      await queue("selected", button, segmentId);
+    });
   }
 }
 
@@ -689,6 +1064,7 @@ function startClipDrag(event) {
   const element = event.currentTarget;
   const segment = findSegment(element.dataset.id);
   if (!segment) return;
+  selectClip(segment.id);
   const resize = event.target.classList.contains("resize-handle");
   const originX = event.clientX;
   const originStart = Number(segment.start) || 0;
@@ -706,12 +1082,19 @@ function startClipDrag(event) {
       else element.style.transform = `translateX(${frameToPx(Math.max(-originStart, deltaFrame))}px)`;
     });
   };
-  const up = () => {
+  const up = (upEvent) => {
+    cancelAnimationFrame(raf);
     element.classList.remove("dragging");
-    element.releasePointerCapture(event.pointerId);
+    if (element.hasPointerCapture(event.pointerId)) element.releasePointerCapture(event.pointerId);
     element.removeEventListener("pointermove", move);
     element.removeEventListener("pointerup", up);
     element.removeEventListener("pointercancel", up);
+    const commit = shouldCommitSegmentDrag(deltaFrame, upEvent.type === "pointercancel");
+    if (!commit) {
+      if (resize) element.style.width = `${Math.max(28, frameToPx(originLength))}px`;
+      else element.style.transform = "";
+      return;
+    }
     if (resize) segment.length = Math.max(1, originLength + deltaFrame);
     else segment.start = Math.max(0, originStart + deltaFrame);
     workspace.playheadFrame = segment.start;
@@ -740,8 +1123,26 @@ function bindInputs() {
     try { await loadProjectOverview(event.target.value, { preserveScene: false }); }
     catch (error) { toast(error.message, "error"); }
   });
-  document.querySelector("#scene-select").addEventListener("change", (event) => { document.querySelector("#load-scene").disabled = !event.target.value; });
-  document.querySelector("#load-scene").onclick = () => loadPremiereScene(document.querySelector("#scene-select").value);
+  const sceneSelect = document.querySelector("#scene-select");
+  const loadSceneBtn = document.querySelector("#load-scene");
+  const pickScene = (clipId) => {
+    if (loadSceneBtn) {
+      loadSceneBtn.disabled = !clipId;
+      loadSceneBtn.textContent = clipId && clipId === workspace?.premiere?.clipId ? "Reload scene" : "Load scene";
+    }
+    if (clipId) void loadPremiereScene(clipId);
+  };
+  sceneSelect.addEventListener("change", (event) => pickScene(event.target.value));
+  sceneSelect.addEventListener("input", (event) => pickScene(event.target.value));
+  sceneSelect.addEventListener("keydown", (event) => { if (event.key === "Enter" && sceneSelect.value) pickScene(sceneSelect.value); });
+  sceneSelect.addEventListener("mousedown", () => { sceneSelect.dataset.menuOpen = sceneSelect.dataset.menuOpen === "1" ? "0" : "1"; });
+  sceneSelect.addEventListener("blur", () => {
+    const clipId = sceneSelect.value;
+    if (sceneSelect.dataset.menuOpen === "1" && clipId) pickScene(clipId);
+    sceneSelect.dataset.menuOpen = "0";
+  });
+  loadSceneBtn.onclick = () => pickScene(sceneSelect.value);
+  if (loadSceneBtn) loadSceneBtn.textContent = sceneSelect.value && sceneSelect.value === workspace?.premiere?.clipId ? "Reload scene" : "Load scene";
   document.querySelector("#project-open").onclick = () => openProjectDrawer(true);
   document.querySelector("#project-close").onclick = () => openProjectDrawer(false);
   document.querySelector("#project-backdrop").onclick = () => openProjectDrawer(false);
@@ -752,10 +1153,30 @@ function bindInputs() {
   document.querySelector("#settings-done").onclick = () => openSettings(false);
   document.querySelector("#settings-backdrop").onclick = () => openSettings(false);
   document.querySelector("#global-prompt").addEventListener("input", (event) => { workspace.timeline.global_prompt = event.target.value; scheduleSave(); });
+  document.querySelector("#save-global-prompt").addEventListener("click", () => { void saveGlobalPrompt(); });
+  document.querySelector("#global-prompt-scope").addEventListener("change", (event) => {
+    workspace.settings = workspace.settings || {};
+    workspace.settings.globalPromptScope = event.target.value;
+    scheduleSave();
+  });
   document.querySelector("#segment-prompt").addEventListener("input", (event) => { const segment = selected(); if (segment) { segment.prompt = event.target.value; scheduleSave(); } });
   document.querySelector("#segment-start").addEventListener("change", (event) => { const segment = selected(); if (segment) { segment.start = Math.max(0, Math.round(Number(event.target.value) * fps())); workspace.playheadFrame = segment.start; renderTimeline(); renderSelection(); scheduleSave(); } });
   document.querySelector("#segment-length").addEventListener("change", (event) => { const segment = selected(); if (segment) { segment.length = Math.max(1, Math.round(Number(event.target.value) * fps())); renderTimeline(); renderSelection(); scheduleSave(); } });
   document.querySelector("#guide-strength").addEventListener("change", (event) => { const segment = selected(); if (!segment) return; const value = Math.max(0, Math.min(2, Number(event.target.value) || 0)); if (trackFor(segment) === "motion") segment.videoStrength = value; else segment.guideStrength = value; scheduleSave(); });
+  document.querySelector("#use-previous-first-frame").addEventListener("change", (event) => {
+    const segment = selected();
+    const neighbors = segmentNeighborState(workspace, segment?.id);
+    if (!segment || !neighbors.canUsePreviousAsFirstFrame) return;
+    segment.usePreviousAsFirstFrame = event.target.checked;
+    scheduleSave();
+  });
+  document.querySelector("#use-next-last-frame").addEventListener("change", (event) => {
+    const segment = selected();
+    const neighbors = segmentNeighborState(workspace, segment?.id);
+    if (!segment || !neighbors.canUseNextAsLastFrame) return;
+    segment.useNextAsLastFrame = event.target.checked;
+    scheduleSave();
+  });
 
   const bindings = [
     ["setting-comfy", "comfyUrl", (value) => value.trim().replace(/\/$/, "")],
@@ -828,8 +1249,43 @@ function bindInputs() {
 
   document.querySelector("#zoom-out").onclick = () => { pxPerSecond = Math.max(24, pxPerSecond / 1.25); renderTimeline(); };
   document.querySelector("#zoom-in").onclick = () => { pxPerSecond = Math.min(220, pxPerSecond * 1.25); renderTimeline(); };
-  document.querySelector("#rewind").onclick = () => { workspace.playheadFrame = 0; updatePlayhead(); };
-  document.querySelector("#scrubber").oninput = (event) => { workspace.playheadFrame = Number(event.target.value); updatePlayhead(); };
+  document.querySelector("#timeline-preview-toggle").onclick = () => setTimelinePreview(!timelinePreview);
+  document.querySelector("#library-lock").onclick = () => setSegmentLock(!selected()?.activeTakeLocked);
+  document.querySelector("#preview-video").addEventListener("timeupdate", () => {
+    if (!timelinePreview || !playing) return;
+    const playlist = visualPlaylist();
+    const current = playlist[previewIndex];
+    if (!current?.segment) return;
+    const video = document.querySelector("#preview-video");
+    workspace.playheadFrame = (Number(current.segment.start) || 0) + Math.round((video.currentTime || 0) * fps());
+    updatePlayhead();
+  });
+  document.querySelector("#preview-video").addEventListener("ended", () => {
+    if (!timelinePreview) return;
+    const playlist = visualPlaylist();
+    const playable = playlist.map((item, index) => ({ ...item, index })).filter((item) => item.url);
+    const current = playlist[previewIndex];
+    const at = playable.findIndex((item) => item.segment?.id === current?.segment?.id);
+    const next = playable[at + 1];
+    if (!next) { if (playing) togglePlay(); return; }
+    previewIndex = next.index;
+    workspace.playheadFrame = Number(next.segment.start) || 0;
+    workspace.selectedSegmentId = next.segment.id;
+    renderSelection();
+    syncAssembledPreview();
+  });
+  document.querySelector("#rewind").onclick = () => {
+    const playlist = visualPlaylist();
+    previewIndex = firstPlayablePreviewIndex(playlist);
+    workspace.playheadFrame = timelinePreview ? (Number(playlist[previewIndex]?.segment?.start) || 0) : 0;
+    updatePlayhead();
+    if (timelinePreview) syncAssembledPreview();
+  };
+  document.querySelector("#scrubber").oninput = (event) => {
+    workspace.playheadFrame = Number(event.target.value);
+    updatePlayhead();
+    if (timelinePreview) syncAssembledPreview();
+  };
   document.querySelector("#play").onclick = togglePlay;
   for (const track of document.querySelectorAll(".track")) track.addEventListener("pointerdown", (event) => {
     if (event.target !== track) return;
@@ -838,8 +1294,9 @@ function bindInputs() {
     updatePlayhead();
   });
   document.querySelector("#queue-selected").onclick = () => queue("selected");
+  document.querySelector("#generate-selected-segment").onclick = (event) => queue("selected", event.currentTarget);
   document.querySelector("#queue-all").onclick = () => queue("segments");
-  document.querySelector("#queue-scene").onclick = () => queue("timeline");
+  document.querySelector("#queue-scene").onclick = (event) => queue(event.currentTarget.dataset.mode || "timeline", event.currentTarget);
   document.querySelector("#interrupt").onclick = interrupt;
   document.querySelector("#export-workspace").onclick = () => window.open("/api/export", "_blank");
   document.querySelector("#reset-workspace").onclick = async () => {
@@ -854,7 +1311,18 @@ function bindInputs() {
 function togglePlay() {
   playing = !playing;
   document.querySelector("#play").textContent = playing ? "Ⅱ" : "▶";
-  if (!playing) { cancelAnimationFrame(playRaf); return; }
+  cancelAnimationFrame(playRaf);
+  if (timelinePreview) {
+    if (!playing) {
+      document.querySelector("#preview-video")?.pause();
+      return;
+    }
+    const playlist = visualPlaylist();
+    if (!playlist[previewIndex]?.url) previewIndex = firstPlayablePreviewIndex(playlist);
+    syncAssembledPreview();
+    return;
+  }
+  if (!playing) return;
   playStartedAt = performance.now();
   playStartFrame = Number(workspace.playheadFrame) || 0;
   const tick = (now) => {
@@ -867,25 +1335,34 @@ function togglePlay() {
   playRaf = requestAnimationFrame(tick);
 }
 
-async function queue(mode) {
-  await saveWorkspace();
-  const button = document.querySelector(mode === "timeline" ? "#queue-scene" : mode === "selected" ? "#queue-selected" : "#queue-all");
+async function queue(mode, triggerButton = null, segmentId = null) {
+  const button = triggerButton || document.querySelector(mode === "timeline" ? "#queue-scene" : mode === "selected" ? "#queue-selected" : "#queue-all");
+  const requestBody = queueRequestBody(mode, workspace, segmentId);
   const old = button.textContent;
   button.disabled = true;
-  button.textContent = "Compiling…";
+  button.textContent = "Saving…";
   try {
+    await saveWorkspace({ throwOnError: true });
+    button.textContent = "Compiling…";
     const result = await api("/api/queue", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ mode, segmentId: workspace.selectedSegmentId })
+      body: JSON.stringify(requestBody)
     });
     activePromptIds = result.accepted.map((item) => item.promptId);
-    const queuedMessage = `Queued ${activePromptIds.length} Director job${activePromptIds.length === 1 ? "" : "s"} on 8188`;
+    const acceptedSegmentIds = result.accepted.map((item) => item.segmentId).filter(Boolean);
+    const queuedMessage = mode === "segments"
+      ? `Queued ${activePromptIds.length} independent segment job${activePromptIds.length === 1 ? "" : "s"} on 8188`
+      : mode === "selected"
+        ? `Queued ${acceptedSegmentIds[0] || requestBody.segmentId} for tuning on 8188`
+        : `Queued ${activePromptIds.length} Director job${activePromptIds.length === 1 ? "" : "s"} on 8188`;
     if (result.partial) {
       toast(`${queuedMessage}; a later submission failed: ${result.error}`, "error");
       setStatus(`Partially queued · ${activePromptIds.length} accepted`, "error");
     } else {
       toast(queuedMessage, "ok");
-      setStatus(`Queued ${activePromptIds.length} job${activePromptIds.length === 1 ? "" : "s"}`, "ok");
+      setStatus(mode === "segments"
+        ? `Queued ${activePromptIds.length} independent segment job${activePromptIds.length === 1 ? "" : "s"}`
+        : `Queued ${activePromptIds.length} job${activePromptIds.length === 1 ? "" : "s"}`, "ok");
     }
     if (premiereOverview?.project?.slug) await loadProjectOverview(premiereOverview.project.slug);
     refreshHealth(true);

@@ -19,11 +19,67 @@ import { graphToApi } from "../server/comfy.js";
 
 const project = JSON.parse(fs.readFileSync(new URL("../projects/harrowing_of_hell/project.json", import.meta.url), "utf8"));
 const storyboard = JSON.parse(fs.readFileSync(new URL("../projects/harrowing_of_hell/production/storyboard.json", import.meta.url), "utf8"));
+const hasH06H09Import = Boolean(storyboard.imports?.h06_h09_ltx25_i2v_complete_v1);
+const hasH10Import = Boolean(storyboard.imports?.h10_ltx25_i2v_complete_v1);
+const expectedProductionCounts = hasH10Import
+  ? { frames: 372, referenceBindings: 2828, effectiveReferences: 2898, videoPlanBindings: 678, frameBindings: 2150 }
+  : hasH06H09Import
+    ? { frames: 325, referenceBindings: 2639, effectiveReferences: 2639, videoPlanBindings: 678, frameBindings: 1961 }
+    : { frames: 190, referenceBindings: 1871, effectiveReferences: 1871, videoPlanBindings: 678, frameBindings: 1193 };
 const attachedKreaWorkflow = fileURLToPath(new URL("../workflows/storyboard-krea2-reference-subgraphs.ui.json", import.meta.url));
 const attachedT2vWorkflow = fileURLToPath(new URL("../workflows/storyboard-ltx25-t2v-semantic-reference.ui.json", import.meta.url));
 
 function workflowNodes(graph) {
   return [graph, ...(graph.definitions?.subgraphs || [])].flatMap((container) => container.nodes || []);
+}
+
+// H10 is now production I2V. Keep the T2V compiler tests honest by adapting a
+// clone into an explicit text-only semantic fixture instead of pretending the
+// live H10 plan is still T2V or weakening the production mode guard.
+function semanticT2vFixture(videoPlanId) {
+  const fixture = structuredClone(storyboard);
+  const plan = fixture.videoPlans[videoPlanId];
+  const clip = fixture.clips[plan?.clipId];
+  assert.ok(plan && clip, `Missing semantic T2V fixture plan ${videoPlanId}`);
+  clip.generationMode = "t2v_with_semantic_references";
+  delete clip.firstFrameId;
+  delete clip.referenceMode;
+  plan.generationMode = "t2v_with_semantic_references";
+  plan.referenceMode = "semantic_reference_resolver";
+  plan.workflowProfileId = "ltx-2.5-t2v-semantic-reference-resolver";
+  plan.status = "ready";
+  delete plan.firstFrameId;
+  delete plan.firstFramePackage;
+  delete plan.guideStrength;
+  plan.globalPrompt = [
+    `PREMIERE316 LTX-2.5 TEXT-TO-VIDEO WITH SEMANTIC REFERENCES — ${clip.id}`,
+    "GENERATION MODE",
+    "Generate directly from text. Declared assets are semantic identity and design references only; do not use any temporal first frame, last frame, prior shot, or timed storyboard image.",
+    "TEMPORAL PROMPT RELAY\nApply each local prompt only during its authored contiguous frame interval.",
+    `STORY BEAT: ${clip.beat}`,
+    `CAMERA: ${clip.shotSizeLens}; ${clip.cameraMovement}`,
+    `TRANSITION: ${clip.transition}`
+  ].join("\n\n");
+  plan.timelineData.global_prompt = plan.globalPrompt;
+
+  const temporalKeys = [
+    "frameId", "firstFrameId", "lastFrameId", "firstFrame", "lastFrame",
+    "image", "imagePath", "inputImage", "endImage", "timedImage", "timedImages",
+    "storyboardFrameId", "fileName", "imageFile", "projectMediaPath",
+    "projectMediaSha256", "missingGuide", "frameStatus"
+  ];
+  for (const segmentId of plan.segmentIds) {
+    const segment = fixture.segments[segmentId];
+    segment.type = "text";
+    for (const key of temporalKeys) delete segment[key];
+    const timeline = plan.timelineData.segments.find((entry) => entry.id === segmentId);
+    assert.ok(timeline, `Missing semantic T2V fixture timeline segment ${segmentId}`);
+    timeline.type = "text";
+    timeline.prompt = segment.prompt;
+    for (const key of temporalKeys) delete timeline[key];
+  }
+  plan.localPrompts = plan.segmentIds.map((segmentId) => fixture.segments[segmentId].prompt).join(" | ");
+  return fixture;
 }
 
 test("production storyboard package has the verified structure", () => {
@@ -42,12 +98,98 @@ test("production storyboard package has the verified structure", () => {
     chapters: 11,
     scenes: 38,
     clips: 153,
-    frames: 0,
-    segments: 392,
-    referenceBindings: 678,
-    effectiveReferences: 678,
-    runtimeFrames: 54792
+    frames: expectedProductionCounts.frames,
+    segments: 406,
+    referenceBindings: expectedProductionCounts.referenceBindings,
+    effectiveReferences: expectedProductionCounts.effectiveReferences,
+    runtimeFrames: 57888
   });
+});
+
+test("H01 has exact segmented-I2V coverage and the 2m24s I2V master on C01", () => {
+  const h01ClipIds = ["H01-S01-C01", "H01-S01-C02", "H01-S02-C01", "H01-S02-C02"];
+  const h01Plans = h01ClipIds.map((clipId) => storyboard.videoPlans[storyboard.clips[clipId].videoPlanId]);
+  assert.deepEqual(h01Plans.map((plan) => plan.segmentIds.length), [18, 3, 3, 3]);
+  assert.ok(h01ClipIds.every((clipId) => storyboard.clips[clipId].generationMode === "i2v_segmented_first_frames"));
+  assert.ok(h01Plans.every((plan) => plan.generationMode === "i2v_segmented_first_frames"));
+  assert.ok(h01Plans.every((plan) => plan.referenceMode === "segment_first_frames"));
+  assert.ok(h01Plans.flatMap((plan) => plan.segmentIds).every((segmentId) => storyboard.segments[segmentId].type === "image"));
+
+  const c01Plan = storyboard.videoPlans["video-h01-s01-c01"];
+  assert.deepEqual(c01Plan.segmentIds.map((segmentId) => storyboard.segments[segmentId].lengthFrames), Array.from({ length: 18 }, () => 192));
+  assert.equal(storyboard.clips["H01-S01-C01"].durationFrames, 3456);
+  assert.equal(c01Plan.firstFramePackage?.packageId, "h01_s01_c01_2m24s_ltx25_i2v_master");
+  assert.match(c01Plan.globalPrompt, /144 seconds \(2:24\) across 18 authored segments/);
+  assert.match(c01Plan.globalPrompt, /Empty hands throughout/);
+  assert.match(c01Plan.globalPrompt, /No crown of thorns, halo disc, levitation, angels, sword, weapon, or duplicate Jesus/);
+  assert.match(c01Plan.negativePrompt, /sword, weapon, scabbard, luminous blade, duplicate Jesus/);
+
+  const c01FrameIds = c01Plan.segmentIds.map((segmentId) => storyboard.segments[segmentId].frameId);
+  assert.deepEqual(c01FrameIds, [
+    "frame-h01-s01-c01-first",
+    "frame-segment-h01-s01-c01-02",
+    "frame-segment-h01-s01-c01-03",
+    "frame-segment-h01-s01-c01-04",
+    "frame-segment-h01-s01-c01-05",
+    "frame-segment-h01-s01-c01-06",
+    "frame-segment-h01-s01-c01-07",
+    "frame-segment-h01-s01-c01-08",
+    "frame-segment-h01-s01-c01-09",
+    "frame-segment-h01-s01-c01-10",
+    "frame-segment-h01-s01-c01-11",
+    "frame-segment-h01-s01-c01-12",
+    "frame-segment-h01-s01-c01-13",
+    "frame-segment-h01-s01-c01-14",
+    "frame-segment-h01-s01-c01-15",
+    "frame-segment-h01-s01-c01-16",
+    "frame-segment-h01-s01-c01-17",
+    "frame-segment-h01-s01-c01-18"
+  ]);
+  assert.deepEqual(c01FrameIds.map((frameId) => storyboard.frames[frameId].generatedFile), [
+    "H01-S01-C01_first.v4.2m24s-i2v-master.png",
+    "H01-S01-C01_seg02.v5.2m24s-i2v-master.png",
+    "H01-S01-C01_seg03.v3.2m24s-i2v-master.png",
+    "H01-S01-C01_seg04.v3.2m24s-i2v-master.png",
+    "H01-S01-C01_seg05.v1.2m24s-i2v-master.png",
+    "H01-S01-C01_seg06.v1.2m24s-i2v-master.png",
+    "H01-S01-C01_seg07.v1.2m24s-i2v-master.png",
+    "H01-S01-C01_seg08.v1.2m24s-i2v-master.png",
+    "H01-S01-C01_seg09.v1.2m24s-i2v-master.png",
+    "H01-S01-C01_seg10.v1.2m24s-i2v-master.png",
+    "H01-S01-C01_seg11.v1.2m24s-i2v-master.png",
+    "H01-S01-C01_seg12.v1.2m24s-i2v-master.png",
+    "H01-S01-C01_seg13.v1.2m24s-i2v-master.png",
+    "H01-S01-C01_seg14.v1.2m24s-i2v-master.png",
+    "H01-S01-C01_seg15.v1.2m24s-i2v-master.png",
+    "H01-S01-C01_seg16.v1.2m24s-i2v-master.png",
+    "H01-S01-C01_seg17.v1.2m24s-i2v-master.png",
+    "H01-S01-C01_seg18.v1.2m24s-i2v-master.png"
+  ]);
+  assert.deepEqual(c01FrameIds.map((frameId) => storyboard.frames[frameId].activeGeneratedVersion), [4, 5, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
+
+  const expectedReferenceFiles = [
+    "char-jesus-main.v4.png",
+    "loc-descent.v1.png",
+    "atmo-smoke.v1.png",
+    "atmo-frags.v1.png",
+    "art-chains.v1.png"
+  ];
+  for (const [index, frameId] of c01FrameIds.entries()) {
+    const frame = storyboard.frames[frameId];
+    const segment = storyboard.segments[c01Plan.segmentIds[index]];
+    const activeVersion = frame.generatedVersions.find((version) => version.v === frame.activeGeneratedVersion);
+    assert.equal(frame.status, "generated");
+    assert.equal(frame.prompt, segment.prompt);
+    assert.match(frame.prompt, /Begin exactly from the supplied frame/i);
+    assert.doesNotMatch(frame.prompt, /luminous golden sword|single right-hand sword|warm-gold point/i);
+    assert.match(frame.negativePrompt, /sword/);
+    assert.deepEqual(frame.references.map((reference) => reference.sourceAssetFile), expectedReferenceFiles);
+    assert.ok(frame.references.every((reference) => !reference.assetId.includes("sword")));
+    assert.equal(activeVersion.file, frame.generatedFile);
+    assert.equal(activeVersion.prompt, frame.prompt);
+    assert.ok((activeVersion.sourceReferenceAssets || []).every((reference) => !reference.assetId.includes("sword")));
+    assert.ok(fs.existsSync(new URL(`../projects/harrowing_of_hell/${frame.generatedInputPath}`, import.meta.url)));
+  }
 });
 
 test("every effective T2V reference resolves to an exact canonical package file", () => {
@@ -70,28 +212,36 @@ test("every effective T2V reference resolves to an exact canonical package file"
   assert.equal(checked, 678);
 });
 
-test("every authored reference binding targets a real video plan", () => {
-  let videoPlanBindings = 0;
+test("every authored reference binding targets its real video plan or first frame", () => {
+  const counts = { video_plan: 0, frame: 0 };
   for (const binding of Object.values(storyboard.referenceBindings)) {
-    assert.equal(binding.targetKind, "video_plan");
-    assert.ok(Object.hasOwn(storyboard.videoPlans, binding.targetId), `${binding.id} video plan target must exist`);
-    videoPlanBindings += 1;
+    assert.ok(Object.hasOwn(counts, binding.targetKind), `${binding.id} target kind must be supported`);
+    if (binding.targetKind === "video_plan") {
+      assert.ok(Object.hasOwn(storyboard.videoPlans, binding.targetId), `${binding.id} video plan target must exist`);
+    } else {
+      assert.ok(Object.hasOwn(storyboard.frames, binding.targetId), `${binding.id} frame target must exist`);
+    }
+    counts[binding.targetKind] += 1;
   }
-  assert.equal(videoPlanBindings, 678);
+  assert.deepEqual(counts, {
+    video_plan: expectedProductionCounts.videoPlanBindings,
+    frame: expectedProductionCounts.frameBindings
+  });
 });
 
 test("storyboard validation rejects a missing video-plan binding target", () => {
   const invalid = structuredClone(storyboard);
-  const binding = Object.values(invalid.referenceBindings)[0];
+  const binding = Object.values(invalid.referenceBindings).find((reference) => reference.targetKind === "video_plan");
   binding.targetId = "video-missing-target";
   assert.throws(() => validateStoryboard(invalid, project.slug), /reference binding target not found/);
 });
 
 test("video-plan reference replacement is target-scoped, exact-version pinned, and de-duplicated", () => {
-  const targetId = "video-h01-s01-c01";
-  const authored = Object.values(storyboard.referenceBindings).find((reference) => reference.targetId === targetId);
+  const targetId = "video-h10-s32-c01";
+  const authored = Object.values(storyboard.referenceBindings).find((reference) => reference.targetKind === "video_plan" && reference.targetId === targetId);
   assert.ok(authored, "fixture must contain an authored video-plan reference");
-  const otherTargetId = "video-h01-s01-c02";
+  const targetReferencesBefore = structuredClone(storyboard.videoPlans[targetId].referenceFiles);
+  const otherTargetId = "video-h10-s32-c02";
   const otherTargetBefore = structuredClone(storyboard.videoPlans[otherTargetId].referenceFiles);
   const result = replaceStoryboardTargetReferences(storyboard, project, {
     targetKind: "video_plan",
@@ -100,7 +250,7 @@ test("video-plan reference replacement is target-scoped, exact-version pinned, a
       {
         id: authored.id,
         assetId: authored.assetId,
-        assetVersion: 4,
+        assetVersion: 3,
         canonicalFile: authored.canonicalFile,
         role: authored.role,
         cropRegion: authored.cropRegion,
@@ -109,22 +259,22 @@ test("video-plan reference replacement is target-scoped, exact-version pinned, a
       },
       {
         assetId: authored.assetId,
-        assetVersion: 4,
+        assetVersion: 3,
         canonicalFile: authored.canonicalFile,
         role: authored.role
       }
     ]
   });
-  assert.equal(storyboard.videoPlans[targetId].referenceFiles.length, 4, "input storyboard must not be mutated");
+  assert.deepEqual(storyboard.videoPlans[targetId].referenceFiles, targetReferencesBefore, "input storyboard must not be mutated");
   assert.equal(result.references.length, 1, "duplicate asset IDs are collapsed deterministically");
-  assert.equal(result.references[0].sourceAssetFile, "char-jesus-main.v4.png");
-  assert.equal(result.references[0].assetVersionId, `${authored.assetId}:v4`);
+  assert.equal(result.references[0].sourceAssetFile, "char-jesus-main.v3.png");
+  assert.equal(result.references[0].assetVersionId, `${authored.assetId}:v3`);
   assert.equal(result.references[0].id, authored.id, "unchanged authored binding ID must survive Apply");
   assert.equal(result.references[0].cropRegion, authored.cropRegion);
   assert.equal(result.references[0].notes, authored.notes);
   assert.equal(result.storyboard.referenceBindings[authored.id].order, storyboard.referenceBindings[authored.id].order, "authored binding order must survive Apply");
   assert.deepEqual(result.storyboard.videoPlans[targetId].referenceFiles, [authored.canonicalFile]);
-  assert.deepEqual(result.storyboard.clips["H01-S01-C01"].referenceFiles, [authored.canonicalFile]);
+  assert.deepEqual(result.storyboard.clips["H10-S32-C01"].referenceFiles, [authored.canonicalFile]);
   assert.deepEqual(result.storyboard.videoPlans[otherTargetId].referenceFiles, otherTargetBefore, "unrelated video-plan references must be preserved");
 });
 
@@ -183,9 +333,10 @@ test("graph conversion preserves linked dynamic reference sockets beyond object_
 test("tracked T2V workflow builder resolves exact semantic references for LTX-2.5 Ingredients conditioning", {
   skip: !fs.existsSync(attachedT2vWorkflow) && "Tracked LTX-2.5 T2V workflow is missing"
 }, () => {
-  const videoPlanId = "video-h01-s01-c01";
-  const built = buildStoryboardVideoPlanWorkflowGraph(project, storyboard, videoPlanId, { requireRunnableAudio: true });
-  const rebuilt = buildStoryboardVideoPlanWorkflowGraph(project, storyboard, videoPlanId, { requireRunnableAudio: true });
+  const videoPlanId = "video-h10-s33-c01";
+  const semanticStoryboard = semanticT2vFixture(videoPlanId);
+  const built = buildStoryboardVideoPlanWorkflowGraph(project, semanticStoryboard, videoPlanId, { requireRunnableAudio: true });
+  const rebuilt = buildStoryboardVideoPlanWorkflowGraph(project, semanticStoryboard, videoPlanId, { requireRunnableAudio: true });
   assert.equal(built.workflowHash, rebuilt.workflowHash, "T2V workflow build must be deterministic");
   assert.equal(built.graph.extra.premiere316.workflowId, STORYBOARD_T2V_WORKFLOW_ID);
   assert.equal(built.graph.extra.premiere316.type, "storyboard-t2v-video-plan");
@@ -205,10 +356,10 @@ test("tracked T2V workflow builder resolves exact semantic references for LTX-2.
     fps: 24,
     width: 768,
     height: 320,
-    authoredFrames: 360,
-    generationFrames: 361,
+    authoredFrames: 432,
+    generationFrames: 433,
     decodedTrim: 1,
-    durationSeconds: 15,
+    durationSeconds: 18,
     seed: built.settings.seed,
     latentX2: true
   });
@@ -216,7 +367,7 @@ test("tracked T2V workflow builder resolves exact semantic references for LTX-2.
   const master = built.graph.nodes.find((node) => node.id === 5900);
   assert.deepEqual(master.widgets_values.slice(0, 6), [
     "LTX-2.5 Native T2V",
-    15,
+    18,
     24,
     "Custom (multiples of 32)",
     768,
@@ -224,13 +375,36 @@ test("tracked T2V workflow builder resolves exact semantic references for LTX-2.
   ]);
   assert.equal(master.widgets_values[7], true);
   const promptNode = built.graph.nodes.find((node) => node.id === 5901);
-  assert.equal(promptNode.widgets_values[0], storyboard.videoPlans[videoPlanId].globalPrompt);
+  assert.equal(promptNode.widgets_values[0], semanticStoryboard.videoPlans[videoPlanId].globalPrompt);
+  assert.equal(built.promptRelay.segmentCount, 3);
+  assert.equal(built.promptRelay.segmentLengths, "144,144,144");
+  assert.deepEqual(
+    built.promptRelay.segments.map(({ id, start, length }) => ({ id, start, length })),
+    [
+      { id: "segment-h10-s33-c01-01", start: 0, length: 144 },
+      { id: "segment-h10-s33-c01-02", start: 144, length: 144 },
+      { id: "segment-h10-s33-c01-03", start: 288, length: 144 }
+    ]
+  );
+  assert.doesNotMatch(built.promptRelay.globalPrompt, /ACTION TIMELINE/);
+  assert.match(built.promptRelay.globalPrompt, /TEMPORAL PROMPT RELAY/);
+  for (const segment of built.promptRelay.segments) {
+    assert.equal(built.promptRelay.localPrompts.split(segment.prompt).length - 1, 1);
+    assert.equal(built.promptRelay.globalPrompt.includes(segment.prompt), false);
+  }
+  const director = built.graph.nodes.find((node) => node.id === 5960);
+  assert.equal(director.widgets_values[7], built.promptRelay.localPrompts);
+  assert.equal(director.widgets_values[8], "144,144,144");
+  assert.deepEqual(
+    JSON.parse(director.widgets_values[6]).segments.map(({ id, start, length }) => ({ id, start, length })),
+    built.promptRelay.segments.map(({ id, start, length }) => ({ id, start, length }))
+  );
   const resolver = built.graph.nodes.find((node) => node.id === 5902);
   assert.equal(resolver.widgets_values[2], 9);
   assert.equal(resolver.widgets_values[3], true);
   assert.equal(resolver.widgets_values[5], "asset_index.json");
-  assert.equal(resolver.widgets_values[6], storyboard.videoPlans[videoPlanId].referenceFiles.join("\n"));
-  assert.deepEqual(built.references.map((reference) => reference.canonical), storyboard.videoPlans[videoPlanId].referenceFiles);
+  assert.equal(resolver.widgets_values[6], semanticStoryboard.videoPlans[videoPlanId].referenceFiles.join("\n"));
+  assert.deepEqual(built.references.map((reference) => reference.canonical), semanticStoryboard.videoPlans[videoPlanId].referenceFiles);
   const audioModeControl = built.graph.nodes.find((node) => node.id === 5904);
   assert.equal(audioModeControl.widgets_values[0], "Generated Audio");
   assert.equal(audioModeControl.title, "AUDIO MODE — Generated Audio");
@@ -266,7 +440,7 @@ test("tracked T2V workflow builder resolves exact semantic references for LTX-2.
   }
   const finalVideo = built.graph.nodes.find((node) => node.id === 5928);
   assert.equal(finalVideo.widgets_values.frame_rate, 24);
-  assert.equal(finalVideo.widgets_values.filename_prefix, "Premiere316/harrowing_of_hell/storyboard/H01-S01-C01");
+  assert.equal(finalVideo.widgets_values.filename_prefix, "Premiere316/harrowing_of_hell/storyboard/H10-S33-C01");
   assert.equal(finalVideo.widgets_values.save_output, true);
   const resolverPreviewLinks = (resolver.outputs.find((output) => output.name === "selected_previews")?.links || []);
   const sequencerIds = new Set(built.graph.nodes.filter((node) => node.type === "DenoLTXSequencer").map((node) => node.id));
@@ -334,7 +508,7 @@ test("pure T2V does not excuse a declared required reference that cannot resolve
 test("compiled T2V prompt injects every canonical reference into the LTX-2.5 IC-LoRA sheet", async (t) => {
   let compiled;
   try {
-    compiled = await compileStoryboardVideoPlanPrompt(project, storyboard, "video-h01-s01-c01");
+    compiled = await compileStoryboardVideoPlanPrompt(project, semanticT2vFixture("video-h10-s33-c01"), "video-h10-s33-c01");
   } catch (error) {
     if (/fetch failed|ECONNREFUSED|active ComfyUI runtime/i.test(String(error?.message || error))) {
       t.skip("Live 8188 object_info is unavailable");
@@ -343,9 +517,9 @@ test("compiled T2V prompt injects every canonical reference into the LTX-2.5 IC-
     throw error;
   }
   assert.deepEqual(compiled.referenceConditioning, {
-    expected: 4,
-    resolved: 4,
-    injected: 4,
+    expected: 6,
+    resolved: 6,
+    injected: 6,
     adapter: "LTX\\2.5\\ltx-2.3-22b-ic-lora-ingredients-0.9.safetensors",
     model: "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
     clip: "gemma4-12b-with-proj-ltx-2.5-bf16.safetensors",
@@ -353,27 +527,62 @@ test("compiled T2V prompt injects every canonical reference into the LTX-2.5 IC-
     audioVae: "LTX\\2.5\\ltx-2.5-audio-vae-bf16.safetensors",
     resolverNodeId: "5902",
     sheetNodeId: "5915",
-    guideNodeId: "5919"
+    guideNodeId: "5919",
+    promptRelayNodeId: "5960",
+    segmentCount: 3,
+    segmentLengths: "144,144,144"
   });
   assert.equal(compiled.apiPrompt["5914"].inputs.model[0], "5801");
   assert.equal(compiled.apiPrompt["5915"].inputs.reference_set[0], "5902");
-  assert.equal(compiled.apiPrompt["5915"].inputs.frame_count, 361);
+  assert.equal(compiled.apiPrompt["5915"].inputs.frame_count, 433);
   assert.equal(compiled.apiPrompt["5919"].inputs.image[0], "5915");
   assert.equal(compiled.apiPrompt["5919"].inputs.vae[0], "5800");
+  assert.deepEqual(compiled.apiPrompt["5960"].inputs.model, ["5914", 0]);
+  assert.deepEqual(compiled.apiPrompt["5960"].inputs.optional_latent, ["5917", 0]);
+  assert.equal(compiled.apiPrompt["5960"].inputs.local_prompts, compiled.promptRelay.localPrompts);
+  assert.equal(compiled.apiPrompt["5960"].inputs.segment_lengths, "144,144,144");
+  assert.equal(JSON.parse(compiled.apiPrompt["5960"].inputs.timeline_data).segments.length, 3);
+  assert.deepEqual(compiled.apiPrompt["5919"].inputs.positive, ["5961", 0]);
+  assert.deepEqual(compiled.apiPrompt["5919"].inputs.latent, ["5960", 2]);
+  assert.deepEqual(compiled.apiPrompt["5941"].inputs.model, ["5960", 0]);
   assert.equal(compiled.apiPrompt["5921"].inputs.switch, true);
   assert.equal(compiled.apiPrompt["5928"].inputs.frame_rate, 24);
 });
 
-test("generation preflight refuses to invent required dialogue or replace an authoritative post-mix track", () => {
+test("T2V Prompt Relay preflight rejects a gap, duration drift, and the reserved delimiter", () => {
+  const gap = semanticT2vFixture("video-h10-s33-c01");
+  gap.segments["segment-h10-s33-c01-02"].startFrame = 145;
   assert.throws(
-    () => buildStoryboardVideoPlanWorkflowGraph(project, storyboard, "video-h01-s02-c01", { requireRunnableAudio: true }),
+    () => buildStoryboardVideoPlanWorkflowGraph(project, gap, "video-h10-s33-c01"),
+    /not contiguous: expected frame 144, received 145/
+  );
+
+  const durationDrift = semanticT2vFixture("video-h10-s33-c01");
+  durationDrift.segments["segment-h10-s33-c01-03"].lengthFrames = 143;
+  assert.throws(
+    () => buildStoryboardVideoPlanWorkflowGraph(project, durationDrift, "video-h10-s33-c01"),
+    /cover 431 frames; expected 432/
+  );
+
+  const delimiter = semanticT2vFixture("video-h10-s33-c01");
+  delimiter.segments["segment-h10-s33-c01-02"].prompt += " | forbidden split";
+  assert.throws(
+    () => buildStoryboardVideoPlanWorkflowGraph(project, delimiter, "video-h10-s33-c01"),
+    /reserved \| delimiter/
+  );
+});
+
+test("generation preflight refuses to invent required dialogue or replace an authoritative post-mix track", () => {
+  const dialogueFixture = semanticT2vFixture("video-h10-s31-c01");
+  assert.throws(
+    () => buildStoryboardVideoPlanWorkflowGraph(project, dialogueFixture, "video-h10-s31-c01", { requireRunnableAudio: true }),
     /requires an exact clip-length dialogue track/
   );
   assert.throws(
     () => buildStoryboardVideoPlanWorkflowGraph(project, storyboard, "video-mv01-s01-c01", { requireRunnableAudio: true }),
     /requires authoritative external audio post-mix support/
   );
-  const pendingDialogue = buildStoryboardVideoPlanWorkflowGraph(project, storyboard, "video-h01-s02-c01");
+  const pendingDialogue = buildStoryboardVideoPlanWorkflowGraph(project, dialogueFixture, "video-h10-s31-c01");
   assert.equal(pendingDialogue.graph.nodes.find((node) => node.id === 5904).widgets_values[0], "Custom Replace");
   assert.equal(pendingDialogue.graph.extra.premiere316.audioRunnable, false);
   assert.match(pendingDialogue.graph.nodes.find((node) => node.id === 5904).title, /AUDIO BLOCKED/);
@@ -390,7 +599,7 @@ test("server exposes T2V download, push, generate, and queue contracts", () => {
   assert.match(queueSource, /markStoryboardVideoPlanGenerationFailed/);
 });
 
-test("legacy storyboard image guide compiler patches the attached Krea workflow deterministically", {
+test("active storyboard image guide compiler patches the attached Krea workflow deterministically", {
   skip: Object.keys(storyboard.frames).length === 0
     ? "True T2V storyboard intentionally contains no image-guide frames"
     : (!fs.existsSync(attachedKreaWorkflow) && "Attached Krea workflow is not installed in the local BlokeyUI profile")
@@ -401,14 +610,16 @@ test("legacy storyboard image guide compiler patches the attached Krea workflow 
   assert.equal(built.graph.extra.premiere316.workflowId, STORYBOARD_KREA_WORKFLOW_ID);
   assert.equal(built.workflowHash, rebuilt.workflowHash, "workflow hash must not contain timestamps or other volatile data");
   assert.equal(built.filenamePrefix, "Premiere316/harrowing_of_hell/storyboard/H01-S01-C01_first");
-  assert.deepEqual(built.resolution, { width: 1280, height: 544, ratio: "2.39:1" });
+  assert.deepEqual(built.resolution, { width: 1280, height: 720, ratio: "16:9" });
   const allNodes = workflowNodes(built.graph);
   const promptInput = allNodes.find((node) => node.id === 10042)?.widgets_values?.[1] || "";
   assert.match(promptInput, /PREMIERE316 STORYBOARD IMAGE GUIDE/);
-  assert.match(promptInput, /A last heartbeat ends/);
+  assert.match(promptInput, /Begin exactly from the supplied frame/);
+  assert.match(promptInput, /heavy barbed iron chain/);
+  assert.doesNotMatch(promptInput, /luminous golden sword|single right-hand sword|warm-gold point/i);
   assert.match(promptInput, /Avoid\/negative constraints/);
   const latent = allNodes.find((node) => node.id === 10053);
-  assert.deepEqual(latent.widgets_values.slice(0, 3), [1280, 544, 1]);
+  assert.deepEqual(latent.widgets_values.slice(0, 3), [1280, 720, 1]);
   const sampler = allNodes.find((node) => node.id === 10056);
   assert.equal(sampler.widgets_values[0], built.seed);
   assert.equal(sampler.widgets_values[1], "fixed");
@@ -420,13 +631,13 @@ test("legacy storyboard image guide compiler patches the attached Krea workflow 
   assert.deepEqual(convertedPixaromaState.warnings, []);
   assert.deepEqual(JSON.parse(convertedPixaromaState.prompt["200"].inputs.ResolutionState), {
     mode: "custom",
-    ratio: "2.39:1",
+    ratio: "16:9",
     w: 1280,
-    h: 544,
+    h: 720,
     custom_w: 1280,
-    custom_h: 544,
-    custom_ratio_w: 239,
-    custom_ratio_h: 100,
+    custom_h: 720,
+    custom_ratio_w: 1280,
+    custom_ratio_h: 720,
     snap: 32
   });
   assert.equal(JSON.parse(convertedPixaromaState.prompt["204"].inputs.SeedState).runSeed, built.seed);

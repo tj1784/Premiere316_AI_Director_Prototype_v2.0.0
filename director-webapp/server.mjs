@@ -16,7 +16,8 @@ import {
   patchPrompt,
   validatePrompt,
   workspaceForClient,
-  workspaceFromWorkflow
+  workspaceFromWorkflow,
+  isHarrowingGenerate
 } from "./workflow-compiler.mjs";
 import {
   buildMusicVideoSequencePlan,
@@ -40,29 +41,72 @@ import {
   resolveProjectMedia,
   resolveProjectReferenceMedia,
   sceneReferenceMedia,
+  workspaceWithRefreshedReferenceBinding,
   storyboardPlanFingerprint,
   syncWorkspaceToPremiere,
+  applyGlobalPromptToScope,
   upsertProjectJob,
-  workspaceForProjectClip
+  workspaceForProjectClip,
+  refreshBoundWorkspaceFromStoryboard,
+  listSegmentTakes,
+  activateSegmentTake,
+  setClipGenerateOption
 } from "./premiere-projects.mjs";
 import { findClip, loadProject, mediaDir, saveProject } from "../server/projects.js";
 import { projectDir } from "../server/paths.js";
-import { registerStoryboardHandoffFrame } from "../server/storyboard-generation.js";
-import { concatPreparedVideosWithSoundtrack, probeMediaExact, trimVideoToFrames } from "../server/ffmpeg.js";
+import {
+  compileStoryboardVideoPlanPrompt,
+  registerStoryboardHandoffFrame
+} from "../server/storyboard-generation.js";
+import { loadStoryboard, saveStoryboard } from "../server/storyboard.js";
+import { concatPreparedVideosWithSoundtrack, extractVideoFrameExact, probeMediaExact, trimVideoToFrames } from "../server/ffmpeg.js";
 import { ensureDirectoryMiddleware } from "./upload-dir.mjs";
 import {
+  canonicalSemanticReferenceRole,
+  LTX25_PREMIERE316_PROFILE,
   PremiereApiError,
   premiereApiBaseUrl,
+  premiere316ProfileForWorkspace,
   queueSemanticT2VViaPremiere,
-  semanticT2VDelegationTarget
+  semanticT2VDelegationTarget,
+  isSegmentedI2vGenerationMode
 } from "./premiere-api-delegation.mjs";
+import {
+  directorJobConflictsWithQueueRequest,
+  queueReservationSegmentIds,
+  SegmentQueueReservationConflict,
+  SegmentQueueReservations,
+  submitCompiledJobsIndividually
+} from "./segment-queue.mjs";
+import { scopePremiere316ReferenceState } from "./premiere316-reference-scope.mjs";
+import {
+  directorOutputDiskCandidates,
+  directorOutputDiskPath,
+  directorOutputRelativePath
+} from "./director-media-paths.mjs";
+import {
+  applyContinuationHandoff,
+  continuationTargetForSegment,
+  segmentQueueReadiness
+} from "./segment-continuity.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(HERE, "public");
 const STATE_DIR = path.join(HERE, "state");
 const STATE_FILE = path.join(STATE_DIR, "workspace.local.json");
-const DEFAULT_SOURCE = path.join(os.homedir(), "Downloads", "LTX2.5_DIRECTOR.json");
+const DEFAULT_SOURCE = path.join(
+  HERE,
+  "..",
+  "BlokeyUI",
+  "ComfyUI",
+  "user",
+  "default",
+  "workflows",
+  "Premiere316",
+  "LTX2.5_Premiere316.json"
+);
 const SOURCE_WORKFLOW = path.resolve(process.env.DIRECTOR_WORKFLOW_PATH || DEFAULT_SOURCE);
+const HARROWING_HELL_WORKFLOW = path.resolve(HERE, "..", "BlokeyUI", "ComfyUI", "user", "default", "workflows", "HARROWING OF HELL.json");
 const MUSIC_VIDEO_WORKFLOW = path.resolve(process.env.DIRECTOR_MUSIC_VIDEO_WORKFLOW_PATH || path.join(
   HERE,
   "..",
@@ -90,6 +134,7 @@ let workspace = null;
 let objectInfoCache = { url: "", at: 0, value: null };
 const directorJobs = new Map();
 const musicVideoRuns = new Map();
+const segmentQueueReservations = new SegmentQueueReservations();
 let directorMonitor = null;
 let directorMonitorBusy = false;
 let musicVideoMonitor = null;
@@ -119,16 +164,23 @@ function quarantinePath(root, stem) {
 
 function loadWorkspace() {
   readSource();
+  let loaded = null;
   if (fs.existsSync(STATE_FILE)) {
     try {
       const saved = JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
       const fresh = workspaceFromWorkflow(sourceGraph, sourceText);
-      if (saved?.source?.sha256 === fresh.source.sha256) return mergeWorkspace(fresh, saved);
+      if (saved?.source?.sha256 === fresh.source.sha256) loaded = mergeWorkspace(fresh, saved);
     } catch (error) {
       console.warn(`[Director] Ignoring invalid local state: ${error.message}`);
     }
   }
-  return workspaceFromWorkflow(sourceGraph, sourceText);
+  if (!loaded) loaded = workspaceFromWorkflow(sourceGraph, sourceText);
+  const refreshed = refreshBoundWorkspaceFromStoryboard(loaded);
+  if (refreshed.refreshed) {
+    atomicWrite(STATE_FILE, refreshed.workspace);
+    console.log(`[Director] Reloaded ${refreshed.workspace.premiere?.clipId} from the shared Premiere316 storyboard.`);
+  }
+  return refreshed.workspace;
 }
 
 async function fetchJson(url, options = {}) {
@@ -154,7 +206,70 @@ async function getObjectInfo(force = false) {
   return value;
 }
 
+
+function harrowingPromptText(workspaceValue, job) {
+  const authoredGlobal = String(workspaceValue?.timeline?.global_prompt || "").trim();
+  const local = String(job?.localPrompts || "").trim();
+  if (authoredGlobal && local && local !== authoredGlobal) return `${authoredGlobal}\n\n${local}`;
+  return authoredGlobal || local;
+}
+
+function harrowingFirstFrame(workspaceValue, job) {
+  const segs = job?.timeline?.segments || workspaceValue?.timeline?.segments || [];
+  const first = segs.find((s) => s.guideRole === "first")
+    || segs.find((s) => s.type === "image" && s.imageFile);
+  return String(first?.imageFile || "").trim();
+}
+
+function isComfyInputName(name) {
+  const value = String(name || "").trim();
+  return Boolean(value) && !/[\\/]/.test(value) && /\.(png|jpe?g|webp)$/i.test(value);
+}
+
+function writeHarrowingPromptToHell(text) {
+  if (!fs.existsSync(HARROWING_HELL_WORKFLOW)) throw new Error("HARROWING OF HELL.json not found");
+  const graph = JSON.parse(fs.readFileSync(HARROWING_HELL_WORKFLOW, "utf8"));
+  const visit = (nodes) => {
+    for (const node of nodes || []) {
+      const id = Number(node.id);
+      if (!Array.isArray(node.widgets_values) || !node.widgets_values.length) continue;
+      if (id === 376 || id === 380 || id === 398) node.widgets_values[0] = text;
+    }
+  };
+  visit(graph.nodes);
+  for (const sub of graph.definitions?.subgraphs || []) visit(sub.nodes);
+  fs.writeFileSync(HARROWING_HELL_WORKFLOW, `${JSON.stringify(graph, null, 2)}\n`);
+  return HARROWING_HELL_WORKFLOW;
+}
+
+function applyHarrowingPromptOnly(apiPrompt, text, imageFile) {
+  const prompt = structuredClone(apiPrompt);
+  if (prompt["376"]?.inputs) prompt["376"].inputs.value = text;
+  if (prompt["380"]?.inputs) prompt["380"].inputs.prompt = text;
+  if (isComfyInputName(imageFile) && prompt["395"]?.inputs) prompt["395"].inputs.image = imageFile;
+  return prompt;
+}
+
+async function compileHarrowingHell(workspaceValue, job, forceObjectInfo = false) {
+  if (!fs.existsSync(HARROWING_HELL_WORKFLOW)) throw new Error("HARROWING OF HELL.json not found");
+  const graph = JSON.parse(fs.readFileSync(HARROWING_HELL_WORKFLOW, "utf8"));
+  const objectInfo = await getObjectInfo(forceObjectInfo);
+  const flat = flattenWorkflow(graph);
+  const converted = graphToApi(flat, objectInfo);
+  if (converted.warnings.length) throw new Error(converted.warnings.join("; "));
+  const prompt = applyHarrowingPromptOnly(converted.prompt, harrowingPromptText(workspaceValue, job), harrowingFirstFrame(workspaceValue, job));
+  return {
+    prompt,
+    directorId: null,
+    referenceConditioning: null,
+    nodeCount: Object.keys(prompt).length,
+    flatNodeCount: flat.nodes.length,
+    flatLinkCount: flat.links.length
+  };
+}
+
 async function compile(workspaceValue = workspace, job = null, forceObjectInfo = false) {
+  if (isHarrowingGenerate(workspaceValue)) return compileHarrowingHell(workspaceValue, job, forceObjectInfo);
   const objectInfo = await getObjectInfo(forceObjectInfo);
   const flat = flattenWorkflow(sourceGraph);
   const converted = graphToApi(flat, objectInfo);
@@ -235,7 +350,114 @@ function newId(prefix) {
 
 const projectUploadCache = new Map();
 
-async function prepareProjectMedia(workspaceValue) {
+function comfyInputPath(value) {
+  return String(value || "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+}
+
+function safeSemanticComponent(value, fallback) {
+  const safe = String(value || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return safe || fallback;
+}
+
+async function preparePremiere316SemanticReferences(prepared, referenceScope = {}) {
+  const profile = premiere316ProfileForWorkspace(prepared);
+  if (!profile) return prepared;
+  const slug = prepared.premiere?.projectSlug;
+  const clipId = prepared.premiere?.clipId;
+  if (!slug || !clipId) throw new Error(`${profile.id} requires a Premiere project and storyboard clip`);
+  const state = sceneReferenceMedia(slug, clipId);
+  const scopedState = scopePremiere316ReferenceState(prepared, state, referenceScope);
+  const {
+    firstFrameI2v,
+    semanticReferences,
+    expectedCount,
+    referencesReady
+  } = scopedState;
+  const requiredFailures = scopedState.invalidReferences.filter((reference) => reference.required);
+  if (!referencesReady || requiredFailures.length || semanticReferences.length !== expectedCount) {
+    const reasons = requiredFailures.map((reference) => reference.reason || reference.assetId || reference.id).filter(Boolean);
+    throw new Error(
+      `${profile.id} semantic references are not ready: expected ${expectedCount}, resolved ${semanticReferences.length}`
+      + (reasons.length ? `; ${reasons.join("; ")}` : "")
+    );
+  }
+  if (!firstFrameI2v && expectedCount > profile.maxSemanticReferences) {
+    throw new Error(`${profile.id} expects ${expectedCount} references but supports ${profile.maxSemanticReferences}`);
+  }
+  if (firstFrameI2v) {
+    const perFrame = new Map();
+    for (const reference of semanticReferences) {
+      const frameId = String(reference.frameId || "");
+      perFrame.set(frameId, (perFrame.get(frameId) || 0) + 1);
+    }
+    const overLimit = [...perFrame.entries()].find(([, count]) => count > profile.maxSemanticReferences);
+    if (overLimit) throw new Error(`${profile.id} frame ${overLimit[0] || "missing"} has ${overLimit[1]} references but supports ${profile.maxSemanticReferences}`);
+  }
+
+  const planComponent = safeSemanticComponent(prepared.premiere.videoPlanId, "video_plan");
+  const assetRoot = comfyInputPath(`Premiere316/${safeSemanticComponent(slug, "project")}/semantic/${planComponent}`);
+  const staged = [];
+  for (let index = 0; index < semanticReferences.length; index += 1) {
+    const reference = semanticReferences[index];
+    const role = canonicalSemanticReferenceRole(reference.role || reference.declaredRole);
+    if (!role) {
+      throw new Error(`${profile.id} reference ${reference.id || index + 1} has unsupported role ${reference.role || "missing"}`);
+    }
+    const directProjectMedia = reference.persistenceOrigin === "user" || String(reference.projectMediaPath || reference.file || "").replace(/\\/g, "/").startsWith("media/");
+    const disk = directProjectMedia
+      ? resolveProjectMedia(slug, reference.projectMediaPath || reference.file)
+      : resolveProjectReferenceMedia(slug, reference.canonicalFile);
+    const stat = fs.statSync(disk);
+    const digest = await hashFile(disk);
+    if (reference.bytes && Number(reference.bytes) !== stat.size) {
+      throw new Error(`${profile.id} reference changed on disk: ${reference.canonicalFile} has ${stat.size} bytes; expected ${reference.bytes}`);
+    }
+    if (reference.sha256 && String(reference.sha256).toLowerCase() !== digest.toLowerCase()) {
+      throw new Error(`${profile.id} reference changed on disk: ${reference.canonicalFile} no longer matches the canonical index`);
+    }
+    const order = Math.max(1, Number(reference.order) || index + 1);
+    const safeName = safeSemanticComponent(
+      `${String(order).padStart(2, "0")}_${digest.slice(0, 12)}_${path.basename(disk)}`,
+      `${String(order).padStart(2, "0")}_${digest.slice(0, 12)}.png`
+    );
+    const subfolder = `${assetRoot}/${role}`;
+    const expectedFile = comfyInputPath(`${subfolder}/${safeName}`);
+    const uploaded = comfyInputPath(await uploadSmall(disk, safeName, subfolder));
+    if (uploaded !== expectedFile) {
+      throw new Error(`${profile.id} staged ${reference.canonicalFile} at unexpected ComfyUI input path ${uploaded}; expected ${expectedFile}`);
+    }
+    staged.push({
+      ...reference,
+      role,
+      declaredRole: reference.declaredRole || reference.role || role,
+      order,
+      imageFile: uploaded,
+      resolverReference: `${role}/${safeName}`,
+      sha256: digest,
+      bytes: stat.size
+    });
+  }
+  if (staged.length !== expectedCount || staged.some((reference) => !reference.imageFile || !reference.resolverReference)) {
+    throw new Error(`${profile.id} semantic staging is incomplete: expected ${expectedCount}, staged ${staged.length}`);
+  }
+  prepared.settings.generationProfile = profile.id;
+  prepared.settings.lengthModel = profile.lengthModel;
+  prepared.premiere.workflowProfileId = profile.id;
+  prepared.premiere.lengthModel = profile.lengthModel;
+  prepared.premiere.semanticConditioning = profile.semanticConditioning;
+  prepared.premiere.semanticAssetRoot = assetRoot;
+  prepared.premiere.semanticReferences = staged;
+  prepared.premiere.referenceCount = staged.length;
+  prepared.premiere.expectedReferenceCount = expectedCount;
+  prepared.premiere.semanticReferenceRoles = staged.map((reference) => reference.role);
+  prepared.premiere.semanticReferencesReady = true;
+  return prepared;
+}
+
+async function prepareProjectMedia(workspaceValue, referenceScope = {}) {
   const prepared = structuredClone(workspaceValue);
   const slug = prepared.premiere?.projectSlug;
   if (!slug) return prepared;
@@ -275,7 +497,7 @@ async function prepareProjectMedia(workspaceValue) {
   for (const segment of prepared.timeline?.motionSegments || []) {
     await prepareOne(segment, "videoFile");
   }
-  return prepared;
+  return preparePremiere316SemanticReferences(prepared, referenceScope);
 }
 
 function collectOutputRefs(outputs) {
@@ -321,6 +543,123 @@ function hashFile(file) {
 
 function safeOutputStem(value) {
   return String(value || "scene").replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 96) || "scene";
+}
+
+function pendingDirectorContinuation(job) {
+  const binding = job?.refs?.binding;
+  const segmentId = String(job?.refs?.segmentId || "");
+  if (binding?.source !== "storyboard" || !binding.projectSlug || !binding.clipId || !segmentId) return null;
+  const storyboard = loadStoryboard(binding.projectSlug);
+  const target = continuationTargetForSegment(storyboard, binding.clipId, segmentId);
+  if (!target?.pending) return null;
+  const source = storyboard.segments?.[segmentId];
+  // A locked take is an explicit editorial choice. A new, unselected render
+  // must never replace the continuation derived from that chosen source.
+  if (source?.activeTakeLocked) {
+    const activeTake = (source.generatedVersions || []).find((take) => (
+      String(take.id || "") === String(source.activeTakeId || "")
+      || Number(take.v) === Number(source.activeGeneratedVersion)
+    ));
+    if (String(activeTake?.comfyPromptId || activeTake?.promptId || "") !== String(job.refs.promptId || "")) return null;
+  }
+  return target;
+}
+
+async function prepareDirectorContinuationHandoff(job, rawVideo, rawFrames, target = pendingDirectorContinuation(job)) {
+  if (!target) return null;
+  if (Number(rawFrames) <= Number(target.decodedFrameIndex)) {
+    throw new Error(
+      `Generated output has ${rawFrames} decoded frames; continuation ${target.targetFrameId} requires zero-based frame ${target.decodedFrameIndex}`
+    );
+  }
+  const slug = job.refs.binding.projectSlug;
+  const promptId = String(job.refs.promptId || "");
+  const root = mediaDir(slug, "storyboard");
+  fs.mkdirSync(root, { recursive: true });
+  const temporary = path.join(
+    mediaDir(slug, "temp"),
+    `${safeOutputStem(promptId)}.${safeOutputStem(target.targetFrameId)}.handoff.${crypto.randomUUID()}.png`
+  );
+  fs.mkdirSync(path.dirname(temporary), { recursive: true });
+  let destination = null;
+  let createdFile = false;
+  try {
+    await extractVideoFrameExact(rawVideo, temporary, target.decodedFrameIndex);
+    const stat = fs.statSync(temporary);
+    const sha256 = await hashFile(temporary);
+    const expectedBase = path.basename(String(target.expectedSource || target.outputHandoff || "handoff.png"));
+    const safeBase = safeOutputStem(path.parse(expectedBase).name);
+    let file = `${safeBase}.png`;
+    destination = path.join(root, file);
+    if (fs.existsSync(destination)) {
+      const existingStat = fs.statSync(destination);
+      const existingHash = await hashFile(destination);
+      if (existingStat.size !== stat.size || existingHash.toLowerCase() !== sha256.toLowerCase()) {
+        file = `${safeBase}.director-${safeOutputStem(promptId).slice(0, 16)}.png`;
+        destination = path.join(root, file);
+        if (fs.existsSync(destination)) {
+          const promptStat = fs.statSync(destination);
+          const promptHash = await hashFile(destination);
+          if (promptStat.size !== stat.size || promptHash.toLowerCase() !== sha256.toLowerCase()) {
+            throw new Error(`Continuation handoff destination already exists with different bytes: ${file}`);
+          }
+        } else {
+          fs.renameSync(temporary, destination);
+          createdFile = true;
+        }
+      }
+    } else {
+      fs.renameSync(temporary, destination);
+      createdFile = true;
+    }
+    try { fs.rmSync(temporary, { force: true }); } catch {}
+    return {
+      disk: destination,
+      createdFile,
+      file: path.basename(destination),
+      bytes: stat.size,
+      sha256,
+      sourcePromptId: promptId,
+      sourceOutputNodeId: "94",
+      sourceFrameIndex: target.decodedFrameIndex,
+      workflowHash: job.refs.sourceHash || null,
+      targetFrameId: target.targetFrameId,
+      createdAt: new Date().toISOString(),
+      commitResult: null
+    };
+  } catch (error) {
+    try { fs.rmSync(temporary, { force: true }); } catch {}
+    if (createdFile && destination) {
+      try { fs.rmSync(destination, { force: true }); } catch {}
+    }
+    throw error;
+  }
+}
+
+function commitExistingDirectorContinuation(job, handoff) {
+  if (!handoff) return null;
+  const binding = job.refs.binding;
+  const storyboard = loadStoryboard(binding.projectSlug);
+  const source = storyboard.segments?.[job.refs.segmentId];
+  const sourceTake = (source?.generatedVersions || []).find((take) => (
+    String(take.comfyPromptId || take.promptId || "") === String(job.refs.promptId || "")
+    && (String(take.id || "") === String(source.activeTakeId || "")
+      || Number(take.v) === Number(source.activeGeneratedVersion))
+  ));
+  if (!sourceTake) return { applied: false, reason: "source_take_not_active" };
+  const result = applyContinuationHandoff(storyboard, {
+    clipId: binding.clipId,
+    sourceSegmentId: job.refs.segmentId,
+    sourcePromptId: job.refs.promptId,
+    sourceTakeId: sourceTake.id,
+    handoff
+  });
+  if (result.applied && !result.idempotent) {
+    storyboard.updatedAt = new Date().toISOString();
+    saveStoryboard(binding.projectSlug, storyboard);
+  }
+  handoff.commitResult = result;
+  return result;
 }
 
 function relativeProjectMedia(file, slug) {
@@ -451,7 +790,7 @@ function registerSequenceOutput(binding, fileName, promptId, mode, segmentId, ex
   clip.versions.push({
     ...provenance,
     v: version,
-    file: fileName,
+    file: directorOutputRelativePath(binding.clipId, fileName),
     name: path.parse(fileName).name,
     source: "ltx25-director-webapp",
     promptId,
@@ -698,7 +1037,12 @@ async function finalizeMusicVideoRun(run) {
     shotDisks.push(disk);
   }
   const totalFrames = run.refs.plan.requestedFrames;
-  const destination = path.join(mediaDir(run.projectSlug, finalization.destinationKind), finalization.fileName);
+  const finalRelativeFile = isManifest
+    ? `media/masters/${finalization.fileName}`
+    : directorOutputRelativePath(binding.clipId, finalization.fileName);
+  const destination = isManifest
+    ? path.join(mediaDir(run.projectSlug, finalization.destinationKind), finalization.fileName)
+    : directorOutputDiskPath(projectDir(run.projectSlug), binding.clipId, finalization.fileName);
   const staged = path.join(musicVideoTempRoot(run), `${path.parse(finalization.fileName).name}.ready.mp4`);
   fs.mkdirSync(path.dirname(staged), { recursive: true });
   if (fs.existsSync(destination) && (!run.refs.finalization.sha256 || !run.refs.finalization.bytes)) {
@@ -768,7 +1112,7 @@ async function finalizeMusicVideoRun(run) {
       version: {
         ...provenance,
         v: finalization.version,
-        file: `media/clips/${finalization.fileName}`,
+        file: finalRelativeFile,
         outputFile: finalization.fileName,
         source: "ltx25-director-music-video",
         workflowId: "ltx25-director-music-video",
@@ -788,7 +1132,7 @@ async function finalizeMusicVideoRun(run) {
   run.error = null;
   run.finishedAt = new Date().toISOString();
   run.result = {
-    file: `media/${finalization.destinationKind}/${finalization.fileName}`,
+    file: finalRelativeFile,
     version: finalization.version,
     frames: totalFrames,
     soundtrackSha256: run.refs.soundtrack.sha256
@@ -904,8 +1248,11 @@ async function completeDirectorJob(job, historyEntry) {
   const expectedFps = Math.max(1, Number(job.refs.fps) || 24);
   const recordedGenerationFrames = Math.max(0, Number(job.refs.generationFrames) || 0);
   const alignedGenerationFrames = ltxFrameCount(expectedFrames);
-  if (recordedGenerationFrames > 0 && recordedGenerationFrames !== alignedGenerationFrames) {
-    throw new Error(`Director job ledger says ${recordedGenerationFrames} generation frames, but ${expectedFrames} requested frames require ${alignedGenerationFrames} on the LTX 8n+1 grid`);
+  if (recordedGenerationFrames > 0 && (
+    recordedGenerationFrames < alignedGenerationFrames
+    || ltxFrameCount(recordedGenerationFrames) !== recordedGenerationFrames
+  )) {
+    throw new Error(`Director job ledger says ${recordedGenerationFrames} generation frames, but ${expectedFrames} requested frames require at least ${alignedGenerationFrames} on the LTX 8n+1 grid`);
   }
   const expectedGenerationFrames = recordedGenerationFrames || alignedGenerationFrames;
   const expectedMedia = {
@@ -918,11 +1265,36 @@ async function completeDirectorJob(job, historyEntry) {
   const promptStem = safeOutputStem(job.refs.promptId).slice(0, 64);
   const tempRoot = mediaDir(binding.projectSlug, "temp");
   const journalPath = path.join(tempRoot, `${promptStem}.director-finalizing.json`);
+  const outputRefs = historyEntry.outputs?.["94"] ? collectOutputRefs({ "94": historyEntry.outputs["94"] }) : [];
+  const videoRef = outputRefs.find((ref) => /\.(mp4|mov|mkv|webm|m4v)$/i.test(ref.filename)) || null;
   const existing = await findDirectorRenderByPrompt(binding.projectSlug, binding, job.refs.promptId);
   if (existing) {
     if (!existing.valid) throw new Error(`Premiere has a render record for this prompt, but its media is invalid: ${existing.error}`);
     const existingInfo = await probeMediaExact(existing.disk);
     assertFinalDirectorMedia(existingInfo, expectedMedia);
+    let existingHandoff = null;
+    const continuationTarget = pendingDirectorContinuation(job);
+    if (continuationTarget) {
+      if (!videoRef) throw new Error("The registered render still needs its continuation tail, but ComfyUI output node 94 is unavailable");
+      const sourceExtension = path.extname(videoRef.filename) || ".mp4";
+      const raw = path.join(tempRoot, `${promptStem}.continuity-repair.raw${sourceExtension}`);
+      try {
+        try { fs.rmSync(raw, { force: true }); } catch {}
+        await downloadComfyOutput(videoRef, raw);
+        const rawInfo = await probeMediaExact(raw);
+        const rawFrames = Number(rawInfo.video?.nb_frames || 0);
+        if (rawFrames !== expectedGenerationFrames) {
+          throw new Error(`Continuation repair output has ${rawFrames || "unknown"} frames; expected ${expectedGenerationFrames}`);
+        }
+        existingHandoff = await prepareDirectorContinuationHandoff(job, raw, rawFrames, continuationTarget);
+        const result = commitExistingDirectorContinuation(job, existingHandoff);
+        if (!result?.applied && existingHandoff.createdFile) {
+          try { fs.rmSync(existingHandoff.disk, { force: true }); } catch {}
+        }
+      } finally {
+        try { fs.rmSync(raw, { force: true }); } catch {}
+      }
+    }
     const journalData = readJsonMaybe(journalPath);
     if (journalData?.promptId === job.refs.promptId) {
       try { fs.rmSync(journalPath, { force: true }); } catch {}
@@ -932,14 +1304,23 @@ async function completeDirectorJob(job, historyEntry) {
     job.progress = 1;
     job.stage = "Already registered in Premiere project";
     job.finishedAt = finishedAt;
-    job.result = { file: existing.file, clipId: binding.clipId, version: existing.version, idempotent: true };
+    job.result = {
+      file: existing.file,
+      clipId: binding.clipId,
+      version: existing.version,
+      idempotent: true,
+      continuationHandoff: existingHandoff?.commitResult?.applied ? {
+        file: existingHandoff.file,
+        targetFrameId: existingHandoff.commitResult.target?.targetFrameId,
+        sourceFrameIndex: existingHandoff.sourceFrameIndex,
+        idempotent: Boolean(existingHandoff.commitResult.idempotent)
+      } : null
+    };
     upsertProjectJob(binding.projectSlug, job);
     directorJobs.delete(job.id);
     return;
   }
   if (!historyEntry.outputs?.["94"]) throw new Error("Expected final ComfyUI output node 94 is missing; preview outputs will not be registered");
-  const refs = collectOutputRefs({ "94": historyEntry.outputs["94"] });
-  const videoRef = refs.find((ref) => /\.(mp4|mov|mkv|webm|m4v)$/i.test(ref.filename));
   if (!videoRef) throw new Error("ComfyUI completed without a video output");
   if (binding.source === "storyboard" && storyboardPlanFingerprint(binding.projectSlug, binding.clipId) !== job.refs.generationFingerprint) {
     throw staleRenderError("The Premiere scene plan changed while this render was running. The ComfyUI output was not attached to the newer scene version.");
@@ -965,22 +1346,23 @@ async function completeDirectorJob(job, historyEntry) {
   const sourceExtension = path.extname(videoRef.filename) || ".mp4";
   const extension = ".mp4";
   const fileName = `${safeOutputStem(binding.clipId)}${suffix}_director_v${String(version).padStart(2, "0")}${extension}`;
-  const destinationKind = "clips";
-  const destination = path.join(mediaDir(binding.projectSlug, destinationKind), fileName);
+  const relativeOutputFile = directorOutputRelativePath(binding.clipId, fileName);
+  const destination = directorOutputDiskPath(projectDir(binding.projectSlug), binding.clipId, fileName);
   const raw = path.join(tempRoot, `${path.parse(fileName).name}.${promptStem}.raw${sourceExtension}`);
   const staged = path.join(tempRoot, `${path.parse(fileName).name}.${promptStem}.ready.mp4`);
-  const recoveryCandidates = recoveryJournal ? [
-    recoveryJournal.targetFileName ? path.join(mediaDir(binding.projectSlug, destinationKind), path.basename(recoveryJournal.targetFileName)) : null,
-    recoveryJournal.fileName ? path.join(mediaDir(binding.projectSlug, destinationKind), path.basename(recoveryJournal.fileName)) : null,
-    recoveryJournal.previousFileName ? path.join(mediaDir(binding.projectSlug, destinationKind), path.basename(recoveryJournal.previousFileName)) : null,
+  const recoveryCandidates = recoveryJournal ? [...new Set([
+    ...[recoveryJournal.targetFileName, recoveryJournal.fileName, recoveryJournal.previousFileName]
+      .filter(Boolean)
+      .flatMap((name) => directorOutputDiskCandidates(projectDir(binding.projectSlug), binding.clipId, path.basename(name))),
     recoveryJournal.stagedFile ? path.join(tempRoot, path.basename(recoveryJournal.stagedFile)) : null,
     recoveryJournal.previousStagedFile ? path.join(tempRoot, path.basename(recoveryJournal.previousStagedFile)) : null
-  ].filter(Boolean) : [];
+  ].filter(Boolean))] : [];
   let rawFrames = 0;
   let mediaInfo;
   let fileStat;
   let fileSha256;
   let promoted = false;
+  let continuityHandoff = null;
   try {
     const recoverySource = recoveryCandidates.find((candidate) => fs.existsSync(candidate)) || null;
     if (recoverySource) {
@@ -992,6 +1374,18 @@ async function completeDirectorJob(job, historyEntry) {
       mediaInfo = await probeMediaExact(recoverySource);
       assertFinalDirectorMedia(mediaInfo, expectedMedia);
       rawFrames = Number(recoveryJournal.generationFrames) || expectedGenerationFrames;
+      const continuationTarget = pendingDirectorContinuation(job);
+      if (continuationTarget) {
+        try { fs.rmSync(raw, { force: true }); } catch {}
+        await downloadComfyOutput(videoRef, raw);
+        const rawInfo = await probeMediaExact(raw);
+        const downloadedFrames = Number(rawInfo.video?.nb_frames || 0);
+        if (downloadedFrames !== expectedGenerationFrames) {
+          throw new Error(`Recovered continuation source has ${downloadedFrames || "unknown"} frames; expected ${expectedGenerationFrames}`);
+        }
+        continuityHandoff = await prepareDirectorContinuationHandoff(job, raw, downloadedFrames, continuationTarget);
+        try { fs.rmSync(raw, { force: true }); } catch {}
+      }
       fs.mkdirSync(path.dirname(destination), { recursive: true });
       if (path.resolve(recoverySource).toLowerCase() !== path.resolve(destination).toLowerCase()) {
         if (fs.existsSync(destination)) throw new Error(`Output destination already exists: ${fileName}`);
@@ -1034,6 +1428,7 @@ async function completeDirectorJob(job, historyEntry) {
       if (!Number.isFinite(rawFrames) || rawFrames !== expectedGenerationFrames) {
         throw new Error(`Generated output has ${rawFrames || "unknown"} frames; expected the LTX-aligned ${expectedGenerationFrames} frames for a ${expectedFrames}-frame Premiere scene`);
       }
+      continuityHandoff = await prepareDirectorContinuationHandoff(job, raw, rawFrames);
       const rawRate = frameRateNumber(rawInfo.video.avg_frame_rate || rawInfo.video.r_frame_rate);
       const rawAudioMismatch = Boolean(job.refs.expectAudio) && (
         Number(rawInfo.audio?.sample_rate || 0) !== 48000
@@ -1082,7 +1477,7 @@ async function completeDirectorJob(job, historyEntry) {
       version: {
         v: version,
         files: [fileName],
-        file: `media/clips/${fileName}`,
+        file: relativeOutputFile,
         outputFile: fileName,
         mediaType: "video",
         source: "ltx25-director-webapp",
@@ -1096,6 +1491,12 @@ async function completeDirectorJob(job, historyEntry) {
         promptHash: job.refs.promptHash,
         mode: job.refs.mode,
         segmentId: job.refs.segmentId || null,
+        segmentIndex: job.refs.segmentIndex ?? null,
+        segmentCount: job.refs.segmentCount ?? null,
+        usePreviousAsFirstFrame: job.refs.usePreviousAsFirstFrame === true,
+        useNextAsLastFrame: job.refs.useNextAsLastFrame === true,
+        firstFrameSegmentId: job.refs.firstFrameSegmentId || job.refs.segmentId || null,
+        lastFrameSegmentId: job.refs.lastFrameSegmentId || null,
         fps: job.refs.fps,
         width: job.refs.width,
         height: job.refs.height,
@@ -1109,8 +1510,12 @@ async function completeDirectorJob(job, historyEntry) {
         createdAt
       },
       expectedFingerprint: job.refs.generationFingerprint,
-      promptId: job.refs.promptId
+      promptId: job.refs.promptId,
+      continuityHandoff
         });
+        if (continuityHandoff && !continuityHandoff.commitResult?.applied && continuityHandoff.createdFile) {
+          try { fs.rmSync(continuityHandoff.disk, { force: true }); } catch {}
+        }
       } else {
         registerSequenceOutput(binding, fileName, job.refs.promptId, job.refs.mode, job.refs.segmentId, version, {
           mediaType: "video",
@@ -1127,6 +1532,9 @@ async function completeDirectorJob(job, historyEntry) {
       }
       try { fs.rmSync(journalPath, { force: true }); } catch {}
     } catch (error) {
+      if (continuityHandoff?.createdFile && !continuityHandoff.commitResult?.applied) {
+        try { fs.rmSync(continuityHandoff.disk, { force: true }); } catch {}
+      }
       if (promoted && fs.existsSync(destination)) {
         const quarantine = quarantinePath(tempRoot, `${path.parse(fileName).name}.${promptStem}`);
         try { fs.renameSync(destination, quarantine); promoted = false; } catch {}
@@ -1138,7 +1546,17 @@ async function completeDirectorJob(job, historyEntry) {
   job.progress = 1;
   job.stage = "Registered in Premiere project";
   job.finishedAt = createdAt;
-  job.result = { file: `media/${destinationKind}/${fileName}`, clipId: binding.clipId, version };
+  job.result = {
+    file: relativeOutputFile,
+    clipId: binding.clipId,
+    version,
+    continuationHandoff: continuityHandoff?.commitResult?.applied ? {
+      file: continuityHandoff.file,
+      targetFrameId: continuityHandoff.commitResult.target?.targetFrameId,
+      sourceFrameIndex: continuityHandoff.sourceFrameIndex,
+      idempotent: Boolean(continuityHandoff.commitResult.idempotent)
+    } : null
+  };
   upsertProjectJob(binding.projectSlug, job);
   directorJobs.delete(job.id);
   } finally {
@@ -1446,11 +1864,15 @@ async function resumeMusicVideoSequence(slug, runId) {
   return await queueMusicVideoShot(stored, index, guide);
 }
 
-function trackDirectorPrompt(accepted, binding, mode, preparedWorkspace) {
+function trackDirectorPrompt(accepted, binding, mode, preparedWorkspace, segmentJob = null) {
   if (!binding?.projectSlug || !binding?.clipId) return;
   const id = `director_${accepted.promptId}`;
-  const timelineText = JSON.stringify(preparedWorkspace.timeline || {});
-  const promptText = `${preparedWorkspace.timeline?.global_prompt || ""}\n${(preparedWorkspace.timeline?.segments || []).map((segment) => segment.prompt || "").join("\n")}`;
+  const trackedTimeline = segmentJob?.timeline || preparedWorkspace.timeline || {};
+  const timelineText = JSON.stringify(trackedTimeline);
+  const trackedLocalPrompt = segmentJob
+    ? String(segmentJob.localPrompts || "")
+    : (preparedWorkspace.timeline?.segments || []).map((segment) => segment.prompt || "").join("\n");
+  const promptText = `${preparedWorkspace.timeline?.global_prompt || ""}\n${trackedLocalPrompt}`;
   const job = {
     id,
     type: "director_render",
@@ -1465,18 +1887,27 @@ function trackDirectorPrompt(accepted, binding, mode, preparedWorkspace) {
       promptId: accepted.promptId,
       mode,
       segmentId: accepted.segmentId || null,
+      segmentIndex: accepted.segmentIndex ?? null,
+      segmentCount: accepted.segmentCount ?? null,
+      queueIndex: accepted.queueIndex ?? null,
+      queueTotal: accepted.queueTotal ?? null,
+      usePreviousAsFirstFrame: accepted.usePreviousAsFirstFrame === true,
+      useNextAsLastFrame: accepted.useNextAsLastFrame === true,
+      firstFrameSegmentId: accepted.firstFrameSegmentId || accepted.segmentId || null,
+      lastFrameSegmentId: accepted.lastFrameSegmentId || null,
       fps: preparedWorkspace.settings.frameRate,
       width: preparedWorkspace.settings.customWidth,
       height: preparedWorkspace.settings.customHeight,
       durationFrames: accepted.requestedFrames ?? preparedWorkspace.timeline?.normalDurationFrames ?? preparedWorkspace.stats?.durationFrames ?? null,
-          requestedFrames: accepted.requestedFrames ?? preparedWorkspace.timeline?.normalDurationFrames ?? preparedWorkspace.stats?.durationFrames ?? null,
+      requestedFrames: accepted.requestedFrames ?? preparedWorkspace.timeline?.normalDurationFrames ?? preparedWorkspace.stats?.durationFrames ?? null,
       generationFrames: accepted.generationFrames ?? accepted.durationFrames ?? null,
       expectAudio: Boolean(accepted.expectAudio),
       segmentIds: accepted.segmentId ? [accepted.segmentId] : (preparedWorkspace.timeline?.segments || []).map((segment) => segment.id),
       sourceHash: preparedWorkspace.source?.sha256 || null,
       timelineHash: crypto.createHash("sha256").update(timelineText).digest("hex"),
       promptHash: crypto.createHash("sha256").update(promptText).digest("hex"),
-      generationFingerprint: accepted.generationFingerprint || null
+      generationFingerprint: accepted.generationFingerprint || null,
+      referenceConditioning: accepted.referenceConditioning || null
     },
     result: null,
     createdAt: new Date().toISOString(),
@@ -1517,6 +1948,11 @@ app.use(express.static(PUBLIC_DIR, {
 }));
 
 app.get("/api/workspace", (_req, res) => {
+  const refreshed = refreshBoundWorkspaceFromStoryboard(workspace);
+  if (refreshed.refreshed) {
+    workspace = refreshed.workspace;
+    atomicWrite(STATE_FILE, workspace);
+  }
   res.json({ workspace: workspaceForClient(workspace), sourceWorkflow: SOURCE_WORKFLOW });
 });
 
@@ -1557,6 +1993,68 @@ app.get("/api/premiere/projects/:slug/scenes/:clipId/references", (req, res) => 
   catch (error) { res.status(404).json({ error: String(error.message || error) }); }
 });
 
+app.post("/api/premiere/projects/:slug/scenes/:clipId/references/refresh", (req, res) => {
+  try {
+    const references = sceneReferenceMedia(req.params.slug, req.params.clipId);
+    workspace = workspaceWithRefreshedReferenceBinding(workspace, references);
+    atomicWrite(STATE_FILE, workspace);
+    res.json({ ok: true, references, workspace: workspaceForClient(workspace) });
+  } catch (error) {
+    const mismatch = /currently bound|before refreshing/i.test(String(error.message || error));
+    res.status(mismatch ? 409 : 400).json({ error: String(error.message || error) });
+  }
+});
+
+app.get("/api/premiere/projects/:slug/scenes/:clipId/segments/:segmentId/takes", (req, res) => {
+  try { res.json(listSegmentTakes(req.params.slug, req.params.clipId, req.params.segmentId)); }
+  catch (error) { res.status(404).json({ error: String(error.message || error) }); }
+});
+
+app.post("/api/premiere/projects/:slug/scenes/:clipId/segments/:segmentId/takes/activate", (req, res) => {
+  try {
+    const takeId = String(req.body?.takeId || req.body?.id || "");
+    if (!takeId) return res.status(400).json({ error: "takeId required" });
+    const result = activateSegmentTake(req.params.slug, req.params.clipId, req.params.segmentId, takeId);
+    if (workspace?.premiere?.projectSlug === req.params.slug && workspace?.premiere?.clipId === req.params.clipId) {
+      const segment = (workspace.timeline?.segments || []).find((item) => String(item.id) === String(req.params.segmentId));
+      if (segment) {
+        segment.generatedTakes = result.takes;
+        segment.activeTakeId = result.activeTakeId;
+        segment.activeGeneratedVersion = result.activeGeneratedVersion;
+        segment.activeTakeFile = result.activeTake?.previewFile || result.activeTake?.file || null;
+      }
+      atomicWrite(STATE_FILE, workspace);
+    }
+    res.json({ ok: true, ...result, workspace: workspaceForClient(workspace) });
+  } catch (error) { res.status(400).json({ error: String(error.message || error) }); }
+});
+
+app.post("/api/premiere/projects/:slug/scenes/:clipId/segments/:segmentId/takes/lock", (req, res) => {
+  try {
+    const result = setSegmentTakeLock(req.params.slug, req.params.clipId, req.params.segmentId, Boolean(req.body?.locked));
+    if (workspace?.premiere?.projectSlug === req.params.slug && workspace?.premiere?.clipId === req.params.clipId) {
+      const segment = (workspace.timeline?.segments || []).find((item) => String(item.id) === String(req.params.segmentId));
+      if (segment) segment.activeTakeLocked = result.activeTakeLocked;
+      atomicWrite(STATE_FILE, workspace);
+    }
+    res.json({ ok: true, ...result, workspace: workspaceForClient(workspace) });
+  } catch (error) { res.status(400).json({ error: String(error.message || error) }); }
+});
+
+app.post("/api/premiere/projects/:slug/generate-option", (req, res) => {
+  try {
+    const clipId = String(req.body?.clipId || workspace?.premiere?.clipId || "");
+    const optionId = String(req.body?.optionId || req.body?.generateOptionId || "");
+    if (!clipId || !optionId) return res.status(400).json({ error: "clipId and optionId required" });
+    const result = setClipGenerateOption(req.params.slug, clipId, optionId);
+    if (workspace?.premiere?.projectSlug === req.params.slug) {
+      workspace = workspaceForProjectClip(workspace, req.params.slug, clipId);
+      atomicWrite(STATE_FILE, workspace);
+    }
+    res.json({ ok: true, ...result, workspace: workspaceForClient(workspace), overview: projectOverview(req.params.slug) });
+  } catch (error) { res.status(400).json({ error: String(error.message || error) }); }
+});
+
 app.post("/api/premiere/projects/:slug/load", (req, res) => {
   try {
     const clipId = String(req.body?.clipId || "");
@@ -1582,6 +2080,28 @@ app.post("/api/premiere/sync", (_req, res) => {
     res.status(error.code === "STALE_STORYBOARD" ? 409 : 400).json({ error: String(error.message || error) });
   }
 });
+
+
+app.post("/api/premiere/global-prompt", (req, res) => {
+  try {
+    const binding = workspace?.premiere;
+    if (!binding?.projectSlug || !binding?.clipId) {
+      throw new Error("Load a Premiere project scene before saving a global prompt");
+    }
+    const scope = String(req.body?.scope || "clip");
+    const text = req.body?.text != null ? String(req.body.text) : String(workspace.timeline?.global_prompt || "");
+    workspace.timeline = workspace.timeline || {};
+    workspace.timeline.global_prompt = text;
+    workspace.settings = workspace.settings || {};
+    workspace.settings.globalPromptScope = scope;
+    atomicWrite(STATE_FILE, workspace);
+    const result = applyGlobalPromptToScope(binding.projectSlug, binding.clipId, text, scope);
+    res.json({ ok: true, result });
+  } catch (error) {
+    res.status(400).json({ error: String(error.message || error) });
+  }
+});
+
 
 app.post("/api/premiere/projects/:slug/import-media", async (req, res) => {
   try {
@@ -1727,8 +2247,60 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
-app.get("/api/preflight", async (_req, res) => {
+app.get("/api/preflight", async (req, res) => {
   try {
+    const premiere316Profile = premiere316ProfileForWorkspace(workspace);
+    if (premiere316Profile) {
+      const selectedSegmentId = String(req.query.segmentId || workspace.selectedSegmentId || "").trim();
+      const prepared = await prepareProjectMedia(workspace, {
+        mode: "selected",
+        segmentId: selectedSegmentId
+      });
+      const segmentJobs = buildSegmentJobs(prepared, selectedSegmentId);
+      if (!segmentJobs.length) {
+        throw new Error("No compilable visual segment. Select a main-track segment with a first frame.");
+      }
+      const built = await compile(prepared, segmentJobs[0], true);
+      return res.json({
+        ok: true,
+        mode: "premiere316-hybrid-segmented-i2v",
+        segmentId: segmentJobs[0].sourceSegmentId,
+        generationProfile: premiere316Profile.id,
+        lengthModel: premiere316Profile.lengthModel,
+        nodeCount: built.nodeCount,
+        flatNodeCount: built.flatNodeCount,
+        flatLinkCount: built.flatLinkCount,
+        outputNodes: Object.entries(built.prompt)
+          .filter(([, node]) => ["VHS_VideoCombine", "SaveVideo"].includes(node.class_type))
+          .map(([id, node]) => ({ id, type: node.class_type })),
+        referenceConditioning: built.referenceConditioning,
+        semanticReferences: built.referenceConditioning?.semantic || null,
+        warnings: []
+      });
+    }
+    if (workspace.premiere?.generationMode === "t2v_with_semantic_references"
+      && workspace.premiere?.projectSlug
+      && workspace.premiere?.videoPlanId) {
+      const referenceState = sceneReferenceMedia(workspace.premiere.projectSlug, workspace.premiere.clipId);
+      if (!referenceState.referencesReady) {
+        const reason = referenceState.invalidReferences?.map((item) => item.reason).filter(Boolean).join("; ")
+          || "Semantic references are not ready";
+        return res.status(400).json({ ok: false, error: reason });
+      }
+      const project = loadProject(workspace.premiere.projectSlug);
+      const storyboard = loadStoryboard(workspace.premiere.projectSlug);
+      const built = await compileStoryboardVideoPlanPrompt(project, storyboard, workspace.premiere.videoPlanId);
+      return res.json({
+        ok: true,
+        mode: "premiere-semantic-t2v",
+        nodeCount: Object.keys(built.apiPrompt).length,
+        outputNodes: Object.entries(built.apiPrompt)
+          .filter(([, node]) => ["VHS_VideoCombine", "SaveVideo"].includes(node.class_type))
+          .map(([id, node]) => ({ id, type: node.class_type })),
+        semanticReferences: built.referenceConditioning,
+        warnings: []
+      });
+    }
     const built = await compile(workspace, null, true);
     res.json({
       ok: true,
@@ -1736,7 +2308,7 @@ app.get("/api/preflight", async (_req, res) => {
       flatNodeCount: built.flatNodeCount,
       flatLinkCount: built.flatLinkCount,
       outputNodes: Object.entries(built.prompt).filter(([, node]) => ["VHS_VideoCombine", "SaveVideo"].includes(node.class_type)).map(([id, node]) => ({ id, type: node.class_type })),
-      warnings: ["The source IC-LoRA track is visible but its motion_guide_data/model sockets are not wired, so it is currently display-only."]
+      warnings: []
     });
   } catch (error) {
     res.status(400).json({ ok: false, error: String(error.message || error) });
@@ -1780,8 +2352,16 @@ app.post("/api/upload", ensureUploadDir, upload.single("file"), async (req, res)
 });
 
 app.post("/api/queue", async (req, res) => {
+  let queueReservation = null;
   try {
-    const mode = String(req.body?.mode || workspace.settings.queueMode || "segments");
+    let mode = String(req.body?.mode || workspace.settings.queueMode || "segments");
+    if (isSegmentedI2vGenerationMode(workspace.premiere?.generationMode) && mode === "timeline") {
+      mode = "segments";
+    }
+    if (!new Set(["timeline", "segments", "selected"]).has(mode)) {
+      return res.status(400).json({ error: `Unsupported Director queue mode: ${mode}` });
+    }
+    const requestedSegmentId = String(req.body?.segmentId || workspace.selectedSegmentId || "").trim();
     if (workspace.premiere?.projectSlug && workspace.premiere?.clipId) {
       const activeMusic = [...musicVideoRuns.values()].find((run) => {
         if (!["queued", "running", "finalizing"].includes(run.status)) return false;
@@ -1790,15 +2370,26 @@ app.post("/api/queue", async (req, res) => {
         return clipIds.includes(workspace.premiere.clipId);
       });
       if (activeMusic) return res.status(409).json({ error: `This Premiere scene belongs to active music-video sequence ${activeMusic.id}` });
-      const active = [...directorJobs.values()].find((job) =>
-        ["queued", "running"].includes(job.status)
-        && job.refs?.mode === "timeline"
-        && job.refs?.binding?.projectSlug === workspace.premiere.projectSlug
-        && job.refs?.binding?.clipId === workspace.premiere.clipId
-      );
+      const active = [...directorJobs.values()].find((job) => directorJobConflictsWithQueueRequest(job, {
+        projectSlug: workspace.premiere.projectSlug,
+        clipId: workspace.premiere.clipId,
+        mode
+      }));
       if (active) return res.status(409).json({ error: `This Premiere scene already has an active Director render (${active.refs.promptId})` });
     }
-    if (workspace.premiere?.source === "storyboard") {
+    if (workspace.premiere?.projectSlug && workspace.premiere?.clipId) {
+      queueReservation = segmentQueueReservations.reserve({
+        projectSlug: workspace.premiere.projectSlug,
+        clipId: workspace.premiere.clipId,
+        segmentIds: queueReservationSegmentIds(
+          mode,
+          workspace,
+          requestedSegmentId
+        )
+      });
+    }
+    if (workspace.premiere?.source === "storyboard"
+      && !isSegmentedI2vGenerationMode(workspace.premiere?.generationMode)) {
       const referenceState = sceneReferenceMedia(workspace.premiere.projectSlug, workspace.premiere.clipId);
       if (!referenceState.referencesReady) {
         const missing = referenceState.invalidReferences.filter((item) => item.required).map((item) => item.assetId || item.sourceAssetKey || item.reason || "reference");
@@ -1842,28 +2433,38 @@ app.post("/api/queue", async (req, res) => {
         throw error;
       }
     }
-    const preparedWorkspace = await prepareProjectMedia(workspace);
+    const preparedWorkspace = await prepareProjectMedia(workspace, {
+      mode,
+      segmentId: mode === "selected" ? requestedSegmentId : null
+    });
     const generationFingerprint = preparedWorkspace.premiere?.source === "storyboard"
       ? storyboardPlanFingerprint(preparedWorkspace.premiere.projectSlug, preparedWorkspace.premiere.clipId)
       : null;
     let jobs = [];
-    if (mode === "selected") jobs = buildSegmentJobs(preparedWorkspace, req.body?.segmentId || preparedWorkspace.selectedSegmentId);
+    if (mode === "selected") jobs = buildSegmentJobs(preparedWorkspace, requestedSegmentId);
     else if (mode === "segments") jobs = buildSegmentJobs(preparedWorkspace);
     else jobs = [null];
-    const hasVisualGuide = (preparedWorkspace.timeline?.segments || []).some((segment) => ["image", "video"].includes(segment.type) && (segment.imageFile || segment.videoFile));
-    const missingGuides = (preparedWorkspace.timeline?.segments || []).filter((segment) => segment.missingGuide).map((segment) => segment.storyboardFrameId || segment.id);
-    if (!jobs.length || (mode === "timeline" && (!hasVisualGuide || missingGuides.length))) {
-      const detail = missingGuides.length ? ` Missing: ${missingGuides.join(", ")}.` : "";
+    const readiness = segmentQueueReadiness(preparedWorkspace.timeline, jobs, mode);
+    if (!readiness.ready) {
+      const detail = readiness.missingGuides.length ? ` Missing: ${readiness.missingGuides.join(", ")}.` : "";
       return res.status(400).json({ error: `This scene is not ready for a full render. Generate or approve every required storyboard guide first.${detail}` });
+    }
+    const requestedSegmentIds = new Set(jobs.map((job) => job?.sourceSegmentId).filter(Boolean));
+    const activeSegment = [...directorJobs.values()].find((job) => directorJobConflictsWithQueueRequest(job, {
+      projectSlug: preparedWorkspace.premiere?.projectSlug,
+      clipId: preparedWorkspace.premiere?.clipId,
+      mode,
+      segmentIds: requestedSegmentIds
+    }));
+    if (activeSegment) {
+      return res.status(409).json({ error: `Segment ${activeSegment.refs.segmentId} already has an active Director render (${activeSegment.refs.promptId})` });
     }
     const compiledJobs = [];
     for (let index = 0; index < jobs.length; index += 1) {
       const job = jobs[index];
       compiledJobs.push({ job, built: await compile(preparedWorkspace, job, index === 0) });
     }
-    const accepted = [];
-    for (const { job, built } of compiledJobs) {
-      try {
+    const submission = await submitCompiledJobsIndividually(compiledJobs, async ({ job, built }) => {
         if (generationFingerprint && storyboardPlanFingerprint(preparedWorkspace.premiere.projectSlug, preparedWorkspace.premiere.clipId) !== generationFingerprint) {
           throw staleRenderError("The Premiere scene changed before it could be submitted. Reload the scene and try again.");
         }
@@ -1878,21 +2479,36 @@ app.post("/api/queue", async (req, res) => {
           promptId: result.prompt_id,
           number: result.number,
           segmentId: job?.sourceSegmentId || null,
+          segmentIndex: job?.sourceSegmentIndex ?? null,
+          segmentCount: job?.sourceSegmentTotal ?? null,
+          queueIndex: job?.queueIndex ?? null,
+          queueTotal: job?.queueTotal ?? null,
+          usePreviousAsFirstFrame: job?.usePreviousAsFirstFrame === true,
+          useNextAsLastFrame: job?.useNextAsLastFrame === true,
+          firstFrameSegmentId: job?.firstFrameSourceSegmentId || job?.sourceSegmentId || null,
+          lastFrameSegmentId: job?.lastFrameSourceSegmentId || null,
           requestedFrames,
-          generationFrames: ltxFrameCount(requestedFrames),
+          generationFrames: job?.generationFrames ?? ltxFrameCount(requestedFrames),
           expectAudio: Boolean(built.prompt?.["94"]?.inputs?.audio),
-          generationFingerprint
+          generationFingerprint,
+          referenceConditioning: built.referenceConditioning || null
         };
-        accepted.push(item);
-        trackDirectorPrompt(item, preparedWorkspace.premiere, mode, preparedWorkspace);
-      } catch (error) {
-        if (accepted.length) return res.status(207).json({ ok: false, partial: true, accepted, error: String(error.message || error) });
-        throw error;
+        return item;
+    }, (item, { job }) => {
+      trackDirectorPrompt(item, preparedWorkspace.premiere, mode, preparedWorkspace, job);
+    });
+    if (submission.error) {
+      if (submission.accepted.length) {
+        return res.status(207).json({ ok: false, partial: true, accepted: submission.accepted, error: String(submission.error.message || submission.error) });
       }
+      throw submission.error;
     }
-    res.status(202).json({ ok: true, accepted });
+    res.status(202).json({ ok: true, accepted: submission.accepted });
   } catch (error) {
-    res.status(400).json({ error: String(error.message || error) });
+    const status = error instanceof SegmentQueueReservationConflict ? 409 : 400;
+    res.status(status).json({ error: String(error.message || error) });
+  } finally {
+    queueReservation?.release();
   }
 });
 
@@ -1915,9 +2531,87 @@ app.get("/api/export", (_req, res) => {
   res.type("application/json").attachment("LTX2.5_DIRECTOR.workspace.json").send(`${JSON.stringify(workspaceForClient(workspace), null, 2)}\n`);
 });
 
+app.get("/api/workflow", async (req, res) => {
+  try {
+    const { preparedWorkspace, job, built } = await compileSelectedSegment(req.query.segmentId);
+    const name = segmentWorkflowName(preparedWorkspace, job);
+    const extraWorkflow = isHarrowingGenerate(preparedWorkspace)
+      ? JSON.parse(fs.readFileSync(HARROWING_HELL_WORKFLOW, "utf8"))
+      : sourceGraph;
+    const body = JSON.stringify({ prompt: built.prompt, extra_pnginfo: { workflow: extraWorkflow } }, null, 2);
+    res.setHeader("content-type", "application/json");
+    res.setHeader("content-disposition", "attachment; filename=\"" + name + "\"");
+    res.send(body);
+  } catch (error) {
+    res.status(400).json({ error: String(error.message || error) });
+  }
+});
+
+app.post("/api/push-to-comfyui", async (req, res) => {
+  try {
+    if (isHarrowingGenerate(workspace)) {
+      const selectedSegmentId = String(req.body?.segmentId || workspace.selectedSegmentId || "").trim();
+      const preparedWorkspace = await prepareProjectMedia(workspace, {
+        mode: "selected",
+        segmentId: selectedSegmentId
+      });
+      const jobs = buildSegmentJobs(preparedWorkspace, selectedSegmentId);
+      const job = jobs[0] || null;
+      const text = harrowingPromptText(preparedWorkspace, job);
+      if (!text) throw new Error("No Premiere prompt to push onto HARROWING OF HELL.json");
+      const workflowFile = writeHarrowingPromptToHell(text);
+      return res.json({
+        ok: true,
+        segmentId: job?.sourceSegmentId || selectedSegmentId || null,
+        workflowName: "HARROWING OF HELL.json",
+        workflowFile,
+        promptChars: text.length
+      });
+    }
+    const { preparedWorkspace, job, built } = await compileSelectedSegment(req.body?.segmentId);
+    const name = segmentWorkflowName(preparedWorkspace, job);
+    fs.mkdirSync(SEGMENT_WORKFLOW_DIR, { recursive: true });
+    const workflowFile = path.join(SEGMENT_WORKFLOW_DIR, name);
+    const payload = { prompt: built.prompt, extra_pnginfo: { workflow: sourceGraph } };
+    fs.writeFileSync(workflowFile, JSON.stringify(payload, null, 2));
+    res.json({
+      ok: true,
+      segmentId: job.sourceSegmentId,
+      workflowName: name,
+      workflowFile,
+      workflowLibraryFolder: SEGMENT_WORKFLOW_DIR
+    });
+  } catch (error) {
+    res.status(400).json({ error: String(error.message || error) });
+  }
+});
+
 app.use("/api", (_req, res) => res.status(404).json({ error: "Director API route not found" }));
 
 app.get("*", (_req, res) => res.sendFile(path.join(PUBLIC_DIR, "index.html")));
+
+
+const SEGMENT_WORKFLOW_DIR = path.join(HERE, "..", "BlokeyUI", "ComfyUI", "user", "default", "workflows", "Premiere316", "Segments");
+
+function segmentWorkflowName(workspaceValue, job) {
+  const clip = String(workspaceValue?.premiere?.clipId || "clip").replace(/[^\w.-]+/g, "_");
+  const seg = String(job?.sourceSegmentId || workspaceValue?.selectedSegmentId || "segment").replace(/[^\w.-]+/g, "_");
+  return clip + "__" + seg + ".json";
+}
+
+async function compileSelectedSegment(segmentId) {
+  const selectedSegmentId = String(segmentId || workspace.selectedSegmentId || "").trim();
+  const preparedWorkspace = await prepareProjectMedia(workspace, {
+    mode: "selected",
+    segmentId: selectedSegmentId
+  });
+  const jobs = buildSegmentJobs(preparedWorkspace, selectedSegmentId);
+  if (!jobs.length) throw new Error("No compilable visual segment. Select a main-track segment with a first frame.");
+  const job = jobs[0];
+  const built = await compile(preparedWorkspace, job, true);
+  return { preparedWorkspace, job, built };
+}
+
 
 const server = app.listen(PORT, HOST, () => {
   console.log(`[Director] LTX 2.5 Director Webapp: http://${HOST}:${PORT}`);

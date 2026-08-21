@@ -225,7 +225,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
       : !h3ModeReady
         ? (store.h3Diagnostics.actionableErrors?.[0] || selectedH3Mode?.disabledReason || "MiniMax H3 is not ready.")
         : h3ModeNeedsApprovedGuides && !selectedClipGuidesApproved
-          ? "Use approved Asset Foundry first/last guides for this H3 mode."
+          ? "Use approved Asset Library first/last guides for this H3 mode."
           : "";
   const h3CanRender = Boolean(selectedClip && store.health.comfy && h3ModeReady && (!h3ModeNeedsApprovedGuides || selectedClipGuidesApproved) && !store.h3Busy);
 
@@ -370,7 +370,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
         <aside className="project-bin premium-panel">
           <div className="panel-title-row">
             <h2>PROJECT BIN</h2>
-            <button className="mini-icon" onClick={onOpenAssets} title="Open Asset Foundry">▣</button>
+            <button className="mini-icon" onClick={onOpenAssets} title="Open Asset Library">▣</button>
           </div>
           <div className="bin-search">
             <span>⌕</span>
@@ -412,7 +412,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
                     <button
                       className="frame-select"
                       onClick={() => store.setSelFrame(frame.file)}
-                      onDoubleClick={() => approvedFrame ? store.addClipFromFrame(frame.file) : store.setError("This legacy item is not an approved Asset Foundry version.")}
+                      onDoubleClick={() => approvedFrame ? store.addClipFromFrame(frame.file) : store.setError("This legacy item is not an approved Asset Library version.")}
                       title={approvedFrame ? `${frame.name} · approved · double-click to add as a clip` : `${frame.name} · locked legacy media`}
                     >
                       <img src={frameUrl(project.slug, frame.file)} alt="" />
@@ -443,7 +443,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
               </details>
             ) : null}
           </div>
-          <button className="bin-lock" onClick={onOpenAssets} title="Open Asset Foundry"><span>▣</span><div><b>Open Asset Foundry</b><small>Generate → review → approve → add to this bin</small></div></button>
+          <button className="bin-lock" onClick={onOpenAssets} title="Open Asset Library"><span>▣</span><div><b>Open Asset Library</b><small>Generate → review → approve → add to this bin</small></div></button>
         </aside>
 
         <section className="monitor-workspace premium-panel">
@@ -838,7 +838,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
             </div>
           ) : <div className="workbench-empty">Add or select a clip to manage guide images.</div>}
           <div className="card-actions">
-            <button className="button secondary" onClick={(event) => { event.stopPropagation(); onOpenAssets(); }}>Open Asset Foundry</button>
+            <button className="button secondary" onClick={(event) => { event.stopPropagation(); onOpenAssets(); }}>Open Asset Library</button>
             <button className="button secondary" disabled={!selectedClip || !selectedFrameApproved} onClick={(event) => { event.stopPropagation(); if (selectedClip && store.selFrameFile) store.attachGuide(selectedClip.id, { frameFile: store.selFrameFile, role: selectedGuide?.role || "middle", frame: selectedGuide?.frame || guideDraft.frame }); }}>Use approved</button>
             <button className="button danger icon-only" disabled={!selectedClip || !selectedGuide} onClick={(event) => { event.stopPropagation(); if (selectedClip && selectedGuide) store.deleteGuide(selectedClip.id, selectedGuide.id); }}>⌫</button>
           </div>
@@ -856,7 +856,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
                   <input ref={shortsFrameRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void store.importFrame(file); event.target.value = ""; }} />
                 </>
               ) : (
-                <button className="upload-tile" onClick={(event) => { event.stopPropagation(); onOpenAssets(); }} title="Create and approve an image in Asset Foundry"><span>▣</span>Create in Asset Foundry</button>
+                <button className="upload-tile" onClick={(event) => { event.stopPropagation(); onOpenAssets(); }} title="Create and approve an image in Asset Library"><span>▣</span>Create in Asset Library</button>
               )}
             </div>
             <div className="generation-fields">
@@ -880,7 +880,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
           </div>
           <div className="card-actions right">
             <button className="button secondary" disabled={!selectedClip || !selectedFrameApproved} onClick={(event) => { event.stopPropagation(); if (selectedClip && store.selFrameFile) store.attachGuide(selectedClip.id, { frameFile: store.selFrameFile, ...guideDraft }); }}>Attach approved</button>
-            <button className="button primary" onClick={(event) => { event.stopPropagation(); onOpenAssets(); }}>Create in Asset Foundry</button>
+            <button className="button primary" onClick={(event) => { event.stopPropagation(); onOpenAssets(); }}>Create in Asset Library</button>
           </div>
         </article>
 

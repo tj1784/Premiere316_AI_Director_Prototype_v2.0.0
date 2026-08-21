@@ -1,0 +1,464 @@
+{
+  "schemaVersion": 1,
+  "registryId": "premiere316.audio-workflows.v1",
+  "validatedAt": "2026-08-21T02:12:02.441Z",
+  "comfyUi": {
+    "url": "http://127.0.0.1:8188",
+    "listenerPid": 11828,
+    "executable": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\python_embeded\\python.exe",
+    "main": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\main.py",
+    "version": "0.33.1",
+    "queueWasIdle": true,
+    "validationMode": "read-only object_info, filesystem, graph conversion; no prompt queued"
+  },
+  "policy": {
+    "sourceWorkflowsAreImmutable": true,
+    "compareSourceSha256BeforeSubmission": true,
+    "sourceHashMismatchStatus": "needs-rebinding",
+    "promptEnhancementDefaultEnabled": false,
+    "enabledMeans": "live node classes, selected model files, dropdown resolution, and bindings validated; it does not mean a render was submitted"
+  },
+  "profiles": [
+    {
+      "id": "music.minimax-music3.text-to-music.v1",
+      "displayName": "MiniMax Music 3 — Text to Music",
+      "category": "music",
+      "role": "generator",
+      "engine": "MiniMax Music 3",
+      "modelFamily": "MiniMax Music 3",
+      "originalWorkflowPath": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\MiniMax Music 3 - Text to Music.json",
+      "originalWorkflowSchema": "comfyui-ui",
+      "appOwnedApiWorkflowPath": "workflows/audio/api/minimax-music3-text-to-music.api.json",
+      "apiWorkflowSchema": "comfyui-prompt-api",
+      "sourceWorkflowSha256": "0322153265B3E785961511B7849F6659F46A8FA7E8CB66976E5279FF1774B228",
+      "apiWorkflowSha256": "BED4E7AAE73D6F45029456835ADB7EA17F28400FD3057D78112300237531797D",
+      "requiredModelFiles": [
+        {
+          "category": "diffusion_models",
+          "name": "minimax_music3_dit_fp16.safetensors",
+          "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\diffusion_models\\minimax_music3_dit_fp16.safetensors",
+          "present": true,
+          "bytes": 4914197682,
+          "sha256": "45494A2B6B69AF115902FF28EAF54118D19067AA54DA01000F3E3EFCE7BA0E34",
+          "listedByLiveLoader": true
+        },
+        {
+          "category": "text_encoders",
+          "name": "minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
+          "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\text_encoders\\minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
+          "present": true,
+          "bytes": 9196611886,
+          "sha256": "010B7416D2336A08C711BC22EE65849C9623069DDB7D89BEC011A75699E52014",
+          "listedByLiveLoader": true
+        },
+        {
+          "category": "vae",
+          "name": "minimax_music3_dav.safetensors",
+          "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\vae\\minimax_music3_dav.safetensors",
+          "present": true,
+          "bytes": 216696128,
+          "sha256": "2A32155B769BE01445FCC2A8663B910FC9E1751E18DC1C3EC528064512D9EF0C",
+          "listedByLiveLoader": true
+        }
+      ],
+      "requiredCustomNodes": [
+        "MiniMaxMusic3TextEncode",
+        "EmptyMiniMaxMusic3LatentAudio",
+        "SeedNode",
+        "ComfySwitchNode",
+        "VAEDecodeAudioTiled",
+        "SaveAudioAdvanced"
+      ],
+      "inputNodeBindings": {
+        "prompt": { "nodeId": "13", "inputName": "caption", "type": "STRING" },
+        "lyrics": { "nodeId": "13", "inputName": "lyrics", "type": "STRING" },
+        "durationSeconds": { "nodeId": "13", "inputName": "max_duration", "type": "FLOAT" },
+        "seed": { "nodeId": "38", "inputName": "seed", "type": "INT" },
+        "tiledDecode": { "nodeId": "43", "inputName": "switch", "type": "BOOLEAN" },
+        "outputFormat": { "nodeId": "35", "inputName": "format", "type": "COMFY_DYNAMICCOMBO_V3" },
+        "outputQuality": { "nodeId": "35", "inputName": "format.quality", "type": "COMBO" }
+      },
+      "outputNodeBindings": [
+        { "nodeId": "35", "classType": "SaveAudioAdvanced", "inputName": "audio", "historyOutput": "audio", "configuredFormat": "mp3" }
+      ],
+      "supportedDurationRange": { "min": 0.04, "max": 360, "step": 0.04, "unit": "seconds", "default": 60, "source": "live MiniMaxMusic3TextEncode and EmptyMiniMaxMusic3LatentAudio schemas" },
+      "supportedConditioningInputs": ["caption", "lyrics"],
+      "lyricsSupport": true,
+      "referenceAudioSupport": false,
+      "seedSupport": true,
+      "negativePromptSupport": false,
+      "promptEnhancementSupport": { "supported": false, "optional": false, "defaultEnabled": false, "enhancerProfileIds": [] },
+      "outputFormats": ["flac", "mp3", "opus"],
+      "readiness": {
+        "status": "ready",
+        "enabled": true,
+        "nodesResolved": true,
+        "modelsResolved": true,
+        "bindingsResolved": true,
+        "renderValidated": false,
+        "validationErrors": []
+      }
+    },
+    {
+      "id": "music.stable-audio3.text-to-music.v1",
+      "displayName": "Stable Audio 3 — Text to Music",
+      "category": "music",
+      "role": "generator",
+      "engine": "Stable Audio 3",
+      "modelFamily": "Stable Audio 3 Medium",
+      "originalWorkflowPath": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\Ep19 Workflows\\Stable Audio 3 - txt2audio.json",
+      "originalWorkflowSchema": "comfyui-ui",
+      "appOwnedApiWorkflowPath": "workflows/audio/api/stable-audio3-text-to-audio.api.json",
+      "apiWorkflowSchema": "comfyui-prompt-api",
+      "sourceWorkflowSha256": "9A77A283801DB4FEC8ADECE4D4CE786ADBF14B4B10C7B4DF8CB9272FFF3D259D",
+      "apiWorkflowSha256": "C7184A755FA899A2AAA37BBAD0F1EDDC7CF9A872417CDB2B20D91BDCA98D6D98",
+      "requiredModelFiles": [
+        {
+          "category": "checkpoints",
+          "name": "stableaudio3\\stable_audio_3_medium.safetensors",
+          "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\checkpoints\\stableaudio3\\stable_audio_3_medium.safetensors",
+          "present": true,
+          "bytes": 9222116660,
+          "sha256": "48D9C65E290E7BCD5194E0633BFC2424A59EE9683F5C2D58762D997B7D8CE0B5",
+          "listedByLiveLoader": true
+        },
+        {
+          "category": "text_encoders",
+          "name": "t5gemma_b_b_ul2.safetensors",
+          "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\text_encoders\\t5gemma_b_b_ul2.safetensors",
+          "present": true,
+          "bytes": 1187264003,
+          "sha256": "1E1EBA25BE8872EDB0D3C6335C6658FD6388E7B14B60DA6E454E404CFCD8150E",
+          "listedByLiveLoader": true
+        }
+      ],
+      "requiredCustomNodes": ["PixaromaText", "PixaromaNumber", "SaveAudioMP3"],
+      "inputNodeBindings": {
+        "prompt": { "nodeId": "14", "inputName": "text", "type": "STRING" },
+        "durationSeconds": { "nodeId": "13", "inputName": "value", "type": "FLOAT" },
+        "seed": { "nodeId": "8", "inputName": "seed", "type": "INT" },
+        "outputQuality": { "nodeId": "11", "inputName": "quality", "type": "COMBO" }
+      },
+      "outputNodeBindings": [
+        { "nodeId": "11", "classType": "SaveAudioMP3", "inputName": "audio", "historyOutput": "audio", "configuredFormat": "mp3" }
+      ],
+      "supportedDurationRange": { "min": 1, "max": 380, "step": 0.01, "unit": "seconds", "default": 30, "source": "source workflow UI contract; live EmptyLatentAudio permits 1-1000 seconds" },
+      "supportedConditioningInputs": ["text prompt compiled for music"],
+      "lyricsSupport": false,
+      "referenceAudioSupport": false,
+      "seedSupport": true,
+      "negativePromptSupport": false,
+      "promptEnhancementSupport": { "supported": true, "optional": true, "defaultEnabled": false, "enhancerProfileIds": ["enhancer.stable-audio3.gemma4.music.v1"] },
+      "outputFormats": ["mp3"],
+      "readiness": { "status": "ready", "enabled": true, "nodesResolved": true, "modelsResolved": true, "bindingsResolved": true, "renderValidated": false, "validationErrors": [] }
+    },
+    {
+      "id": "sound-effect.stable-audio3.text-to-sfx.v1",
+      "displayName": "Stable Audio 3 — Text to Sound FX",
+      "category": "sound effect",
+      "role": "generator",
+      "engine": "Stable Audio 3",
+      "modelFamily": "Stable Audio 3 Medium",
+      "originalWorkflowPath": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\Ep19 Workflows\\Stable Audio 3 - txt2audio.json",
+      "originalWorkflowSchema": "comfyui-ui",
+      "appOwnedApiWorkflowPath": "workflows/audio/api/stable-audio3-text-to-audio.api.json",
+      "apiWorkflowSchema": "comfyui-prompt-api",
+      "sourceWorkflowSha256": "9A77A283801DB4FEC8ADECE4D4CE786ADBF14B4B10C7B4DF8CB9272FFF3D259D",
+      "apiWorkflowSha256": "C7184A755FA899A2AAA37BBAD0F1EDDC7CF9A872417CDB2B20D91BDCA98D6D98",
+      "requiredModelFiles": [
+        { "category": "checkpoints", "name": "stableaudio3\\stable_audio_3_medium.safetensors", "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\checkpoints\\stableaudio3\\stable_audio_3_medium.safetensors", "present": true, "bytes": 9222116660, "sha256": "48D9C65E290E7BCD5194E0633BFC2424A59EE9683F5C2D58762D997B7D8CE0B5", "listedByLiveLoader": true },
+        { "category": "text_encoders", "name": "t5gemma_b_b_ul2.safetensors", "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\text_encoders\\t5gemma_b_b_ul2.safetensors", "present": true, "bytes": 1187264003, "sha256": "1E1EBA25BE8872EDB0D3C6335C6658FD6388E7B14B60DA6E454E404CFCD8150E", "listedByLiveLoader": true }
+      ],
+      "requiredCustomNodes": ["PixaromaText", "PixaromaNumber", "SaveAudioMP3"],
+      "inputNodeBindings": {
+        "prompt": { "nodeId": "14", "inputName": "text", "type": "STRING" },
+        "durationSeconds": { "nodeId": "13", "inputName": "value", "type": "FLOAT" },
+        "seed": { "nodeId": "8", "inputName": "seed", "type": "INT" },
+        "outputQuality": { "nodeId": "11", "inputName": "quality", "type": "COMBO" }
+      },
+      "outputNodeBindings": [
+        { "nodeId": "11", "classType": "SaveAudioMP3", "inputName": "audio", "historyOutput": "audio", "configuredFormat": "mp3" }
+      ],
+      "supportedDurationRange": { "min": 1, "max": 380, "step": 0.01, "unit": "seconds", "default": 30, "source": "source workflow UI contract; live EmptyLatentAudio permits 1-1000 seconds" },
+      "supportedConditioningInputs": ["text prompt compiled for sound effect, ambience, or foley description"],
+      "lyricsSupport": false,
+      "referenceAudioSupport": false,
+      "seedSupport": true,
+      "negativePromptSupport": false,
+      "promptEnhancementSupport": { "supported": true, "optional": true, "defaultEnabled": false, "enhancerProfileIds": ["enhancer.stable-audio3.gemma4.sfx.v1"] },
+      "outputFormats": ["mp3"],
+      "readiness": { "status": "ready", "enabled": true, "nodesResolved": true, "modelsResolved": true, "bindingsResolved": true, "renderValidated": false, "validationErrors": [] }
+    },
+    {
+      "id": "hybrid.stable-audio3.text-to-audio.v1",
+      "displayName": "Stable Audio 3 — General Text to Audio",
+      "category": "hybrid",
+      "role": "generator",
+      "engine": "Stable Audio 3",
+      "modelFamily": "Stable Audio 3 Medium",
+      "originalWorkflowPath": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\Ep19 Workflows\\Stable Audio 3 - txt2audio.json",
+      "originalWorkflowSchema": "comfyui-ui",
+      "appOwnedApiWorkflowPath": "workflows/audio/api/stable-audio3-text-to-audio.api.json",
+      "apiWorkflowSchema": "comfyui-prompt-api",
+      "sourceWorkflowSha256": "9A77A283801DB4FEC8ADECE4D4CE786ADBF14B4B10C7B4DF8CB9272FFF3D259D",
+      "apiWorkflowSha256": "C7184A755FA899A2AAA37BBAD0F1EDDC7CF9A872417CDB2B20D91BDCA98D6D98",
+      "requiredModelFiles": [
+        { "category": "checkpoints", "name": "stableaudio3\\stable_audio_3_medium.safetensors", "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\checkpoints\\stableaudio3\\stable_audio_3_medium.safetensors", "present": true, "bytes": 9222116660, "sha256": "48D9C65E290E7BCD5194E0633BFC2424A59EE9683F5C2D58762D997B7D8CE0B5", "listedByLiveLoader": true },
+        { "category": "text_encoders", "name": "t5gemma_b_b_ul2.safetensors", "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\text_encoders\\t5gemma_b_b_ul2.safetensors", "present": true, "bytes": 1187264003, "sha256": "1E1EBA25BE8872EDB0D3C6335C6658FD6388E7B14B60DA6E454E404CFCD8150E", "listedByLiveLoader": true }
+      ],
+      "requiredCustomNodes": ["PixaromaText", "PixaromaNumber", "SaveAudioMP3"],
+      "inputNodeBindings": {
+        "prompt": { "nodeId": "14", "inputName": "text", "type": "STRING" },
+        "durationSeconds": { "nodeId": "13", "inputName": "value", "type": "FLOAT" },
+        "seed": { "nodeId": "8", "inputName": "seed", "type": "INT" },
+        "outputQuality": { "nodeId": "11", "inputName": "quality", "type": "COMBO" }
+      },
+      "outputNodeBindings": [
+        { "nodeId": "11", "classType": "SaveAudioMP3", "inputName": "audio", "historyOutput": "audio", "configuredFormat": "mp3" }
+      ],
+      "supportedDurationRange": { "min": 1, "max": 380, "step": 0.01, "unit": "seconds", "default": 30, "source": "source workflow UI contract; live EmptyLatentAudio permits 1-1000 seconds" },
+      "supportedConditioningInputs": ["text prompt"],
+      "lyricsSupport": false,
+      "referenceAudioSupport": false,
+      "seedSupport": true,
+      "negativePromptSupport": false,
+      "promptEnhancementSupport": { "supported": true, "optional": true, "defaultEnabled": false, "enhancerProfileIds": ["enhancer.stable-audio3.gemma4.music.v1", "enhancer.stable-audio3.gemma4.sfx.v1"] },
+      "outputFormats": ["mp3"],
+      "readiness": { "status": "ready", "enabled": true, "nodesResolved": true, "modelsResolved": true, "bindingsResolved": true, "renderValidated": false, "validationErrors": [] }
+    },
+    {
+      "id": "voice.qwen3-tts.voice-design-1.7b.v1",
+      "displayName": "Qwen3-TTS 1.7B — Voice Design",
+      "category": "voice",
+      "role": "generator",
+      "engine": "Qwen3-TTS",
+      "modelFamily": "Qwen3-TTS 12Hz 1.7B VoiceDesign",
+      "originalWorkflowPath": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\Ep07 Workflows\\2. Qwen3-TTS VoiceDesign.json",
+      "originalWorkflowSchema": "comfyui-ui",
+      "appOwnedApiWorkflowPath": "workflows/audio/api/qwen3-tts-voice-design.api.json",
+      "apiWorkflowSchema": "comfyui-prompt-api",
+      "sourceWorkflowSha256": "BCC73BE2FA575B7AC597573005BBFAE5C909356CEE9088E4F97F678705FFB453",
+      "apiWorkflowSha256": "A2402843EA0ECB00FCF985A9242C2C65F1ACFC695736CD2773E052BB0BEC05A1",
+      "requiredModelFiles": [
+        { "category": "qwen-tts", "name": "Qwen3-TTS-12Hz-1.7B-VoiceDesign/model.safetensors", "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\qwen-tts\\Qwen3-TTS-12Hz-1.7B-VoiceDesign\\model.safetensors", "present": false, "bytes": null, "sha256": null, "listedByLiveLoader": false },
+        { "category": "qwen-tts", "name": "Qwen3-TTS-12Hz-1.7B-VoiceDesign/config.json", "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\qwen-tts\\Qwen3-TTS-12Hz-1.7B-VoiceDesign\\config.json", "present": true, "bytes": 4421, "sha256": "AECD2CC4C1FE9EDEF1CB7CA7C401685A43879AD43F3F9E883F1C6760B61731E0", "listedByLiveLoader": false },
+        { "category": "qwen-tts", "name": "Qwen3-TTS-Tokenizer-12Hz/model.safetensors", "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\qwen-tts\\Qwen3-TTS-Tokenizer-12Hz\\model.safetensors", "present": true, "bytes": 682293092, "sha256": "836B7B357F5EA43E889936A3709AF68DFE3751881ACEFE4ECF0DBD30BA571258", "listedByLiveLoader": false }
+      ],
+      "requiredCustomNodes": ["FB_Qwen3TTSVoiceDesign", "easy positive", "LayerUtility: PurgeVRAM V2", "SaveAudioMP3"],
+      "inputNodeBindings": {
+        "text": { "nodeId": "5", "inputName": "positive", "type": "STRING" },
+        "voiceInstruction": { "nodeId": "6", "inputName": "positive", "type": "STRING" },
+        "language": { "nodeId": "4", "inputName": "language", "type": "COMBO" },
+        "seed": { "nodeId": "4", "inputName": "seed", "type": "INT" }
+      },
+      "outputNodeBindings": [
+        { "nodeId": "8", "classType": "SaveAudioMP3", "inputName": "audio", "historyOutput": "audio", "configuredFormat": "mp3" }
+      ],
+      "supportedDurationRange": { "min": null, "max": null, "step": null, "unit": "seconds", "default": null, "source": "no duration-in-seconds input is exposed" },
+      "supportedConditioningInputs": ["speech text", "voice design instruction", "language"],
+      "lyricsSupport": false,
+      "referenceAudioSupport": false,
+      "seedSupport": true,
+      "negativePromptSupport": false,
+      "promptEnhancementSupport": { "supported": false, "optional": false, "defaultEnabled": false, "enhancerProfileIds": [] },
+      "outputFormats": ["mp3"],
+      "readiness": {
+        "status": "disabled",
+        "enabled": false,
+        "nodesResolved": true,
+        "modelsResolved": false,
+        "bindingsResolved": true,
+        "renderValidated": false,
+        "validationErrors": [
+          "Missing C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\qwen-tts\\Qwen3-TTS-12Hz-1.7B-VoiceDesign\\model.safetensors; the shared VoiceDesign directory contains only 4,468,189 bytes of metadata/tokenizer text files.",
+          "The active resolver checks the repo-local models/qwen-tts root first and accepts its empty matching VoiceDesign directory without checking model.safetensors, shadowing later registered paths.",
+          "FB_Qwen3TTSVoiceDesign does not expose custom_model_path, so this profile cannot bypass the resolver by an API binding."
+        ]
+      }
+    },
+    {
+      "id": "music.ace-step-1.5-xl-turbo.text-to-music.v1",
+      "displayName": "ACE-Step 1.5 XL Turbo — Text to Music",
+      "category": "music",
+      "role": "generator",
+      "engine": "ACE-Step",
+      "modelFamily": "ACE-Step 1.5 XL Turbo",
+      "originalWorkflowPath": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\Ep15 Workflows\\Acestep v1.5 xl Turbo Text to Music.json",
+      "originalWorkflowSchema": "comfyui-ui",
+      "appOwnedApiWorkflowPath": "workflows/audio/api/ace-step-1.5-xl-turbo-text-to-music.api.json",
+      "apiWorkflowSchema": "comfyui-prompt-api",
+      "sourceWorkflowSha256": "2EA82773B21FA62E4757B21D4D5C7E5E6A70AFA6623B23B4BFB4A0DF3A2D6DB3",
+      "apiWorkflowSha256": "2FEBDE651A99D05E61FF549DB9806F5DBEA64B1839E6D03399B78E777C4EE0ED",
+      "requiredModelFiles": [
+        { "category": "diffusion_models", "name": "acestep\\acestep_v1.5_xl_turbo_bf16.safetensors", "resolvedPath": null, "present": false, "bytes": null, "sha256": null, "listedByLiveLoader": false },
+        { "category": "text_encoders", "name": "qwen_0.6b_ace15.safetensors", "resolvedPath": null, "present": false, "bytes": null, "sha256": null, "listedByLiveLoader": false },
+        { "category": "text_encoders", "name": "qwen_4b_ace15.safetensors", "resolvedPath": null, "present": false, "bytes": null, "sha256": null, "listedByLiveLoader": false },
+        { "category": "vae", "name": "ace_1.5_vae.safetensors", "resolvedPath": null, "present": false, "bytes": null, "sha256": null, "listedByLiveLoader": false }
+      ],
+      "requiredCustomNodes": ["TextEncodeAceStepAudio1.5", "EmptyAceStep1.5LatentAudio", "PrimitiveFloat", "PrimitiveInt", "SaveAudioMP3"],
+      "inputNodeBindings": {
+        "prompt": { "nodeId": "6", "inputName": "tags", "type": "STRING" },
+        "lyrics": { "nodeId": "6", "inputName": "lyrics", "type": "STRING" },
+        "durationSeconds": { "nodeId": "11", "inputName": "value", "type": "FLOAT" },
+        "seed": { "nodeId": "14", "inputName": "value", "type": "INT" },
+        "bpm": { "nodeId": "15", "inputName": "value", "type": "INT" },
+        "meter": { "nodeId": "6", "inputName": "timesignature", "type": "COMBO" },
+        "key": { "nodeId": "6", "inputName": "keyscale", "type": "STRING" },
+        "language": { "nodeId": "6", "inputName": "language", "type": "COMBO" }
+      },
+      "outputNodeBindings": [
+        { "nodeId": "13", "classType": "SaveAudioMP3", "inputName": "audio", "historyOutput": "audio", "configuredFormat": "mp3" }
+      ],
+      "supportedDurationRange": { "min": 1, "max": 1000, "step": 0.01, "unit": "seconds", "default": 120, "source": "intersection of live TextEncodeAceStepAudio1.5 and EmptyAceStep1.5LatentAudio schemas" },
+      "supportedConditioningInputs": ["tags", "lyrics", "BPM", "meter", "key", "language"],
+      "lyricsSupport": true,
+      "referenceAudioSupport": false,
+      "seedSupport": true,
+      "negativePromptSupport": false,
+      "promptEnhancementSupport": { "supported": false, "optional": false, "defaultEnabled": false, "enhancerProfileIds": [] },
+      "outputFormats": ["mp3"],
+      "readiness": {
+        "status": "disabled",
+        "enabled": false,
+        "nodesResolved": true,
+        "modelsResolved": false,
+        "bindingsResolved": true,
+        "renderValidated": false,
+        "validationErrors": [
+          "Missing and absent from live UNETLoader dropdown: acestep\\acestep_v1.5_xl_turbo_bf16.safetensors.",
+          "Missing and absent from live DualCLIPLoader dropdowns: qwen_0.6b_ace15.safetensors and qwen_4b_ace15.safetensors.",
+          "Missing and absent from live VAELoader dropdown: ace_1.5_vae.safetensors."
+        ]
+      }
+    },
+    {
+      "id": "voice.fish-s2-pro-fp8.tts.v1",
+      "displayName": "Fish Audio S2 Pro FP8 — TTS",
+      "category": "voice",
+      "role": "generator",
+      "engine": "Fish Audio S2",
+      "modelFamily": "Fish S2 Pro FP8",
+      "originalWorkflowPath": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\Ep10 Workflows\\Fish S2 TTS.json",
+      "originalWorkflowSchema": "comfyui-ui",
+      "appOwnedApiWorkflowPath": "workflows/audio/api/fish-s2-pro-fp8-tts.api.json",
+      "apiWorkflowSchema": "comfyui-prompt-api",
+      "sourceWorkflowSha256": "038E428796D07C379EF680D855AA1F1266353B4166FDDBC705BF85A0D5000C2C",
+      "apiWorkflowSha256": "F84810B964F746DEA30E307083709CBB70E38C1C50EA4EC9B9EF075BDBBD0EBB",
+      "requiredModelFiles": [
+        { "category": "fishaudioS2", "name": "s2-pro-fp8", "resolvedPath": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\models\\fishaudioS2\\s2-pro-fp8", "present": false, "bytes": null, "sha256": null, "listedByLiveLoader": false }
+      ],
+      "requiredCustomNodes": ["FishS2TTS", "easy positive", "SaveAudioMP3"],
+      "inputNodeBindings": {
+        "text": { "nodeId": "5", "inputName": "positive", "type": "STRING" },
+        "language": { "nodeId": "15", "inputName": "language", "type": "COMBO" },
+        "seed": { "nodeId": "15", "inputName": "seed", "type": "INT" }
+      },
+      "outputNodeBindings": [
+        { "nodeId": "6", "classType": "SaveAudioMP3", "inputName": "audio", "historyOutput": "audio", "configuredFormat": "mp3" }
+      ],
+      "supportedDurationRange": { "min": null, "max": null, "step": null, "unit": "seconds", "default": null, "source": "no duration-in-seconds input is exposed" },
+      "supportedConditioningInputs": ["speech text with inline Fish style/emotion tags", "language"],
+      "lyricsSupport": false,
+      "referenceAudioSupport": false,
+      "seedSupport": true,
+      "negativePromptSupport": false,
+      "promptEnhancementSupport": { "supported": false, "optional": false, "defaultEnabled": false, "enhancerProfileIds": [] },
+      "outputFormats": ["mp3"],
+      "readiness": {
+        "status": "disabled",
+        "enabled": false,
+        "nodesResolved": true,
+        "modelsResolved": false,
+        "bindingsResolved": true,
+        "renderValidated": false,
+        "validationErrors": [
+          "The selected local-only model s2-pro-fp8 is absent; the active ComfyUI models/fishaudioS2 directory is empty and no configured shared model root contains it."
+        ]
+      }
+    }
+  ],
+  "promptEnhancers": [
+    {
+      "id": "enhancer.stable-audio3.gemma4.music.v1",
+      "displayName": "Gemma 4 — Stable Audio Music Prompt Enhancer",
+      "category": "music",
+      "role": "prompt-enhancer",
+      "engine": "Gemma 4",
+      "modelFamily": "Gemma 4 E4B IT FP8",
+      "originalWorkflowPath": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\Ep19 Workflows\\Stable Audio 3 - txt2music with Gemma 4.json",
+      "originalWorkflowSchema": "comfyui-ui",
+      "appOwnedApiWorkflowPath": "workflows/audio/api/stable-audio3-gemma4-music-prompt-enhancer.api.json",
+      "apiWorkflowSchema": "comfyui-prompt-api",
+      "sourceWorkflowSha256": "06636E560C66CE4228E23AEB1559B23FB4DE3CE63FCA96983C6D740E4DDCD3E1",
+      "apiWorkflowSha256": "EE281C7D5A68B2BA6FE0B5484E90BEF4F2E8D8EAEBBBB61DC505CE8845AB1287",
+      "requiredModelFiles": [
+        { "category": "text_encoders", "name": "gemma4_e4b_it_fp8_scaled.safetensors", "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\text_encoders\\gemma4_e4b_it_fp8_scaled.safetensors", "present": true, "bytes": 9057782194, "sha256": "BF0B4FA2E41A25684DC9E9B256CD505564F02FED09BE3DA95CE024E653E2C52B", "listedByLiveLoader": true }
+      ],
+      "requiredCustomNodes": ["TextGenerate", "StringConcatenate", "PixaromaShowText"],
+      "inputNodeBindings": {
+        "originalPrompt": { "nodeId": "31", "inputName": "string_b", "type": "STRING" },
+        "seed": { "nodeId": "26", "inputName": "sampling_mode.seed", "type": "INT" }
+      },
+      "outputNodeBindings": [
+        { "nodeId": "30", "classType": "PixaromaShowText", "inputName": "source", "historyOutput": "text" }
+      ],
+      "supportedDurationRange": null,
+      "supportedConditioningInputs": ["original music idea"],
+      "lyricsSupport": false,
+      "referenceAudioSupport": false,
+      "seedSupport": true,
+      "negativePromptSupport": false,
+      "promptEnhancementSupport": { "supported": true, "optional": true, "defaultEnabled": false, "enhancerProfileIds": [] },
+      "outputFormats": ["text"],
+      "readiness": { "status": "ready", "enabled": true, "nodesResolved": true, "modelsResolved": true, "bindingsResolved": true, "renderValidated": false, "validationErrors": [] }
+    },
+    {
+      "id": "enhancer.stable-audio3.gemma4.sfx.v1",
+      "displayName": "Gemma 4 — Stable Audio Sound Prompt Enhancer",
+      "category": "sound effect",
+      "role": "prompt-enhancer",
+      "engine": "Gemma 4",
+      "modelFamily": "Gemma 4 E4B IT FP8",
+      "originalWorkflowPath": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\Ep19 Workflows\\Stable Audio 3 - txt2sound with Gemma 4.json",
+      "originalWorkflowSchema": "comfyui-ui",
+      "appOwnedApiWorkflowPath": "workflows/audio/api/stable-audio3-gemma4-sfx-prompt-enhancer.api.json",
+      "apiWorkflowSchema": "comfyui-prompt-api",
+      "sourceWorkflowSha256": "9615089A8B4BF58ED62E24F301E71D102FFF3FF501AEC517C1BD7B67B6EEC6B5",
+      "apiWorkflowSha256": "3A73956D467AFBC602543C7FC0FAB15041850FEAFC87BB2148BF113605D8F0F6",
+      "requiredModelFiles": [
+        { "category": "text_encoders", "name": "gemma4_e4b_it_fp8_scaled.safetensors", "resolvedPath": "C:\\ComfyUI\\ComfyUI_Shared_Folders\\models\\text_encoders\\gemma4_e4b_it_fp8_scaled.safetensors", "present": true, "bytes": 9057782194, "sha256": "BF0B4FA2E41A25684DC9E9B256CD505564F02FED09BE3DA95CE024E653E2C52B", "listedByLiveLoader": true }
+      ],
+      "requiredCustomNodes": ["TextGenerate", "StringConcatenate", "PixaromaShowText"],
+      "inputNodeBindings": {
+        "originalPrompt": { "nodeId": "31", "inputName": "string_b", "type": "STRING" },
+        "seed": { "nodeId": "26", "inputName": "sampling_mode.seed", "type": "INT" }
+      },
+      "outputNodeBindings": [
+        { "nodeId": "30", "classType": "PixaromaShowText", "inputName": "source", "historyOutput": "text" }
+      ],
+      "supportedDurationRange": null,
+      "supportedConditioningInputs": ["original sound-effect idea"],
+      "lyricsSupport": false,
+      "referenceAudioSupport": false,
+      "seedSupport": true,
+      "negativePromptSupport": false,
+      "promptEnhancementSupport": { "supported": true, "optional": true, "defaultEnabled": false, "enhancerProfileIds": [] },
+      "outputFormats": ["text"],
+      "readiness": { "status": "ready", "enabled": true, "nodesResolved": true, "modelsResolved": true, "bindingsResolved": true, "renderValidated": false, "validationErrors": [] }
+    }
+  ],
+  "excludedDiscoveries": [
+    {
+      "name": "AudioReact Workflow",
+      "reason": "LoadImage + LoadAudio -> PixaromaAudioStudio -> PixaromaSaveMp4 is visual-reactive video processing, not audio generation."
+    },
+    {
+      "name": "MOSS SoundEffect v2",
+      "reason": "Live node classes exist, but no source workflow JSON or local MOSS model was found."
+    },
+    {
+      "name": "LTX audio-only nodes",
+      "reason": "Live/custom-node capability exists, but no locally installed audio-generation workflow JSON was found to bind."
+    }
+  ]
+}

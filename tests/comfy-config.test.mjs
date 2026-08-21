@@ -5,6 +5,8 @@ import path from "node:path";
 import test from "node:test";
 import {
   isBundledComfyUrl,
+  isManagedComfyUrl,
+  managedComfyProfile,
   normalizeComfyUrl,
   readSavedComfyUrl,
   resolveConfiguredComfyUrl,
@@ -30,6 +32,15 @@ test("bundled engine recognition is consistent across local host forms", () => {
   assert.equal(isBundledComfyUrl("http://127.0.0.1:8190/proxy"), false);
   assert.equal(isBundledComfyUrl("http://127.0.0.1:8188"), false);
   assert.equal(isBundledComfyUrl("http://192.168.1.25:8190"), false);
+});
+
+test("managed engine recognition covers the repo-local 8188 and dedicated 8190 engines only", () => {
+  assert.equal(managedComfyProfile("http://127.0.0.1:8188"), "shared");
+  assert.equal(managedComfyProfile("http://localhost:8190/"), "dedicated");
+  assert.equal(isManagedComfyUrl("http://[::1]:8188"), true);
+  assert.equal(isManagedComfyUrl("http://127.0.0.1:8288"), false);
+  assert.equal(isManagedComfyUrl("http://192.168.1.25:8188"), false);
+  assert.equal(isManagedComfyUrl("https://127.0.0.1:8188"), false);
 });
 
 test("saved ComfyUI address persists and takes precedence on the next process start", () => {

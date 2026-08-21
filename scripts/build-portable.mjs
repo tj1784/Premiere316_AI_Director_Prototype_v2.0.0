@@ -27,7 +27,10 @@ function walk(dir) {
 
 for (const file of walk(assets).filter((item) => item.endsWith(".js"))) {
   let code = fs.readFileSync(file, "utf8");
-  code = code.replace(/^import\s+["']\.\/styles\.css["'];?\s*$/m, "");
+  // The browser-native portable bundle cannot import CSS modules. Collect all
+  // source styles into the one stylesheet linked by index.html, then remove
+  // every side-effect CSS import emitted by TypeScript.
+  code = code.replace(/^import\s+["'][^"']+\.css["'];?\s*$/gm, "");
   code = code.replace(/(from\s+["'])(\.\.?\/[^"']+)(["'])/g, (_, start, spec, end) => {
     if (/\.(?:js|mjs|json|css)$/.test(spec)) return `${start}${spec}${end}`;
     return `${start}${spec}.js${end}`;
@@ -39,7 +42,19 @@ for (const file of walk(assets).filter((item) => item.endsWith(".js"))) {
   fs.writeFileSync(file, code);
 }
 
-fs.copyFileSync(path.join(root, "client", "src", "styles.css"), path.join(dist, "styles.css"));
+const clientSource = path.join(root, "client", "src");
+const stylesheet = walk(clientSource)
+  .filter((file) => file.endsWith(".css"))
+  .sort((left, right) => {
+    const rootStyles = path.join(clientSource, "styles.css");
+    if (left === rootStyles) return -1;
+    if (right === rootStyles) return 1;
+    return left.localeCompare(right);
+  })
+  .map((file) => fs.readFileSync(file, "utf8").trim())
+  .filter(Boolean)
+  .join("\n\n");
+fs.writeFileSync(path.join(dist, "styles.css"), `${stylesheet}\n`);
 fs.copyFileSync(path.join(root, "node_modules", "react", "umd", "react.production.min.js"), path.join(vendor, "react.production.min.js"));
 fs.copyFileSync(path.join(root, "node_modules", "react-dom", "umd", "react-dom.production.min.js"), path.join(vendor, "react-dom.production.min.js"));
 

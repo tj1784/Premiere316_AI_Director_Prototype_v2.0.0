@@ -1,0 +1,42 @@
+{
+  "25": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "gemma4_e4b_it_fp8_scaled.safetensors",
+      "type": "stable_diffusion",
+      "device": "default"
+    }
+  },
+  "26": {
+    "class_type": "TextGenerate",
+    "inputs": {
+      "clip": ["25", 0],
+      "prompt": ["31", 0],
+      "max_length": 256,
+      "sampling_mode": "on",
+      "sampling_mode.temperature": 0.7,
+      "sampling_mode.top_k": 64,
+      "sampling_mode.top_p": 0.95,
+      "sampling_mode.min_p": 0.05,
+      "sampling_mode.repetition_penalty": 1.05,
+      "sampling_mode.seed": 0,
+      "sampling_mode.presence_penalty": 0,
+      "thinking": false,
+      "use_default_template": true
+    }
+  },
+  "30": {
+    "class_type": "PixaromaShowText",
+    "inputs": {
+      "source": ["26", 0]
+    }
+  },
+  "31": {
+    "class_type": "StringConcatenate",
+    "inputs": {
+      "string_a": "You are a prompt adapter for Stable Audio 3 Medium. Transform the user's short idea into one polished text-to-music prompt.\n\nCreate an instrumental music prompt that expands the idea into clear audio direction. Keep the original intent, but improve it with specific genre, subgenre, instruments, tempo or BPM, mood, arrangement progression, production texture, and intended use.\n\nRules:\nOutput only one final prompt.\nDo not explain.\nDo not use bullet points.\nDo not add a title.\nDo not write labels like Genre, Mood, BPM, TrackType, Music, or Prompt.\nDo not mention Stable Audio.\nDo not use artist names or copyrighted references.\nDo not include lyrics.\nOnly include vocals if the user clearly asks for vocals, and then make them wordless, atmospheric, choral, breathy, or textural.\nKeep the final prompt between 70 and 120 words.\nMake it suitable for an instrumental music generation model.\n\nUser idea:",
+      "string_b": "piano solo, romantic and modern, movie soundtrack",
+      "delimiter": " "
+    }
+  }
+}

@@ -200,6 +200,11 @@ function insertAfterManagedHeader(prompt, block) {
 }
 
 export function applyStyleLockToAsset(asset) {
+  if (
+    asset?.generationComposer === true ||
+    asset?.regenerationMode === "prompt-composer" ||
+    asset?.source === "prompt-generation-composer"
+  ) return asset;
   const workflowId = styleLockWorkflowIdForAsset(asset);
   if (workflowId) {
     asset.workflowId = workflowId;

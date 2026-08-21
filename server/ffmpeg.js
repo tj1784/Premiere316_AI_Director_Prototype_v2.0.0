@@ -6,21 +6,46 @@ import { BOOKEND_DURATION_SEC, BOOKEND_OPENING_TITLE } from "./bookends.js";
 
 const FFMPEG = process.env.FFMPEG_PATH || "ffmpeg";
 const FFPROBE = process.env.FFPROBE_PATH || "ffprobe";
+const MAX_TIMELINE_AUDIO_INPUTS = 64;
+const MAX_PREPARED_LOOP_REGION_SEC = 300;
 
-function run(bin, args, { cwd, onStderr } = {}) {
+function cancellationError() {
+  const error = new Error("Media operation cancelled");
+  error.code = "GENERATION_CANCELLED";
+  return error;
+}
+
+function throwIfAborted(signal) {
+  if (signal?.aborted) throw cancellationError();
+}
+
+function run(bin, args, { cwd, onStderr, signal } = {}) {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(cancellationError());
     const child = spawn(bin, args, { cwd, windowsHide: true });
     let stderr = "";
     let stdout = "";
+    let aborted = false;
+    const cleanup = () => signal?.removeEventListener?.("abort", onAbort);
+    const onAbort = () => {
+      aborted = true;
+      try { child.kill(); } catch {}
+    };
+    signal?.addEventListener?.("abort", onAbort, { once: true });
     child.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
     child.stderr.on("data", (chunk) => {
       const text = chunk.toString();
       stderr += text;
       if (onStderr) onStderr(text);
     });
-    child.once("error", reject);
+    child.once("error", (error) => {
+      cleanup();
+      reject(aborted || signal?.aborted ? cancellationError() : error);
+    });
     child.once("close", (code) => {
-      if (code === 0) resolve({ stdout, stderr });
+      cleanup();
+      if (aborted || signal?.aborted) reject(cancellationError());
+      else if (code === 0) resolve({ stdout, stderr });
       else reject(new Error(`${path.basename(bin)} exited ${code}: ${stderr.slice(-2500)}`));
     });
   });
@@ -35,13 +60,13 @@ export async function ffmpegAvailable() {
   }
 }
 
-export async function probeMedia(file) {
+export async function probeMedia(file, { signal } = {}) {
   const { stdout } = await run(FFPROBE, [
     "-v", "error",
     "-show_entries", "format=duration:stream=index,codec_type,width,height,r_frame_rate,avg_frame_rate,time_base,start_time,duration,nb_frames,sample_rate,channels",
     "-of", "json",
     file
-  ]);
+  ], { signal });
   const data = JSON.parse(stdout || "{}");
   const durationSec = Number(data.format?.duration || 0);
   const video = (data.streams || []).find((s) => s.codec_type === "video") || null;
@@ -91,30 +116,55 @@ export async function trimVideoToFrames(input, output, frames, fps) {
   return output;
 }
 
+export async function extractVideoFrameExact(input, output, zeroBasedFrameIndex) {
+  const frameIndex = Math.round(Number(zeroBasedFrameIndex));
+  if (!Number.isInteger(frameIndex) || frameIndex < 0) throw new Error("Decoded frame index must be a non-negative integer");
+  await run(FFMPEG, [
+    "-hide_banner",
+    "-loglevel", "error",
+    "-y",
+    "-i", input,
+    "-map", "0:v:0",
+    "-vf", `select=eq(n\\,${frameIndex})`,
+    "-vsync", "0",
+    "-frames:v", "1",
+    output
+  ]);
+  if (!fs.existsSync(output) || !fs.statSync(output).size) {
+    throw new Error(`Decoded frame ${frameIndex} is not present in the generated video`);
+  }
+  return output;
+}
+
 async function normalizeVideo(input, output, {
   width,
   height,
   fps,
   startSec = 0,
-  durationSec = null
+  durationSec = null,
+  audioMuted = false,
+  audioVolumeDb = 0,
+  signal = null
 }) {
-  const info = await probeMedia(input);
+  throwIfAborted(signal);
+  const info = await probeMedia(input, { signal });
+  const useSourceAudio = Boolean(info.audio && !audioMuted);
+  const outputDuration = Number(durationSec) > 0
+    ? Number(durationSec)
+    : Math.max(0.001, Number(info.durationSec) - Number(startSec || 0));
   const vf = `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=black,fps=${fps},format=yuv420p`;
   const args = ["-y"];
   if (Number(startSec) > 0) args.push("-ss", Number(startSec).toFixed(6));
   if (Number(durationSec) > 0) args.push("-t", Number(durationSec).toFixed(6));
   args.push("-i", input);
-  if (!info.audio) {
-    const silenceDuration = Number(durationSec) > 0
-      ? Number(durationSec)
-      : Math.max(0.001, Number(info.durationSec) - Number(startSec || 0));
+  if (!useSourceAudio) {
     args.push(
       "-f", "lavfi",
-      "-t", silenceDuration.toFixed(6),
+      "-t", outputDuration.toFixed(6),
       "-i", "anullsrc=channel_layout=stereo:sample_rate=48000"
     );
   }
-  args.push("-map", "0:v:0", "-map", info.audio ? "0:a:0" : "1:a:0");
+  args.push("-map", "0:v:0", "-map", useSourceAudio ? "0:a:0" : "1:a:0");
   args.push(
     "-vf", vf,
     "-c:v", "libx264",
@@ -125,10 +175,15 @@ async function normalizeVideo(input, output, {
     "-ar", "48000",
     "-ac", "2",
     "-shortest",
-    "-movflags", "+faststart",
-    output
+    "-t", outputDuration.toFixed(6),
+    "-movflags", "+faststart"
   );
-  await run(FFMPEG, args);
+  if (useSourceAudio) {
+    const gain = Math.pow(10, Number(audioVolumeDb) / 20);
+    args.push("-af", `volume=${gain.toFixed(8)},apad=whole_dur=${outputDuration.toFixed(6)},atrim=0:${outputDuration.toFixed(6)}`);
+  }
+  args.push(output);
+  await run(FFMPEG, args, { signal });
   return output;
 }
 
@@ -156,7 +211,7 @@ export async function concatVideos(inputs, output, settings, onProgress) {
       "-c", "copy",
       "-movflags", "+faststart",
       output
-    ]);
+    ], { signal: settings?.signal });
     if (onProgress) onProgress(1);
     return output;
   } finally {
@@ -316,7 +371,9 @@ export async function concatVideoSegments(segments, output, settings, onProgress
       await normalizeVideo(segment.file, target, {
         ...settings,
         startSec: Math.max(0, Number(segment.startSec) || 0),
-        durationSec: Math.max(1 / Number(settings.fps || 24), Number(segment.durationSec) || 0)
+        durationSec: Math.max(1 / Number(settings.fps || 24), Number(segment.durationSec) || 0),
+        audioMuted: segment.audioMuted === true,
+        audioVolumeDb: Number(segment.audioVolumeDb) || 0
       });
       normalized.push(target);
       if (onProgress) onProgress((i + 1) / (segments.length + 1));
@@ -334,8 +391,196 @@ export async function concatVideoSegments(segments, output, settings, onProgress
       "-c", "copy",
       "-movflags", "+faststart",
       output
-    ]);
+    ], { signal: settings?.signal });
     if (onProgress) onProgress(1);
+    return output;
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+/** Append encoded black picture and silence without re-encoding the existing cut. */
+export async function appendBlackTail(videoFile, output, tailDurationSec, {
+  width,
+  height,
+  fps,
+  signal = null
+} = {}) {
+  throwIfAborted(signal);
+  const duration = Math.max(0, Number(tailDurationSec) || 0);
+  if (duration < 1 / Math.max(1, Number(fps) || 24)) {
+    fs.copyFileSync(videoFile, output);
+    return output;
+  }
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "p316-black-tail-"));
+  try {
+    const black = path.join(tempRoot, "black-tail.mp4");
+    const listFile = path.join(tempRoot, "concat.txt");
+    await run(FFMPEG, [
+      "-y",
+      "-f", "lavfi", "-i", `color=c=black:s=${Math.max(2, Math.round(width))}x${Math.max(2, Math.round(height))}:r=${Math.max(1, Number(fps) || 24)}`,
+      "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
+      "-map", "0:v:0",
+      "-map", "1:a:0",
+      "-t", duration.toFixed(6),
+      "-c:v", "libx264",
+      "-preset", "fast",
+      "-crf", "18",
+      "-pix_fmt", "yuv420p",
+      "-c:a", "aac",
+      "-b:a", "192k",
+      "-ar", "48000",
+      "-ac", "2",
+      "-shortest",
+      "-movflags", "+faststart",
+      black
+    ], { signal });
+    fs.writeFileSync(listFile, [videoFile, black]
+      .map((file) => `file '${String(file).replaceAll("'", "'\\''")}'`)
+      .join("\n"));
+    await run(FFMPEG, [
+      "-y",
+      "-f", "concat",
+      "-safe", "0",
+      "-i", listFile,
+      "-c", "copy",
+      "-movflags", "+faststart",
+      output
+    ], { signal });
+    return output;
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Mix positioned post-production audio clips over an already conformed picture.
+ * Each item is trimmed from its own source, offset on the sequence, faded, and
+ * mixed at an explicit gain. The picture stream is copied without another
+ * lossy encode.
+ */
+export async function mixTimelineAudio(videoFile, audioClips, output, {
+  durationSec = null,
+  baseAudioMuted = false,
+  baseVolumeDb = 0,
+  signal = null
+} = {}) {
+  throwIfAborted(signal);
+  if (!videoFile || !fs.existsSync(videoFile)) throw new Error(`Video source missing: ${videoFile || "unknown"}`);
+  const videoInfo = await probeMedia(videoFile, { signal });
+  const duration = Math.max(1 / 120, Number(durationSec) || Number(videoInfo.durationSec) || 1);
+  const clips = (audioClips || []).filter((clip) =>
+    clip?.file && fs.existsSync(clip.file) && Number(clip.durationSec) > 0 && Number(clip.timelineStartSec) < duration
+  );
+  if (clips.length > MAX_TIMELINE_AUDIO_INPUTS) {
+    throw new Error(`An edit can mix at most ${MAX_TIMELINE_AUDIO_INPUTS} positioned audio clips`);
+  }
+  if (!clips.length && !baseAudioMuted && !Number(baseVolumeDb)) {
+    throwIfAborted(signal);
+    fs.copyFileSync(videoFile, output);
+    return output;
+  }
+
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "p316-audio-mix-"));
+  try {
+    const preparedClips = [];
+    const preparedLoops = new Map();
+    for (const clip of clips) {
+      const sourceIn = Math.max(0, Number(clip.sourceInSec) || 0);
+      const sourceOut = Math.max(sourceIn + 0.001, Number(clip.sourceOutSec) || sourceIn + Number(clip.durationSec) || sourceIn + 0.001);
+      const loopRegionDuration = sourceOut - sourceIn;
+      const timelineAvailable = Math.max(0.001, Math.min(
+        Number(clip.durationSec) || duration,
+        duration - Math.max(0, Number(clip.timelineStartSec) || 0)
+      ));
+      const needsLoop = clip.loop === true && timelineAvailable > loopRegionDuration + 0.001;
+      if (!needsLoop) {
+        preparedClips.push({ ...clip, sourceIn, sourceOut, preparedLoop: false });
+        continue;
+      }
+      if (loopRegionDuration > MAX_PREPARED_LOOP_REGION_SEC) {
+        throw new Error(`Loop regions must be ${MAX_PREPARED_LOOP_REGION_SEC} seconds or shorter; shorten the source range before repeating it`);
+      }
+      const loopKey = `${path.resolve(clip.file)}\u0000${sourceIn.toFixed(6)}\u0000${sourceOut.toFixed(6)}`;
+      let preparedFile = preparedLoops.get(loopKey);
+      if (!preparedFile) {
+        preparedFile = path.join(tempRoot, `loop_${String(preparedLoops.size).padStart(3, "0")}.flac`);
+        await run(FFMPEG, [
+          "-y",
+          "-ss", sourceIn.toFixed(6),
+          "-t", (sourceOut - sourceIn).toFixed(6),
+          "-i", clip.file,
+          "-map", "0:a:0",
+          "-vn",
+          "-ar", "48000",
+          "-ac", "2",
+          "-c:a", "flac",
+          "-compression_level", "5",
+          preparedFile
+        ], { signal });
+        preparedLoops.set(loopKey, preparedFile);
+      }
+      preparedClips.push({ ...clip, file: preparedFile, sourceIn: 0, sourceOut: loopRegionDuration, preparedLoop: true });
+    }
+
+    const args = ["-y", "-i", videoFile];
+    for (const clip of preparedClips) {
+      if (clip.preparedLoop) args.push("-stream_loop", "-1");
+      args.push("-i", clip.file);
+    }
+
+    const filters = [];
+    const mixInputs = [];
+    if (videoInfo.audio && !baseAudioMuted) {
+      const baseGain = Math.pow(10, Number(baseVolumeDb || 0) / 20);
+      filters.push(`[0:a:0]atrim=0:${duration.toFixed(6)},asetpts=PTS-STARTPTS,volume=${baseGain.toFixed(8)}[base]`);
+    } else {
+      filters.push(`anullsrc=channel_layout=stereo:sample_rate=48000,atrim=0:${duration.toFixed(6)},asetpts=PTS-STARTPTS[base]`);
+    }
+    mixInputs.push("[base]");
+
+    preparedClips.forEach((clip, index) => {
+      const inputIndex = index + 1;
+      const available = Math.max(0.001, Math.min(
+        Number(clip.durationSec) || duration,
+        duration - Math.max(0, Number(clip.timelineStartSec) || 0)
+      ));
+      const fadeIn = Math.min(available, Math.max(0, Number(clip.fadeInSec) || 0));
+      const fadeOut = Math.min(available, Math.max(0, Number(clip.fadeOutSec) || 0));
+      const fadeOutStart = Math.max(0, available - fadeOut);
+      const gain = Math.pow(10, Number(clip.volumeDb || 0) / 20);
+      const delayMs = Math.max(0, Math.round((Number(clip.timelineStartSec) || 0) * 1000));
+      const chain = [`[${inputIndex}:a:0]aresample=48000`];
+      if (!clip.preparedLoop) chain.push(`atrim=start=${clip.sourceIn.toFixed(6)}:end=${clip.sourceOut.toFixed(6)}`);
+      chain.push("asetpts=PTS-STARTPTS");
+      chain.push(`atrim=0:${available.toFixed(6)}`);
+      chain.push(`volume=${gain.toFixed(8)}`);
+      if (fadeIn > 0) chain.push(`afade=t=in:st=0:d=${fadeIn.toFixed(6)}`);
+      if (fadeOut > 0) chain.push(`afade=t=out:st=${fadeOutStart.toFixed(6)}:d=${fadeOut.toFixed(6)}`);
+      chain.push(`adelay=${delayMs}:all=1`);
+      chain.push(`apad=whole_dur=${duration.toFixed(6)}`);
+      chain.push(`atrim=0:${duration.toFixed(6)}[mix${index}]`);
+      filters.push(chain.join(","));
+      mixInputs.push(`[mix${index}]`);
+    });
+    filters.push(`${mixInputs.join("")}amix=inputs=${mixInputs.length}:duration=longest:normalize=0,alimiter=limit=0.95,atrim=0:${duration.toFixed(6)},asetpts=PTS-STARTPTS[aout]`);
+
+    const filterFile = path.join(tempRoot, "timeline-filter.txt");
+    fs.writeFileSync(filterFile, filters.join(";"));
+    args.push(
+      "-filter_complex_script", filterFile,
+      "-map", "0:v:0",
+      "-map", "[aout]",
+      "-c:v", "copy",
+      "-c:a", "aac",
+      "-b:a", "192k",
+      "-ar", "48000",
+      "-ac", "2",
+      "-t", duration.toFixed(6),
+      "-movflags", "+faststart",
+      output
+    );
+    await run(FFMPEG, args, { signal });
     return output;
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });

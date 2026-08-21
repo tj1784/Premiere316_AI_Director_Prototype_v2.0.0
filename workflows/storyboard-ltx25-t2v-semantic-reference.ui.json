@@ -3521,8 +3521,8 @@
         "LTX\\2.3\\Distilled\\ltx-2.3-22b-distilled-1.1-Q5_K_M.gguf",
         "LTX 2.3\\LTX23_video_vae_bf16.safetensors",
         "LTX 2.3\\LTX23_audio_vae_bf16.safetensors",
-        "LTX 2.3\\gemma_3_12B_it_fp8_e4m3fn.safetensors",
-        "LTX 2.3\\ltx-2.3_text_projection_bf16.safetensors",
+        "gemma_3_12B_it_fp8_e4m3fn.safetensors",
+        "ltx-2.3_text_projection_bf16.safetensors",
         "cpu",
         "default"
       ],

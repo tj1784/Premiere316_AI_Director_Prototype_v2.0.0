@@ -37,6 +37,70 @@ function PromptBlock({ label, title, prompt, rows = 9 }: { label: string; title:
   );
 }
 
+function GlobalPromptEditor({
+  clipId,
+  label,
+  title,
+  prompt,
+  rows = 12
+}: {
+  clipId: string;
+  label: string;
+  title: string;
+  prompt: string;
+  rows?: number;
+}) {
+  const store = useStore();
+  const [draft, setDraft] = useState(prompt || "");
+  const [scope, setScope] = useState<"clip" | "scene" | "chapter" | "project">("clip");
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    setDraft(prompt || "");
+  }, [clipId, prompt]);
+
+  const save = async () => {
+    const labels = {
+      clip: "this clip",
+      scene: "this entire scene",
+      chapter: "this entire chapter",
+      project: "the entire project"
+    };
+    if ((scope === "chapter" || scope === "project") && !window.confirm("Save this global prompt to " + labels[scope] + "? Local segment prompts stay unchanged.")) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const result = await store.saveStoryboardGlobalPrompt(clipId, draft, scope);
+      setNotice("Saved global to " + (result?.scope || scope) + ": " + (result?.clips || 0) + " clips, " + (result?.segments || 0) + " segments.");
+    } catch (error: any) {
+      setNotice(String(error.message || error));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section className="storyboard-prompt-block storyboard-global-editor">
+      <header><div><p className="eyebrow">{label}</p><h3>{title}</h3></div><CopyButton text={draft} /></header>
+      <div className="storyboard-global-scope-row">
+        <select value={scope} onChange={(event) => setScope(event.target.value as typeof scope)} aria-label="Global prompt save scope">
+          <option value="clip">This clip (all its segments)</option>
+          <option value="scene">This scene (all clips in this S##)</option>
+          <option value="chapter">This chapter (all of this H##)</option>
+          <option value="project">Entire project</option>
+        </select>
+        <button type="button" className="storyboard-copy-button" disabled={saving || !clipId} onClick={() => void save()}>{saving ? "Saving…" : "Save global"}</button>
+      </div>
+      <textarea aria-label={title + " prompt"} value={draft} rows={rows} onChange={(event) => setDraft(event.target.value)} />
+      {notice ? <small className="storyboard-global-notice">{notice}</small> : null}
+    </section>
+  );
+}
+
+
+
 function versionApproved(asset: any, version: number) {
   return Boolean(asset?.approvalCurrent === true && asset?.approval?.status === "approved" && Number(asset.approval.activeVersion) === Number(version));
 }
@@ -427,7 +491,7 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
                 {store.storyboardBulkWorkflowBusy ? `Pushing all ${Object.keys(storyboard.frames || {}).length}…` : `Push all ${Object.keys(storyboard.frames || {}).length} workflows`}
               </button>
             ) : null}
-            <button type="button" className="secondary-action" onClick={onOpenAssets}>Open Asset Foundry</button>
+            <button type="button" className="secondary-action" onClick={onOpenAssets}>Open Asset Library</button>
             {store.storyboardBulkWorkflowNotice ? <small className="storyboard-bulk-workflow-notice">{store.storyboardBulkWorkflowNotice}</small> : null}
           </div>
         </header>
@@ -436,7 +500,7 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
           {isT2V ? (
             <section className="storyboard-readiness-banner"><span>✓</span><div><b>T2V PLAN · SEMANTIC REFERENCES ONLY</b><small>This clip generates directly from text. Reference images control identity and design without becoming opening, ending, handoff, or timed video frames.</small></div></section>
           ) : (
-            <section className="storyboard-readiness-banner"><span>!</span><div><b>PROMPTS COMPLETE · IMAGE APPROVAL REQUIRED BEFORE VIDEO</b><small>The plan is render-aligned, but exact reference versions and generated image guides must pass Asset Foundry review before queueing.</small></div></section>
+            <section className="storyboard-readiness-banner"><span>!</span><div><b>PROMPTS COMPLETE · IMAGE APPROVAL REQUIRED BEFORE VIDEO</b><small>The plan is render-aligned, but exact reference versions and generated image guides must pass Asset Library review before queueing.</small></div></section>
           )}
           <section className="storyboard-shot-metadata">
             <div><span>Timeline</span><b>{formatTimecode(clip.timelineStartFrame, fps)}</b></div>
@@ -476,7 +540,7 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
 
           <section className="storyboard-video-panel">
             <header><div><p className="eyebrow">VIDEO GENERATION</p><h2>{isT2V ? "LTX-2.5 native T2V" : "LTX Director"} · {Math.round(clip.durationFrames / fps)}-second {isT2V ? "direct generation" : "silent picture pass"}</h2></div><div className="storyboard-workflow-chips"><span>24 FPS</span><span>8-frame grid</span><span>{segments.length} segments</span><span>Trim +{clip.trimDecodedFrames} decoded frame</span><span>{isT2V ? String(videoPlan?.audioMode || clip.audioPlan?.mode || "authored audio").replaceAll("_", " ") : "Audio off"}</span></div></header>
-            <PromptBlock label={isT2V ? "LTX-2.5 T2V MASTER" : "LTX GLOBAL VIDEO"} title={isT2V ? "Text-to-video generation prompt" : "Global video-generation prompt"} prompt={videoPlan?.globalPrompt || ""} rows={12} />
+            <GlobalPromptEditor clipId={clip.id} label={isT2V ? "LTX-2.5 T2V MASTER" : "LTX GLOBAL VIDEO"} title={isT2V ? "Text-to-video generation prompt" : "Global video-generation prompt"} prompt={videoPlan?.globalPrompt || ""} rows={12} />
             <div className="storyboard-segment-heading"><div><p className="eyebrow">PROMPT RELAY</p><h3>{segments.length} contiguous segments{isT2V ? " · text-only timeline" : ` · ${additionalFrames} additional image reset${additionalFrames === 1 ? "" : "s"}`}</h3></div><small>{videoPlan?.segmentLengths || segments.map((segment: any) => segment.lengthFrames).join(",")} frames</small></div>
             <div className="storyboard-segment-list">
               {segments.map((segment: any) => {
