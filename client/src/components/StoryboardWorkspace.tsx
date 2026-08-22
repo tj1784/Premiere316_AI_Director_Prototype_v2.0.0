@@ -1,6 +1,7 @@
 import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { assetUrl, storyboardUrl, useStore } from "../store";
 import AssetReferencePicker from "./AssetReferencePicker";
+import { AudioOffChip, ClipDirectionEditor, SegmentDirectionEditor, openLtxDirector } from "./StoryboardDirection";
 
 function formatTimecode(frames: number, fps: number) {
   const safeFrames = Math.max(0, Math.round(Number(frames) || 0));
@@ -29,10 +30,17 @@ function CopyButton({ text, label = "Copy prompt" }: { text: string; label?: str
 }
 
 function PromptBlock({ label, title, prompt, rows = 9 }: { label: string; title: string; prompt: string; rows?: number }) {
+  const [expanded, setExpanded] = useState(false);
   return (
     <section className="storyboard-prompt-block">
-      <header><div><p className="eyebrow">{label}</p><h3>{title}</h3></div><CopyButton text={prompt} /></header>
-      <textarea aria-label={`${title} prompt`} readOnly value={prompt || ""} rows={rows} />
+      <header>
+        <div><p className="eyebrow">{label}</p><h3>{title}</h3></div>
+        <div className="requirement-slot-actions">
+          <CopyButton text={prompt} />
+          <button type="button" className="storyboard-copy-button" onClick={() => setExpanded((current) => !current)}>{expanded ? "Collapse" : "Expand"}</button>
+        </div>
+      </header>
+      <textarea aria-label={`${title} prompt`} readOnly value={prompt || ""} rows={expanded ? Math.max(rows, 22) : rows} />
     </section>
   );
 }
@@ -111,7 +119,7 @@ function ReferenceImage({ projectSlug, binding }: { projectSlug: string; binding
   return <img src={assetUrl(projectSlug, binding.sourceAssetFile)} alt="" onError={() => setFailed(true)} />;
 }
 
-function ReferenceStrip({ project, references }: { project: any; references: any[] }) {
+function ReferenceStrip({ project, references, appliedIds = [] }: { project: any; references: any[]; appliedIds?: string[] }) {
   const assets = project.assets?.items || [];
   return (
     <div className="storyboard-reference-strip">
@@ -119,7 +127,7 @@ function ReferenceStrip({ project, references }: { project: any; references: any
         const asset = assets.find((item: any) => item.id === binding.assetId);
         const approved = versionApproved(asset, Number(binding.assetVersion));
         return (
-          <article key={`${binding.assetId}-${binding.assetVersion}-${binding.order}`} title={`${binding.sourceAssetFile} · ${binding.role}`}>
+          <article className={appliedIds.includes(binding.assetId) ? "storyboard-reference-new" : undefined} key={`${binding.assetId}-${binding.assetVersion}-${binding.order}`} title={`${binding.sourceAssetFile} · ${binding.role}`}>
             <div><ReferenceImage projectSlug={project.slug} binding={binding} /><span className={approved ? "approved" : "review"}>{approved ? "✓" : "!"}</span></div>
             <b>{asset?.name || binding.sourceAssetKey}</b>
             <small>{binding.role} · v{binding.assetVersion}{Number(asset?.activeVersion) !== Number(binding.assetVersion) ? " · historical" : ""}</small>
@@ -141,7 +149,9 @@ function FramePromptPanel({
   onPush,
   onDownload,
   onGenerate,
-  onReplaceImage
+  onReplaceImage,
+  onGenerateAll,
+  appliedIds = []
 }: {
   project: any;
   frame: any;
@@ -153,6 +163,8 @@ function FramePromptPanel({
   onDownload: (frameId: string) => void;
   onGenerate: (frameId: string) => void;
   onReplaceImage: (frameId: string, file: File) => void;
+  onGenerateAll?: () => void;
+  appliedIds?: string[];
 }) {
   const replacementInput = useRef<HTMLInputElement>(null);
   const references = frame?.references || [];
@@ -225,7 +237,7 @@ function FramePromptPanel({
         </div>
       </header>
       <div className="storyboard-frame-status"><span className={["ready_to_generate", "generated"].includes(frame.status) ? "ready" : "waiting"} /><b>{String(frame.status || "not started").replaceAll("_", " ")}</b><small>{frame.purpose === "first_frame" ? "Clip opening composition" : "Additional segment continuity reset"}</small></div>
-      {(notice || frame.lastError) ? <div className={`storyboard-frame-notice ${frame.lastError ? "error" : ""}`}>{frame.lastError || notice}</div> : null}
+      {(notice || frame.lastError) ? <div className={`storyboard-frame-notice ${frame.lastError ? "error" : ""}`}>{frame.lastError || notice}{frame.lastError ? <button type="button" className="storyboard-copy-button" onClick={() => onGenerate(frame.id)}>Retry</button> : null}{frame.lastError && onGenerateAll ? <button type="button" className="storyboard-copy-button" onClick={() => onGenerateAll()}>Generate all missing for this clip</button> : null}</div> : null}
       {generatedFile ? (
         <section className="storyboard-generated-guide">
           <img src={storyboardUrl(project.slug, generatedFile)} alt={`${label} generated guide`} />
@@ -240,7 +252,7 @@ function FramePromptPanel({
       <details className="storyboard-negative-prompt"><summary>Negative / avoid prompt <span>{frame.negativePrompt?.length || 0} characters</span></summary><div><CopyButton text={frame.negativePrompt || ""} /><p>{frame.negativePrompt}</p></div></details>
       <section className="storyboard-reference-section">
         <header><div><p className="eyebrow">EXACT INPUTS</p><h3>{references.length} assigned visual references</h3></div><small>Identity, wardrobe, environment, props, crowd, and VFX are version-pinned.</small></header>
-        <ReferenceStrip project={project} references={references} />
+        <ReferenceStrip project={project} references={references} appliedIds={appliedIds} />
       </section>
     </section>
   );
@@ -383,7 +395,7 @@ function fullClipPackage(storyboard: any, clip: any) {
   return sections.join("\n\n============================================================\n\n");
 }
 
-export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: () => void }) {
+export default function StoryboardWorkspace({ onOpenAssets: _onOpenAssets }: { onOpenAssets?: () => void }) {
   const store = useStore();
   const project = store.project;
   const storyboard = store.storyboard;
@@ -391,6 +403,8 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
   const [pickerTarget, setPickerTarget] = useState<{ frameId: string; label: string } | null>(null);
+  const [appliedReferenceIds, setAppliedReferenceIds] = useState<string[]>([]);
+  const goDirectLtx = (clipId: string) => openLtxDirector(store, clipId);
 
   useEffect(() => { void store.loadStoryboard(); }, [project?.slug]);
 
@@ -429,7 +443,7 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
   const selectedRecord = clipRecords.find((record) => record.clip.id === store.selectedStoryboardClipId) || clipRecords[0] || null;
 
   if (store.storyboardBusy && !storyboard) return <main className="storyboard-loading"><span>▦</span><h1>Loading production storyboard…</h1><p>119 clips and their generation packages are being indexed.</p></main>;
-  if (!storyboard || !selectedRecord) return <main className="storyboard-loading"><span>!</span><h1>Storyboard package unavailable</h1><p>Import a Premiere316 storyboard package for this project, then try again.</p><button className="primary-action" onClick={() => void store.loadStoryboard()}>Retry</button></main>;
+  if (!storyboard || !selectedRecord) return <main className="storyboard-loading"><span>!</span><h1>Storyboard package unavailable</h1><p>{store.error || "Import a Premiere316 storyboard package for this project, then try again."}</p><div className="requirement-slot-actions"><button className="primary-action" onClick={() => void store.loadStoryboard()}>Retry</button><button className="secondary-action" onClick={() => void store.buildAssets()}>Build from Screenplay</button><label className="secondary-action">Import package<input className="storyboard-hidden-file" type="file" accept="application/json,.json" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void (async () => { try { const json = JSON.parse(await file.text()); const response = await fetch(`/api/projects/${encodeURIComponent(project?.slug || "")}/storyboard`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storyboard: json.storyboard || json }) }); const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(body.error || `Import package failed (${response.status}).`); await store.loadStoryboard(); } catch (error: any) { window.alert(String(error.message || error)); } })(); }} /></label></div>{store.error ? <details className="storyboard-negative-prompt" open><summary>Inspect error</summary><pre>{store.error}</pre></details> : null}</main>;
 
   const { clip, chapter, scene, sequenceIndex } = selectedRecord;
   const fps = Number(storyboard.defaults?.fps || project.settings?.fps || 24);
@@ -491,7 +505,13 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
                 {store.storyboardBulkWorkflowBusy ? `Pushing all ${Object.keys(storyboard.frames || {}).length}…` : `Push all ${Object.keys(storyboard.frames || {}).length} workflows`}
               </button>
             ) : null}
-            <button type="button" className="secondary-action" onClick={onOpenAssets}>Open Asset Library</button>
+            
+            <button type="button" className="secondary-action" onClick={() => goDirectLtx(clip.id)}>Open in LTX Director</button>
+            {!isT2V ? <button type="button" className="secondary-action" onClick={() => {
+              const frameFile = (frame: any) => frame?.generatedFile || frame?.generatedVersions?.find((version: any) => Number(version.v) === Number(frame?.activeGeneratedVersion))?.file;
+              const missing = [firstFrame].filter((frame: any) => frame && frame.id && !frameFile(frame) && frame.status !== "generated");
+              for (const frame of missing) void store.generateStoryboardFrame(frame.id);
+            }}>Generate all missing for this clip</button> : null}
             {store.storyboardBulkWorkflowNotice ? <small className="storyboard-bulk-workflow-notice">{store.storyboardBulkWorkflowNotice}</small> : null}
           </div>
         </header>
@@ -502,15 +522,7 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
           ) : (
             <section className="storyboard-readiness-banner"><span>!</span><div><b>PROMPTS COMPLETE · IMAGE APPROVAL REQUIRED BEFORE VIDEO</b><small>The plan is render-aligned, but exact reference versions and generated image guides must pass Asset Library review before queueing.</small></div></section>
           )}
-          <section className="storyboard-shot-metadata">
-            <div><span>Timeline</span><b>{formatTimecode(clip.timelineStartFrame, fps)}</b></div>
-            <div><span>Duration</span><b>{(clip.durationFrames / fps).toFixed(1)} sec · {clip.durationFrames} frames</b></div>
-            <div><span>Shot / lens</span><b>{clip.shotSizeLens}</b></div>
-            <div><span>Camera</span><b>{clip.cameraMovement}</b></div>
-            <div><span>Transition</span><b>{clip.transition}</b></div>
-            <div><span>Dialogue anchor</span><b>{clip.dialogueAnchor}</b></div>
-          </section>
-          <section className="storyboard-continuity-locks"><header><p className="eyebrow">CONTINUITY LOCKS</p><span>{clip.continuityLocks?.length || 0}</span></header><div>{(clip.continuityLocks || []).map((lock: string, index: number) => <span key={`${lock}-${index}`}>✓ {lock}</span>)}</div></section>
+          <ClipDirectionEditor clip={clip} fps={fps} />
 
           {isT2V ? (
             <T2VPlanPanel
@@ -527,6 +539,12 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
             <FramePromptPanel
               project={project}
               frame={firstFrame}
+              appliedIds={appliedReferenceIds}
+              onGenerateAll={() => {
+                const frameFile = (frame: any) => frame?.generatedFile || frame?.generatedVersions?.find((version: any) => Number(version.v) === Number(frame?.activeGeneratedVersion))?.file;
+                const missing = [firstFrame].filter((frame: any) => frame && frame.id && !frameFile(frame) && frame.status !== "generated");
+                for (const frame of missing) void store.generateStoryboardFrame(frame.id);
+              }}
               label="First frame"
               busyLabel={store.storyboardFrameActions[firstFrame.id]}
               notice={store.storyboardFrameNotices[firstFrame.id]}
@@ -539,7 +557,7 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
           ) : null}
 
           <section className="storyboard-video-panel">
-            <header><div><p className="eyebrow">VIDEO GENERATION</p><h2>{isT2V ? "LTX-2.5 native T2V" : "LTX Director"} · {Math.round(clip.durationFrames / fps)}-second {isT2V ? "direct generation" : "silent picture pass"}</h2></div><div className="storyboard-workflow-chips"><span>24 FPS</span><span>8-frame grid</span><span>{segments.length} segments</span><span>Trim +{clip.trimDecodedFrames} decoded frame</span><span>{isT2V ? String(videoPlan?.audioMode || clip.audioPlan?.mode || "authored audio").replaceAll("_", " ") : "Audio off"}</span></div></header>
+            <header><div><p className="eyebrow">VIDEO GENERATION</p><h2>{isT2V ? "LTX-2.5 native T2V" : "LTX Director"} · {Math.round(clip.durationFrames / fps)}-second {isT2V ? "direct generation" : "silent picture pass"}</h2></div><div className="storyboard-workflow-chips"><span>24 FPS</span><span>8-frame grid</span><span>{segments.length} segments</span><span>Trim +{clip.trimDecodedFrames} decoded frame</span><span>{isT2V ? String(videoPlan?.audioMode || clip.audioPlan?.mode || "authored audio").replaceAll("_", " ") : <AudioOffChip segment={segments[0]} clipLabel={clip.id} clipId={clip.id} />}</span></div></header>
             <GlobalPromptEditor clipId={clip.id} label={isT2V ? "LTX-2.5 T2V MASTER" : "LTX GLOBAL VIDEO"} title={isT2V ? "Text-to-video generation prompt" : "Global video-generation prompt"} prompt={videoPlan?.globalPrompt || ""} rows={12} />
             <div className="storyboard-segment-heading"><div><p className="eyebrow">PROMPT RELAY</p><h3>{segments.length} contiguous segments{isT2V ? " · text-only timeline" : ` · ${additionalFrames} additional image reset${additionalFrames === 1 ? "" : "s"}`}</h3></div><small>{videoPlan?.segmentLengths || segments.map((segment: any) => segment.lengthFrames).join(",")} frames</small></div>
             <div className="storyboard-segment-list">
@@ -549,12 +567,18 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
                 const end = (segment.startFrame + segment.lengthFrames) / fps;
                 return (
                   <article key={segment.id} className={`storyboard-segment-card ${segment.type}`}>
-                    <header><span>{String(segment.order).padStart(2, "0")}</span><div><b>{start.toFixed(1)}–{end.toFixed(1)} seconds</b><small>{segment.lengthFrames} frames · {isT2V ? "text-only continuation" : segment.type === "image" ? "image-guided" : "text continuation"}</small></div><CopyButton text={segment.prompt} label="Copy local prompt" /></header>
-                    <p>{segment.prompt}</p>
+                    <header><span>{String(segment.order).padStart(2, "0")}</span><div><b>{start.toFixed(1)}–{end.toFixed(1)} seconds</b><small>{segment.lengthFrames} frames · {isT2V ? "text-only continuation" : segment.type === "image" ? "image-guided" : "text continuation"}</small></div><CopyButton text={segment.prompt} label="Copy local prompt" /><button type="button" className="storyboard-copy-button" onClick={() => goDirectLtx(clip.id)}>Open in LTX Director</button></header>
+                    <SegmentDirectionEditor segment={segment} fps={fps} clipId={clip.id} clipLabel={clip.id} />
                     {!isT2V && segmentFrame && segmentFrame.id !== firstFrame?.id ? (
                       <FramePromptPanel
                         project={project}
                         frame={segmentFrame}
+                        appliedIds={appliedReferenceIds}
+                        onGenerateAll={() => {
+                          const frameFile = (frame: any) => frame?.generatedFile || frame?.generatedVersions?.find((version: any) => Number(version.v) === Number(frame?.activeGeneratedVersion))?.file;
+                          const missing = [firstFrame].filter((frame: any) => frame && frame.id && !frameFile(frame) && frame.status !== "generated");
+                          for (const frame of missing) void store.generateStoryboardFrame(frame.id);
+                        }}
                         label={`Additional image · segment ${String(segment.order).padStart(2, "0")}`}
                         busyLabel={store.storyboardFrameActions[segmentFrame.id]}
                         notice={store.storyboardFrameNotices[segmentFrame.id]}
@@ -573,7 +597,7 @@ export default function StoryboardWorkspace({ onOpenAssets }: { onOpenAssets: ()
         </div>
       </section>
 
-      {pickerTarget && targetFrame ? <AssetReferencePicker key={pickerTarget.frameId} project={project} targetLabel={pickerTarget.label} initialReferences={targetFrame.references || []} saving={store.storyboardSaving} onCancel={() => setPickerTarget(null)} onApply={(references) => store.replaceStoryboardReferences("frame", pickerTarget.frameId, references)} /> : null}
+      {pickerTarget && targetFrame ? <AssetReferencePicker key={pickerTarget.frameId} project={project} targetLabel={pickerTarget.label} targetId={pickerTarget.frameId} targetKind="frame" initialReferences={targetFrame.references || []} saving={store.storyboardSaving} onCancel={() => setPickerTarget(null)} onApply={async (references) => { await store.replaceStoryboardReferences("frame", pickerTarget.frameId, references); setAppliedReferenceIds(references.map((item: any) => item.assetId)); }} /> : null}
     </main>
   );
 }

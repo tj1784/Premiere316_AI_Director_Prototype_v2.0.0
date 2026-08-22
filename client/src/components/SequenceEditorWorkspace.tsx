@@ -6,6 +6,21 @@ import React, {
   useState
 } from "react";
 import { useStore } from "../store";
+import { openAssetAction } from "../contextual-agency";
+
+function openSequenceSlot(intent: any) {
+  openAssetAction({
+    sourceRoute: "/direct/sequence",
+    ...intent
+  });
+}
+
+function openWorkspaceRoute(path: string) {
+  const params = new URLSearchParams(window.location.search);
+  window.history.pushState({}, "", `${path}${params.size ? `?${params}` : ""}`);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+}
+
 import {
   activeStoryCut,
   insertAudio,
@@ -937,8 +952,15 @@ export default function SequenceEditorWorkspace(
       if (media) {
         setLibraryTab("audio");
         setSourceMediaId(media.id);
+        openSequenceSlot({
+          sourceEntity: { type: "timeline-item", id: "A1", label: media.name || file.name },
+          requirement: { relationship: "sequence.audioAtPlayhead", category: "sound", expectedMediaType: "audio", assetId: media.id },
+          initialAction: "attach",
+          slotState: "unapproved",
+          returnFocusId: "sequence-editor-add-a1"
+        });
       }
-      setNotice(`Imported ${file.name}. Place it on A1 or M1 from the Source monitor.`);
+      setNotice(`Imported ${file.name}. Selected in the bin. Place on A1 at playhead or save as a canonical sound asset.`);
     } catch (error: any) {
       setNotice(`Audio import failed: ${String(error?.message || error)}`);
     } finally {
@@ -1115,6 +1137,13 @@ export default function SequenceEditorWorkspace(
         <span className="sequence-edit-header-spacer" style={{ flex: 1 }} />
         <span className="sequence-edit-notice" role="status" title={notice} style={{ maxWidth: 440, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#8493a7" }}>{notice}</span>
         <button className="sequence-edit-refresh-media" data-testid="sequence-editor-refresh-media" style={button} disabled={refreshingMedia} onClick={() => void refreshMedia(false)}>{refreshingMedia ? "Refreshing…" : "↻ Refresh Media"}</button>
+        <button type="button" style={button} onClick={() => openAssetAction({
+          sourceRoute: "/direct/sequence",
+          sourceEntity: { type: "sequence", id: sequence.id || "sequence", label: sequence.name || "Sequence" },
+          requirement: { relationship: "sequence.media", category: "atmosphere", expectedMediaType: "image" },
+          initialAction: "generate",
+          slotState: "missing"
+        })}>Generate missing media</button>
       </header>
 
       {conflict ? (
@@ -1182,7 +1211,18 @@ export default function SequenceEditorWorkspace(
                 </button>
               );
             })}
-            {!(libraryTab === "video" ? filteredVideos : filteredAudio).length ? <p className="sequence-edit-library-empty" style={{ color: "#748296", textAlign: "center", padding: 20 }}>No matching {libraryTab} media.</p> : null}
+            {libraryTab === "video" && !(library?.videos || []).length ? (
+              <div className="sequence-edit-library-empty seq-001-empty" data-testid="seq-001-empty" style={{ color: "#748296", textAlign: "center", padding: 12, display: "grid", gap: 7 }}>
+                <p style={{ margin: 0 }}>No video takes in this bin.</p>
+                <nav aria-label="Empty video library recovery" style={{ display: "grid", gap: 5 }}>
+                  <button type="button" style={button} data-testid="seq-001-storyboard" onClick={() => openWorkspaceRoute("/storyboard")}>Open Storyboard</button>
+                  <button type="button" style={button} data-testid="seq-001-ltx" onClick={() => openWorkspaceRoute("/direct/ltx")}>Open LTX Director</button>
+                  <button type="button" style={button} data-testid="seq-001-generate" onClick={() => openSequenceSlot({ sourceEntity: { type: "sequence", id: String(sequence?.id || "sequence"), label: sequence?.name || "Sequence" }, requirement: { relationship: "sequence.media", category: "video", expectedMediaType: "video" }, initialAction: "generate", slotState: "missing", returnFocusId: "seq-001-generate" })}>Generate missing takes</button>
+                  <button type="button" style={button} data-testid="seq-001-import" onClick={() => openSequenceSlot({ sourceEntity: { type: "sequence", id: String(sequence?.id || "sequence"), label: sequence?.name || "Sequence" }, requirement: { relationship: "sequence.media", category: "video", expectedMediaType: "video" }, initialAction: "upload", slotState: "missing", returnFocusId: "seq-001-import" })}>Import video</button>
+                  <button type="button" style={button} data-testid="seq-001-create-asset" onClick={() => { const selected = useStore.getState().project?.assets?.items?.find((item: any) => item.id === useStore.getState().selectedAssetId); openSequenceSlot({ sourceEntity: { type: "sequence", id: String(sequence?.id || "sequence"), label: sequence?.name || "Sequence" }, requirement: { relationship: "sequence.media", category: "video", expectedMediaType: "video", assetId: selected?.id }, initialAction: "choose", slotState: "missing", returnFocusId: "seq-001-create-asset", prefill: selected ? { name: selected.name, prompt: selected.prompt } : undefined }); }}>Create from selected asset</button>
+                </nav>
+              </div>
+            ) : !(libraryTab === "video" ? filteredVideos : filteredAudio).length ? <p className="sequence-edit-library-empty" style={{ color: "#748296", textAlign: "center", padding: 20 }}>No matching {libraryTab} media.</p> : null}
           </div>
         </aside>
 
@@ -1229,6 +1269,22 @@ export default function SequenceEditorWorkspace(
               <div className="sequence-edit-source-edit-buttons" style={{ display: "flex", gap: 5 }}>
                 {selectedMediaIsVideo ? <><button className="sequence-edit-insert-video" data-testid="sequence-editor-insert-video" title={selectedVideoIsExact ? "Insert marked source range at the playhead" : "Waiting for exact-duration probe"} style={{ ...primaryButton, flex: 1 }} disabled={!selectedVideoIsExact || probing} onClick={() => insertSelectedVideo(false)}>{probing && !selectedVideoIsExact ? "Probing take…" : "Insert at playhead"}</button><button className="sequence-edit-append-video" data-testid="sequence-editor-append-video" title={selectedVideoIsExact ? "Append marked source range to V1" : "Waiting for exact-duration probe"} style={{ ...button, flex: 1 }} disabled={!selectedVideoIsExact || probing} onClick={() => insertSelectedVideo(true)}>{probing && !selectedVideoIsExact ? "Probing take…" : "Append to V1"}</button></> : selectedMedia ? <><button className="sequence-edit-add-a1" data-testid="sequence-editor-add-a1" title={selectedAudioIsExact ? "Place marked audio on A1" : "Waiting for exact-duration probe"} style={{ ...primaryButton, flex: 1 }} disabled={!selectedAudioIsExact || probing} onClick={() => addSelectedAudio("A1")}>{probing && !selectedAudioIsExact ? "Probing audio…" : "Add to A1"}</button><button className="sequence-edit-add-m1" data-testid="sequence-editor-add-m1" title={selectedAudioIsExact ? "Place marked audio on M1" : "Waiting for exact-duration probe"} style={{ ...button, flex: 1 }} disabled={!selectedAudioIsExact || probing} onClick={() => addSelectedAudio("M1")}>{probing && !selectedAudioIsExact ? "Probing audio…" : "Add to M1"}</button></> : null}
               </div>
+              {selectedMedia ? (
+                <div className="seq-source-agency" data-testid="seq-source-agency" style={{ display: "flex", flexWrap: "wrap", gap: 4, padding: "4px 0 0" }}>
+                  <button type="button" style={button} onClick={() => openSequenceSlot({ sourceEntity: { type: "sequence", id: String(selectedMedia.clipId || selectedMedia.id), label: mediaTitle(selectedMedia) }, requirement: { relationship: "clip.take", category: "video", expectedMediaType: selectedMediaIsVideo ? "video" : "audio", assetId: selectedMedia.id }, initialAction: "generate", slotState: selectedMedia.available ? "unapproved" : "missing", returnFocusId: "sequence-editor-probe-source" })}>Regenerate this take</button>
+                  <button type="button" style={button} onClick={() => openSequenceSlot({ sourceEntity: { type: "sequence", id: String(selectedMedia.clipId || selectedMedia.id), label: mediaTitle(selectedMedia) }, requirement: { relationship: "clip.take", category: "video", expectedMediaType: selectedMediaIsVideo ? "video" : "audio", assetId: selectedMedia.id }, initialAction: "replace", slotState: "broken", returnFocusId: "sequence-editor-probe-source" })}>Replace source</button>
+                  {!selectedMedia.available || selectedMedia.metadataStatus === "failed" || sourcePlaybackError?.id === selectedMedia.id ? (
+                    <>
+                      <button type="button" style={button} disabled={probing} onClick={() => void probeMedia(selectedMedia)}>Retry one</button>
+                      <button type="button" style={button} disabled={probing} onClick={() => { const failed = (libraryTab === "video" ? filteredVideos : filteredAudio).filter((item: any) => !item.available || item.metadataStatus === "failed" || item.metadataStatus !== "probed"); failed.forEach((item: any) => void probeMedia(item)); }}>Retry all</button>
+                      <button type="button" style={button} onClick={() => openSequenceSlot({ sourceEntity: { type: "sequence", id: String(selectedMedia.id), label: mediaTitle(selectedMedia) }, requirement: { relationship: "clip.take", category: "video", expectedMediaType: selectedMediaIsVideo ? "video" : "audio", assetId: selectedMedia.id }, initialAction: "choose", slotState: "broken" })}>Relink</button>
+                    </>
+                  ) : null}
+                  {selectedMedia.kind === "audio" ? (
+                    <button type="button" style={button} onClick={() => openSequenceSlot({ sourceEntity: { type: "timeline-item", id: "A1", label: mediaTitle(selectedMedia) }, requirement: { relationship: "library.asset", category: "sound", expectedMediaType: "audio", assetId: selectedMedia.id }, initialAction: "create", slotState: "unapproved" })}>Save as sound asset</button>
+                  ) : null}
+                </div>
+              ) : null}
             </footer>
           </article>
 
@@ -1306,6 +1362,7 @@ export default function SequenceEditorWorkspace(
                 </>
               )}
               <dl className="sequence-edit-inspector-facts" style={{ margin: 0, paddingTop: 7, borderTop: "1px solid #293447", display: "grid", gap: 5 }}><div style={{ display: "flex", justifyContent: "space-between" }}><dt style={{ color: "#7d8b9f" }}>Start</dt><dd style={{ margin: 0 }}>{timecode(selectedTimelineClip.timelineStartSec, fps)}</dd></div><div style={{ display: "flex", justifyContent: "space-between" }}><dt style={{ color: "#7d8b9f" }}>Duration</dt><dd style={{ margin: 0 }}>{seconds(selectedTimelineClip.durationSec)}</dd></div></dl>
+              <button type="button" className="sequence-edit-replace-source" data-testid="sequence-editor-replace-source" style={button} onClick={() => openSequenceSlot({ sourceEntity: { type: "sequence", id: String(selectedTimelineClip.id), label: selectedTimelineClip.name || "Timeline clip" }, requirement: { relationship: "clip.source", category: selectedIsVideo ? "video" : "sound", expectedMediaType: selectedIsVideo ? "video" : "audio" }, initialAction: "replace", slotState: "approved", returnFocusId: "sequence-editor-replace-source" })}>Replace source media</button>
               <button className="sequence-edit-delete-inspector" data-testid="sequence-editor-delete-selected" style={{ ...button, borderColor: "#743b49", color: "#ef9ca8" }} onClick={deleteSelected}>Delete from timeline</button>
             </div>
           )}

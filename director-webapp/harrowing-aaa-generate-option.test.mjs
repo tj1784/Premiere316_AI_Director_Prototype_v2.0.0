@@ -14,10 +14,11 @@ test("Harrowing AAA I2V is the Premiere generate option for segmented first-fram
   const option = generateOptionForMode("i2v_segmented_first_frames");
   assert.equal(option.id, HARROWING_AAA_I2V_GENERATE_OPTION.id);
   assert.equal(option.queueMode, "segments");
-  assert.match(option.catalogWorkflow, /LTX_2\.5_Harrowing_AAA\.json$/);
+  assert.match(option.catalogWorkflow, /HARROWING OF HELL\.json$/);
   assert.doesNotMatch(option.catalogWorkflow, /Premiere316\/02_GENERATE/);
-  assert.match(option.directorWorkflow, /LTX2\.5_Premiere316\.json$/);
+  assert.match(option.directorWorkflow, /HARROWING OF HELL\.json$/);
   assert.ok(PREMIERE_GENERATE_OPTIONS.some((item) => item.id === "harrowing_aaa_i2v_segmented"));
+  assert.ok(PREMIERE_GENERATE_OPTIONS.some((item) => item.id === "harrowing_of_hell_ltx25_director"));
 });
 
 test("Queue All reservations are one segment id per authored I2V segment", () => {
@@ -35,7 +36,8 @@ test("Queue All reservations are one segment id per authored I2V segment", () =>
   assert.equal(ids.length, 18);
   assert.equal(ids[0], "segment-h01-s01-c01-01");
   assert.equal(ids[17], "segment-h01-s01-c01-18");
-});
+});
+
 
 test("Harrowing AAA I2V hides Semantic T2V so Queue All cannot become one 144s job", () => {
   assert.equal(semanticT2vLockedForContext({

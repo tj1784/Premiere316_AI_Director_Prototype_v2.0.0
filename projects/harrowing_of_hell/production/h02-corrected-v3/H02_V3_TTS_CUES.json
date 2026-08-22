@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "packageId": "h02_corrected_v3_lotr",
+  "source": "H02_CORRECTED_V3 / H02_DIALOGUE_POSTPRODUCTION_SCRIPT.md",
+  "note": "Revised longer lines with scene context. Speakers and story beats unchanged. Be still remains one command.",
+  "engine": "Qwen3-TTS Base voice cloning",
+  "seed": 42,
+  "characters": {
+    "TORTURER": {
+      "characterId": "character-guardian-leader-hells-champion-appearance",
+      "voiceName": "H02 V3 Torturer · Saruman architecture",
+      "lotrReference": "Saruman (Christopher Lee) meeting Balrog dread"
+    },
+    "ADAM": {
+      "characterId": "character-adam-first-man-freed-appearance",
+      "voiceName": "H02 V3 Adam · Aragorn architecture",
+      "lotrReference": "Aragorn (Viggo Mortensen)"
+    },
+    "EVE": {
+      "characterId": "character-eve-first-woman-freed-appearance",
+      "voiceName": "H02 V3 Eve · Galadriel architecture",
+      "lotrReference": "Galadriel (Cate Blanchett)"
+    },
+    "MOSES": {
+      "characterId": "character-moses-freed-prophet-appearance",
+      "voiceName": "H02 V3 Moses · Elrond architecture",
+      "lotrReference": "Elrond (Hugo Weaving)"
+    },
+    "DAVID": {
+      "characterId": "character-david-freed-king-appearance",
+      "voiceName": "H02 V3 David · Frodo architecture",
+      "lotrReference": "Frodo at Mount Doom (matured Elijah Wood)"
+    },
+    "JOHN": {
+      "characterId": "character-john-the-baptist-last-freed-before-resurrection-appearance",
+      "voiceName": "H02 V3 John · Samwise architecture",
+      "lotrReference": "Samwise Gamgee (Sean Astin)"
+    }
+  },
+  "cues": [
+    {
+      "cueId": "H02V3-D001",
+      "segmentId": "H02-S03-C01-SEG02",
+      "speaker": "TORTURER",
+      "exactDialogue": "Renounce the promise, first father, and this ends. One word from you, and I loose the hook.",
+      "style": "Low, dry, judicial, almost conversational. Controlled false mercy. No growl, no shout."
+    },
+    {
+      "cueId": "H02V3-D002",
+      "segmentId": "H02-S03-C01-SEG03",
+      "speaker": "ADAM",
+      "exactDialogue": "The promise is not mine to renounce. I did not speak it into being, and I will not unsay it here.",
+      "style": "Weathered, exhausted, firm final word. Conviction under pain, not heroic shout."
+    },
+    {
+      "cueId": "H02V3-D003",
+      "segmentId": "H02-S03-C02-SEG01",
+      "speaker": "TORTURER",
+      "exactDialogue": "You are dust. Dust has no inheritance. Tell me what ashes may claim from the living God.",
+      "style": "Calm cruelty. Dry courtroom contempt. No laugh or snarl."
+    },
+    {
+      "cueId": "H02V3-D004",
+      "segmentId": "H02-S03-C02-SEG02",
+      "speaker": "ADAM",
+      "exactDialogue": "I am dust—and guilty before Him. Yet the dust is His, and still I belong to God.",
+      "style": "One painful breath on the dash. Confession then quiet belonging. No triumph."
+    },
+    {
+      "cueId": "H02V3-D005",
+      "segmentId": "H02-S03-C03-SEG02",
+      "speaker": "TORTURER",
+      "offScreen": true,
+      "exactDialogue": "Look upon the inheritance of rebellion. Kingdoms fall, names perish, and every proud crown is broken here.",
+      "style": "Distant ceremonial address. Falsely authoritative. Quiet and grave."
+    },
+    {
+      "cueId": "H02V3-D006",
+      "segmentId": "H02-S04-C01-SEG02",
+      "speaker": "EVE",
+      "exactDialogue": "Adam—look at me. Let not his darkness make strangers of us again.",
+      "style": "Intimate, cracked but controlled. Name catches; do not scream the name."
+    },
+    {
+      "cueId": "H02V3-D007",
+      "segmentId": "H02-S04-C01-SEG03",
+      "speaker": "MOSES",
+      "exactDialogue": "Hold fast, Adam. These chains may bind the hand, but not the promise. You do not wait alone.",
+      "style": "Firm chained witness. No pulpit cadence. Reassure without sentimentality."
+    },
+    {
+      "cueId": "H02V3-D008",
+      "segmentId": "H02-S04-C02-SEG01",
+      "speaker": "MOSES",
+      "exactDialogue": "He claims no innocence, and asks no wage. He waits upon the mercy of the God who judges him.",
+      "style": "Measured testimony. Stress mercy, not innocence. No sermon tone."
+    },
+    {
+      "cueId": "H02V3-D009",
+      "segmentId": "H02-S04-C02-SEG03",
+      "speaker": "TORTURER",
+      "exactDialogue": "Your Messiah is dead. His blood is cold, and the grave has sealed its mouth upon Him.",
+      "style": "Nearly whispered, certain, unadorned. Controlled malice hiding unease."
+    },
+    {
+      "cueId": "H02V3-D010",
+      "segmentId": "H02-S04-C03-SEG01",
+      "speaker": "MOSES",
+      "exactDialogue": "Then why do you tremble? You did not gather the faithful by judgment. You seized them because His death frightened you.",
+      "style": "Quiet exact accusation. Unhurried moral force. No triumph."
+    },
+    {
+      "cueId": "H02V3-D011",
+      "segmentId": "H02-S04-C03-SEG03",
+      "speaker": "TORTURER",
+      "exactDialogue": "Then let Him come. Let Him descend into my kingdom. Adam shall be the pledge of His defeat.",
+      "style": "Controlled bravado masking fear. Short pause after come. Hostage threat, not roar."
+    },
+    {
+      "cueId": "H02V3-D012",
+      "segmentId": "H02-S04-C04-SEG02",
+      "speaker": "TORTURER",
+      "exactDialogue": "You blamed her once, when fear found you in the garden. Will you condemn her again, here before all the dead?",
+      "style": "Surgical, intimate, divisive. Emphasis on her and again. Do not shout."
+    },
+    {
+      "cueId": "H02V3-D013",
+      "segmentId": "H02-S04-C04-SEG03",
+      "speaker": "EVE",
+      "exactDialogue": "No. I chose the serpent’s lie, and the wound is mine. I will not escape my guilt by choosing your lie now.",
+      "style": "Clear-eyed confession. Grow unwavering. Finish quietly. No sob through the line."
+    },
+    {
+      "cueId": "H02V3-D014",
+      "segmentId": "H02-S04-C05-SEG01",
+      "speaker": "TORTURER",
+      "exactDialogue": "In the garden, when judgment found you, you set her name between yourself and the face of God.",
+      "style": "Quieter than the prior challenge. Forensic, pressing an old wound."
+    },
+    {
+      "cueId": "H02V3-D015",
+      "segmentId": "H02-S04-C05-SEG02",
+      "speaker": "ADAM",
+      "exactDialogue": "I named her when I should have confessed. I made of her a shield for my fear. Never again.",
+      "style": "Remorse first, resolve second. Brief breath before Never again."
+    },
+    {
+      "cueId": "H02V3-D016",
+      "segmentId": "H02-S05-C01-SEG01",
+      "speaker": "ADAM",
+      "exactDialogue": "He found us hiding among the trees, clothed only in shame. Yet He covered us with His own hand.",
+      "style": "Memory softens the voice without making it dreamy."
+    },
+    {
+      "cueId": "H02V3-D017",
+      "segmentId": "H02-S05-C01-SEG02",
+      "speaker": "ADAM",
+      "exactDialogue": "Then He promised the woman’s Son would crush the serpent. The wound would be His, and the victory would be God’s.",
+      "style": "Light weight on promised and Son. Quiet certainty, not sermon."
+    },
+    {
+      "cueId": "H02V3-D018",
+      "segmentId": "H02-S05-C02-SEG01",
+      "speaker": "TORTURER",
+      "exactDialogue": "Sons beyond counting have crossed these gates: kings, prophets, beggars, all swallowed by the same night.",
+      "style": "Public-address projection without doubling or roar."
+    },
+    {
+      "cueId": "H02V3-D019",
+      "segmentId": "H02-S05-C02-SEG02",
+      "speaker": "TORTURER",
+      "exactDialogue": "So where is the Son you were promised? Why does He not answer from beyond the stone?",
+      "style": "Contempt on promised, unease underneath. No laugh."
+    },
+    {
+      "cueId": "H02V3-D020",
+      "segmentId": "H02-S05-C03-SEG01",
+      "speaker": "DAVID",
+      "sung": true,
+      "exactDialogue": "You will not abandon my soul to Sheol. Even in the depths, I will wait for You.",
+      "style": "Narrow psalmic cantillation, halfway between speech and a restrained chant. Intimate, unaccompanied."
+    },
+    {
+      "cueId": "H02V3-D021",
+      "segmentId": "H02-S05-C03-SEG02",
+      "speaker": "DAVID",
+      "sung": true,
+      "exactDialogue": "Nor will You let Your Holy One see corruption. The grave shall not possess Him.",
+      "style": "Continue the same psalmic breath-world. Holy One is the quiet peak. No Broadway vibrato."
+    },
+    {
+      "cueId": "H02V3-D022",
+      "segmentId": "H02-S05-C04-SEG01",
+      "speaker": "JOHN",
+      "exactDialogue": "Be still.",
+      "style": "Close, dry whisper with authority. Almost under the breath."
+    },
+    {
+      "cueId": "H02V3-D023",
+      "segmentId": "H02-S05-C05-SEG01",
+      "speaker": "JOHN",
+      "exactDialogue": "I know that tread. I heard it beside the Jordan, when heaven opened and the waters bore witness.",
+      "style": "Recognition, not exposition. Small astonished joy only on Jordan."
+    },
+    {
+      "cueId": "H02V3-D024",
+      "segmentId": "H02-S05-C05-SEG02",
+      "speaker": "JOHN",
+      "exactDialogue": "Death has taken the One whom death cannot hold. The grave has opened its mouth upon its own undoing.",
+      "style": "Strong but not shouted. Hushed certainty, not celebration."
+    }
+  ]
+}

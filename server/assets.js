@@ -1634,9 +1634,36 @@ export function restoreCancelledAsset(projectSlug, assetId) {
   return project;
 }
 
+
+function findExistingFileHash(project, sha256) {
+  const needle = String(sha256 || "").toLowerCase();
+  if (!needle) return null;
+  for (const item of project?.assets?.items || []) {
+    for (const version of item.versions || []) {
+      const hashes = normalizedFileHashes(version);
+      if (hashes.some((entry) => entry.sha256 === needle) || String(version.sha256 || "").toLowerCase() === needle) {
+        return { asset: item, version, sha256: needle };
+      }
+    }
+  }
+  return null;
+}
+
+export function refuseDuplicateFoundryImport(project, buffer) {
+  const sha256 = crypto.createHash("sha256").update(buffer).digest("hex");
+  const hit = findExistingFileHash(project, sha256);
+  if (!hit) return sha256;
+  const error = new Error(`Exact SHA-256 already exists as ${hit.asset.name} v${hit.version.v}. Reuse that version? A new vN+1 was not created.`);
+  error.code = "DUPLICATE_HASH";
+  error.statusCode = 409;
+  error.existing = hit;
+  throw error;
+}
+
 export function registerDirectorAssetImage(project, asset, { buffer, extension = ".png", sourceFileName = "director-import.png" }) {
   if (!asset || asset.mediaType !== "image") throw new Error("The selected asset does not accept image versions");
   if (!Buffer.isBuffer(buffer) || !buffer.length) throw new Error("The imported image is empty");
+  refuseDuplicateFoundryImport(project, buffer);
   const safeExtension = [".png", ".jpg", ".jpeg", ".webp"].includes(String(extension).toLowerCase())
     ? String(extension).toLowerCase()
     : ".png";
@@ -1694,6 +1721,7 @@ export function registerDirectorAssetAudio(project, asset, {
   const acceptsAudio = asset?.mediaType === "audio" || ["voice", "sound", "music"].includes(category);
   if (!asset || !acceptsAudio) throw new Error("The selected asset does not accept audio versions");
   if (!Buffer.isBuffer(buffer) || !buffer.length) throw new Error("The imported audio is empty");
+  refuseDuplicateFoundryImport(project, buffer);
   const safeExtension = [".mp3", ".wav", ".flac", ".m4a", ".aac", ".ogg"].includes(String(extension).toLowerCase())
     ? String(extension).toLowerCase()
     : ".mp3";

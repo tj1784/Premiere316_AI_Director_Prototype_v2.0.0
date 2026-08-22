@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { assetUrl, useStore } from "../store";
+import { openAssetAction, resultActions, slotStateFromAsset, useAssetActionStore } from "../contextual-agency";
 
 const CATEGORY_ORDER = [
   "character",
@@ -45,6 +46,100 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const AUDIO_UPLOAD_CATEGORIES = new Set(["voice", "sound", "music"]);
 const AUDIO_ACCEPT = "audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/flac,audio/x-flac,audio/mp4,audio/aac,audio/ogg,application/ogg,.mp3,.wav,.flac,.m4a,.aac,.ogg";
+
+
+const LIBRARY_CATEGORIES = new Set(["character", "wardrobe", "location", "artifact", "extra", "atmosphere", "guide-frame", "voice", "dialogue", "sound", "music", "video"]);
+const CARD_ACTIONS = ["generate", "replace", "upload", "edit", "versions", "review"] as const;
+
+function libraryCategory(asset: any) {
+  const raw = String(asset?.category || "character");
+  if (raw === "graphic") return "artifact";
+  return LIBRARY_CATEGORIES.has(raw) ? raw : "character";
+}
+
+function libraryMediaType(asset: any): "image" | "audio" | "video" | "instruction" {
+  if (asset?.mediaType === "audio" || ["voice", "sound", "music"].includes(String(asset?.category || ""))) return "audio";
+  if (asset?.mediaType === "video" || asset?.mediaType === "instruction") return asset.mediaType;
+  return "image";
+}
+
+function libraryIntent(asset: any, action: typeof CARD_ACTIONS[number] | "choose" | "create" | "attach", slotState?: any) {
+  return {
+    sourceRoute: "/assets/library",
+    sourceEntity: { type: "library" as const, id: String(asset?.id || "library"), label: String(asset?.name || asset?.id || "Library") },
+    requirement: {
+      relationship: "library.asset",
+      category: libraryCategory(asset) as any,
+      assetId: asset?.id,
+      assetVersion: asset?.activeVersion,
+      expectedMediaType: libraryMediaType(asset)
+    },
+    initialAction: action,
+    slotState: slotState || slotStateFromAsset(asset),
+    returnFocusId: `lib-card-${asset?.id || "library"}-${action}`
+  };
+}
+
+function originatingIntent() {
+  const current = useAssetActionStore.getState().intent;
+  if (!current) return null;
+  const rel = String(current.requirement?.relationship || "");
+  if (current.sourceEntity?.type === "library" && (rel === "library.asset" || rel === "library.compose")) return null;
+  return current;
+}
+
+function openLibraryAssetAction(asset: any, action: typeof CARD_ACTIONS[number]) {
+  openAssetAction(libraryIntent(asset, action));
+}
+
+function chooseLibraryAsset(asset: any) {
+  const origin = originatingIntent();
+  if (origin) {
+    openAssetAction({
+      ...origin,
+      requirement: {
+        ...origin.requirement,
+        assetId: asset.id,
+        assetVersion: asset.activeVersion
+      },
+      initialAction: "choose",
+      returnFocusId: origin.returnFocusId || `lib-004-${asset.id}`
+    });
+    return;
+  }
+  openAssetAction(libraryIntent(asset, "choose"));
+}
+
+async function duplicateLibraryAsset(store: any, asset: any) {
+  const created = await store.createAsset({
+    name: `${asset.name} copy`,
+    variant: asset.variant || "Production Reference",
+    category: asset.category || "character",
+    workflowId: asset.workflowId || undefined,
+    prompt: asset.prompt || "",
+    sampleText: asset.sampleText || "",
+    continuity: asset.continuity || [],
+    dependencies: asset.dependencies || []
+  });
+  if (!created) return null;
+  openAssetAction({
+    ...libraryIntent(created, "generate", "missing"),
+    returnFocusId: `lib-007-${created.id}`,
+    prefill: { name: created.name, prompt: created.prompt, sampleText: created.sampleText }
+  });
+  return created;
+}
+
+function openValidationIssue(issue: any, assets: any[]) {
+  const id = String(issue?.assetId || issue?.asset_id || issue?.asset || "").trim();
+  const asset = assets.find((item: any) => item.id === id)
+    || assets.find((item: any) => item.name && item.name === (issue?.assetName || issue?.name))
+    || null;
+  openAssetAction({
+    ...libraryIntent(asset || { id: id || "validation", name: issue?.summary || issue?.issue || "Validation" }, "choose", "broken"),
+    returnFocusId: `lib-009-${asset?.id || id || "issue"}`
+  });
+}
 
 function acceptsAudioUpload(asset: any) {
   return Boolean(asset && (asset.mediaType === "audio" || AUDIO_UPLOAD_CATEGORIES.has(String(asset.category || ""))));
@@ -175,6 +270,12 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
   const store = useStore();
   const project = store.project;
   const assets = project?.assets?.items || [];
+  const agencyIntent = useAssetActionStore((state) => state.intent);
+  const lastResult = useAssetActionStore((state) => state.lastResult);
+  const lastIntentRef = useRef<any>(null);
+  if (agencyIntent) lastIntentRef.current = agencyIntent;
+  const attachIntent = agencyIntent || lastIntentRef.current;
+  const attachActions = lastResult && attachIntent ? resultActions(attachIntent, lastResult) : [];
   const [category, setCategory] = useState("all");
   const selectedId = store.selectedAssetId;
   const setSelectedId = store.setSelectedAsset;
@@ -184,9 +285,55 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
   const [stopping, setStopping] = useState(false);
   const [queueing, setQueueing] = useState(false);
   const [assetEditor, setAssetEditor] = useState<{ mode: "create" | "edit"; asset?: any } | null>(null);
+  const openLibraryCreate = () => openAssetAction({
+    sourceRoute: "/assets/library",
+    sourceEntity: { type: "library", id: "new-asset", label: "New library asset" },
+    requirement: { relationship: "library.compose", category: "character", expectedMediaType: "image" },
+    initialAction: "create",
+    slotState: "missing"
+  });
   const [assetEditorBusy, setAssetEditorBusy] = useState(false);
   const assetImageInput = useRef<HTMLInputElement>(null);
   const assetAudioInput = useRef<HTMLInputElement>(null);
+  const folderInput = useRef<HTMLInputElement>(null);
+  const [folderImporting, setFolderImporting] = useState(false);
+
+  const importMediaFolder = async (fileList: FileList | null) => {
+    const files = [...(fileList || [])].filter((file) => /\.(png|jpe?g|webp|gif|mp3|wav|flac|m4a|aac|ogg)$/i.test(file.name));
+    if (!files.length) return;
+    setFolderImporting(true);
+    const created: any[] = [];
+    try {
+      for (const file of files) {
+        const audio = /\.(mp3|wav|flac|m4a|aac|ogg)$/i.test(file.name);
+        const name = file.name.replace(/\.[^.]+$/, "") || file.name;
+        try {
+          const asset = await store.createAsset({
+            name,
+            variant: "Imported",
+            category: audio ? "sound" : "atmosphere"
+          });
+          if (!asset?.id) continue;
+          const uploaded = audio
+            ? await store.uploadAssetAudio(asset.id, file)
+            : await store.uploadAssetImage(asset.id, file);
+          created.push(uploaded || asset);
+        } catch {
+          /* skip failed copies; never overwrite another asset */
+        }
+      }
+      const first = created[0];
+      if (first) {
+        openAssetAction({
+          ...libraryIntent(first, "review", "unapproved"),
+          returnFocusId: "lib-005-import"
+        });
+      }
+    } finally {
+      setFolderImporting(false);
+      if (folderInput.current) folderInput.current.value = "";
+    }
+  };
   const assetIdKey = assets.map((asset: any) => asset.id).join("|");
   const selected = assets.find((asset: any) => asset.id === selectedId) || assets[0] || null;
   const [prompt, setPrompt] = useState(selected?.prompt || "");
@@ -288,6 +435,10 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
 
   const selectAssetCard = (event: React.MouseEvent<HTMLElement>, id: string) => {
     setSelectedId(id);
+    const picked = assets.find((item: any) => item.id === id);
+    if (picked && originatingIntent() && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
+      chooseLibraryAsset(picked);
+    }
     if (event.shiftKey) {
       const anchorIndex = visibleIds.indexOf(assetSelectionAnchorId || id);
       const targetIndex = visibleIds.indexOf(id);
@@ -412,7 +563,21 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
           )}
           {!project.screenplay?.markdown ? <small>Generate or import a screenplay first.</small> : null}
           {!approved && project.screenplay?.markdown ? <small>Review the screenplay first. Approval is tied to this exact revision and is revoked by later edits.</small> : null}
-          <button className="secondary-action wide" onClick={() => setAssetEditor({ mode: "create" })}>+ Create Asset Manually</button>
+          <p className="assets-empty-explain">This library is empty. Import a media folder as copies (new unapproved items, no overwrite), or create / upload / choose a slot here.</p>
+          <input
+            ref={folderInput}
+            className="asset-hidden-file"
+            type="file"
+            multiple
+            {...({ webkitdirectory: "", directory: "" } as any)}
+            data-testid="lib-005-folder-input"
+            onChange={(event) => { void importMediaFolder(event.target.files); }}
+          />
+          <button type="button" className="primary-action wide" data-testid="lib-005-import-folder" disabled={folderImporting} onClick={() => folderInput.current?.click()}>{folderImporting ? "Importing folder…" : "Import media folder"}</button>
+          <button type="button" className="primary-action wide" data-testid="lib-005-create" onClick={openLibraryCreate}>Create</button>
+          <button type="button" className="secondary-action wide" data-testid="lib-005-upload" onClick={() => openAssetAction({ sourceRoute: "/assets/library", sourceEntity: { type: "library", id: "new-asset", label: "New library asset" }, requirement: { relationship: "library.compose", category: "atmosphere", expectedMediaType: "image" }, initialAction: "upload", slotState: "missing", returnFocusId: "lib-005-upload" })}>Upload</button>
+          <button type="button" className="secondary-action wide" data-testid="lib-005-choose" onClick={() => openAssetAction({ sourceRoute: "/assets/library", sourceEntity: { type: "library", id: "new-asset", label: "New library asset" }, requirement: { relationship: "library.compose", category: "atmosphere", expectedMediaType: "image" }, initialAction: "choose", slotState: "missing", returnFocusId: "lib-005-choose" })}>Choose existing</button>
+          <button className="secondary-action wide" onClick={openLibraryCreate}>+ Create Asset Manually</button>
         </section>
         {assetEditor ? <AssetEditorDialog mode={assetEditor.mode} asset={assetEditor.asset} workflows={store.assetWorkflows} busy={assetEditorBusy} onCancel={() => setAssetEditor(null)} onSubmit={submitAssetEditor} onUploadImage={assetEditor.asset ? (file) => uploadAssetImage(file, assetEditor.asset.id) : undefined} onUploadAudio={assetEditor.asset ? (file) => uploadAssetAudio(file, assetEditor.asset.id) : undefined} /> : null}
       </main>
@@ -481,7 +646,7 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
             <small>{visible.length} shown · {readyWorkflows.length}/{store.assetWorkflows.length || project.assets.catalog?.length || 0} installed · {availableWorkflows.length} available now{waitingWorkflows.length ? ` · ${waitingWorkflows.length} waiting for GPU` : ""} · Ctrl/Cmd-click toggles · Shift-click selects a range</small>
           </div>
           <div className="asset-toolbar-actions">
-            <button data-testid="new-asset-button" className="primary-action" onClick={() => setAssetEditor({ mode: "create" })}>+ New Asset</button>
+            <button data-testid="new-asset-button" className="primary-action" onClick={openLibraryCreate}>+ New Asset</button>
             <button
               className="secondary-action"
               disabled={!visible.length}
@@ -553,7 +718,7 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
         {issues.length ? (
           <details className="asset-review-banner">
             <summary><span>i</span><b>Optional production notes · {issues.length} decisions to revisit</b><small>Does not block generation · Review notes</small></summary>
-            <div>{issues.slice(0, 8).map((issue: any, index: number) => <p key={issue.id || issue.issue_id || index}>{issue.priority ? <strong>{String(issue.priority).toUpperCase()} · </strong> : null}{issue.summary || issue.issue || issue.description || issue.finding || JSON.stringify(issue)}{issue.required_decision ? <small> Decision: {issue.required_decision}</small> : null}</p>)}</div>
+            <div data-testid="lib-009-issues">{issues.slice(0, 8).map((issue: any, index: number) => <button type="button" key={issue.id || issue.issue_id || index} className="asset-review-issue" data-testid={`lib-009-issue-${issue.id || issue.issue_id || index}`} onClick={() => openValidationIssue(issue, assets)}>{issue.priority ? <strong>{String(issue.priority).toUpperCase()} · </strong> : null}{issue.summary || issue.issue || issue.description || issue.finding || JSON.stringify(issue)}{issue.required_decision ? <small> Decision: {issue.required_decision}</small> : null}</button>)}</div>
           </details>
         ) : null}
 
@@ -582,6 +747,13 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
                     <code title={asset.id}>{asset.id}</code>
                     <p title={liveWorkflow?.runtimeWarning || liveWorkflow?.reason}><i className={workflowReady && workflowAvailable ? "ready" : workflowReady ? "waiting" : "blocked"} />{liveWorkflow?.label || asset.workflowId}</p>
                   </div>
+                  <nav className="asset-card-actions" aria-label={`${asset.name} quick actions`} data-testid={`lib-card-actions-${asset.id}`} style={{ position: "absolute", top: 6, left: 6, right: 6, zIndex: 4, display: "flex", flexWrap: "wrap", gap: 4 }} onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+                    {CARD_ACTIONS.map((action) => (
+                      <button key={action} type="button" id={`lib-card-${asset.id}-${action}`} data-testid={`lib-card-${action}`} className="secondary-action" style={{ fontSize: 9, padding: "3px 6px" }} onClick={(event) => { event.stopPropagation(); openLibraryAssetAction(asset, action); }}>{action[0].toUpperCase() + action.slice(1)}</button>
+                    ))}
+                    <button type="button" className="secondary-action" style={{ fontSize: 9, padding: "3px 6px" }} data-testid={`lib-007-duplicate-${asset.id}`} onClick={(event) => { event.stopPropagation(); void duplicateLibraryAsset(store, asset); }}>Duplicate</button>
+                    {originatingIntent() ? <button type="button" className="secondary-action" style={{ fontSize: 9, padding: "3px 6px" }} data-testid={`lib-004-use-${asset.id}`} onClick={(event) => { event.stopPropagation(); chooseLibraryAsset(asset); }}>Use here</button> : null}
+                  </nav>
                 </div>
               </article>
             );
@@ -592,7 +764,18 @@ export default function AssetsWorkspace({ onOpenEditor }: { onOpenEditor: () => 
       <aside className="asset-inspector">
         {selected ? (
           <>
-            <header><div><p className="eyebrow">ASSET INSPECTOR</p><h2>{selected.name}</h2><small>{selected.variant}</small></div><div className="asset-inspector-heading-actions"><StatusPill status={selected.status} /><button data-testid="edit-asset-button" className="secondary-action" onClick={() => setAssetEditor({ mode: "edit", asset: selected })}>Edit</button></div></header>
+            <header><div><p className="eyebrow">ASSET INSPECTOR</p><h2>{selected.name}</h2><small>{selected.variant}</small></div><div className="asset-inspector-heading-actions"><StatusPill status={selected.status} /><button data-testid="lib-007-duplicate" className="secondary-action" onClick={() => void duplicateLibraryAsset(store, selected)}>Duplicate</button><button data-testid="edit-asset-button" className="secondary-action" onClick={() => setAssetEditor({ mode: "edit", asset: selected })}>Edit</button></div></header>
+            {attachActions.length ? (
+              <nav className="lib-003-result-actions" data-testid="lib-003-result-actions" aria-label="Post-generation attach-back">
+                {attachActions.map((action: any) => (
+                  <button key={action.id} type="button" className="secondary-action" onClick={() => openAssetAction({
+                    ...attachIntent,
+                    initialAction: action.kind === "review" ? "review" : action.kind === "versions" ? "versions" : "attach",
+                    returnFocusId: attachIntent.returnFocusId || `lib-003-${action.id}`
+                  })}>{action.label}</button>
+                ))}
+              </nav>
+            ) : null}
             <AssetPreview project={project} asset={selected} large />
             <div className="asset-inspector-scroll">
               <section className="asset-provenance">

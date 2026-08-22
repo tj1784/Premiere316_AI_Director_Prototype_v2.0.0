@@ -6,6 +6,22 @@ import {
   audioUrl,
   masterUrl
 } from "../store";
+import { openAssetAction } from "../contextual-agency";
+
+function currentCreativeRoute() {
+  const path = String(window.location.pathname || "").toLowerCase();
+  if (path.includes("/export")) return "/export";
+  if (path.includes("/master")) return "/master";
+  if (path.includes("/generate")) return "/generate";
+  return "/edit";
+}
+
+function openCreativeSlot(intent) {
+  openAssetAction({
+    sourceRoute: currentCreativeRoute(),
+    ...intent
+  });
+}
 
 function timecode(frame: number, fps: number) {
   const safe = Math.max(0, Math.round(Number(frame) || 0));
@@ -370,7 +386,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
         <aside className="project-bin premium-panel">
           <div className="panel-title-row">
             <h2>PROJECT BIN</h2>
-            <button className="mini-icon" onClick={onOpenAssets} title="Open Asset Library">▣</button>
+            <button type="button" className="mini-icon" data-testid="nav-007-bin-fix" title="Fix missing media here" onClick={() => openCreativeSlot({ sourceEntity: { type: "sequence", id: selectedClip?.id || "edit", label: selectedClip?.name || "Edit" }, requirement: { relationship: "edit.media", category: "atmosphere", expectedMediaType: "image" }, initialAction: "choose", slotState: "missing", returnFocusId: "nav-007-bin-fix" })}>▣</button>
           </div>
           <div className="bin-search">
             <span>⌕</span>
@@ -443,7 +459,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
               </details>
             ) : null}
           </div>
-          <button className="bin-lock" onClick={onOpenAssets} title="Open Asset Library"><span>▣</span><div><b>Open Asset Library</b><small>Generate → review → approve → add to this bin</small></div></button>
+          <button type="button" className="bin-lock" data-testid="nav-007-bin-lock" title="Fix missing media here" onClick={() => openCreativeSlot({ sourceEntity: { type: "sequence", id: selectedClip?.id || "edit", label: selectedClip?.name || "Edit" }, requirement: { relationship: "edit.media", category: "atmosphere", expectedMediaType: "image" }, initialAction: "generate", slotState: "missing", returnFocusId: "nav-007-bin-lock" })}><span>▣</span><div><b>Fix missing here</b><small>Generate, upload, or choose for this slot</small></div></button>
         </aside>
 
         <section className="monitor-workspace premium-panel">
@@ -832,13 +848,14 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
                       <span className={roleClass(guide.role)}>{roleLetter(guide.role)}</span>
                     </button>
                   ))}
-                  <button className="new-guide" onClick={(event) => { event.stopPropagation(); onOpenAssets(); }}>＋<small>Assets</small></button>
+                  <button type="button" className="new-guide" data-testid="edt-001-new-guide" onClick={(event) => { event.stopPropagation(); openCreativeSlot({ sourceEntity: { type: "sequence", id: selectedClip?.id || "edit", label: selectedClip?.name || "Guide" }, requirement: { relationship: "edit.guide", category: "guide-frame", expectedMediaType: "image" }, initialAction: "generate", slotState: "missing", returnFocusId: "edt-001-new-guide" }); }}>＋<small>Generate guide</small></button>
                 </div>
               </div>
             </div>
-          ) : <div className="workbench-empty">Add or select a clip to manage guide images.</div>}
+          ) : <div className="workbench-empty" data-testid="nav-006-empty"><p>Add or select a clip to manage guide images.</p><nav className="nav-006-empty-actions" aria-label="Empty edit slot"><button type="button" className="button primary" data-testid="nav-006-generate" onClick={(event) => { event.stopPropagation(); openCreativeSlot({ sourceEntity: { type: "sequence", id: selectedClip?.id || "edit", label: selectedClip?.name || "Guide" }, requirement: { relationship: "edit.guide", category: "guide-frame", expectedMediaType: "image" }, initialAction: "generate", slotState: "missing", returnFocusId: "nav-006-generate" }); }}>Generate</button><button type="button" className="button secondary" data-testid="nav-006-upload" onClick={(event) => { event.stopPropagation(); openCreativeSlot({ sourceEntity: { type: "sequence", id: selectedClip?.id || "edit", label: selectedClip?.name || "Guide" }, requirement: { relationship: "edit.guide", category: "guide-frame", expectedMediaType: "image" }, initialAction: "upload", slotState: "missing", returnFocusId: "nav-006-upload" }); }}>Upload</button><button type="button" className="button secondary" data-testid="nav-006-choose" onClick={(event) => { event.stopPropagation(); openCreativeSlot({ sourceEntity: { type: "sequence", id: selectedClip?.id || "edit", label: selectedClip?.name || "Guide" }, requirement: { relationship: "edit.guide", category: "guide-frame", expectedMediaType: "image" }, initialAction: "choose", slotState: "missing", returnFocusId: "nav-006-choose" }); }}>Choose existing</button></nav></div>}
           <div className="card-actions">
-            <button className="button secondary" onClick={(event) => { event.stopPropagation(); onOpenAssets(); }}>Open Asset Library</button>
+            <button type="button" className="button secondary" data-testid="edt-001-generate-guide" onClick={(event) => { event.stopPropagation(); openCreativeSlot({ sourceEntity: { type: "sequence", id: selectedClip?.id || "edit", label: selectedClip?.name || "Guide" }, requirement: { relationship: "edit.guide", category: "guide-frame", expectedMediaType: "image" }, initialAction: "generate", slotState: selectedGuide ? "unapproved" : "missing", returnFocusId: "edt-001-generate-guide" }); }}>Generate guide</button>
+            <button type="button" className="button secondary" onClick={(event) => { event.stopPropagation(); openCreativeSlot({ sourceEntity: { type: "sequence", id: selectedClip?.id || "edit", label: selectedClip?.name || "Guide" }, requirement: { relationship: "edit.guide", category: "guide-frame", expectedMediaType: "image" }, initialAction: "choose", slotState: "missing" }); }}>Choose existing</button>
             <button className="button secondary" disabled={!selectedClip || !selectedFrameApproved} onClick={(event) => { event.stopPropagation(); if (selectedClip && store.selFrameFile) store.attachGuide(selectedClip.id, { frameFile: store.selFrameFile, role: selectedGuide?.role || "middle", frame: selectedGuide?.frame || guideDraft.frame }); }}>Use approved</button>
             <button className="button danger icon-only" disabled={!selectedClip || !selectedGuide} onClick={(event) => { event.stopPropagation(); if (selectedClip && selectedGuide) store.deleteGuide(selectedClip.id, selectedGuide.id); }}>⌫</button>
           </div>
@@ -856,7 +873,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
                   <input ref={shortsFrameRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void store.importFrame(file); event.target.value = ""; }} />
                 </>
               ) : (
-                <button className="upload-tile" onClick={(event) => { event.stopPropagation(); onOpenAssets(); }} title="Create and approve an image in Asset Library"><span>▣</span>Create in Asset Library</button>
+                <button type="button" className="upload-tile" data-testid="edt-001-create-guide" onClick={(event) => { event.stopPropagation(); openCreativeSlot({ sourceEntity: { type: "sequence", id: selectedClip?.id || "edit", label: selectedClip?.name || "Guide" }, requirement: { relationship: "edit.guide", category: "guide-frame", expectedMediaType: "image" }, initialAction: "generate", slotState: "missing", returnFocusId: "edt-001-create-guide" }); }} title="Generate or choose a guide for this clip"><span>▣</span>Generate guide</button>
               )}
             </div>
             <div className="generation-fields">
@@ -880,7 +897,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
           </div>
           <div className="card-actions right">
             <button className="button secondary" disabled={!selectedClip || !selectedFrameApproved} onClick={(event) => { event.stopPropagation(); if (selectedClip && store.selFrameFile) store.attachGuide(selectedClip.id, { frameFile: store.selFrameFile, ...guideDraft }); }}>Attach approved</button>
-            <button className="button primary" onClick={(event) => { event.stopPropagation(); onOpenAssets(); }}>Create in Asset Library</button>
+            <button type="button" className="button primary" data-testid="nav-007-create" onClick={(event) => { event.stopPropagation(); openCreativeSlot({ sourceEntity: { type: "sequence", id: selectedClip?.id || "edit", label: selectedClip?.name || "Guide" }, requirement: { relationship: "edit.guide", category: "guide-frame", expectedMediaType: "image" }, initialAction: "generate", slotState: "missing", returnFocusId: "nav-007-create" }); }}>Generate here</button>
           </div>
         </article>
 
@@ -910,6 +927,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
           <div className="card-actions right">
             <button className="button secondary" onClick={(event) => { event.stopPropagation(); scoreUploadRef.current?.click(); }}>Upload Score</button>
             <button className="button primary" disabled={!store.health.ffmpeg || !clips.length} onClick={(event) => { event.stopPropagation(); store.generateScore(); }}>Generate Score</button>
+            <button type="button" className="button secondary" data-testid="mst-001-score" onClick={(event) => { event.stopPropagation(); openCreativeSlot({ sourceRoute: "/master", sourceEntity: { type: "master", id: "master", label: "Master score" }, requirement: { relationship: "master.score", category: "music", expectedMediaType: "audio" }, initialAction: activeScore ? "review" : "generate", slotState: activeScore ? "unapproved" : "missing", returnFocusId: "mst-001-score" }); }}>{activeScore ? "Review score" : "Resolve missing score"}</button>
           </div>
           <input ref={scoreUploadRef} type="file" accept="audio/*" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) store.uploadScore(file); event.target.value = ""; }} />
         </article>
@@ -939,7 +957,11 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
               <p className={bookendsNeedRebuild ? "bookend-rebuild-notice" : ""}>{bookendsNeedRebuild ? "Current bookends differ from the active export · rebuild to apply." : "Deterministic typography · no AI generation · appended only to Final Master."}</p>
             </div>
             <div><h4>MASTER INFO</h4><dl><div><dt>Resolution</dt><dd>{project.settings.width}×{project.settings.height}</dd></div><div><dt>FPS</dt><dd>{fps}</dd></div><div><dt>Duration</dt><dd>{activeMaster ? timecode(Math.round(activeMaster.durationSec * fps), fps) : timecode(plannedMasterFrames, fps)}</dd></div><div><dt>Bookends</dt><dd>{activeMasterBookendLabel}</dd></div><div><dt>Audio</dt><dd>48 kHz / Stereo</dd></div></dl></div>
-            <div><h4>EXPORT PRESET</h4><select><option>H.264 (MP4)</option><option>ProRes 422</option><option>WebM</option></select><div className="master-actions">{activeMaster ? <a className="button secondary export-link" href={masterUrl(project.slug, activeMaster.file)} download>Export Master</a> : null}<button className="button primary" disabled={!store.health.ffmpeg || !clips.length} onClick={(event) => { event.stopPropagation(); store.buildMaster(); }}>{activeMaster ? "Rebuild Final Master" : "Build Final Master"}</button></div></div>
+            <div><h4>EXPORT PRESET</h4><select><option>H.264 (MP4)</option><option>ProRes 422</option><option>WebM</option></select><div className="master-actions">{activeMaster ? <a className="button secondary export-link" href={masterUrl(project.slug, activeMaster.file)} download>Export Master</a> : null}<button className="button primary" disabled={!store.health.ffmpeg || !clips.length} onClick={(event) => { event.stopPropagation(); store.buildMaster(); }}>{activeMaster ? "Rebuild Final Master" : "Build Final Master"}</button>
+              <button type="button" className="button secondary" data-testid="mst-001-resolve" onClick={(event) => { event.stopPropagation(); openCreativeSlot({ sourceRoute: "/master", sourceEntity: { type: "master", id: "master", label: "Master" }, requirement: { relationship: activeScore ? "master.program" : "master.score", category: activeScore ? "video" : "music", expectedMediaType: activeScore ? "video" : "audio" }, initialAction: activeMaster ? "review" : "generate", slotState: activeMaster ? "unapproved" : "missing", returnFocusId: "mst-001-resolve" }); }}>{activeMaster ? "Review master" : "Resolve master"}</button>
+              <button type="button" className="button secondary" data-testid="exp-001-blocker" onClick={(event) => { event.stopPropagation(); const relationship = !activeMaster ? "export.master" : !activeScore ? "master.score" : !store.health.comfy ? "export.comfy" : "export.blocker"; openCreativeSlot({ sourceRoute: "/export", sourceEntity: { type: "export-blocker", id: relationship, label: !activeMaster ? "Missing master" : !activeScore ? "Missing score" : !store.health.comfy ? "ComfyUI offline" : "Export ready" }, requirement: { relationship, category: relationship === "master.score" ? "music" : "video", expectedMediaType: relationship === "master.score" ? "audio" : "video" }, initialAction: !store.health.comfy ? "choose" : "generate", slotState: activeMaster && activeScore && store.health.comfy ? "approved" : "missing", returnFocusId: "exp-001-blocker" }); }}>Resolve export blocker</button>
+              <button type="button" className="button secondary" data-testid="exp-002-recheck" onClick={(event) => { event.stopPropagation(); const ready = Boolean(activeMaster && activeScore && store.health.comfy); openCreativeSlot({ sourceRoute: "/export", sourceEntity: { type: "export-blocker", id: "export-recheck", label: ready ? "Export ready" : "Recheck blockers" }, requirement: { relationship: ready ? "export.ready" : "export.blocker", category: "video", expectedMediaType: "video" }, initialAction: ready ? "review" : "generate", slotState: ready ? "approved" : "broken", returnFocusId: "exp-002-recheck" }); }}>Recheck blockers</button>
+            </div></div>
           </div>
         </article>
       </section>

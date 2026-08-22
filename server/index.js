@@ -179,9 +179,13 @@ import {
 } from "./asset-prompt-audio.js";
 import {
   loadStoryboard,
+  saveStoryboard,
+  validateStoryboard,
   saveStoryboardTargetReferences,
   storyboardSummary,
-  applyGlobalPromptToScope
+  applyGlobalPromptToScope,
+  applyStoryboardDirection,
+  applyStoryboardStructure
 } from "./storyboard.js";
 import {
   compileStoryboardFramePrompt,
@@ -1095,6 +1099,17 @@ app.get("/api/projects/:slug/storyboard", (req, res) => {
   }
 });
 
+app.put("/api/projects/:slug/storyboard", (req, res) => {
+  try {
+    loadProject(req.params.slug);
+    const storyboard = validateStoryboard(req.body?.storyboard || req.body, req.params.slug);
+    saveStoryboard(req.params.slug, storyboard);
+    res.json({ storyboard, summary: storyboardSummary(storyboard) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
 app.put("/api/projects/:slug/storyboard/targets/:targetKind/:targetId/references", (req, res) => {
   try {
     const project = loadProject(req.params.slug);
@@ -1209,6 +1224,25 @@ app.post("/api/projects/:slug/storyboard/global-prompt", (req, res) => {
     const result = applyGlobalPromptToScope(req.params.slug, clipId, text, scope);
     const storyboard = loadStoryboard(req.params.slug);
     res.json({ result, storyboard, summary: storyboardSummary(storyboard) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+
+app.patch("/api/projects/:slug/storyboard/direction", (req, res) => {
+  try {
+    const result = applyStoryboardDirection(req.params.slug, req.body || {});
+    res.json(result);
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+app.post("/api/projects/:slug/storyboard/structure", (req, res) => {
+  try {
+    const result = applyStoryboardStructure(req.params.slug, req.body || {});
+    res.json(result);
   } catch (e) {
     res.status(400).json({ error: String(e.message) });
   }
@@ -2042,7 +2076,7 @@ app.patch("/api/projects/:slug/assets/:assetId", async (req, res) => {
       });
     }
     const beforeFingerprint = assetGenerationFingerprint(asset);
-    const allowed = ["name", "variant", "prompt", "sampleText", "workflowId", "seed", "durationSec", "bpm", "status", "dependencies", "continuity"];
+    const allowed = ["name", "variant", "prompt", "sampleText", "workflowId", "seed", "durationSec", "bpm", "status", "dependencies", "continuity", "activeVersion"];
     for (const key of allowed) if (Object.prototype.hasOwnProperty.call(req.body || {}, key)) asset[key] = req.body[key];
     if (Object.prototype.hasOwnProperty.call(req.body || {}, "category")) {
       const category = String(req.body.category || "").trim();
@@ -2058,6 +2092,16 @@ app.patch("/api/projects/:slug/assets/:assetId", async (req, res) => {
     asset.name = String(asset.name || "").replace(/\s+/g, " ").trim().slice(0, 160);
     asset.variant = String(asset.variant || "Production Reference").replace(/\s+/g, " ").trim().slice(0, 120) || "Production Reference";
     if (!asset.name) return res.status(400).json({ error: "Asset name is required" });
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, "activeVersion")) {
+      const requested = Number(req.body.activeVersion);
+      const exists = (asset.versions || []).some((version) => Number(version.v) === requested);
+      if (!exists) return res.status(400).json({ error: `Version v${requested} is not on this asset.` });
+      asset.activeVersion = requested;
+      const restored = (asset.versions || []).find((version) => Number(version.v) === requested);
+      if (restored?.file) asset.file = restored.file;
+      asset.approval = null;
+      asset.approvalCurrent = false;
+    }
     asset.dependencies = Array.isArray(asset.dependencies) ? asset.dependencies.map((item) => String(item || "").trim()).filter(Boolean) : [];
     asset.continuity = Array.isArray(asset.continuity) ? asset.continuity.map((item) => String(item || "").trim()).filter(Boolean) : [];
     if (!promptComposerAsset) asset.prompt = withAssetPromptHeader(asset, asset.prompt);
@@ -2139,6 +2183,49 @@ app.delete("/api/projects/:slug/assets/:assetId", (req, res) => {
     saveAssetPackageFiles(project);
     saveProject(project);
     res.json({ project, deleted: { id: asset.id, deletedAt, recoverable: true } });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
+  }
+});
+
+
+app.post("/api/projects/:slug/assets/:assetId/versions/:version/restore", (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    const asset = project.assets?.items?.find((item) => item.id === req.params.assetId);
+    if (!asset) return res.status(404).json({ error: "Asset not found" });
+    const requested = Number(req.params.version);
+    const versions = Array.isArray(asset.versions) ? asset.versions : [];
+    const target = versions.find((version) => Number(version.v) === requested);
+    if (!target) return res.status(400).json({ error: `Version v${requested} is not on this asset.` });
+    const fromVersion = Number(asset.activeVersion || 0);
+    const keptVersions = versions.map((version) => Number(version.v)).sort((left, right) => left - right);
+    asset.activeVersion = requested;
+    if (target.file) asset.file = target.file;
+    asset.approval = null;
+    asset.approvalCurrent = false;
+    const timestamp = new Date().toISOString();
+    const audit = {
+      op: "restore",
+      sourceEntity: `asset:${asset.id}`,
+      relationship: "restore",
+      previousRelationship: "none",
+      assetId: asset.id,
+      exactVersion: requested,
+      previousVersion: fromVersion,
+      approvalFingerprint: String(target.assetFingerprint || asset.approval?.versionFingerprint || ""),
+      timestamp,
+      opSource: "prior-v-api",
+      keptVersions,
+      deletedVersions: [],
+      approved: false
+    };
+    const line = `VER restore ${timestamp}: active v${fromVersion} → v${requested}; later versions kept (${keptVersions.join(",")}); no delete; approval reset`;
+    asset.continuity = Array.isArray(req.body?.continuity) ? req.body.continuity : [...(Array.isArray(asset.continuity) ? asset.continuity : []), line];
+    asset.updatedAt = timestamp;
+    saveAssetPackageFiles(project);
+    saveProject(project);
+    res.json({ project, asset, audit, versionsKept: keptVersions });
   } catch (e) {
     res.status(400).json({ error: String(e.message) });
   }
@@ -3299,13 +3386,22 @@ app.post(
         topP: req.body?.topP,
         temperature: req.body?.temperature,
         repetitionPenalty: req.body?.repetitionPenalty,
-        maxNewTokens: req.body?.maxNewTokens
+        maxNewTokens: req.body?.maxNewTokens,
+        cueId: req.body?.cueId,
+        segmentId: req.body?.segmentId,
+        attachToCue: req.body?.attachToCue
       });
       const job = enqueue({
         type: "generate_qwen_tts",
         projectSlug: prepared.project.slug,
         label: `Create sound · ${prepared.generation.name}`,
-        refs: { generationId: prepared.generation.id, voiceId: prepared.voice.id }
+        refs: {
+          generationId: prepared.generation.id,
+          voiceId: prepared.voice.id,
+          cueId: prepared.generation.cueId || null,
+          segmentId: prepared.generation.segmentId || null,
+          attachToCue: prepared.generation.attachToCue || 0
+        }
       });
       const generation = bindQwenTtsGenerationJob(prepared.project.slug, prepared.generation.id, job.id);
       res.status(202).json({ provider: "qwenTts", voice: prepared.voice, generation, job });
@@ -3376,7 +3472,8 @@ app.post("/api/projects/:slug/assets/:assetId/import-image", upload.single("file
       sourceFileName: req.file.originalname
     }));
   } catch (e) {
-    res.status(400).json({ error: String(e.message) });
+    const status = Number(e.statusCode) || (e.code === "DUPLICATE_HASH" ? 409 : 400);
+    res.status(status).json({ error: String(e.message), code: e.code, existing: e.existing });
   }
 });
 
@@ -3396,7 +3493,8 @@ app.post("/api/projects/:slug/assets/:assetId/import-audio", upload.single("file
       contentType: req.file.mimetype || null
     }));
   } catch (e) {
-    res.status(400).json({ error: String(e.message) });
+    const status = Number(e.statusCode) || (e.code === "DUPLICATE_HASH" ? 409 : 400);
+    res.status(status).json({ error: String(e.message), code: e.code, existing: e.existing });
   }
 });
 

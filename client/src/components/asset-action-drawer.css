@@ -1,0 +1,59 @@
+
+.asset-action-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  background: rgba(4, 7, 12, .52);
+  display: flex;
+  justify-content: flex-end;
+}
+.asset-action-drawer {
+  width: min(460px, 100%);
+  height: 100%;
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 12px;
+}
+.asset-action-drawer header { display: flex; justify-content: space-between; gap: 12px; }
+.asset-action-drawer h2 { margin: 4px 0; }
+.asset-action-modes { display: flex; flex-wrap: wrap; gap: 6px; }
+.asset-action-modes button {
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  border-radius: 999px;
+  padding: 5px 9px;
+  min-height: 28px;
+}
+.asset-action-modes button.active { border-color: var(--purple-bright); background: var(--purple-dark); }
+.asset-action-modes em { margin-left: 6px; color: var(--muted); font-style: normal; font-size: 10px; }
+.asset-action-body { display: grid; gap: 8px; overflow: auto; }
+.asset-action-result { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--panel-2); display: grid; gap: 8px; }
+
+.asset-action-form { display: grid; gap: 10px; }
+.asset-action-form label { display: grid; gap: 4px; font-size: 12px; }
+.asset-action-form input, .asset-action-form select, .asset-action-form textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: inherit;
+  border-radius: 6px;
+  padding: 7px 8px;
+}
+.asset-action-form img { width: 100%; border-radius: 8px; max-height: 220px; object-fit: cover; }
+.asset-action-error { color: #ff8a8a; }
+.asset-action-ok { color: #8ee0b0; }
+.asset-action-versions { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.asset-action-auditions { display: grid; gap: 10px; margin-top: 12px; }
+.asset-action-auditions article { border: 1px solid #2b3848; border-radius: 8px; padding: 10px; background: #101821; }
+.asset-action-auditions article.comparing { outline: 2px solid #8d6bff; }
+.asset-action-auditions article header { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.asset-action-auditions audio { width: 100%; }
+.asset-action-compare { margin: 8px 0 12px; }
+.asset-action-compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.asset-action-compare-grid article { border: 1px solid #8d6bff; border-radius: 8px; padding: 10px; background: #161022; }
+.asset-action-compare-grid audio { width: 100%; }
+@media (max-width: 720px) { .asset-action-compare-grid { grid-template-columns: 1fr; } }

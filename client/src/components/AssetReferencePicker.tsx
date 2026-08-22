@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { assetUrl } from "../store";
+import { openAssetAction, useAssetActionStore } from "../contextual-agency";
 
 const IMAGE_FILE_RE = /\.(png|jpe?g|webp|gif|svg)$/i;
 const CATEGORY_ORDER = ["character", "wardrobe", "location", "artifact", "extra", "atmosphere", "guide-frame", "graphic"];
@@ -86,6 +87,8 @@ function AssetThumbnail({ projectSlug, asset, version }: { projectSlug: string; 
 export default function AssetReferencePicker({
   project,
   targetLabel,
+  targetId,
+  targetKind = "frame",
   initialReferences,
   saving,
   onCancel,
@@ -93,11 +96,16 @@ export default function AssetReferencePicker({
 }: {
   project: any;
   targetLabel: string;
+  targetId?: string;
+  targetKind?: string;
   initialReferences: any[];
   saving: boolean;
   onCancel: () => void;
   onApply: (references: DraftReference[]) => Promise<void>;
 }) {
+  const lastResult = useAssetActionStore((state) => state.lastResult);
+  const consumedResult = React.useRef<string | null>(null);
+
   const assets = useMemo(() => (project.assets?.items || [])
     .filter((asset: any) => visualVersions(asset).length)
     .slice()
@@ -105,7 +113,7 @@ export default function AssetReferencePicker({
       const categoryDifference = CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
       return categoryDifference || String(a.name).localeCompare(String(b.name));
     }), [project.assets?.items]);
-  const assetMap = useMemo(() => new Map(assets.map((asset: any) => [asset.id, asset])), [assets]);
+  const assetMap = useMemo(() => new Map((project.assets?.items || []).map((asset: any) => [asset.id, asset])), [project.assets?.items]);
   const [category, setCategory] = useState("all");
   const [query, setQuery] = useState("");
   const [applying, setApplying] = useState(false);
@@ -203,7 +211,42 @@ export default function AssetReferencePicker({
     });
   };
 
-  const updateDraft = (assetId: string, patch: Partial<DraftReference>) => {
+  React.useEffect(() => {
+    if (!lastResult?.assetId || consumedResult.current === lastResult.assetId) return;
+    const asset = (project.assets?.items || []).find((item: any) => item.id === lastResult.assetId);
+    if (!asset) return;
+    consumedResult.current = lastResult.assetId;
+    setDraft((current) => {
+      if (current.some((reference) => reference.assetId === asset.id)) return current;
+      return [...current, {
+        assetId: asset.id,
+        assetVersion: Number(lastResult.version || asset.activeVersion || 1),
+        role: DEFAULT_ROLE[asset.category] || "identity",
+        useMode: "direct_conditioning",
+        required: true,
+        cropRegion: "Use relevant subject/design region only",
+        notes: "Returned from the contextual asset drawer with a role pinned.",
+        pinnedActiveAtImport: Number(asset.activeVersion) === Number(lastResult.version || asset.activeVersion || 1)
+      }];
+    });
+  }, [lastResult?.assetId, lastResult?.version, project.assets?.items]);
+
+  const openMissing = (action: "create" | "generate" | "upload") => {
+    const categoryKey = category === "all" ? "location" : category;
+    openAssetAction({
+      sourceRoute: "/storyboard",
+      sourceEntity: { type: "storyboard-frame", id: targetId || targetLabel, label: targetLabel },
+      requirement: {
+        relationship: "storyboardFrame.locationReference",
+        category: categoryKey as any,
+        expectedMediaType: "image"
+      },
+      initialAction: action,
+      returnFocusId: "reference-asset-search"
+    });
+  };
+
+    const updateDraft = (assetId: string, patch: Partial<DraftReference>) => {
     setDraft((current) => current.map((reference) => reference.assetId === assetId ? { ...reference, ...patch } : reference));
   };
 
@@ -258,7 +301,16 @@ export default function AssetReferencePicker({
                   </button>
                 );
               })}
-              {!visible.length ? <div className="reference-picker-empty">No visual assets match this category and search.</div> : null}
+              {!visible.length ? (
+                <div className="reference-picker-empty">
+                  <p>No visual assets match this category and search.</p>
+                  <div className="reference-picker-empty-actions">
+                    <button type="button" className="primary-action" onClick={() => openMissing("create")}>Create asset</button>
+                    <button type="button" className="secondary-action" onClick={() => openMissing("generate")}>Generate asset</button>
+                    <button type="button" className="secondary-action" onClick={() => openMissing("upload")}>Upload asset</button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </section>
 

@@ -951,6 +951,8 @@ function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
     const current = (timeline.segments || []).find((segment) => segment.id === segmentId) || {};
     const frame = planned.frameId ? storyboard.frames?.[planned.frameId] : null;
     const generated = resolvedFrameMedia(project.slug, frame);
+    const plannedGuidePath = planned.projectMediaPath || planned.imageFile || current.projectMediaPath || current.imageFile || null;
+    const plannedGuideExists = plannedGuidePath ? projectMediaExists(project.slug, plannedGuidePath) : false;
     const segment = {
       ...current,
       id: planned.id,
@@ -961,7 +963,7 @@ function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
       type: String(planned.type || current.type || (planned.frameId ? "image" : "text")),
       isEndFrame: Boolean(planned.isEndFrame),
       storyboardFrameId: planned.frameId || null,
-      missingGuide: Boolean(planned.frameId && !generated)
+      missingGuide: Boolean(planned.frameId && !generated && !plannedGuideExists)
     };
     if (planned.mythicDialoguePass) segment.mythicDialoguePass = clone(planned.mythicDialoguePass);
     else delete segment.mythicDialoguePass;

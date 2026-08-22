@@ -8,7 +8,13 @@ async function api(path: string, opts: RequestInit = {}) {
       : { "Content-Type": "application/json", ...(opts.headers || {}) }
   });
   const json = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(json.error || response.statusText || "Request failed");
+  if (!response.ok) {
+    const err = new Error(json.error || response.statusText || "Request failed");
+    (err as any).code = json.code;
+    (err as any).existing = json.existing;
+    (err as any).status = response.status;
+    throw err;
+  }
   return json;
 }
 
@@ -160,6 +166,8 @@ type Store = {
   downloadStoryboardVideoPlanWorkflow: (videoPlanId: string) => Promise<void>;
   generateStoryboardVideoPlan: (videoPlanId: string) => Promise<void>;
   saveStoryboardGlobalPrompt: (clipId: string, text: string, scope: "clip" | "scene" | "chapter" | "project") => Promise<any>;
+  saveStoryboardDirection: (body: any) => Promise<any>;
+  mutateStoryboardStructure: (body: any) => Promise<any>;
   patchLocal: (fn: (project: any) => void) => void;
   patchClip: (clipId: string, body: any) => Promise<void>;
   deleteFrame: (frameId: string) => Promise<void>;
@@ -180,6 +188,7 @@ type Store = {
   buildAssets: (body?: any) => Promise<void>;
   createAsset: (body: any) => Promise<any>;
   patchAsset: (assetId: string, body: any) => Promise<void>;
+  restoreAssetVersion: (assetId: string, version: number, extras?: { continuity?: string[]; audit?: any }) => Promise<any>;
   uploadAssetImage: (assetId: string, file: File) => Promise<any>;
   uploadAssetAudio: (assetId: string, file: File) => Promise<any>;
   deleteAsset: (assetId: string) => Promise<void>;
@@ -889,6 +898,46 @@ export const useStore = create<Store>((set, get) => ({
       set({ storyboardVideoPlanActions: nextActions });
     }
   },
+
+  mutateStoryboardStructure: async (body) => {
+    const project = get().project;
+    if (!project) throw new Error("No project loaded");
+    try {
+      const json = await api(
+        `/api/projects/${encodeURIComponent(project.slug)}/storyboard/structure`,
+        { method: "POST", body: JSON.stringify(body) }
+      );
+      set({
+        storyboard: json.storyboard || get().storyboard,
+        storyboardSummary: json.summary || get().storyboardSummary,
+        error: null
+      });
+      return json;
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    }
+  },
+
+  saveStoryboardDirection: async (body) => {
+    const project = get().project;
+    if (!project) throw new Error("No project loaded");
+    try {
+      const json = await api(
+        `/api/projects/${encodeURIComponent(project.slug)}/storyboard/direction`,
+        { method: "PATCH", body: JSON.stringify(body) }
+      );
+      set({
+        storyboard: json.storyboard || get().storyboard,
+        storyboardSummary: json.summary || get().storyboardSummary,
+        error: null
+      });
+      return json;
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    }
+  },
   saveStoryboardGlobalPrompt: async (clipId, text, scope) => {
     const project = get().project;
     if (!project) throw new Error("No project loaded");
@@ -1183,6 +1232,37 @@ export const useStore = create<Store>((set, get) => ({
       });
       set({ project: json.project, selectedAssetId: json.asset?.id || get().selectedAssetId });
       return json.asset;
+    } catch (error: any) {
+      set({ error: String(error.message) });
+      throw error;
+    }
+  },
+  restoreAssetVersion: async (assetId, version, extras: any = {}) => {
+    const project = get().project;
+    if (!project) return null;
+    const asset = project.assets?.items?.find((item: any) => item.id === assetId);
+    if (!asset) throw new Error("Asset not found");
+    const target = (asset.versions || []).find((item: any) => Number(item.v) === Number(version));
+    if (!target) throw new Error("Version not found");
+    try {
+      const continuity = Array.isArray(extras?.continuity) ? extras.continuity : asset.continuity;
+      const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/assets/${encodeURIComponent(assetId)}/versions/${encodeURIComponent(String(version))}/restore`, {
+        method: "POST",
+        body: JSON.stringify({ continuity, audit: extras?.audit })
+      });
+      const next = json.project || project;
+      const updated = next.assets?.items?.find((item: any) => item.id === assetId);
+      if (updated) {
+        updated.activeVersion = Number(version);
+        if (target.file) updated.file = target.file;
+        updated.approval = null;
+        updated.approvalCurrent = false;
+        if (!Array.isArray(updated.versions) || updated.versions.length < (asset.versions || []).length) {
+          updated.versions = asset.versions;
+        }
+      }
+      set({ project: next });
+      return updated;
     } catch (error: any) {
       set({ error: String(error.message) });
       throw error;

@@ -7,6 +7,70 @@ import {
   dialogueCueStatus
 } from "../dialogue-cues";
 import { useStore } from "../store";
+import { openAssetAction } from "../contextual-agency";
+
+function openWorkspaceRoute(path) {
+  const params = new URLSearchParams(window.location.search);
+  window.history.pushState({}, "", `${path}${params.size ? `?${params}` : ""}`);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+}
+
+function openLtxSlot(intent) {
+  openAssetAction({
+    sourceRoute: "/ltx",
+    ...intent
+  });
+}
+
+function openCueWorkspace(path, cue, focusId) {
+  const params = new URLSearchParams(window.location.search);
+  const cueId = String(cue?.cueId || "").trim();
+  if (cueId) params.set("cue", cueId);
+  if (focusId) params.set("returnFocusId", focusId);
+  const hash = cueId ? `#cue-${encodeURIComponent(cueId)}` : "";
+  window.history.pushState({}, "", `${path}${params.size ? `?${params}` : ""}${hash}`);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+}
+
+function ltxDialogueCueIntent(cue, initialAction, returnFocusId) {
+  const cueId = String(cue?.cueId || "").trim();
+  return {
+    sourceEntity: {
+      type: "segment",
+      id: cueId || String(cue?.segmentId || "ltx-cue"),
+      label: `${cueId} · ${cue?.speaker || "cue"}`
+    },
+    requirement: {
+      relationship: "ltx.dialogueCue",
+      category: "dialogue",
+      expectedMediaType: "audio",
+      expectedVariant: cueId
+    },
+    initialAction,
+    slotState: dialogueCueStatus(cue) === "ready" ? "unapproved" : "missing",
+    returnFocusId,
+    prefill: {
+      name: cue?.speaker,
+      sampleText: cue?.exactDialogue,
+      prompt: cue?.performanceDirection
+    }
+  };
+}
+
+function LtxCueActions({ cue, focusPrefix }: { cue: any; focusPrefix: string }) {
+  const cueId = String(cue?.cueId || "").trim();
+  const focusId = `${focusPrefix}-${cueId}`;
+  return (
+    <nav className="ltx-001-cue-actions" aria-label={`${cueId} voice actions`} data-testid={`${focusPrefix}-actions-${cueId}`}>
+      <button type="button" id={focusId} className="button secondary" onClick={() => openLtxSlot(ltxDialogueCueIntent(cue, "generate", focusId))}>Generate voice</button>
+      <button type="button" className="button secondary" onClick={() => openLtxSlot(ltxDialogueCueIntent(cue, "upload", focusId))}>Upload voice</button>
+      <button type="button" className="button secondary" onClick={() => openLtxSlot(ltxDialogueCueIntent(cue, "choose", focusId))}>Assign voice</button>
+      <button type="button" className="button secondary" onClick={() => openCueWorkspace("/sound", cue, focusId)}>Open Create Sound</button>
+      <button type="button" className="button secondary" onClick={() => openCueWorkspace("/assets/characters", cue, focusId)}>Open Character Bible</button>
+    </nav>
+  );
+}
+
 import AssetReferencePicker from "./AssetReferencePicker";
 import {
   LTX25_PREMIERE316_PROFILE,
@@ -770,8 +834,15 @@ export default function LtxDirectorWorkspace() {
   return (
     <main className="ltx-native-workspace">
       <header className="ltx-bridge-bar">
-        <div className="ltx-scene-context"><label>SCENE<select value={sceneChoice} onChange={(event) => { const id = event.target.value; setSceneChoice(id); if (id) void loadScene(id); }}>{sceneOptions.map((clip: any) => <option key={clip.id} value={clip.id}>{clip.id} · {clip.scene} · {clip.ready ? "ready" : "needs guide"}</option>)}</select></label><button className="button secondary" disabled={!sceneChoice || busy === "load"} onClick={() => void loadScene()}>{busy === "load" ? "Loading…" : sceneChoice === workspace?.premiere?.clipId ? "Reload Scene" : "Load Scene"}</button></div>
-        <div className="ltx-service-state"><span className={health?.connected ? "online" : "offline"}><i />LTX {health?.connected ? "Ready" : "Offline"}</span><label className="ltx-generate-option">GENERATE OPTION<select value={generateOptionId} onChange={(event) => void chooseGenerateOption(event.target.value)}>{(generateOptions.length ? generateOptions : [{ id: generateOptionId || "harrowing_aaa_i2v_segmented", label: selectedGenerateOption?.label || "Harrowing of Hell" }]).map((option: any) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><span className="ltx-profile-chip">{activeProfileLabel}</span><span>{queueMode === "timeline" ? "Semantic timeline" : `${eligibleSegments.length} I2V segment jobs`}</span><span>ComfyUI {health?.comfyUrl?.replace(/^https?:\/\//, "") || "unavailable"}</span><span>{health?.queue?.running || 0} running · {health?.queue?.pending || 0} queued</span></div>
+        <div className="ltx-scene-context"><label>SCENE<select value={sceneChoice} onChange={(event) => { const id = event.target.value; setSceneChoice(id); if (id) void loadScene(id); }}>{sceneOptions.map((clip: any) => <option key={clip.id} value={clip.id}>{clip.id} · {clip.scene} · {clip.ready ? "ready" : "needs guide"}</option>)}</select></label><button className="button secondary" disabled={!sceneChoice || busy === "load"} onClick={() => void loadScene()}>{busy === "load" ? "Loading…" : sceneChoice === workspace?.premiere?.clipId ? "Reload Scene" : "Load Scene"}</button>
+          <button type="button" className="button secondary" disabled={!sceneChoice} onClick={() => {
+            if (sceneChoice) setSelectedStoryboardClip(sceneChoice);
+            const params = new URLSearchParams(window.location.search);
+            if (project?.slug) params.set("project", project.slug);
+            window.history.pushState({}, "", `/storyboard${params.size ? `?${params}` : ""}`);
+            window.dispatchEvent(new PopStateEvent("popstate"));
+          }}>Open Storyboard for this clip</button></div>
+        <div className="ltx-service-state"><span className={health?.connected ? "online" : "offline"}><i />LTX {health?.connected ? "Ready" : "Offline"}</span>{!health?.connected ? <small data-testid="ltx-008-offline">LTX or its ComfyUI engine is offline. Generate is paused. Upload, choose, and review stay available.</small> : null}<label className="ltx-generate-option">GENERATE OPTION<select value={generateOptionId} onChange={(event) => void chooseGenerateOption(event.target.value)}>{(generateOptions.length ? generateOptions : [{ id: generateOptionId || "harrowing_aaa_i2v_segmented", label: selectedGenerateOption?.label || "Harrowing of Hell" }]).map((option: any) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><span className="ltx-profile-chip">{activeProfileLabel}</span><span>{queueMode === "timeline" ? "Semantic timeline" : `${eligibleSegments.length} I2V segment jobs`}</span><span>ComfyUI {health?.comfyUrl?.replace(/^https?:\/\//, "") || "unavailable"}</span><span>{health?.queue?.running || 0} running · {health?.queue?.pending || 0} queued</span></div>
         <div className="ltx-actions"><button type="button" className="button secondary" onClick={() => { const next = !workflowPanel; setWorkflowPanel(next); if (next) { void loadWorkflowLibrary().catch((error) => setNotice(String(error.message || error))); void loadAaaWorkflow(aaaWorkflow?.rel || "HARROWING OF HELL.json").catch((error) => setNotice(String(error.message || error))); } }}>{workflowPanel ? "Hide workflow" : "Workflow"}</button><button className="button secondary" disabled={!bindingCurrent || Boolean(busy)} onClick={syncToPremiere}>{busy === "sync" ? "Saving…" : "Save to Premiere316"}</button>{queueMode === "segments" ? <><button className="button primary" disabled={busy === "queue"} title={!serviceReady ? "LTX Director or its ComfyUI engine is offline." : !bindingCurrent ? "Load the current shared shot before generating." : !i2vQueueReady ? "Load a segmented first-frame I2V scene with approved temporal guides." : !selectedEligible ? "Select a visual main-track segment with an approved temporal guide." : queueBusy ? "Wait for the shared GPU queue to become idle." : "Generate only the selected visual segment with its separate temporal and semantic inputs."} onClick={() => queue("selected")}>{busy === "queue" ? "Queueing…" : "Generate Segment"}</button><button className="button secondary" disabled={!selectedEligible || Boolean(busy) || !bindingCurrent || !serviceReady} onClick={() => void downloadSegmentWorkflow()}>{busy === "download" ? "Downloading…" : "Download Workflow"}</button><button className="button secondary" disabled={busy === "push"} onClick={() => void pushSegmentWorkflow()}>{busy === "push" ? "Pushing…" : "Push to ComfyUI"}</button></> : <button className="button primary" disabled={busy === "queue"} title={!semanticQueueReady ? "Resolve every declared semantic reference and pass compiler preflight before generation." : "Generate the complete semantic T2V timeline through Premiere316."} onClick={() => queue("timeline")}>{busy === "queue" ? "Queueing…" : "Generate Semantic T2V"}</button>}</div>
       </header>
 
@@ -779,7 +850,7 @@ export default function LtxDirectorWorkspace() {
 
       {workflowPanel ? <section className="ltx-workflow-panel premium-panel">
         <header>
-          <div><span className="workspace-eyebrow">WORKFLOW LIBRARY</span><h2>{(aaaWorkflow?.rel === "HARROWING OF HELL.json" ? "Harrowing of Hell" : aaaWorkflow?.name) || "Harrowing of Hell"}{aaaWorkflow?.folder ? ` · ${aaaWorkflow.folder}` : ""}</h2></div>
+          <div><span className="workspace-eyebrow">WORKFLOW LIBRARY</span><h2>{(aaaWorkflow?.rel === "HARROWING OF HELL.json" ? "Harrowing of Hell" : aaaWorkflow?.rel === "harrowing_of_hell_LTX2.5_Director.json" ? "Harrowing LTX2.5 Director" : aaaWorkflow?.name) || "Harrowing of Hell"}{aaaWorkflow?.folder ? ` · ${aaaWorkflow.folder}` : ""}</h2></div>
           <button type="button" className="button primary" disabled={Boolean(busy) || !aaaWorkflow} onClick={() => void saveAaaWorkflow()}>{busy === "workflow" ? "Saving…" : "Save workflow"}</button>
         </header>
         <div className="ltx-workflow-shell">
@@ -787,15 +858,15 @@ export default function LtxDirectorWorkspace() {
           <input className="ltx-workflow-search" type="search" placeholder="Search workflows…" value={workflowQuery} onChange={(event) => setWorkflowQuery(event.target.value)} />
           <div className="ltx-workflow-list">
             {workflowLibrary.filter((item: any) => {
-              const label = item.rel === "HARROWING OF HELL.json" ? "Harrowing of Hell" : item.rel === "LTX_2.5_Harrowing_AAA.json" ? "Harrowing AAA" : item.name;
+              const label = item.rel === "HARROWING OF HELL.json" ? "Harrowing of Hell" : item.rel === "harrowing_of_hell_LTX2.5_Director.json" ? "Harrowing LTX2.5 Director" : item.rel === "LTX_2.5_Harrowing_AAA.json" ? "Harrowing AAA" : item.name;
               const hay = `${label} ${item.rel} ${item.folder || ""} harrowing of hell`.toLowerCase();
               return !workflowQuery.trim() || hay.includes(workflowQuery.trim().toLowerCase());
             }).sort((a: any, b: any) => {
-              const rank = (item: any) => item.rel === "HARROWING OF HELL.json" ? 0 : item.rel === "LTX_2.5_Harrowing_AAA.json" ? 1 : item.folder === "H01_S01_C01_AAA_segments" ? 2 : 3;
+              const rank = (item: any) => item.rel === "HARROWING OF HELL.json" ? 0 : item.rel === "harrowing_of_hell_LTX2.5_Director.json" ? 1 : item.rel === "LTX_2.5_Harrowing_AAA.json" ? 2 : item.folder === "H01_S01_C01_AAA_segments" ? 3 : 4;
               return rank(a) - rank(b) || String(a.rel).localeCompare(String(b.rel));
             }).map((item: any) => {
-              const label = item.rel === "HARROWING OF HELL.json" ? "Harrowing of Hell" : item.rel === "LTX_2.5_Harrowing_AAA.json" ? "Harrowing AAA" : item.name;
-              const pinned = item.rel === "HARROWING OF HELL.json" || item.rel === "LTX_2.5_Harrowing_AAA.json" || item.folder === "H01_S01_C01_AAA_segments";
+              const label = item.rel === "HARROWING OF HELL.json" ? "Harrowing of Hell" : item.rel === "harrowing_of_hell_LTX2.5_Director.json" ? "Harrowing LTX2.5 Director" : item.rel === "LTX_2.5_Harrowing_AAA.json" ? "Harrowing AAA" : item.name;
+              const pinned = item.rel === "HARROWING OF HELL.json" || item.rel === "harrowing_of_hell_LTX2.5_Director.json" || item.rel === "LTX_2.5_Harrowing_AAA.json" || item.folder === "H01_S01_C01_AAA_segments";
               return <button type="button" key={item.rel} className={`${item.rel === aaaWorkflow?.rel ? "active" : ""} ${pinned ? "pinned" : ""}`} onClick={() => void loadAaaWorkflow(item.rel).then((wf) => setNotice(`Loaded ${label}`)).catch((error) => setNotice(String(error.message || error)))}><b>{label}</b><small>{pinned ? "PINNED" : item.folder || "root"}{item.folder && item.rel !== "LTX_2.5_Harrowing_AAA.json" ? ` · ${item.folder}` : ""}</small></button>;
             })}
             {!workflowLibrary.length ? <p className="ltx-workflow-empty">No workflows match.</p> : null}
@@ -827,7 +898,7 @@ export default function LtxDirectorWorkspace() {
               <div className="ltx-dialogue-cue-strip" aria-label="Dialogue cues in this clip">{clipDialogueCues.map((cue: any) => {
                 const associated = selectedDialogueCues.some((selectedCue: any) => selectedCue.cueId === cue.cueId);
                 const progress = dialogueCueProgress(cue);
-                return <article key={cue.cueId} className={associated ? "associated" : ""}><b>{cue.cueId}</b><code>{cue.segmentId}</code><span>{cue.speaker}</span><i><em style={{ width: `${Math.round(progress * 100)}%` }} /></i></article>;
+                return <article key={cue.cueId} className={associated ? "associated" : ""} data-testid={`ltx-001-strip-${cue.cueId}`}><b>{cue.cueId}</b><code>{cue.segmentId}</code><span>{cue.speaker}</span><i><em style={{ width: `${Math.round(progress * 100)}%` }} /></i><LtxCueActions cue={cue} focusPrefix="ltx-strip" /></article>;
               })}</div>
               <div className="ltx-dialogue-cue-details">
                 {selectedTrack !== "Main" ? <p>Select a MAIN pass to inspect its authored speech association.</p> : selectedDialogueCues.length ? selectedDialogueCues.map((cue: any) => <article key={cue.cueId} data-testid={`ltx-dialogue-cue-detail-${cue.cueId}`}>
@@ -835,6 +906,7 @@ export default function LtxDirectorWorkspace() {
                   <blockquote>{cue.exactDialogue}</blockquote>
                   <p><b>Performance:</b> {cue.performanceDirection || "Use the authoritative cue-specific direction."}</p>
                   <small>{Number(cue.targetVoiceDurationSec) > 0 ? `${Number(cue.targetVoiceDurationSec).toFixed(1)}s voice` : "Voice timing planned"}{Number(cue.targetVideoDurationSec) > 0 ? ` · ${Number(cue.targetVideoDurationSec).toFixed(1)}s video target` : ""}</small>
+                  <LtxCueActions cue={cue} focusPrefix="ltx-cue" />
                 </article>) : <p>This selected MAIN pass is picture-only. It has no intelligible dialogue cue.</p>}
               </div>
             </> : <p className="ltx-dialogue-cue-empty">{dialogueCueError || "Reading the 34-cue authoritative Qwen plan…"}</p>}
@@ -879,12 +951,31 @@ export default function LtxDirectorWorkspace() {
                 <div className="ltx-reference-thumb">{temporalGuides.first ? <ReferenceMedia src={firstGuideUrl} reference={temporalGuides.first} alt="First temporal guide" /> : <span aria-hidden="true">◇</span>}</div>
                 <strong>{temporalGuides.first?.fileName || "No first temporal source"}</strong>
                 <small>{temporalGuides.first ? `${temporalGuides.first.origin} · ${temporalGuides.first.sourceSegmentId}` : "Generation requires a selected visual source."}</small>
+                <button type="button" id="ltx-first-guide" className="button secondary" disabled={!selected?.id} onClick={() => openLtxSlot({
+                  sourceEntity: { type: "guide", id: String(selected?.id || ""), label: `${selected?.id || "segment"} first guide` },
+                  requirement: { relationship: "ltx.temporalGuide.first", category: "guide-frame", expectedMediaType: "image" },
+                  initialAction: temporalGuides.first ? "replace" : "generate",
+                  slotState: temporalGuides.first ? "approved" : "missing",
+                  returnFocusId: "ltx-first-guide"
+                })}>{temporalGuides.first ? "Replace first guide" : "Generate first guide"}</button>
+                <button type="button" className="button secondary" disabled={!selected?.id} onClick={() => openLtxSlot({ sourceEntity: { type: "guide", id: String(selected?.id || ""), label: `${selected?.id || "segment"} first guide` }, requirement: { relationship: "ltx.temporalGuide.first", category: "guide-frame", expectedMediaType: "image" }, initialAction: "upload", slotState: temporalGuides.first ? "unapproved" : "missing", returnFocusId: "ltx-first-guide" })}>Upload first guide</button>
+                <button type="button" className="button secondary" disabled={!selected?.id} onClick={() => openLtxSlot({ sourceEntity: { type: "guide", id: String(selected?.id || ""), label: `${selected?.id || "segment"} first guide` }, requirement: { relationship: "ltx.temporalGuide.first", category: "guide-frame", expectedMediaType: "image" }, initialAction: "choose", slotState: "missing", returnFocusId: "ltx-first-guide" })}>Choose first guide</button>
               </article>
               <article className={`ltx-temporal-card ${temporalGuides.last ? "ready" : "optional"}`}>
                 <div className="ltx-reference-card-label"><b>LAST</b><span>{temporalGuides.last ? `Editorial frame ${framePlan.editFrames - 1}` : "Optional"}</span></div>
                 <div className="ltx-reference-thumb">{temporalGuides.last ? <ReferenceMedia src={lastGuideUrl} reference={temporalGuides.last} alt="Last temporal guide" /> : <span aria-hidden="true">◇</span>}</div>
                 <strong>{temporalGuides.last?.fileName || "No last temporal guide"}</strong>
-                <small>{temporalGuides.last ? `${temporalGuides.last.origin} · ${temporalGuides.last.sourceSegmentId}` : temporalGuides.lastRequested ? "Requested last guide is unavailable." : "Enable ‘Use next as last frame’ when the next image is approved."}</small>
+                <small>{temporalGuides.last ? `${temporalGuides.last.origin} · ${temporalGuides.last.sourceSegmentId}` : temporalGuides.lastRequested ? "Requested last guide is unavailable." : neighbors.canUseNextAsLastFrame ? "Next approved frame can bind as last guide." : "Last guide needs an accepted next frame or Storyboard still. Generate will not invent a continuation."}</small>
+                <button type="button" id="ltx-last-guide" className="button secondary" disabled={!selected?.id} onClick={() => openLtxSlot({
+                  sourceEntity: { type: "guide", id: String(selected?.id || ""), label: `${selected?.id || "segment"} last guide` },
+                  requirement: { relationship: "ltx.temporalGuide.last", category: "guide-frame", expectedMediaType: "image" },
+                  initialAction: temporalGuides.last ? "replace" : "choose",
+                  slotState: temporalGuides.last ? "approved" : "missing",
+                  returnFocusId: "ltx-last-guide"
+                })}>{temporalGuides.last ? "Replace last guide" : "Use as last guide"}</button>
+                <button type="button" className="button secondary" disabled={!selected?.id} onClick={() => openLtxSlot({ sourceEntity: { type: "guide", id: String(selected?.id || ""), label: `${selected?.id || "segment"} last guide` }, requirement: { relationship: "ltx.temporalGuide.last", category: "guide-frame", expectedMediaType: "image" }, initialAction: "upload", slotState: "missing", returnFocusId: "ltx-last-guide" })}>Upload last guide</button>
+                <button type="button" className="button secondary" disabled={!selected?.id} onClick={() => openLtxSlot({ sourceEntity: { type: "guide", id: String(selected?.id || ""), label: `${selected?.id || "segment"} last guide` }, requirement: { relationship: "ltx.temporalGuide.last", category: "guide-frame", expectedMediaType: "image" }, initialAction: "choose", slotState: "missing", returnFocusId: "ltx-last-guide" })}>Choose last guide</button>
+                <button type="button" className="button secondary" disabled={!sceneChoice} onClick={() => { if (sceneChoice) setSelectedStoryboardClip(sceneChoice); openWorkspaceRoute("/storyboard"); }}>Open Storyboard for this clip</button>
               </article>
             </div>
           </section>
@@ -899,7 +990,13 @@ export default function LtxDirectorWorkspace() {
               {semanticReferences.references.map((reference: any) => {
                 const src = semanticPreviewUrl(project.slug, reference);
                 const name = reference.name || reference.assetId || reference.canonicalFile || reference.file || "Semantic reference";
-                return <article key={`${reference.role}:${reference.id || reference.file}`}><div className="ltx-reference-thumb"><ReferenceMedia src={src} reference={reference} alt={`${roleLabel(reference.role)} reference: ${name}`} /></div><div><b>{name}</b><span>{roleLabel(reference.role)}{reference.version ? ` · v${reference.version}` : ""}</span><small>{reference.required ? "required" : "supporting"}{reference.current === false ? " · pinned prior version" : ""}</small></div></article>;
+                return <article key={`${reference.role}:${reference.id || reference.file}`}><div className="ltx-reference-thumb"><ReferenceMedia src={src} reference={reference} alt={`${roleLabel(reference.role)} reference: ${name}`} /></div><div><b>{name}</b><span>{roleLabel(reference.role)}{reference.version ? ` · v${reference.version}` : ""}</span><small>{reference.required ? "required" : "supporting"}{reference.current === false ? " · pinned prior version" : ""}</small>
+                  <nav className="ltx-011-ref-actions" aria-label={`${name} reference actions`}>
+                    <button type="button" className="button secondary" onClick={() => openLtxSlot({ sourceEntity: { type: "guide", id: String(selected?.id || reference.assetId || name), label: name }, requirement: { relationship: "ltx.reference", category: "artifact", expectedMediaType: "image", assetId: reference.assetId }, initialAction: "choose", returnFocusId: "ltx-semantic-heading" })}>Choose</button>
+                    <button type="button" className="button secondary" onClick={() => openLtxSlot({ sourceEntity: { type: "guide", id: String(selected?.id || reference.assetId || name), label: name }, requirement: { relationship: "ltx.reference", category: "artifact", expectedMediaType: "image", assetId: reference.assetId }, initialAction: "replace", slotState: "unapproved", returnFocusId: "ltx-semantic-heading" })}>Replace</button>
+                    <button type="button" className="button secondary" onClick={() => openLtxSlot({ sourceEntity: { type: "guide", id: String(selected?.id || reference.assetId || name), label: name }, requirement: { relationship: "ltx.reference", category: "artifact", expectedMediaType: "image" }, initialAction: "upload", slotState: "missing", returnFocusId: "ltx-semantic-heading" })}>Upload</button>
+                    <button type="button" className="button secondary" onClick={() => openLtxSlot({ sourceEntity: { type: "guide", id: String(selected?.id || reference.assetId || name), label: name }, requirement: { relationship: "ltx.reference", category: "artifact", expectedMediaType: "image", assetId: reference.assetId }, initialAction: "review", returnFocusId: "ltx-semantic-heading" })}>Review</button>
+                  </nav></div></article>;
               })}
               {!semanticReferences.references.length ? <p className="ltx-reference-empty">No semantic role bindings were returned for this {semanticReferences.scope === "selected-frame" ? "frame" : "scene"}.</p> : null}
             </div>
@@ -915,7 +1012,7 @@ export default function LtxDirectorWorkspace() {
       </section>
 
       <section className="ltx-prompt-grid">
-        <article className="ltx-segment-editor premium-panel"><header><div><span className="workspace-eyebrow">SEGMENT PROMPT</span><h3>{selected?.id || "No selection"}</h3></div><span>{selectedTrack}</span></header>{selected ? <><textarea value={selected.prompt || ""} onChange={(event) => patchWorkspace((draft) => { const all = [...(draft.timeline.segments || []), ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])]; const segment = all.find((item: any) => item.id === selected.id); if (segment) segment.prompt = event.target.value; })} /><div className="ltx-segment-fields"><label>Start (sec)<input type="number" step={0.1} value={((Number(selected.start) || 0) / fps).toFixed(2)} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment.start = Math.max(0, Math.round(Number(event.target.value) * fps)); })} /></label><label>Duration (sec)<input type="number" step={0.1} value={((Number(selected.length) || 1) / fps).toFixed(2)} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment.length = Math.max(1, Math.round(Number(event.target.value) * fps)); })} /></label><label>Guide strength<input type="number" min={0} max={2} step={0.05} disabled={selectedTrack === "Audio"} value={selected.guideStrength ?? selected.videoStrength ?? 1} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment[selectedTrack === "IC-LoRA" ? "videoStrength" : "guideStrength"] = Number(event.target.value); })} /></label></div>{selectedTrack === "Main" ? <div className="ltx-neighbor-locks"><label><input type="checkbox" disabled={!neighbors.canUsePreviousAsFirstFrame} checked={Boolean(neighbors.canUsePreviousAsFirstFrame && selected.usePreviousAsFirstFrame)} onChange={(event) => patchWorkspace((draft) => { const segment = draft.timeline.segments.find((item: any) => item.id === selected.id); if (segment) segment.usePreviousAsFirstFrame = event.target.checked; })} /> Use previous as first frame</label><label><input type="checkbox" disabled={!neighbors.canUseNextAsLastFrame} checked={Boolean(neighbors.canUseNextAsLastFrame && selected.useNextAsLastFrame)} onChange={(event) => patchWorkspace((draft) => { const segment = draft.timeline.segments.find((item: any) => item.id === selected.id); if (segment) segment.useNextAsLastFrame = event.target.checked; })} /> Use next as last frame</label></div> : null}</> : null}</article>
+        <article className="ltx-segment-editor premium-panel"><header><div><span className="workspace-eyebrow">SEGMENT PROMPT</span><h3>{selected?.id || "No selection"}</h3></div><span>{selectedTrack}</span></header>{selected ? <><textarea value={selected.prompt || ""} onChange={(event) => patchWorkspace((draft) => { const all = [...(draft.timeline.segments || []), ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])]; const segment = all.find((item: any) => item.id === selected.id); if (segment) segment.prompt = event.target.value; })} /><div className="ltx-segment-fields"><label>Start (sec)<input type="number" step={0.1} value={((Number(selected.start) || 0) / fps).toFixed(2)} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment.start = Math.max(0, Math.round(Number(event.target.value) * fps)); })} /></label><label>Duration (sec)<input type="number" step={0.1} value={((Number(selected.length) || 1) / fps).toFixed(2)} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment.length = Math.max(1, Math.round(Number(event.target.value) * fps)); })} /></label><label>Guide strength<input type="number" min={0} max={2} step={0.05} disabled={selectedTrack === "Audio"} value={selected.guideStrength ?? selected.videoStrength ?? 1} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment[selectedTrack === "IC-LoRA" ? "videoStrength" : "guideStrength"] = Number(event.target.value); })} /></label></div>{selectedTrack === "Main" ? <div className="ltx-neighbor-locks"><label title={!neighbors.canUsePreviousAsFirstFrame ? "Previous segment has no approved image guide, so Use previous as first frame stays off." : "Bind the previous approved frame as this segment first guide."}><input type="checkbox" disabled={!neighbors.canUsePreviousAsFirstFrame} checked={Boolean(neighbors.canUsePreviousAsFirstFrame && selected.usePreviousAsFirstFrame)} onChange={(event) => patchWorkspace((draft) => { const segment = draft.timeline.segments.find((item: any) => item.id === selected.id); if (segment) segment.usePreviousAsFirstFrame = event.target.checked; })} /> Use previous as first frame</label><label title={!neighbors.canUseNextAsLastFrame ? "Next segment has no approved image guide, so Use next as last frame stays off." : "Bind the next approved frame as this segment last guide."}><input type="checkbox" disabled={!neighbors.canUseNextAsLastFrame} checked={Boolean(neighbors.canUseNextAsLastFrame && selected.useNextAsLastFrame)} onChange={(event) => patchWorkspace((draft) => { const segment = draft.timeline.segments.find((item: any) => item.id === selected.id); if (segment) segment.useNextAsLastFrame = event.target.checked; })} /> Use next as last frame</label></div> : null}</> : null}</article>
         <article className="ltx-global-editor premium-panel"><header><div><span className="workspace-eyebrow">GLOBAL PROMPT</span><h3>Clip / scene / chapter / project</h3></div><span>{String(workspace.timeline.global_prompt || "").length} chars</span></header><div className="ltx-global-scope-row"><select value={globalPromptScope} onChange={(event) => { const next = event.target.value as "clip" | "scene" | "chapter" | "project"; setGlobalPromptScope(next); patchWorkspace((draft) => { draft.settings = draft.settings || {}; draft.settings.globalPromptScope = next; }); }}><option value="clip">This clip (all its segments)</option><option value="scene">This scene (all clips in this S##)</option><option value="chapter">This chapter (all of this H##)</option><option value="project">Entire project</option></select><button type="button" className="button secondary" disabled={Boolean(busy) || !workspace?.premiere?.clipId} onClick={() => saveGlobalPrompt()}>{busy === "global" ? "Saving…" : "Save global"}</button></div><textarea value={workspace.timeline.global_prompt || ""} onChange={(event) => patchWorkspace((draft) => { draft.timeline.global_prompt = event.target.value; })} /><details><summary>Negative prompt and delivery settings</summary><textarea value={workspace.settings.negativePrompt || ""} onChange={(event) => patchWorkspace((draft) => { draft.settings.negativePrompt = event.target.value; })} /></details></article>
       </section></>
       {referencePickerOpen && referenceTarget ? <AssetReferencePicker

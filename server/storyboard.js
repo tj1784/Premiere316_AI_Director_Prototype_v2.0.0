@@ -407,3 +407,144 @@ export function storyboardSummary(storyboard) {
     updatedAt: storyboard.updatedAt || storyboard.source?.generatedAt || null
   };
 }
+
+export function patchStoryboardDirectionInMemory(storyboard, body = {}, fps = 24) {
+  const rate = Number(fps) > 0 ? Number(fps) : 24;
+  const now = new Date().toISOString();
+  let touched = { clip: false, segment: false };
+
+  if (body.segmentId) {
+    const segment = storyboard.segments?.[body.segmentId];
+    if (!segment) throw new Error("Unknown segment " + body.segmentId);
+    if (body.prompt != null) segment.prompt = String(body.prompt);
+    if (body.dialogueAnchor != null) segment.dialogueAnchor = String(body.dialogueAnchor);
+    if (body.startSec != null && body.startSec !== "") {
+      segment.startFrame = Math.max(0, Math.round(Number(body.startSec) * rate));
+    }
+    if (body.durationSec != null && body.durationSec !== "") {
+      segment.lengthFrames = Math.max(1, Math.round(Number(body.durationSec) * rate));
+    }
+    if (Array.isArray(body.continuityLocks)) {
+      segment.continuityLocks = body.continuityLocks.map((item) => String(item || "").trim()).filter(Boolean);
+    }
+    if (body.volume != null && body.volume !== "") {
+      segment.volume = Math.min(2, Math.max(0, Number(body.volume)));
+    }
+    if (body.ambience != null) segment.ambience = String(body.ambience);
+    if (body.dialogueAssetId != null) segment.dialogueAssetId = String(body.dialogueAssetId);
+    if (body.muted != null) segment.muted = Boolean(body.muted);
+    segment.updatedAt = now;
+    touched.segment = true;
+  }
+
+  if (body.clipId) {
+    const clip = storyboard.clips?.[body.clipId];
+    if (!clip) throw new Error("Unknown clip " + body.clipId);
+    if (body.dialogueAnchor != null) clip.dialogueAnchor = String(body.dialogueAnchor);
+    if (body.durationSec != null && body.durationSec !== "" && !body.segmentId) {
+      clip.durationFrames = Math.max(1, Math.round(Number(body.durationSec) * rate));
+    }
+    if (Array.isArray(body.continuityLocks)) {
+      clip.continuityLocks = body.continuityLocks.map((item) => String(item || "").trim()).filter(Boolean);
+    }
+    clip.updatedAt = now;
+    touched.clip = true;
+  }
+
+  if (!touched.clip && !touched.segment) throw new Error("clipId or segmentId is required");
+  storyboard.updatedAt = now;
+  return storyboard;
+}
+
+export function applyStoryboardDirection(slug, body = {}) {
+  const storyboard = loadStoryboard(slug);
+  const fps = Number(storyboard.defaults?.fps || 24);
+  patchStoryboardDirectionInMemory(storyboard, body, fps);
+  saveStoryboard(slug, storyboard);
+  return { storyboard, summary: storyboardSummary(storyboard) };
+}
+
+
+
+function nextSegmentId(storyboard) {
+  for (let i = 1; i < 10000; i += 1) {
+    const id = `segment-added-${String(i).padStart(3, "0")}`;
+    if (!storyboard.segments?.[id]) return id;
+  }
+  throw new Error("Could not allocate a segment id");
+}
+
+function planForClip(storyboard, clipId) {
+  const clip = storyboard.clips?.[clipId];
+  if (!clip) throw new Error("Unknown clip " + clipId);
+  const plan = storyboard.videoPlans?.[clip.videoPlanId];
+  if (!plan) throw new Error("Clip has no video plan");
+  if (!Array.isArray(plan.segmentIds)) plan.segmentIds = [];
+  return { clip, plan };
+}
+
+export function mutateStoryboardStructureInMemory(storyboard, body = {}) {
+  const action = String(body.action || "");
+  const clipId = String(body.clipId || "");
+  if (!clipId) throw new Error("clipId is required");
+  const { clip, plan } = planForClip(storyboard, clipId);
+  const now = new Date().toISOString();
+
+  if (action === "add" || action === "duplicate") {
+    const sourceId = body.segmentId || plan.segmentIds[plan.segmentIds.length - 1];
+    const source = sourceId ? storyboard.segments?.[sourceId] : null;
+    const id = nextSegmentId(storyboard);
+    const clone = source
+      ? { ...JSON.parse(JSON.stringify(source)), id, frameId: undefined, generatedFile: undefined, updatedAt: now }
+      : { id, prompt: "", dialogueAnchor: "", startFrame: 0, lengthFrames: 24, continuityLocks: [], updatedAt: now };
+    delete clone.frameId;
+    storyboard.segments[id] = clone;
+    const after = sourceId ? plan.segmentIds.indexOf(sourceId) : plan.segmentIds.length - 1;
+    plan.segmentIds.splice(after + 1, 0, id);
+    plan.segmentIds.forEach((sid, index) => {
+      if (storyboard.segments[sid]) storyboard.segments[sid].order = index + 1;
+    });
+    storyboard.updatedAt = now;
+    return storyboard;
+  }
+
+  if (action === "delete") {
+    const segmentId = String(body.segmentId || "");
+    if (!segmentId) throw new Error("segmentId is required");
+    if (plan.segmentIds.length <= 1) throw new Error("A clip must keep at least one segment");
+    plan.segmentIds = plan.segmentIds.filter((id) => id !== segmentId);
+    delete storyboard.segments[segmentId];
+    for (const [bindingId, binding] of Object.entries(storyboard.referenceBindings || {})) {
+      if (binding?.targetKind === "segment" && binding.targetId === segmentId) delete storyboard.referenceBindings[bindingId];
+    }
+    plan.segmentIds.forEach((sid, index) => {
+      if (storyboard.segments[sid]) storyboard.segments[sid].order = index + 1;
+    });
+    storyboard.updatedAt = now;
+    return storyboard;
+  }
+
+  if (action === "move") {
+    const segmentId = String(body.segmentId || "");
+    const toIndex = Number(body.toIndex);
+    const from = plan.segmentIds.indexOf(segmentId);
+    if (from < 0) throw new Error("Segment is not on this clip");
+    if (!Number.isInteger(toIndex) || toIndex < 0 || toIndex >= plan.segmentIds.length) throw new Error("Invalid toIndex");
+    plan.segmentIds.splice(from, 1);
+    plan.segmentIds.splice(toIndex, 0, segmentId);
+    plan.segmentIds.forEach((sid, index) => {
+      if (storyboard.segments[sid]) storyboard.segments[sid].order = index + 1;
+    });
+    storyboard.updatedAt = now;
+    return storyboard;
+  }
+
+  throw new Error("Unknown structure action " + action);
+}
+
+export function applyStoryboardStructure(slug, body = {}) {
+  const storyboard = loadStoryboard(slug);
+  mutateStoryboardStructureInMemory(storyboard, body);
+  saveStoryboard(slug, storyboard);
+  return { storyboard, summary: storyboardSummary(storyboard) };
+}

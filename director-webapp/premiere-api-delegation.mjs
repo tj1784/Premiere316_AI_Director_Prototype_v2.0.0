@@ -21,8 +21,20 @@ export const HARROWING_AAA_I2V_GENERATE_OPTION = Object.freeze({
   description: "One I2V Comfy job per authored segment. First frame is graph-wired. Ingredients stay IC-LoRA/identity, never extra timeline frames."
 });
 
+
+export const HARROWING_LTX25_DIRECTOR_GENERATE_OPTION = Object.freeze({
+  id: "harrowing_of_hell_ltx25_director",
+  label: "Harrowing LTX2.5 Director",
+  generationMode: LTX25_PREMIERE316_PROFILE.generationMode,
+  queueMode: "segments",
+  workflowProfileId: LTX25_PREMIERE316_PROFILE.id,
+  directorWorkflow: "BlokeyUI/ComfyUI/user/default/workflows/harrowing_of_hell_LTX2.5_Director.json",
+  catalogWorkflow: "BlokeyUI/ComfyUI/user/default/workflows/harrowing_of_hell_LTX2.5_Director.json",
+  description: "Harrowing of Hell LTX 2.5 Director graph as a first-class LTX Director generate preset."
+});
 export const PREMIERE_GENERATE_OPTIONS = Object.freeze([
   HARROWING_AAA_I2V_GENERATE_OPTION,
+  HARROWING_LTX25_DIRECTOR_GENERATE_OPTION,
   Object.freeze({
     id: "ltx25_premiere316_i2v",
     label: "LTX2.5 Premiere316 I2V · segmented",

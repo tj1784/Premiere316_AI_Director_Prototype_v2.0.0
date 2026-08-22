@@ -1,0 +1,285 @@
+{
+  "backup": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\projects\\harrowing_of_hell\\production\\storyboard.before-h02-cu-20260822T034512Z.json",
+  "spokenSegments": 27,
+  "closeups": 21,
+  "closeupRatio": 0.778,
+  "newFrames": [
+    "frame-h02-s04-c01-seg03b-cu-v3r",
+    "frame-h02-s04-c03-seg01b-cu-v3r",
+    "frame-h02-s04-c05-seg02b-cu-v3r"
+  ],
+  "h02DurationDeltaFrames": 1560,
+  "laterChapterShiftFrames": 1560,
+  "spoken": [
+    {
+      "clipId": "H02-S03-C01",
+      "segmentId": "segment-h02-s03-c01-seg02",
+      "speaker": "TORTURER",
+      "dialogue": "Renounce the promise, first father, and this ends. One word from you, and I loose the hook.",
+      "parentCue": "H02V3-D001",
+      "isNew": false,
+      "closeup": true,
+      "angle": "85mm facial close-up, eye-level three-quarter from camera left"
+    },
+    {
+      "clipId": "H02-S03-C01",
+      "segmentId": "segment-h02-s03-c01-seg03",
+      "speaker": "ADAM",
+      "dialogue": "The promise is not mine to renounce. I did not speak it into being, and I will not unsay it here.",
+      "parentCue": "H02V3-D002",
+      "isNew": false,
+      "closeup": true,
+      "angle": "100mm facial close-up, slightly low front-right"
+    },
+    {
+      "clipId": "H02-S03-C02",
+      "segmentId": "segment-h02-s03-c02-seg01",
+      "speaker": "TORTURER",
+      "dialogue": "You are dust. Dust has no inheritance. Tell me what ashes may claim from the living God.",
+      "parentCue": "H02V3-D003",
+      "isNew": false,
+      "closeup": true,
+      "angle": "85mm facial close-up, true profile camera left"
+    },
+    {
+      "clipId": "H02-S03-C02",
+      "segmentId": "segment-h02-s03-c02-seg02",
+      "speaker": "ADAM",
+      "dialogue": "I am dust—and guilty before Him. Yet the dust is His, and still I belong to God.",
+      "parentCue": "H02V3-D004",
+      "isNew": false,
+      "closeup": true,
+      "angle": "135mm extreme close-up on eyes and mouth, slight high angle"
+    },
+    {
+      "clipId": "H02-S03-C03",
+      "segmentId": "segment-h02-s03-c03-seg02",
+      "speaker": "TORTURER",
+      "dialogue": "Look upon the inheritance of rebellion. Kingdoms fall, names perish, and every proud crown is broken here.",
+      "parentCue": "H02V3-D005",
+      "isNew": false,
+      "closeup": false,
+      "angle": "50mm two-shot, both figures readable"
+    },
+    {
+      "clipId": "H02-S04-C01",
+      "segmentId": "segment-h02-s04-c01-seg02",
+      "speaker": "EVE",
+      "dialogue": "Adam—look at me. Let not his darkness make strangers of us again.",
+      "parentCue": "H02V3-D006",
+      "isNew": false,
+      "closeup": true,
+      "angle": "85mm facial close-up, eight-degree Dutch, three-quarter camera right"
+    },
+    {
+      "clipId": "H02-S04-C01",
+      "segmentId": "segment-h02-s04-c01-seg03",
+      "speaker": "MOSES",
+      "dialogue": "Hold fast, Adam. These chains may bind the hand, but not the promise.",
+      "parentCue": "H02V3-D007",
+      "isNew": false,
+      "closeup": true,
+      "angle": "65mm medium close-up face and shoulders, eye-level front"
+    },
+    {
+      "clipId": "H02-S04-C01",
+      "segmentId": "segment-h02-s04-c01-seg03b",
+      "speaker": "MOSES",
+      "dialogue": "You do not wait alone.",
+      "parentCue": "H02V3-D007",
+      "isNew": true,
+      "closeup": false,
+      "angle": "40mm medium including chains and iron tree"
+    },
+    {
+      "clipId": "H02-S04-C02",
+      "segmentId": "segment-h02-s04-c02-seg01",
+      "speaker": "MOSES",
+      "dialogue": "He claims no innocence, and asks no wage. He waits upon the mercy of the God who judges him.",
+      "parentCue": "H02V3-D008",
+      "isNew": false,
+      "closeup": false,
+      "angle": "24mm wider court coverage while the speaker remains dominant"
+    },
+    {
+      "clipId": "H02-S04-C02",
+      "segmentId": "segment-h02-s04-c02-seg03",
+      "speaker": "TORTURER",
+      "dialogue": "Your Messiah is dead. His blood is cold, and the grave has sealed its mouth upon Him.",
+      "parentCue": "H02V3-D009",
+      "isNew": false,
+      "closeup": false,
+      "angle": "50mm two-shot, both figures readable"
+    },
+    {
+      "clipId": "H02-S04-C03",
+      "segmentId": "segment-h02-s04-c03-seg01",
+      "speaker": "MOSES",
+      "dialogue": "Then why do you tremble? You did not gather the faithful by judgment.",
+      "parentCue": "H02V3-D010",
+      "isNew": false,
+      "closeup": true,
+      "angle": "100mm facial close-up over the listener's shoulder from camera right"
+    },
+    {
+      "clipId": "H02-S04-C03",
+      "segmentId": "segment-h02-s04-c03-seg01b",
+      "speaker": "MOSES",
+      "dialogue": "You seized them because His death frightened you.",
+      "parentCue": "H02V3-D010",
+      "isNew": true,
+      "closeup": false,
+      "angle": "40mm medium including chains and iron tree"
+    },
+    {
+      "clipId": "H02-S04-C03",
+      "segmentId": "segment-h02-s04-c03-seg03",
+      "speaker": "TORTURER",
+      "dialogue": "Then let Him come. Let Him descend into my kingdom. Adam shall be the pledge of His defeat.",
+      "parentCue": "H02V3-D011",
+      "isNew": false,
+      "closeup": true,
+      "angle": "85mm facial close-up, fifteen-degree high looking down"
+    },
+    {
+      "clipId": "H02-S04-C04",
+      "segmentId": "segment-h02-s04-c04-seg02",
+      "speaker": "TORTURER",
+      "dialogue": "You blamed her once, when fear found you in the garden. Will you condemn her again, here before all the dead?",
+      "parentCue": "H02V3-D012",
+      "isNew": false,
+      "closeup": true,
+      "angle": "85mm facial close-up, eye-level three-quarter from camera left"
+    },
+    {
+      "clipId": "H02-S04-C04",
+      "segmentId": "segment-h02-s04-c04-seg03",
+      "speaker": "EVE",
+      "dialogue": "No. I chose the serpent’s lie, and the wound is mine. I will not escape my guilt by choosing your lie now.",
+      "parentCue": "H02V3-D013",
+      "isNew": false,
+      "closeup": true,
+      "angle": "100mm facial close-up, slightly low front-right"
+    },
+    {
+      "clipId": "H02-S04-C05",
+      "segmentId": "segment-h02-s04-c05-seg01",
+      "speaker": "TORTURER",
+      "dialogue": "In the garden, when judgment found you, you set her name between yourself and the face of God.",
+      "parentCue": "H02V3-D014",
+      "isNew": false,
+      "closeup": true,
+      "angle": "85mm facial close-up, true profile camera left"
+    },
+    {
+      "clipId": "H02-S04-C05",
+      "segmentId": "segment-h02-s04-c05-seg02",
+      "speaker": "ADAM",
+      "dialogue": "I named her when I should have confessed. I made of her a shield for my fear.",
+      "parentCue": "H02V3-D015",
+      "isNew": false,
+      "closeup": true,
+      "angle": "135mm extreme close-up on eyes and mouth, slight high angle"
+    },
+    {
+      "clipId": "H02-S04-C05",
+      "segmentId": "segment-h02-s04-c05-seg02b",
+      "speaker": "ADAM",
+      "dialogue": "Never again.",
+      "parentCue": "H02V3-D015",
+      "isNew": true,
+      "closeup": true,
+      "angle": "85mm facial close-up, eight-degree Dutch, three-quarter camera right"
+    },
+    {
+      "clipId": "H02-S05-C01",
+      "segmentId": "segment-h02-s05-c01-seg01",
+      "speaker": "ADAM",
+      "dialogue": "He found us hiding among the trees, clothed only in shame. Yet He covered us with His own hand.",
+      "parentCue": "H02V3-D016",
+      "isNew": false,
+      "closeup": true,
+      "angle": "65mm medium close-up face and shoulders, eye-level front"
+    },
+    {
+      "clipId": "H02-S05-C01",
+      "segmentId": "segment-h02-s05-c01-seg02",
+      "speaker": "ADAM",
+      "dialogue": "Then He promised the woman’s Son would crush the serpent. The wound would be His, and the victory would be God’s.",
+      "parentCue": "H02V3-D017",
+      "isNew": false,
+      "closeup": true,
+      "angle": "100mm facial close-up over the listener's shoulder from camera right"
+    },
+    {
+      "clipId": "H02-S05-C02",
+      "segmentId": "segment-h02-s05-c02-seg01",
+      "speaker": "TORTURER",
+      "dialogue": "Sons beyond counting have crossed these gates: kings, prophets, beggars, all swallowed by the same night.",
+      "parentCue": "H02V3-D018",
+      "isNew": false,
+      "closeup": true,
+      "angle": "85mm facial close-up, fifteen-degree high looking down"
+    },
+    {
+      "clipId": "H02-S05-C02",
+      "segmentId": "segment-h02-s05-c02-seg02",
+      "speaker": "TORTURER",
+      "dialogue": "So where is the Son you were promised? Why does He not answer from beyond the stone?",
+      "parentCue": "H02V3-D019",
+      "isNew": false,
+      "closeup": true,
+      "angle": "85mm facial close-up, eye-level three-quarter from camera left"
+    },
+    {
+      "clipId": "H02-S05-C03",
+      "segmentId": "segment-h02-s05-c03-seg01",
+      "speaker": "DAVID",
+      "dialogue": "You will not abandon my soul to Sheol. Even in the depths, I will wait for You.",
+      "parentCue": "H02V3-D020",
+      "isNew": false,
+      "closeup": true,
+      "angle": "100mm facial close-up, slightly low front-right"
+    },
+    {
+      "clipId": "H02-S05-C03",
+      "segmentId": "segment-h02-s05-c03-seg02",
+      "speaker": "DAVID",
+      "dialogue": "Nor will You let Your Holy One see corruption. The grave shall not possess Him.",
+      "parentCue": "H02V3-D021",
+      "isNew": false,
+      "closeup": true,
+      "angle": "85mm facial close-up, true profile camera left"
+    },
+    {
+      "clipId": "H02-S05-C04",
+      "segmentId": "segment-h02-s05-c04-seg01",
+      "speaker": "JOHN",
+      "dialogue": "Be still.",
+      "parentCue": "H02V3-D022",
+      "isNew": false,
+      "closeup": true,
+      "angle": "135mm extreme close-up on eyes and mouth, slight high angle"
+    },
+    {
+      "clipId": "H02-S05-C05",
+      "segmentId": "segment-h02-s05-c05-seg01",
+      "speaker": "JOHN",
+      "dialogue": "I know that tread. I heard it beside the Jordan, when heaven opened and the waters bore witness.",
+      "parentCue": "H02V3-D023",
+      "isNew": false,
+      "closeup": true,
+      "angle": "85mm facial close-up, eight-degree Dutch, three-quarter camera right"
+    },
+    {
+      "clipId": "H02-S05-C05",
+      "segmentId": "segment-h02-s05-c05-seg02",
+      "speaker": "JOHN",
+      "dialogue": "Death has taken the One whom death cannot hold. The grave has opened its mouth upon its own undoing.",
+      "parentCue": "H02V3-D024",
+      "isNew": false,
+      "closeup": false,
+      "angle": "24mm wider court coverage while the speaker remains dominant"
+    }
+  ]
+}

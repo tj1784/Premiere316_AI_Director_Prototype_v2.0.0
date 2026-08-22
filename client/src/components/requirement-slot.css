@@ -1,0 +1,26 @@
+
+.requirement-slot {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+.requirement-slot header { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.requirement-slot header b { display: block; }
+.requirement-slot header small { color: var(--muted); }
+.requirement-slot-state {
+  border: 1px solid var(--line);
+  background: var(--well);
+  color: var(--text-soft);
+  border-radius: 999px;
+  padding: 3px 8px;
+  min-height: 24px;
+  cursor: pointer;
+}
+.requirement-slot-state.missing, .requirement-slot-state.broken { color: #ffd0d4; border-color: #5a2a30; }
+.requirement-slot-state.planned { color: #f3d9a6; }
+.requirement-slot-state.unapproved { color: #f0c48a; }
+.requirement-slot-state.approved { color: #b7efd0; }
+.requirement-slot-actions { display: flex; flex-wrap: wrap; gap: 6px; }

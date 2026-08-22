@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import {
   canonicalSemanticReferenceRole,
+  generateOptionsForContext,
   LTX25_PREMIERE316_PROFILE,
   premiere316ProfileForWorkspace
 } from "./premiere-api-delegation.mjs";
@@ -225,6 +226,12 @@ export function workspaceForClient(workspace) {
   copy.timeline.audioSegments = (copy.timeline.audioSegments || []).map(cleanSegment);
   normalizeAdjacentFrameOptions(copy);
   applyHarrowingGenLock(copy);
+  if (copy.premiere) {
+    copy.premiere.generateOptions = generateOptionsForContext({
+      projectSlug: copy.premiere.projectSlug,
+      generationMode: copy.premiere.generateOption?.generationMode || copy.premiere.generationMode
+    });
+  }
   copy.stats = {
     durationFrames: timelineEnd(copy.timeline),
     durationSeconds: timelineEnd(copy.timeline) / Math.max(1, Number(copy.settings.frameRate) || 24)

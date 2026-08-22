@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { assetUrl, useStore } from "../store";
 import { activeAssetFile, buildCharacterBundles, readableCharacterText, sourceImportState } from "../character-assets";
 import "./character-assets-workspace.css";
+import RequirementSlot from "./RequirementSlot";
+import { openAssetAction } from "../contextual-agency";
+import { cueLinesForCharacter, locksFromBundle } from "../contextual-agency/agency-actions.js";
 
 async function responseJson(response: Response, operation: string) {
   const raw = await response.text();
@@ -35,7 +38,7 @@ function AssetThumb({ project, asset, onInspect }: { project: any; asset: any; o
   const variant = readableCharacterText(asset.variant);
   return (
     <article className="character-bundle-asset">
-      <button type="button" className="character-bundle-asset-preview" onClick={onInspect} aria-label={`Inspect ${name}, ${variant}`}>
+      <button type="button" className="character-bundle-asset-preview" onClick={onInspect} aria-label={`Open ${name}, ${variant} in the asset drawer`}>
         {file && /\.(png|jpe?g|webp|gif)$/i.test(file)
           ? <img src={assetUrl(project.slug, file)} alt="" loading="lazy" />
           : <span aria-hidden="true">◇</span>}
@@ -46,15 +49,69 @@ function AssetThumb({ project, asset, onInspect }: { project: any; asset: any; o
   );
 }
 
+function biblePrefill(bundle: any, category: "character" | "wardrobe" | "voice", storyboard?: any) {
+  const name = readableCharacterText(bundle.name);
+  const sheetPrompt = String(bundle.primaryAsset?.prompt || bundle.characterAssets?.[0]?.prompt || "").trim();
+  const continuity = locksFromBundle(bundle);
+  const cueLines = cueLinesForCharacter(name, storyboard);
+  if (category === "wardrobe") {
+    return { name, prompt: `Wardrobe continuity for ${name}. Keep identity locked to the approved character sheet. ${sheetPrompt}`.trim(), continuity, continuityLocks: continuity };
+  }
+  if (category === "voice") {
+    return { name, prompt: `Stable cinematic voice identity for ${name}.`, sampleText: cueLines[0] || "", cueLines, continuity, continuityLocks: continuity };
+  }
+  return { name, prompt: sheetPrompt || `Production identity sheet for ${name}.`, continuity, continuityLocks: continuity };
+}
+
+function openMissingSlot(bundle: any, storyboard?: any) {
+  const name = readableCharacterText(bundle.name);
+  const entity = { type: "character" as const, id: bundle.primaryAsset.id, label: name };
+  if (!bundle.wardrobeAssets.length) {
+    openAssetAction({
+      sourceRoute: "/assets/characters",
+      sourceEntity: entity,
+      requirement: { relationship: "character.wardrobe", category: "wardrobe", expectedMediaType: "image" },
+      initialAction: "generate",
+      slotState: "missing",
+      returnFocusId: `coverage-${bundle.key}`,
+      prefill: biblePrefill(bundle, "wardrobe", storyboard)
+    });
+    return;
+  }
+  if (!bundle.voiceAssets.length) {
+    openAssetAction({
+      sourceRoute: "/assets/characters",
+      sourceEntity: entity,
+      requirement: { relationship: "character.voice", category: "voice", expectedMediaType: "audio" },
+      initialAction: "generate",
+      slotState: "missing",
+      returnFocusId: `coverage-${bundle.key}`,
+      prefill: biblePrefill(bundle, "voice", storyboard)
+    });
+    return;
+  }
+  openAssetAction({
+    sourceRoute: "/assets/characters",
+    sourceEntity: entity,
+    requirement: { relationship: "character.coverage", category: "character" },
+    initialAction: "generate",
+    slotState: "missing",
+    returnFocusId: `coverage-${bundle.key}`,
+    prefill: biblePrefill(bundle, "character", storyboard)
+  });
+}
+
 export default function CharacterAssetsWorkspace({ onOpenLibrary }: { onOpenLibrary: () => void }) {
   const store = useStore();
   const project = store.project!;
+  const storyboard = store.storyboard;
   const [sources, setSources] = useState<any[]>([]);
   const [sourceRoot, setSourceRoot] = useState("");
   const [unsupportedProjects, setUnsupportedProjects] = useState<any[]>([]);
   const [loadingSources, setLoadingSources] = useState(true);
   const [sourceError, setSourceError] = useState("");
   const [query, setQuery] = useState("");
+  const [incompleteOnly, setIncompleteOnly] = useState(false);
   const [importingId, setImportingId] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -85,15 +142,40 @@ export default function CharacterAssetsWorkspace({ onOpenLibrary }: { onOpenLibr
     ...bundle.characterAssets.map((asset: any) => `${asset.name} ${asset.variant} ${asset.id}`),
     ...bundle.wardrobeAssets.map((asset: any) => `${asset.name} ${asset.variant} ${asset.id}`),
     ...bundle.voiceAssets.map((asset: any) => `${asset.name} ${asset.variant} ${asset.id}`)
-  ].join(" ").toLowerCase().includes(query.trim().toLowerCase()));
+  ].join(" ").toLowerCase().includes(query.trim().toLowerCase()) && (!incompleteOnly || !bundle.complete));
   const linkedSourceIds = new Set(bundles.flatMap((bundle: any) => bundle.recordings.map((source: any) => source.id)));
   const unmatched = sources.filter((source) => !linkedSourceIds.has(source.id));
   const importedSourceCount = sources.filter((source) => sourceImportState(source).alreadyImported).length;
 
-  const inspect = (asset: any) => {
-    store.setSelectedAsset(asset.id);
-    onOpenLibrary();
+  const openFilledSlot = (bundle: any, relationship: string, category: "character" | "wardrobe" | "voice", asset: any, action?: "edit" | "replace" | "review" | "unlink" | "generate" | "create") => {
+    const file = activeAssetFile(asset);
+    openAssetAction({
+      sourceRoute: "/assets/characters",
+      sourceEntity: { type: "character", id: bundle.primaryAsset.id, label: readableCharacterText(bundle.name) },
+      requirement: {
+        relationship,
+        category,
+        assetId: asset.id,
+        assetVersion: asset.activeVersion,
+        expectedMediaType: category === "voice" ? "audio" : "image"
+      },
+      initialAction: action || (file ? (asset.approvalCurrent ? "edit" : "review") : "upload"),
+      slotState: file ? (asset.approvalCurrent ? "approved" : "unapproved") : "planned",
+      returnFocusId: asset.id,
+      prefill: biblePrefill(bundle, category, storyboard)
+    });
   };
+
+  const filledActions = (bundle: any, relationship: string, category: "character" | "wardrobe" | "voice", asset: any) => (
+    <div className="character-bundle-asset-actions">
+      {category === "voice" ? <button type="button" className="button secondary" onClick={() => openFilledSlot(bundle, relationship, category, asset, "generate")}>Compare takes</button> : null}
+      {category === "voice" ? <button type="button" className="button secondary" onClick={() => openFilledSlot(bundle, relationship, category, asset, "generate")}>Create voice</button> : null}
+      <button type="button" className="button secondary" onClick={() => openFilledSlot(bundle, relationship, category, asset, "edit")}>Edit</button>
+      <button type="button" className="button secondary" onClick={() => openFilledSlot(bundle, relationship, category, asset, "replace")}>Replace</button>
+      <button type="button" className="button secondary" onClick={() => openFilledSlot(bundle, relationship, category, asset, "review")}>{category === "voice" ? "Approve" : "Review"}</button>
+      <button type="button" className="button secondary" onClick={() => openFilledSlot(bundle, relationship, category, asset, "unlink")}>Unlink</button>
+    </div>
+  );
 
   const importRecording = async (bundle: any, source: any) => {
     if (importingId) return;
@@ -121,7 +203,17 @@ export default function CharacterAssetsWorkspace({ onOpenLibrary }: { onOpenLibr
       if (json.alreadyImported) {
         setNotice(`${sourceName} is already the exact source for ${readableCharacterText(json.asset?.name || importState.existingAssetName || bundle.name)} v${json.version?.v || importState.existingVersion || "current"}; no duplicate version was created.`);
       } else {
-        setNotice(`Imported ${sourceName} as ${readableCharacterText(json.asset?.name || bundle.name)} voice v${json.version?.v || "new"}. Review and approve it in the library.`);
+        setNotice(`Imported ${sourceName} as ${readableCharacterText(json.asset?.name || bundle.name)} voice v${json.version?.v || "new"}.`);
+        if (json.asset?.id) {
+          openAssetAction({
+            sourceRoute: "/assets/characters",
+            sourceEntity: { type: "character", id: bundle.primaryAsset.id, label: readableCharacterText(bundle.name) },
+            requirement: { relationship: "character.voice", category: "voice", assetId: json.asset.id, assetVersion: json.version?.v, expectedMediaType: "audio" },
+            initialAction: "review",
+            slotState: "unapproved",
+            returnFocusId: bundle.primaryAsset.id
+          });
+        }
       }
     } catch (error: any) {
       setSourceError(String(error.message || error));
@@ -136,8 +228,13 @@ export default function CharacterAssetsWorkspace({ onOpenLibrary }: { onOpenLibr
         <div><span className="workspace-eyebrow">IDENTITY · WARDROBE · VOICE</span><h1>Characters</h1><p>One production bible per character, assembled from exact Asset Library versions.</p></div>
         <div className="workspace-command-actions">
           <label className="character-search"><span>Search characters</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Adam, Eve, Jesus…" /></label>
+          <button type="button" className={`button ${incompleteOnly ? "primary" : "secondary"}`} aria-pressed={incompleteOnly} onClick={() => setIncompleteOnly((current) => !current)}>Incomplete only</button>
+          <button type="button" className="button secondary" onClick={() => {
+            const first = bundles.find((bundle: any) => !bundle.complete);
+            if (!first) return;
+            openMissingSlot(first, store.storyboard);
+          }}>Generate all missing characters</button>
           <button type="button" className="button secondary" onClick={() => void loadSources()} disabled={loadingSources}>{loadingSources ? "Scanning…" : "Rescan Audacity"}</button>
-          <button type="button" className="button primary" onClick={onOpenLibrary}>Open Asset Library</button>
         </div>
       </header>
 
@@ -158,19 +255,43 @@ export default function CharacterAssetsWorkspace({ onOpenLibrary }: { onOpenLibr
                   {primaryFile ? <img src={assetUrl(project.slug, primaryFile)} alt="" loading="lazy" /> : <span aria-hidden="true">◇</span>}
                 </div>
                 <div><small>CHARACTER BIBLE</small><h2>{readableCharacterText(bundle.name)}</h2><p>{bundle.characterAssets.length} sheet{bundle.characterAssets.length === 1 ? "" : "s"} · {bundle.wardrobeAssets.length} wardrobe · {bundle.voiceAssets.length} voice asset{bundle.voiceAssets.length === 1 ? "" : "s"}</p></div>
-                <em className={bundle.complete ? "complete" : "incomplete"}>{bundle.complete ? "Complete" : "Needs coverage"}</em>
+                {bundle.complete
+                  ? <em className="complete">Complete</em>
+                  : <button type="button" className="incomplete" id={`coverage-${bundle.key}`} onClick={() => openMissingSlot(bundle, store.storyboard)}>Needs coverage · Generate missing</button>}
               </header>
 
               <section className="character-bundle-section">
                 <div className="character-bundle-section-title"><b>Character sheets</b><span>{bundle.characterAssets.length}</span></div>
-                <div className="character-bundle-assets">{bundle.characterAssets.map((asset: any) => <AssetThumb key={asset.id} project={project} asset={asset} onInspect={() => inspect(asset)} />)}</div>
+                {bundle.characterAssets.length
+                  ? <div className="character-bundle-assets">{bundle.characterAssets.map((asset: any) => <div key={asset.id}><AssetThumb project={project} asset={asset} onInspect={() => openFilledSlot(bundle, "character.primaryAppearance", "character", asset)} />{filledActions(bundle, "character.primaryAppearance", "character", asset)}</div>)}</div>
+                  : <RequirementSlot
+                      state="missing"
+                      title="Character sheet"
+                      summary="No identity sheet is assigned."
+                      intent={{
+                        sourceRoute: "/assets/characters",
+                        sourceEntity: { type: "character", id: bundle.primaryAsset.id, label: readableCharacterText(bundle.name) },
+                        requirement: { relationship: "character.primaryAppearance", category: "character", expectedMediaType: "image" },
+                        prefill: biblePrefill(bundle, "character", storyboard)
+                      }}
+                    />}
               </section>
 
               <section className="character-bundle-section">
                 <div className="character-bundle-section-title"><b>Wardrobe</b><span>{bundle.wardrobeAssets.length}</span></div>
                 {bundle.wardrobeAssets.length
-                  ? <div className="character-bundle-assets">{bundle.wardrobeAssets.map((asset: any) => <AssetThumb key={asset.id} project={project} asset={asset} onInspect={() => inspect(asset)} />)}</div>
-                  : <p className="character-bundle-empty">No wardrobe asset is assigned.</p>}
+                  ? <div className="character-bundle-assets">{bundle.wardrobeAssets.map((asset: any) => <div key={asset.id}><AssetThumb project={project} asset={asset} onInspect={() => openFilledSlot(bundle, "character.wardrobe", "wardrobe", asset)} />{filledActions(bundle, "character.wardrobe", "wardrobe", asset)}</div>)}</div>
+                  : <RequirementSlot
+                      state="missing"
+                      title="Wardrobe"
+                      summary="No wardrobe asset is assigned."
+                      intent={{
+                        sourceRoute: "/assets/characters",
+                        sourceEntity: { type: "character", id: bundle.primaryAsset.id, label: readableCharacterText(bundle.name) },
+                        requirement: { relationship: "character.wardrobe", category: "wardrobe", expectedMediaType: "image" },
+                        prefill: biblePrefill(bundle, "wardrobe", storyboard)
+                      }}
+                    />}
               </section>
 
               <section className="character-bundle-section">
@@ -178,8 +299,19 @@ export default function CharacterAssetsWorkspace({ onOpenLibrary }: { onOpenLibr
                 {bundle.voiceAssets.length ? bundle.voiceAssets.map((asset: any) => {
                   const file = activeAssetFile(asset);
                   const assetName = readableCharacterText(asset.name);
-                  return <div className="character-library-voice" key={asset.id}><button type="button" onClick={() => inspect(asset)}>{assetName}<small>{readableCharacterText(asset.variant)} · {file ? `v${asset.activeVersion}` : "planned"}</small></button>{file ? <audio src={assetUrl(project.slug, file)} controls preload="none" aria-label={`Preview ${assetName} voice v${asset.activeVersion}`} /> : null}</div>;
-                }) : <p className="character-bundle-empty">No voice asset exists yet. Importing a matched take will create one.</p>}
+                  return <div className="character-library-voice" key={asset.id}><button type="button" id={asset.id} onClick={() => openFilledSlot(bundle, "character.voice", "voice", asset)}>{assetName}<small>{readableCharacterText(asset.variant)} · {file ? `v${asset.activeVersion}` : "planned"}</small></button>{file ? <audio src={assetUrl(project.slug, file)} controls preload="none" aria-label={`Preview ${assetName} voice v${asset.activeVersion}`} /> : null}{filledActions(bundle, "character.voice", "voice", asset)}</div>;
+                }) : <RequirementSlot
+                      state="missing"
+                      title="Voice"
+                      summary="Create voice, upload, generate, or assign without leaving Characters."
+                      intent={{
+                        sourceRoute: "/assets/characters",
+                        sourceEntity: { type: "character", id: bundle.primaryAsset.id, label: readableCharacterText(bundle.name) },
+                        requirement: { relationship: "character.voice", category: "voice", expectedMediaType: "audio" },
+                        initialAction: "generate",
+                        prefill: biblePrefill(bundle, "voice", storyboard)
+                      }}
+                    />}
               </section>
 
               <section className="character-bundle-section audacity-takes">
@@ -206,8 +338,13 @@ export default function CharacterAssetsWorkspace({ onOpenLibrary }: { onOpenLibr
         })}
       </section>
 
-      {!visible.length ? <div className="workspace-empty"><p>{query.trim() ? `No character matches “${query}”.` : "No character identity assets exist in this project yet."}</p></div> : null}
-      {unmatched.length ? <details className="character-unmatched premium-panel"><summary>{unmatched.length} unassigned Audacity recording{unmatched.length === 1 ? "" : "s"}</summary><p>These names do not uniquely match a project character, so Premiere316 has not linked or imported them.</p><ul>{unmatched.map((source) => { const sourceName = readableCharacterText(source.fileName); return <li key={source.id}><span>{sourceName}</span><audio src={source.previewUrl} controls preload="none" aria-label={`Preview unassigned Audacity recording ${sourceName}`} /></li>; })}</ul></details> : null}
+      {!visible.length ? <div className="workspace-empty"><p>{query.trim() ? `No character matches “${query}”.` : "No character identity assets exist in this project yet."}</p>{query.trim() ? null : <div className="requirement-slot-actions">
+            <button type="button" id="create-planned-character" className="button primary" onClick={() => openAssetAction({ sourceRoute: "/assets/characters", sourceEntity: { type: "character", id: "new-character", label: "New character" }, requirement: { relationship: "character.primaryAppearance", category: "character", expectedMediaType: "image" }, initialAction: "create", slotState: "missing", returnFocusId: "create-planned-character" })}>Create planned character</button>
+            <button type="button" id="upload-identity-sheet" className="button secondary" onClick={() => openAssetAction({ sourceRoute: "/assets/characters", sourceEntity: { type: "character", id: "new-character", label: "New character" }, requirement: { relationship: "character.primaryAppearance", category: "character", expectedMediaType: "image" }, initialAction: "upload", slotState: "missing", returnFocusId: "upload-identity-sheet" })}>Upload identity sheet</button>
+            <button type="button" id="import-existing-character" className="button secondary" onClick={() => openAssetAction({ sourceRoute: "/assets/characters", sourceEntity: { type: "character", id: "new-character", label: "New character" }, requirement: { relationship: "character.primaryAppearance", category: "character", expectedMediaType: "image" }, initialAction: "choose", slotState: "missing", returnFocusId: "import-existing-character" })}>Import existing</button>
+            <button type="button" className="button secondary" onClick={() => void store.buildAssets()}>Build characters from approved screenplay</button>
+          </div>}</div> : null}
+      {unmatched.length ? <details className="character-unmatched premium-panel"><summary>{unmatched.length} unassigned Audacity recording{unmatched.length === 1 ? "" : "s"}</summary><p>These names do not uniquely match a project character. Assign one here — matching is not the only path.</p><ul>{unmatched.map((source) => { const sourceName = readableCharacterText(source.fileName); const assignId = `assign-${source.id}`; return <li key={source.id}><span>{sourceName}</span><audio src={source.previewUrl} controls preload="none" aria-label={`Preview unassigned Audacity recording ${sourceName}`} /><button type="button" id={assignId} className="button secondary" onClick={() => openAssetAction({ sourceRoute: "/assets/characters", sourceEntity: { type: "character", id: source.id, label: sourceName }, requirement: { relationship: "character.voice", category: "voice", expectedMediaType: "audio" }, initialAction: "assign", slotState: "missing", returnFocusId: assignId })}>Assign to a character</button></li>; })}</ul></details> : null}
     </main>
   );
 }

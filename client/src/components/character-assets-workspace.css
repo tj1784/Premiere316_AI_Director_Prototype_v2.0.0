@@ -61,3 +61,5 @@
   .character-bundle-card > header { grid-template-columns: 70px 1fr; }
   .character-bundle-card > header > em { grid-column: 1 / -1; justify-self: start; }
 }
+
+.character-bundle-asset-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }

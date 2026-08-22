@@ -287,18 +287,23 @@ Rules:
 
 export async function screenplayModelHealth(timeoutMs = 1800) {
   try {
-    const response = await fetch(`${LM_STUDIO_URL}/models`, { signal: AbortSignal.timeout(timeoutMs) });
-    if (!response.ok) return { online: false, modelAvailable: false, model: SCREENPLAY_MODEL, url: LM_STUDIO_URL };
+    // LM Studio's OpenAI-compatible /v1/models endpoint can include every
+    // installed model when JIT loading is enabled. Use the native endpoint so
+    // "modelAvailable" means the pinned model is actually loaded and ready.
+    const modelsUrl = new URL("/api/v0/models", LM_STUDIO_URL);
+    const response = await fetch(modelsUrl, { signal: AbortSignal.timeout(timeoutMs) });
+    if (!response.ok) return { online: false, modelAvailable: false, modelInstalled: false, model: SCREENPLAY_MODEL, url: LM_STUDIO_URL };
     const json = await response.json();
-    const ids = (json.data || []).map((item) => item.id);
+    const required = (json.data || []).find((item) => item.id === SCREENPLAY_MODEL) || null;
     return {
       online: true,
-      modelAvailable: ids.includes(SCREENPLAY_MODEL),
+      modelAvailable: required?.state === "loaded",
+      modelInstalled: Boolean(required),
       model: SCREENPLAY_MODEL,
       url: LM_STUDIO_URL
     };
   } catch {
-    return { online: false, modelAvailable: false, model: SCREENPLAY_MODEL, url: LM_STUDIO_URL };
+    return { online: false, modelAvailable: false, modelInstalled: false, model: SCREENPLAY_MODEL, url: LM_STUDIO_URL };
   }
 }
 

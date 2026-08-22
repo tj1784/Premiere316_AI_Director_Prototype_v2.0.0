@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { dialogueCueComplete, dialogueCueProgress, dialogueCuesFromSound, dialogueCueStatus } from "../dialogue-cues";
 import { useStore } from "../store";
+import { actionsForSlotState, openAssetAction } from "../contextual-agency";
 import SoundWorkflowWorkspace, {
   SoundWorkflowKind,
   SoundWorkflowSnapshot,
@@ -171,6 +172,19 @@ function voiceProvider(voice: any): TtsProvider {
 
 function voiceReferenceTranscript(voice: any) {
   return String(voice?.referenceTranscript || voice?.refText || voice?.transcript || "").trim();
+}
+
+
+function estimateSpeechSeconds(text) {
+  const words = String(text || "").trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(2, Math.round(words * 0.42 * 10) / 10);
+}
+
+function openSoundSlot(intent) {
+  openAssetAction({
+    sourceRoute: "/sound",
+    ...intent
+  });
 }
 
 function isWavReference(file: File | null) {
@@ -614,6 +628,58 @@ export default function CreateSoundWorkspace() {
     }
   }
 
+
+  async function generateCueNow(cue) {
+    setFormError("");
+    setNotice("");
+    const qwen = healthForProvider("qwenTts");
+    if (qwen?.ready !== true) {
+      setFormError(qwen?.reason || "Qwen TTS is not ready. Generate this cue now will not fall back to IndexTTS or Voice Design.");
+      return;
+    }
+    const speaker = String(cue?.speaker || "VO").trim() || "VO";
+    const cueId = String(cue?.cueId || "").trim();
+    const body = new FormData();
+    body.set("text", String(cue?.exactDialogue || "").trim());
+    body.set("speaker", speaker);
+    body.set("style", String(cue?.performanceDirection || "").trim());
+    body.set("name", `${cueId} · ${speaker}`);
+    body.set("provider", "qwenTts");
+    body.set("cueId", cueId);
+    body.set("segmentId", String(cue?.segmentId || "").trim());
+    body.set("attachToCue", "1");
+    body.set("language", draft.language || "EN");
+    body.set("seed", String(Math.trunc(draft.seed)));
+    if (draft.provider === "qwenTts" && draft.voiceMode === "saved" && draft.voiceId) {
+      body.set("voiceId", draft.voiceId);
+    }
+    setSubmitting(true);
+    try {
+      const response = await fetch(TTS_PROVIDERS.qwenTts.generationPath(slug), { method: "POST", body });
+      const json = await responseJson(response);
+      if (json.job) setLastJob(json.job);
+      setSnapshot((current) => {
+        const nextSound = { ...(current.sound || {}) };
+        if (json.voice) {
+          const existingVoices = collection(nextSound.voices).filter((voice) => voiceId(voice) !== voiceId(json.voice));
+          nextSound.voices = [json.voice, ...existingVoices];
+        }
+        if (json.generation) {
+          const existingGenerations = collection(nextSound.generations).filter((item) => generationId(item) !== generationId(json.generation));
+          nextSound.generations = [json.generation, ...existingGenerations];
+        }
+        return { ...current, sound: nextSound };
+      });
+      setNotice(`Queued QwenTTS for ${cueId}. Take will pin to this cue.`);
+      await store.refreshQueue();
+      await refreshSound(true);
+    } catch (error: any) {
+      setFormError(String(error.message || error));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   function generationStatus(generation: any) {
     const jobId = generationJobId(generation);
     const job = ttsJobs.find((candidate: any) => String(candidate.id || "") === jobId);
@@ -760,7 +826,28 @@ export default function CreateSoundWorkspace() {
                 <label>Voice name
                   <input value={draft.name} onChange={(event) => patchDraft("name", event.target.value)} placeholder="Father — Low Voice" />
                 </label>
-                <label className={`create-sound-upload ${referenceDurationValid ? "valid" : formError && referenceFile ? "invalid" : ""}`}>
+                <label
+                  className={`create-sound-upload create-sound-drop-target ${referenceDurationValid ? "valid" : formError && referenceFile ? "invalid" : ""}`}
+                  data-testid="create-sound-reference-drop"
+                  onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    const file = event.dataTransfer.files?.[0] || null;
+                    if (!file) return;
+                    if (draft.provider === "qwenTts" && !isWavReference(file)) {
+                      setFormError("QwenTTS accepts WAV reference audio only. Convert or choose a WAV file.");
+                      return;
+                    }
+                    void selectReference(file);
+                    openSoundSlot({
+                      sourceEntity: { type: "timeline-item", id: draft.speaker || "voice-source", label: draft.name || "Voice source" },
+                      requirement: { relationship: "cue.referenceAudio", category: "voice", expectedMediaType: "audio" },
+                      initialAction: "upload",
+                      slotState: "missing",
+                      returnFocusId: "create-sound-reference-drop"
+                    });
+                  }}
+                >
                   <input
                     key={draft.provider}
                     type="file"
@@ -772,8 +859,8 @@ export default function CreateSoundWorkspace() {
                     }}
                   />
                   <span>↥</span>
-                  <b>{referenceFile?.name || "Choose reference audio"}</b>
-                  <small>{referenceChecking ? "Inspecting recording…" : referenceDuration !== null ? `${referenceDuration.toFixed(1)} seconds · ${referenceDurationValid ? "ready" : "outside 8–15 sec"}` : draft.provider === "qwenTts" ? "WAV required · exactly 8–15 seconds" : "WAV preferred · exactly 8–15 seconds"}</small>
+                  <b>{referenceFile?.name || "Drop or choose reference audio"}</b>
+                  <small>{referenceChecking ? "Inspecting recording…" : referenceDuration !== null ? `${referenceDuration.toFixed(1)} seconds · ${referenceDurationValid ? "ready" : "outside 8–15 sec"}` : draft.provider === "qwenTts" ? "WAV required · exactly 8–15 seconds · drop a WAV here" : "WAV preferred · exactly 8–15 seconds · drop audio here"}</small>
                 </label>
                 {draft.provider === "qwenTts" ? (
                   <label className="create-sound-reference-transcript">Exact reference transcript
@@ -797,8 +884,20 @@ export default function CreateSoundWorkspace() {
 
             <div className={`create-sound-provider-card ${providerReady ? "ready" : "offline"}`}>
               <span>{providerReady ? "✓" : "!"}</span>
-              <p><b>{providerReady ? `${providerDefinition.shortLabel} standalone engine ready` : `${providerDefinition.shortLabel} unavailable`}</b><small>{providerReady ? "One continuous generation will run locally without ComfyUI." : provider?.reason || `Install or start ${providerDefinition.label} before generating.`}</small></p>
+              <p><b>{providerReady ? `${providerDefinition.shortLabel} standalone engine ready` : `${providerLabel} is offline`}</b><small>{providerReady ? "One continuous generation will run locally without ComfyUI." : `${provider?.reason || `Start ${providerDefinition.label} before generating.`} Upload, assign existing, edit, and review stay available. Qwen remains the default.`}</small></p>
             </div>
+            {!providerReady ? (
+              <div className="create-sound-offline-recovery" role="status" data-testid="create-sound-offline-recovery">
+                <p><b>Generate is paused</b><small>The unavailable component is {providerLabel}. IndexTTS is not substituted.</small></p>
+                <div>
+                  <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "timeline-item", id: draft.speaker || "voice", label: draft.speaker || "Voice" }, requirement: { relationship: "cue.dialogueAudio", category: "voice", expectedMediaType: "audio" }, initialAction: "upload", slotState: "missing" })}>Upload</button>
+                  <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "timeline-item", id: draft.speaker || "voice", label: draft.speaker || "Voice" }, requirement: { relationship: "cue.dialogueAudio", category: "voice", expectedMediaType: "audio" }, initialAction: "choose", slotState: "missing" })}>Assign existing</button>
+                  <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "timeline-item", id: draft.speaker || "voice", label: draft.speaker || "Voice" }, requirement: { relationship: "cue.dialogueAudio", category: "voice", expectedMediaType: "audio" }, initialAction: "edit" })}>Edit</button>
+                  <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "timeline-item", id: draft.speaker || "voice", label: draft.speaker || "Voice" }, requirement: { relationship: "cue.dialogueAudio", category: "voice", expectedMediaType: "audio" }, initialAction: "review" })}>Review</button>
+                  <button type="button" className="button secondary" onClick={() => void store.refreshHealth?.()}>Reconnect {providerDefinition.shortLabel}</button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </section>
 
@@ -808,7 +907,7 @@ export default function CreateSoundWorkspace() {
             <div className="create-sound-form-scroll">
               <label className="create-sound-dialogue-label">Dialogue or narration
                 <textarea rows={12} value={draft.text} onChange={(event) => patchDraft("text", event.target.value)} placeholder="Enter the exact words to speak…" />
-                <small>{draft.text.trim().length.toLocaleString()} characters</small>
+                <small>{draft.text.trim().length.toLocaleString()} characters · ~{estimateSpeechSeconds(draft.text)}s spoken (estimate, not guaranteed)</small>
               </label>
               <label>{draft.provider === "qwenTts" ? "Editorial performance note" : "Performance direction"}
                 <textarea
@@ -844,7 +943,7 @@ export default function CreateSoundWorkspace() {
               {notice ? <div className="create-sound-message success" role="status">{notice}</div> : null}
             </div>
             <footer>
-              <div><b>{draft.voiceMode === "saved" ? voiceName(selectedVoice) : draft.name || "New clone"}</b><small>{draft.language} · seed {draft.seed} · {draft.provider === "qwenTts" ? "reference prosody" : `${draft.durationFactor.toFixed(2)}× duration`}</small></div>
+              <div><b>{draft.voiceMode === "saved" ? voiceName(selectedVoice) : draft.name || "New clone"}</b><small>{draft.language} · seed {draft.seed} · {draft.provider === "qwenTts" ? "reference prosody" : `${draft.durationFactor.toFixed(2)}× duration`} · ~{estimateSpeechSeconds(draft.text)}s estimate</small></div>
               <button className="button primary create-sound-generate" type="submit" disabled={!canGenerate}>{submitting ? "Queueing…" : activeJobs.length ? "Queue another full take" : "Generate one take"}</button>
             </footer>
           </form>
@@ -864,7 +963,16 @@ export default function CreateSoundWorkspace() {
                   const progress = dialogueCueProgress(cue);
                   const target = Number(cue.targetVoiceDurationSec) > 0 ? `${Number(cue.targetVoiceDurationSec).toFixed(1)}s voice` : "timing planned";
                   return <article key={cue.cueId} className={`create-sound-dialogue-cue ${status}`} data-testid={`create-sound-dialogue-cue-${cue.cueId}`}>
-                    <header><b>{cue.cueId}</b><code>{cue.segmentId}</code><span>{cue.speaker}</span><em>{status}</em></header>
+                    <header><b>{cue.cueId}</b><code>{cue.segmentId}</code><span>{cue.speaker}</span><em>{status}</em>
+                      <button type="button" id={`cue-${cue.cueId}`} className="button secondary" data-testid="snd-002-generate-cue" disabled={submitting} onClick={() => void generateCueNow(cue)}>Generate this cue now</button>
+                      <button type="button" id={`cue-link-${cue.cueId}`} className="button secondary" data-testid={`create-sound-cue-link-${cue.cueId}`} onClick={() => openSoundSlot({
+                        sourceEntity: { type: "timeline-item", id: String(cue.segmentId || cue.cueId), label: `${cue.cueId} · ${cue.speaker}` },
+                        requirement: { relationship: "cue.dialogueAudio", category: "dialogue", expectedMediaType: "audio" },
+                        initialAction: status === "complete" ? "review" : "generate",
+                        slotState: status === "complete" ? "unapproved" : "missing",
+                        returnFocusId: `cue-link-${cue.cueId}`
+                      })}>Open cue</button>
+                    </header>
                     <blockquote>{cue.exactDialogue}</blockquote>
                     <p>{cue.performanceDirection || "Use the authoritative cue-specific performance direction."}</p>
                     <div className="create-sound-dialogue-cue-progress" aria-label={`${cue.cueId} ${Math.round(progress * 100)} percent complete`}><i style={{ width: `${Math.round(progress * 100)}%` }} /><small>{target} · {Math.round(progress * 100)}%</small></div>
@@ -891,9 +999,20 @@ export default function CreateSoundWorkspace() {
                     <header><span>{String(generation?.speaker || generation?.name || "VO").slice(0, 2).toUpperCase()}</span><p><b>{generation?.name || generation?.speaker || "Voice take"}</b><small>{formatDate(generation?.createdAt)} · {formatDuration(generation?.durationSec || generation?.duration)}</small></p><em className={status}>{finished ? "ready" : status}</em></header>
                     {generation?.text ? <blockquote>{generation.text}</blockquote> : null}
                     {mediaUrl ? <audio controls preload="metadata" src={mediaUrl} /> : <div className="create-sound-rendering"><i /><span>{status === "error" ? generation?.error || "Generation failed" : "Waiting for rendered audio…"}</span></div>}
+                    {finished ? (
+                      <nav className="snd-take-actions" aria-label={`${generation?.name || "Voice take"} next actions`} data-testid="snd-take-actions">
+                        <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "character", id: String(generation?.characterId || generation?.speaker || generationId(generation)), label: String(generation?.speaker || generation?.name || "Character") }, requirement: { relationship: "character.voice", category: "voice", expectedMediaType: "audio", assetId: generation?.assetId }, initialAction: "attach", slotState: "unapproved", returnFocusId: `snd-take-${generationId(generation)}-character` })}>Add to Character Bible</button>
+                        <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "segment", id: String(generation?.segmentId || generationId(generation)), label: String(generation?.name || "Storyboard segment") }, requirement: { relationship: "segment.dialogueAudio", category: "dialogue", expectedMediaType: "audio", assetId: generation?.assetId }, initialAction: "attach", returnFocusId: `snd-take-${generationId(generation)}-storyboard` })}>Attach to Storyboard segment</button>
+                        <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "segment", id: String(generation?.segmentId || generationId(generation)), label: String(generation?.name || "LTX cue") }, requirement: { relationship: "segment.dialogueAudio", category: "dialogue", expectedMediaType: "audio", assetId: generation?.assetId }, initialAction: "attach", returnFocusId: `snd-take-${generationId(generation)}-ltx` })}>Attach to LTX dialogue cue</button>
+                        <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "timeline-item", id: "A1", label: "A1 at playhead" }, requirement: { relationship: "sequence.audioAtPlayhead", category: "dialogue", expectedMediaType: "audio", assetId: generation?.assetId }, initialAction: "attach", returnFocusId: `snd-take-${generationId(generation)}-a1` })}>Place on A1</button>
+                        <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "timeline-item", id: "M1", label: "M1 at playhead" }, requirement: { relationship: "sequence.audioAtPlayhead", category: "music", expectedMediaType: "audio", assetId: generation?.assetId }, initialAction: "attach", returnFocusId: `snd-take-${generationId(generation)}-m1` })}>Place on M1</button>
+                        <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "character", id: String(generation?.characterId || generation?.speaker || generationId(generation)), label: String(generation?.speaker || generation?.name || "Character") }, requirement: { relationship: "character.voice", category: "voice", expectedMediaType: "audio", assetId: generation?.assetId }, initialAction: "attach", slotState: "unapproved", returnFocusId: `snd-take-${generationId(generation)}-register` })}>Register in Character Bible</button>
+                        <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "timeline-item", id: String(generation?.assetId || generationId(generation)), label: String(generation?.name || "Voice take") }, requirement: { relationship: "library.asset", category: "voice", expectedMediaType: "audio", assetId: generation?.assetId }, initialAction: "review", slotState: "unapproved", returnFocusId: `snd-take-${generationId(generation)}-review` })}>Review and approve</button>
+                      </nav>
+                    ) : null}
                   </article>
                 );
-              }) : <div className="create-sound-empty"><span>◖◗</span><h3>No takes yet</h3><p>Generated WAV files will appear here and remain available to Premiere316.</p></div>}
+              }) : <div className="create-sound-empty" data-testid="nav-006-empty"><span aria-hidden="true">o</span><h3>No takes yet</h3><p>Generated WAV files will appear here and remain available to Premiere316.</p><nav className="nav-006-empty-actions" aria-label="Empty sound slot">{actionsForSlotState("missing").map((action) => <button key={action} type="button" className="button secondary" data-testid={`nav-006-${action}`} onClick={() => openSoundSlot({ sourceEntity: { type: "timeline-item", id: "sound-empty", label: "Create Sound" }, requirement: { relationship: "cue.dialogueAudio", category: "dialogue", expectedMediaType: "audio" }, initialAction: action, slotState: "missing", returnFocusId: `nav-006-${action}` })}>{action[0].toUpperCase() + action.slice(1)}</button>)}</nav></div>}
             </div>
           </div>
         </section>
@@ -908,6 +1027,12 @@ export default function CreateSoundWorkspace() {
         aria-labelledby={`create-sound-tab-${kind}`}
         hidden={activeTab !== kind}
       >
+        <div className="snd-workflow-placement" data-testid={`snd-${kind}-placement`}>
+          <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "timeline-item", id: "A1", label: "A1 at playhead" }, requirement: { relationship: "sequence.audioAtPlayhead", category: kind === "music" ? "music" : "sound", expectedMediaType: "audio" }, initialAction: "attach" })}>Add to A1 at playhead</button>
+          <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "timeline-item", id: "M1", label: "M1 at playhead" }, requirement: { relationship: "sequence.audioAtPlayhead", category: "music", expectedMediaType: "audio" }, initialAction: "attach" })}>Add to M1 at playhead</button>
+          <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "clip", id: "active-clip", label: "Active clip" }, requirement: { relationship: "clip.audio", category: kind === "music" ? "music" : "sound", expectedMediaType: "audio" }, initialAction: "attach" })}>Attach to active clip</button>
+          <button type="button" className="button secondary" onClick={() => openSoundSlot({ sourceEntity: { type: "master", id: "master", label: "Master" }, requirement: { relationship: "master.score", category: kind === "music" ? "music" : "sound", expectedMediaType: "audio" }, initialAction: "attach" })}>Send to Master</button>
+        </div>
         <SoundWorkflowWorkspace
           kind={kind}
           slug={slug}

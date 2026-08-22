@@ -1,5 +1,6 @@
 import React from "react";
 import { useStore } from "../store";
+import { openAssetAction } from "../contextual-agency";
 
 function productionLocation(id: string | null) {
   if (!id) return "No shot selected";
@@ -12,7 +13,7 @@ function gibibytes(bytes: number) {
   return `${(Math.max(0, Number(bytes) || 0) / (1024 ** 3)).toFixed(1)} GB`;
 }
 
-export default function ProjectContextStrip() {
+export default function ProjectContextStrip({ onOpenQueue }: { onOpenQueue?: () => void }) {
   const store = useStore();
   const project = store.project;
   if (!project) return null;
@@ -29,13 +30,38 @@ export default function ProjectContextStrip() {
   const blocked = projectJobs.filter((job: any) => job.status === "error").length;
   const promoted = projectJobs.filter((job: any) => job.status === "promoted").length;
   const gpu = store.health.gpu;
+  const clipId = store.productionClipId || store.selClipId;
+
+  const openShot = () => {
+    if (!clipId) return;
+    openAssetAction({
+      sourceRoute: "/direct/sequence",
+      sourceEntity: { type: "sequence", id: String(clipId), label: productionLocation(clipId) },
+      requirement: { relationship: "sequence.media", category: "video", expectedMediaType: "video" },
+      initialAction: "choose",
+      slotState: "missing",
+      returnFocusId: "nav-002-shot"
+    });
+  };
+
+  const openAsset = () => {
+    if (!selectedAsset) return;
+    openAssetAction({
+      sourceRoute: "/library",
+      sourceEntity: { type: "library", id: selectedAsset.id, label: selectedAsset.name },
+      requirement: { relationship: "library.asset", category: "atmosphere", assetId: selectedAsset.id },
+      initialAction: selectedAsset.approvalCurrent === false ? "review" : "choose",
+      slotState: selectedAsset.approvalCurrent === false ? "unapproved" : "approved",
+      returnFocusId: "nav-002-asset"
+    });
+  };
 
   return (
     <section className="project-context-strip" aria-label="Shared production context">
       <div className="context-primary">
         <b>{project.name}</b>
-        <span>{productionLocation(store.productionClipId)}</span>
-        {selectedAsset ? <span title={selectedAsset.id}>Asset: {selectedAsset.name}</span> : null}
+        <button type="button" id="nav-002-shot" data-testid="nav-002-shot" onClick={openShot}>{productionLocation(clipId)}</button>
+        {selectedAsset ? <button type="button" id="nav-002-asset" data-testid="nav-002-asset" title={selectedAsset.id} onClick={openAsset}>Asset: {selectedAsset.name}</button> : null}
       </div>
       <div className="context-badges">
         <span className={screenplayApproval?.status === "approved" ? "context-good" : "context-warning"}>
@@ -44,9 +70,14 @@ export default function ProjectContextStrip() {
         <span className={continuityCurrent ? "context-good" : "context-warning"}>
           Asset manifest {continuityCurrent ? "Current" : "Review Required"}
         </span>
-        <span className={running ? "context-busy" : awaitingReview || blocked ? "context-warning" : promoted ? "context-good" : "context-neutral"}>
+        <button
+          type="button"
+          className={running ? "context-busy" : awaitingReview || blocked ? "context-warning" : promoted ? "context-good" : "context-neutral"}
+          data-testid="nav-002-queue"
+          onClick={() => onOpenQueue?.()}
+        >
           Queue: {running || waiting ? `${running} running · ${waiting} waiting` : awaitingReview ? `${awaitingReview} awaiting review` : blocked ? `${blocked} blocked` : promoted ? `${promoted} promoted` : "Idle"}
-        </span>
+        </button>
       </div>
       <details className="provider-status-popover">
         <summary className={store.health.comfy ? "context-good" : "context-warning"}>

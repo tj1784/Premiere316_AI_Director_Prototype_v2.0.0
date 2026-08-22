@@ -404,6 +404,63 @@ function validateStoredVoice(project, voice) {
   return disk;
 }
 
+
+function truthyFlag(value) {
+  const text = String(value ?? "").trim().toLowerCase();
+  return value === true || value === 1 || text === "1" || text === "true" || text === "yes";
+}
+
+function cuePinFromInput(input = {}) {
+  const cueId = String(input.cueId || input.cue_id || "").trim();
+  const segmentId = String(input.segmentId || input.segment_id || "").trim();
+  const attachToCue = truthyFlag(input.attachToCue) || Boolean(cueId);
+  return {
+    cueId,
+    segmentId,
+    attachToCue: attachToCue && cueId ? 1 : 0
+  };
+}
+
+function bindGenerationTakeToCue(project, generation) {
+  if (!generation?.attachToCue || !generation?.cueId) return null;
+  const sound = ensureProjectSound(project);
+  sound.dialogueCues = Array.isArray(sound.dialogueCues) ? sound.dialogueCues : [];
+  let cue = sound.dialogueCues.find((item) => String(item.cueId || "") === String(generation.cueId));
+  if (!cue) {
+    cue = {
+      cueId: generation.cueId,
+      segmentId: generation.segmentId || "",
+      speaker: generation.speaker || ""
+    };
+    sound.dialogueCues.push(cue);
+  }
+  const take = {
+    id: generation.id,
+    generationId: generation.id,
+    file: generation.file,
+    mediaUrl: generation.mediaUrl,
+    provider: generation.provider,
+    createdAt: generation.finishedAt || generation.updatedAt
+  };
+  cue.segmentId = cue.segmentId || generation.segmentId || "";
+  cue.generationId = generation.id;
+  cue.file = generation.file;
+  cue.mediaUrl = generation.mediaUrl;
+  cue.status = "ready";
+  cue.masterReady = true;
+  cue.output = {
+    ...(cue.output && typeof cue.output === "object" ? cue.output : {}),
+    masterFilename: generation.file,
+    exists: true,
+    mediaUrl: generation.mediaUrl
+  };
+  cue.takes = Array.isArray(cue.takes) ? cue.takes : [];
+  if (!cue.takes.some((item) => item.generationId === generation.id)) cue.takes.push(take);
+  cue.completedTakes = cue.takes.length;
+  cue.attachToCue = 1;
+  return cue;
+}
+
 function generationById(project, generationId) {
   return ensureProjectSound(project).generations.find((entry) => entry.id === generationId && entry.provider === QWEN_TTS_PROVIDER) || null;
 }
@@ -510,7 +567,8 @@ export async function createQwenTtsGeneration(projectSlug, input = {}) {
     error: null,
     createdAt,
     updatedAt: createdAt,
-    finishedAt: null
+    finishedAt: null,
+    ...cuePinFromInput(input)
   };
   sound.generations.push(generation);
   saveProjectWithRetry(project);
@@ -576,6 +634,11 @@ export function getProjectQwenSound(projectSlug, activeGenerationIds = null) {
     }
   }
   if (changed) saveProjectWithRetry(project);
+  for (const generation of sound.generations || []) {
+    if (generation?.attachToCue && generation?.cueId && generation?.file) {
+      bindGenerationTakeToCue(project, generation);
+    }
+  }
   return { project, sound, health: qwenTtsHealth() };
 }
 
@@ -1001,6 +1064,7 @@ export async function generateQwenTtsJob(job) {
     target.error = null;
     target.updatedAt = new Date().toISOString();
     target.finishedAt = target.updatedAt;
+    bindGenerationTakeToCue(fresh, target);
     saveProjectWithRetry(fresh);
     projectRecordCommitted = true;
     job.result = {

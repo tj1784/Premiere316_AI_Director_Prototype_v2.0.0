@@ -15,6 +15,7 @@ export const AAA_WORKFLOW_PATH = path.join(WORKFLOW_ROOT, "LTX_2.5_Harrowing_AAA
 export const AAA_REL = "HARROWING OF HELL.json";
 export const HARROWING_REL = "HARROWING OF HELL.json";
 export const AAA_FILE_REL = "LTX_2.5_Harrowing_AAA.json";
+export const DIRECTOR_REL = "harrowing_of_hell_LTX2.5_Director.json";
 
 const SEG_DIR = path.join(
   PACKAGE_ROOT,
@@ -73,17 +74,17 @@ export function listWorkflows(query = "") {
       const rel = path.relative(WORKFLOW_ROOT, full).replace(/\\/g, "/");
       const folder = rel.includes("/") ? rel.slice(0, rel.lastIndexOf("/")) : "";
       const baseName = entry.name.replace(/\.json$/i, "");
-      const name = rel === HARROWING_REL ? "Harrowing of Hell" : rel === AAA_REL ? "Harrowing AAA" : baseName;
+      const name = rel === HARROWING_REL ? "Harrowing of Hell" : rel === AAA_FILE_REL ? "Harrowing AAA" : rel === DIRECTOR_REL ? "Harrowing LTX2.5 Director" : baseName;
       const hay = `${rel} ${name} ${baseName} ${folder} harrowing of hell`.toLowerCase();
       if (needle && !hay.includes(needle)) continue;
       let bytes = 0;
       try { bytes = fs.statSync(full).size; } catch {}
-      const pinned = rel === HARROWING_REL || rel === AAA_REL || folder === "H01_S01_C01_AAA_segments";
+      const pinned = rel === HARROWING_REL || rel === AAA_FILE_REL || rel === DIRECTOR_REL || folder === "H01_S01_C01_AAA_segments";
       items.push({ rel, name, folder, bytes, active: rel === AAA_REL, pinned });
     }
   }
   walk(WORKFLOW_ROOT);
-  const pinRank = (item) => item.rel === HARROWING_REL ? 0 : item.rel === AAA_REL ? 1 : item.folder === "H01_S01_C01_AAA_segments" ? 2 : 3;
+  const pinRank = (item) => item.rel === HARROWING_REL ? 0 : item.rel === DIRECTOR_REL ? 1 : item.rel === AAA_FILE_REL ? 2 : item.folder === "H01_S01_C01_AAA_segments" ? 3 : 4;
   items.sort((a, b) => pinRank(a) - pinRank(b) || a.rel.localeCompare(b.rel));
   return { root: WORKFLOW_ROOT, count: items.length, items };
 }
@@ -183,7 +184,7 @@ export function readAaaWorkflow(rel) {
   return {
     rel: resolved.rel,
     file: resolved.abs,
-    name: resolved.rel === HARROWING_REL || resolved.rel === AAA_REL ? "Harrowing of Hell" : resolved.rel === AAA_FILE_REL ? "Harrowing AAA" : path.basename(resolved.rel, ".json"),
+    name: resolved.rel === HARROWING_REL || resolved.rel === AAA_REL ? "Harrowing of Hell" : resolved.rel === AAA_FILE_REL ? "Harrowing AAA" : resolved.rel === DIRECTOR_REL ? "Harrowing LTX2.5 Director" : path.basename(resolved.rel, ".json"),
     folder: resolved.rel.includes("/") ? resolved.rel.slice(0, resolved.rel.lastIndexOf("/")) : "",
     isAaa: resolved.rel === AAA_REL,
     ...hellDelivery(graph),

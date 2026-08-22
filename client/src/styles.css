@@ -1658,3 +1658,23 @@ label input, label textarea, label select { margin-top: 5px; text-transform: non
 .ltx-workflow-list small{color:#8b97a6;font-size:10px;}
 .ltx-workflow-empty{padding:16px;color:#8b97a6;}
 .ltx-workflow-list button.pinned{border-left:2px solid #e84359;}
+
+.storyboard-direction-editor, .storyboard-segment-direction { display: grid; gap: 8px; padding: 10px; }
+.storyboard-direction-editor label, .storyboard-segment-direction label { display: grid; gap: 4px; color: #8b97a8; font-size: 10px; }
+.storyboard-direction-editor textarea, .storyboard-segment-direction textarea, .storyboard-direction-editor input, .storyboard-segment-direction input {
+  width: 100%; border: 1px solid #2c3a4d; background: #101821; color: #d5dce6; border-radius: 6px; padding: 7px 8px;
+}
+.storyboard-segment-timing { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.storyboard-segment-audio-actions, .storyboard-direction-editor footer, .storyboard-segment-direction footer { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.storyboard-direction-editor em.unsaved, .storyboard-segment-direction em.unsaved { color: #e0c27a; font-size: 10px; }
+.storyboard-audio-off { border: 1px solid #5a3d2a; background: #2a1b14; color: #f0c2a0; border-radius: 999px; padding: 3px 8px; min-height: 24px; cursor: pointer; }
+.reference-picker-empty-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+.storyboard-reference-new { outline: 2px solid #8d6bff; box-shadow: 0 0 0 3px rgba(141,107,255,.25); }
+.agency-return-focus { outline: 2px solid #8d6bff; box-shadow: 0 0 0 4px rgba(141,107,255,.28); }
+.storyboard-audio-off-panel { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.storyboard-audio-volume { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.storyboard-audio-volume input { width: 90px; }
+.storyboard-prompt-fullscreen { position: fixed; inset: 0; z-index: 140; display: grid; grid-template-rows: auto 1fr; background: #0b111a; padding: 18px 22px; }
+.storyboard-prompt-fullscreen header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 12px; }
+.storyboard-prompt-fullscreen h2 { margin: 0; color: #f1f5fb; font-size: 20px; }
+.storyboard-prompt-fullscreen textarea { width: 100%; height: 100%; min-height: 0; resize: none; padding: 16px; font: inherit; line-height: 1.45; }
