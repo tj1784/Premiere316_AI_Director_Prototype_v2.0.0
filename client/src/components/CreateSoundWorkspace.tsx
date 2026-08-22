@@ -9,6 +9,7 @@ import SoundWorkflowWorkspace, {
   soundProfileReady
 } from "./SoundWorkflowWorkspace";
 import VoiceDesignWorkspace, { type VoiceDesignEngineSummary } from "./VoiceDesignWorkspace";
+import emotionPresets from "../data/emotion-presets.json";
 import "./CreateSoundWorkspace.css";
 
 type SoundTab = "voice-design" | "voice-clone" | "music" | "sound-fx";
@@ -85,6 +86,8 @@ type SoundDraft = {
   emotionWeight: number;
   durationFactor: number;
   seed: number;
+  emotionPreset: string;
+  emotionVector: number[] | null;
 };
 
 type SoundSnapshot = {
@@ -106,8 +109,34 @@ const DEFAULT_DRAFT: SoundDraft = {
   language: "EN",
   emotionWeight: 0.8,
   durationFactor: 1,
-  seed: 42
+  seed: 42,
+  emotionPreset: "",
+  emotionVector: null
 };
+
+const EMOTION_PRESET_NAMES = Object.keys(emotionPresets as Record<string, { type?: string; values?: number[]; description?: string }>).sort();
+
+function applyEmotionPreset(name: string): Pick<SoundDraft, "emotionPreset" | "emotionVector" | "style" | "emotionWeight"> {
+  const preset = (emotionPresets as Record<string, { type?: string; values?: number[]; description?: string }>)[name];
+  if (!preset) return { emotionPreset: "", emotionVector: null, style: "", emotionWeight: 0.8 };
+  if (preset.type === "vector" && Array.isArray(preset.values)) {
+    const vector = preset.values.slice(0, 8).map((value) => Math.max(0, Math.min(1.15, Number(value) || 0)));
+    while (vector.length < 8) vector.push(0);
+    const peak = Math.max(...vector, 0);
+    return {
+      emotionPreset: name,
+      emotionVector: vector,
+      style: name.replace(/^vec_/, "").replace(/_/g, " "),
+      emotionWeight: Math.max(0.45, Math.min(0.85, 0.45 + peak * 0.35))
+    };
+  }
+  return {
+    emotionPreset: name,
+    emotionVector: null,
+    style: String(preset.description || name),
+    emotionWeight: 0.62
+  };
+}
 
 function draftStorageKey(slug: string) {
   return `premiere316.create-sound.${slug}`;
@@ -595,6 +624,7 @@ export default function CreateSoundWorkspace() {
     if (draft.provider === "indexTts") {
       body.set("emotionWeight", String(draft.emotionWeight));
       body.set("durationFactor", String(draft.durationFactor));
+      if (draft.emotionVector?.length) body.set("emotionVector", JSON.stringify(draft.emotionVector));
     }
     body.set("seed", String(Math.trunc(draft.seed)));
 
@@ -908,6 +938,13 @@ export default function CreateSoundWorkspace() {
               <label className="create-sound-dialogue-label">Dialogue or narration
                 <textarea rows={12} value={draft.text} onChange={(event) => patchDraft("text", event.target.value)} placeholder="Enter the exact words to speak…" />
                 <small>{draft.text.trim().length.toLocaleString()} characters · ~{estimateSpeechSeconds(draft.text)}s spoken (estimate, not guaranteed)</small>
+              </label>
+              <label>Emotion preset
+                <select value={draft.emotionPreset} onChange={(event) => setDraft((current) => ({ ...current, ...applyEmotionPreset(event.target.value) }))}>
+                  <option value="">None</option>
+                  {EMOTION_PRESET_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}
+                </select>
+                <small>{draft.emotionPreset ? `${(emotionPresets as Record<string, { type?: string }>)[draft.emotionPreset]?.type || "preset"} · 609-pack` : "Optional IndexTTS vector / Qwen performance note"}</small>
               </label>
               <label>{draft.provider === "qwenTts" ? "Editorial performance note" : "Performance direction"}
                 <textarea

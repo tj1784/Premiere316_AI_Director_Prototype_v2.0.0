@@ -92314,38 +92314,28 @@
         {
           "v": 1,
           "files": [
-            "frame-h02-s04-c01-seg03b-cu-v3r.v1.png"
+            "frame-h02-s04-c01-seg03b-cu-v3r.v1.manual.png"
           ],
-          "file": "frame-h02-s04-c01-seg03b-cu-v3r.v1.png",
+          "file": "frame-h02-s04-c01-seg03b-cu-v3r.v1.manual.png",
           "mediaType": "image",
-          "workflowId": "premiere316-storyboard-krea2-reference-subgraphs",
-          "workflowHash": "92507bb79ffcbcbd48bf896684df032354d4c7e50aac95c74867e431e93e5d63",
-          "workflowSource": "storyboard-krea2-reference-subgraphs.ui.json",
-          "sourceWorkflowHash": "34183e142d4d3c9db6fcfe28ea556aba322384eaf97e76e40e20bfb152ac2fe2",
-          "generationFingerprint": "b1b54e1d8606c8688303baf396e0d92960df75e5896705d6b35942609bba4b48",
-          "prompt": "PREMIERE316 STORYBOARD IMAGE GUIDE\n\nOne continuous 5.0-second live-action 35mm anamorphic coverage shot in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 40mm medium including chains and iron tree. Subject: the same older Moses, desert-worn face, grey-white beard, firm gaze, one face only on the front of the head. The speaker is delivering this line in post (do not render readable text): You do not wait alone. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head.\n\nExact authored visual references to respect as role-specific context only:\nidentity: char-moses.v2.png (character-moses-freed-prophet-appearance:v2)\nUse these references only for their assigned role. Do not copy contact-sheet borders, labels, lettering, panel layouts, duplicate turnarounds, or unrelated subjects.\n\nAvoid/negative constraints to translate into clean positive image choices:\ntext, caption, subtitle, logo, watermark, extra limbs, second face on the back of the head, cartoon, CGI plastic, modern clothing",
-          "promptHash": "0bdfcdb0dcb81c89ea0ae499dba89386a8910e9ec46cee422552899ba8a0c19d",
-          "seed": 147871560853472,
-          "resolution": {
-            "width": 1280,
-            "height": 544,
-            "ratio": "2.39:1"
-          },
-          "filenamePrefix": "Premiere316/harrowing_of_hell/storyboard/frame-h02-s04-c01-seg03b-cu-v3r",
+          "source": "director_manual_replacement",
+          "sourceFileName": "H02-S04-C01-SEG03B_MOSES.png",
+          "workflowId": null,
+          "workflowHash": null,
           "fileHashes": [
             {
-              "file": "frame-h02-s04-c01-seg03b-cu-v3r.v1.png",
-              "sha256": "6f7940a005a7e50f99b0da0fe31ef616222b172086c06e0cf73bf41941af8cd1",
-              "bytes": 3921046,
+              "file": "frame-h02-s04-c01-seg03b-cu-v3r.v1.manual.png",
+              "sha256": "8229b72e8c431201cf265d295c0e14d14fb5f7b98238cbac1b466d93797679b2",
+              "bytes": 1955372,
               "extension": ".png"
             }
           ],
-          "createdAt": "2026-08-22T04:01:57.020Z"
+          "createdAt": "2026-08-22T06:56:37.096Z"
         }
       ],
       "activeGeneratedVersion": 1,
-      "generatedFile": "frame-h02-s04-c01-seg03b-cu-v3r.v1.png",
-      "generatedInputPath": "media/storyboard/frame-h02-s04-c01-seg03b-cu-v3r.v1.png",
+      "generatedFile": "frame-h02-s04-c01-seg03b-cu-v3r.v1.manual.png",
+      "generatedInputPath": "media/storyboard/frame-h02-s04-c01-seg03b-cu-v3r.v1.manual.png",
       "importProvenance": {
         "packageId": "h02_v3_revised_cu",
         "createdAt": "2026-08-22T03:45:12.299026+00:00"
@@ -92360,7 +92350,8 @@
         "height": 544,
         "ratio": "2.39:1"
       },
-      "generationCompletedAt": "2026-08-22T04:01:57.020Z"
+      "generationCompletedAt": "2026-08-22T04:01:57.020Z",
+      "manualReplacementAt": "2026-08-22T06:56:37.096Z"
     },
     "frame-h02-s04-c03-seg01b-cu-v3r": {
       "id": "frame-h02-s04-c03-seg01b-cu-v3r",
@@ -92369,10 +92360,10 @@
       "ownerId": "segment-h02-s04-c03-seg01b",
       "prompt": "One continuous 5.0-second live-action 35mm anamorphic coverage shot in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 40mm medium including chains and iron tree. Subject: the same older Moses, desert-worn face, grey-white beard, firm gaze, one face only on the front of the head. The speaker is delivering this line in post (do not render readable text): You seized them because His death frightened you. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head.",
       "negativePrompt": "text, caption, subtitle, logo, watermark, extra limbs, second face on the back of the head, cartoon, CGI plastic, modern clothing",
-      "status": "ready_to_generate",
+      "status": "generated",
       "expectedInputPath": null,
-      "generatedAssetId": null,
-      "generatedAssetVersionId": null,
+      "generatedAssetId": "frame-h02-s04-c03-seg01b-cu-v3r",
+      "generatedAssetVersionId": "frame-h02-s04-c03-seg01b-cu-v3r:v1",
       "inputHash": null,
       "references": [
         {
@@ -92396,11 +92387,33 @@
           "persistenceOrigin": "user"
         }
       ],
-      "lastError": "ComfyUI completed without a storyboard image file",
-      "generatedVersions": [],
-      "activeGeneratedVersion": null,
-      "generatedFile": null,
-      "generatedInputPath": null,
+      "lastError": null,
+      "generatedVersions": [
+        {
+          "v": 1,
+          "files": [
+            "frame-h02-s04-c03-seg01b-cu-v3r.v1.manual.png"
+          ],
+          "file": "frame-h02-s04-c03-seg01b-cu-v3r.v1.manual.png",
+          "mediaType": "image",
+          "source": "director_manual_replacement",
+          "sourceFileName": "H02-S04-C03-SEG01B_MOSES.png",
+          "workflowId": null,
+          "workflowHash": null,
+          "fileHashes": [
+            {
+              "file": "frame-h02-s04-c03-seg01b-cu-v3r.v1.manual.png",
+              "sha256": "b5a5613c98a3ab07d12e7c6d6e662cc23d9ae77eb0d0e8d1f5b89901f8feb0f3",
+              "bytes": 1862206,
+              "extension": ".png"
+            }
+          ],
+          "createdAt": "2026-08-22T06:56:37.580Z"
+        }
+      ],
+      "activeGeneratedVersion": 1,
+      "generatedFile": "frame-h02-s04-c03-seg01b-cu-v3r.v1.manual.png",
+      "generatedInputPath": "media/storyboard/frame-h02-s04-c03-seg01b-cu-v3r.v1.manual.png",
       "importProvenance": {
         "packageId": "h02_v3_revised_cu",
         "createdAt": "2026-08-22T03:45:12.299026+00:00"
@@ -92415,7 +92428,8 @@
         "height": 544,
         "ratio": "2.39:1"
       },
-      "generationFailedAt": "2026-08-22T04:40:48.318Z"
+      "generationFailedAt": "2026-08-22T04:40:48.318Z",
+      "manualReplacementAt": "2026-08-22T06:56:37.580Z"
     },
     "frame-h02-s04-c05-seg02b-cu-v3r": {
       "id": "frame-h02-s04-c05-seg02b-cu-v3r",
@@ -92424,10 +92438,10 @@
       "ownerId": "segment-h02-s04-c05-seg02b",
       "prompt": "One continuous 5.0-second live-action 35mm anamorphic facial close-up in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 85mm facial close-up, eight-degree Dutch, three-quarter camera right. Subject: the same elderly Adam, weathered lined face, dust-dry beard, exhausted eyes, one face only on the front of the head. The speaker is delivering this line in post (do not render readable text): Never again. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head.",
       "negativePrompt": "text, caption, subtitle, logo, watermark, extra limbs, second face on the back of the head, cartoon, CGI plastic, modern clothing",
-      "status": "ready_to_generate",
+      "status": "generated",
       "expectedInputPath": null,
-      "generatedAssetId": null,
-      "generatedAssetVersionId": null,
+      "generatedAssetId": "frame-h02-s04-c05-seg02b-cu-v3r",
+      "generatedAssetVersionId": "frame-h02-s04-c05-seg02b-cu-v3r:v1",
       "inputHash": null,
       "references": [
         {
@@ -92451,11 +92465,33 @@
           "persistenceOrigin": "user"
         }
       ],
-      "lastError": "ComfyUI completed without a storyboard image file",
-      "generatedVersions": [],
-      "activeGeneratedVersion": null,
-      "generatedFile": null,
-      "generatedInputPath": null,
+      "lastError": null,
+      "generatedVersions": [
+        {
+          "v": 1,
+          "files": [
+            "frame-h02-s04-c05-seg02b-cu-v3r.v1.manual.png"
+          ],
+          "file": "frame-h02-s04-c05-seg02b-cu-v3r.v1.manual.png",
+          "mediaType": "image",
+          "source": "director_manual_replacement",
+          "sourceFileName": "H02-S04-C05-SEG02B_ADAM.png",
+          "workflowId": null,
+          "workflowHash": null,
+          "fileHashes": [
+            {
+              "file": "frame-h02-s04-c05-seg02b-cu-v3r.v1.manual.png",
+              "sha256": "9c6c84d758f909c04816efd5538f043d520d4788a219c7dd5acf77f6d0eb7941",
+              "bytes": 1933973,
+              "extension": ".png"
+            }
+          ],
+          "createdAt": "2026-08-22T06:56:38.082Z"
+        }
+      ],
+      "activeGeneratedVersion": 1,
+      "generatedFile": "frame-h02-s04-c05-seg02b-cu-v3r.v1.manual.png",
+      "generatedInputPath": "media/storyboard/frame-h02-s04-c05-seg02b-cu-v3r.v1.manual.png",
       "importProvenance": {
         "packageId": "h02_v3_revised_cu",
         "createdAt": "2026-08-22T03:45:12.299026+00:00"
@@ -92470,7 +92506,8 @@
         "height": 544,
         "ratio": "2.39:1"
       },
-      "generationFailedAt": "2026-08-22T04:40:54.561Z"
+      "generationFailedAt": "2026-08-22T04:40:54.561Z",
+      "manualReplacementAt": "2026-08-22T06:56:38.082Z"
     }
   },
   "videoPlans": {
@@ -95093,7 +95130,7 @@
         "segment-h02-s04-c03-seg02",
         "segment-h02-s04-c03-seg03"
       ],
-      "localPrompts": "One continuous 6.0-second live-action 35mm anamorphic facial close-up in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 100mm facial close-up over the listener's shoulder from camera right. Subject: the same older Moses, desert-worn face, grey-white beard, firm gaze, one face only on the front of the head. The speaker is delivering this line in post (do not render readable text): Then why do you tremble? You did not gather the faithful by judgment. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head.\n\nOne continuous 5.0-second live-action 35mm anamorphic coverage shot in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 40mm medium including chains and iron tree. Subject: the same older Moses, desert-worn face, grey-white beard, firm gaze, one face only on the front of the head. The speaker is delivering this line in post (do not render readable text): You seized them because His death frightened you. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head.\n\nOne continuous five-second live-action 35mm anamorphic shot in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Continue from the exact Segment 01 handoff. Every mouth stays closed. The same 50mm camera continues only the remaining short portion of the established arc and settles into a three-depth composition: Moses chained in the near left plane, Adam visibly restrained in the central distance, and the Torturer on the right. The Torturer turns his masked gaze from Moses to Adam and extends one empty open hand toward him, stopping a hand's breadth away. Adam and Moses remain still. All described actor and camera motion finishes by 4.5 seconds. The resulting composition remains locked and unchanged through the final twelve frames; only minimal breathing, smoke and sparse ash continue.\n\nOne continuous 8.0-second live-action 35mm anamorphic facial close-up in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 85mm facial close-up, fifteen-degree high looking down. Subject: the same human-scale Lesser Torturer, mask filling the frame, dry judicial eyes behind the mask, no roar, no extra limbs. The speaker is delivering this line in post (do not render readable text): Then let Him come. Let Him descend into my kingdom. Adam shall be the pledge of His defeat. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head.",
+      "localPrompts": "One continuous 6.0-second live-action 35mm anamorphic facial close-up in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 100mm facial close-up over the listener's shoulder from camera right. Subject: the same older Moses, desert-worn face, grey-white beard, firm gaze, one face only on the front of the head. The speaker is delivering this line in post (do not render readable text): Then why do you tremble? You did not gather the faithful by judgment. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head. | One continuous 5.0-second live-action 35mm anamorphic coverage shot in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 40mm medium including chains and iron tree. Subject: the same older Moses, desert-worn face, grey-white beard, firm gaze, one face only on the front of the head. The speaker is delivering this line in post (do not render readable text): You seized them because His death frightened you. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head. | One continuous five-second live-action 35mm anamorphic shot in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Continue from the exact Segment 01 handoff. Every mouth stays closed. The same 50mm camera continues only the remaining short portion of the established arc and settles into a three-depth composition: Moses chained in the near left plane, Adam visibly restrained in the central distance, and the Torturer on the right. The Torturer turns his masked gaze from Moses to Adam and extends one empty open hand toward him, stopping a hand's breadth away. Adam and Moses remain still. All described actor and camera motion finishes by 4.5 seconds. The resulting composition remains locked and unchanged through the final twelve frames; only minimal breathing, smoke and sparse ash continue. | One continuous 8.0-second live-action 35mm anamorphic facial close-up in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 85mm facial close-up, fifteen-degree high looking down. Subject: the same human-scale Lesser Torturer, mask filling the frame, dry judicial eyes behind the mask, no roar, no extra limbs. The speaker is delivering this line in post (do not render readable text): Then let Him come. Let Him descend into my kingdom. Adam shall be the pledge of His defeat. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head.",
       "segmentLengths": "144,120,120,192",
       "timelineData": {
         "mainTrackEnabled": true,
@@ -95122,7 +95159,6 @@
             "prompt": "One continuous 6.0-second live-action 35mm anamorphic facial close-up in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 100mm facial close-up over the listener's shoulder from camera right. Subject: the same older Moses, desert-worn face, grey-white beard, firm gaze, one face only on the front of the head. The speaker is delivering this line in post (do not render readable text): Then why do you tremble? You did not gather the faithful by judgment. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head.",
             "type": "image",
             "isEndFrame": false,
-            "storyboardFrameId": "frame-h02-s04-c03-canonical-start-v3",
             "guideStrength": 1,
             "referenceFiles": [],
             "expectedInputPath": "canonical_start_frames/H02-S04-C03_CANONICAL_START.png",
@@ -95130,17 +95166,19 @@
             "passType": "SPEECH",
             "speaker": "MOSES",
             "dialogue": "You seized the faithful because His death frightened you.",
-            "missingGuide": false,
             "imageFile": "canonical_start_frames/H02-S04-C03_CANONICAL_START.png",
             "fileName": "H02-S04-C03_CANONICAL_START.png",
-            "projectMediaPath": "media/storyboard/canonical_start_frames/H02-S04-C03_CANONICAL_START.png",
-            "projectMediaBytes": 2150672,
-            "projectMediaSha256": "4383D405989F4F7C2E36CAF308E75A588615A793BC3880D98B4E7F502F6F7C10",
             "startingImageBinding": {
               "source": "corrected_canonical_start_zip",
               "appliedAt": "2026-08-22T03:13:16.952Z",
               "sha256": "4383D405989F4F7C2E36CAF308E75A588615A793BC3880D98B4E7F502F6F7C10"
-            }
+            },
+            "global_prompt": "PREMIERE316 LTX-2.5 SEGMENTED IMAGE-TO-VIDEO â€” H02-S04-C03\n\nGENERATION MODE\nGenerate only the selected H02 Corrected V3 picture segment from its declared first frame. Segment 01 begins from the supplied canonical start plate. Segment 02 begins only from the accepted decoded tail of Segment 01. Segment 03 begins only from the accepted decoded tail of Segment 02.\n\nPACKAGE GLOBAL VISUAL / CHRONOLOGY LOCK\nMaximum-photorealistic live-action biblical epic; real actors, real anatomy, visible skin pores, real hair, tactile practical ancient linen, practical creature prosthetics, physically photographed basalt and iron, real smoke and ash, natural anamorphic lens behavior, restrained motion blur, high dynamic range and delicate film grain. No cartoon, illustration, painting, glossy CGI, fantasy game render, plastic skin, synthetic fabric, text, captions, logos, watermarks, borders, collages, duplicated people or malformed anatomy.\n\nCORRECTED V3 HANDOFF CONTRACT\nDo not use independently supplied SEG02_FIRST or SEG03_FIRST images as frame zero. They are story-intent references only. Export the accepted decoded tail of Segment 01 as SEG02 handoff, and the accepted decoded tail of Segment 02 as SEG03 handoff. Dialogue, intelligible voices and music are added in post.",
+            "generatedTakes": [],
+            "activeTakeId": null,
+            "activeGeneratedVersion": null,
+            "activeTakeLocked": false,
+            "useNextAsLastFrame": false
           },
           {
             "id": "segment-h02-s04-c03-seg01b",
@@ -95149,10 +95187,17 @@
             "prompt": "One continuous 5.0-second live-action 35mm anamorphic coverage shot in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 40mm medium including chains and iron tree. Subject: the same older Moses, desert-worn face, grey-white beard, firm gaze, one face only on the front of the head. The speaker is delivering this line in post (do not render readable text): You seized them because His death frightened you. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head.",
             "type": "image",
             "isEndFrame": false,
-            "storyboardFrameId": "frame-h02-s04-c03-seg01b-cu-v3r",
             "guideStrength": 1,
             "referenceFiles": [],
-            "expectedInputPath": null
+            "expectedInputPath": null,
+            "global_prompt": "PREMIERE316 LTX-2.5 SEGMENTED IMAGE-TO-VIDEO â€” H02-S04-C03\n\nGENERATION MODE\nGenerate only the selected H02 Corrected V3 picture segment from its declared first frame. Segment 01 begins from the supplied canonical start plate. Segment 02 begins only from the accepted decoded tail of Segment 01. Segment 03 begins only from the accepted decoded tail of Segment 02.\n\nPACKAGE GLOBAL VISUAL / CHRONOLOGY LOCK\nMaximum-photorealistic live-action biblical epic; real actors, real anatomy, visible skin pores, real hair, tactile practical ancient linen, practical creature prosthetics, physically photographed basalt and iron, real smoke and ash, natural anamorphic lens behavior, restrained motion blur, high dynamic range and delicate film grain. No cartoon, illustration, painting, glossy CGI, fantasy game render, plastic skin, synthetic fabric, text, captions, logos, watermarks, borders, collages, duplicated people or malformed anatomy.\n\nCORRECTED V3 HANDOFF CONTRACT\nDo not use independently supplied SEG02_FIRST or SEG03_FIRST images as frame zero. They are story-intent references only. Export the accepted decoded tail of Segment 01 as SEG02 handoff, and the accepted decoded tail of Segment 02 as SEG03 handoff. Dialogue, intelligible voices and music are added in post.",
+            "fileName": "frame-h02-s04-c03-seg01b-cu-v3r.v1.manual.png",
+            "imageFile": null,
+            "generatedTakes": [],
+            "activeTakeId": null,
+            "activeGeneratedVersion": null,
+            "activeTakeLocked": false,
+            "useNextAsLastFrame": false
           },
           {
             "id": "segment-h02-s04-c03-seg02",
@@ -95161,7 +95206,6 @@
             "prompt": "One continuous five-second live-action 35mm anamorphic shot in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Continue from the exact Segment 01 handoff. Every mouth stays closed. The same 50mm camera continues only the remaining short portion of the established arc and settles into a three-depth composition: Moses chained in the near left plane, Adam visibly restrained in the central distance, and the Torturer on the right. The Torturer turns his masked gaze from Moses to Adam and extends one empty open hand toward him, stopping a hand's breadth away. Adam and Moses remain still. All described actor and camera motion finishes by 4.5 seconds. The resulting composition remains locked and unchanged through the final twelve frames; only minimal breathing, smoke and sparse ash continue.",
             "type": "image",
             "isEndFrame": false,
-            "storyboardFrameId": "frame-h02-s04-c03-seg02-handoff-v3",
             "guideStrength": 1,
             "referenceFiles": [],
             "expectedInputPath": "handoffs/H02-S04-C03_SEG02_HANDOFF.png",
@@ -95169,17 +95213,18 @@
             "passType": "PICTURE_ONLY",
             "speaker": "NONE",
             "dialogue": null,
-            "missingGuide": false,
-            "imageFile": "canonical_start_frames/H02-S04-C03_CANONICAL_START.png",
             "fileName": "H02-S04-C03_CANONICAL_START.png",
-            "projectMediaPath": "media/storyboard/canonical_start_frames/H02-S04-C03_CANONICAL_START.png",
-            "projectMediaBytes": 2150672,
-            "projectMediaSha256": "4383D405989F4F7C2E36CAF308E75A588615A793BC3880D98B4E7F502F6F7C10",
             "startingImageBinding": {
               "source": "corrected_canonical_start_zip",
               "appliedAt": "2026-08-22T03:13:16.952Z",
               "sha256": "4383D405989F4F7C2E36CAF308E75A588615A793BC3880D98B4E7F502F6F7C10"
-            }
+            },
+            "global_prompt": "PREMIERE316 LTX-2.5 SEGMENTED IMAGE-TO-VIDEO â€” H02-S04-C03\n\nGENERATION MODE\nGenerate only the selected H02 Corrected V3 picture segment from its declared first frame. Segment 01 begins from the supplied canonical start plate. Segment 02 begins only from the accepted decoded tail of Segment 01. Segment 03 begins only from the accepted decoded tail of Segment 02.\n\nPACKAGE GLOBAL VISUAL / CHRONOLOGY LOCK\nMaximum-photorealistic live-action biblical epic; real actors, real anatomy, visible skin pores, real hair, tactile practical ancient linen, practical creature prosthetics, physically photographed basalt and iron, real smoke and ash, natural anamorphic lens behavior, restrained motion blur, high dynamic range and delicate film grain. No cartoon, illustration, painting, glossy CGI, fantasy game render, plastic skin, synthetic fabric, text, captions, logos, watermarks, borders, collages, duplicated people or malformed anatomy.\n\nCORRECTED V3 HANDOFF CONTRACT\nDo not use independently supplied SEG02_FIRST or SEG03_FIRST images as frame zero. They are story-intent references only. Export the accepted decoded tail of Segment 01 as SEG02 handoff, and the accepted decoded tail of Segment 02 as SEG03 handoff. Dialogue, intelligible voices and music are added in post.",
+            "generatedTakes": [],
+            "activeTakeId": null,
+            "activeGeneratedVersion": null,
+            "activeTakeLocked": false,
+            "useNextAsLastFrame": false
           },
           {
             "id": "segment-h02-s04-c03-seg03",
@@ -95188,7 +95233,6 @@
             "prompt": "One continuous 8.0-second live-action 35mm anamorphic facial close-up in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 85mm facial close-up, fifteen-degree high looking down. Subject: the same human-scale Lesser Torturer, mask filling the frame, dry judicial eyes behind the mask, no roar, no extra limbs. The speaker is delivering this line in post (do not render readable text): Then let Him come. Let Him descend into my kingdom. Adam shall be the pledge of His defeat. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head.",
             "type": "image",
             "isEndFrame": false,
-            "storyboardFrameId": "frame-h02-s04-c03-seg03-handoff-v3",
             "guideStrength": 1,
             "referenceFiles": [],
             "expectedInputPath": "handoffs/H02-S04-C03_SEG03_HANDOFF.png",
@@ -95196,24 +95240,25 @@
             "passType": "SPEECH",
             "speaker": "TORTURER",
             "dialogue": "Then let Him come. Adam is my pledge.",
-            "missingGuide": false,
-            "imageFile": "canonical_start_frames/H02-S04-C03_CANONICAL_START.png",
             "fileName": "H02-S04-C03_CANONICAL_START.png",
-            "projectMediaPath": "media/storyboard/canonical_start_frames/H02-S04-C03_CANONICAL_START.png",
-            "projectMediaBytes": 2150672,
-            "projectMediaSha256": "4383D405989F4F7C2E36CAF308E75A588615A793BC3880D98B4E7F502F6F7C10",
             "startingImageBinding": {
               "source": "corrected_canonical_start_zip",
               "appliedAt": "2026-08-22T03:13:16.952Z",
               "sha256": "4383D405989F4F7C2E36CAF308E75A588615A793BC3880D98B4E7F502F6F7C10"
-            }
+            },
+            "global_prompt": "PREMIERE316 LTX-2.5 SEGMENTED IMAGE-TO-VIDEO â€” H02-S04-C03\n\nGENERATION MODE\nGenerate only the selected H02 Corrected V3 picture segment from its declared first frame. Segment 01 begins from the supplied canonical start plate. Segment 02 begins only from the accepted decoded tail of Segment 01. Segment 03 begins only from the accepted decoded tail of Segment 02.\n\nPACKAGE GLOBAL VISUAL / CHRONOLOGY LOCK\nMaximum-photorealistic live-action biblical epic; real actors, real anatomy, visible skin pores, real hair, tactile practical ancient linen, practical creature prosthetics, physically photographed basalt and iron, real smoke and ash, natural anamorphic lens behavior, restrained motion blur, high dynamic range and delicate film grain. No cartoon, illustration, painting, glossy CGI, fantasy game render, plastic skin, synthetic fabric, text, captions, logos, watermarks, borders, collages, duplicated people or malformed anatomy.\n\nCORRECTED V3 HANDOFF CONTRACT\nDo not use independently supplied SEG02_FIRST or SEG03_FIRST images as frame zero. They are story-intent references only. Export the accepted decoded tail of Segment 01 as SEG02 handoff, and the accepted decoded tail of Segment 02 as SEG03 handoff. Dialogue, intelligible voices and music are added in post.",
+            "generatedTakes": [],
+            "activeTakeId": null,
+            "activeGeneratedVersion": null,
+            "activeTakeLocked": false,
+            "useNextAsLastFrame": false
           }
         ],
         "motionSegments": [],
         "audioSegments": []
       },
-      "status": "not_started",
-      "inputHash": null,
+      "status": "needs_render",
+      "inputHash": "5cdb2bfe2a31cd53c5f198c11528aabe61090d3ebb85d2333cabce98a181591f",
       "generationMode": "i2v_segmented_first_frames",
       "referenceMode": "segment_first_frames",
       "referenceRoot": "corrected_v3_canonical_starts_and_handoffs",
@@ -95284,7 +95329,8 @@
         "pendingAcceptedDecodedTails": 4,
         "importedAt": "2026-08-21T10:27:03.698Z"
       },
-      "correctedV3Package": "h02_v3_revised_cu"
+      "correctedV3Package": "h02_v3_revised_cu",
+      "renderStaleAt": "2026-08-22T06:59:50.610Z"
     },
     "video-h02-s04-c04": {
       "id": "video-h02-s04-c04",
@@ -144015,7 +144061,7 @@
       "prompt": "One continuous 5.0-second live-action 35mm anamorphic coverage shot in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 40mm medium including chains and iron tree. Subject: the same older Moses, desert-worn face, grey-white beard, firm gaze, one face only on the front of the head. The speaker is delivering this line in post (do not render readable text): You seized them because His death frightened you. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head.",
       "type": "image",
       "isEndFrame": false,
-      "status": "needs_guide",
+      "status": "ready",
       "referenceFiles": [],
       "frameId": "frame-h02-s04-c03-seg01b-cu-v3r",
       "generatedVersions": [],
@@ -144046,16 +144092,16 @@
         "canonicalStartMediaPath": "storyboard/canonical_start_frames/H02-S04-C03_CANONICAL_START.png",
         "canonicalStartSha256": "4383d405989f4f7c2e36caf308e75a588615a793bc3880d98b4e7f502f6f7c10"
       },
-      "imageFile": "canonical_start_frames/H02-S04-C03_CANONICAL_START.png",
-      "fileName": "H02-S04-C03_CANONICAL_START.png",
-      "projectMediaPath": "media/storyboard/canonical_start_frames/H02-S04-C03_CANONICAL_START.png",
+      "imageFile": "frame-h02-s04-c03-seg01b-cu-v3r.v1.manual.png",
+      "fileName": "frame-h02-s04-c03-seg01b-cu-v3r.v1.manual.png",
+      "projectMediaPath": "media/storyboard/frame-h02-s04-c03-seg01b-cu-v3r.v1.manual.png",
       "projectMediaBytes": 2150672,
       "projectMediaSha256": "4383D405989F4F7C2E36CAF308E75A588615A793BC3880D98B4E7F502F6F7C10",
-      "missingGuide": true,
+      "missingGuide": false,
       "startingImageBinding": {
-        "source": "corrected_canonical_start_zip",
-        "appliedAt": "2026-08-22T03:13:16.952Z",
-        "sha256": "4383D405989F4F7C2E36CAF308E75A588615A793BC3880D98B4E7F502F6F7C10"
+        "source": "user_manual_still",
+        "file": "frame-h02-s04-c03-seg01b-cu-v3r.v1.manual.png",
+        "appliedAt": "2026-08-22T06:57:19.339675+00:00"
       }
     },
     "segment-h02-s04-c03-seg02": {
@@ -144620,7 +144666,7 @@
       "prompt": "One continuous 5.0-second live-action 35mm anamorphic facial close-up in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 85mm facial close-up, eight-degree Dutch, three-quarter camera right. Subject: the same elderly Adam, weathered lined face, dust-dry beard, exhausted eyes, one face only on the front of the head. The speaker is delivering this line in post (do not render readable text): Never again. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head.",
       "type": "image",
       "isEndFrame": false,
-      "status": "needs_guide",
+      "status": "ready",
       "referenceFiles": [],
       "frameId": "frame-h02-s04-c05-seg02b-cu-v3r",
       "generatedVersions": [],
@@ -144648,16 +144694,16 @@
         "promptHash": "982a54423a3d4bb4563c5f80ffed9f0eb26e1f254aaf349eceb6bcc9a3fbd675",
         "importedAt": "2026-08-21T17:11:15.962Z"
       },
-      "imageFile": "canonical_start_frames/H02-S04-C05_CANONICAL_START.png",
-      "fileName": "H02-S04-C05_CANONICAL_START.png",
-      "projectMediaPath": "media/storyboard/canonical_start_frames/H02-S04-C05_CANONICAL_START.png",
+      "imageFile": "frame-h02-s04-c05-seg02b-cu-v3r.v1.manual.png",
+      "fileName": "frame-h02-s04-c05-seg02b-cu-v3r.v1.manual.png",
+      "projectMediaPath": "media/storyboard/frame-h02-s04-c05-seg02b-cu-v3r.v1.manual.png",
       "projectMediaBytes": 2991362,
       "projectMediaSha256": "3A8BB8C1CF1B5E749B39F555FDFBE4114A42A7E212E2B71FFC292AAB1B030013",
-      "missingGuide": true,
+      "missingGuide": false,
       "startingImageBinding": {
-        "source": "corrected_canonical_start_zip",
-        "appliedAt": "2026-08-22T03:13:16.956Z",
-        "sha256": "3A8BB8C1CF1B5E749B39F555FDFBE4114A42A7E212E2B71FFC292AAB1B030013"
+        "source": "user_manual_still",
+        "file": "frame-h02-s04-c05-seg02b-cu-v3r.v1.manual.png",
+        "appliedAt": "2026-08-22T06:57:19.339675+00:00"
       }
     },
     "segment-h02-s04-c05-seg03": {
@@ -146237,7 +146283,7 @@
       "prompt": "One continuous 5.0-second live-action 35mm anamorphic coverage shot in the physically built basalt Court of Accusation. Photographed human skin and hair, coarse ancient linen, matte hand-forged iron, practical smoke and ash, restrained ember key light, weak cool rear separation, natural gravity and lens falloff. Camera: 40mm medium including chains and iron tree. Subject: the same older Moses, desert-worn face, grey-white beard, firm gaze, one face only on the front of the head. The speaker is delivering this line in post (do not render readable text): You do not wait alone. Mouth begins slightly parted as if speech has just started; eyes stay alive; no subtitle, no caption, no logo. All described actor and camera motion finishes 0.5 seconds before the end. The resulting composition remains locked through the final twelve frames; only minimal breathing, smoke and sparse ash continue. No Jesus face, no modern objects, no malformed anatomy, one face only on the front of any head.",
       "type": "image",
       "isEndFrame": false,
-      "status": "needs_guide",
+      "status": "ready",
       "referenceFiles": [],
       "frameId": "frame-h02-s04-c01-seg03b-cu-v3r",
       "generatedVersions": [],
@@ -146265,16 +146311,16 @@
         "promptHash": "71e09aa31e7f69292fc1278c7202fdc73ce4a7e20016f8111ced210f93ba4aa3",
         "importedAt": "2026-08-21T17:11:15.962Z"
       },
-      "imageFile": "canonical_start_frames/H02-S04-C01_CANONICAL_START.png",
-      "fileName": "H02-S04-C01_CANONICAL_START.png",
-      "projectMediaPath": "media/storyboard/canonical_start_frames/H02-S04-C01_CANONICAL_START.png",
-      "projectMediaBytes": 2209705,
-      "projectMediaSha256": "C9BEBD3E53BCDAF81BD17290FF65DBF7D1A362CB306BFFE986F63CC5C5D4974C",
-      "missingGuide": true,
+      "imageFile": "frame-h02-s04-c01-seg03b-cu-v3r.v1.manual.png",
+      "fileName": "frame-h02-s04-c01-seg03b-cu-v3r.v1.manual.png",
+      "projectMediaPath": "media/storyboard/frame-h02-s04-c01-seg03b-cu-v3r.v1.manual.png",
+      "projectMediaBytes": null,
+      "projectMediaSha256": null,
+      "missingGuide": false,
       "startingImageBinding": {
-        "source": "corrected_canonical_start_zip",
-        "appliedAt": "2026-08-22T03:13:16.950Z",
-        "sha256": "C9BEBD3E53BCDAF81BD17290FF65DBF7D1A362CB306BFFE986F63CC5C5D4974C"
+        "source": "user_manual_still",
+        "file": "frame-h02-s04-c01-seg03b-cu-v3r.v1.manual.png",
+        "appliedAt": "2026-08-22T06:57:19.339675+00:00"
       }
     }
   },
@@ -179974,5 +180020,5 @@
       "importedAt": "2026-08-21T17:11:15.962Z"
     }
   },
-  "updatedAt": "2026-08-22T03:49:14.315Z"
+  "updatedAt": "2026-08-22T06:59:50.610Z"
 }

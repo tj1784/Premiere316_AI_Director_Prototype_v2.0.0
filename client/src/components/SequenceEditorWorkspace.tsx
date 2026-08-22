@@ -38,6 +38,59 @@ import {
   videoClipAtTime
 } from "../sequence-editor-state.js";
 
+
+
+async function filesFromDataTransfer(dataTransfer: DataTransfer) {
+  const collected: File[] = [];
+  const walkEntry = async (entry: any) => {
+    if (!entry) return;
+    if (entry.isFile) {
+      const file = await new Promise<File>((resolve, reject) => entry.file(resolve, reject));
+      collected.push(file);
+      return;
+    }
+    if (entry.isDirectory) {
+      const reader = entry.createReader();
+      const readBatch = () => new Promise<any[]>((resolve, reject) => reader.readEntries(resolve, reject));
+      let batch: any[] = [];
+      do {
+        batch = await readBatch();
+        for (const child of batch) await walkEntry(child);
+      } while (batch.length);
+    }
+  };
+  const items = [...(dataTransfer.items || [])];
+  let walked = false;
+  for (const item of items) {
+    const entry = (item as any).webkitGetAsEntry?.();
+    if (entry) {
+      walked = true;
+      await walkEntry(entry);
+    }
+  }
+  if (!walked) collected.push(...[...(dataTransfer.files || [])]);
+  return collected;
+}
+
+function transferHasFiles(dataTransfer: DataTransfer | null) {
+  if (!dataTransfer) return false;
+  if (dataTransfer.files?.length) return true;
+  return [...(dataTransfer.items || [])].some((item) => item.kind === "file" || Boolean((item as any).webkitGetAsEntry?.()));
+}
+
+function selectedVideoSegmentId(clip: any, videos: any[]) {
+  if (!clip || clip.track !== "V1") return "";
+  const direct = String(clip.segmentId || clip.origin?.segmentId || "").trim();
+  if (direct) return direct;
+  const clipId = String(clip.origin?.clipId || "").trim();
+  const source = String(clip.origin?.source || clip.sourceFile || "").trim();
+  const match = (videos || []).find((item: any) =>
+    (clipId && String(item.clipId || "") === clipId)
+    || (source && [item.source, item.relativeFile, item.id, item.sourceFile].some((value) => String(value || "") === source))
+  );
+  return String(match?.segmentId || "").trim();
+}
+
 type TakeFilter = "active" | "latest" | "all";
 type LibraryTab = "video" | "audio";
 type TrackName = "V1" | "A1" | "M1";
@@ -165,7 +218,7 @@ function mediaTitle(item: any) {
 
 function Waveform({ color = "#35c6bc" }: { color?: string }) {
   return (
-    <span className="sequence-edit-waveform" aria-hidden="true" style={{ position: "absolute", inset: 3, display: "flex", alignItems: "center", gap: 1, opacity: .8, overflow: "hidden" }}>
+    <span className="sequence-edit-waveform" aria-hidden="true" style={{ position: "absolute", top: 12, right: 3, bottom: 3, left: 3, display: "flex", alignItems: "flex-end", gap: 1, opacity: .8, overflow: "hidden" }}>
       {Array.from({ length: 48 }, (_, index) => (
         <i key={index} style={{ flex: "1 0 1px", height: `${22 + ((index * 29) % 72)}%`, background: color, borderRadius: 1 }} />
       ))}
@@ -187,7 +240,7 @@ export default function SequenceEditorWorkspace(
   const [documentState, setDocumentState] = useState<any>(null);
   const [library, setLibrary] = useState<any>({ videos: [], audio: [], counts: {} });
   const [sequence, setSequence] = useState<any>(null);
-  const [takeFilter, setTakeFilter] = useState<TakeFilter>("active");
+  const [takeFilter, setTakeFilter] = useState<TakeFilter>("all");
   const [libraryTab, setLibraryTab] = useState<LibraryTab>("video");
   const [search, setSearch] = useState("");
   const [sceneFilter, setSceneFilter] = useState("");
@@ -229,6 +282,7 @@ export default function SequenceEditorWorkspace(
   const audioUploadRef = useRef<HTMLInputElement>(null);
   const mediaRefreshBusyRef = useRef(false);
   const autoProbeAttemptRef = useRef(new Set<string>());
+  const playClockRef = useRef<{ originSec: number; originMs: number } | null>(null);
 
   const replaceLoadedDocument = useCallback((payload: any) => {
     const nextDocument = payload.document || {};
@@ -245,7 +299,7 @@ export default function SequenceEditorWorkspace(
     setConflict(null);
     setUndoStack([]);
     setRedoStack([]);
-    setSelectedClipId(nextSequence.videoClips?.[0]?.id || nextSequence.audioClips?.[0]?.id || "");
+    setSelectedClipId("");
     setPlayheadSec(0);
     const firstMedia = payload.library?.videos?.find((item: any) => item.available && item.isActiveTake)
       || payload.library?.videos?.find((item: any) => item.available)
@@ -453,11 +507,20 @@ export default function SequenceEditorWorkspace(
     return [...byId.entries()].sort((left, right) => left[1].localeCompare(right[1]));
   }, [videos]);
 
+  const selectedSegmentId = useMemo(
+    () => selectedVideoSegmentId(selectedIsVideo ? selectedTimelineClip : null, videos),
+    [selectedIsVideo, selectedTimelineClip, videos]
+  );
+
   const filteredVideos = useMemo(() => {
     const query = search.trim().toLowerCase();
     return videos.filter((item: any) => {
+      if (selectedSegmentId) {
+        const itemSeg = String(item.segmentId || "").trim();
+        if (itemSeg && itemSeg !== selectedSegmentId) return false;
+      }
       if (takeFilter === "active" && !item.isActiveTake) return false;
-      if (takeFilter === "latest" && !item.isLatestTake) return false;
+      if (takeFilter === "latest") { /* All Takes is takeFilter all; latest is not shown */ }
       if (sceneFilter && String(item.sceneId || "") !== sceneFilter) return false;
       if (query && ![
         item.name, item.fileName, item.clipName, item.sceneTitle, item.segmentId, item.prompt
@@ -468,7 +531,7 @@ export default function SequenceEditorWorkspace(
       || finite(right.takeNumber) - finite(left.takeNumber)
       || String(left.name || "").localeCompare(String(right.name || ""))
     );
-  }, [sceneFilter, search, takeFilter, videos]);
+  }, [sceneFilter, search, selectedSegmentId, takeFilter, videos]);
 
   const filteredAudio = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -773,26 +836,33 @@ export default function SequenceEditorWorkspace(
   }, [programPlaying, syncAuxiliaryAudio]);
 
   useEffect(() => {
-    seekProgramElement(playheadSec, programPlaying);
-  }, [currentProgramClip?.id, currentProgramUrl]);
-
-  useEffect(() => {
     if (!programPlaying) {
+      playClockRef.current = null;
       programVideoRef.current?.pause();
       syncAuxiliaryAudio(playheadSec, false);
       return;
     }
-    seekProgramElement(playheadSec, true);
-  }, [programPlaying]);
-
-  useEffect(() => {
-    if (!programPlaying || currentProgramClip || totalDuration <= 0 || playheadSec >= totalDuration) return;
-    const startedAt = playheadSec;
-    const startedWallTime = performance.now();
+    playClockRef.current = { originSec: playheadSec, originMs: performance.now() };
+    let leftClipId = currentProgramClip?.id || "";
     let animationFrame = 0;
     const tick = (now: number) => {
-      const next = Math.min(totalDuration, startedAt + ((now - startedWallTime) / 1000));
+      const clock = playClockRef.current;
+      if (!clock) return;
+      const next = Math.min(totalDuration, clock.originSec + ((now - clock.originMs) / 1000));
       setPlayheadSec(next);
+      const clip = sequenceRef.current ? videoClipAtTime(sequenceRef.current, next) : null;
+      if (clip && leftClipId && clip.id !== leftClipId) leftClipId = clip.id;
+      const element = programVideoRef.current;
+      if (element) {
+        element.loop = false;
+        if (clip) {
+          const desired = finite(clip.sourceInSec) + clamp(next - finite(clip.timelineStartSec), 0, Math.max(.001, finite(clip.durationSec)));
+          if (Math.abs(element.currentTime - desired) > 0.35) {
+            try { element.currentTime = desired; } catch {}
+          }
+          if (element.paused) void element.play().catch(() => setProgramPlaying(false));
+        } else if (!element.paused) element.pause();
+      }
       syncAuxiliaryAudio(next, next < totalDuration);
       if (next >= totalDuration) {
         setProgramPlaying(false);
@@ -802,36 +872,24 @@ export default function SequenceEditorWorkspace(
     };
     animationFrame = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [currentProgramClip?.id, programPlaying, syncAuxiliaryAudio, totalDuration]);
+  }, [programPlaying, syncAuxiliaryAudio, totalDuration]);
 
   const setProgramTime = (time: number, shouldPlay = programPlaying) => {
     const next = clamp(time, 0, Math.max(0, totalDuration));
     setPlayheadSec(next);
+    if (shouldPlay) playClockRef.current = { originSec: next, originMs: performance.now() };
+    else playClockRef.current = null;
     seekProgramElement(next, shouldPlay);
   };
 
   const programTimeUpdate = () => {
+    if (programPlaying) return;
     const element = programVideoRef.current;
     const clip = currentProgramClip;
-    if (!element || !clip || !programPlaying) return;
+    if (!element || !clip) return;
     const local = element.currentTime - finite(clip.sourceInSec);
     const globalTime = finite(clip.timelineStartSec) + Math.max(0, local);
-    const clipEnd = finite(clip.timelineStartSec) + finite(clip.durationSec);
-    if (globalTime >= clipEnd - .025 || element.currentTime >= finite(clip.sourceOutSec) - .025) {
-      const nextIndex = sequenceRef.current.videoClips.findIndex((item: any) => item.id === clip.id) + 1;
-      const nextClip = sequenceRef.current.videoClips[nextIndex];
-      if (nextClip) {
-        setProgramTime(nextClip.timelineStartSec, true);
-      } else if (totalDuration > clipEnd + (1 / fps)) {
-        setProgramTime(Math.min(totalDuration, clipEnd + (0.5 / fps)), true);
-      } else {
-        setProgramPlaying(false);
-        setProgramTime(Math.min(totalDuration, clipEnd), false);
-      }
-      return;
-    }
-    setPlayheadSec(globalTime);
-    syncAuxiliaryAudio(globalTime, true);
+    setPlayheadSec(clamp(globalTime, 0, Math.max(0, totalDuration)));
   };
 
   const beginVideoTrim = (event: React.PointerEvent, clip: any, edge: "start" | "end") => {
@@ -937,6 +995,52 @@ export default function SequenceEditorWorkspace(
       },
       updatedAt: new Date().toISOString()
     });
+  };
+
+
+  const importDroppedMedia = async (fileList: File[]) => {
+    const files = fileList.filter((file) => /\.(png|jpe?g|webp|gif|mp4|mov|mkv|webm|m4v|avi|mp3|wav|flac|m4a|aac|ogg|opus|aif|aiff)$/i.test(file.name));
+    if (!files.length || !slug) return;
+    const videos = files.filter((file) => /\.(mp4|mov|mkv|webm|m4v|avi)$/i.test(file.name));
+    const audios = files.filter((file) => /\.(mp3|wav|flac|m4a|aac|ogg|opus|aif|aiff)$/i.test(file.name));
+    setUploading(true);
+    let importedAudio = 0;
+    let importedVideo = 0;
+    try {
+      for (const file of audios) {
+        try {
+          const body = new FormData();
+          body.append("file", file);
+          await jsonRequest(`/api/projects/${encodeURIComponent(slug)}/editor/media/audio`, { method: "POST", body });
+          importedAudio += 1;
+        } catch {
+          /* skip failed copies; never overwrite */
+        }
+      }
+      for (const file of videos) {
+        try {
+          const body = new FormData();
+          body.append("file", file);
+          await jsonRequest(`/api/projects/${encodeURIComponent(slug)}/editor/media/video`, { method: "POST", body });
+          importedVideo += 1;
+        } catch {
+          /* skip failed copies; never overwrite */
+        }
+      }
+      await refreshMedia(true);
+      setTakeFilter("all");
+      if (importedVideo) setLibraryTab("video");
+      else if (importedAudio) setLibraryTab("audio");
+      setNotice(`Imported ${importedAudio + importedVideo} item${importedAudio + importedVideo === 1 ? "" : "s"} (${importedAudio} audio, ${importedVideo} video). New copies, unapproved, no overwrite.`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onFolderDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    void filesFromDataTransfer(event.dataTransfer).then((dropped) => void importDroppedMedia(dropped));
   };
 
   const uploadAudio = async (file: File) => {
@@ -1087,13 +1191,37 @@ export default function SequenceEditorWorkspace(
     );
   }
 
+
+  const playAudioLane = (track: "A1" | "M1", clip?: any) => {
+    const clips = (sequenceRef.current?.audioClips || []).filter((item: any) => item.track === track);
+    const atPlayhead = clips.find((item: any) => {
+      const start = finite(item.timelineStartSec);
+      return playheadSec >= start && playheadSec < start + Math.max(.001, finite(item.durationSec));
+    });
+    const upcoming = clips.find((item: any) => finite(item.timelineStartSec) + finite(item.durationSec) > playheadSec + 0.01);
+    const target = clip || atPlayhead || upcoming || clips[0];
+    if (!target) {
+      setNotice(`No clips on ${track} to play.`);
+      return;
+    }
+    if (programPlaying && !clip) {
+      setProgramPlaying(false);
+      return;
+    }
+    setSelectedClipId(target.id);
+    const start = finite(clip ? clip.timelineStartSec : (atPlayhead ? playheadSec : target.timelineStartSec));
+    setProgramTime(start, true);
+    setProgramPlaying(true);
+  };
+
   const trackRow = (track: TrackName, title: string, children: React.ReactNode, testId: string) => {
     const settings = sequence.trackSettings?.[track] || {};
     return (
       <div className={`sequence-edit-track-row sequence-edit-track-${track.toLowerCase()}`} data-testid={testId} style={{ display: "grid", gridTemplateColumns: "128px 1fr", height: track === "V1" ? 72 : 50, borderBottom: "1px solid #1d2734" }}>
-        <div className="sequence-edit-track-label" style={{ position: "sticky", left: 0, zIndex: 15, display: "grid", gridTemplateColumns: "32px 1fr 25px 25px", alignItems: "center", gap: 4, padding: "0 7px", background: "#121a25", borderRight: "1px solid #293547" }}>
+        <div className="sequence-edit-track-label" style={{ position: "sticky", left: 0, zIndex: 15, display: "grid", gridTemplateColumns: track === "V1" ? "32px 1fr 25px 25px" : "28px 1fr 22px 22px 22px", alignItems: "center", gap: 4, padding: "0 7px", background: "#121a25", borderRight: "1px solid #293547" }}>
           <b className="sequence-edit-track-code" style={{ width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid #3a485d", borderRadius: 5, color: track === "M1" ? "#c2a4ff" : track === "A1" ? "#72d6cf" : "#efb178" }}>{track}</b>
           <span className="sequence-edit-track-name" style={{ fontSize: 10, fontWeight: 750, color: "#aeb9c8" }}>{title}</span>
+          {track === "V1" ? null : <button type="button" className="sequence-edit-track-play" data-testid={`sequence-editor-${track.toLowerCase()}-play`} title={programPlaying ? `Pause ${track}` : `Play ${track}`} style={{ ...button, minHeight: 24, padding: 0, color: programPlaying ? "#7fd7ff" : "#7f8da1" }} onClick={(event) => { event.stopPropagation(); playAudioLane(track as "A1" | "M1"); }}>{programPlaying ? "❚❚" : "▶"}</button>}
           <button className="sequence-edit-track-mute" data-testid={`sequence-editor-${track.toLowerCase()}-mute`} title={`${settings.muted ? "Unmute" : "Mute"} ${track}`} style={{ ...button, minHeight: 24, padding: 0, color: settings.muted ? "#ff9a76" : "#7f8da1" }} onClick={() => patchTrack(track, { muted: !settings.muted })}>M</button>
           <button className="sequence-edit-track-lock" data-testid={`sequence-editor-${track.toLowerCase()}-lock`} title={`${settings.locked ? "Unlock" : "Lock"} ${track}`} style={{ ...button, minHeight: 24, padding: 0, color: settings.locked ? "#d3bd73" : "#7f8da1" }} onClick={() => patchTrack(track, { locked: !settings.locked })}>{settings.locked ? "▣" : "□"}</button>
         </div>
@@ -1105,13 +1233,17 @@ export default function SequenceEditorWorkspace(
             setProgramTime((event.clientX - rect.left) / zoom, false);
             setProgramPlaying(false);
           }}
-          onDragOver={track === "V1" ? (event) => event.preventDefault() : undefined}
-          onDrop={track === "V1" ? (event) => {
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => {
             event.preventDefault();
-            if (!dragVideoId || sequence.trackSettings?.V1?.locked) return;
+            if (transferHasFiles(event.dataTransfer)) {
+              onFolderDrop(event);
+              return;
+            }
+            if (track !== "V1" || !dragVideoId || sequence.trackSettings?.V1?.locked) return;
             commit(moveVideoClip(sequenceRef.current, dragVideoId, sequenceRef.current.videoClips.length), dragVideoId);
             setDragVideoId("");
-          } : undefined}
+          }}
         >
           {children}
           <i className="sequence-edit-playhead" data-testid={`sequence-editor-${track.toLowerCase()}-playhead`} style={{ pointerEvents: "none", position: "absolute", zIndex: 12, top: 0, bottom: 0, left: playheadSec * zoom, width: 1, background: "#31a6ff", boxShadow: "0 0 8px rgba(49,166,255,.5)" }} />
@@ -1158,7 +1290,7 @@ export default function SequenceEditorWorkspace(
       ) : null}
 
       <section className="sequence-edit-top" style={{ display: "grid", gridTemplateColumns: "320px minmax(630px, 1fr) 290px", gap: 8, minWidth: 1260, minHeight: 0 }}>
-        <aside className="sequence-edit-library" style={{ ...panel, display: "flex", flexDirection: "column" }}>
+        <aside className="sequence-edit-library" data-testid="sequence-editor-library-drop" style={{ ...panel, display: "flex", flexDirection: "column" }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }} onDrop={onFolderDrop}>
           <div className="sequence-edit-panel-heading" style={{ height: 39, flex: "0 0 39px", display: "flex", alignItems: "center", gap: 6, padding: "0 9px", borderBottom: "1px solid #293447" }}>
             <b>LTX TAKES + MEDIA</b>
             <span className="sequence-edit-library-counts" data-testid="sequence-editor-library-counts" style={{ marginLeft: "auto", color: "#7f8da1", fontSize: 10 }}>{library.counts?.playableVideos || 0}/{library.counts?.videos || videos.length} video · {library.counts?.playableAudio || 0} audio</span>
@@ -1177,8 +1309,8 @@ export default function SequenceEditorWorkspace(
           {libraryTab === "video" ? (
             <>
               <div className="sequence-edit-take-filters" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4, padding: "0 7px 7px" }}>
-                {(["active", "latest", "all"] as TakeFilter[]).map((filter) => (
-                  <button key={filter} className={`sequence-edit-take-filter-${filter}`} data-testid={`sequence-editor-take-filter-${filter}`} style={{ ...button, minHeight: 26, padding: 3, borderColor: takeFilter === filter ? "#e18a48" : "#354359", color: takeFilter === filter ? "#ffc69d" : "#9ba8b8" }} onClick={() => setTakeFilter(filter)}>{filter === "active" ? "Active" : filter === "latest" ? "Latest / segment" : "All takes"}</button>
+                {(["active", "all"] as TakeFilter[]).map((filter) => (
+                  <button key={filter} className={`sequence-edit-take-filter-${filter}`} data-testid={`sequence-editor-take-filter-${filter}`} style={{ ...button, minHeight: 26, padding: 3, borderColor: takeFilter === filter ? "#e18a48" : "#354359", color: takeFilter === filter ? "#ffc69d" : "#9ba8b8" }} onClick={() => setTakeFilter(filter)}>{filter === "active" ? "Active" : "All Takes"}</button>
                 ))}
               </div>
               <button className="sequence-edit-append-story-cut" data-testid="sequence-editor-append-active-cut" style={{ ...primaryButton, margin: "0 7px 7px" }} disabled={appendingCut} onClick={() => void appendActiveCut()}>{appendingCut ? "Probing active takes…" : "＋ Append Active Story Cut"}</button>
@@ -1300,7 +1432,8 @@ export default function SequenceEditorWorkspace(
                   src={currentProgramUrl}
                   preload="auto"
                   playsInline
-                  onLoadedMetadata={() => { setProgramPlaybackError(null); seekProgramElement(playheadSec, programPlaying); }}
+                  loop={false}
+                  onLoadedMetadata={() => { setProgramPlaybackError(null); if (!programPlaying) seekProgramElement(playheadSec, false); }}
                   onCanPlay={() => setProgramPlaybackError(null)}
                   onError={() => setProgramPlaybackError({ id: currentProgramClip.id, message: "Program media could not be loaded. Refresh Media or choose another take." })}
                   onTimeUpdate={programTimeUpdate}
@@ -1318,7 +1451,7 @@ export default function SequenceEditorWorkspace(
                 <b style={{ minWidth: 82, color: "#2fa8ff", fontVariantNumeric: "tabular-nums" }}>{timecode(playheadSec, fps)}</b>
                 <button className="sequence-edit-program-start" style={button} onClick={() => setProgramTime(0, false)}>│◀</button>
                 <button className="sequence-edit-program-step-back" style={button} onClick={() => setProgramTime(playheadSec - (1 / fps), false)}>◀</button>
-                <button className="sequence-edit-program-play" data-testid="sequence-editor-program-play" style={primaryButton} disabled={!sequence.videoClips.length} onClick={() => {
+                <button className="sequence-edit-program-play" data-testid="sequence-editor-program-play" style={primaryButton} disabled={!sequence.videoClips.length && !(sequence.audioClips || []).length} onClick={() => {
                   if (programPlaying) setProgramPlaying(false);
                   else {
                     if (playheadSec >= totalDuration - (1 / fps)) setProgramTime(0, true);
@@ -1359,6 +1492,24 @@ export default function SequenceEditorWorkspace(
                     <label className="sequence-edit-field-audio-mute" style={{ ...labelStyle, display: "flex", alignItems: "center" }}><input data-testid="sequence-editor-audio-mute" type="checkbox" checked={Boolean(selectedTimelineClip.muted)} onChange={(event) => patchSelectedClip({ muted: event.target.checked })} /> Mute</label>
                     <label className="sequence-edit-field-audio-loop" style={{ ...labelStyle, display: "flex", alignItems: "center" }}><input data-testid="sequence-editor-audio-loop" type="checkbox" checked={Boolean(selectedTimelineClip.loop)} onChange={(event) => patchSelectedClip({ loop: event.target.checked })} /> Loop</label>
                   </div>
+                  <nav className="seq-audio-inspector-agency" data-testid="seq-audio-inspector-agency" aria-label="Audio clip actions" style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                    {(["generate", "replace", "upload", "edit", "versions", "review"] as const).map((action) => (
+                      <button
+                        key={action}
+                        type="button"
+                        style={button}
+                        data-testid={`seq-audio-inspector-${action}`}
+                        onClick={() => openSequenceSlot({
+                          sourceRoute: "/sequence",
+                          sourceEntity: { type: "sequence", id: String(selectedTimelineClip.id), label: selectedTimelineClip.name || "Audio clip" },
+                          requirement: { relationship: "clip.source", category: "sound", expectedMediaType: "audio" },
+                          initialAction: action,
+                          slotState: selectedTimelineClip.sourceFile ? "unapproved" : "missing",
+                          returnFocusId: `seq-audio-inspector-${action}`
+                        })}
+                      >{action === "versions" ? "Versions" : action[0].toUpperCase() + action.slice(1)}</button>
+                    ))}
+                  </nav>
                 </>
               )}
               <dl className="sequence-edit-inspector-facts" style={{ margin: 0, paddingTop: 7, borderTop: "1px solid #293447", display: "grid", gap: 5 }}><div style={{ display: "flex", justifyContent: "space-between" }}><dt style={{ color: "#7d8b9f" }}>Start</dt><dd style={{ margin: 0 }}>{timecode(selectedTimelineClip.timelineStartSec, fps)}</dd></div><div style={{ display: "flex", justifyContent: "space-between" }}><dt style={{ color: "#7d8b9f" }}>Duration</dt><dd style={{ margin: 0 }}>{seconds(selectedTimelineClip.durationSec)}</dd></div></dl>
@@ -1369,7 +1520,7 @@ export default function SequenceEditorWorkspace(
         </aside>
       </section>
 
-      <section className="sequence-edit-timeline" data-testid="sequence-editor-timeline" style={{ ...panel, minWidth: 1260, display: "flex", flexDirection: "column" }}>
+      <section className="sequence-edit-timeline" data-testid="sequence-editor-timeline" style={{ ...panel, minWidth: 1260, display: "flex", flexDirection: "column" }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }} onDrop={onFolderDrop}>
         <div className="sequence-edit-timeline-toolbar" style={{ height: 42, flex: "0 0 42px", display: "flex", alignItems: "center", gap: 6, padding: "0 9px", borderBottom: "1px solid #293447" }}>
           <button className="sequence-edit-tool-select" style={{ ...button, color: "#7fb4ff" }}>➤ Select</button>
           <button className="sequence-edit-tool-split" data-testid="sequence-editor-split" style={button} disabled={!sequence.videoClips.length} onClick={splitSelected}>✂ Split (S)</button>
@@ -1400,6 +1551,10 @@ export default function SequenceEditorWorkspace(
                 onDrop={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
+                  if (transferHasFiles(event.dataTransfer)) {
+                    onFolderDrop(event);
+                    return;
+                  }
                   if (!dragVideoId || dragVideoId === clip.id || sequence.trackSettings?.V1?.locked) return;
                   const sourceIndex = sequenceRef.current.videoClips.findIndex((item: any) => item.id === dragVideoId);
                   const rect = event.currentTarget.getBoundingClientRect();
@@ -1419,11 +1574,11 @@ export default function SequenceEditorWorkspace(
             )), "sequence-editor-track-v1")}
 
             {trackRow("A1", "SOUND / DIALOGUE", sequence.audioClips.filter((clip: any) => clip.track === "A1").map((clip: any) => (
-              <div key={clip.id} className="sequence-edit-audio-clip-a1" data-testid={`sequence-editor-audio-clip-${clip.id}`} onPointerDown={(event) => beginAudioMove(event, clip)} style={{ position: "absolute", zIndex: selectedClipId === clip.id ? 6 : 3, left: clip.timelineStartSec * zoom, top: 5, width: Math.max(25, clip.durationSec * zoom), height: 40, border: `1px solid ${selectedClipId === clip.id ? "#fff" : "#187976"}`, borderRadius: 4, overflow: "hidden", background: clip.muted ? "rgba(53,62,70,.7)" : "rgba(15,111,108,.55)", cursor: sequence.trackSettings?.A1?.locked ? "not-allowed" : "grab" }}><Waveform /><span style={{ position: "relative", zIndex: 2, padding: "5px 8px", display: "block", color: "#d9fffb", fontSize: 9, textShadow: "0 1px 2px #000", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", pointerEvents: "none" }}>{clip.name} · {finite(clip.volumeDb).toFixed(1)} dB</span></div>
+              <div key={clip.id} className="sequence-edit-audio-clip-a1" data-testid={`sequence-editor-audio-clip-${clip.id}`} onPointerDown={(event) => beginAudioMove(event, clip)} style={{ position: "absolute", zIndex: selectedClipId === clip.id ? 6 : 3, left: clip.timelineStartSec * zoom, top: 12, width: Math.max(25, clip.durationSec * zoom), height: 32, border: `1px solid ${selectedClipId === clip.id ? "#fff" : "#187976"}`, borderRadius: 4, overflow: "hidden", background: clip.muted ? "rgba(53,62,70,.7)" : "rgba(15,111,108,.55)", cursor: sequence.trackSettings?.A1?.locked ? "not-allowed" : "grab" }}><Waveform /><button type="button" className="sequence-edit-audio-clip-play" data-testid={`sequence-editor-audio-play-${clip.id}`} title="Play this clip" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); }} onClick={(event) => { event.stopPropagation(); playAudioLane("A1", clip); }} style={{ position: "absolute", zIndex: 9, right: 3, bottom: 3, width: 18, height: 16, padding: 0, border: "1px solid #2d8f88", borderRadius: 3, background: "rgba(8,20,22,.82)", color: "#d9fffb", fontSize: 8, cursor: "pointer" }}>▶</button><span style={{ position: "relative", zIndex: 2, padding: "5px 8px", display: "block", color: "#d9fffb", fontSize: 9, textShadow: "0 1px 2px #000", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", pointerEvents: "none" }}>{clip.name} · {finite(clip.volumeDb).toFixed(1)} dB</span></div>
             )), "sequence-editor-track-a1")}
 
             {trackRow("M1", "MUSIC", sequence.audioClips.filter((clip: any) => clip.track === "M1").map((clip: any) => (
-              <div key={clip.id} className="sequence-edit-audio-clip-m1" data-testid={`sequence-editor-audio-clip-${clip.id}`} onPointerDown={(event) => beginAudioMove(event, clip)} style={{ position: "absolute", zIndex: selectedClipId === clip.id ? 6 : 3, left: clip.timelineStartSec * zoom, top: 5, width: Math.max(25, clip.durationSec * zoom), height: 40, border: `1px solid ${selectedClipId === clip.id ? "#fff" : "#7755b6"}`, borderRadius: 4, overflow: "hidden", background: clip.muted ? "rgba(53,62,70,.7)" : "rgba(91,56,151,.55)", cursor: sequence.trackSettings?.M1?.locked ? "not-allowed" : "grab" }}><Waveform color="#ac82f2" /><span style={{ position: "relative", zIndex: 2, padding: "5px 8px", display: "block", color: "#eadfff", fontSize: 9, textShadow: "0 1px 2px #000", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", pointerEvents: "none" }}>{clip.name} · {finite(clip.volumeDb).toFixed(1)} dB{clip.loop ? " · LOOP" : ""}</span></div>
+              <div key={clip.id} className="sequence-edit-audio-clip-m1" data-testid={`sequence-editor-audio-clip-${clip.id}`} onPointerDown={(event) => beginAudioMove(event, clip)} style={{ position: "absolute", zIndex: selectedClipId === clip.id ? 6 : 3, left: clip.timelineStartSec * zoom, top: 12, width: Math.max(25, clip.durationSec * zoom), height: 32, border: `1px solid ${selectedClipId === clip.id ? "#fff" : "#7755b6"}`, borderRadius: 4, overflow: "hidden", background: clip.muted ? "rgba(53,62,70,.7)" : "rgba(91,56,151,.55)", cursor: sequence.trackSettings?.M1?.locked ? "not-allowed" : "grab" }}><Waveform color="#ac82f2" /><button type="button" className="sequence-edit-audio-clip-play" data-testid={`sequence-editor-audio-play-${clip.id}`} title="Play this clip" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); }} onClick={(event) => { event.stopPropagation(); playAudioLane("M1", clip); }} style={{ position: "absolute", zIndex: 9, right: 3, bottom: 3, width: 18, height: 16, padding: 0, border: "1px solid #7755b6", borderRadius: 3, background: "rgba(18,10,28,.82)", color: "#eadfff", fontSize: 8, cursor: "pointer" }}>▶</button><span style={{ position: "relative", zIndex: 2, padding: "5px 8px", display: "block", color: "#eadfff", fontSize: 9, textShadow: "0 1px 2px #000", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", pointerEvents: "none" }}>{clip.name} · {finite(clip.volumeDb).toFixed(1)} dB{clip.loop ? " · LOOP" : ""}</span></div>
             )), "sequence-editor-track-m1")}
           </div>
         </div>

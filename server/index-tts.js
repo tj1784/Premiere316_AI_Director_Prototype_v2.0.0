@@ -244,6 +244,20 @@ function includesAny(text, words) {
   return words.some((word) => text.includes(word));
 }
 
+export function parseEmotionVector(value) {
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (!text) return null;
+    try { value = JSON.parse(text); } catch { return null; }
+  }
+  if (!Array.isArray(value) || value.length < 8) return null;
+  const vector = value.slice(0, 8).map((item) => {
+    const number = Number(item);
+    return Number.isFinite(number) ? Math.max(0, Math.min(1.15, number)) : 0;
+  });
+  return vector.some((item) => item > 0) || value.length >= 8 ? vector : null;
+}
+
 export function emotionVectorFromStyle(style) {
   const text = String(style || "").toLowerCase();
   const vector = [0.015, 0.01, 0.015, 0.01, 0, 0.015, 0.01, 0.22];
@@ -595,8 +609,8 @@ export async function createIndexTtsGeneration(projectSlug, input = {}) {
     seed,
     emotionWeight,
     emotionLabels: [...INDEX_TTS_EMOTION_LABELS],
-    emotionVector: emotionVectorFromStyle(style),
-    emotionVectorSource: "premiere316-style-heuristic",
+    emotionVector: parseEmotionVector(input.emotionVector) || emotionVectorFromStyle(style),
+    emotionVectorSource: parseEmotionVector(input.emotionVector) ? "emotion-preset" : "premiere316-style-heuristic",
     voiceId: voice.id,
     reference: {
       file: voice.referenceFile,

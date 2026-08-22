@@ -200,10 +200,11 @@ import {
   registerStoryboardFrameReplacement
 } from "./storyboard-generation.js";
 import { startComfyOutputIngest } from "./comfy-output-ingest.js";
-import { readAaaWorkflow, writeAaaWorkflow, listWorkflows } from "./aaa-workflow.js";
+import { readAaaWorkflow, writeAaaWorkflow, listWorkflows, readWorkflowGraph } from "./aaa-workflow.js";
 import {
   editorWorkspace,
   importEditorAudio,
+  importEditorVideo,
   loadEditDocument,
   probeEditorMedia,
   saveEditSequence
@@ -790,6 +791,11 @@ app.all("/api/integrations/ltx/director/*", proxyDirectorApi);
 app.get("/api/aaa-workflow/library", (req, res) => {
   try { res.json({ ok: true, ...listWorkflows(String(req.query.q || "")) }); }
   catch (error) { res.status(500).json({ error: String(error.message || error) }); }
+});
+
+app.get("/api/aaa-workflow/graph", (req, res) => {
+  try { res.json({ ok: true, ...readWorkflowGraph({ rel: req.query.rel, id: req.query.id || req.query.workflowId }) }); }
+  catch (error) { res.status(404).json({ error: String(error.message || error) }); }
 });
 
 app.get("/api/aaa-workflow", (req, res) => {
@@ -2484,6 +2490,7 @@ app.post("/api/projects/:slug/assets/:assetId/promote", (req, res) => {
 // ---------- media import ----------
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
 const editorAudioUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 128 * 1024 * 1024, files: 1 } });
+const editorVideoUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 512 * 1024 * 1024, files: 1 } });
 const indexTtsAudioUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 64 * 1024 * 1024, files: 1, fields: 12 }
@@ -3434,6 +3441,7 @@ app.post(
         text: req.body?.text,
         style: req.body?.style,
         emotionWeight: req.body?.emotionWeight,
+        emotionVector: req.body?.emotionVector,
         language: req.body?.language,
         durationFactor: req.body?.durationFactor,
         seed: req.body?.seed
@@ -4041,6 +4049,14 @@ app.post("/api/projects/:slug/editor/media/probe", requireLocalSameOriginMutatio
 app.post("/api/projects/:slug/editor/media/audio", requireLocalSameOriginMutation, editorAudioUpload.single("file"), async (req, res) => {
   try {
     res.json({ imported: await importEditorAudio(req.params.slug, req.file) });
+  } catch (e) {
+    res.status(400).json({ error: String(e.message || e) });
+  }
+});
+
+app.post("/api/projects/:slug/editor/media/video", requireLocalSameOriginMutation, editorVideoUpload.single("file"), async (req, res) => {
+  try {
+    res.json({ imported: await importEditorVideo(req.params.slug, req.file) });
   } catch (e) {
     res.status(400).json({ error: String(e.message || e) });
   }

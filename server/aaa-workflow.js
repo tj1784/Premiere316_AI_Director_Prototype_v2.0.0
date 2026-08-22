@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { PACKAGE_ROOT } from "./paths.js";
+import { PACKAGE_ROOT, WORKFLOWS_DIR } from "./paths.js";
 
 export const WORKFLOW_ROOT = path.join(
   PACKAGE_ROOT,
@@ -178,7 +178,35 @@ function hellDelivery(graph) {
 
 export function readAaaWorkflow(rel) {
   const resolved = resolveWorkflowRel(rel || AAA_REL);
-  const graph = readGraph(resolved.abs);
+  let graph;
+  try {
+    graph = readGraph(resolved.abs);
+  } catch (error) {
+    return {
+      rel: resolved.rel,
+      file: resolved.abs,
+      name: resolved.rel === HARROWING_REL || resolved.rel === AAA_REL ? "Harrowing of Hell" : resolved.rel === AAA_FILE_REL ? "Harrowing AAA" : resolved.rel === DIRECTOR_REL ? "Harrowing LTX2.5 Director" : path.basename(resolved.rel, ".json"),
+      folder: resolved.rel.includes("/") ? resolved.rel.slice(0, resolved.rel.lastIndexOf("/")) : "",
+      isAaa: resolved.rel === AAA_REL,
+      seconds: 0,
+      width: 0,
+      height: 0,
+      fps: 0,
+      unet: "",
+      clip: "",
+      firstFrame: "",
+      useFirstFrame: false,
+      globalPrompt: "",
+      negativePrompt: "",
+      sampler: "euler",
+      pass1Sigmas: "",
+      pass2Sigmas: "",
+      pass1Steps: 0,
+      pass2Steps: 0,
+      loras: {},
+      loadError: String(error.message || error)
+    };
+  }
   const pass1 = hellSigmas(graph, 5723);
   const pass2 = hellSigmas(graph, 5724);
   return {
@@ -288,4 +316,58 @@ export function writeAaaWorkflow(config) {
     }
   }
   return { ...readAaaWorkflow(resolved.rel), segmentsUpdated: segments };
+}
+
+
+function findPackageWorkflow(id) {
+  const needle = String(id || "").trim().toLowerCase();
+  if (!needle) return null;
+  const hits = [];
+  function walk(dir) {
+    let entries = [];
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name.startsWith(".")) continue;
+        walk(full);
+        continue;
+      }
+      if (!entry.isFile() || !/\.(json)$/i.test(entry.name) || entry.name.startsWith(".")) continue;
+      const rel = path.relative(WORKFLOWS_DIR, full).replace(/\\/g, "/");
+      const hay = `${rel} ${entry.name}`.toLowerCase();
+      if (!hay.includes(needle)) continue;
+      hits.push({ rel, abs: full, ui: /\.ui\.json$/i.test(entry.name) || /\/ui\//i.test(rel) });
+    }
+  }
+  try { walk(WORKFLOWS_DIR); } catch { return null; }
+  hits.sort((a, b) => Number(b.ui) - Number(a.ui) || a.rel.localeCompare(b.rel));
+  if (!hits.length) return null;
+  return { rel: hits[0].rel, graph: readGraph(hits[0].abs), source: "package" };
+}
+
+export function readWorkflowGraph({ rel, id } = {}) {
+  const rawRel = String(rel || "").trim();
+  const rawId = String(id || "").trim();
+  if (rawRel) {
+    const resolved = resolveWorkflowRel(rawRel);
+    return { rel: resolved.rel, graph: readGraph(resolved.abs), source: "library" };
+  }
+  if (rawId) {
+    try {
+      const resolved = resolveWorkflowRel(rawId.endsWith(".json") ? rawId : `${rawId}.json`);
+      return { rel: resolved.rel, graph: readGraph(resolved.abs), source: "library" };
+    } catch {}
+    const items = listWorkflows().items || [];
+    const lower = rawId.toLowerCase();
+    const match = items.find((item) => item.rel === rawId || item.rel.toLowerCase() === lower || String(item.name || "").toLowerCase() === lower)
+      || items.find((item) => String(item.rel || "").toLowerCase().includes(lower) || String(item.name || "").toLowerCase().includes(lower));
+    if (match) {
+      const resolved = resolveWorkflowRel(match.rel);
+      return { rel: resolved.rel, graph: readGraph(resolved.abs), source: "library" };
+    }
+    const packaged = findPackageWorkflow(rawId);
+    if (packaged) return packaged;
+  }
+  throw new Error("Workflow graph not found");
 }

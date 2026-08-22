@@ -23,6 +23,30 @@ function comfyMedia(asset: any): "image" | "audio" | "video" {
   return "image";
 }
 
+
+function injectGraph(frame: HTMLIFrameElement | null, graph: any) {
+  const win = frame?.contentWindow as any;
+  const app = win?.app || win?.comfyApp;
+  if (!app) return false;
+  try {
+    if (graph?.nodes && typeof app.loadGraphData === "function") {
+      app.loadGraphData(graph);
+      return true;
+    }
+    if (typeof app.loadApiJson === "function") {
+      app.loadApiJson(graph?.prompt || graph);
+      return true;
+    }
+    if (typeof app.loadGraphData === "function") {
+      app.loadGraphData(graph);
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 export default function ComfyUIWorkspace({ onOpenAssets: _onOpenAssets, onReviewOutputs: _onReviewOutputs }: { onOpenAssets: () => void; onReviewOutputs: () => void }) {
   const store = useStore();
   const frameRef = useRef<HTMLIFrameElement>(null);
@@ -32,6 +56,9 @@ export default function ComfyUIWorkspace({ onOpenAssets: _onOpenAssets, onReview
   const [notice, setNotice] = useState("ComfyUI is loading through Premiere316's fixed local gateway.");
   const [completedJob, setCompletedJob] = useState<any>(null);
   const [failedJob, setFailedJob] = useState<any>(null);
+  const [installedWorkflows, setInstalledWorkflows] = useState<any[]>([]);
+  const [workflowKey, setWorkflowKey] = useState("");
+  const [embedSrc, setEmbedSrc] = useState(store.health.comfyEmbedUrl || "/integrations/comfyui/");
   const project = store.project!;
   const selectedAsset = project.assets?.items?.find((item: any) => item.id === store.selectedAssetId) || null;
   const origin = useMemo(() => {
@@ -92,6 +119,77 @@ export default function ComfyUIWorkspace({ onOpenAssets: _onOpenAssets, onReview
     });
   };
 
+
+  useEffect(() => {
+    let cancelled = false;
+    const slug = project.slug || "";
+    Promise.all([
+      fetch(`/api/generation-workflows${slug ? `?project=${encodeURIComponent(slug)}` : ""}`).then((response) => response.json()).catch(() => ({})),
+      fetch("/api/asset-workflows").then((response) => response.json()).catch(() => ({})),
+      fetch("/api/aaa-workflow/library").then((response) => response.json()).catch(() => ({}))
+    ]).then(([generation, assets, library]) => {
+      if (cancelled) return;
+      const items: any[] = [];
+      const seen = new Set<string>();
+      const add = (item: any) => {
+        const key = String(item.key || "");
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        items.push(item);
+      };
+      for (const workflow of [...(assets.workflows || []), ...(generation.workflows || [])]) {
+        const id = String(workflow.id || "");
+        if (!id) continue;
+        add({
+          key: `cat:${id}`,
+          id,
+          label: String(workflow.label || workflow.name || id),
+          source: "catalog",
+          ready: workflow.ready,
+          defaultForAsset: Boolean(selectedAsset?.workflowId && selectedAsset.workflowId === id)
+        });
+      }
+      for (const item of library.items || []) {
+        add({
+          key: `lib:${item.rel}`,
+          rel: item.rel,
+          id: item.rel,
+          label: String(item.name || item.rel),
+          source: "library"
+        });
+      }
+      setInstalledWorkflows(items);
+      setWorkflowKey((current) => {
+        if (current && items.some((item) => item.key === current)) return current;
+        const preferred = selectedAsset?.workflowId ? `cat:${selectedAsset.workflowId}` : "";
+        return items.find((item) => item.key === preferred)?.key || items[0]?.key || "";
+      });
+    });
+    return () => { cancelled = true; };
+  }, [project.slug, selectedAsset?.workflowId]);
+
+  const loadWorkflowIntoFrame = async (key: string) => {
+    const item = installedWorkflows.find((entry) => entry.key === key) || null;
+    setWorkflowKey(key);
+    if (!item) return;
+    try {
+      const query = item.rel
+        ? `rel=${encodeURIComponent(item.rel)}`
+        : `id=${encodeURIComponent(item.id || "")}`;
+      const response = await fetch(`/api/aaa-workflow/graph?${query}`);
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok || !json.graph) throw new Error(json.error || "Workflow graph was not available");
+      const injected = injectGraph(frameRef.current, json.graph);
+      if (!injected) {
+        const base = store.health.comfyEmbedUrl || "/integrations/comfyui/";
+        setEmbedSrc(`${base}${base.includes("?") ? "&" : "?"}workflow=${encodeURIComponent(json.rel || item.rel || item.id || "")}`);
+      }
+      setNotice(`Loaded ${item.label} in ComfyUI. Not locked to the asset default.`);
+    } catch (error: any) {
+      setNotice(String(error.message || error));
+    }
+  };
+
   const copyPromptPackage = async () => {
     if (!selectedAsset?.prompt) return setNotice("Select an asset with a canonical prompt package first.");
     try {
@@ -122,7 +220,20 @@ export default function ComfyUIWorkspace({ onOpenAssets: _onOpenAssets, onReview
           <span>Queue: {store.health.comfyQueue?.running || 0} running · {store.health.comfyQueue?.pending || 0} waiting</span>
         </div>
         <div className="comfy-bridge-context">
-          <span><small>Workflow</small><b>{selectedAsset?.workflow?.label || selectedAsset?.workflowId || "Visible ComfyUI workflow"}</b></span>
+          <label className="comfy-workflow-picker"><small>Workflow</small>
+            <select
+              data-testid="comfy-workflow-picker"
+              value={workflowKey}
+              onChange={(event) => void loadWorkflowIntoFrame(event.target.value)}
+            >
+              {!installedWorkflows.length ? <option value="">Loading workflows…</option> : null}
+              {installedWorkflows.map((item: any) => (
+                <option key={item.key} value={item.key} disabled={false}>
+                  {item.label}{item.source === "library" ? " · library" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
           <span><small>Project</small><b>{project.name}</b></span>
           <span><small>Shot</small><b>{store.productionClipId || "Not selected"}</b></span>
           <span><small>Slot</small><b>{origin.sourceEntity.label}</b></span>
@@ -160,7 +271,7 @@ export default function ComfyUIWorkspace({ onOpenAssets: _onOpenAssets, onReview
         </nav>
       ) : null}
       {store.health.comfyProxyReady ? (
-        <iframe ref={frameRef} className="comfy-embedded-frame" src={store.health.comfyEmbedUrl || "/integrations/comfyui/"} title="ComfyUI inside Premiere316" onLoad={() => { setLoaded(true); setNotice("ComfyUI is ready inside Premiere316."); }} />
+        <iframe ref={frameRef} className="comfy-embedded-frame" src={embedSrc} title="ComfyUI inside Premiere316" onLoad={() => { setLoaded(true); setNotice("ComfyUI is ready inside Premiere316."); }} />
       ) : (
         <section className="comfy-offline premium-panel" data-testid="comfy-005-offline">
           <span>◇</span>

@@ -15,7 +15,7 @@ import {
 } from "./ffmpeg.js";
 
 export const EDIT_DOCUMENT_SCHEMA = "premiere316.edit.v1";
-const VIDEO_RE = /\.(mp4|mov|mkv|webm)$/i;
+const VIDEO_RE = /\.(mp4|webm|mov|mkv|m4v)$/i;
 const AUDIO_RE = /\.(wav|mp3|m4a|aac|flac|ogg|opus|aif|aiff)$/i;
 const MIN_PLAYABLE_BYTES = 1024;
 const MAX_VIDEO_ITEMS = 2000;
@@ -57,7 +57,7 @@ function safeRelative(value) {
 function sourcePath(slug, relativeFile, kind) {
   const relative = safeRelative(relativeFile);
   const allowed = kind === "video"
-    ? /^media\/clips\/(?:(?:H|MV)\d{2}\/)?[^/]+$/i.test(relative) && VIDEO_RE.test(relative)
+    ? (/^media\/clips\/(?:(?:H|MV)\d{2}\/)?[^/]+$/i.test(relative) || /^media\/video\/[^/]+$/i.test(relative)) && VIDEO_RE.test(relative)
     : /^media\/(audio|assets)\/[^/]+$/i.test(relative) && AUDIO_RE.test(relative);
   if (!allowed) throw new Error(`Unsupported ${kind} source: ${relative}`);
   const root = path.resolve(projectDir(slug));
@@ -399,7 +399,7 @@ function readMediaCache(slug) {
   }
 }
 
-function videoLibrary(project, storyboard, mediaCache) {
+function videoLibrary(project, storyboard, mediaCache, document) {
   const records = new Map();
   const fps = Math.max(1, finite(storyboard?.defaults?.fps, project.settings?.fps || 24));
   const segmentEntries = Object.entries(storyboard?.segments || {});
@@ -514,7 +514,35 @@ function videoLibrary(project, storyboard, mediaCache) {
     }
   }
 
+  for (const entry of document?.imports || []) {
+    const relative = String(entry?.relativeFile || "").replaceAll("\\", "/");
+    if (!relative || !VIDEO_RE.test(relative) || records.has(relative)) continue;
+    records.set(relative, {
+      relativeFile: relative,
+      clipId: null,
+      clipName: entry.name || path.parse(relative).name,
+      sceneId: null,
+      sceneTitle: "Imported media",
+      segmentId: null,
+      segmentOrder: 0,
+      editorialIndex: Number.MAX_SAFE_INTEGER / 2,
+      takeId: null,
+      recordedVersion: null,
+      takeNumber: null,
+      durationSec: finite(entry.durationSec || entry.mediaInfo?.durationSec),
+      fps,
+      width: null,
+      height: null,
+      hasAudio: Boolean(entry.mediaInfo?.audio),
+      source: entry.source || "sequence-editor-import",
+      createdAt: entry.createdAt || null,
+      isActiveTake: false,
+      activeTakeLocked: false
+    });
+  }
+
   const items = [...records.values()].map((record) => {
+
     let disk = null;
     try { disk = sourcePath(project.slug, record.relativeFile, "video").disk; } catch {}
     const stat = disk ? statMaybe(disk) : null;
@@ -625,7 +653,7 @@ export function editorWorkspace(slug) {
   const document = loadEditDocument(project.slug);
   const storyboard = readStoryboard(project.slug);
   const mediaCache = readMediaCache(project.slug);
-  const videos = videoLibrary(project, storyboard, mediaCache);
+  const videos = videoLibrary(project, storyboard, mediaCache, document);
   const audio = audioLibrary(project, document, mediaCache);
   return {
     project: {
@@ -715,6 +743,53 @@ export async function importEditorAudio(slug, file) {
   const document = loadEditDocument(project.slug);
   document.imports = [...(document.imports || []), {
     id: mediaId("audio", relativeFile),
+    name: path.basename(String(file.originalname || name)),
+    relativeFile,
+    bytes: stat.size,
+    mtimeMs: Math.round(stat.mtimeMs),
+    durationSec: probe.durationSec,
+    mediaInfo: probe,
+    source: "sequence-editor-import",
+    createdAt: new Date().toISOString()
+  }];
+  document.updatedAt = new Date().toISOString();
+  writeJsonAtomic(editDocumentPath(project.slug), document);
+  const cache = readMediaCache(project.slug);
+  cache.files = cache.files || {};
+  cache.files[relativeFile] = { bytes: stat.size, mtimeMs: Math.round(stat.mtimeMs), probe, probedAt: new Date().toISOString() };
+  cache.updatedAt = new Date().toISOString();
+  writeJsonAtomic(mediaCachePath(project.slug), cache);
+  return { relativeFile, probe, bytes: stat.size };
+}
+
+
+export async function importEditorVideo(slug, file) {
+  const project = loadProject(slug);
+  if (!file?.buffer?.length) throw new Error("Video file required");
+  const extension = path.extname(String(file.originalname || "")).toLowerCase();
+  if (!VIDEO_RE.test(extension)) throw new Error("Use MP4, WEBM, MOV, MKV, or M4V video");
+  const base = path.basename(String(file.originalname || `video${extension}`), extension)
+    .replace(/[^a-zA-Z0-9_.-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 100) || "video";
+  const name = `edit_${Date.now()}_${base}${extension}`;
+  const disk = path.join(mediaDir(project, "video"), name);
+  fs.mkdirSync(path.dirname(disk), { recursive: true });
+  if (fs.existsSync(disk)) throw new Error("Refusing to overwrite an existing video file");
+  fs.writeFileSync(disk, file.buffer);
+  let probe;
+  try {
+    probe = await probeMedia(disk);
+    if (!probe.video) throw new Error("No video stream found");
+  } catch (error) {
+    try { fs.unlinkSync(disk); } catch {}
+    throw new Error(`Video import failed: ${String(error.message || error)}`);
+  }
+  const relativeFile = `media/video/${name}`;
+  const stat = fs.statSync(disk);
+  const document = loadEditDocument(project.slug);
+  document.imports = [...(document.imports || []), {
+    id: mediaId("video", relativeFile),
     name: path.basename(String(file.originalname || name)),
     relativeFile,
     bytes: stat.size,
