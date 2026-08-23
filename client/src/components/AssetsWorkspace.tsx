@@ -10,6 +10,7 @@ const CATEGORY_ORDER = [
   "extra",
   "atmosphere",
   "guide-frame",
+  "reference",
   "voice",
   "sound",
   "music",
@@ -24,6 +25,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   extra: "◌",
   atmosphere: "✦",
   "guide-frame": "▣",
+  reference: "▤",
   voice: "◖",
   sound: "≋",
   music: "♫",
@@ -38,6 +40,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   extra: "Crowds & Creatures",
   atmosphere: "Atmosphere & VFX",
   "guide-frame": "Guide Frames",
+  reference: "References",
   voice: "Voices",
   sound: "Sound Design",
   music: "Music",
@@ -48,7 +51,7 @@ const AUDIO_UPLOAD_CATEGORIES = new Set(["voice", "sound", "music"]);
 const AUDIO_ACCEPT = "audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/flac,audio/x-flac,audio/mp4,audio/aac,audio/ogg,application/ogg,.mp3,.wav,.flac,.m4a,.aac,.ogg";
 
 
-const LIBRARY_CATEGORIES = new Set(["character", "wardrobe", "location", "artifact", "extra", "atmosphere", "guide-frame", "voice", "dialogue", "sound", "music", "video"]);
+const LIBRARY_CATEGORIES = new Set(["character", "wardrobe", "location", "artifact", "extra", "atmosphere", "guide-frame", "reference", "voice", "dialogue", "sound", "music", "video"]);
 const CARD_ACTIONS = ["generate", "replace", "upload", "edit", "versions", "review"] as const;
 
 function libraryCategory(asset: any) {
