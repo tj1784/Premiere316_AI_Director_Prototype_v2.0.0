@@ -181,6 +181,8 @@ import {
   loadStoryboard,
   saveStoryboard,
   validateStoryboard,
+  ensureStoryboard,
+  seedStoryboardFromShotPlan,
   saveStoryboardTargetReferences,
   storyboardSummary,
   applyGlobalPromptToScope,
@@ -783,7 +785,12 @@ app.get("/api/integrations/ltx/status", async (req, res) => {
 
 app.post("/api/integrations/ltx/start", async (req, res) => {
   if (!isLoopbackRequest(req)) return res.status(403).json({ error: "LTX Director can be started only on this computer." });
-  res.json({ ok: true, connected: true, url: DIRECTOR_URL, skippedDirector: true });
+  try {
+    await ensureDirectorService();
+    res.json({ ok: true, connected: true, url: DIRECTOR_URL });
+  } catch (error) {
+    res.status(500).json({ error: String(error.message || error) });
+  }
 });
 
 app.all("/api/integrations/ltx/director/*", proxyDirectorApi);
@@ -795,7 +802,10 @@ app.get("/api/aaa-workflow/library", (req, res) => {
 
 app.get("/api/aaa-workflow/graph", (req, res) => {
   try { res.json({ ok: true, ...readWorkflowGraph({ rel: req.query.rel, id: req.query.id || req.query.workflowId }) }); }
-  catch (error) { res.status(404).json({ error: String(error.message || error) }); }
+  catch (error) {
+    const status = /Ambiguous workflow/i.test(String(error.message || "")) ? 409 : 404;
+    res.status(status).json({ error: String(error.message || error) });
+  }
 });
 
 app.get("/api/aaa-workflow", (req, res) => {
@@ -1097,11 +1107,34 @@ app.get("/api/projects/:slug", (req, res) => {
 
 app.get("/api/projects/:slug/storyboard", (req, res) => {
   try {
-    loadProject(req.params.slug);
-    const storyboard = loadStoryboard(req.params.slug);
+    const project = loadProject(req.params.slug);
+    const storyboard = ensureStoryboard(req.params.slug, {
+      title: project.name,
+      fps: project.settings?.fps,
+      aspectRatio: project.settings?.aspectRatio || project.screenplay?.settings?.aspectRatio
+    });
     res.json({ storyboard, summary: storyboardSummary(storyboard) });
   } catch (e) {
     res.status(404).json({ error: String(e.message) });
+  }
+});
+
+app.post("/api/projects/:slug/storyboard/seed-from-plan", (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    const plan = req.body?.shotPlan || project.screenplay?.shotPlan || {};
+    const result = seedStoryboardFromShotPlan(project.slug, plan, {
+      title: project.name,
+      fps: project.settings?.fps,
+      aspectRatio: project.settings?.aspectRatio || project.screenplay?.settings?.aspectRatio,
+      chapterId: req.body?.chapterId || "H01",
+      sceneId: req.body?.sceneId || "H01-S01",
+      chapterTitle: req.body?.chapterTitle || "Golgotha",
+      sceneTitle: req.body?.sceneTitle || "EXT. GOLGOTHA"
+    });
+    res.json(result);
+  } catch (e) {
+    res.status(400).json({ error: String(e.message) });
   }
 });
 
@@ -2300,7 +2333,14 @@ app.post("/api/projects/:slug/assets/:assetId/generate", async (req, res) => {
     if (existingJob) return res.json({ project, job: existingJob, alreadyQueued: true });
     const catalog = await getAssetWorkflowCatalog();
     const state = catalog.find((workflow) => workflow.id === asset.workflowId);
-    if (!state?.ready) return res.status(409).json({ error: state?.reason || "The selected workflow is not ready" });
+    if (!state?.ready) {
+      return res.status(409).json({
+        error: state?.reason || "The selected workflow is not ready",
+        code: state?.code || "WORKFLOW_NOT_READY",
+        remediation: state?.remediation || (state?.code === "COMFY_OFFLINE" ? "start-comfy" : null),
+        workflowId: asset.workflowId
+      });
+    }
     if (state.availableNow === false) return res.status(409).json({ error: state.runtimeWarning || "The selected workflow is waiting for GPU memory" });
     const validation = await validateAssetWorkflow(project, asset);
     if (!validation.ready) return res.status(409).json({ error: `Workflow validation failed: ${validation.errors.slice(0, 8).join("; ")}` });
@@ -2381,7 +2421,30 @@ app.post("/api/projects/:slug/assets/generate-all", async (req, res) => {
           assetFingerprint: assetGenerationFingerprint(asset)
         }
       }));
-    res.json({ project, jobs, queued: jobs.length, skipped: project.assets.items.length - targets.length });
+    if (!jobs.length) {
+      const requestedAssets = project.assets.items.filter((asset) => requested.has(asset.id));
+      const reasons = requestedAssets.map((asset) => {
+        const workflow = catalog.find((entry) => entry.id === asset.workflowId);
+        return {
+          assetId: asset.id,
+          name: asset.name,
+          workflowId: asset.workflowId,
+          reason: workflow?.runtimeWarning || workflow?.reason || "Workflow is not ready",
+          code: workflow?.code || "WORKFLOW_NOT_READY",
+          remediation: workflow?.remediation || null
+        };
+      });
+      const unknown = [...requested].filter((id) => !project.assets.items.some((asset) => asset.id === id));
+      for (const id of unknown) reasons.push({ assetId: id, name: id, reason: "Asset not found", code: "NOT_FOUND" });
+      return res.status(409).json({
+        error: reasons[0]?.reason || "No assets were queued because no selected workflow is ready.",
+        queued: 0,
+        skipped: requested.size,
+        reasons,
+        remediation: reasons.find((item) => item.remediation)?.remediation || null
+      });
+    }
+    res.json({ project, jobs, queued: jobs.length, skipped: Math.max(0, requested.size - jobs.length) });
   } catch (e) {
     res.status(400).json({ error: String(e.message) });
   }
@@ -2489,8 +2552,19 @@ app.post("/api/projects/:slug/assets/:assetId/promote", (req, res) => {
 
 // ---------- media import ----------
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
-const editorAudioUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 128 * 1024 * 1024, files: 1 } });
-const editorVideoUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 512 * 1024 * 1024, files: 1 } });
+const editorUploadRoot = path.join(PACKAGE_ROOT, "staging", "editor-uploads");
+const editorDiskStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    fs.mkdirSync(editorUploadRoot, { recursive: true });
+    cb(null, editorUploadRoot);
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(String(file.originalname || "")).slice(0, 12);
+    cb(null, `${Date.now()}_${crypto.randomUUID()}${ext}`);
+  }
+});
+const editorAudioUpload = multer({ storage: editorDiskStorage, limits: { fileSize: 128 * 1024 * 1024, files: 1 } });
+const editorVideoUpload = multer({ storage: editorDiskStorage, limits: { fileSize: 512 * 1024 * 1024, files: 1 } });
 const indexTtsAudioUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 64 * 1024 * 1024, files: 1, fields: 12 }

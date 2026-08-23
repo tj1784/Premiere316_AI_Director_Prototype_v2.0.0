@@ -70,7 +70,7 @@ export function hellPromptFromWorkspace(body = {}, workspaceOverride = null) {
     const fps = Math.max(1, Number(workspace?.settings?.frameRate) || 24);
     const frames = Math.max(0, Number(segment.length) || Number(segment.durationFrames) || 0);
     const seconds = frames ? frames / fps : (Number(segment.durationSec) || 13);
-    const imageFile = String(segment.imageFile || "").trim();
+    const imageFile = String(segment.imageFile || segment.projectMediaPath || "").trim();
     return {
       segment,
       clipId,
@@ -120,7 +120,7 @@ function confinedPath(root, relativeFile, label) {
  */
 export function stageHellSegmentImage(job, options = {}) {
   const segmentId = String(job?.segment?.id || "unknown segment");
-  const imageName = path.basename(String(job?.imageFile || "").replace(/\\/g, "/").trim());
+  const imageName = path.basename(String(job?.imageFile || job?.projectMediaPath || "").replace(/\\/g, "/").trim());
   if (!imageName || imageName === ".") {
     throw new Error(`${segmentId} has no first-frame image filename`);
   }

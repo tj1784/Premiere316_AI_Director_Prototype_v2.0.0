@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../store";
+import { screenplayStats } from "../screenplay-stats.js";
 
 const MODEL = "qwen3.6-40b-claude-4.6-opus-deckard-heretic-uncensored-thinking-neo-code-di-imatrix-max";
 
@@ -49,27 +50,6 @@ function MarkdownDocument({ markdown }: { markdown: string }) {
   return <div className="screenplay-document">{blocks}</div>;
 }
 
-function sectionNames(markdown: string, start: string, end: string) {
-  const source = String(markdown || "");
-  const from = source.search(new RegExp(start, "i"));
-  if (from < 0) return [];
-  const remainder = source.slice(from);
-  const to = remainder.search(new RegExp(end, "i"));
-  const section = to > 0 ? remainder.slice(0, to) : remainder;
-  return [...section.matchAll(/^###\s+(.+)$/gm)].map((match) => match[1].replace(/\s+-\s+.+$/, "").trim());
-}
-
-function screenplayStats(markdown: string) {
-  const title = markdown.match(/^#\s+(.+)$/m)?.[1] || "Untitled screenplay";
-  const runtime = markdown.match(/\*\*Runtime[^:]*:\*\*\s*([^\n]+)/i)?.[1]?.trim() || "—";
-  const scenes = (markdown.match(/^\s*(?:INT\.|EXT\.)[^\n]+$/gm) || []).length;
-  const dialogue = (markdown.match(/^\s{20,}[A-Z][A-Z .'-]{2,}$/gm) || []).length;
-  const characters = sectionNames(markdown, "## 1\\. CHARACTER ASSETS", "## 2\\. LOCATION ASSETS");
-  const locations = sectionNames(markdown, "## 2\\. LOCATION ASSETS", "## 3\\. ARTIFACT ASSETS");
-  const artifacts = sectionNames(markdown, "## 3\\. ARTIFACT ASSETS", "## 4\\. ATMOSPHERIC ASSETS");
-  return { title, runtime, scenes, dialogue, characters, locations, artifacts, words: markdown.trim() ? markdown.trim().split(/\s+/).length : 0 };
-}
-
 export default function ScreenplayWorkspace({ onOpenEditor, onOpenAssets }: { onOpenEditor: () => void; onOpenAssets: () => void }) {
   const store = useStore();
   const project = store.project!;
@@ -77,16 +57,16 @@ export default function ScreenplayWorkspace({ onOpenEditor, onOpenAssets }: { on
   const settings = screenplay?.settings || {};
   const importRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState(String(screenplay?.markdown || ""));
-  const [mode, setMode] = useState<"chat" | "preview" | "source">("chat");
+  const [mode, setMode] = useState<"chat" | "preview" | "source">(String(screenplay?.markdown || "").trim() ? "preview" : "chat");
   const [concept, setConcept] = useState(settings.concept || `${project.name}: a cinematic story with a complete screenplay and production asset package.`);
-  const [runtimeMinutes, setRuntimeMinutes] = useState(Number(settings.runtimeMinutes) || 10);
+  const [runtimeMinutes, setRuntimeMinutes] = useState(Number(settings.runtimeMinutes) || 30);
   const [genre, setGenre] = useState(settings.genre || "Cinematic Biblical Epic / Supernatural Drama");
   const [aspectRatio, setAspectRatio] = useState(settings.aspectRatio || "2.39:1");
   const [rating, setRating] = useState(settings.rating || "PG-13");
   const [tone, setTone] = useState(settings.tone || "Cinematic, dramatic, emotionally sincere, visually coherent");
   const [additionalInstructions, setAdditionalInstructions] = useState(settings.additionalInstructions || "Include complete dialogue, asset prompts, voice direction, first and last frame prompts, and strict identity continuity.");
   const [targetShotSeconds, setTargetShotSeconds] = useState(15);
-  const [maxShots, setMaxShots] = useState(40);
+  const [maxShots, setMaxShots] = useState(80);
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [planning, setPlanning] = useState(false);
   const [chat, setChat] = useState<any[]>(Array.isArray(screenplay?.chat) ? screenplay.chat : []);
@@ -299,7 +279,7 @@ export default function ScreenplayWorkspace({ onOpenEditor, onOpenAssets }: { on
         <div className="screenplay-form-scroll">
           <label>Story brief<textarea rows={7} value={concept} onChange={(event) => setConcept(event.target.value)} /></label>
           <div className="screenplay-field-row">
-            <label>Runtime (minutes)<input type="number" min={1} max={30} value={runtimeMinutes} onChange={(event) => setRuntimeMinutes(Number(event.target.value))} /></label>
+            <label>Runtime (minutes)<input type="number" min={1} max={180} value={runtimeMinutes} onChange={(event) => setRuntimeMinutes(Number(event.target.value))} /></label>
             <label>Aspect ratio<select value={aspectRatio} onChange={(event) => setAspectRatio(event.target.value)}><option>2.39:1</option><option>16:9</option><option>1.85:1</option><option>4:3</option><option>9:16</option></select></label>
           </div>
           <label>Genre<input value={genre} onChange={(event) => setGenre(event.target.value)} /></label>
@@ -323,7 +303,7 @@ export default function ScreenplayWorkspace({ onOpenEditor, onOpenAssets }: { on
               if (!file) return;
               const text = await file.text();
               setDraft(text);
-              setMode("chat");
+              setMode("preview");
               try { await store.saveScreenplay(text, { importedFilename: file.name }); } catch {}
               event.target.value = "";
             }}
@@ -419,6 +399,8 @@ export default function ScreenplayWorkspace({ onOpenEditor, onOpenAssets }: { on
         </div>
         <dl className="screenplay-facts">
           <div><dt>Runtime</dt><dd>{stats.runtime}</dd></div>
+          <div><dt>Scenes / dialogue</dt><dd>{stats.scenes} · {stats.dialogue}</dd></div>
+          <div><dt>Shot manifest</dt><dd>{project.assets?.review?.status?.render_ready_shot_manifest ? "Ready" : "Not render-ready"}</dd></div>
           <div><dt>Source</dt><dd>{screenplay?.source || "—"}</dd></div>
           <div><dt>Model</dt><dd>{screenplay?.model ? "Pinned Qwen 40B" : "—"}</dd></div>
         </dl>
@@ -449,9 +431,9 @@ export default function ScreenplayWorkspace({ onOpenEditor, onOpenAssets }: { on
           <div className="screenplay-section-heading"><h3>LTX Shot Planner</h3>{plan ? <span>{plan.shots?.length || 0} clips</span> : null}</div>
           <div className="screenplay-field-row">
             <label>Target seconds<input type="number" min={6} max={30} value={targetShotSeconds} onChange={(event) => setTargetShotSeconds(Number(event.target.value))} /></label>
-            <label>Max clips<input type="number" min={4} max={60} value={maxShots} onChange={(event) => setMaxShots(Number(event.target.value))} /></label>
+            <label>Max clips<input type="number" min={4} max={120} value={maxShots} onChange={(event) => setMaxShots(Number(event.target.value))} /></label>
           </div>
-          <button className="button secondary full" disabled={busy || planning || !draft.trim() || !modelReady} onClick={makePlan}>{planning ? "Qwen is building the shot plan…" : plan ? "Regenerate Shot Plan" : "Generate Shot Plan"}</button>
+          <button className="button secondary full" disabled={busy || planning || !draft.trim()} onClick={makePlan}>{planning ? "Building shot plan…" : plan ? "Regenerate Shot Plan" : modelReady ? "Generate Shot Plan" : "Build Deterministic Shot Plan"}</button>
           {plan ? (
             <div className="screenplay-shot-list">
               {plan.shots.slice(0, 12).map((shot: any, index: number) => <div key={`${shot.name}-${index}`}><b>{String(index + 1).padStart(2, "0")}</b><span>{shot.name}</span><small>{shot.durationSec}s</small></div>)}

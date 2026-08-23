@@ -13,10 +13,9 @@ import {
   mixTimelineAudio,
   probeMedia
 } from "./ffmpeg.js";
+import { AUDIO_RE, VIDEO_RE } from "../shared/media-types.js";
 
 export const EDIT_DOCUMENT_SCHEMA = "premiere316.edit.v1";
-const VIDEO_RE = /\.(mp4|webm|mov|mkv|m4v)$/i;
-const AUDIO_RE = /\.(wav|mp3|m4a|aac|flac|ogg|opus|aif|aiff)$/i;
 const MIN_PLAYABLE_BYTES = 1024;
 const MAX_VIDEO_ITEMS = 2000;
 const MAX_AUDIO_ITEMS = 64;
@@ -717,19 +716,35 @@ export async function probeEditorMedia(slug, files) {
   return results;
 }
 
+function materializeUpload(file, dest) {
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  if (file?.path && fs.existsSync(file.path)) {
+    try { fs.renameSync(file.path, dest); }
+    catch {
+      fs.copyFileSync(file.path, dest);
+      try { fs.unlinkSync(file.path); } catch {}
+    }
+    return;
+  }
+  if (file?.buffer?.length) {
+    fs.writeFileSync(dest, file.buffer);
+    return;
+  }
+  throw new Error("Upload file required");
+}
+
 export async function importEditorAudio(slug, file) {
   const project = loadProject(slug);
-  if (!file?.buffer?.length) throw new Error("Audio file required");
-  const extension = path.extname(String(file.originalname || "")).toLowerCase();
+  if (!file?.buffer?.length && !(file?.path && fs.existsSync(file.path))) throw new Error("Audio file required");
+  const extension = path.extname(String(file.originalname || file.path || "")).toLowerCase();
   if (!AUDIO_RE.test(extension)) throw new Error("Use WAV, MP3, M4A, AAC, FLAC, OGG, OPUS, AIF, or AIFF audio");
   const base = path.basename(String(file.originalname || `audio${extension}`), extension)
     .replace(/[^a-zA-Z0-9_.-]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 100) || "audio";
-  const name = `edit_${Date.now()}_${base}${extension}`;
+  const name = `edit_${crypto.randomUUID()}_${base}${extension}`;
   const disk = path.join(mediaDir(project, "audio"), name);
-  fs.mkdirSync(path.dirname(disk), { recursive: true });
-  fs.writeFileSync(disk, file.buffer);
+  materializeUpload(file, disk);
   let probe;
   try {
     probe = await probeMedia(disk);
@@ -765,18 +780,17 @@ export async function importEditorAudio(slug, file) {
 
 export async function importEditorVideo(slug, file) {
   const project = loadProject(slug);
-  if (!file?.buffer?.length) throw new Error("Video file required");
-  const extension = path.extname(String(file.originalname || "")).toLowerCase();
-  if (!VIDEO_RE.test(extension)) throw new Error("Use MP4, WEBM, MOV, MKV, or M4V video");
+  if (!file?.buffer?.length && !(file?.path && fs.existsSync(file.path))) throw new Error("Video file required");
+  const extension = path.extname(String(file.originalname || file.path || "")).toLowerCase();
+  if (!VIDEO_RE.test(extension)) throw new Error("Use MP4, WEBM, MOV, MKV, M4V, or AVI video");
   const base = path.basename(String(file.originalname || `video${extension}`), extension)
     .replace(/[^a-zA-Z0-9_.-]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 100) || "video";
-  const name = `edit_${Date.now()}_${base}${extension}`;
+  const name = `edit_${crypto.randomUUID()}_${base}${extension}`;
   const disk = path.join(mediaDir(project, "video"), name);
-  fs.mkdirSync(path.dirname(disk), { recursive: true });
   if (fs.existsSync(disk)) throw new Error("Refusing to overwrite an existing video file");
-  fs.writeFileSync(disk, file.buffer);
+  materializeUpload(file, disk);
   let probe;
   try {
     probe = await probeMedia(disk);

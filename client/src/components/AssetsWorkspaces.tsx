@@ -48,6 +48,7 @@ export function PromptDevelopmentWorkspace({ onSendToGenerate }: { onSendToGener
   const assetIdKey = assets.map((asset: any) => asset.id).join("|");
   const selected = assets.find((item: any) => item.id === store.selectedAssetId) || assets[0] || null;
   const [lane, setLane] = useState("Visual");
+  const [sceneFilter, setSceneFilter] = useState("SEQ-01|Golgotha|Temple|veil|cross");
   const [prompt, setPrompt] = useState(selected?.prompt || "");
   const [sampleText, setSampleText] = useState(selected?.sampleText || "");
   const [continuityText, setContinuityText] = useState((selected?.continuity || []).join("\n"));
@@ -72,6 +73,15 @@ export function PromptDevelopmentWorkspace({ onSendToGenerate }: { onSendToGener
   const continuity = continuityText.split(/\r?\n/).map((value) => value.trim()).filter(Boolean);
   const compiled = useMemo(() => compileTargets(selected, prompt, continuity), [selected?.id, selected?.workflowId, selected?.seed, prompt, continuityText]);
   const categories = useMemo(() => [...new Set(assets.map((item: any) => item.category))], [assets]);
+  const visibleAssets = useMemo(() => {
+    const needle = sceneFilter.trim();
+    if (!needle) return assets;
+    const parts = needle.split("|").map((part) => part.trim()).filter(Boolean);
+    return assets.filter((asset: any) => {
+      const blob = `${asset.id} ${asset.name} ${asset.variant} ${asset.sourceSection || ""} ${asset.prompt || ""}`;
+      return parts.some((part) => new RegExp(part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i").test(blob));
+    });
+  }, [assets, sceneFilter]);
 
   const save = async () => {
     if (!selected || saving) return;
@@ -108,12 +118,20 @@ export function PromptDevelopmentWorkspace({ onSendToGenerate }: { onSendToGener
 
       <section className="prompt-development-grid">
         <aside className="prompt-scope-tree premium-panel">
-          <header><b>SCOPE</b><small>{assets.length} requirements</small></header>
+          <header><b>SCOPE</b><small>{visibleAssets.length}/{assets.length} requirements</small></header>
+          <label className="prompt-scene-filter" style={{ display: "grid", gap: 4, padding: "0 10px 8px" }}>
+            <small>Scene / beat filter</small>
+            <input value={sceneFilter} onChange={(event) => setSceneFilter(event.target.value)} placeholder="SEQ-01 or Golgotha" />
+            <span style={{ display: "flex", gap: 4 }}>
+              <button type="button" className="button secondary" onClick={() => setSceneFilter("SEQ-01|Golgotha|Temple|veil|cross")}>SEQ-01</button>
+              <button type="button" className="button secondary" onClick={() => setSceneFilter("")}>All</button>
+            </span>
+          </label>
           <button className="scope-root selected"><span>▣</span><div><b>{project.name}</b><small>Project package</small></div></button>
           {categories.map((category: any) => (
             <section key={category}>
               <h3>{String(category).toUpperCase()}</h3>
-              {assets.filter((item: any) => item.category === category).map((asset: any) => (
+              {visibleAssets.filter((item: any) => item.category === category).map((asset: any) => (
                 <button key={asset.id} className={selected?.id === asset.id ? "selected" : ""} onClick={() => store.setSelectedAsset(asset.id)}>
                   <span>{asset.approvalCurrent ? "●" : "○"}</span><div><b>{asset.name}</b><small>{asset.variant}</small></div>
                 </button>
@@ -217,6 +235,10 @@ export function AssetGenerationWorkspace({ onOpenLibrary }: { onOpenLibrary: () 
       const asset = assets.find((candidate: any) => candidate.id === id);
       return String(asset?.prompt || "").trim() && asset?.source !== "prompt-generation-composer" && asset?.regenerationMode !== "prompt-composer";
     });
+    const voiceOnly = promptReadyIds.length && promptReadyIds.every((id) => assets.find((asset: any) => asset.id === id)?.category === "voice");
+    if (voiceOnly) {
+      return store.setError("Voice assets generate in Create Sound → Voice Design, not Asset Generation.");
+    }
     if (!promptReadyIds.length) {
       const composerOnly = ids.some((id) => {
         const asset = assets.find((candidate: any) => candidate.id === id);

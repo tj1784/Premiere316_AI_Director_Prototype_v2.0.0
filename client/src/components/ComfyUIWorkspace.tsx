@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { openAssetAction } from "../contextual-agency";
 import { useStore } from "../store";
+import {
+  announceLoadedAllowed,
+  createWorkflowPickerState,
+  graphIdentity,
+  mergeWorkflowSources,
+  nextRequestId
+} from "@shared/comfy-workflow-state.js";
 
 function openComfySlot(intent: any) {
   openAssetAction({
@@ -23,44 +30,78 @@ function comfyMedia(asset: any): "image" | "audio" | "video" {
   return "image";
 }
 
-
-function injectGraph(frame: HTMLIFrameElement | null, graph: any) {
-  const win = frame?.contentWindow as any;
-  const app = win?.app || win?.comfyApp;
-  if (!app) return false;
+async function fetchJsonSource(url: string, source: string) {
   try {
-    if (graph?.nodes && typeof app.loadGraphData === "function") {
-      app.loadGraphData(graph);
-      return true;
+    const response = await fetch(url);
+    const text = await response.text();
+    let json: any = {};
+    try { json = text ? JSON.parse(text) : {}; }
+    catch {
+      return { source, error: "Invalid JSON from workflow list", status: response.status, items: [] };
     }
-    if (typeof app.loadApiJson === "function") {
-      app.loadApiJson(graph?.prompt || graph);
-      return true;
+    if (!response.ok) {
+      return { source, error: json.error || response.statusText || `HTTP ${response.status}`, status: response.status, items: [] };
     }
-    if (typeof app.loadGraphData === "function") {
-      app.loadGraphData(graph);
-      return true;
-    }
-  } catch {
-    return false;
+    return { source, status: response.status, raw: json, items: [] };
+  } catch (error: any) {
+    return { source, error: String(error?.message || error), status: 0, items: [] };
   }
-  return false;
+}
+
+function readIframeWindow(frame: HTMLIFrameElement | null) {
+  try {
+    return frame?.contentWindow as any || null;
+  } catch (error: any) {
+    throw new Error(`Cross-origin iframe is not readable: ${String(error?.message || error)}`);
+  }
+}
+
+async function injectGraph(frame: HTMLIFrameElement | null, graph: any, identity: any) {
+  try {
+    const win = readIframeWindow(frame);
+    if (!win) return { ok: false, error: "Comfy iframe is not available", ...identity };
+    const app = win.app || win.comfyApp;
+    if (!app) return { ok: false, error: "Comfy bridge is unavailable (no app/comfyApp)", ...identity };
+    if (graph?.nodes && typeof app.loadGraphData === "function") {
+      await Promise.resolve(app.loadGraphData(graph));
+    } else if (typeof app.loadApiJson === "function") {
+      await Promise.resolve(app.loadApiJson(graph?.prompt || graph));
+    } else if (typeof app.loadGraphData === "function") {
+      await Promise.resolve(app.loadGraphData(graph));
+    } else {
+      return { ok: false, error: "No supported graph loader on the Comfy bridge", ...identity };
+    }
+    return { ok: true, workflowKey: identity.workflowKey, id: identity.id, hash: identity.hash, source: identity.source };
+  } catch (error: any) {
+    return { ok: false, error: String(error?.message || error), ...identity };
+  }
 }
 
 export default function ComfyUIWorkspace({ onOpenAssets: _onOpenAssets, onReviewOutputs: _onReviewOutputs }: { onOpenAssets: () => void; onReviewOutputs: () => void }) {
   const store = useStore();
   const frameRef = useRef<HTMLIFrameElement>(null);
   const seenJobs = useRef(new Set<string>());
+  const pickerRef = useRef(createWorkflowPickerState());
   const [focusMode, setFocusMode] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [iframeReady, setIframeReady] = useState(false);
+  const [iframeStatus, setIframeStatus] = useState<"loading" | "ready" | "timeout" | "error">("loading");
   const [notice, setNotice] = useState("ComfyUI is loading through Premiere316's fixed local gateway.");
   const [completedJob, setCompletedJob] = useState<any>(null);
   const [failedJob, setFailedJob] = useState<any>(null);
   const [installedWorkflows, setInstalledWorkflows] = useState<any[]>([]);
-  const [workflowKey, setWorkflowKey] = useState("");
+  const [picker, setPicker] = useState(createWorkflowPickerState());
   const [embedSrc, setEmbedSrc] = useState(store.health.comfyEmbedUrl || "/integrations/comfyui/");
+  const [missingLibrary, setMissingLibrary] = useState(false);
   const project = store.project!;
   const selectedAsset = project.assets?.items?.find((item: any) => item.id === store.selectedAssetId) || null;
+
+  const setPickerState = (patch: any) => {
+    const next = { ...pickerRef.current, ...(typeof patch === "function" ? patch(pickerRef.current) : patch) };
+    pickerRef.current = next;
+    setPicker(next);
+    return next;
+  };
+
   const origin = useMemo(() => {
     if (selectedAsset) {
       return {
@@ -119,73 +160,133 @@ export default function ComfyUIWorkspace({ onOpenAssets: _onOpenAssets, onReview
     });
   };
 
+  useEffect(() => {
+    const next = store.health.comfyEmbedUrl || "/integrations/comfyui/";
+    setEmbedSrc((current) => current.split("?")[0] === next.split("?")[0] ? current : next);
+  }, [store.health.comfyEmbedUrl]);
+
+  useEffect(() => {
+    if (!store.health.comfyProxyReady) return;
+    setIframeStatus("loading");
+    const timer = window.setTimeout(() => {
+      setIframeStatus((current) => current === "ready" ? current : "timeout");
+      setNotice("ComfyUI iframe did not finish loading. Retry the engine or reload the selected workflow.");
+    }, 20000);
+    return () => window.clearTimeout(timer);
+  }, [embedSrc, store.health.comfyProxyReady]);
 
   useEffect(() => {
     let cancelled = false;
     const slug = project.slug || "";
+    setPickerState({ listStatus: "loading", lastError: "" });
     Promise.all([
-      fetch(`/api/generation-workflows${slug ? `?project=${encodeURIComponent(slug)}` : ""}`).then((response) => response.json()).catch(() => ({})),
-      fetch("/api/asset-workflows").then((response) => response.json()).catch(() => ({})),
-      fetch("/api/aaa-workflow/library").then((response) => response.json()).catch(() => ({}))
+      fetchJsonSource(`/api/generation-workflows${slug ? `?project=${encodeURIComponent(slug)}` : ""}`, "catalog-generation"),
+      fetchJsonSource("/api/asset-workflows", "catalog-assets"),
+      fetchJsonSource("/api/aaa-workflow/library", "library")
     ]).then(([generation, assets, library]) => {
       if (cancelled) return;
-      const items: any[] = [];
-      const seen = new Set<string>();
-      const add = (item: any) => {
-        const key = String(item.key || "");
-        if (!key || seen.has(key)) return;
-        seen.add(key);
-        items.push(item);
-      };
-      for (const workflow of [...(assets.workflows || []), ...(generation.workflows || [])]) {
+      const catalogItems: any[] = [];
+      for (const workflow of [...(assets.raw?.workflows || []), ...(generation.raw?.workflows || [])]) {
         const id = String(workflow.id || "");
         if (!id) continue;
-        add({
+        catalogItems.push({
           key: `cat:${id}`,
           id,
           label: String(workflow.label || workflow.name || id),
           source: "catalog",
-          ready: workflow.ready,
+          ready: workflow.ready !== false,
+          hash: workflow.hash || workflow.version || "",
           defaultForAsset: Boolean(selectedAsset?.workflowId && selectedAsset.workflowId === id)
         });
       }
-      for (const item of library.items || []) {
-        add({
-          key: `lib:${item.rel}`,
-          rel: item.rel,
-          id: item.rel,
-          label: String(item.name || item.rel),
-          source: "library"
-        });
-      }
-      setInstalledWorkflows(items);
-      setWorkflowKey((current) => {
-        if (current && items.some((item) => item.key === current)) return current;
+      const libraryItems = (library.raw?.items || []).map((item: any) => ({
+        key: `${item.source || "library"}:${item.rel}`,
+        rel: item.rel,
+        id: item.rel,
+        label: String(item.name || item.rel),
+        source: item.source || "library",
+        ready: true,
+        hash: item.hash || "",
+        defaultForAsset: false
+      }));
+      const merged = mergeWorkflowSources([
+        { ...generation, items: [] },
+        { ...assets, items: catalogItems },
+        { ...library, items: libraryItems }
+      ]);
+      setMissingLibrary(Boolean(library.raw?.missingLibrary));
+      setInstalledWorkflows(merged.items);
+      setPickerState((current: any) => {
         const preferred = selectedAsset?.workflowId ? `cat:${selectedAsset.workflowId}` : "";
-        return items.find((item) => item.key === preferred)?.key || items[0]?.key || "";
+        const selectedKey = (current.selectedKey && merged.items.some((item) => item.key === current.selectedKey))
+          ? current.selectedKey
+          : merged.items.find((item) => item.key === preferred)?.key || merged.items[0]?.key || "";
+        return {
+          ...current,
+          listStatus: merged.listStatus,
+          sourceErrors: merged.sourceErrors,
+          selectedKey,
+          lastError: merged.sourceErrors[0]?.error || ""
+        };
       });
     });
     return () => { cancelled = true; };
   }, [project.slug, selectedAsset?.workflowId]);
 
-  const loadWorkflowIntoFrame = async (key: string) => {
+  const confirmReplaceLoaded = (nextKey: string) => {
+    const state = pickerRef.current;
+    if (!state.loadedKey || state.loadedKey === nextKey) return true;
+    return window.confirm("The canvas may have unsaved graph edits. Discard them and load the selected workflow?");
+  };
+
+  const loadWorkflowIntoFrame = async (key: string, force = false) => {
     const item = installedWorkflows.find((entry) => entry.key === key) || null;
-    setWorkflowKey(key);
     if (!item) return;
+    if (item.ready === false) {
+      setNotice(`${item.label} is marked unavailable. Repair the catalog/runtime before loading.`);
+      return;
+    }
+    if (!force && !confirmReplaceLoaded(key)) return;
+    const requestId = nextRequestId(pickerRef.current);
+    setPickerState({
+      selectedKey: key,
+      loadingKey: key,
+      requestId,
+      lastError: "",
+      dirty: false
+    });
+    setNotice(`Loading ${item.label}…`);
     try {
       const query = item.rel
         ? `rel=${encodeURIComponent(item.rel)}`
         : `id=${encodeURIComponent(item.id || "")}`;
       const response = await fetch(`/api/aaa-workflow/graph?${query}`);
       const json = await response.json().catch(() => ({}));
+      if (requestId !== pickerRef.current.requestId) return;
       if (!response.ok || !json.graph) throw new Error(json.error || "Workflow graph was not available");
-      const injected = injectGraph(frameRef.current, json.graph);
-      if (!injected) {
+      const identity = graphIdentity({ ...item, hash: json.hash || item.hash }, json.graph);
+      const ack = await injectGraph(frameRef.current, json.graph, identity);
+      if (requestId !== pickerRef.current.requestId) return;
+      if (!ack.ok) {
         const base = store.health.comfyEmbedUrl || "/integrations/comfyui/";
         setEmbedSrc(`${base}${base.includes("?") ? "&" : "?"}workflow=${encodeURIComponent(json.rel || item.rel || item.id || "")}`);
+        setPickerState({ lastError: ack.error || "Bridge inject failed", loadingKey: key });
+        setNotice(`Could not confirm ${item.label} in the iframe. ${ack.error || "Waiting for URL fallback."}`);
+        return;
       }
-      setNotice(`Loaded ${item.label} in ComfyUI. Not locked to the asset default.`);
+      if (!announceLoadedAllowed({ ...pickerRef.current, loadingKey: key }, ack)) return;
+      setPickerState({
+        loadedKey: key,
+        loadedHash: ack.hash || identity.hash,
+        loadedSource: item.source,
+        loadingKey: "",
+        lastError: "",
+        dirty: true
+      });
+      setNotice(`Loaded ${item.label} · ${item.source}${identity.hash ? ` · ${identity.hash}` : ""}. Canvas ACK received.`);
     } catch (error: any) {
+      if (requestId !== pickerRef.current.requestId) return;
+      setPickerState({ lastError: String(error.message || error), loadingKey: "" });
       setNotice(String(error.message || error));
     }
   };
@@ -195,22 +296,54 @@ export default function ComfyUIWorkspace({ onOpenAssets: _onOpenAssets, onReview
     try {
       await navigator.clipboard.writeText(selectedAsset.prompt);
       setNotice(`${selectedAsset.name} prompt copied. Paste it into the selected ComfyUI text node.`);
-      frameRef.current?.contentWindow?.focus();
+      try { frameRef.current?.contentWindow?.focus(); } catch {}
     } catch {
       setNotice("Clipboard access was blocked. Open Prompt Development to copy the package manually.");
     }
   };
 
-  const queueVisibleWorkflow = () => {
-    const document = frameRef.current?.contentDocument;
-    if (!document) return setNotice("ComfyUI is not ready yet.");
-    const direct = document.querySelector<HTMLElement>("#queue-button, [data-testid='queue-button'], button[aria-label*='Queue' i]");
-    const fallback = Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find((button) => /^queue( prompt)?$/i.test(button.textContent?.trim() || ""));
-    const button = direct || fallback;
-    if (!button) return setNotice("The active ComfyUI skin did not expose a queue control to the bridge. Use its native Queue button inside the workspace.");
-    button.click();
-    setNotice(`Queue sent for ${origin.sourceEntity.label} · ${origin.requirement.relationship}. Output stays on this slot, not an orphan Library card.`);
+  const queueVisibleWorkflow = async () => {
+    const loaded = installedWorkflows.find((item) => item.key === picker.loadedKey);
+    if (!loaded) return setNotice("Load a workflow and wait for the canvas ACK before queueing.");
+    try {
+      const win = readIframeWindow(frameRef.current);
+      const document = (() => {
+        try { return frameRef.current?.contentDocument; }
+        catch (error: any) { throw new Error(`Cross-origin iframe is not readable: ${String(error?.message || error)}`); }
+      })();
+      if (!document && !win) return setNotice("Comfy bridge is unavailable.");
+      const api = win?.app?.queuePrompt || win?.app?.queue_prompt || win?.comfyApp?.queuePrompt;
+      if (typeof api === "function") {
+        const result = await Promise.resolve(api.call(win.app || win.comfyApp));
+        const promptId = result?.prompt_id || result?.promptId || result?.id;
+        if (!promptId) throw new Error("Queue API returned no prompt ID");
+        setNotice(`Queue accepted · prompt ${promptId} · ${origin.sourceEntity.label}.`);
+        return;
+      }
+      const host = document;
+      if (!host) throw new Error("No versioned queue bridge and no readable queue control");
+      const direct = host.querySelector<HTMLElement>("#queue-button, [data-testid='queue-button'], button[aria-label*='Queue' i]");
+      const fallback = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => /^queue( prompt)?$/i.test(button.textContent?.trim() || ""));
+      const button = direct || fallback;
+      if (!button) throw new Error("The active ComfyUI skin did not expose a queue control to the bridge.");
+      button.click();
+      setNotice("Queue click sent, but no prompt ID was returned. Treat this as unverified.");
+    } catch (error: any) {
+      setNotice(`Queue failed: ${String(error.message || error)}`);
+    }
   };
+
+  const loadedItem = installedWorkflows.find((item) => item.key === picker.loadedKey) || null;
+  const selectedItem = installedWorkflows.find((item) => item.key === picker.selectedKey) || null;
+  const listLabel = picker.listStatus === "loading"
+    ? "Loading workflows…"
+    : picker.listStatus === "error"
+      ? "Workflow sources failed"
+      : picker.listStatus === "empty"
+        ? "No workflows available"
+        : picker.listStatus === "partial"
+          ? "Partial workflow library"
+          : "Workflow";
 
   return (
     <main className={`comfyui-workspace ${focusMode ? "focus-mode" : ""}`} data-testid="comfy-workspace">
@@ -220,30 +353,39 @@ export default function ComfyUIWorkspace({ onOpenAssets: _onOpenAssets, onReview
           <span>Queue: {store.health.comfyQueue?.running || 0} running · {store.health.comfyQueue?.pending || 0} waiting</span>
         </div>
         <div className="comfy-bridge-context">
-          <label className="comfy-workflow-picker"><small>Workflow</small>
+          <label className="comfy-workflow-picker"><small>{listLabel}</small>
             <select
               data-testid="comfy-workflow-picker"
-              value={workflowKey}
+              aria-label="Workflow picker"
+              aria-describedby="comfy-workflow-state"
+              value={picker.selectedKey}
               onChange={(event) => void loadWorkflowIntoFrame(event.target.value)}
             >
-              {!installedWorkflows.length ? <option value="">Loading workflows…</option> : null}
+              {picker.listStatus === "loading" && !installedWorkflows.length ? <option value="">Loading workflows…</option> : null}
+              {picker.listStatus !== "loading" && !installedWorkflows.length ? <option value="">No workflows available</option> : null}
               {installedWorkflows.map((item: any) => (
-                <option key={item.key} value={item.key} disabled={false}>
-                  {item.label}{item.source === "library" ? " · library" : ""}
+                <option key={item.key} value={item.key} disabled={item.ready === false}>
+                  {item.label}{item.source === "library" ? " · library" : item.source === "package" ? " · packaged" : ""}{item.ready === false ? " · unavailable" : ""}{item.defaultForAsset ? " · recommended" : ""}
                 </option>
               ))}
             </select>
           </label>
+          <span id="comfy-workflow-state" data-testid="comfy-workflow-state">
+            <small>Loaded</small>
+            <b>{loadedItem ? `${loadedItem.label} · ${picker.loadedSource || loadedItem.source}${picker.loadedHash ? ` · ${picker.loadedHash}` : ""}` : "Not loaded"}</b>
+          </span>
+          <span><small>Selected</small><b>{selectedItem?.label || "None"}</b></span>
           <span><small>Project</small><b>{project.name}</b></span>
           <span><small>Shot</small><b>{store.productionClipId || "Not selected"}</b></span>
           <span><small>Slot</small><b>{origin.sourceEntity.label}</b></span>
         </div>
         <div className="comfy-bridge-actions">
+          <button type="button" className="button secondary" data-testid="comfy-reload-selected" disabled={!picker.selectedKey} onClick={() => void loadWorkflowIntoFrame(picker.selectedKey, true)}>Reload selected</button>
           <button id="comfy-review" type="button" className="button secondary" onClick={() => openOrigin("review", { returnFocusId: "comfy-review" })}>Review output</button>
           <button id="comfy-attach" type="button" className="button secondary" onClick={() => openOrigin("attach", { returnFocusId: "comfy-attach" })}>Attach to current slot</button>
           <button id="comfy-replace" type="button" className="button secondary" disabled={!selectedAsset} onClick={() => openOrigin("replace", { slotState: "unapproved", returnFocusId: "comfy-replace" })}>Save as new version</button>
           <button className="button secondary" disabled={!selectedAsset?.prompt} onClick={copyPromptPackage}>Copy Selected Prompt</button>
-          <button className="button primary" disabled={!loaded || !store.health.comfy} title="Queues the visible workflow directly in ComfyUI's manual upstream queue." onClick={queueVisibleWorkflow}>Queue in ComfyUI</button>
+          <button className="button primary" disabled={!iframeReady || !store.health.comfy || !picker.loadedKey} title="Queues the verified loaded workflow." onClick={() => void queueVisibleWorkflow()}>Queue in ComfyUI</button>
           <button className="button secondary" onClick={() => setFocusMode((value) => !value)}>{focusMode ? "Exit Focus" : "Focus Mode"}</button>
         </div>
       </header>
@@ -251,6 +393,14 @@ export default function ComfyUIWorkspace({ onOpenAssets: _onOpenAssets, onReview
         <span>{notice}</span>
         <small>The gateway target is fixed by Premiere316 settings; requests cannot select an arbitrary upstream server.</small>
       </div>
+      {missingLibrary ? (
+        <p className="comfy-missing-library" data-testid="comfy-missing-library" role="status">Local Comfy user workflow folder is missing or empty. Packaged Premiere316 workflows remain available.</p>
+      ) : null}
+      {picker.sourceErrors?.length ? (
+        <p className="comfy-source-errors" data-testid="comfy-source-errors" role="alert">
+          {picker.sourceErrors.map((entry: any) => `${entry.source}: ${entry.error}`).join(" · ")}
+        </p>
+      ) : null}
       {completedJob ? (
         <nav className="comfy-001-ingest" data-testid="comfy-001-ingest" aria-label="Comfy output ingest">
           <b>Output ready · {completedJob.label || completedJob.id}</b>
@@ -271,7 +421,30 @@ export default function ComfyUIWorkspace({ onOpenAssets: _onOpenAssets, onReview
         </nav>
       ) : null}
       {store.health.comfyProxyReady ? (
-        <iframe ref={frameRef} className="comfy-embedded-frame" src={embedSrc} title="ComfyUI inside Premiere316" onLoad={() => { setLoaded(true); setNotice("ComfyUI is ready inside Premiere316."); }} />
+        iframeStatus === "timeout" || iframeStatus === "error" ? (
+          <section className="comfy-offline premium-panel" data-testid="comfy-iframe-timeout">
+            <span>◇</span>
+            <h1>{iframeStatus === "timeout" ? "ComfyUI iframe timed out" : "ComfyUI iframe failed"}</h1>
+            <p>The embedded engine did not become ready. Retry without losing the selected workflow.</p>
+            <div>
+              <button type="button" className="button primary" onClick={() => { setIframeStatus("loading"); setEmbedSrc((value) => value); }}>Retry iframe</button>
+              <button type="button" className="button secondary" disabled={!picker.selectedKey} onClick={() => void loadWorkflowIntoFrame(picker.selectedKey, true)}>Reload selected workflow</button>
+            </div>
+          </section>
+        ) : (
+          <iframe
+            ref={frameRef}
+            className="comfy-embedded-frame"
+            src={embedSrc}
+            title="ComfyUI inside Premiere316"
+            onLoad={() => {
+              setIframeReady(true);
+              setIframeStatus("ready");
+              setNotice(picker.loadedKey ? notice : "ComfyUI is ready inside Premiere316. No workflow is loaded until you select one and the canvas ACKs.");
+            }}
+            onError={() => setIframeStatus("error")}
+          />
+        )
       ) : (
         <section className="comfy-offline premium-panel" data-testid="comfy-005-offline">
           <span>◇</span>

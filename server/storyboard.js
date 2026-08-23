@@ -206,6 +206,155 @@ export function validateStoryboard(storyboard, projectSlug = null, { allowLegacy
   return storyboard;
 }
 
+export function createEmptyStoryboard(slug, extras = {}) {
+  const now = new Date().toISOString();
+  return {
+    schemaVersion: STORYBOARD_SCHEMA,
+    storyboardId: `storyboard-${slug}`,
+    projectId: slug,
+    title: extras.title || slug,
+    source: { generatedAt: now, kind: extras.source || "ensure" },
+    defaults: {
+      fps: Number(extras.fps) > 0 ? Number(extras.fps) : 24,
+      frameGrid: 8,
+      pixelGrid: 32,
+      aspectRatio: extras.aspectRatio || "2.39:1",
+      workingWidth: 1920,
+      workingHeight: 816,
+      decodedFrameTrim: 1,
+      generationMode: "t2v_with_semantic_references",
+      referenceMode: "canonical_filename_resolver",
+      maxReferences: 9,
+      firstFrameGeneration: true,
+      lastFrameGeneration: true,
+      visualReferencePersistence: EXPLICIT_USER_REFERENCES_ONLY
+    },
+    workflowProfile: extras.workflowProfile || "premiere316-storyboard-ltx25-t2v-semantic-reference",
+    runtimeFrames: 0,
+    chapterOrder: [],
+    chapters: {},
+    scenes: {},
+    clips: {},
+    frames: {},
+    videoPlans: {},
+    segments: {},
+    referenceBindings: {},
+    imports: {},
+    updatedAt: now
+  };
+}
+
+export function ensureStoryboard(slug, extras = {}) {
+  const file = storyboardPath(slug);
+  if (fs.existsSync(file)) return loadStoryboard(slug);
+  return saveStoryboard(slug, createEmptyStoryboard(slug, extras));
+}
+
+export function seedStoryboardFromShotPlan(slug, shotPlan = {}, extras = {}) {
+  const storyboard = ensureStoryboard(slug, extras);
+  const shots = Array.isArray(shotPlan.shots) ? shotPlan.shots : [];
+  if (!shots.length) return { storyboard, summary: storyboardSummary(storyboard), seeded: 0 };
+  const fps = Number(storyboard.defaults?.fps) || 24;
+  const now = new Date().toISOString();
+  let cursor = 0;
+  let seeded = 0;
+  for (const [index, shot] of shots.entries()) {
+    const sceneSlug = String(shot.scene || shot.name || `scene-${index + 1}`)
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 24) || `SCENE-${index + 1}`;
+    const chapterId = extras.chapterId || "H01";
+    const sceneId = extras.sceneId || `${chapterId}-S01`;
+    const clipId = `${sceneId}-C${String(index + 1).padStart(2, "0")}`;
+    if (storyboard.clips[clipId]) continue;
+    if (!storyboard.chapters[chapterId]) {
+      storyboard.chapters[chapterId] = { id: chapterId, number: 1, title: extras.chapterTitle || "Opening", sceneIds: [] };
+      if (!storyboard.chapterOrder.includes(chapterId)) storyboard.chapterOrder.push(chapterId);
+    }
+    if (!storyboard.scenes[sceneId]) {
+      storyboard.scenes[sceneId] = { id: sceneId, chapterId, number: 1, title: extras.sceneTitle || sceneSlug, clipIds: [] };
+    }
+    if (!storyboard.chapters[chapterId].sceneIds.includes(sceneId)) storyboard.chapters[chapterId].sceneIds.push(sceneId);
+    if (!storyboard.scenes[sceneId].clipIds.includes(clipId)) storyboard.scenes[sceneId].clipIds.push(clipId);
+    const durationSec = Math.max(6, Math.min(30, Number(shot.durationSec) || 12));
+    const durationFrames = Math.round(durationSec * fps);
+    const videoPlanId = `video-${clipId.toLowerCase()}`;
+    const segmentId = `segment-${clipId.toLowerCase()}-01`;
+    const firstFrameId = `frame-${clipId.toLowerCase()}-first`;
+    const lastFrameId = `frame-${clipId.toLowerCase()}-last`;
+    storyboard.clips[clipId] = {
+      id: clipId,
+      sceneId,
+      order: storyboard.scenes[sceneId].clipIds.length,
+      timelineStartFrame: cursor,
+      durationFrames,
+      beat: shot.name || clipId,
+      dialogueAnchor: shot.dialogue || "",
+      shotSizeLens: shot.shotSize || "",
+      cameraMovement: shot.camera || "",
+      transition: index === 0 ? "fade_in" : "cut",
+      continuityLocks: [],
+      videoPlanId,
+      renderStatus: "not_started",
+      generationMode: "t2v_with_semantic_references",
+      referenceFiles: [],
+      voiceReferences: [],
+      firstFrameId,
+      lastFrameId,
+      updatedAt: now
+    };
+    storyboard.videoPlans[videoPlanId] = {
+      id: videoPlanId,
+      clipId,
+      workflowProfileId: storyboard.workflowProfile,
+      globalPrompt: shot.globalPrompt || shot.name || "",
+      segmentIds: [segmentId],
+      status: "needs_render",
+      generationMode: "t2v_with_semantic_references",
+      referenceFiles: [],
+      referenceCount: 0,
+      audioPlan: { mode: "dialogue", dialogueText: shot.dialogue || "", instruction: shot.audioDirection || "" }
+    };
+    storyboard.segments[segmentId] = {
+      id: segmentId,
+      order: 1,
+      prompt: (shot.motionPrompts && shot.motionPrompts[0]) || shot.globalPrompt || "",
+      dialogueAnchor: shot.dialogue || "",
+      startFrame: 0,
+      lengthFrames: durationFrames,
+      continuityLocks: [],
+      updatedAt: now
+    };
+    storyboard.frames[firstFrameId] = {
+      id: firstFrameId,
+      purpose: "first_frame",
+      ownerKind: "clip",
+      ownerId: clipId,
+      prompt: shot.firstFramePrompt || shot.globalPrompt || "",
+      negativePrompt: "text, captions, logos, watermarks, modern objects",
+      status: "ready_to_generate",
+      references: []
+    };
+    storyboard.frames[lastFrameId] = {
+      id: lastFrameId,
+      purpose: "last_frame",
+      ownerKind: "clip",
+      ownerId: clipId,
+      prompt: shot.lastFramePrompt || shot.globalPrompt || "",
+      negativePrompt: "text, captions, logos, watermarks, modern objects",
+      status: "ready_to_generate",
+      references: []
+    };
+    cursor += durationFrames;
+    seeded += 1;
+  }
+  storyboard.runtimeFrames = cursor;
+  storyboard.updatedAt = now;
+  const saved = saveStoryboard(slug, storyboard);
+  return { storyboard: saved, summary: storyboardSummary(saved), seeded };
+}
+
 export function loadStoryboard(slug) {
   const file = storyboardPath(slug);
   if (!fs.existsSync(file)) throw new Error(`Storyboard not found for project: ${slug}`);

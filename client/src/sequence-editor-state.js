@@ -237,6 +237,49 @@ export function videoClipAtTime(sequence, seconds) {
   }) || null;
 }
 
+export function nextVideoClip(sequence, seconds) {
+  const clips = rippleVideoClips(sequence?.videoClips || []);
+  const current = videoClipAtTime({ ...sequence, videoClips: clips }, seconds);
+  if (!current) return clips[0] || null;
+  const index = clips.findIndex((clip) => clip.id === current.id);
+  return index >= 0 ? clips[index + 1] || null : null;
+}
+
+export function replaceVideoClipMedia(sequence, clipId, media) {
+  const clips = (sequence?.videoClips || []).map((clip) => {
+    if (clip.id !== clipId) return clip;
+    const sourceDurationSec = mediaDuration(media, finite(clip.sourceDurationSec, clip.durationSec));
+    let sourceInSec = Math.max(0, finite(clip.sourceInSec));
+    let sourceOutSec = Math.max(sourceInSec + MIN_CLIP_SECONDS, finite(clip.sourceOutSec, sourceInSec + finite(clip.durationSec)));
+    if (sourceOutSec > sourceDurationSec) {
+      sourceInSec = 0;
+      sourceOutSec = sourceDurationSec;
+    }
+    return {
+      ...clip,
+      name: media.name || media.clipName || clip.name,
+      sourceFile: media.relativeFile || media.sourceFile || clip.sourceFile,
+      sourceDurationSec: roundTime(sourceDurationSec),
+      sourceInSec: roundTime(sourceInSec),
+      sourceOutSec: roundTime(sourceOutSec),
+      durationSec: roundTime(sourceOutSec - sourceInSec),
+      origin: {
+        ...(clip.origin || {}),
+        clipId: media.clipId || clip.origin?.clipId,
+        segmentId: media.segmentId || clip.origin?.segmentId,
+        takeId: media.takeId || media.id,
+        takeNumber: media.takeNumber,
+        source: media.relativeFile || media.sourceFile || clip.origin?.source
+      }
+    };
+  });
+  return {
+    ...sequence,
+    videoClips: rippleVideoClips(clips),
+    updatedAt: new Date().toISOString()
+  };
+}
+
 export function activeStoryCut(library = [], scope = {}) {
   const candidates = library.filter((media) => {
     if (media.kind !== "video" || !media.isActiveTake) return false;

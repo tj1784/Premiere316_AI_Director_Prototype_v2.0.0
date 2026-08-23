@@ -11,6 +11,7 @@ test("legacy production routes redirect to their integrated workspaces", () => {
   assert.equal(resolveProductionRoute("/media"), "/direct/sequence");
   assert.equal(resolveProductionRoute("/ltx-director"), "/direct/ltx");
   assert.equal(resolveProductionRoute("/comfyui"), "/direct/comfyui");
+  assert.equal(resolveProductionRoute("/comfy"), "/direct/comfyui");
 });
 
 test("workspace roots use a valid remembered subtab", () => {

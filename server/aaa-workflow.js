@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { PACKAGE_ROOT, WORKFLOWS_DIR } from "./paths.js";
@@ -57,36 +58,125 @@ function resolveWorkflowRel(rel) {
   return { rel: path.relative(WORKFLOW_ROOT, abs).replace(/\\/g, "/"), abs };
 }
 
-export function listWorkflows(query = "") {
-  const needle = String(query || "").trim().toLowerCase();
-  const items = [];
+const MANIFEST_PATH = path.join(WORKFLOWS_DIR, "manifest.json");
+
+function fileHash(abs) {
+  try {
+    return crypto.createHash("sha256").update(fs.readFileSync(abs)).digest("hex").slice(0, 12);
+  } catch {
+    return "";
+  }
+}
+
+function readManifest() {
+  try {
+    return JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf8"));
+  } catch {
+    return { schema: "premiere316.workflows.v1", workflows: [] };
+  }
+}
+
+function walkJsonFiles(root) {
+  const files = [];
   function walk(dir) {
     let entries = [];
     try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
     for (const entry of entries) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
-        if (entry.name.startsWith(".")) continue;
+        if (entry.name.startsWith(".") || entry.name === "minimax-h3" || entry.name === "ci-flux2-p316-style-lock" || entry.name === "audio") continue;
         walk(full);
         continue;
       }
-      if (!entry.isFile() || !/\.json$/i.test(entry.name) || entry.name.startsWith(".")) continue;
-      const rel = path.relative(WORKFLOW_ROOT, full).replace(/\\/g, "/");
-      const folder = rel.includes("/") ? rel.slice(0, rel.lastIndexOf("/")) : "";
-      const baseName = entry.name.replace(/\.json$/i, "");
-      const name = rel === HARROWING_REL ? "Harrowing of Hell" : rel === AAA_FILE_REL ? "Harrowing AAA" : rel === DIRECTOR_REL ? "Harrowing LTX2.5 Director" : baseName;
-      const hay = `${rel} ${name} ${baseName} ${folder} harrowing of hell`.toLowerCase();
-      if (needle && !hay.includes(needle)) continue;
-      let bytes = 0;
-      try { bytes = fs.statSync(full).size; } catch {}
-      const pinned = rel === HARROWING_REL || rel === AAA_FILE_REL || rel === DIRECTOR_REL || folder === "H01_S01_C01_AAA_segments";
-      items.push({ rel, name, folder, bytes, active: rel === AAA_REL, pinned });
+      if (!entry.isFile() || !/\.json$/i.test(entry.name) || entry.name.startsWith(".") || /\.bak$/i.test(entry.name) || /before-/i.test(entry.name)) continue;
+      files.push(full);
     }
   }
-  walk(WORKFLOW_ROOT);
-  const pinRank = (item) => item.rel === HARROWING_REL ? 0 : item.rel === DIRECTOR_REL ? 1 : item.rel === AAA_FILE_REL ? 2 : item.folder === "H01_S01_C01_AAA_segments" ? 3 : 4;
-  items.sort((a, b) => pinRank(a) - pinRank(b) || a.rel.localeCompare(b.rel));
-  return { root: WORKFLOW_ROOT, count: items.length, items };
+  walk(root);
+  return files;
+}
+
+function packagedWorkflows() {
+  const manifest = readManifest();
+  const listed = Array.isArray(manifest.workflows) ? manifest.workflows : [];
+  const items = [];
+  const seen = new Set();
+  for (const entry of listed) {
+    const rel = String(entry.rel || "").replace(/\\/g, "/");
+    if (!rel) continue;
+    const abs = path.resolve(WORKFLOWS_DIR, rel);
+    if (!abs.startsWith(path.resolve(WORKFLOWS_DIR) + path.sep) && abs !== path.resolve(WORKFLOWS_DIR, rel)) continue;
+    if (!fs.existsSync(abs)) continue;
+    seen.add(rel);
+    items.push({
+      rel,
+      name: entry.label || path.basename(rel, ".json"),
+      folder: rel.includes("/") ? rel.slice(0, rel.lastIndexOf("/")) : "",
+      bytes: fs.statSync(abs).size,
+      hash: fileHash(abs),
+      source: "package",
+      id: entry.id || rel,
+      pinned: true,
+      active: false
+    });
+  }
+  for (const abs of walkJsonFiles(WORKFLOWS_DIR)) {
+    const rel = path.relative(WORKFLOWS_DIR, abs).replace(/\\/g, "/");
+    if (rel === "manifest.json" || seen.has(rel)) continue;
+    items.push({
+      rel,
+      name: path.basename(rel, ".json"),
+      folder: rel.includes("/") ? rel.slice(0, rel.lastIndexOf("/")) : "",
+      bytes: fs.statSync(abs).size,
+      hash: fileHash(abs),
+      source: "package",
+      id: rel,
+      pinned: false,
+      active: false
+    });
+  }
+  return items;
+}
+
+export function listWorkflows(query = "") {
+  const needle = String(query || "").trim().toLowerCase();
+  const items = [...packagedWorkflows()];
+  let missingLibrary = false;
+  if (!fs.existsSync(WORKFLOW_ROOT)) {
+    missingLibrary = true;
+  } else {
+    const localFiles = walkJsonFiles(WORKFLOW_ROOT);
+    if (!localFiles.length) missingLibrary = true;
+    for (const full of localFiles) {
+      const rel = path.relative(WORKFLOW_ROOT, full).replace(/\\/g, "/");
+      const folder = rel.includes("/") ? rel.slice(0, rel.lastIndexOf("/")) : "";
+      const baseName = path.basename(rel, ".json");
+      const name = rel === HARROWING_REL ? "Harrowing of Hell" : rel === AAA_FILE_REL ? "Harrowing AAA" : rel === DIRECTOR_REL ? "Harrowing LTX2.5 Director" : baseName;
+      items.push({
+        rel,
+        name,
+        folder,
+        bytes: fs.statSync(full).size,
+        hash: fileHash(full),
+        source: "library",
+        id: rel,
+        pinned: rel === HARROWING_REL || rel === AAA_FILE_REL || rel === DIRECTOR_REL || folder === "H01_S01_C01_AAA_segments",
+        active: rel === AAA_REL
+      });
+    }
+  }
+  const filtered = needle
+    ? items.filter((item) => `${item.rel} ${item.name} ${item.id} ${item.folder}`.toLowerCase().includes(needle))
+    : items;
+  const pinRank = (item) => item.source === "package" ? 0 : item.rel === HARROWING_REL ? 1 : item.rel === DIRECTOR_REL ? 2 : item.rel === AAA_FILE_REL ? 3 : item.folder === "H01_S01_C01_AAA_segments" ? 4 : 5;
+  filtered.sort((a, b) => pinRank(a) - pinRank(b) || a.rel.localeCompare(b.rel));
+  return {
+    root: WORKFLOW_ROOT,
+    packagedRoot: WORKFLOWS_DIR,
+    missingLibrary,
+    count: filtered.length,
+    items: filtered
+  };
 }
 
 function nodeById(graph, id) {
@@ -319,52 +409,60 @@ export function writeAaaWorkflow(config) {
 }
 
 
-function findPackageWorkflow(id) {
+function collectPackageHits(id) {
   const needle = String(id || "").trim().toLowerCase();
-  if (!needle) return null;
-  const hits = [];
-  function walk(dir) {
-    let entries = [];
-    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
-    for (const entry of entries) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        if (entry.name.startsWith(".")) continue;
-        walk(full);
-        continue;
-      }
-      if (!entry.isFile() || !/\.(json)$/i.test(entry.name) || entry.name.startsWith(".")) continue;
-      const rel = path.relative(WORKFLOWS_DIR, full).replace(/\\/g, "/");
-      const hay = `${rel} ${entry.name}`.toLowerCase();
-      if (!hay.includes(needle)) continue;
-      hits.push({ rel, abs: full, ui: /\.ui\.json$/i.test(entry.name) || /\/ui\//i.test(rel) });
-    }
-  }
-  try { walk(WORKFLOWS_DIR); } catch { return null; }
-  hits.sort((a, b) => Number(b.ui) - Number(a.ui) || a.rel.localeCompare(b.rel));
+  if (!needle) return [];
+  const items = packagedWorkflows();
+  const exact = items.filter((item) => {
+    const rel = String(item.rel || "").toLowerCase();
+    const base = path.basename(rel).toLowerCase();
+    const stem = base.replace(/\.json$/i, "");
+    return rel === needle || rel === `${needle}.json` || base === needle || stem === needle || String(item.id || "").toLowerCase() === needle;
+  });
+  if (exact.length) return exact;
+  return items.filter((item) => `${item.rel} ${item.name} ${item.id}`.toLowerCase().includes(needle));
+}
+
+function findPackageWorkflow(id) {
+  const hits = collectPackageHits(id);
   if (!hits.length) return null;
-  return { rel: hits[0].rel, graph: readGraph(hits[0].abs), source: "package" };
+  if (hits.length > 1) {
+    const error = new Error(`Ambiguous workflow id '${id}'. Matches: ${hits.map((item) => item.rel).join(", ")}`);
+    error.code = "WORKFLOW_AMBIGUOUS";
+    throw error;
+  }
+  const abs = path.resolve(WORKFLOWS_DIR, hits[0].rel);
+  return { rel: hits[0].rel, graph: readGraph(abs), source: "package", hash: hits[0].hash || fileHash(abs) };
 }
 
 export function readWorkflowGraph({ rel, id } = {}) {
   const rawRel = String(rel || "").trim();
   const rawId = String(id || "").trim();
   if (rawRel) {
+    const packagedExact = packagedWorkflows().find((item) => item.rel === rawRel.replace(/\\/g, "/"));
+    if (packagedExact) {
+      const abs = path.resolve(WORKFLOWS_DIR, packagedExact.rel);
+      return { rel: packagedExact.rel, graph: readGraph(abs), source: "package", hash: packagedExact.hash || fileHash(abs) };
+    }
     const resolved = resolveWorkflowRel(rawRel);
-    return { rel: resolved.rel, graph: readGraph(resolved.abs), source: "library" };
+    return { rel: resolved.rel, graph: readGraph(resolved.abs), source: "library", hash: fileHash(resolved.abs) };
   }
   if (rawId) {
     try {
       const resolved = resolveWorkflowRel(rawId.endsWith(".json") ? rawId : `${rawId}.json`);
-      return { rel: resolved.rel, graph: readGraph(resolved.abs), source: "library" };
+      return { rel: resolved.rel, graph: readGraph(resolved.abs), source: "library", hash: fileHash(resolved.abs) };
     } catch {}
     const items = listWorkflows().items || [];
     const lower = rawId.toLowerCase();
-    const match = items.find((item) => item.rel === rawId || item.rel.toLowerCase() === lower || String(item.name || "").toLowerCase() === lower)
-      || items.find((item) => String(item.rel || "").toLowerCase().includes(lower) || String(item.name || "").toLowerCase().includes(lower));
-    if (match) {
-      const resolved = resolveWorkflowRel(match.rel);
-      return { rel: resolved.rel, graph: readGraph(resolved.abs), source: "library" };
+    const exact = items.filter((item) => item.rel === rawId || item.rel.toLowerCase() === lower || String(item.id || "").toLowerCase() === lower || String(item.name || "").toLowerCase() === lower);
+    if (exact.length > 1) throw new Error(`Ambiguous workflow id '${rawId}'. Matches: ${exact.map((item) => item.rel).join(", ")}`);
+    if (exact.length === 1) {
+      if (exact[0].source === "package") {
+        const abs = path.resolve(WORKFLOWS_DIR, exact[0].rel);
+        return { rel: exact[0].rel, graph: readGraph(abs), source: "package", hash: exact[0].hash || fileHash(abs) };
+      }
+      const resolved = resolveWorkflowRel(exact[0].rel);
+      return { rel: resolved.rel, graph: readGraph(resolved.abs), source: "library", hash: fileHash(resolved.abs) };
     }
     const packaged = findPackageWorkflow(rawId);
     if (packaged) return packaged;

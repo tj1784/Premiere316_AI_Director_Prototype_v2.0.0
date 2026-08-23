@@ -1,0 +1,89 @@
+﻿case_id,area,priority,scenario,preconditions,steps,expected,evidence_to_capture
+UAT-PLAY-001,Playback,P1,Two-clip seamless cut,Two 4K clips with different codecs/resolutions,Place clips consecutively; play through cut three times,"No black/stale frame, no stall, correct frame at seam","60 fps screen recording, console, media events"
+UAT-PLAY-002,Playback,P1,Buffering freezes transport,Throttle source/disk or use deliberately slow source,Play; induce waiting for 2 seconds,Playhead/audio pause with visible buffering; resume in sync,Timestamped media-event log and screen recording
+UAT-PLAY-003,Playback,P1,Background-tab clock integrity,Sequence with video plus auxiliary audio,Play; background tab for 10 seconds; return,"No wall-clock jump, broken fade, or A/V desync",Screen recording and currentTime trace
+UAT-PLAY-004,Playback,P1,Positive-gain parity,+12 dB clip with known tone,Preview; export; measure both,Preview/export agree within 0.5 dB,Waveform/loudness report
+UAT-PLAY-005,Playback,P1,Long-sequence sync,10-minute sequence with clap markers each minute,Play end to end,A/V drift stays within 20 ms,Recorded output and marker analysis
+UAT-PLAY-006,Playback,P2,Play rejection,Force autoplay/device rejection,Press Play,Persistent actionable error; no silent stop,Screenshot and console
+UAT-PLAY-007,Playback,P2,Missing program media,Remove/move one source,Play into missing clip,Clear missing/relink state; transport behavior predictable,Screenshot and network log
+UAT-PLAY-008,Playback,P2,Corrupt media decode,Use corrupt MP4,Play source/program,Decode error names the asset and recovery,Screenshot and media error code
+UAT-PLAY-009,Playback,P2,Trim-boundary accuracy,Long-GOP source with frame numbers,Set in/out on known frames; play seam,Expected frames appear; limitations disclosed,Frame captures
+UAT-PLAY-010,Playback,P2,Audio tail after picture,Picture ends before audio,Play to end,Black-tail behavior is labeled and transport ends correctly,Screen recording
+UAT-PLAY-011,Playback,P2,Mute/lock combinations,Multiple video/audio tracks,Toggle mute/lock while stopped and playing,State and sound match labels; no forbidden edits,Screen recording
+UAT-PLAY-012,Playback,P2,Rapid scrub,Mixed clips on local SSD,Drag playhead rapidly across cuts,"No stale frame, crash, or runaway audio",Performance trace
+UAT-PLAY-013,Playback,P2,Repeated play/pause,Loaded sequence,Press Space 30 times at varied focus,"No duplicate audio, stuck transport, or outside-context shortcut",Screen recording
+UAT-PLAY-014,Playback,P2,Multiple auxiliary tracks,Three overlapping audio clips with fades,Play overlap,All tracks remain synchronized and fades are smooth,Audio capture
+UAT-PLAY-015,Playback,P3,End-of-sequence replay,Completed playback,Press Play again,Starts from defined position with clear state,Screen recording
+UAT-TAKE-001,Takes,P1,Default filter,"Project with active, latest, and historical takes",Open sequence editor,Active is default; count and label are correct,Screenshot
+UAT-TAKE-002,Takes,P1,Latest per selected segment,"Three segments, multiple versions each",Select each timeline segment; choose Latest/segment,Only newest eligible take for selected segment is shown,Screenshots and item IDs
+UAT-TAKE-003,Takes,P1,All filter,Same fixture,Choose All,All takes appear exactly once,Item ID export
+UAT-TAKE-004,Takes,P1,Replace selected clip with take,Selected timeline clip and alternate take,Invoke Replace,Correct target changes; trim policy disclosed; undo works,Before/after document diff
+UAT-TAKE-005,Takes,P2,Previous/next take keyboard cycle,Segment with 20 takes,Use keyboard cycle and audition,Focus remains stable and each take appears once,Screen recording
+UAT-TAKE-006,Takes,P2,Hidden selection on filter change,Select historical item then switch to Active,Change filter,Selection clears or is explicitly marked hidden,Screenshot
+UAT-TAKE-007,Takes,P2,Unassigned import isolation,Imports with no segment ID,Select one segment and Latest/segment,Unassigned assets do not leak unless opted in,Screenshot
+UAT-TAKE-008,Takes,P2,Take status consistency,Active/latest flags in data,Refresh and switch filters,"Badges, counts, and membership agree",Screenshot/data snapshot
+UAT-TAKE-009,Takes,P2,Undo/redo take swap,Complete a take replacement,Undo then redo,Timeline and active flags restore exactly,Document revisions
+UAT-TAKE-010,Takes,P3,Filter persistence,Choose preferred filter,Navigate away/relaunch,Preference restores safely,Screen recording
+UAT-DROP-001,Folder Drop,P1,Mixed valid/invalid folder,"MP4, WAV, AVI, PNG, corrupt file, oversized file",Drop folder,Totals add to scanned count; every reject/failure has reason,Import report
+UAT-DROP-002,Folder Drop,P1,All failures,Folder of unsupported/oversized/corrupt files,Drop folder,No success-style ambiguity; failure list and retry shown,Screenshot
+UAT-DROP-003,Folder Drop,P1,Large file memory safety,Near-limit 4K media,Import while monitoring process,Streaming behavior; no full-file memory spike or UI freeze,Memory/event-loop trace
+UAT-DROP-004,Folder Drop,P1,Client/server type parity,One fixture per advertised extension,Drop each,Every extension has deterministic end-to-end result,Result table
+UAT-DROP-005,Folder Drop,P2,Deep folder scan,"10-level tree, 1,000 files",Drop root,"Immediate scan feedback, stable progress, no hang",Screen recording/performance
+UAT-DROP-006,Folder Drop,P2,Cancel import,100 large media files,Drop; cancel at 30%,No new work starts; partial results clear; metadata consistent,Disk listing/document diff
+UAT-DROP-007,Folder Drop,P2,Mixed file and folder payload,Drag a folder plus loose files,Drop once,Every eligible item imported exactly once,Hash manifest
+UAT-DROP-008,Folder Drop,P2,Duplicate re-drop,Import same folder twice,Drop second time,Duplicate policy is offered; no silent copies,Disk/document diff
+UAT-DROP-009,Folder Drop,P2,Duplicate filenames in different folders,A/x.wav and B/x.wav,Drop root,Both preserved with distinct provenance,Metadata/disk listing
+UAT-DROP-010,Folder Drop,P2,Concurrent drops,Two folders dropped nearly simultaneously,Start both imports,No lost document updates or overwritten files,Revision/import list
+UAT-DROP-011,Folder Drop,P2,Timeline drop semantics,Drag media onto exact timeline time,Drop,Preview/result matches target contract,Screen recording
+UAT-DROP-012,Folder Drop,P2,Relative path preservation,Nested scene/take folders,Import,relativePath/group structure remains accessible,Metadata export
+UAT-DROP-013,Folder Drop,P2,Context preservation,Filter set to one segment,Drop unrelated media,Filter/selection remains; Show imported is optional,Screen recording
+UAT-DROP-014,Folder Drop,P2,Failure-only retry,One transient failure among successes,Retry failures,Only failed item is retried; no duplicates,Request log
+UAT-DROP-015,Folder Drop,P2,Browser compatibility,"Chrome, Edge, Firefox",Repeat file/folder drops,Supported behavior or explicit fallback guidance,Browser matrix
+UAT-DROP-016,Folder Drop,P2,Zero-byte and truncated files,Malformed media fixtures,Drop folder,"Rejected with clear reason, no server instability",Import report/server log
+UAT-DROP-017,Folder Drop,P3,Recent import discoverability,Large existing bin,Import 20 items,Imported set reachable in one action,Screen recording
+UAT-DROP-018,Folder Drop,P3,Disk full/permission denied,Constrained target directory,Import,"Atomic failure, no corrupt partial metadata",Disk/server log
+UAT-DROP-019,Folder Drop,P3,Unicode/long filenames,International and 250-char names,Import,Safe deterministic naming with original display name retained,Metadata/disk listing
+UAT-DROP-020,Folder Drop,P3,Repeated large imports,"Five cycles of 1,000 files",Import and inspect,No runaway UI degradation; storage tools expose growth,Performance/storage report
+UAT-COMFY-001,Comfy Picker,P1,Initial selection truth,Open workspace with pre-existing canvas,Observe picker/canvas before interaction,UI clearly says not loaded or canvas matches selected workflow,Screenshot and graph hash
+UAT-COMFY-002,Comfy Picker,P1,ACK-backed load,Select known graph,Load workflow,Success only after iframe ACK with matching ID/hash,Bridge log
+UAT-COMFY-003,Comfy Picker,P1,Rapid selection race,Throttle graph endpoint,Select A→B→C rapidly,Only C loads and is reported,Network/bridge log
+UAT-COMFY-004,Comfy Picker,P1,Unsaved graph protection,Modify graph in canvas,Select another workflow,Save/discard/cancel decision appears,Screen recording
+UAT-COMFY-005,Comfy Picker,P1,Clean recursive clone,Fresh machine with recursive submodules only,Launch picker,Deterministic packaged inventory or actionable setup block,Inventory/hash export
+UAT-COMFY-006,Comfy Picker,P2,Missing local workflow folder,Rename/remove user/default/workflows,Open picker,Explicit missing-library state; packaged options still identified,Screenshot
+UAT-COMFY-007,Comfy Picker,P2,Partial source failure,Make one list endpoint return 500,Open picker,Partial results plus source-specific error/retry,Screenshot/network log
+UAT-COMFY-008,Comfy Picker,P2,Malformed graph JSON,Add malformed workflow file,Select it,Parse error names file; prior canvas remains intact,Screenshot
+UAT-COMFY-009,Comfy Picker,P2,Ambiguous names,Add foo.json and foo-v2.json with overlapping IDs,Request fuzzy ID,Explicit exact choice or ambiguity error,Server response
+UAT-COMFY-010,Comfy Picker,P2,Large library search,"5,000 workflow entries",Search by name/path/model,Fast filtered discovery without giant select scanning,Performance/video
+UAT-COMFY-011,Comfy Picker,P2,Cross-origin iframe,Configure an origin that blocks DOM access,Load/queue,Controlled bridge-unavailable state; no uncaught exception,Console/screenshot
+UAT-COMFY-012,Comfy Picker,P2,Queue acknowledgement,Load valid graph and queue,Queue once,Prompt/job ID returned and visible,API/bridge log
+UAT-COMFY-013,Comfy Picker,P2,Queue rejection,Force Comfy validation error,Queue,No false success; actionable node/error info,Screenshot/API response
+UAT-COMFY-014,Comfy Picker,P2,Engine offline,Stop ComfyUI,Open workspace/retry,Offline state with start/retry; no endless blank iframe,Screen recording
+UAT-COMFY-015,Comfy Picker,P2,Hung iframe,Accept connection but never finish load,Open workspace,Timeout state and retry,Timer/screenshot
+UAT-COMFY-016,Comfy Picker,P2,Engine URL changes,Switch shared/dedicated profile,Observe toolbar/iframe,Both update to same authoritative endpoint,Health log/screenshot
+UAT-COMFY-017,Comfy Picker,P2,Reload selected,Modify current canvas,Use Reload selected,Confirmation then deterministic restore,Graph hash
+UAT-COMFY-018,Comfy Picker,P2,Asset context change,Switch image→video→audio asset context,Observe recommendation/current graph,Incompatibility/default choice is explicit,Screen recording
+UAT-COMFY-019,Comfy Picker,P2,Unavailable catalog workflow,Catalog ready=false,Open/select,Unavailable option disabled or explains remediation,Screenshot
+UAT-COMFY-020,Comfy Picker,P2,Source provenance,Load local and packaged variants,Inspect status,Source/version/hash always visible,Screenshot
+UAT-COMFY-021,Comfy Picker,P3,Same-value reload,Select current option again/use reload,Reload,Request executes deliberately and state updates,Network log
+UAT-COMFY-022,Comfy Picker,P3,Favorites/recent,Use several workflows,Reopen picker,Recent/favorites aid discovery without hiding source,Screenshot
+UAT-COMFY-023,Comfy Picker,P3,Library filesystem changes,Add/remove workflow while app open,Refresh/index,Inventory updates predictably without server stall,Performance/log
+UAT-COMFY-024,Comfy Picker,P3,Large graph,Load very large JSON graph,Select/load,"Responsive UI, progress, bounded server blocking",Performance trace
+UAT-A11Y-001,Accessibility,P1,Keyboard-only full path,No mouse,"Import, select take, replace, play, load workflow",Every primary workflow completes with visible focus,Screen recording
+UAT-A11Y-002,Accessibility,P2,Screen-reader names,NVDA on Windows,Navigate all controls,Distinct roles/names/states announced,NVDA transcript
+UAT-A11Y-003,Accessibility,P2,Live status,NVDA on Windows,Run long import and induce buffering/error,Progress and errors announced appropriately,NVDA transcript
+UAT-A11Y-004,Accessibility,P2,Target size,Rendered app,Measure interactive hit boxes,Primary targets meet project minimum,Measurement sheet
+UAT-A11Y-005,Accessibility,P2,Contrast,Rendered app in all states,Run axe/manual sampling,Chosen WCAG AA thresholds pass,axe/contrast report
+UAT-RESP-001,Responsive,P2,1366×768,Windows 100% scale,Complete sequence and Comfy flows,No clipped critical controls or viewport-wide horizontal scroll,Screenshots
+UAT-RESP-002,Responsive,P2,1440×900 at 125%,Windows 125% scale,Complete flows,Usable density and focus visibility,Screenshots
+UAT-RESP-003,Responsive,P2,1920×1080 at 150%,Windows 150% scale,Complete flows,No inaccessible content,Screenshots
+UAT-RESP-004,Responsive,P3,4K at 150%,4K display,Complete flows,Density remains readable; controls not excessively tiny,Screenshots
+UAT-REG-001,Regression,P1,Active/latest/all baseline,Parent fixture and current fixture,Compare take membership/defaults,No regression from accepted parent behavior,Automated diff
+UAT-REG-002,Regression,P1,Required CI gate,Open test PR with intentional failure,Attempt merge,Protected branch blocks merge,PR evidence
+UAT-REG-003,Regression,P2,Revision conflict during import/edit,Two browser windows,"Edit in one, import in another",Conflict handled without lost data,Document revisions
+UAT-REG-004,Regression,P2,Autosave/undo after take replacement,Perform swap and trim,Wait autosave; undo/redo,History and persisted document agree,Document snapshots
+UAT-REG-005,Regression,P2,Clean-room reproducibility,Fresh Windows account/machine,Clone/setup/run,Same picker inventory and key workflows,Setup log/hash manifest
+UAT-REG-006,Regression,P2,No-console-error smoke,Run all primary paths,Inspect console/server logs,No uncaught errors or unhandled rejections,Logs
+UAT-REG-007,Regression,P2,Project data isolation,Switch between two projects,Import/edit/load workflows,No data/state leakage,Document/file diff
+UAT-REG-008,Regression,P3,Restart recovery,Stop/restart app during dirty/import state,Relaunch,Clear recovery behavior; no corrupt state,Recovery log
+UAT-REG-009,Regression,P3,Long-session stability,Use editor for prolonged multi-operation session,Monitor memory/listeners,No runaway memory/listeners or duplicated media playback,Performance profile
+UAT-REG-010,Regression,P3,Canonical branch policy,Inspect main/master workflow,Release process,One canonical branch or synchronized protected policy,Repository settings evidence

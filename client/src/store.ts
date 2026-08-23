@@ -1109,7 +1109,7 @@ export const useStore = create<Store>((set, get) => ({
         method: "POST",
         body: JSON.stringify(body)
       });
-      set({ project: json.project });
+      set({ project: json.project, error: json.shotPlan?.warning || null });
     } catch (error: any) {
       set({ error: String(error.message) });
       throw error;

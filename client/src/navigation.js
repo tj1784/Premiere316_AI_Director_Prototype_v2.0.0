@@ -34,7 +34,7 @@ export function resolveProductionRoute(pathname, preferences = {}) {
   if (path === "/direct") return `/direct/${directTab}`;
   if (path === "/media") return "/direct/sequence";
   if (path === "/ltx-director") return "/direct/ltx";
-  if (path === "/comfyui") return "/direct/comfyui";
+  if (path === "/comfy" || path === "/comfyui") return "/direct/comfyui";
   if (ASSET_TABS.some((tab) => path === `/assets/${tab}`)) return path;
   if (DIRECT_TABS.some((tab) => path === `/direct/${tab}`)) return path;
   if (Object.values(TOP_LEVEL_ROUTES).includes(path)) return path;

@@ -25,7 +25,8 @@ import {
 import {
   clipMediaCandidates,
   discoverDirectorTakeFiles,
-  preferredClipMediaPath
+  preferredClipMediaPath,
+  resolveSegmentStartImage
 } from "./director-media-paths.mjs";
 
 const IMAGE_RE = /\.(png|jpe?g|webp|gif|bmp|tiff?)$/i;
@@ -951,8 +952,19 @@ function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
     const current = (timeline.segments || []).find((segment) => segment.id === segmentId) || {};
     const frame = planned.frameId ? storyboard.frames?.[planned.frameId] : null;
     const generated = resolvedFrameMedia(project.slug, frame);
-    const plannedGuidePath = planned.projectMediaPath || planned.imageFile || current.projectMediaPath || current.imageFile || null;
+    const startImage = resolveSegmentStartImage(projectDir(project.slug), clip.id, (plan.segmentIds || []).indexOf(segmentId) + 1);
+    const plannedGuidePath = startImage?.relative
+      || planned.projectMediaPath
+      || planned.imageFile
+      || current.projectMediaPath
+      || current.imageFile
+      || null;
     const plannedGuideExists = plannedGuidePath ? projectMediaExists(project.slug, plannedGuidePath) : false;
+    const chosenStart = startImage?.source === "canonical"
+      ? startImage
+      : generated
+        ? { relative: generated.relative, fileName: path.basename(generated.relative), source: "bound", bytes: generated.bytes, sha256: generated.sha256 }
+        : startImage;
     const segment = {
       ...current,
       id: planned.id,
@@ -960,10 +972,10 @@ function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
       length: Math.max(1, Number(planned.lengthFrames) || 1),
       prompt: String(planned.prompt || current.prompt || ""),
       global_prompt: String(planned.global_prompt || current.global_prompt || ""),
-      type: String(planned.type || current.type || (planned.frameId ? "image" : "text")),
+      type: String(planned.type || current.type || (chosenStart || planned.frameId ? "image" : "text")),
       isEndFrame: Boolean(planned.isEndFrame),
       storyboardFrameId: planned.frameId || null,
-      missingGuide: Boolean(planned.frameId && !generated && !plannedGuideExists)
+      missingGuide: Boolean((planned.frameId || startImage) && !chosenStart && !plannedGuideExists)
     };
     if (planned.mythicDialoguePass) segment.mythicDialoguePass = clone(planned.mythicDialoguePass);
     else delete segment.mythicDialoguePass;
@@ -972,16 +984,22 @@ function storyboardWorkspace(baseWorkspace, project, storyboard, clipId) {
     const dialogueDirection = segmentDialogueDirections.get(planned.id);
     if (dialogueDirection) segment.dialogueDirection = dialogueDirection;
     else delete segment.dialogueDirection;
-    if (generated) {
-      segment.projectMediaPath = generated.relative;
-      segment.projectMediaBytes = generated.bytes;
-      segment.projectMediaSha256 = generated.sha256;
-      segment.fileName = path.basename(generated.relative);
-      segment.imageFile = current.imageFile || frame.expectedInputPath || null;
+    if (chosenStart) {
+      segment.projectMediaPath = chosenStart.relative;
+      segment.fileName = chosenStart.fileName || path.basename(chosenStart.relative);
+      segment.startImageSource = chosenStart.source;
+      segment.type = "image";
+      segment.missingGuide = false;
+      if (chosenStart.bytes) segment.projectMediaBytes = chosenStart.bytes;
+      if (chosenStart.sha256) segment.projectMediaSha256 = chosenStart.sha256;
+      segment.imageFile = chosenStart.source === "canonical" || chosenStart.source === "canonical-fallback"
+        ? chosenStart.relative
+        : (current.imageFile || frame?.expectedInputPath || chosenStart.fileName);
       segment.guideStrength = Number(current.guideStrength ?? plan.guideStrength ?? 1);
     } else {
       delete segment.imageFile;
       delete segment.imageB64;
+      delete segment.startImageSource;
     }
     const takes = ensureActiveTake(planned, { slug: project.slug, clipId });
     const activeTake = activeTakeFromList(takes, planned.activeTakeId, planned.activeGeneratedVersion);
@@ -1709,6 +1727,117 @@ export function setClipGenerateOption(slug, clipId, optionId) {
   storyboard.updatedAt = new Date().toISOString();
   saveStoryboard(slug, storyboard);
   return { projectSlug: slug, clipId, generateOption: option };
+}
+
+function bindStartImageToFrame(storyboard, clipId, segment, startImage, now) {
+  if (!segment || !startImage?.relative) return false;
+  let frameId = segment.frameId;
+  if (!frameId || !storyboard.frames?.[frameId]) {
+    frameId = `frame-${String(segment.id || clipId).replace(/^segment-/, "")}-start`;
+    storyboard.frames[frameId] = {
+      id: frameId,
+      purpose: "first_frame",
+      ownerKind: "segment",
+      ownerId: segment.id,
+      prompt: segment.prompt || "",
+      status: "generated",
+      references: [],
+      generatedVersions: []
+    };
+    segment.frameId = frameId;
+  }
+  const frame = storyboard.frames[frameId];
+  const versions = Array.isArray(frame.generatedVersions) ? frame.generatedVersions : [];
+  const existing = versions.find((version) => String(version.file || "").replaceAll("\\", "/") === startImage.relative);
+  const nextV = existing
+    ? Number(existing.v)
+    : Math.max(0, ...versions.map((version) => Number(version.v) || 0)) + 1;
+  const stat = fs.statSync(startImage.disk);
+  const sha256 = cachedFileSha256(startImage.disk, stat);
+  const record = {
+    ...(existing || {}),
+    v: nextV,
+    id: existing?.id || `start-v${nextV}`,
+    file: startImage.relative,
+    files: [startImage.relative],
+    mediaType: "image",
+    source: startImage.source === "library" ? "storyboard-library" : "canonical_start_frames",
+    sourceFileName: startImage.fileName,
+    provenanceType: startImage.source === "canonical"
+      ? "canonical_start_frames_supersede"
+      : startImage.source === "canonical-fallback"
+        ? "canonical_start_frames_fallback"
+        : "storyboard_library_start",
+    fileHashes: [{ file: startImage.relative, sha256, bytes: stat.size }],
+    createdAt: existing?.createdAt || now
+  };
+  if (!existing) versions.push(record);
+  else Object.assign(existing, record);
+  frame.generatedVersions = versions;
+  frame.activeGeneratedVersion = nextV;
+  frame.generatedFile = startImage.fileName;
+  frame.generatedInputPath = startImage.relative;
+  frame.expectedInputPath = startImage.relative.replace(/^media\/storyboard\//, "");
+  frame.status = "generated";
+  frame.lastError = null;
+  segment.projectMediaPath = startImage.relative;
+  segment.imageFile = startImage.fileName;
+  segment.type = "image";
+  return true;
+}
+
+export function applyCanonicalStartImagesToStoryboard(slug, chapters = ["H02", "H03", "H04"]) {
+  slug = assertProjectSlug(slug);
+  const storyboard = loadStoryboard(slug);
+  const root = projectDir(slug);
+  const wanted = new Set((chapters || []).map((chapter) => String(chapter).toUpperCase()));
+  const now = new Date().toISOString();
+  const counts = { clips: 0, segments: 0, canonical: 0, library: 0, fallback: 0, missing: 0 };
+  for (const chapterId of storyboard.chapterOrder || Object.keys(storyboard.chapters || {})) {
+    if (wanted.size && !wanted.has(String(chapterId).toUpperCase())) continue;
+    const chapter = storyboard.chapters?.[chapterId];
+    for (const sceneId of chapter?.sceneIds || []) {
+      for (const clipId of storyboard.scenes?.[sceneId]?.clipIds || []) {
+        const clip = storyboard.clips?.[clipId];
+        const plan = clip ? storyboard.videoPlans?.[clip.videoPlanId] : null;
+        if (!plan?.segmentIds?.length) continue;
+        counts.clips += 1;
+        (plan.segmentIds || []).forEach((segmentId, index) => {
+          const segment = storyboard.segments?.[segmentId];
+          const startImage = resolveSegmentStartImage(root, clipId, index + 1);
+          counts.segments += 1;
+          if (!startImage) {
+            counts.missing += 1;
+            return;
+          }
+          bindStartImageToFrame(storyboard, clipId, segment, startImage, now);
+          if (startImage.source === "canonical") counts.canonical += 1;
+          else if (startImage.source === "library") counts.library += 1;
+          else counts.fallback += 1;
+        });
+        const opener = resolveSegmentStartImage(root, clipId, 1);
+        if (opener && clip) {
+          clip.firstFramePackage = {
+            ...(clip.firstFramePackage || plan.firstFramePackage || {}),
+            canonicalOpener: opener.relative.replace(/^media\/storyboard\//, ""),
+            canonicalOpenerSupersedes: true,
+            updatedAt: now
+          };
+          if (plan.firstFramePackage) {
+            plan.firstFramePackage = {
+              ...plan.firstFramePackage,
+              canonicalOpener: clip.firstFramePackage.canonicalOpener,
+              canonicalOpenerSupersedes: true,
+              updatedAt: now
+            };
+          }
+        }
+      }
+    }
+  }
+  storyboard.updatedAt = now;
+  saveStoryboard(slug, storyboard);
+  return { projectSlug: slug, ...counts, updatedAt: now };
 }
 
 export { PREMIERE_GENERATE_OPTIONS, HARROWING_AAA_I2V_GENERATE_OPTION, generateOptionForMode };

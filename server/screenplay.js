@@ -383,6 +383,59 @@ export function normalizeShotPlan(value) {
   };
 }
 
+export function createDeterministicShotPlan(markdown, { targetShotSeconds = 15, maxShots = 40, sceneFilter = null } = {}) {
+  const text = String(markdown || "").replace(/\r/g, "");
+  if (!text.trim()) throw new Error("Save or generate a screenplay before building a shot plan.");
+  const headingRe = /^(INT\.|EXT\.|INT\/EXT\.|I\/E\.)[^\n]+/gm;
+  const matches = [...text.matchAll(headingRe)];
+  const scenes = matches.map((match, index) => {
+    const start = match.index;
+    const end = index + 1 < matches.length ? matches[index + 1].index : text.length;
+    return { heading: match[0].trim(), body: text.slice(start, end).trim() };
+  }).filter((scene) => !sceneFilter || new RegExp(sceneFilter, "i").test(`${scene.heading}\n${scene.body}`));
+  const title = text.match(/^#\s+(.+)$/m)?.[1] || "Screenplay Shot Plan";
+  const shots = [];
+  const limit = Math.min(120, Math.max(4, Number(maxShots) || 40));
+  for (const scene of scenes) {
+    const blocks = scene.body.split(/\n{2,}/).map((block) => block.trim()).filter(Boolean);
+    let bucket = [];
+    let dialogue = [];
+    const flush = () => {
+      if (!bucket.length || shots.length >= limit) return;
+      const action = bucket.join(" ").replace(/\s+/g, " ").trim();
+      const spoken = dialogue.join(" / ");
+      const durationSec = Math.min(30, Math.max(6, spoken ? 10 : Number(targetShotSeconds) || 12));
+      shots.push({
+        name: `${scene.heading.replace(/^(INT\.|EXT\.|INT\/EXT\.)\s*/i, "").slice(0, 42)} ${String(shots.length + 1).padStart(2, "0")}`,
+        scene: scene.heading,
+        durationSec,
+        globalPrompt: `Photorealistic live-action biblical epic. No captions, logos, or modern objects. ${scene.heading}. ${action.slice(0, 900)}`,
+        motionPrompts: bucket.slice(0, 6).map((part) => part.replace(/\s+/g, " ").slice(0, 280)),
+        firstFramePrompt: `Opening still: ${scene.heading}. ${bucket[0].replace(/\s+/g, " ").slice(0, 400)}`,
+        lastFramePrompt: `Closing still: ${scene.heading}. ${bucket.at(-1).replace(/\s+/g, " ").slice(0, 400)}`,
+        dialogue: spoken,
+        audioDirection: spoken ? "Exact spoken dialogue over diegetic ambience." : "Diegetic ambience only.",
+        voiceDirection: spoken ? "Preserve speaker identity and scripture cadence." : ""
+      });
+      bucket = [];
+      dialogue = [];
+    };
+    for (const block of blocks) {
+      if (shots.length >= limit) break;
+      const speaker = block.match(/^([A-Z][A-Z0-9 .'-]{1,40})(?:\s*\(.*\))?\s*\n([\s\S]+)$/);
+      if (speaker && !/^(INT|EXT|FADE|CUT|BACK|INTERCUT|SAME|CONTINUOUS)/.test(speaker[1])) {
+        dialogue.push(`${speaker[1].trim()}: ${speaker[2].replace(/\s+/g, " ").trim()}`);
+      }
+      bucket.push(block);
+      const words = bucket.join(" ").split(/\s+/).length;
+      if (words > 80 || dialogue.length >= 2) flush();
+    }
+    flush();
+  }
+  if (!shots.length) throw new Error("Could not derive a deterministic shot plan from the screenplay.");
+  return normalizeShotPlan({ title, shots });
+}
+
 function sectionBetween(markdown, startHeading, endHeading) {
   const start = markdown.search(startHeading);
   if (start < 0) return "";
@@ -415,11 +468,20 @@ function planningSource(markdown) {
   return combined.slice(0, 56000);
 }
 
-export async function createShotPlan(markdown, { targetShotSeconds = 15, maxShots = 40 } = {}) {
+export async function createShotPlan(markdown, { targetShotSeconds = 15, maxShots = 40, sceneFilter = null } = {}) {
   const screenplay = String(markdown || "").trim();
   if (!screenplay) throw new Error("Save or generate a screenplay before building a shot plan.");
   const shotSeconds = Math.min(30, Math.max(6, Number(targetShotSeconds) || 15));
-  const shotLimit = Math.min(60, Math.max(4, Number(maxShots) || 40));
+  const shotLimit = Math.min(120, Math.max(4, Number(maxShots) || 40));
+  const health = await screenplayModelHealth(2500);
+  if (!health.modelAvailable) {
+    return {
+      ...createDeterministicShotPlan(screenplay, { targetShotSeconds: shotSeconds, maxShots: shotLimit, sceneFilter }),
+      model: "deterministic-fallback",
+      fallback: true,
+      warning: `Pinned screenplay model is not loaded (${SCREENPLAY_MODEL}). Built a deterministic scene/dialogue shot plan.`
+    };
+  }
 
   const system = `You are Premiere316's screenplay-to-video planning engine. Convert the supplied screenplay package into a concise, production-ordered LTX video shot plan. Return only valid JSON, with no Markdown and no commentary.
 
@@ -449,9 +511,18 @@ Maximum shots: ${shotLimit}.
 
 SCREENPLAY PACKAGE (render-planning view; chronology and dialogue are verbatim):
 ${planningSource(screenplay)}`;
-  const result = await callScreenplayModel([
-    { role: "system", content: system },
-    { role: "user", content: user }
-  ], { temperature: 0.35, topP: 0.85, maxTokens: 7000 });
-  return { ...normalizeShotPlan(parseJsonResponse(result.content)), model: SCREENPLAY_MODEL, usage: result.usage };
+  try {
+    const result = await callScreenplayModel([
+      { role: "system", content: system },
+      { role: "user", content: user }
+    ], { temperature: 0.35, topP: 0.85, maxTokens: 7000 });
+    return { ...normalizeShotPlan(parseJsonResponse(result.content)), model: SCREENPLAY_MODEL, usage: result.usage };
+  } catch (error) {
+    return {
+      ...createDeterministicShotPlan(screenplay, { targetShotSeconds: shotSeconds, maxShots: shotLimit, sceneFilter }),
+      model: "deterministic-fallback",
+      fallback: true,
+      warning: String(error.message || error)
+    };
+  }
 }

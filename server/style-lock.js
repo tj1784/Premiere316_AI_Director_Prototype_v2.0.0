@@ -207,7 +207,9 @@ export function applyStyleLockToAsset(asset) {
   ) return asset;
   const workflowId = styleLockWorkflowIdForAsset(asset);
   if (workflowId) {
-    asset.workflowId = workflowId;
+    const current = String(asset.workflowId || "");
+    const keepExplicit = current && !isStyleLockWorkflow(current);
+    if (!keepExplicit) asset.workflowId = workflowId;
     // The 97-asset production package already contains the complete,
     // authoritative prompt envelope for every indexed image. Never prepend
     // the older generic style-lock text or add a Jesus-only exception.

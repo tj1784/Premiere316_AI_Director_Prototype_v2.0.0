@@ -1,0 +1,27 @@
+{
+  "schema": "premiere316.workflows.v1",
+  "package": "premiere316",
+  "version": "2.0.0",
+  "precedence": ["package", "library", "catalog"],
+  "note": "Tracked product graphs. Local BlokeyUI user/default/workflows files are optional overlays, never the sole release inventory.",
+  "workflows": [
+    {
+      "id": "ltx-director-i2v",
+      "rel": "ltx-director-i2v.ui.json",
+      "label": "LTX Director I2V",
+      "source": "package"
+    },
+    {
+      "id": "storyboard-ltx25-t2v-semantic-reference",
+      "rel": "storyboard-ltx25-t2v-semantic-reference.ui.json",
+      "label": "Storyboard LTX 2.5 T2V semantic reference",
+      "source": "package"
+    },
+    {
+      "id": "storyboard-krea2-reference-subgraphs",
+      "rel": "storyboard-krea2-reference-subgraphs.ui.json",
+      "label": "Storyboard Krea2 reference subgraphs",
+      "source": "package"
+    }
+  ]
+}

@@ -68,9 +68,16 @@ export function getPromptEnhanceStatus(slug) {
     };
   }
   const persisted = readJson(path.join(enhanceRoot(slug), "last-run.json"), null);
-  return persisted
-    ? { ...persisted, active: false }
-    : { status: "idle", active: false, completed: 0, total: 0, message: "No prompt enhance run yet." };
+  if (!persisted) return { status: "idle", active: false, completed: 0, total: 0, message: "No prompt enhance run yet." };
+  const stale = ["queued", "running", "cancelling"].includes(String(persisted.status || ""));
+  return {
+    ...persisted,
+    status: stale ? "interrupted" : persisted.status,
+    active: false,
+    message: stale
+      ? `Previous enhance run was interrupted at ${persisted.completed || 0}/${persisted.total || 0}. Retry selected assets.`
+      : persisted.message
+  };
 }
 
 export function grokCliAvailable() {

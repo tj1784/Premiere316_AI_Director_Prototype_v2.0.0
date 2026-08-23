@@ -984,12 +984,28 @@ function enumValues(objectInfo, className, inputName) {
   return [];
 }
 
-function workflowReadiness(workflow, objectInfo) {
+function workflowReadiness(workflow, objectInfo, { comfyOnline = false } = {}) {
   if (["ltx-2.3-native-audio", "premiere316-title-card"].includes(workflow.id)) {
     return { ready: true, reason: "Built into Premiere316" };
   }
+  if (workflow.id === "qwen3-tts-voice-design-1.7b") {
+    return {
+      ready: false,
+      code: "USE_CREATE_SOUND",
+      reason: "Use Create Sound → Voice Design. The legacy ComfyUI Qwen generator is disabled so it cannot conflict with the standalone pinned runtime.",
+      remediation: "/sound"
+    };
+  }
+  if (!comfyOnline) {
+    return {
+      ready: false,
+      code: "COMFY_OFFLINE",
+      reason: `ComfyUI is offline at ${process.env.COMFY_URL || "http://127.0.0.1:8188"}. Start the engine, then retry generation.`,
+      remediation: "start-comfy"
+    };
+  }
   const missingNodes = workflow.requiredNodes.filter((node) => !objectInfo?.[node]);
-  if (missingNodes.length) return { ready: false, reason: `Missing nodes: ${missingNodes.join(", ")}` };
+  if (missingNodes.length) return { ready: false, code: "MISSING_NODES", reason: `Missing nodes: ${missingNodes.join(", ")}` };
   if (isStyleLockWorkflow(workflow.id)) {
     const missing = [
       enumValues(objectInfo, "UNETLoader", "unet_name").includes(STYLE_FLUX_MODEL) ? null : STYLE_FLUX_MODEL,
@@ -1016,12 +1032,6 @@ function workflowReadiness(workflow, objectInfo) {
       enumValues(objectInfo, "VAELoader", "vae_name").includes(FLUX_VAE) ? null : FLUX_VAE
     ].filter(Boolean);
     return missing.length ? { ready: false, reason: `Missing models: ${missing.join(", ")}` } : { ready: true, reason: "Installed locally" };
-  }
-  if (workflow.id === "qwen3-tts-voice-design-1.7b") {
-    return {
-      ready: false,
-      reason: "Use Create Sound → Voice Design. The legacy ComfyUI Qwen generator is disabled so it cannot conflict with the standalone pinned runtime."
-    };
   }
   if (workflow.id === "ace-step-1.5-xl-turbo") {
     const missing = [
@@ -1065,10 +1075,17 @@ function vramFloor(workflowId) {
 
 export async function getAssetWorkflowCatalog(force = false) {
   let objectInfo = {};
-  try { objectInfo = await getObjectInfo(force); } catch {}
+  let comfyOnline = false;
+  try {
+    objectInfo = await getObjectInfo(force);
+    comfyOnline = Boolean(objectInfo && Object.keys(objectInfo).length);
+  } catch {
+    comfyOnline = false;
+    objectInfo = {};
+  }
   const gpu = gpuState();
   return ASSET_WORKFLOWS.map((workflow) => {
-    const installed = workflowReadiness(workflow, objectInfo);
+    const installed = workflowReadiness(workflow, objectInfo, { comfyOnline });
     const minimumFreeVramGb = vramFloor(workflow.id);
     const handoffRequired = Boolean(
       installed.ready &&

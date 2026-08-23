@@ -110,6 +110,30 @@ test("approved versioned first frames are staged under the workflow LoadImage ba
   }
 });
 
+test("staging falls back to verified project media when imageFile is blank", () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "premiere316-hell-stage-"));
+  try {
+    const source = path.join(tempRoot, "projects", "harrowing_of_hell", "media", "storyboard", "canonical_start_frames", "H02-S04-C02_CANONICAL_START.png");
+    const inputRoot = path.join(tempRoot, "comfy-input");
+    fs.mkdirSync(path.dirname(source), { recursive: true });
+    fs.writeFileSync(source, "canonical-start");
+
+    const staged = stageHellSegmentImage({
+      segment: { id: "segment-h02-s04-c02-seg02" },
+      projectSlug: "harrowing_of_hell",
+      projectMediaPath: "media/storyboard/canonical_start_frames/H02-S04-C02_CANONICAL_START.png",
+      projectMediaBytes: Buffer.byteLength("canonical-start"),
+      projectMediaSha256: crypto.createHash("sha256").update("canonical-start").digest("hex"),
+      imageFile: ""
+    }, { packageRoot: tempRoot, inputRoot });
+
+    assert.equal(staged.imageName, "H02-S04-C02_CANONICAL_START.png");
+    assert.equal(fs.readFileSync(staged.destination, "utf8"), "canonical-start");
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
 test("staging rejects project-media traversal", () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "premiere316-hell-stage-"));
   try {

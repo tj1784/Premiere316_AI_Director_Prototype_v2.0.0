@@ -66,6 +66,68 @@ export function directorOutputDiskCandidates(projectRoot, clipId, fileName) {
     .map((relative) => projectMediaDiskPath(projectRoot, relative));
 }
 
+const STORYBOARD_IMAGE_RE = /\.(png|jpe?g|webp|gif|bmp|tiff?)$/i;
+
+export function canonicalStartRelativePath(clipId, segmentIndex = 1) {
+  const clip = String(clipId || "").trim().toUpperCase();
+  if (!/^H0[2-4]-S\d+-C\d+$/.test(clip)) return "";
+  const index = Math.max(1, Number(segmentIndex) || 1);
+  if (index === 1) return `media/storyboard/canonical_start_frames/${clip}_CANONICAL_START.png`;
+  const nn = String(index).padStart(2, "0");
+  return `media/storyboard/canonical_start_frames/${clip}_SEG${nn}_CANONICAL_START.png`;
+}
+
+function startImageVersion(name) {
+  const match = String(name || "").match(/\.v(\d+)\b/i);
+  return match ? Number(match[1]) : 0;
+}
+
+function isSegmentLibraryName(name, clipId, segmentIndex) {
+  const base = String(name || "");
+  const clip = String(clipId || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const index = Math.max(1, Number(segmentIndex) || 1);
+  const nn = String(index).padStart(2, "0");
+  if (index === 1) {
+    return new RegExp(`^${clip}_first\\b`, "i").test(base) || new RegExp(`^${clip}_CANONICAL_START\\b`, "i").test(base);
+  }
+  return new RegExp(`^${clip}(?:_seg0?${index}|-SEG0?${index})\\b`, "i").test(base);
+}
+
+export function resolveSegmentStartImage(projectRoot, clipId, segmentIndex = 1) {
+  const root = path.resolve(String(projectRoot || ""));
+  const index = Math.max(1, Number(segmentIndex) || 1);
+  const clip = String(clipId || "").trim().toUpperCase();
+  if (!root || !clip) return null;
+
+  const tryRelative = (relative, source) => {
+    const normalized = safeMediaFragment(relative);
+    if (!normalized.startsWith("media/")) return null;
+    const disk = path.resolve(root, ...normalized.split("/"));
+    if (!fs.existsSync(disk) || !fs.statSync(disk).isFile()) return null;
+    return { relative: normalized, disk, fileName: path.basename(normalized), source };
+  };
+
+  const specificCanonical = tryRelative(canonicalStartRelativePath(clip, index), "canonical");
+  if (specificCanonical) return specificCanonical;
+
+  const storyboardDir = path.join(root, "media", "storyboard");
+  if (fs.existsSync(storyboardDir)) {
+    const matches = fs.readdirSync(storyboardDir)
+      .filter((name) => STORYBOARD_IMAGE_RE.test(name) && isSegmentLibraryName(name, clip, index) && !/contact_sheet/i.test(name))
+      .sort((left, right) => startImageVersion(right) - startImageVersion(left) || left.localeCompare(right));
+    if (matches[0]) {
+      const library = tryRelative(`media/storyboard/${matches[0]}`, "library");
+      if (library) return library;
+    }
+  }
+
+  if (index > 1) {
+    const clipCanonical = tryRelative(canonicalStartRelativePath(clip, 1), "canonical-fallback");
+    if (clipCanonical) return clipCanonical;
+  }
+  return null;
+}
+
 export function discoverDirectorTakeFiles(clipsRoot, clipId, segmentId) {
   const prefix = `${String(clipId)}_${String(segmentId)}_director_v`.toLowerCase();
   const chapter = chapterFolderForClipId(clipId);

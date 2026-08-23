@@ -8,8 +8,10 @@ import {
   moveAudioClip,
   moveVideoClip,
   newEditorSequence,
+  nextVideoClip,
   patchTimelineClip,
   projectMediaUrl,
+  replaceVideoClipMedia,
   removeTimelineClip,
   sequenceDuration,
   splitVideoClip,
@@ -210,4 +212,16 @@ test("resolves the active playback clip at cut boundaries", () => {
   assert.equal(videoClipAtTime(sequence, 3)?.name, "B");
   assert.equal(videoClipAtTime(sequence, 5)?.name, "B");
   assert.equal(videoClipAtTime(sequence, 5.001), null);
+  assert.equal(nextVideoClip(sequence, 0)?.name, "B");
+  assert.equal(nextVideoClip(sequence, 3), null);
+});
+
+test("replaces a timeline clip with a take while preserving in-range trims", () => {
+  let sequence = insertVideo(editorSequence(), videoMedia("A", 8));
+  sequence = patchTimelineClip(sequence, sequence.videoClips[0].id, { sourceInSec: 1, sourceOutSec: 4 });
+  const next = replaceVideoClipMedia(sequence, sequence.videoClips[0].id, videoMedia("Take2", 8, { takeNumber: 2, takeId: "t2" }));
+  assert.equal(next.videoClips[0].sourceFile, "media/clips/Take2.mp4");
+  assert.equal(next.videoClips[0].sourceInSec, 1);
+  assert.equal(next.videoClips[0].sourceOutSec, 4);
+  assert.equal(next.videoClips[0].origin.takeNumber, 2);
 });

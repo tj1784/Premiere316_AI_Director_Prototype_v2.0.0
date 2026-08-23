@@ -45,7 +45,7 @@ const WORKSPACE_ROUTE: Record<string, string> = {
   master: "/master",
   export: "/export",
   library: "/library",
-  comfy: "/comfy"
+  comfy: "/direct/comfyui"
 };
 
 const NAV_COUNT_KEYS: Record<string, string[]> = {
@@ -143,7 +143,7 @@ function intentFromMissingItem(item: MissingWorkItem): AssetActionIntent {
 
 function openComfyBlocked() {
   openAssetAction({
-    sourceRoute: "/comfy",
+    sourceRoute: "/direct/comfyui",
     sourceEntity: { type: "sequence", id: "comfy-offline", label: "ComfyUI offline" },
     requirement: { relationship: "comfy.offline", category: "atmosphere", expectedMediaType: "image" },
     initialAction: "choose",

@@ -280,10 +280,16 @@ test("loads H01-S01-C01 as eighteen 8-second 2m24s I2V jobs without rewriting th
 test("H03+ workspaces scope dialogue turns to one segment without changing H02 behavior", () => {
   const base = workspaceFromWorkflow(sourceGraph, sourceText);
   const h02 = workspaceForProjectClip(base, "harrowing_of_hell", "H02-S03-C01");
+  assert.equal(h02.timeline.segments[0].startImageSource, "canonical");
+  assert.match(h02.timeline.segments[0].projectMediaPath, /canonical_start_frames\/H02-S03-C01_CANONICAL_START\.png$/);
+  assert.equal(h02.timeline.segments[1].missingGuide, false);
+  assert.match(h02.timeline.segments[1].fileName, /^H02-S03-C01_seg02/);
   assert.match(h02.timeline.global_prompt, /Silent picture pass\. Torturer: Say the promise was a lie\. Adam: No\./);
   assert.ok(h02.timeline.segments.every((segment) => !segment.dialogueDirection));
 
   const h03 = workspaceForProjectClip(base, "harrowing_of_hell", "H03-S06-C03");
+  assert.equal(h03.timeline.segments[0].startImageSource, "canonical");
+  assert.match(h03.timeline.segments[0].projectMediaPath, /canonical_start_frames\/H03-S06-C03_CANONICAL_START\.png$/);
   assert.match(h03.timeline.global_prompt, /AUDIO \/ DIALOGUE CONTRACT/);
   assert.doesNotMatch(h03.timeline.global_prompt, /Silent picture pass|Jesus: Adam|Adam: I remember Your voice/);
   assert.deepEqual(h03.timeline.segments.map((segment) => segment.dialogueDirection || null), [

@@ -29,24 +29,53 @@ import {
   moveAudioClip,
   moveVideoClip,
   newEditorSequence,
+  nextVideoClip,
   patchTimelineClip,
   projectMediaUrl,
   removeTimelineClip,
+  replaceVideoClipMedia,
   sequenceDuration,
   splitVideoClip,
   trimVideoClip,
   videoClipAtTime
 } from "../sequence-editor-state.js";
+import { createPreviewGainController, dbToLinear } from "../preview-gain.js";
+import {
+  advertisedAcceptList,
+  MAX_EDITOR_AUDIO_BYTES,
+  MAX_EDITOR_VIDEO_BYTES,
+  preflightDroppedFile,
+  summarizeImportJob
+} from "@shared/media-types.js";
+import { DEFAULT_TAKE_FILTER, filterTakes, normalizeTakeFilter, TAKE_FILTERS } from "@shared/take-filters.js";
 
 
+
+function attachRelativePath(file: File, relativePath: string) {
+  const next = file as File & { relativePath?: string };
+  try { Object.defineProperty(next, "relativePath", { value: relativePath, configurable: true }); }
+  catch { next.relativePath = relativePath; }
+  return next;
+}
+
+function fileKey(file: File) {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
 
 async function filesFromDataTransfer(dataTransfer: DataTransfer) {
   const collected: File[] = [];
-  const walkEntry = async (entry: any) => {
+  const seen = new Set<string>();
+  const addFile = (file: File, relativePath = "") => {
+    const key = fileKey(file);
+    if (seen.has(key)) return;
+    seen.add(key);
+    collected.push(attachRelativePath(file, relativePath || (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name));
+  };
+  const walkEntry = async (entry: any, prefix = "") => {
     if (!entry) return;
     if (entry.isFile) {
       const file = await new Promise<File>((resolve, reject) => entry.file(resolve, reject));
-      collected.push(file);
+      addFile(file, String(entry.fullPath || `${prefix}${entry.name}`).replace(/^\/+/, ""));
       return;
     }
     if (entry.isDirectory) {
@@ -55,20 +84,16 @@ async function filesFromDataTransfer(dataTransfer: DataTransfer) {
       let batch: any[] = [];
       do {
         batch = await readBatch();
-        for (const child of batch) await walkEntry(child);
+        for (const child of batch) await walkEntry(child, `${prefix}${entry.name}/`);
       } while (batch.length);
     }
   };
   const items = [...(dataTransfer.items || [])];
-  let walked = false;
   for (const item of items) {
     const entry = (item as any).webkitGetAsEntry?.();
-    if (entry) {
-      walked = true;
-      await walkEntry(entry);
-    }
+    if (entry) await walkEntry(entry);
   }
-  if (!walked) collected.push(...[...(dataTransfer.files || [])]);
+  for (const file of [...(dataTransfer.files || [])]) addFile(file);
   return collected;
 }
 
@@ -181,8 +206,10 @@ function seconds(value: unknown) {
   return `${number >= 10 ? number.toFixed(1) : number.toFixed(2)}s`;
 }
 
+const previewGain = createPreviewGainController();
+
 function dbGain(value: unknown) {
-  return clamp(Math.pow(10, finite(value) / 20), 0, 1);
+  return dbToLinear(value);
 }
 
 function sourceUrl(slug: string, relativeFile: string) {
@@ -240,7 +267,10 @@ export default function SequenceEditorWorkspace(
   const [documentState, setDocumentState] = useState<any>(null);
   const [library, setLibrary] = useState<any>({ videos: [], audio: [], counts: {} });
   const [sequence, setSequence] = useState<any>(null);
-  const [takeFilter, setTakeFilter] = useState<TakeFilter>("all");
+  const [takeFilter, setTakeFilter] = useState<TakeFilter>(() => {
+    try { return normalizeTakeFilter(window.localStorage.getItem(`premiere316.takeFilter.${slug || "default"}`)) as TakeFilter; }
+    catch { return DEFAULT_TAKE_FILTER; }
+  });
   const [libraryTab, setLibraryTab] = useState<LibraryTab>("video");
   const [search, setSearch] = useState("");
   const [sceneFilter, setSceneFilter] = useState("");
@@ -261,6 +291,8 @@ export default function SequenceEditorWorkspace(
   const [probing, setProbing] = useState(false);
   const [appendingCut, setAppendingCut] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [importJob, setImportJob] = useState<any>(null);
+  const [programMediaState, setProgramMediaState] = useState<"idle" | "playing" | "buffering" | "seeking" | "stalled" | "error">("idle");
   const [exporting, setExporting] = useState(false);
   const [exportJobId, setExportJobId] = useState("");
   const [dragVideoId, setDragVideoId] = useState("");
@@ -278,6 +310,9 @@ export default function SequenceEditorWorkspace(
   const sourceVideoRef = useRef<HTMLVideoElement>(null);
   const sourceAudioRef = useRef<HTMLAudioElement>(null);
   const programVideoRef = useRef<HTMLVideoElement>(null);
+  const programPreloadRef = useRef<HTMLVideoElement>(null);
+  const programWaitingRef = useRef(false);
+  const importAbortRef = useRef<{ cancelled: boolean }>({ cancelled: false });
   const auxiliaryAudioRefs = useRef(new Map<string, HTMLAudioElement>());
   const audioUploadRef = useRef<HTMLInputElement>(null);
   const mediaRefreshBusyRef = useRef(false);
@@ -512,26 +547,17 @@ export default function SequenceEditorWorkspace(
     [selectedIsVideo, selectedTimelineClip, videos]
   );
 
-  const filteredVideos = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return videos.filter((item: any) => {
-      if (selectedSegmentId) {
-        const itemSeg = String(item.segmentId || "").trim();
-        if (itemSeg && itemSeg !== selectedSegmentId) return false;
-      }
-      if (takeFilter === "active" && !item.isActiveTake) return false;
-      if (takeFilter === "latest") { /* All Takes is takeFilter all; latest is not shown */ }
-      if (sceneFilter && String(item.sceneId || "") !== sceneFilter) return false;
-      if (query && ![
-        item.name, item.fileName, item.clipName, item.sceneTitle, item.segmentId, item.prompt
-      ].some((value) => String(value || "").toLowerCase().includes(query))) return false;
-      return true;
-    }).sort((left: any, right: any) =>
-      finite(left.editorialIndex, Number.MAX_SAFE_INTEGER) - finite(right.editorialIndex, Number.MAX_SAFE_INTEGER)
-      || finite(right.takeNumber) - finite(left.takeNumber)
-      || String(left.name || "").localeCompare(String(right.name || ""))
-    );
-  }, [sceneFilter, search, selectedSegmentId, takeFilter, videos]);
+  const filteredVideos = useMemo(() => filterTakes(videos, {
+    takeFilter,
+    selectedSegmentId,
+    sceneFilter,
+    query: search,
+    includeUnassigned: false
+  }), [sceneFilter, search, selectedSegmentId, takeFilter, videos]);
+
+  useEffect(() => {
+    try { window.localStorage.setItem(`premiere316.takeFilter.${slug || "default"}`, takeFilter); } catch {}
+  }, [slug, takeFilter]);
 
   const filteredAudio = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -786,7 +812,9 @@ export default function SequenceEditorWorkspace(
   }, [deleteSelected, performSave, redo, splitSelected, undo]);
 
   const currentProgramClip = useMemo(() => sequence ? videoClipAtTime(sequence, playheadSec) : null, [playheadSec, sequence]);
+  const upcomingProgramClip = useMemo(() => sequence ? nextVideoClip(sequence, playheadSec) : null, [playheadSec, sequence]);
   const currentProgramUrl = currentProgramClip ? sourceUrl(slug, currentProgramClip.sourceFile) : "";
+  const upcomingProgramUrl = upcomingProgramClip ? sourceUrl(slug, upcomingProgramClip.sourceFile) : "";
 
   const syncAuxiliaryAudio = useCallback((globalTime: number, playing: boolean) => {
     if (!sequenceRef.current) return;
@@ -809,9 +837,12 @@ export default function SequenceEditorWorkspace(
       }
       const fadeIn = finite(clip.fadeInSec) > 0 ? clamp(local / finite(clip.fadeInSec), 0, 1) : 1;
       const fadeOut = finite(clip.fadeOutSec) > 0 ? clamp((duration - local) / finite(clip.fadeOutSec), 0, 1) : 1;
-      element.volume = clamp(dbGain(finite(clip.volumeDb) + finite(track.volumeDb)) * fadeIn * fadeOut, 0, 1);
+      const previewLinear = dbGain(finite(clip.volumeDb) + finite(track.volumeDb)) * fadeIn * fadeOut;
+      void previewGain.setGainDb(element, 20 * Math.log10(Math.max(1e-8, previewLinear)));
       element.muted = false;
-      if (playing && element.paused) void element.play().catch(() => {});
+      if (playing && element.paused) void element.play().catch((error) => {
+        setProgramPlaybackError({ id: clip.id, message: `Audio play failed: ${String(error?.message || error)}` });
+      });
       if (!playing && !element.paused) element.pause();
     }
   }, []);
@@ -828,8 +859,11 @@ export default function SequenceEditorWorkspace(
         try { element.currentTime = desired; } catch {}
       }
       element.muted = Boolean(clip.muted || sequenceRef.current?.trackSettings?.V1?.muted);
-      element.volume = clamp(dbGain(finite(clip.volumeDb) + finite(sequenceRef.current?.trackSettings?.V1?.volumeDb)), 0, 1);
-      if (shouldPlay) void element.play().catch(() => setProgramPlaying(false));
+      void previewGain.setGainDb(element, finite(clip.volumeDb) + finite(sequenceRef.current?.trackSettings?.V1?.volumeDb));
+      if (shouldPlay) void element.play().catch((error) => {
+        setProgramPlaying(false);
+        setProgramPlaybackError({ id: clip.id, message: `Playback was blocked: ${String(error?.message || error)}` });
+      });
       else element.pause();
       syncAuxiliaryAudio(time, shouldPlay);
     });
@@ -839,20 +873,35 @@ export default function SequenceEditorWorkspace(
     if (!programPlaying) {
       playClockRef.current = null;
       programVideoRef.current?.pause();
+      programPreloadRef.current?.pause();
       syncAuxiliaryAudio(playheadSec, false);
+      if (programMediaState !== "error") setProgramMediaState("idle");
       return;
     }
     playClockRef.current = { originSec: playheadSec, originMs: performance.now() };
-    let leftClipId = currentProgramClip?.id || "";
+    let currentSec = playheadSec;
     let animationFrame = 0;
+    const mediaNotReady = (element: HTMLVideoElement | null) => {
+      if (!element) return true;
+      return programWaitingRef.current || element.seeking || element.readyState < HTMLMediaElement.HAVE_FUTURE_DATA;
+    };
     const tick = (now: number) => {
       const clock = playClockRef.current;
       if (!clock) return;
+      const element = programVideoRef.current;
+      if (mediaNotReady(element)) {
+        clock.originSec = currentSec;
+        clock.originMs = now;
+        setProgramMediaState(element?.seeking ? "seeking" : "buffering");
+        syncAuxiliaryAudio(currentSec, false);
+        animationFrame = window.requestAnimationFrame(tick);
+        return;
+      }
+      setProgramMediaState("playing");
       const next = Math.min(totalDuration, clock.originSec + ((now - clock.originMs) / 1000));
+      currentSec = next;
       setPlayheadSec(next);
       const clip = sequenceRef.current ? videoClipAtTime(sequenceRef.current, next) : null;
-      if (clip && leftClipId && clip.id !== leftClipId) leftClipId = clip.id;
-      const element = programVideoRef.current;
       if (element) {
         element.loop = false;
         if (clip) {
@@ -860,8 +909,22 @@ export default function SequenceEditorWorkspace(
           if (Math.abs(element.currentTime - desired) > 0.35) {
             try { element.currentTime = desired; } catch {}
           }
-          if (element.paused) void element.play().catch(() => setProgramPlaying(false));
+          if (element.paused) void element.play().catch((error) => {
+            setProgramPlaying(false);
+            setProgramPlaybackError({ id: clip.id, message: `Playback was blocked: ${String(error?.message || error)}` });
+          });
         } else if (!element.paused) element.pause();
+      }
+      const upcoming = sequenceRef.current ? nextVideoClip(sequenceRef.current, next) : null;
+      const preload = programPreloadRef.current;
+      if (preload && upcoming) {
+        const upcomingSrc = sourceUrl(slug, upcoming.sourceFile);
+        if (preload.src !== upcomingSrc) {
+          preload.src = upcomingSrc;
+          try { preload.currentTime = finite(upcoming.sourceInSec); } catch {}
+        } else if (clip && finite(clip.timelineStartSec) + finite(clip.durationSec) - next < 0.6) {
+          try { preload.currentTime = finite(upcoming.sourceInSec); } catch {}
+        }
       }
       syncAuxiliaryAudio(next, next < totalDuration);
       if (next >= totalDuration) {
@@ -872,7 +935,7 @@ export default function SequenceEditorWorkspace(
     };
     animationFrame = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [programPlaying, syncAuxiliaryAudio, totalDuration]);
+  }, [programPlaying, slug, syncAuxiliaryAudio, totalDuration]);
 
   const setProgramTime = (time: number, shouldPlay = programPlaying) => {
     const next = clamp(time, 0, Math.max(0, totalDuration));
@@ -998,49 +1061,105 @@ export default function SequenceEditorWorkspace(
   };
 
 
-  const importDroppedMedia = async (fileList: File[]) => {
-    const files = fileList.filter((file) => /\.(png|jpe?g|webp|gif|mp4|mov|mkv|webm|m4v|avi|mp3|wav|flac|m4a|aac|ogg|opus|aif|aiff)$/i.test(file.name));
-    if (!files.length || !slug) return;
-    const videos = files.filter((file) => /\.(mp4|mov|mkv|webm|m4v|avi)$/i.test(file.name));
-    const audios = files.filter((file) => /\.(mp3|wav|flac|m4a|aac|ogg|opus|aif|aiff)$/i.test(file.name));
+  const importDroppedMedia = async (fileList: File[], destination = "library") => {
+    if (!slug) return;
+    const token = { cancelled: false };
+    importAbortRef.current = token;
+    const results: any[] = fileList.map((file) => ({
+      ...preflightDroppedFile(file, { videoBytes: MAX_EDITOR_VIDEO_BYTES, audioBytes: MAX_EDITOR_AUDIO_BYTES }),
+      file
+    }));
+    if (!results.length) {
+      const empty = { status: "complete", destination, results: [], summary: summarizeImportJob([]), scanned: 0 };
+      setImportJob(empty);
+      setNotice("Drop was seen, but it contained no files.");
+      return;
+    }
     setUploading(true);
-    let importedAudio = 0;
-    let importedVideo = 0;
+    setImportJob({ status: "importing", destination, results, summary: summarizeImportJob(results), scanned: results.length });
     try {
-      for (const file of audios) {
+      for (const item of results) {
+        if (token.cancelled) {
+          item.status = "cancelled";
+          item.reason = "Import cancelled.";
+          continue;
+        }
+        if (item.status !== "eligible") continue;
         try {
           const body = new FormData();
-          body.append("file", file);
-          await jsonRequest(`/api/projects/${encodeURIComponent(slug)}/editor/media/audio`, { method: "POST", body });
-          importedAudio += 1;
-        } catch {
-          /* skip failed copies; never overwrite */
+          body.append("file", item.file);
+          if (item.relativePath) body.append("relativePath", item.relativePath);
+          const endpoint = item.kind === "audio" ? "audio" : "video";
+          await jsonRequest(`/api/projects/${encodeURIComponent(slug)}/editor/media/${endpoint}`, { method: "POST", body });
+          item.status = "imported";
+          item.reason = "";
+        } catch (error: any) {
+          item.status = "failed";
+          item.reason = String(error?.message || error || "Import failed");
         }
-      }
-      for (const file of videos) {
-        try {
-          const body = new FormData();
-          body.append("file", file);
-          await jsonRequest(`/api/projects/${encodeURIComponent(slug)}/editor/media/video`, { method: "POST", body });
-          importedVideo += 1;
-        } catch {
-          /* skip failed copies; never overwrite */
-        }
+        setImportJob({ status: "importing", destination, results: [...results], summary: summarizeImportJob(results), scanned: results.length });
       }
       await refreshMedia(true);
-      setTakeFilter("all");
-      if (importedVideo) setLibraryTab("video");
-      else if (importedAudio) setLibraryTab("audio");
-      setNotice(`Imported ${importedAudio + importedVideo} item${importedAudio + importedVideo === 1 ? "" : "s"} (${importedAudio} audio, ${importedVideo} video). New copies, unapproved, no overwrite.`);
+      const summary = summarizeImportJob(results);
+      const status = token.cancelled ? "cancelled" : summary.failed && summary.imported ? "partial" : summary.failed ? "failed" : "complete";
+      setImportJob({ status, destination, results, summary, scanned: results.length });
+      setNotice(summary.headline + (summary.balanced ? "" : " · totals need review"));
+    } catch (error: any) {
+      const summary = summarizeImportJob(results);
+      setImportJob({ status: "failed", destination, results, summary, scanned: results.length, error: String(error?.message || error) });
+      setNotice(`Import failed: ${String(error?.message || error)}`);
     } finally {
       setUploading(false);
     }
   };
 
-  const onFolderDrop = (event: React.DragEvent) => {
+  const retryFailedImports = async () => {
+    const failed = (importJob?.results || []).filter((item: any) => item.file && !["imported", "linked", "duplicate", "skipped", "cancelled"].includes(item.status));
+    if (!failed.length) return;
+    await importDroppedMedia(failed.map((item: any) => item.file), importJob?.destination || "library");
+  };
+
+  const replaceSelectedClipWithTake = () => {
+    if (!sequenceRef.current || !selectedIsVideo || !selectedMediaIsVideo || !selectedMedia) {
+      setNotice("Select a timeline clip and a take to replace it.");
+      return;
+    }
+    if (sequenceRef.current.trackSettings?.V1?.locked) {
+      setNotice("Unlock V1 before replacing the selected clip.");
+      return;
+    }
+    commit(replaceVideoClipMedia(sequenceRef.current, selectedTimelineClip.id, selectedMedia), selectedTimelineClip.id);
+    setNotice(`Replaced ${selectedTimelineClip.name} with ${mediaTitle(selectedMedia)}. Trim was preserved when it still fits.`);
+  };
+
+  const onFolderDrop = (event: React.DragEvent, destination = "library") => {
     event.preventDefault();
     event.stopPropagation();
-    void filesFromDataTransfer(event.dataTransfer).then((dropped) => void importDroppedMedia(dropped));
+    if (conflictRef.current) {
+      setNotice("Resolve the save conflict before importing media.");
+      return;
+    }
+    setUploading(true);
+    setImportJob({ status: "scanning", destination, results: [], summary: summarizeImportJob([]), scanned: 0 });
+    void (async () => {
+      try {
+        const dropped = await filesFromDataTransfer(event.dataTransfer);
+        setImportJob({ status: "importing", destination, results: [], summary: summarizeImportJob([]), scanned: dropped.length });
+        await importDroppedMedia(dropped, destination);
+      } catch (error: any) {
+        setImportJob({
+          status: "failed",
+          destination,
+          results: [{ name: destination, status: "failed", reason: String(error?.message || error) }],
+          summary: summarizeImportJob([{ status: "failed" }]),
+          scanned: 0,
+          error: String(error?.message || error)
+        });
+        setNotice(`Folder scan failed: ${String(error?.message || error)}`);
+      } finally {
+        setUploading(false);
+      }
+    })();
   };
 
   const uploadAudio = async (file: File) => {
@@ -1237,7 +1356,7 @@ export default function SequenceEditorWorkspace(
           onDrop={(event) => {
             event.preventDefault();
             if (transferHasFiles(event.dataTransfer)) {
-              onFolderDrop(event);
+              onFolderDrop(event, "timeline");
               return;
             }
             if (track !== "V1" || !dragVideoId || sequence.trackSettings?.V1?.locked) return;
@@ -1290,11 +1409,24 @@ export default function SequenceEditorWorkspace(
       ) : null}
 
       <section className="sequence-edit-top" style={{ display: "grid", gridTemplateColumns: "320px minmax(630px, 1fr) 290px", gap: 8, minWidth: 1260, minHeight: 0 }}>
-        <aside className="sequence-edit-library" data-testid="sequence-editor-library-drop" style={{ ...panel, display: "flex", flexDirection: "column" }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }} onDrop={onFolderDrop}>
+        <aside className="sequence-edit-library" data-testid="sequence-editor-library-drop" style={{ ...panel, display: "flex", flexDirection: "column" }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }} onDrop={(event) => onFolderDrop(event, "library")}>
           <div className="sequence-edit-panel-heading" style={{ height: 39, flex: "0 0 39px", display: "flex", alignItems: "center", gap: 6, padding: "0 9px", borderBottom: "1px solid #293447" }}>
             <b>LTX TAKES + MEDIA</b>
             <span className="sequence-edit-library-counts" data-testid="sequence-editor-library-counts" style={{ marginLeft: "auto", color: "#7f8da1", fontSize: 10 }}>{library.counts?.playableVideos || 0}/{library.counts?.videos || videos.length} video · {library.counts?.playableAudio || 0} audio</span>
           </div>
+          {importJob ? (
+            <div className="sequence-edit-import-job" data-testid="sequence-editor-import-report" role="status" aria-live="polite" style={{ margin: 7, padding: 8, border: "1px solid #354359", borderRadius: 6, background: "#0c121b", display: "grid", gap: 6 }}>
+              <b style={{ fontSize: 11 }}>{importJob.status === "scanning" ? "Scanning drop…" : importJob.summary?.headline || "Import"}</b>
+              <small style={{ color: "#8d9bae" }}>{importJob.destination === "timeline" ? "Dropped on timeline · imported to bin" : "Library import"}{importJob.summary?.balanced === false ? " · totals do not reconcile" : ""}</small>
+              {(importJob.summary?.failures || []).slice(0, 6).map((item: any, index: number) => (
+                <span key={`${item.name || "file"}-${index}`} style={{ color: "#ef9ca8", fontSize: 11 }}>{item.name || "file"}: {item.reason || item.status}</span>
+              ))}
+              <div style={{ display: "flex", gap: 5 }}>
+                <button type="button" style={button} disabled={!importJob.summary?.failures?.length || uploading} onClick={() => void retryFailedImports()}>Retry failed</button>
+                <button type="button" style={button} onClick={() => setImportJob(null)}>Dismiss</button>
+              </div>
+            </div>
+          ) : null}
           <div className="sequence-edit-library-tabs" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, padding: "7px 7px 0" }}>
             <button className="sequence-edit-library-video-tab" data-testid="sequence-editor-library-video-tab" style={{ ...button, borderColor: libraryTab === "video" ? "#8265e6" : "#354359" }} onClick={() => setLibraryTab("video")}>Video takes</button>
             <button className="sequence-edit-library-audio-tab" data-testid="sequence-editor-library-audio-tab" style={{ ...button, borderColor: libraryTab === "audio" ? "#8265e6" : "#354359" }} onClick={() => setLibraryTab("audio")}>Sound + music</button>
@@ -1308,16 +1440,26 @@ export default function SequenceEditorWorkspace(
           </div>
           {libraryTab === "video" ? (
             <>
-              <div className="sequence-edit-take-filters" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4, padding: "0 7px 7px" }}>
-                {(["active", "all"] as TakeFilter[]).map((filter) => (
-                  <button key={filter} className={`sequence-edit-take-filter-${filter}`} data-testid={`sequence-editor-take-filter-${filter}`} style={{ ...button, minHeight: 26, padding: 3, borderColor: takeFilter === filter ? "#e18a48" : "#354359", color: takeFilter === filter ? "#ffc69d" : "#9ba8b8" }} onClick={() => setTakeFilter(filter)}>{filter === "active" ? "Active" : "All Takes"}</button>
+              <div className="sequence-edit-take-filters" role="tablist" aria-label="Take filters" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4, padding: "0 7px 7px" }}>
+                {TAKE_FILTERS.map((filter) => (
+                  <button
+                    key={filter}
+                    type="button"
+                    role="tab"
+                    aria-selected={takeFilter === filter}
+                    className={`sequence-edit-take-filter-${filter}`}
+                    data-testid={`sequence-editor-take-filter-${filter}`}
+                    style={{ ...button, minHeight: 40, padding: 3, borderColor: takeFilter === filter ? "#e18a48" : "#354359", color: takeFilter === filter ? "#ffc69d" : "#9ba8b8" }}
+                    onClick={() => setTakeFilter(filter as TakeFilter)}
+                  >{filter === "active" ? "Active" : filter === "latest" ? "Latest / segment" : "All"}</button>
                 ))}
               </div>
+              <button type="button" className="sequence-edit-replace-take" data-testid="sequence-editor-replace-take" style={{ ...button, margin: "0 7px 7px" }} disabled={!selectedIsVideo || !selectedMediaIsVideo} onClick={replaceSelectedClipWithTake}>Replace selected clip with take</button>
               <button className="sequence-edit-append-story-cut" data-testid="sequence-editor-append-active-cut" style={{ ...primaryButton, margin: "0 7px 7px" }} disabled={appendingCut} onClick={() => void appendActiveCut()}>{appendingCut ? "Probing active takes…" : "＋ Append Active Story Cut"}</button>
             </>
           ) : (
             <div className="sequence-edit-audio-import" style={{ display: "flex", gap: 5, padding: "0 7px 7px" }}>
-              <input ref={audioUploadRef} className="sequence-edit-audio-file" data-testid="sequence-editor-audio-file" type="file" accept="audio/*,.wav,.mp3,.m4a,.aac,.flac,.ogg,.opus,.aif,.aiff" style={{ display: "none" }} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAudio(file); }} />
+              <input ref={audioUploadRef} className="sequence-edit-audio-file" data-testid="sequence-editor-audio-file" type="file" accept={advertisedAcceptList()} style={{ display: "none" }} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAudio(file); }} />
               <button className="sequence-edit-audio-upload" data-testid="sequence-editor-audio-upload" style={{ ...primaryButton, width: "100%" }} disabled={uploading} onClick={() => audioUploadRef.current?.click()}>{uploading ? "Importing…" : "↑ Import sound or music"}</button>
               {onOpenAssets ? <button className="sequence-edit-open-assets" style={button} onClick={onOpenAssets}>Assets</button> : null}
             </div>
@@ -1424,23 +1566,40 @@ export default function SequenceEditorWorkspace(
             <header className="sequence-edit-monitor-heading" style={{ height: 35, flex: "0 0 35px", display: "flex", alignItems: "center", padding: "0 9px", borderBottom: "1px solid #293447" }}><b>PROGRAM · STITCHED EDIT</b><small style={{ marginLeft: "auto", color: "#78879a" }}>{sequence.videoClips.length} clips</small></header>
             <div className="sequence-edit-program-stage" style={{ flex: 1, minHeight: 0, display: "grid", placeItems: "center", position: "relative", background: "#030609" }}>
               {currentProgramClip ? (
-                <video
-                  key={currentProgramClip.id}
-                  ref={programVideoRef}
-                  className="sequence-edit-program-video"
-                  data-testid="sequence-editor-program-video"
-                  src={currentProgramUrl}
-                  preload="auto"
-                  playsInline
-                  loop={false}
-                  onLoadedMetadata={() => { setProgramPlaybackError(null); if (!programPlaying) seekProgramElement(playheadSec, false); }}
-                  onCanPlay={() => setProgramPlaybackError(null)}
-                  onError={() => setProgramPlaybackError({ id: currentProgramClip.id, message: "Program media could not be loaded. Refresh Media or choose another take." })}
-                  onTimeUpdate={programTimeUpdate}
-                  onEnded={programTimeUpdate}
-                  style={{ width: "100%", height: "100%", objectFit: "contain", background: "#020407" }}
-                />
+                <>
+                  <video
+                    ref={programVideoRef}
+                    className="sequence-edit-program-video"
+                    data-testid="sequence-editor-program-video"
+                    src={currentProgramUrl}
+                    preload="auto"
+                    playsInline
+                    loop={false}
+                    onWaiting={() => { programWaitingRef.current = true; setProgramMediaState("buffering"); }}
+                    onStalled={() => { programWaitingRef.current = true; setProgramMediaState("stalled"); }}
+                    onSeeking={() => setProgramMediaState("seeking")}
+                    onSeeked={() => { programWaitingRef.current = false; }}
+                    onLoadedMetadata={() => { setProgramPlaybackError(null); if (!programPlaying) seekProgramElement(playheadSec, false); }}
+                    onCanPlay={() => { programWaitingRef.current = false; setProgramPlaybackError(null); }}
+                    onError={() => { setProgramMediaState("error"); setProgramPlaybackError({ id: currentProgramClip.id, message: "Program media could not be loaded. Refresh Media or choose another take." }); }}
+                    onTimeUpdate={programTimeUpdate}
+                    onEnded={programTimeUpdate}
+                    style={{ width: "100%", height: "100%", objectFit: "contain", background: "#020407" }}
+                  />
+                  <video
+                    ref={programPreloadRef}
+                    className="sequence-edit-program-preload"
+                    data-testid="sequence-editor-program-preload"
+                    src={upcomingProgramUrl || undefined}
+                    preload="auto"
+                    muted
+                    playsInline
+                    aria-hidden="true"
+                    style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+                  />
+                </>
               ) : <span className="sequence-edit-monitor-empty" style={{ color: "#647286" }}>{sequence.videoClips.length ? "Black picture · audio tail" : "Add LTX takes to V1 to build the program."}</span>}
+              {currentProgramClip && ["buffering", "seeking", "stalled"].includes(programMediaState) ? <span className="sequence-edit-program-buffering" data-testid="sequence-editor-program-buffering" role="status" aria-live="polite" style={{ position: "absolute", inset: "12px 12px auto", zIndex: 4, padding: "8px 10px", border: "1px solid #3d5a78", borderRadius: 5, background: "rgba(8,16,28,.92)", color: "#c5d8ee", textAlign: "center" }}>{programMediaState === "seeking" ? "Seeking…" : programMediaState === "stalled" ? "Media stalled · playhead held" : "Buffering… playhead held"}</span> : null}
               {currentProgramClip && programPlaybackError?.id === currentProgramClip.id ? <span className="sequence-edit-program-error" data-testid="sequence-editor-program-error" role="alert" style={{ position: "absolute", inset: "auto 12px 12px", zIndex: 4, padding: "8px 10px", border: "1px solid #813f4a", borderRadius: 5, background: "rgba(50,16,22,.94)", color: "#ffb5bf", textAlign: "center" }}>{programPlaybackError.message}</span> : null}
               {(sequence.audioClips || []).map((clip: any) => (
                 <audio key={clip.id} className="sequence-edit-auxiliary-audio" data-testid={`sequence-editor-preview-audio-${clip.id}`} ref={(element) => { if (element) auxiliaryAudioRefs.current.set(clip.id, element); else auxiliaryAudioRefs.current.delete(clip.id); }} src={sourceUrl(slug, clip.sourceFile)} preload="auto" style={{ display: "none" }} />
@@ -1451,7 +1610,7 @@ export default function SequenceEditorWorkspace(
                 <b style={{ minWidth: 82, color: "#2fa8ff", fontVariantNumeric: "tabular-nums" }}>{timecode(playheadSec, fps)}</b>
                 <button className="sequence-edit-program-start" style={button} onClick={() => setProgramTime(0, false)}>│◀</button>
                 <button className="sequence-edit-program-step-back" style={button} onClick={() => setProgramTime(playheadSec - (1 / fps), false)}>◀</button>
-                <button className="sequence-edit-program-play" data-testid="sequence-editor-program-play" style={primaryButton} disabled={!sequence.videoClips.length && !(sequence.audioClips || []).length} onClick={() => {
+                <button className="sequence-edit-program-play" data-testid="sequence-editor-program-play" aria-label={programPlaying ? "Pause program" : "Play program"} title={programPlaying ? "Pause program" : "Play program"} style={{ ...primaryButton, minWidth: 44, minHeight: 40 }} disabled={!sequence.videoClips.length && !(sequence.audioClips || []).length} onClick={() => {
                   if (programPlaying) setProgramPlaying(false);
                   else {
                     if (playheadSec >= totalDuration - (1 / fps)) setProgramTime(0, true);
@@ -1520,7 +1679,7 @@ export default function SequenceEditorWorkspace(
         </aside>
       </section>
 
-      <section className="sequence-edit-timeline" data-testid="sequence-editor-timeline" style={{ ...panel, minWidth: 1260, display: "flex", flexDirection: "column" }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }} onDrop={onFolderDrop}>
+      <section className="sequence-edit-timeline" data-testid="sequence-editor-timeline" style={{ ...panel, minWidth: 1260, display: "flex", flexDirection: "column" }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }} onDrop={(event) => onFolderDrop(event, "timeline")}>
         <div className="sequence-edit-timeline-toolbar" style={{ height: 42, flex: "0 0 42px", display: "flex", alignItems: "center", gap: 6, padding: "0 9px", borderBottom: "1px solid #293447" }}>
           <button className="sequence-edit-tool-select" style={{ ...button, color: "#7fb4ff" }}>➤ Select</button>
           <button className="sequence-edit-tool-split" data-testid="sequence-editor-split" style={button} disabled={!sequence.videoClips.length} onClick={splitSelected}>✂ Split (S)</button>
@@ -1535,7 +1694,8 @@ export default function SequenceEditorWorkspace(
               <div className="sequence-edit-ruler-label" style={{ position: "sticky", left: 0, zIndex: 15, display: "flex", alignItems: "center", padding: "0 9px", background: "#121a25", borderRight: "1px solid #293547", color: "#8492a5", fontWeight: 750 }}>TIME</div>
               <div className="sequence-edit-ruler-lane" data-testid="sequence-editor-ruler" style={{ position: "relative", background: "#0b1119" }} onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); setProgramPlaying(false); setProgramTime((event.clientX - rect.left) / zoom, false); }}>
                 {rulerTicks.map((tick) => <span key={tick} className="sequence-edit-ruler-tick" style={{ position: "absolute", left: tick * zoom, top: 0, bottom: 0, padding: "6px 0 0 4px", borderLeft: "1px solid #2b3748", color: "#748296", fontSize: 9 }}>{timecode(tick, fps)}</span>)}
-                <i className="sequence-edit-ruler-playhead" style={{ pointerEvents: "none", position: "absolute", zIndex: 12, top: 0, bottom: 0, left: playheadSec * zoom, width: 1, background: "#31a6ff" }} />
+                <i className="sequence-edit-ruler-playhead" aria-hidden="true" style={{ pointerEvents: "none", position: "absolute", zIndex: 12, top: 0, bottom: 0, left: playheadSec * zoom, width: 1, background: "#31a6ff" }} />
+                <button type="button" className="sequence-edit-playhead-handle" data-testid="sequence-editor-playhead-handle" aria-label="Playhead" title="Playhead" style={{ position: "absolute", zIndex: 13, top: 0, left: playheadSec * zoom - 7, width: 14, height: 35, padding: 0, border: 0, background: "transparent", cursor: "ew-resize" }} onClick={(event) => event.stopPropagation()} />
               </div>
             </div>
 
@@ -1552,7 +1712,7 @@ export default function SequenceEditorWorkspace(
                   event.preventDefault();
                   event.stopPropagation();
                   if (transferHasFiles(event.dataTransfer)) {
-                    onFolderDrop(event);
+                    onFolderDrop(event, "timeline");
                     return;
                   }
                   if (!dragVideoId || dragVideoId === clip.id || sequence.trackSettings?.V1?.locked) return;

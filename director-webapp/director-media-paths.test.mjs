@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  canonicalStartRelativePath,
   chapterFolderForClipId,
   clipMediaCandidates,
   directorOutputDiskCandidates,
@@ -12,7 +13,8 @@ import {
   directorOutputRelativePath,
   discoverDirectorTakeFiles,
   preferredClipMediaPath,
-  projectMediaDiskPath
+  projectMediaDiskPath,
+  resolveSegmentStartImage
 } from "./director-media-paths.mjs";
 
 test("chapter outputs route under their chapter while legacy flat paths remain candidates", () => {
@@ -76,4 +78,24 @@ test("disk take discovery scopes nested files to the requested chapter and still
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("canonical start frames supersede library first stills for H02-H04", () => {
+  const root = path.resolve(import.meta.dirname, "..", "projects", "harrowing_of_hell");
+  assert.equal(
+    canonicalStartRelativePath("H03-S06-C01", 1),
+    "media/storyboard/canonical_start_frames/H03-S06-C01_CANONICAL_START.png"
+  );
+  const first = resolveSegmentStartImage(root, "H03-S06-C01", 1);
+  assert.equal(first.source, "canonical");
+  assert.equal(first.fileName, "H03-S06-C01_CANONICAL_START.png");
+  assert.match(first.relative, /canonical_start_frames\/H03-S06-C01_CANONICAL_START\.png$/);
+
+  const second = resolveSegmentStartImage(root, "H02-S03-C01", 2);
+  assert.equal(second.source, "library");
+  assert.match(second.fileName, /^H02-S03-C01_seg02/);
+
+  const extra = resolveSegmentStartImage(root, "H04-S10-C02", 5);
+  assert.equal(extra.source, "canonical-fallback");
+  assert.equal(extra.fileName, "H04-S10-C02_CANONICAL_START.png");
 });

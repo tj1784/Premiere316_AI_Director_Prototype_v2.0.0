@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   dialogueCueProgress,
   dialogueCuesForClip,
-  dialogueCuesForSegment,
   dialogueCuesFromSound,
   dialogueCueStatus
 } from "../dialogue-cues";
@@ -100,6 +99,84 @@ async function integrationApi(path: string, options: RequestInit = {}) {
 
 function trackSegments(workspace: any, key: "segments" | "audioSegments" | "motionSegments") {
   return workspace?.timeline?.[key] || [];
+}
+
+function cueTimelineSegmentId(cue: any) {
+  const text = String(cue?.segmentId || "").trim().toLowerCase().replace(/_/g, "-");
+  const match = text.match(/(h\d{2}-s\d{2}-c\d{2}).*?seg(?:ment)?-?(\d{1,2})([a-z]?)/i);
+  if (!match) return "";
+  return `segment-${match[1]}-seg${String(Number(match[2])).padStart(2, "0")}${match[3] || ""}`;
+}
+
+function audioUrlForCue(projectSlug: string, cue: any) {
+  const supplied = String(cue?.mediaUrl || cue?.output?.mediaUrl || "").trim();
+  if (supplied) return supplied;
+  const file = String(cue?.file || cue?.output?.masterFilename || cue?.expectedMasterFilename || "").trim();
+  return file ? `/media/${encodeURIComponent(projectSlug)}/audio/${encodeURIComponent(file)}` : "";
+}
+
+function audioIterationsForCue(projectSlug: string, cue: any) {
+  const iterations = [];
+  const selectedSeed = cue?.selectedSeed != null ? String(cue.selectedSeed) : "";
+  const masterUrl = audioUrlForCue(projectSlug, cue);
+  if (masterUrl) {
+    iterations.push({
+      id: `${cue?.cueId || "cue"}-master`,
+      label: selectedSeed ? `Master seed ${selectedSeed}` : "Master",
+      status: cue?.qaResult || cue?.status || "ready",
+      duration: Number(cue?.measuredDurationSec || cue?.targetVoiceDurationSec || 0),
+      url: masterUrl,
+      active: true
+    });
+  }
+  const seeds = Array.isArray(cue?.wrapperSeeds) ? cue.wrapperSeeds : [];
+  for (const seed of seeds) {
+    if (String(seed) === selectedSeed && masterUrl) continue;
+    iterations.push({
+      id: `${cue?.cueId || "cue"}-seed-${seed}`,
+      label: `Seed ${seed}`,
+      status: "declared",
+      duration: 0,
+      url: "",
+      active: false
+    });
+  }
+  return iterations;
+}
+
+function dialogueCueTimelineSegments(cues: any[], visualSegments: any[], fps: number, projectSlug: string) {
+  const bySegment = new Map(visualSegments.map((segment: any) => [String(segment.id), segment]));
+  return cues.map((cue: any, index: number) => {
+    const sourceId = cueTimelineSegmentId(cue);
+    const source = bySegment.get(sourceId) || null;
+    const targetSeconds = Number(cue?.targetVideoDurationSec || cue?.targetVoiceDurationSec || cue?.measuredDurationSec || 0);
+    const cueFrames = targetSeconds > 0 ? Math.max(1, Math.round(targetSeconds * fps)) : Math.max(1, Number(source?.length) || fps);
+    return {
+      id: `audio-cue-${cue.cueId || index + 1}`,
+      type: "audio",
+      readOnly: true,
+      cue,
+      cueId: cue.cueId,
+      speaker: cue.speaker,
+      sourceSegmentId: source?.id || sourceId || cue.segmentId || null,
+      start: Number(source?.start) || 0,
+      length: source ? Math.min(Math.max(1, Number(source.length) || cueFrames), cueFrames) : cueFrames,
+      fileName: cue.output?.masterFilename || cue.file || `${cue.cueId || "Cue"} ${cue.speaker || ""}`.trim(),
+      mediaUrl: audioUrlForCue(projectSlug, cue),
+      prompt: cue.exactDialogue || cue.text || "",
+      status: dialogueCueStatus(cue),
+      progress: dialogueCueProgress(cue),
+      generatedTakes: audioIterationsForCue(projectSlug, cue)
+    };
+  });
+}
+
+function mergedAudioSegments(workspace: any, cues: any[], fps: number, projectSlug: string) {
+  const existing = trackSegments(workspace, "audioSegments");
+  const existingCueIds = new Set(existing.map((segment: any) => String(segment.cueId || segment.cue?.cueId || "")));
+  const derived = dialogueCueTimelineSegments(cues, trackSegments(workspace, "segments"), fps, projectSlug)
+    .filter((segment: any) => !existingCueIds.has(String(segment.cueId || "")));
+  return [...existing, ...derived];
 }
 
 function durationFrames(workspace: any) {
@@ -296,6 +373,43 @@ function AssembledPreviewPlayer({
   );
 }
 
+function AudioCueInspector({ cue, projectSlug }: { cue: any; projectSlug: string }) {
+  if (!cue) {
+    return <section className="ltx-reference-group ltx-audio-inspector"><p className="ltx-reference-empty">Select an audio cue from the timeline.</p></section>;
+  }
+  const iterations = audioIterationsForCue(projectSlug, cue);
+  const primary = iterations.find((item) => item.url) || null;
+  return (
+    <section className="ltx-reference-group ltx-audio-inspector" aria-labelledby="ltx-audio-heading">
+      <div className="ltx-reference-heading">
+        <div><span className="workspace-eyebrow">AUDIO CUE</span><b id="ltx-audio-heading">{cue.cueId} · {cue.speaker}</b></div>
+        <small>{dialogueCueStatus(cue)} · {Math.round(dialogueCueProgress(cue) * 100)}%</small>
+      </div>
+      <div className="ltx-audio-player-card">
+        <strong>{cue.output?.masterFilename || cue.file || cue.expectedMasterFilename || "No master WAV bound"}</strong>
+        {primary?.url ? <audio controls preload="metadata" src={primary.url} /> : <p>No playable audio file is bound to this cue.</p>}
+        <small>{Number(cue.measuredDurationSec) > 0 ? `${Number(cue.measuredDurationSec).toFixed(2)}s measured` : Number(cue.targetVoiceDurationSec) > 0 ? `${Number(cue.targetVoiceDurationSec).toFixed(1)}s target` : "Duration not measured"}{cue.qaResult ? ` · QA ${cue.qaResult}` : ""}</small>
+      </div>
+      <LtxCueActions cue={cue} focusPrefix="ltx-audio-panel" />
+      <div className="ltx-audio-dialogue">
+        <b>Line</b>
+        <blockquote>{cue.exactDialogue || cue.text || "No dialogue text recorded."}</blockquote>
+        <b>Performance</b>
+        <p>{cue.performanceDirection || "Use the authoritative cue-specific direction."}</p>
+      </div>
+      <div className="ltx-audio-iterations" aria-label="Audio cue iterations">
+        {iterations.map((item) => (
+          <article key={item.id} className={item.active ? "active" : ""}>
+            <header><b>{item.label}</b><span>{item.status}</span></header>
+            {item.url ? <audio controls preload="metadata" src={item.url} /> : <small>No file in the project media folder for this iteration.</small>}
+            {item.duration > 0 ? <small>{item.duration.toFixed(2)}s</small> : null}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function LtxDirectorWorkspace() {
   const project = useStore((state) => state.project)!;
   const productionClipId = useStore((state) => state.productionClipId);
@@ -440,32 +554,32 @@ export default function LtxDirectorWorkspace() {
     return () => { active = false; window.clearInterval(timer); };
   }, [project.slug]);
 
-  const selected = useMemo(() => {
-    const all = [
-      ...trackSegments(workspace, "segments"),
-      ...trackSegments(workspace, "audioSegments"),
-      ...trackSegments(workspace, "motionSegments")
-    ];
-    return all.find((segment: any) => String(segment.id) === String(workspace?.selectedSegmentId)) || all[0] || null;
-  }, [workspace]);
+  const total = durationFrames(workspace);
+  const fps = Math.max(1, Number(workspace?.settings?.frameRate) || 24);
   const dialogueCues = useMemo(() => dialogueCuesFromSound(dialogueCueSound), [dialogueCueSound]);
   const clipDialogueCues = useMemo(
     () => dialogueCuesForClip(dialogueCues, workspace?.premiere?.clipId || sceneChoice),
     [dialogueCues, sceneChoice, workspace?.premiere?.clipId]
   );
-  const selectedDialogueCues = useMemo(
-    () => dialogueCuesForSegment(dialogueCues, selected, workspace?.premiere?.clipId || sceneChoice),
-    [dialogueCues, sceneChoice, selected, workspace?.premiere?.clipId]
+  const timelineAudioSegments = useMemo(
+    () => mergedAudioSegments(workspace, clipDialogueCues, fps, project.slug),
+    [workspace, clipDialogueCues, fps, project.slug]
   );
-
+  const selected = useMemo(() => {
+    const all = [
+      ...trackSegments(workspace, "segments"),
+      ...timelineAudioSegments,
+      ...trackSegments(workspace, "motionSegments")
+    ];
+    return all.find((segment: any) => String(segment.id) === String(workspace?.selectedSegmentId)) || all[0] || null;
+  }, [workspace, timelineAudioSegments]);
   useEffect(() => {
     const clipId = workspace?.premiere?.clipId;
     if (!clipId || !selected?.id) return;
     void refreshDiagnostics(clipId, selected.id);
   }, [refreshDiagnostics, selected?.id, workspace?.premiere?.clipId]);
-  const total = durationFrames(workspace);
-  const fps = Math.max(1, Number(workspace?.settings?.frameRate) || 24);
-  const selectedTrack = trackSegments(workspace, "audioSegments").some((item: any) => item.id === selected?.id) ? "Audio" : trackSegments(workspace, "motionSegments").some((item: any) => item.id === selected?.id) ? "IC-LoRA" : "Main";
+  const selectedTrack = timelineAudioSegments.some((item: any) => item.id === selected?.id) ? "Audio" : trackSegments(workspace, "motionSegments").some((item: any) => item.id === selected?.id) ? "IC-LoRA" : "Main";
+  const selectedReadOnly = selectedTrack === "Audio" && selected?.readOnly;
   const selectedEligible = selectedTrack === "Main" && isVisualGenerationSegment(selected);
   const eligibleSegments = trackSegments(workspace, "segments").filter(isVisualGenerationSegment);
   const queueBusy = jobs.some((job: any) => ["queued", "running", "cancelling"].includes(job.status)) || Number(health?.queue?.running || 0) + Number(health?.queue?.pending || 0) > 0;
@@ -537,6 +651,8 @@ export default function LtxDirectorWorkspace() {
   const queueReady = queueMode === "segments"
     ? i2vQueueReady
     : semanticQueueReady;
+  const selectedQueueDisabled = Boolean(busy) || !serviceReady || !bindingCurrent || !selectedEligible || queueBusy;
+  const queueAllDisabled = Boolean(busy) || !serviceReady || !bindingCurrent || queueBusy || !queueReady;
 
   useEffect(() => {
     if (!timelinePreview) return;
@@ -843,7 +959,7 @@ export default function LtxDirectorWorkspace() {
             window.dispatchEvent(new PopStateEvent("popstate"));
           }}>Open Storyboard for this clip</button></div>
         <div className="ltx-service-state"><span className={health?.connected ? "online" : "offline"}><i />LTX {health?.connected ? "Ready" : "Offline"}</span>{!health?.connected ? <small data-testid="ltx-008-offline">LTX or its ComfyUI engine is offline. Generate is paused. Upload, choose, and review stay available.</small> : null}<label className="ltx-generate-option">GENERATE OPTION<select value={generateOptionId} onChange={(event) => void chooseGenerateOption(event.target.value)}>{(generateOptions.length ? generateOptions : [{ id: generateOptionId || "harrowing_aaa_i2v_segmented", label: selectedGenerateOption?.label || "Harrowing of Hell" }]).map((option: any) => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><span className="ltx-profile-chip">{activeProfileLabel}</span><span>{queueMode === "timeline" ? "Semantic timeline" : `${eligibleSegments.length} I2V segment jobs`}</span><span>ComfyUI {health?.comfyUrl?.replace(/^https?:\/\//, "") || "unavailable"}</span><span>{health?.queue?.running || 0} running · {health?.queue?.pending || 0} queued</span></div>
-        <div className="ltx-actions"><button type="button" className="button secondary" onClick={() => { const next = !workflowPanel; setWorkflowPanel(next); if (next) { void loadWorkflowLibrary().catch((error) => setNotice(String(error.message || error))); void loadAaaWorkflow(aaaWorkflow?.rel || "HARROWING OF HELL.json").catch((error) => setNotice(String(error.message || error))); } }}>{workflowPanel ? "Hide workflow" : "Workflow"}</button><button className="button secondary" disabled={!bindingCurrent || Boolean(busy)} onClick={syncToPremiere}>{busy === "sync" ? "Saving…" : "Save to Premiere316"}</button>{queueMode === "segments" ? <><button className="button primary" disabled={busy === "queue"} title={!serviceReady ? "LTX Director or its ComfyUI engine is offline." : !bindingCurrent ? "Load the current shared shot before generating." : !i2vQueueReady ? "Load a segmented first-frame I2V scene with approved temporal guides." : !selectedEligible ? "Select a visual main-track segment with an approved temporal guide." : queueBusy ? "Wait for the shared GPU queue to become idle." : "Generate only the selected visual segment with its separate temporal and semantic inputs."} onClick={() => queue("selected")}>{busy === "queue" ? "Queueing…" : "Generate Segment"}</button><button className="button secondary" disabled={!selectedEligible || Boolean(busy) || !bindingCurrent || !serviceReady} onClick={() => void downloadSegmentWorkflow()}>{busy === "download" ? "Downloading…" : "Download Workflow"}</button><button className="button secondary" disabled={busy === "push"} onClick={() => void pushSegmentWorkflow()}>{busy === "push" ? "Pushing…" : "Push to ComfyUI"}</button></> : <button className="button primary" disabled={busy === "queue"} title={!semanticQueueReady ? "Resolve every declared semantic reference and pass compiler preflight before generation." : "Generate the complete semantic T2V timeline through Premiere316."} onClick={() => queue("timeline")}>{busy === "queue" ? "Queueing…" : "Generate Semantic T2V"}</button>}</div>
+        <div className="ltx-actions"><button type="button" className="button secondary" onClick={() => { const next = !workflowPanel; setWorkflowPanel(next); if (next) { void loadWorkflowLibrary().catch((error) => setNotice(String(error.message || error))); void loadAaaWorkflow(aaaWorkflow?.rel || "HARROWING OF HELL.json").catch((error) => setNotice(String(error.message || error))); } }}>{workflowPanel ? "Hide workflow" : "Workflow"}</button><button className="button secondary" disabled={!bindingCurrent || Boolean(busy)} onClick={syncToPremiere}>{busy === "sync" ? "Saving…" : "Save to Premiere316"}</button>{queueMode === "segments" ? <><button className="button primary" disabled={selectedQueueDisabled} title={!serviceReady ? "LTX Director or its ComfyUI engine is offline." : !bindingCurrent ? "Load the current shared shot before generating." : !i2vQueueReady ? "Load a segmented first-frame I2V scene with approved temporal guides." : !selectedEligible ? "Select a visual main-track segment with an approved temporal guide." : queueBusy ? "Wait for the shared GPU queue to become idle." : "Generate only the selected visual segment with its separate temporal and semantic inputs."} onClick={() => queue("selected")}>{busy === "queue" ? "Queueing…" : "Generate Segment"}</button><button className="button secondary" disabled={!selectedEligible || Boolean(busy) || !bindingCurrent || !serviceReady} onClick={() => void downloadSegmentWorkflow()}>{busy === "download" ? "Downloading…" : "Download Workflow"}</button><button className="button secondary" disabled={!selectedEligible || Boolean(busy) || !bindingCurrent || !serviceReady} onClick={() => void pushSegmentWorkflow()}>{busy === "push" ? "Pushing…" : "Push to ComfyUI"}</button></> : <button className="button primary" disabled={queueAllDisabled} title={!semanticQueueReady ? "Resolve every declared semantic reference and pass compiler preflight before generation." : "Generate the complete semantic T2V timeline through Premiere316."} onClick={() => queue("timeline")}>{busy === "queue" ? "Queueing…" : "Generate Semantic T2V"}</button>}</div>
       </header>
 
       <section role="status" aria-live="polite" className={`ltx-notice ${/failed|error|busy/i.test(notice) ? "warning" : ""}`}><span>{notice}</span>{!bindingCurrent && productionClipId ? <button onClick={() => { setSceneChoice(productionClipId || ""); }}>Use shared shot {productionClipId}</button> : null}</section>
@@ -892,40 +1008,21 @@ export default function LtxDirectorWorkspace() {
       <><section className="ltx-editor-grid">
         <section className="ltx-timeline-panel premium-panel">
           <header><div><span className="workspace-eyebrow">SEGMENT TIMELINE · {activeProfileLabel}</span><h2>{workspace.premiere?.clipId || "Unbound Director workspace"}</h2></div><div className="ltx-timeline-header-meta"><button type="button" className="ltx-timeline-toggle" onClick={() => { setTimelinePreview((value) => { const next = !value; if (next) setPreviewIndex(firstPlayablePreviewIndex(playlist)); return next; }); setPreviewPlaying(false); }}>{timelinePreview ? "Timeline" : "Preview"}</button><b>{(total / fps).toFixed(1)}s</b><small>{total} editorial frames · {fps} fps · {workspace.settings.customWidth}×{workspace.settings.customHeight}</small></div></header>
-          {String(workspace?.premiere?.clipId || "").toUpperCase().startsWith("H02-") ? <section className="ltx-dialogue-cue-plan" data-testid="ltx-dialogue-cue-plan" aria-label="Authoritative H02 dialogue cue plan">
-            <header><div><span className="workspace-eyebrow">AUTHORITATIVE H02 DIALOGUE PLAN · READ ONLY</span><b>{selectedTrack === "Main" ? selected?.id || "No MAIN selection" : "Select a MAIN segment"}</b></div><span>{clipDialogueCues.length ? `${clipDialogueCues.length} speech cue${clipDialogueCues.length === 1 ? "" : "s"} in clip` : dialogueCueError || "Loading cue plan…"}</span></header>
-            {clipDialogueCues.length ? <>
-              <div className="ltx-dialogue-cue-strip" aria-label="Dialogue cues in this clip">{clipDialogueCues.map((cue: any) => {
-                const associated = selectedDialogueCues.some((selectedCue: any) => selectedCue.cueId === cue.cueId);
-                const progress = dialogueCueProgress(cue);
-                return <article key={cue.cueId} className={associated ? "associated" : ""} data-testid={`ltx-001-strip-${cue.cueId}`}><b>{cue.cueId}</b><code>{cue.segmentId}</code><span>{cue.speaker}</span><i><em style={{ width: `${Math.round(progress * 100)}%` }} /></i><LtxCueActions cue={cue} focusPrefix="ltx-strip" /></article>;
-              })}</div>
-              <div className="ltx-dialogue-cue-details">
-                {selectedTrack !== "Main" ? <p>Select a MAIN pass to inspect its authored speech association.</p> : selectedDialogueCues.length ? selectedDialogueCues.map((cue: any) => <article key={cue.cueId} data-testid={`ltx-dialogue-cue-detail-${cue.cueId}`}>
-                  <header><b>{cue.cueId} · {cue.speaker}</b><code>{cue.segmentId}</code><em className={dialogueCueStatus(cue)}>{dialogueCueStatus(cue)} · {Math.round(dialogueCueProgress(cue) * 100)}%</em></header>
-                  <blockquote>{cue.exactDialogue}</blockquote>
-                  <p><b>Performance:</b> {cue.performanceDirection || "Use the authoritative cue-specific direction."}</p>
-                  <small>{Number(cue.targetVoiceDurationSec) > 0 ? `${Number(cue.targetVoiceDurationSec).toFixed(1)}s voice` : "Voice timing planned"}{Number(cue.targetVideoDurationSec) > 0 ? ` · ${Number(cue.targetVideoDurationSec).toFixed(1)}s video target` : ""}</small>
-                  <LtxCueActions cue={cue} focusPrefix="ltx-cue" />
-                </article>) : <p>This selected MAIN pass is picture-only. It has no intelligible dialogue cue.</p>}
-              </div>
-            </> : <p className="ltx-dialogue-cue-empty">{dialogueCueError || "Reading the 34-cue authoritative Qwen plan…"}</p>}
-            <footer>Planned cue metadata only. A validated master WAV becomes an LTX AUDIO input only after its file is actually bound.</footer>
-          </section> : null}
           {timelinePreview ? <AssembledPreviewPlayer playlist={playlist} fps={fps} playheadFrame={Number(workspace.playheadFrame) || 0} playing={previewPlaying} previewIndex={previewIndex} onPlayhead={(frame) => setWorkspace((current: any) => current ? { ...current, playheadFrame: frame } : current)} onPlayingChange={setPreviewPlaying} onPreviewIndex={setPreviewIndex} onSelectSegment={(segmentId, frame) => setWorkspace((current: any) => current ? { ...current, selectedSegmentId: segmentId, playheadFrame: frame } : current)} /> : <>
           <div className="ltx-ruler">{Array.from({ length: Math.max(2, Math.ceil(total / fps) + 1) }).map((_, index) => <span key={index} style={{ left: `${Math.min(100, (index * fps / total) * 100)}%` }}>{index}s</span>)}</div>
-          {([
-            ["MAIN", "segments"],
-            ["AUDIO", "audioSegments"],
-            ["IC-LORA", "motionSegments"]
-          ] as const).map(([label, key]) => <div className={`ltx-track ltx-track-${key}`} key={key}><b>{label}</b><div className="ltx-track-lane">{trackSegments(workspace, key).map((segment: any) => <button key={segment.id} className={`${String(segment.id) === String(selected?.id) ? "selected" : ""} ${segment.missingGuide ? "missing" : ""}`} style={{ left: `${((Number(segment.start) || 0) / total) * 100}%`, width: `${Math.max(1.5, ((Number(segment.length) || 1) / total) * 100)}%` }} onClick={() => patchWorkspace((draft) => { draft.selectedSegmentId = segment.id; draft.playheadFrame = Number(segment.start) || 0; })}><span>{segment.fileName || segment.id}</span><small>{((Number(segment.length) || 1) / fps).toFixed(1)}s</small></button>)}</div></div>)}
+          {[
+            { label: "MAIN", key: "segments", items: trackSegments(workspace, "segments") },
+            { label: "AUDIO", key: "audioSegments", items: timelineAudioSegments },
+            { label: "IC-LORA", key: "motionSegments", items: trackSegments(workspace, "motionSegments") }
+          ].map(({ label, key, items }) => <div className={`ltx-track ltx-track-${key}`} key={key}><b>{label}</b><div className="ltx-track-lane">{items.map((segment: any) => <button key={segment.id} className={`${String(segment.id) === String(selected?.id) ? "selected" : ""} ${segment.missingGuide ? "missing" : ""} ${segment.cue ? "audio-cue" : ""}`} style={{ left: `${((Number(segment.start) || 0) / total) * 100}%`, width: `${Math.max(1.5, ((Number(segment.length) || 1) / total) * 100)}%` }} onClick={() => patchWorkspace((draft) => { draft.selectedSegmentId = segment.id; draft.playheadFrame = Number(segment.start) || 0; })}><span>{segment.cue ? `${segment.cue.cueId} · ${segment.cue.speaker}` : segment.fileName || segment.id}</span><small>{segment.cue ? dialogueCueStatus(segment.cue) : `${((Number(segment.length) || 1) / fps).toFixed(1)}s`}</small></button>)}</div></div>)}
           <div className="ltx-playhead" style={{ left: `calc(92px + (100% - 104px) * ${Math.max(0, Number(workspace.playheadFrame) || 0) / total})` }} />
           </>}
-          <footer><button className="button secondary" disabled={Boolean(busy)} onClick={() => saveWorkspace()}>Save Workspace</button><button className="button secondary" disabled={busy === "queue"} onClick={() => queue(queueMode)}>{queueMode === "timeline" ? "Queue Semantic Timeline" : `Queue All Segments (${eligibleSegments.length})`}</button><span>{workspace.timeline.segments?.length || 0} main · {workspace.timeline.audioSegments?.length || 0} audio · {workspace.timeline.motionSegments?.length || 0} IC-LoRA</span></footer>
+          <footer><button className="button secondary" disabled={Boolean(busy)} onClick={() => saveWorkspace()}>Save Workspace</button><button className="button secondary" disabled={queueAllDisabled} onClick={() => queue(queueMode)}>{queueMode === "timeline" ? "Queue Semantic Timeline" : `Queue All Segments (${eligibleSegments.length})`}</button><span>{workspace.timeline.segments?.length || 0} main · {timelineAudioSegments.length} audio · {workspace.timeline.motionSegments?.length || 0} IC-LoRA</span></footer>
         </section>
 
-        <aside className="ltx-reference-panel premium-panel" aria-label="Temporal and semantic reference diagnostics">
-          <header><div><b>REFERENCE INPUTS</b><small>{selectedTrack} segment · {referenceTab === "library" ? `${selectedTakes.length} take${selectedTakes.length === 1 ? "" : "s"}` : "roles stay separate"}</small></div><div className="ltx-reference-header-actions"><div className="ltx-panel-tabs" role="tablist" aria-label="Reference panel"><button type="button" role="tab" aria-selected={referenceTab === "inputs"} className={referenceTab === "inputs" ? "active" : ""} onClick={() => setReferenceTab("inputs")}>Inputs</button><button type="button" role="tab" aria-selected={referenceTab === "library"} className={referenceTab === "library" ? "active" : ""} onClick={() => setReferenceTab("library")}>Library</button></div><button type="button" disabled={diagnosticsBusy || !workspace?.premiere?.clipId} onClick={() => refreshDiagnostics(workspace?.premiere?.clipId, selected?.id)}>{diagnosticsBusy ? "Checking…" : "Recheck"}</button></div></header>
+        <aside className="ltx-reference-panel premium-panel" aria-label={selectedTrack === "Audio" ? "Audio cue options" : "Temporal and semantic reference diagnostics"}>
+          <header><div><b>{selectedTrack === "Audio" ? "AUDIO OPTIONS" : "REFERENCE INPUTS"}</b><small>{selectedTrack === "Audio" ? `${selected?.cue?.cueId || "Cue"} · ${selected?.cue?.speaker || "Audio"}` : `${selectedTrack} segment · ${referenceTab === "library" ? `${selectedTakes.length} take${selectedTakes.length === 1 ? "" : "s"}` : "roles stay separate"}`}</small></div>{selectedTrack === "Audio" ? null : <div className="ltx-reference-header-actions"><div className="ltx-panel-tabs" role="tablist" aria-label="Reference panel"><button type="button" role="tab" aria-selected={referenceTab === "inputs"} className={referenceTab === "inputs" ? "active" : ""} onClick={() => setReferenceTab("inputs")}>Inputs</button><button type="button" role="tab" aria-selected={referenceTab === "library"} className={referenceTab === "library" ? "active" : ""} onClick={() => setReferenceTab("library")}>Library</button></div><button type="button" disabled={diagnosticsBusy || !workspace?.premiere?.clipId} onClick={() => refreshDiagnostics(workspace?.premiere?.clipId, selected?.id)}>{diagnosticsBusy ? "Checking…" : "Recheck"}</button></div>}</header>
+          {selectedTrack === "Audio" ? <AudioCueInspector cue={selected?.cue} projectSlug={project.slug} /> : <>
           {referenceTab === "library" ? <section className="ltx-reference-group ltx-library-group" aria-labelledby="ltx-library-heading">
             <div className="ltx-reference-heading"><div><span className="workspace-eyebrow">SEGMENT LIBRARY</span><b id="ltx-library-heading">{selected?.id || "No selection"}</b></div><small>{selectedTakes.length} iteration{selectedTakes.length === 1 ? "" : "s"}</small></div>
             <p className="ltx-library-help">Click a take to make it the active segment output. No extra confirm.</p>
@@ -933,7 +1030,7 @@ export default function LtxDirectorWorkspace() {
               {selectedTakes.map((take: any) => {
                 const active = String(take.id) === String(selectedActiveTake?.id || selected?.activeTakeId);
                 return <button type="button" key={take.id || take.v} className={`ltx-library-card ${active ? "active" : ""}`} onClick={() => void activateTake(take)}>
-                  <div className="ltx-reference-thumb">{takePreviewUrl(project.slug, take) ? <video src={takePreviewUrl(project.slug, take)} muted playsInline preload="metadata" /> : <span aria-hidden="true">◇</span>}</div>
+                  <div className="ltx-reference-thumb">{takePreviewUrl(project.slug, take) ? <video src={takePreviewUrl(project.slug, take)} controls playsInline preload="metadata" /> : <span aria-hidden="true">◇</span>}</div>
                   <strong>{take.id || `v${take.v}`}</strong>
                   <small>{active ? "ACTIVE" : "Click to activate"}{take.createdAt ? ` · ${new Date(take.createdAt).toLocaleString()}` : ""}</small>
                 </button>;
@@ -1008,11 +1105,12 @@ export default function LtxDirectorWorkspace() {
             <p>Duration edits recalculate automatically. The model receives the next valid 8n+1 length; Premiere316 keeps the authored edit length.</p>
           </section> : null}
           </> : null}
+          </>}
         </aside>
       </section>
 
       <section className="ltx-prompt-grid">
-        <article className="ltx-segment-editor premium-panel"><header><div><span className="workspace-eyebrow">SEGMENT PROMPT</span><h3>{selected?.id || "No selection"}</h3></div><span>{selectedTrack}</span></header>{selected ? <><textarea value={selected.prompt || ""} onChange={(event) => patchWorkspace((draft) => { const all = [...(draft.timeline.segments || []), ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])]; const segment = all.find((item: any) => item.id === selected.id); if (segment) segment.prompt = event.target.value; })} /><div className="ltx-segment-fields"><label>Start (sec)<input type="number" step={0.1} value={((Number(selected.start) || 0) / fps).toFixed(2)} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment.start = Math.max(0, Math.round(Number(event.target.value) * fps)); })} /></label><label>Duration (sec)<input type="number" step={0.1} value={((Number(selected.length) || 1) / fps).toFixed(2)} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment.length = Math.max(1, Math.round(Number(event.target.value) * fps)); })} /></label><label>Guide strength<input type="number" min={0} max={2} step={0.05} disabled={selectedTrack === "Audio"} value={selected.guideStrength ?? selected.videoStrength ?? 1} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment[selectedTrack === "IC-LoRA" ? "videoStrength" : "guideStrength"] = Number(event.target.value); })} /></label></div>{selectedTrack === "Main" ? <div className="ltx-neighbor-locks"><label title={!neighbors.canUsePreviousAsFirstFrame ? "Previous segment has no approved image guide, so Use previous as first frame stays off." : "Bind the previous approved frame as this segment first guide."}><input type="checkbox" disabled={!neighbors.canUsePreviousAsFirstFrame} checked={Boolean(neighbors.canUsePreviousAsFirstFrame && selected.usePreviousAsFirstFrame)} onChange={(event) => patchWorkspace((draft) => { const segment = draft.timeline.segments.find((item: any) => item.id === selected.id); if (segment) segment.usePreviousAsFirstFrame = event.target.checked; })} /> Use previous as first frame</label><label title={!neighbors.canUseNextAsLastFrame ? "Next segment has no approved image guide, so Use next as last frame stays off." : "Bind the next approved frame as this segment last guide."}><input type="checkbox" disabled={!neighbors.canUseNextAsLastFrame} checked={Boolean(neighbors.canUseNextAsLastFrame && selected.useNextAsLastFrame)} onChange={(event) => patchWorkspace((draft) => { const segment = draft.timeline.segments.find((item: any) => item.id === selected.id); if (segment) segment.useNextAsLastFrame = event.target.checked; })} /> Use next as last frame</label></div> : null}</> : null}</article>
+        <article className="ltx-segment-editor premium-panel"><header><div><span className="workspace-eyebrow">SEGMENT PROMPT</span><h3>{selected?.id || "No selection"}</h3></div><span>{selectedTrack}</span></header>{selected ? <><textarea readOnly={selectedReadOnly} value={selected.prompt || ""} onChange={(event) => { if (selectedReadOnly) return; patchWorkspace((draft) => { const all = [...(draft.timeline.segments || []), ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])]; const segment = all.find((item: any) => item.id === selected.id); if (segment) segment.prompt = event.target.value; }); }} /><div className="ltx-segment-fields"><label>Start (sec)<input type="number" step={0.1} disabled={selectedReadOnly} value={((Number(selected.start) || 0) / fps).toFixed(2)} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment.start = Math.max(0, Math.round(Number(event.target.value) * fps)); })} /></label><label>Duration (sec)<input type="number" step={0.1} disabled={selectedReadOnly} value={((Number(selected.length) || 1) / fps).toFixed(2)} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment.length = Math.max(1, Math.round(Number(event.target.value) * fps)); })} /></label><label>Guide strength<input type="number" min={0} max={2} step={0.05} disabled={selectedTrack === "Audio"} value={selected.guideStrength ?? selected.videoStrength ?? 1} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment[selectedTrack === "IC-LoRA" ? "videoStrength" : "guideStrength"] = Number(event.target.value); })} /></label></div>{selectedTrack === "Main" ? <div className="ltx-neighbor-locks"><label title={!neighbors.canUsePreviousAsFirstFrame ? "Previous segment has no approved image guide, so Use previous as first frame stays off." : "Bind the previous approved frame as this segment first guide."}><input type="checkbox" disabled={!neighbors.canUsePreviousAsFirstFrame} checked={Boolean(neighbors.canUsePreviousAsFirstFrame && selected.usePreviousAsFirstFrame)} onChange={(event) => patchWorkspace((draft) => { const segment = draft.timeline.segments.find((item: any) => item.id === selected.id); if (segment) segment.usePreviousAsFirstFrame = event.target.checked; })} /> Use previous as first frame</label><label title={!neighbors.canUseNextAsLastFrame ? "Next segment has no approved image guide, so Use next as last frame stays off." : "Bind the next approved frame as this segment last guide."}><input type="checkbox" disabled={!neighbors.canUseNextAsLastFrame} checked={Boolean(neighbors.canUseNextAsLastFrame && selected.useNextAsLastFrame)} onChange={(event) => patchWorkspace((draft) => { const segment = draft.timeline.segments.find((item: any) => item.id === selected.id); if (segment) segment.useNextAsLastFrame = event.target.checked; })} /> Use next as last frame</label></div> : null}</> : null}</article>
         <article className="ltx-global-editor premium-panel"><header><div><span className="workspace-eyebrow">GLOBAL PROMPT</span><h3>Clip / scene / chapter / project</h3></div><span>{String(workspace.timeline.global_prompt || "").length} chars</span></header><div className="ltx-global-scope-row"><select value={globalPromptScope} onChange={(event) => { const next = event.target.value as "clip" | "scene" | "chapter" | "project"; setGlobalPromptScope(next); patchWorkspace((draft) => { draft.settings = draft.settings || {}; draft.settings.globalPromptScope = next; }); }}><option value="clip">This clip (all its segments)</option><option value="scene">This scene (all clips in this S##)</option><option value="chapter">This chapter (all of this H##)</option><option value="project">Entire project</option></select><button type="button" className="button secondary" disabled={Boolean(busy) || !workspace?.premiere?.clipId} onClick={() => saveGlobalPrompt()}>{busy === "global" ? "Saving…" : "Save global"}</button></div><textarea value={workspace.timeline.global_prompt || ""} onChange={(event) => patchWorkspace((draft) => { draft.timeline.global_prompt = event.target.value; })} /><details><summary>Negative prompt and delivery settings</summary><textarea value={workspace.settings.negativePrompt || ""} onChange={(event) => patchWorkspace((draft) => { draft.settings.negativePrompt = event.target.value; })} /></details></article>
       </section></>
       {referencePickerOpen && referenceTarget ? <AssetReferencePicker

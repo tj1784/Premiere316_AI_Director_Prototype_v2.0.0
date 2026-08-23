@@ -73,13 +73,16 @@ test("expanded MAIN segments select only their exact authored cue", () => {
   assert.deepEqual(dialogueCuesForClip(cues, "H02-S03-C01").map((cue) => cue.cueId), ["D001", "D002", "D003"]);
 });
 
-test("Create Sound and Direct render the cue plan without creating fake audio segments", () => {
+test("Create Sound and Direct expose cue audio without creating fake persisted audio segments", () => {
   const createSound = fs.readFileSync(fileURLToPath(new URL("../client/src/components/CreateSoundWorkspace.tsx", import.meta.url)), "utf8");
   const director = fs.readFileSync(fileURLToPath(new URL("../client/src/components/LtxDirectorWorkspace.tsx", import.meta.url)), "utf8");
   assert.match(createSound, /Authoritative dialogue cue queue/);
   assert.match(createSound, /cue\.exactDialogue/);
   assert.match(createSound, /cue\.performanceDirection/);
-  assert.match(director, /AUTHORITATIVE H02 DIALOGUE PLAN · READ ONLY/);
-  assert.match(director, /Planned cue metadata only/);
+  assert.match(director, /AUDIO CUE/);
+  assert.match(director, /Audio cue iterations/);
+  assert.match(director, /ltx-audio-panel/);
+  assert.match(director, /dialogueCueTimelineSegments/);
+  assert.doesNotMatch(director, /ltx-dialogue-cue-plan/);
   assert.doesNotMatch(director, /audioSegments\.push\([^)]*dialogue/i);
 });
