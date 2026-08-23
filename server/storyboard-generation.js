@@ -1498,7 +1498,8 @@ export async function pushStoryboardFrameToComfyUI(slug, frameId) {
 export async function pushAllStoryboardFrameWorkflowsToComfyUI(slug) {
   const project = loadProject(slug);
   const storyboard = loadStoryboard(slug);
-  const frames = Object.values(storyboard.frames || {}).sort((left, right) => left.id.localeCompare(right.id));
+  const allFrames = Object.values(storyboard.frames || {}).sort((left, right) => left.id.localeCompare(right.id));
+  const frames = allFrames.filter((frame) => (frame.references || []).length > 0);
   const uploadCache = new Map();
   const workflows = [];
   for (const frame of frames) {
@@ -1521,6 +1522,8 @@ export async function pushAllStoryboardFrameWorkflowsToComfyUI(slug) {
     projectSlug: slug,
     workflowId: STORYBOARD_KREA_WORKFLOW_ID,
     workflowCount: workflows.length,
+    skippedFrameCount: allFrames.length - frames.length,
+    totalFrameCount: allFrames.length,
     uniqueReferenceFilesUploaded: uploadCache.size,
     workflowLibraryFolder: PUSH_WORKFLOW_DIR,
     workflows

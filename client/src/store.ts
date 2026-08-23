@@ -193,7 +193,7 @@ type Store = {
   uploadAssetAudio: (assetId: string, file: File) => Promise<any>;
   deleteAsset: (assetId: string) => Promise<void>;
   approveAsset: (assetId: string) => Promise<void>;
-  generateAsset: (assetId: string) => Promise<void>;
+  generateAsset: (assetId: string, options?: { workflowId?: string }) => Promise<void>;
   generateAssets: (assetIds?: string[], regenerate?: boolean) => Promise<void>;
   stopAssetGeneration: (assetId?: string) => Promise<void>;
   promoteAsset: (assetId: string) => Promise<void>;
@@ -688,7 +688,7 @@ export const useStore = create<Store>((set, get) => ({
         { method: "POST", body: JSON.stringify({}) }
       );
       set({
-        storyboardBulkWorkflowNotice: `Pushed ${json.workflowCount || 0} image-guide workflows to ComfyUI · ${json.uniqueReferenceFilesUploaded || 0} unique reference files staged`
+        storyboardBulkWorkflowNotice: `Pushed ${json.workflowCount || 0} reference image-guide workflows to ComfyUI · ${json.uniqueReferenceFilesUploaded || 0} unique reference files staged${json.skippedFrameCount ? ` · skipped ${json.skippedFrameCount} no-reference frames` : ""}`
       });
     } catch (error: any) {
       set({ error: String(error.message) });
@@ -1346,13 +1346,13 @@ export const useStore = create<Store>((set, get) => ({
       throw error;
     }
   },
-  generateAsset: async (assetId) => {
+  generateAsset: async (assetId, options = {}) => {
     const project = get().project;
     if (!project) return;
     try {
       const json = await api(`/api/projects/${encodeURIComponent(project.slug)}/assets/${encodeURIComponent(assetId)}/generate`, {
         method: "POST",
-        body: JSON.stringify({})
+        body: JSON.stringify(options?.workflowId ? { workflowId: options.workflowId } : {})
       });
       set({ project: json.project });
       await get().refreshQueue();

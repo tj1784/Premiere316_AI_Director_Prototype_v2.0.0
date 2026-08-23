@@ -67,7 +67,7 @@ export type AssetActionIntent = {
   initialAction?: AssetActionName;
   returnFocusId?: string;
   slotState?: RequirementSlotState;
-  prefill?: { name?: string; prompt?: string; sampleText?: string; continuity?: string[]; continuityLocks?: string[]; cueLines?: string[] };
+  prefill?: { name?: string; prompt?: string; sampleText?: string; workflowId?: string; continuity?: string[]; continuityLocks?: string[]; cueLines?: string[] };
 };
 
 export const MANUAL_ACTIONS = manualActionsJs as AssetActionName[];

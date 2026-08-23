@@ -319,6 +319,7 @@ export async function createPlannedAsset(store, intent, fields = {}) {
     category: intent.requirement.category,
     prompt: fields.prompt || "",
     sampleText: fields.sampleText,
+    workflowId: fields.workflowId,
     continuity: fields.continuity || fields.continuityLocks || intent.prefill?.continuity || intent.prefill?.continuityLocks || [],
     dependencies: withCharacterDependency([], characterId)
   });
@@ -428,11 +429,20 @@ export async function generateForIntent(store, intent, fields = {}, fetchImpl = 
   if (!asset) asset = await createPlannedAsset(store, intent, fields);
   const locks = fields.continuity || fields.continuityLocks || intent.prefill?.continuity || intent.prefill?.continuityLocks || asset.continuity || [];
   const lockedPrompt = withContinuityLocks(fields.prompt || asset.prompt, locks);
-  if (typeof store.patchAsset === "function" && (locks.length || lockedPrompt !== String(asset.prompt || ""))) {
-    await store.patchAsset(asset.id, { prompt: lockedPrompt, continuity: locks });
-    asset = { ...asset, prompt: lockedPrompt, continuity: locks };
+  const requestedWorkflowId = String(fields.workflowId || "").trim();
+  const patch = {};
+  if (locks.length || lockedPrompt !== String(asset.prompt || "")) {
+    patch.prompt = lockedPrompt;
+    patch.continuity = locks;
   }
-  await store.generateAsset(asset.id);
+  if (requestedWorkflowId && requestedWorkflowId !== String(asset.workflowId || "")) {
+    patch.workflowId = requestedWorkflowId;
+  }
+  if (typeof store.patchAsset === "function" && Object.keys(patch).length) {
+    await store.patchAsset(asset.id, patch);
+    asset = { ...asset, ...patch };
+  }
+  await store.generateAsset(asset.id, requestedWorkflowId ? { workflowId: requestedWorkflowId } : undefined);
   let attached = null;
   if (fields.attachAfter !== false) {
     try {

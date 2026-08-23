@@ -2143,6 +2143,7 @@ app.patch("/api/projects/:slug/assets/:assetId", async (req, res) => {
     }
     const beforeFingerprint = assetGenerationFingerprint(asset);
     const allowed = ["name", "variant", "prompt", "sampleText", "workflowId", "seed", "durationSec", "bpm", "status", "dependencies", "continuity", "activeVersion"];
+    const workflowProvided = Object.prototype.hasOwnProperty.call(req.body || {}, "workflowId");
     for (const key of allowed) if (Object.prototype.hasOwnProperty.call(req.body || {}, key)) asset[key] = req.body[key];
     if (Object.prototype.hasOwnProperty.call(req.body || {}, "category")) {
       const category = String(req.body.category || "").trim();
@@ -2153,11 +2154,20 @@ app.patch("/api/projects/:slug/assets/:assetId", async (req, res) => {
       asset.mediaType = assetMediaType(category);
       if (changed && !Object.prototype.hasOwnProperty.call(req.body || {}, "workflowId")) {
         asset.workflowId = defaultAssetWorkflow(category, asset.variant, asset.name, asset.id);
+        asset.workflowExplicit = false;
       }
     }
     asset.name = String(asset.name || "").replace(/\s+/g, " ").trim().slice(0, 160);
     asset.variant = String(asset.variant || "Production Reference").replace(/\s+/g, " ").trim().slice(0, 120) || "Production Reference";
     if (!asset.name) return res.status(400).json({ error: "Asset name is required" });
+    if (workflowProvided) {
+      asset.workflowId = String(asset.workflowId || "").trim();
+      if (asset.workflowId) asset.workflowExplicit = true;
+      else {
+        asset.workflowId = defaultAssetWorkflow(asset.category, asset.variant, asset.name, asset.id);
+        asset.workflowExplicit = false;
+      }
+    }
     if (Object.prototype.hasOwnProperty.call(req.body || {}, "activeVersion")) {
       const requested = Number(req.body.activeVersion);
       const exists = (asset.versions || []).some((version) => Number(version.v) === requested);
@@ -2351,15 +2361,39 @@ app.post("/api/projects/:slug/assets/:assetId/generate", async (req, res) => {
     }
     if (!screenplayApprovalCurrent(project)) return res.status(409).json({ error: "Asset generation is locked until the current screenplay revision is approved." });
     if (!assetManifestCurrent(project)) return res.status(409).json({ error: "The production asset manifest is stale. Refresh Assets from the approved screenplay before generating." });
+    const requestedWorkflowId = String(req.body?.workflowId || "").trim();
+    if (requestedWorkflowId && !ASSET_WORKFLOWS.some((workflow) => workflow.id === requestedWorkflowId)) {
+      return res.status(400).json({ error: `Unknown asset workflow: ${requestedWorkflowId}` });
+    }
     const existingJob = listJobs().find((job) =>
       job.projectSlug === project.slug &&
       job.type === "generate_asset" &&
       job.refs?.assetId === asset.id &&
       ["queued", "running", "cancelling"].includes(job.status)
     );
-    if (existingJob) return res.json({ project, job: existingJob, alreadyQueued: true });
+    if (existingJob) {
+      if (requestedWorkflowId && requestedWorkflowId !== String(asset.workflowId || "")) {
+        return res.status(409).json({ error: "This asset is already queued. Stop or finish that job before switching workflows.", job: existingJob });
+      }
+      return res.json({ project, job: existingJob, alreadyQueued: true });
+    }
     const catalog = await getAssetWorkflowCatalog();
+    if (requestedWorkflowId && requestedWorkflowId !== String(asset.workflowId || "")) {
+      asset.workflowId = requestedWorkflowId;
+      asset.workflowExplicit = true;
+      asset.approval = null;
+      asset.approvalCurrent = false;
+      asset.updatedAt = new Date().toISOString();
+    }
     const state = catalog.find((workflow) => workflow.id === asset.workflowId);
+    if (state) {
+      asset.workflow = {
+        id: state.id,
+        label: state.label || state.name || state.id,
+        ready: Boolean(state.ready),
+        availableNow: state.availableNow !== false
+      };
+    }
     if (!state?.ready) {
       return res.status(409).json({
         error: state?.reason || "The selected workflow is not ready",

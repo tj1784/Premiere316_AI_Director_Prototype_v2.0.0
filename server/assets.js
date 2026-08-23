@@ -316,6 +316,7 @@ export function createDirectorAsset(input = {}, existingItems = []) {
     status: "planned",
     reviewState: "director-created",
     workflowId: requestedWorkflow || defaultAssetWorkflow(category, variant, name, id),
+    workflowExplicit: Boolean(requestedWorkflow),
     dependencies: stringList(input.dependencies),
     continuity: stringList(input.continuity),
     durationSec: input.durationSec == null || input.durationSec === "" ? undefined : Number(input.durationSec),

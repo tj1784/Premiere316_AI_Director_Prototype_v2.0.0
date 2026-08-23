@@ -459,6 +459,8 @@ export default function StoryboardWorkspace({ onOpenAssets: _onOpenAssets }: { o
     const plan = storyboard.videoPlans?.[storyboardClip.videoPlanId];
     return usesSemanticT2V(storyboardClip, plan);
   }).length;
+  const referenceFrameWorkflowCount = Object.values(storyboard.frames || {})
+    .filter((frame: any) => (frame?.references || []).length > 0).length;
   const targetFrame = pickerTarget ? storyboard.frames?.[pickerTarget.frameId] : null;
 
   return (
@@ -502,7 +504,7 @@ export default function StoryboardWorkspace({ onOpenAssets: _onOpenAssets }: { o
                 disabled={store.storyboardBulkWorkflowBusy}
                 onClick={() => void store.pushAllStoryboardFrameWorkflowsToComfyUI()}
               >
-                {store.storyboardBulkWorkflowBusy ? `Pushing all ${Object.keys(storyboard.frames || {}).length}…` : `Push all ${Object.keys(storyboard.frames || {}).length} workflows`}
+                {store.storyboardBulkWorkflowBusy ? `Pushing ${referenceFrameWorkflowCount}…` : `Push ${referenceFrameWorkflowCount} reference workflows`}
               </button>
             ) : null}
             

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { assetUrl, useStore } from "../store";
+import { filterCompatibleWorkflows, workflowIsReady } from "../asset-prompt";
 import { openAssetAction, resultActions, useAssetActionStore, type AssetActionName } from "../contextual-agency";
 import { MANUAL_ACTIONS } from "../contextual-agency/agency.js";
 import {
@@ -53,6 +54,14 @@ function mediaAccept(mediaType?: string) {
   return "image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp";
 }
 
+function workflowStatusText(workflow: any) {
+  if (!workflow) return "";
+  if (workflow.ready === false) return String(workflow.reason || "Required workflow components are not installed.");
+  if (workflow.availableNow === false) return String(workflow.runtimeWarning || workflow.reason || "The workflow is waiting for the current runtime.");
+  if (workflow.ready !== true || workflow.availableNow !== true) return String(workflow.runtimeWarning || workflow.reason || "This workflow has not passed a current readiness check.");
+  return String(workflow.purpose || workflow.mediaType || "Ready for generation.");
+}
+
 export default function AssetActionDrawer() {
   const store = useStore();
   const { intent, mode, lastResult, setMode, close, complete } = useAssetActionStore();
@@ -71,6 +80,7 @@ export default function AssetActionDrawer() {
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [duplicateHit, setDuplicateHit] = useState<any>(null);
   const [auditRow, setAuditRow] = useState<any>(null);
+  const [workflowId, setWorkflowId] = useState("");
 
   const project = store.project;
   const items = project?.assets?.items || [];
@@ -86,6 +96,7 @@ export default function AssetActionDrawer() {
     setName(workingAsset?.name || intent.prefill?.name || intent.sourceEntity.label || "");
     setVariant(workingAsset?.variant || (intent.requirement.category === "voice" ? "Voice Design" : "Production Reference"));
     setPrompt(workingAsset?.prompt || intent.prefill?.prompt || "");
+    setWorkflowId(workingAsset?.workflowId || intent.prefill?.workflowId || "");
     setChooseId(intent.requirement.assetId || "");
     setAssignCharacterId(intent.sourceEntity.type === "character" ? intent.sourceEntity.id : "");
     const cueLines = Array.isArray(intent.prefill?.cueLines) ? intent.prefill.cueLines.map((item: string) => String(item || "").trim()).filter(Boolean) : [];
@@ -104,6 +115,13 @@ export default function AssetActionDrawer() {
     setCompareIds([]);
     setDuplicateHit(null);
   }, [intent?.sourceEntity.id, intent?.requirement.relationship, workingAsset?.id]);
+
+  useEffect(() => {
+    if (!intent) return;
+    const category = intent.requirement.category;
+    const media = intent.requirement.expectedMediaType || (category === "voice" || category === "dialogue" || category === "sound" || category === "music" ? "audio" : "image");
+    if (media !== "audio" && !store.assetWorkflows.length) void store.refreshAssetWorkflows();
+  }, [intent?.requirement.category, intent?.requirement.expectedMediaType, store.assetWorkflows.length]);
 
   useEffect(() => {
     if (!intent) return;
@@ -139,9 +157,20 @@ export default function AssetActionDrawer() {
   const mediaType = intent.requirement.expectedMediaType || (category === "voice" || category === "dialogue" || category === "sound" || category === "music" ? "audio" : "image");
   const characterId = intent.sourceEntity.type === "character" ? intent.sourceEntity.id : "";
   const generateReason = generateBlockReason(intent, store.health);
-  const generateBlocked = Boolean(generateReason);
   const dialogueMode = category === "dialogue";
   const voiceMode = category === "voice";
+  const visualGenerateMode = !dialogueMode && !voiceMode && mediaType !== "audio";
+  const compatibleWorkflows = visualGenerateMode
+    ? filterCompatibleWorkflows(store.assetWorkflows || [], mediaType === "video" ? "video" : "image", { includeUnavailable: true })
+    : [];
+  const selectedWorkflow = compatibleWorkflows.find((workflow: any) => String(workflow.id) === workflowId) || null;
+  const workflowReason = visualGenerateMode && workflowId && selectedWorkflow && !workflowIsReady(selectedWorkflow)
+    ? workflowStatusText(selectedWorkflow)
+    : "";
+  const workflowMissing = visualGenerateMode && workflowId && !selectedWorkflow
+    ? "The selected workflow is no longer registered. Choose another workflow or use automatic routing."
+    : "";
+  const generateBlocked = Boolean(generateReason || workflowReason || workflowMissing);
 
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -175,16 +204,17 @@ export default function AssetActionDrawer() {
   };
 
   const onCreate = () => run(async () => {
-    const created = await createPlannedAsset(store, intent, { name: name.trim(), variant, prompt, sampleText: auditionText });
+    const created = await createPlannedAsset(store, intent, { name: name.trim(), variant, prompt, sampleText: auditionText, workflowId: visualGenerateMode ? workflowId : "" });
     rememberAsset(created);
     mark(created, "created");
   });
 
   const onEdit = () => run(async () => {
-    const asset = workingAsset || await createPlannedAsset(store, intent, { name: name.trim(), variant, prompt, sampleText: auditionText });
-    await store.patchAsset(asset.id, { name: name.trim(), variant, prompt, sampleText: auditionText });
+    const nextWorkflowId = visualGenerateMode ? workflowId : "";
+    const asset = workingAsset || await createPlannedAsset(store, intent, { name: name.trim(), variant, prompt, sampleText: auditionText, workflowId: nextWorkflowId });
+    await store.patchAsset(asset.id, { name: name.trim(), variant, prompt, sampleText: auditionText, workflowId: nextWorkflowId || undefined });
     rememberAsset(asset);
-    mark({ ...asset, name: name.trim(), variant, prompt }, "created");
+    mark({ ...asset, name: name.trim(), variant, prompt, workflowId: nextWorkflowId || asset.workflowId }, "created");
   });
 
   const onUpload = (file: File) => run(async () => {
@@ -224,7 +254,8 @@ export default function AssetActionDrawer() {
       sampleText: auditionText,
       cueLines: intent.prefill?.cueLines,
       continuity: intent.prefill?.continuity || intent.prefill?.continuityLocks,
-      asset: workingAsset
+      asset: workingAsset,
+      workflowId: visualGenerateMode ? workflowId : ""
     });
     if (result.provider === "qwen-tts") {
       const attachBack = intent.requirement.relationship === "ltx.dialogueCue" ? "Attach-back binds the LTX dialogue cue." : "Attach-back stays on the segment dialogue slot.";
@@ -377,6 +408,24 @@ export default function AssetActionDrawer() {
           {mode === "generate" ? (
             <div className="asset-action-form">
               <p>{dialogueMode ? "Queues Qwen TTS of this cue. This is not Voice Design and it does not mint character auditions." : voiceMode ? "Queues three Qwen Voice Design auditions so you can compare, save, and attach here. Qwen is the only voice provider here." : "Queues ComfyUI generation for this visual slot, then attaches the result to the originating requirement."}</p>
+              {visualGenerateMode ? (
+                <label>Generation workflow
+                  <select value={workflowId} onChange={(event) => setWorkflowId(event.target.value)} data-testid="asset-action-workflow">
+                    <option value="">{workingAsset?.workflowId ? "Use asset workflow" : "Automatic category routing"}</option>
+                    {compatibleWorkflows.map((workflow: any) => {
+                      const ready = workflowIsReady(workflow);
+                      return (
+                        <option key={workflow.id} value={workflow.id}>
+                          {workflow.label || workflow.name || workflow.id}{ready ? "" : workflow.ready === false ? " - unavailable" : " - waiting"}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <small className={`asset-action-workflow-status ${workflowReason || workflowMissing ? "blocked" : workflowId ? "ready" : "info"}`}>
+                    {workflowReason || workflowMissing || (workflowId && selectedWorkflow ? workflowStatusText(selectedWorkflow) : "Select any registered visual workflow for this generate request.")}
+                  </small>
+                </label>
+              ) : null}
               {dialogueMode ? <label>Dialogue cue<textarea rows={4} value={auditionText} onChange={(event) => setAuditionText(event.target.value)} /></label> : null}
               {voiceMode ? <label>Audition line<textarea rows={3} value={auditionText} onChange={(event) => setAuditionText(event.target.value)} placeholder="Use a cue line for this character" /></label> : null}
               {voiceMode && Array.isArray(intent.prefill?.cueLines) && intent.prefill.cueLines.length ? (
@@ -387,8 +436,8 @@ export default function AssetActionDrawer() {
                 </div>
               ) : null}
               {voiceMode ? <label>Voice direction<textarea rows={4} value={prompt} onChange={(event) => setPrompt(event.target.value)} /></label> : null}
-              {generateReason ? <p className="muted">{generateReason}</p> : <p className="muted">Upload, create, choose, and review stay available if generate is offline.</p>}
-              <button type="button" className="button primary" disabled={busy || generateBlocked} title={generateReason || "Generate this requirement"} onClick={() => void onGenerate()}>{busy ? "Queueing…" : dialogueMode ? "Generate dialogue" : voiceMode ? "Generate 3 Qwen auditions" : workingAsset ? "Generate and attach" : "Create, generate, and attach"}</button>
+              {generateReason || workflowReason || workflowMissing ? <p className="muted">{generateReason || workflowReason || workflowMissing}</p> : <p className="muted">Upload, create, choose, and review stay available if generate is offline.</p>}
+              <button type="button" className="button primary" disabled={busy || generateBlocked} title={generateReason || workflowReason || workflowMissing || "Generate this requirement"} onClick={() => void onGenerate()}>{busy ? "Queueing…" : dialogueMode ? "Generate dialogue" : voiceMode ? "Generate 3 Qwen auditions" : workingAsset ? "Generate and attach" : "Create, generate, and attach"}</button>
               {error && !generateBlocked ? <button type="button" className="button secondary" disabled={busy} onClick={() => void onGenerate()}>Retry last generate</button> : null}
               {voiceMode && session ? (
                 <div className="asset-action-auditions" aria-label="Qwen auditions">

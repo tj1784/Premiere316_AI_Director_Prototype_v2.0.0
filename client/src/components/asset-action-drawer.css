@@ -43,6 +43,19 @@
   border-radius: 6px;
   padding: 7px 8px;
 }
+.asset-action-form small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+.asset-action-workflow-status {
+  display: block;
+}
+.asset-action-workflow-status.ready {
+  color: #8ee0b0;
+}
+.asset-action-workflow-status.blocked {
+  color: #ffb1b1;
+}
 .asset-action-form img { width: 100%; border-radius: 8px; max-height: 220px; object-fit: cover; }
 .asset-action-error { color: #ff8a8a; }
 .asset-action-ok { color: #8ee0b0; }

@@ -43,7 +43,7 @@ function mockStore(overrides = {}) {
     async patchAsset(id, body) { calls.push(["patchAsset", id, body]); },
     async uploadAssetImage(id, file) { calls.push(["uploadAssetImage", id, file.name]); return { id, activeVersion: 1, name: id }; },
     async uploadAssetAudio(id, file) { calls.push(["uploadAssetAudio", id, file.name]); return { id, activeVersion: 1, name: id }; },
-    async generateAsset(id) { calls.push(["generateAsset", id]); },
+    async generateAsset(id, options) { calls.push(["generateAsset", id, options]); },
     async approveAsset(id) { calls.push(["approveAsset", id]); },
     async replaceStoryboardReferences(kind, targetId, references) { calls.push(["replaceStoryboardReferences", kind, targetId, references]); },
     async refreshQueue() { calls.push(["refreshQueue"]); },
@@ -84,6 +84,35 @@ test("image generate still uses Comfy generateAsset", async () => {
   }, { name: "David wardrobe" });
   assert.equal(result.provider, "comfy");
   assert.equal(store.calls.some((call) => call[0] === "generateAsset"), true);
+});
+
+test("image generate creates planned visual assets with selected workflow", async () => {
+  const store = mockStore();
+  await generateForIntent(store, {
+    sourceEntity: { type: "guide", id: "segment-h01-s01-c02-01-first-guide", label: "first guide" },
+    requirement: { relationship: "ltx.temporalGuide.first", category: "guide-frame", expectedMediaType: "image" }
+  }, { name: "H01 first guide", workflowId: "ltx25-premiere316-i2v-segmented", attachAfter: false });
+  const create = store.calls.find((call) => call[0] === "createAsset");
+  assert.equal(create[1].workflowId, "ltx25-premiere316-i2v-segmented");
+  const generate = store.calls.find((call) => call[0] === "generateAsset");
+  assert.deepEqual(generate, ["generateAsset", "voice-david", { workflowId: "ltx25-premiere316-i2v-segmented" }]);
+});
+
+test("image generate patches existing visual asset workflow before queueing", async () => {
+  const store = mockStore();
+  await generateForIntent(store, {
+    sourceEntity: { type: "guide", id: "segment-h01-s01-c02-01-first-guide", label: "first guide" },
+    requirement: { relationship: "ltx.temporalGuide.first", category: "guide-frame", expectedMediaType: "image" }
+  }, {
+    asset: { id: "guide-frame-segment-h01-s01-c02-01", workflowId: "style-lock-flux2-reference", prompt: "locked frame", continuity: [] },
+    workflowId: "ltx25-premiere316-i2v-segmented",
+    attachAfter: false
+  });
+  const patch = store.calls.find((call) => call[0] === "patchAsset");
+  assert.equal(patch[1], "guide-frame-segment-h01-s01-c02-01");
+  assert.equal(patch[2].workflowId, "ltx25-premiere316-i2v-segmented");
+  const generate = store.calls.find((call) => call[0] === "generateAsset");
+  assert.deepEqual(generate, ["generateAsset", "guide-frame-segment-h01-s01-c02-01", { workflowId: "ltx25-premiere316-i2v-segmented" }]);
 });
 
 test("voice generate stays disabled when Qwen is offline", () => {
@@ -428,7 +457,7 @@ test("CHR-008 empty voice offers character cue lines, not enrollment", () => {
 
 test("CHR-006 generate-from-character keeps bible continuity locks", async () => {
   const store = mockStore();
-  store.generateAsset = async (id) => { store.calls.push(["generateAsset", id]); };
+  store.generateAsset = async (id, options) => { store.calls.push(["generateAsset", id, options]); };
   const locks = ["iron collar locked", "wrists bound"];
   assert.match(withContinuityLocks("David sheet", locks), /CONTINUITY LOCKS/);
   assert.deepEqual(locksFromBundle({ primaryAsset: { continuity: locks } }), locks);

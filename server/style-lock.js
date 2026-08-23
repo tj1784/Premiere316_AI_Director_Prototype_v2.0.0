@@ -208,7 +208,7 @@ export function applyStyleLockToAsset(asset) {
   const workflowId = styleLockWorkflowIdForAsset(asset);
   if (workflowId) {
     const current = String(asset.workflowId || "");
-    const keepExplicit = current && !isStyleLockWorkflow(current);
+    const keepExplicit = current && (asset.workflowExplicit === true || !isStyleLockWorkflow(current));
     if (!keepExplicit) asset.workflowId = workflowId;
     // The 97-asset production package already contains the complete,
     // authoritative prompt envelope for every indexed image. Never prepend
