@@ -626,6 +626,7 @@ app.get("/api/health", async (_req, res) => {
       qwenTts,
       indexTts,
       qwenVoiceDesign,
+      qwenCustomVoice: qwenCustomVoiceHealth(),
       ffmpeg: { available: ffmpeg }
     },
     app: "premiere316",
@@ -663,8 +664,34 @@ app.get("/api/sound/index-tts/health", (_req, res) => {
   res.json(indexTtsHealth());
 });
 
+function qwenCustomVoiceHealth() {
+  const localAppData = process.env.LOCALAPPDATA || process.env.HOME || "";
+  const modelDir = path.join(localAppData, "Premiere316", "Qwen3-TTS", "models", "Qwen3-TTS-12Hz-1.7B-CustomVoice");
+  const installed = fs.existsSync(modelDir);
+  return {
+    installed,
+    ready: false,
+    available: false,
+    engine: "Qwen3-TTS CustomVoice",
+    model: "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice",
+    modelDir,
+    reason: installed
+      ? "CustomVoice 1.7B is present but generation is not wired in this Premiere316 build."
+      : "CustomVoice 1.7B is not installed locally. Use Voice Design or Base clone."
+  };
+}
+
 app.get("/api/sound/qwen-tts/health", (_req, res) => {
   res.json(qwenTtsHealth());
+});
+
+app.get("/api/sound/qwen-custom-voice/health", (_req, res) => {
+  res.json(qwenCustomVoiceHealth());
+});
+
+app.post("/api/projects/:slug/sound/qwen-custom-voice/generations", requireLocalSameOriginMutation, (_req, res) => {
+  const health = qwenCustomVoiceHealth();
+  return res.status(503).json({ error: health.reason, health });
 });
 
 app.post("/api/sound/qwen-tts/load", requireLocalSameOriginMutation, async (_req, res) => {
@@ -3470,7 +3497,11 @@ app.post(
         maxNewTokens: req.body?.maxNewTokens,
         cueId: req.body?.cueId,
         segmentId: req.body?.segmentId,
-        attachToCue: req.body?.attachToCue
+        attachToCue: req.body?.attachToCue,
+        primaryEmotion: req.body?.primaryEmotion || req.body?.emotion,
+        secondaryEmotion: req.body?.secondaryEmotion,
+        tertiaryEmotion: req.body?.tertiaryEmotion,
+        emotionIntensity: req.body?.emotionIntensity
       });
       const job = enqueue({
         type: "generate_qwen_tts",

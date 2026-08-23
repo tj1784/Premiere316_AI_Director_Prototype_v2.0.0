@@ -228,6 +228,7 @@ def generate(request_id: str, payload: dict[str, Any]) -> dict[str, Any]:
 
     settings = payload.get("settings") if isinstance(payload.get("settings"), dict) else {}
     seed = bounded_int(payload.get("seed"), 316, 0, 2_147_483_647)
+    instruct = str(payload.get("instruct") or payload.get("style") or "").strip()
     generation_kwargs = {
         "do_sample": True,
         "top_k": bounded_int(settings.get("topK"), 20, 1, 200),
@@ -252,6 +253,9 @@ def generate(request_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         TORCH.manual_seed(seed)
         TORCH.cuda.manual_seed_all(seed)
         # This scalar call is the editorial contract: no segmenting or stitching.
+        if instruct:
+            instruct_ids = MODEL._tokenize_texts([MODEL._build_instruct_text(instruct)])
+            generation_kwargs["instruct_ids"] = instruct_ids
         wavs, sample_rate = MODEL.generate_voice_clone(
             text=text,
             language=language,

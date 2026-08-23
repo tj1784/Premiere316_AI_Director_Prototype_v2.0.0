@@ -44,6 +44,13 @@ function languageValues(providerName) {
   });
 }
 
+test("Create Sound includes an official QwenTTS Demo sub-tab", () => {
+  assert.match(source, /id: "qwen-tts-demo"/);
+  assert.match(source, /label: "QwenTTS Demo"/);
+  assert.match(source, /QwenTtsDemoWorkspace/);
+  assert.match(source, /create-sound-panel-qwen-tts-demo/);
+});
+
 test("Create Sound defaults voice cloning to standalone QwenTTS", () => {
   const defaultDraft = visit(syntax, (node) => (
     ts.isVariableDeclaration(node)

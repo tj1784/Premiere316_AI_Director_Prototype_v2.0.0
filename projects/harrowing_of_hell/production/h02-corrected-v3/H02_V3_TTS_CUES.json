@@ -85,8 +85,15 @@
       "cueId": "H02V3-D007",
       "segmentId": "H02-S04-C01-SEG03",
       "speaker": "MOSES",
-      "exactDialogue": "Hold fast, Adam. These chains may bind the hand, but not the promise. You do not wait alone.",
+      "exactDialogue": "Hold fast, Adam. These chains may bind the hand, but not the promise.",
       "style": "Firm chained witness. No pulpit cadence. Reassure without sentimentality."
+    },
+    {
+      "cueId": "H02V3-D007B",
+      "segmentId": "H02-S04-C01-SEG03B",
+      "speaker": "MOSES",
+      "exactDialogue": "You do not wait alone.",
+      "style": "Quiet after the longer line. Intimate certainty. No sermon."
     },
     {
       "cueId": "H02V3-D008",
@@ -106,8 +113,15 @@
       "cueId": "H02V3-D010",
       "segmentId": "H02-S04-C03-SEG01",
       "speaker": "MOSES",
-      "exactDialogue": "Then why do you tremble? You did not gather the faithful by judgment. You seized them because His death frightened you.",
+      "exactDialogue": "Then why do you tremble? You did not gather the faithful by judgment.",
       "style": "Quiet exact accusation. Unhurried moral force. No triumph."
+    },
+    {
+      "cueId": "H02V3-D010B",
+      "segmentId": "H02-S04-C03-SEG01B",
+      "speaker": "MOSES",
+      "exactDialogue": "You seized them because His death frightened you.",
+      "style": "The second half of the accusation. Unhurried. No triumph."
     },
     {
       "cueId": "H02V3-D011",
@@ -141,8 +155,15 @@
       "cueId": "H02V3-D015",
       "segmentId": "H02-S04-C05-SEG02",
       "speaker": "ADAM",
-      "exactDialogue": "I named her when I should have confessed. I made of her a shield for my fear. Never again.",
-      "style": "Remorse first, resolve second. Brief breath before Never again."
+      "exactDialogue": "I named her when I should have confessed. I made of her a shield for my fear.",
+      "style": "Remorse first, resolve second."
+    },
+    {
+      "cueId": "H02V3-D015B",
+      "segmentId": "H02-S04-C05-SEG02B",
+      "speaker": "ADAM",
+      "exactDialogue": "Never again.",
+      "style": "Resolve only. Short. No shout."
     },
     {
       "cueId": "H02V3-D016",

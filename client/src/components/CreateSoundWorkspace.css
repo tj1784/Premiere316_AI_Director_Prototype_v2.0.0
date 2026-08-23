@@ -26,7 +26,7 @@
   min-height: 55px;
   padding: 6px 10px 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
   gap: 5px;
   border-bottom: 1px solid #252e3c;
   background: linear-gradient(180deg, #0e151f, #0a1018);
@@ -71,7 +71,8 @@
 }
 .create-sound-tab-surface[hidden] { display: none !important; }
 .create-sound-tab-surface > .create-sound-grid,
-.create-sound-tab-surface > .voice-design-workspace { width: 100%; }
+.create-sound-tab-surface > .voice-design-workspace,
+.create-sound-tab-surface > .qwen-tts-demo { width: 100%; }
 
 .create-sound-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(300px, .82fr) minmax(470px, 1.35fr) minmax(320px, .9fr); gap: 8px; padding: 8px; }
 .create-sound-panel { min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 8px; background: linear-gradient(180deg, #111824, #0c121b); box-shadow: 0 12px 34px rgba(0,0,0,.12); }

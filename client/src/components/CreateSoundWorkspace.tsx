@@ -9,10 +9,12 @@ import SoundWorkflowWorkspace, {
   soundProfileReady
 } from "./SoundWorkflowWorkspace";
 import VoiceDesignWorkspace, { type VoiceDesignEngineSummary } from "./VoiceDesignWorkspace";
+import QwenTtsDemoWorkspace from "./QwenTtsDemoWorkspace";
 import emotionPresets from "../data/emotion-presets.json";
+import qwenEmotionalPresets from "../data/qwen-emotional-presets.json";
 import "./CreateSoundWorkspace.css";
 
-type SoundTab = "voice-design" | "voice-clone" | "music" | "sound-fx";
+type SoundTab = "voice-design" | "voice-clone" | "qwen-tts-demo" | "music" | "sound-fx";
 type TtsProvider = "qwenTts" | "indexTts";
 
 const TTS_PROVIDERS: Record<TtsProvider, {
@@ -61,6 +63,7 @@ const TTS_LANGUAGES: Record<TtsProvider, Array<{ value: string; label: string }>
 const SOUND_TABS: Array<{ id: SoundTab; label: string; description: string }> = [
   { id: "voice-design", label: "Voice Design", description: "Design a new voice identity with Qwen3-TTS" },
   { id: "voice-clone", label: "Voice Clone", description: "Clone a recorded voice with QwenTTS or IndexTTS" },
+  { id: "qwen-tts-demo", label: "QwenTTS Demo", description: "Official Qwen3-TTS Space: Design, Clone, CustomVoice" },
   { id: "music", label: "Music", description: "Create project score and music cues" },
   { id: "sound-fx", label: "Sound FX", description: "Create effects, foley, and ambience" }
 ];
@@ -88,6 +91,10 @@ type SoundDraft = {
   seed: number;
   emotionPreset: string;
   emotionVector: number[] | null;
+  primaryEmotion: string;
+  secondaryEmotion: string;
+  tertiaryEmotion: string;
+  emotionIntensity: number;
 };
 
 type SoundSnapshot = {
@@ -111,10 +118,15 @@ const DEFAULT_DRAFT: SoundDraft = {
   durationFactor: 1,
   seed: 42,
   emotionPreset: "",
-  emotionVector: null
+  emotionVector: null,
+  primaryEmotion: "neutral",
+  secondaryEmotion: "none",
+  tertiaryEmotion: "none",
+  emotionIntensity: 1
 };
 
 const EMOTION_PRESET_NAMES = Object.keys(emotionPresets as Record<string, { type?: string; values?: number[]; description?: string }>).sort();
+const QWEN_EMOTION_NAMES = Object.keys(qwenEmotionalPresets as Record<string, unknown>).sort();
 
 function applyEmotionPreset(name: string): Pick<SoundDraft, "emotionPreset" | "emotionVector" | "style" | "emotionWeight"> {
   const preset = (emotionPresets as Record<string, { type?: string; values?: number[]; description?: string }>)[name];
@@ -329,6 +341,11 @@ export default function CreateSoundWorkspace() {
   const [voiceDesignCommandStatus, setVoiceDesignCommandStatus] = useState<VoiceDesignEngineSummary>({
     label: "Qwen3-TTS VoiceDesign",
     detail: "Checking the standalone VoiceDesign engine…",
+    status: "waiting"
+  });
+  const [qwenDemoCommandStatus, setQwenDemoCommandStatus] = useState<VoiceDesignEngineSummary>({
+    label: "Qwen3-TTS Demo",
+    detail: "Official Voice Design, Base clone, and CustomVoice",
     status: "waiting"
   });
   const requestSequence = useRef(0);
@@ -621,6 +638,12 @@ export default function CreateSoundWorkspace() {
     body.set("text", draft.text.trim());
     body.set("style", draft.style.trim());
     body.set("language", draft.language || "EN");
+    if (draft.provider === "qwenTts") {
+      body.set("primaryEmotion", draft.primaryEmotion || "neutral");
+      body.set("secondaryEmotion", draft.secondaryEmotion || "none");
+      body.set("tertiaryEmotion", draft.tertiaryEmotion || "none");
+      body.set("emotionIntensity", String(draft.emotionIntensity ?? 1));
+    }
     if (draft.provider === "indexTts") {
       body.set("emotionWeight", String(draft.emotionWeight));
       body.set("durationFactor", String(draft.durationFactor));
@@ -736,6 +759,11 @@ export default function CreateSoundWorkspace() {
       ...voiceDesignCommandStatus,
       refresh: null as null | (() => void)
     }
+    : activeTab === "qwen-tts-demo"
+      ? {
+        ...qwenDemoCommandStatus,
+        refresh: () => void refreshSound(false)
+      }
     : activeTab === "voice-clone"
       ? {
         label: providerLabel,
@@ -796,6 +824,21 @@ export default function CreateSoundWorkspace() {
           onCancelJob={cancelSoundJob}
           onSendToIndexTts={useDesignedVoice}
           onEngineStatusChange={setVoiceDesignCommandStatus}
+        />
+      </section>
+
+      <section
+        id="create-sound-panel-qwen-tts-demo"
+        className="create-sound-tab-surface"
+        role="tabpanel"
+        aria-labelledby="create-sound-tab-qwen-tts-demo"
+        hidden={activeTab !== "qwen-tts-demo"}
+      >
+        <QwenTtsDemoWorkspace
+          slug={slug}
+          active={activeTab === "qwen-tts-demo"}
+          jobs={store.jobs}
+          onStatusChange={setQwenDemoCommandStatus}
         />
       </section>
 
@@ -939,6 +982,29 @@ export default function CreateSoundWorkspace() {
                 <textarea rows={12} value={draft.text} onChange={(event) => patchDraft("text", event.target.value)} placeholder="Enter the exact words to speak…" />
                 <small>{draft.text.trim().length.toLocaleString()} characters · ~{estimateSpeechSeconds(draft.text)}s spoken (estimate, not guaranteed)</small>
               </label>
+              {draft.provider === "qwenTts" ? <div className="create-sound-control-grid" data-testid="qwen-emotional-mix">
+                <label>Primary emotion
+                  <select value={draft.primaryEmotion} onChange={(event) => patchDraft("primaryEmotion", event.target.value)}>
+                    {QWEN_EMOTION_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}
+                  </select>
+                </label>
+                <label>Secondary
+                  <select value={draft.secondaryEmotion} onChange={(event) => patchDraft("secondaryEmotion", event.target.value)}>
+                    <option value="none">none</option>
+                    {QWEN_EMOTION_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}
+                  </select>
+                </label>
+                <label>Tertiary
+                  <select value={draft.tertiaryEmotion} onChange={(event) => patchDraft("tertiaryEmotion", event.target.value)}>
+                    <option value="none">none</option>
+                    {QWEN_EMOTION_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}
+                  </select>
+                </label>
+                <label className="create-sound-range">Intensity · {Number(draft.emotionIntensity || 1).toFixed(1)}x
+                  <input type="range" min="0" max="2" step="0.1" value={draft.emotionIntensity} onChange={(event) => patchDraft("emotionIntensity", Number(event.target.value))} />
+                </label>
+                <small>Qwen3-TTS Emotional mix from ComfyUI-Qwen3TTS-Emotional. Furious + contemptuous is a good Torturer start.</small>
+              </div> : null}
               <label>Emotion preset
                 <select value={draft.emotionPreset} onChange={(event) => setDraft((current) => ({ ...current, ...applyEmotionPreset(event.target.value) }))}>
                   <option value="">None</option>

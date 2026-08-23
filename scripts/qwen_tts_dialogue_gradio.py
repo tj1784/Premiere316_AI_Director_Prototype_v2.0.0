@@ -23,33 +23,33 @@ LINE_RE = re.compile(r"^\s*(?:\[(?P<b>[^\]]+)\]|(?P<a>[A-Za-z][A-Za-z0-9 _/-]*))
 DEFAULT_CAST = [
     {
         "name": "TORTURER",
-        "wav": PROJECT / "production/qwen3-tts/voice-design/qvd_session_32c8311628c74bba9cfc8eb4f151b399/01-h02-v3-torturer-saruman-architecture-92b24ad4c2.native-24k-f32.wav",
-        "transcript": "I do not raise my voice. I weigh a man, I name his dust, and I offer him an ending that sounds like mercy. Speak once, first father, and the chain will loosen.",
+        "wav": PROJECT / "production/h02-corrected-v3/provided-voice-refs/torturer_ref_12s.wav",
+        "transcript": "I do not shout, I do not beg the dark to make me larger. I weigh a man the way a court weighs dust, slowly and without pity. You were formed from the ground, and the ground has not forgotten you.",
     },
     {
         "name": "ADAM",
-        "wav": PROJECT / "production/qwen3-tts/voice-design/qvd_session_238da6e590df4ee3a2743a3e40d06168/01-h02-v3-adam-aragorn-architecture-69aa144596.native-24k-f32.wav",
-        "transcript": "I am worn thin by waiting. I will not pretend I am innocent. The word that keeps me was never mine to make.",
+        "wav": PROJECT / "production/h02-corrected-v3/provided-voice-refs/adam_ref_12s.wav",
+        "transcript": "I am worn, and I will not pretend I am clean. I hid when I should have stood, I named her when I should have named my own fear.",
     },
     {
         "name": "EVE",
-        "wav": PROJECT / "production/qwen3-tts/voice-design/qvd_session_f625b9c411384707b71d8c9c94e4dd5f/01-h02-v3-eve-galadriel-architecture-f72f603b65.native-24k-f32.wav",
-        "transcript": "Look at me. I will not let this darkness make strangers of us. I chose the first lie with my own will, and I will not choose another to escape my wound.",
+        "wav": PROJECT / "production/h02-corrected-v3/provided-voice-refs/eve_ref_12s.wav",
+        "transcript": "Adam, look at me. I will not let this darkness make strangers of us again. I chose the serpent's lie with my own will, and the wound is mine.",
     },
     {
         "name": "MOSES",
-        "wav": PROJECT / "production/qwen3-tts/voice-design/qvd_session_64a44a2c73ab4dd3bfb51983d5c35314/01-h02-v3-moses-elrond-architecture-df092175f6.native-24k-f32.wav",
-        "transcript": "Stand fast. These chains may close upon the hand, but they cannot close upon the promise. I speak as a witness, not as a man who needs to be believed.",
+        "wav": PROJECT / "production/h02-corrected-v3/provided-voice-refs/moses_ref_12s.wav",
+        "transcript": "Hold fast, Adam. These chains may close upon the hand, but they cannot close upon the promise. You claim no innocence. You ask no wage.",
     },
     {
         "name": "DAVID",
-        "wav": PROJECT / "production/qwen3-tts/voice-design/qvd_session_d647fe8c82ac4171bd70066d11994362/01-h02-v3-david-frodo-architecture-8a17428b9e.native-24k-f32.wav",
-        "transcript": "I will wait in the deep places. I will keep the same small melody in my breath, and I will not let the grave teach me a louder song than hope.",
+        "wav": PROJECT / "production/h02-corrected-v3/provided-voice-refs/david_ref_12s.wav",
+        "transcript": "I will not answer him with my own name. I will answer with the song that was given me. You will not abandon my soul to Sheol, even in the depths I will wait for you. You will not let your Holy One see corruption.",
     },
     {
         "name": "JOHN",
-        "wav": PROJECT / "production/qwen3-tts/voice-design/qvd_session_1fe4302536e24aa9abacd71d9acc0b0b/01-h02-v3-john-samwise-architecture-5a9ef92035.native-24k-f32.wav",
-        "transcript": "Be quiet and listen with me. I have heard this step before, when the water opened and the air itself seemed to know the one who came toward us from the river.",
+        "wav": PROJECT / "production/h02-corrected-v3/provided-voice-refs/john_ref_12s.wav",
+        "transcript": "Be still. Do not fill this silence with fear. I know that tread. I heard it beside the Jordan.",
     },
 ]
 

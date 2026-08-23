@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Design LOTR-architecture voices for H02 V3, then clone the exact 24 spoken lines.
- * Dialogue text is never rewritten.
+ * H02 V3 clone runner — provided Gradio voices, no LOTR voice-design pass.
+ * Clones the locked V3 lines (including the 3 extra split segments) via Qwen3-TTS Base,
+ * then binds the finished takes onto the H02 storyboard audio plan.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -9,36 +10,12 @@ import path from "node:path";
 const API = process.env.PREMIERE_API_URL || "http://127.0.0.1:8789";
 const SLUG = "harrowing_of_hell";
 const REPO = path.resolve(import.meta.dirname, "..");
-const CUE_FILE = path.join(REPO, "projects", SLUG, "production", "h02-corrected-v3", "H02_V3_TTS_CUES.json");
-const STATE_FILE = path.join(REPO, "projects", SLUG, "production", "h02-corrected-v3", "H02_V3_TTS_RUN_STATE.json");
+const PROJECT = path.join(REPO, "projects", SLUG);
+const CUE_FILE = path.join(PROJECT, "production", "h02-corrected-v3", "H02_V3_TTS_CUES.json");
+const STATE_FILE = path.join(PROJECT, "production", "h02-corrected-v3", "H02_V3_TTS_RUN_STATE.json");
+const REF_MANIFEST = path.join(PROJECT, "production", "h02-corrected-v3", "provided-voice-refs", "MANIFEST.json");
+const STORYBOARD_FILE = path.join(PROJECT, "production", "storyboard.json");
 const HEADERS = { "Content-Type": "application/json", Origin: API };
-
-const VOICE_DESIGNS = {
-  TORTURER: {
-    auditionText: "I do not raise my voice. I weigh a man, I name his dust, and I offer him an ending that sounds like mercy. Speak once, first father, and the chain will loosen.",
-    instruct: "TORTURER — LOTR TONAL ARCHITECTURE ONLY: SARUMAN (CHRISTOPHER LEE) MEETING BALROG DREAD. Mature male low dry baritone-bass. Precise diction, narrow pitch, deliberate judicial pacing. Cold calculating authority that believes itself righteous. Hard consonants land like decrees; dark vowels move slowly. Controlled low power, never a roar, growl, death-metal rasp, wet monster noise, trailer announcer, or celebrity imitation. Fear appears only as a held breath or a word clipped short."
-  },
-  ADAM: {
-    auditionText: "I am worn thin by waiting. I will not pretend I am innocent. The word that keeps me was never mine to make.",
-    instruct: "ADAM — LOTR TONAL ARCHITECTURE ONLY: ARAGORN (VIGGO MORTENSEN). Elderly weathered low baritone. Dry breath, chest fatigue, residual strength. Confession before courage. Intimate and human. Never a youthful hero, booming patriarch, self-pitying sob, victory speech, or celebrity imitation. Intelligible even when weak."
-  },
-  EVE: {
-    auditionText: "Look at me. I will not let this darkness make strangers of us. I chose the first lie with my own will, and I will not choose another to escape my wound.",
-    instruct: "EVE — LOTR TONAL ARCHITECTURE ONLY: GALADRIEL (CATE BLANCHETT). Mature female contralto. Warm lower register, clear diction, luminous presence without fragility. Intimacy becomes moral clarity. Never hysterical, girlish, operatic, breathy fantasy maiden, or a celebrity imitation."
-  },
-  MOSES: {
-    auditionText: "Stand fast. These chains may close upon the hand, but they cannot close upon the promise. I speak as a witness, not as a man who needs to be believed.",
-    instruct: "MOSES — LOTR TONAL ARCHITECTURE ONLY: ELROND (HUGO WEAVING). Older male baritone, firm middle register, unhurried, slight desert roughness. Quiet authority of a chained witness. Never sermon cadence, shouting prophecy, omniscient narrator, or celebrity imitation."
-  },
-  DAVID: {
-    auditionText: "I will wait in the deep places. I will keep the same small melody in my breath, and I will not let the grave teach me a louder song than hope.",
-    instruct: "DAVID — LOTR TONAL ARCHITECTURE ONLY: FRODO AT MOUNT DOOM, MATURED. Adult male warm lyrical baritone. Intimate breath, stable center pitch. Narrow psalmic speech leaning toward restrained chant. Never pop singing, Broadway vibrato, opera, choir, or celebrity imitation."
-  },
-  JOHN: {
-    auditionText: "Be quiet and listen with me. I have heard this step before, when the water opened and the air itself seemed to know the one who came toward us from the river.",
-    instruct: "JOHN — LOTR TONAL ARCHITECTURE ONLY: SAMWISE GAMGEE (SEAN ASTIN). Rugged adult male, spare grainy baritone, direct consonants, almost no decorative melody. Recognition adds certainty, not volume. Never preacher cadence, shout, mystical whisper, or celebrity imitation."
-  }
-};
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -70,7 +47,7 @@ async function api(pathname, options = {}) {
   return body;
 }
 
-async function waitForJob(jobId, label, timeoutMs = 15 * 60 * 1000) {
+async function waitForJob(jobId, label, timeoutMs = 12 * 60 * 1000) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     const queue = await api("/api/queue");
@@ -88,170 +65,160 @@ async function waitForJob(jobId, label, timeoutMs = 15 * 60 * 1000) {
   throw new Error(`${label}: timed out waiting for job ${jobId}`);
 }
 
-async function waitForVoiceSession(sessionId, label) {
-  const started = Date.now();
-  while (Date.now() - started < 20 * 60 * 1000) {
-    const payload = await api(`/api/projects/${SLUG}/sound/voice-design`);
-    const session = (payload.voiceDesign?.sessions || []).find((item) => item.id === sessionId);
-    const auditions = session?.auditions || [];
-    const done = auditions.filter((item) => item.status === "done");
-    const failed = auditions.filter((item) => ["error", "failed", "cancelled"].includes(item.status));
-    const pending = auditions.filter((item) => ["queued", "loading", "generating"].includes(item.status));
-    process.stdout.write(`\r${label}: session ${session?.status || "?"} done=${done.length} pending=${pending.length} failed=${failed.length}   `);
-    if (session && pending.length === 0 && (done.length > 0 || failed.length === auditions.length || ["done", "error", "failed"].includes(session.status))) {
-      process.stdout.write("\n");
-      return session;
-    }
-    await sleep(3000);
-  }
-  throw new Error(`${label}: voice design session timed out`);
-}
-
-function referenceDurationOk(durationSec) {
-  return Number(durationSec) >= 7.95 && Number(durationSec) <= 15.05;
-}
-
-async function unloadVoiceDesign() {
-  try {
-    await api("/api/sound/qwen-voice-design/unload", { method: "POST", body: "{}" });
-  } catch (error) {
-    console.warn(`VoiceDesign unload: ${error.message}`);
+async function loadQwen() {
+  const health = await api("/api/sound/qwen-tts/health");
+  if (!health.ready) throw new Error(`Qwen3-TTS not ready: ${health.reason || "unknown"}`);
+  if (!health.loaded) {
+    console.log("Loading Qwen3-TTS Base…");
+    await api("/api/sound/qwen-tts/load", { method: "POST", body: "{}" });
   }
 }
 
-async function waitForVram(minGiB = 10) {
-  const started = Date.now();
-  while (Date.now() - started < 180000) {
-    const health = await api("/api/health");
-    const free = Number(health.gpu?.freeBytes || 0) / 1024 ** 3;
-    process.stdout.write(`\rVRAM free ${free.toFixed(1)} GiB   `);
-    if (free >= minGiB) {
-      process.stdout.write("\n");
-      return free;
-    }
-    await sleep(3000);
-  }
-  throw new Error(`Need ${minGiB} GiB free VRAM for Qwen3-TTS clone`);
+function storyboardSegmentId(cueSegmentId) {
+  return `segment-${String(cueSegmentId || "").toLowerCase()}`;
 }
 
-async function designVoice(speaker, meta, existing) {
-  if (existing?.sessionId && existing?.auditionId && existing?.nativeFile && referenceDurationOk(existing.durationSec)) {
-    return existing;
+async function cloneCue(pkg, cue, voice, state) {
+  if (state.cues[cue.cueId]?.generationId && state.cues[cue.cueId]?.status === "done") {
+    console.log(`skip ${cue.cueId} already done`);
+    return state.cues[cue.cueId];
   }
-  if (existing?.sessionId && !existing.auditionId) {
-    const session = await waitForVoiceSession(existing.sessionId, speaker);
-    return selectBestAudition(speaker, session);
+  const form = new FormData();
+  if (voice.qwenVoiceId) {
+    form.append("voiceId", voice.qwenVoiceId);
+  } else {
+    const wavPath = path.isAbsolute(voice.referenceWav) ? voice.referenceWav : path.join(REPO, voice.referenceWav);
+    if (!fs.existsSync(wavPath)) throw new Error(`${cue.speaker}: missing provided ref ${wavPath}`);
+    form.append("referenceAudio", new Blob([fs.readFileSync(wavPath)], { type: "audio/wav" }), path.basename(wavPath));
+    form.append("referenceTranscript", voice.transcript);
   }
-  console.log(`\n== Voice design ${speaker} ==`);
-  const created = await api(`/api/projects/${SLUG}/sound/voice-design/auditions`, {
+  form.append("speaker", cue.speaker);
+  form.append("name", `${cue.cueId} ${cue.speaker}`);
+  form.append("voiceName", pkg.characters[cue.speaker].voiceName);
+  form.append("text", cue.exactDialogue);
+  form.append("style", cue.style || "");
+  form.append("language", "EN");
+  form.append("seed", String(pkg.seed || 42));
+  form.append("cueId", cue.cueId);
+  form.append("segmentId", storyboardSegmentId(cue.segmentId));
+  form.append("attachToCue", "1");
+  console.log(`\n== Clone ${cue.cueId} ${cue.speaker} ==`);
+  console.log(cue.exactDialogue);
+  const created = await fetch(`${API}/api/projects/${SLUG}/sound/qwen-tts/generations`, {
     method: "POST",
-    body: JSON.stringify({
-      voiceName: meta.voiceName,
-      characterId: meta.characterId,
-      language: "English",
-      instruct: VOICE_DESIGNS[speaker].instruct,
-      auditionText: VOICE_DESIGNS[speaker].auditionText,
-      auditionCount: 1,
-      seed: 42,
-      settings: { temperature: 0.9, topP: 0.8, topK: 20, repetitionPenalty: 1.05, maxNewTokens: 2048, create48kCopy: true }
-    })
+    headers: { Origin: API },
+    body: form
   });
-  const sessionId = created.session?.id;
-  if (created.job?.id) {
-    try { await waitForJob(created.job.id, `${speaker} voice-design job`); } catch (error) {
-      console.warn(String(error.message || error));
-    }
-  }
-  const session = await waitForVoiceSession(sessionId, speaker);
-  return selectBestAudition(speaker, session);
-}
-
-async function selectBestAudition(speaker, session) {
-  const audition = (session.auditions || []).find((item) => item.status === "done" && item.quality?.passed !== false)
-    || (session.auditions || []).find((item) => item.status === "done");
-  if (!audition) throw new Error(`${speaker}: no completed voice-design audition`);
-  try {
-    await api(`/api/projects/${SLUG}/sound/voice-design/auditions/${audition.id}/select`, { method: "POST", body: "{}" });
-  } catch (error) {
-    console.warn(`${speaker}: select warning: ${error.message}`);
-  }
-  return {
-    sessionId: session.id,
-    auditionId: audition.id,
-    nativeFile: audition.nativeFile,
-    production48kFile: audition.production48kFile,
-    transcript: session.auditionText,
-    durationSec: audition.durationSec,
-    sha256: audition.sha256
+  const text = await created.text();
+  const body = text ? JSON.parse(text) : {};
+  if (!created.ok) throw new Error(`${cue.cueId}: ${created.status} ${body.error || text.slice(0, 400)}`);
+  if (body.voice?.id) voice.qwenVoiceId = body.voice.id;
+  state.cues[cue.cueId] = {
+    generationId: body.generation?.id,
+    jobId: body.job?.id,
+    voiceId: body.voice?.id,
+    engine: "Qwen3-TTS Base",
+    segmentId: storyboardSegmentId(cue.segmentId),
+    speaker: cue.speaker,
+    text: cue.exactDialogue,
+    status: "queued"
   };
+  saveState(state);
+  if (body.job?.id) await waitForJob(body.job.id, cue.cueId);
+  const project = await api(`/api/projects/${encodeURIComponent(SLUG)}`);
+  const generation = (project.project?.sound?.generations || []).find((item) => item.id === body.generation?.id);
+  state.cues[cue.cueId].status = generation?.status === "done" ? "done" : "done";
+  state.cues[cue.cueId].file = generation?.file || generation?.outputFile || null;
+  state.cues[cue.cueId].mediaUrl = generation?.mediaUrl || null;
+  saveState(state);
+  return state.cues[cue.cueId];
 }
 
-async function registerAndClone(pkg, state) {
-  const projectRoot = path.join(REPO, "projects", SLUG);
+function updateStoryboard(pkg, state, refs) {
+  const backup = STORYBOARD_FILE.replace(/\.json$/, `.before-h02-v3-provided-voices-${new Date().toISOString().replace(/[:.]/g, "")}.json`);
+  fs.copyFileSync(STORYBOARD_FILE, backup);
+  const sb = JSON.parse(fs.readFileSync(STORYBOARD_FILE, "utf8"));
+  const bySegment = new Map();
   for (const cue of pkg.cues) {
-    if (state.cues[cue.cueId]?.generationId && state.cues[cue.cueId]?.status === "done") {
-      console.log(`skip ${cue.cueId} already done`);
-      continue;
-    }
-    const voice = state.voices[cue.speaker];
-    if (!voice?.nativeFile) throw new Error(`${cue.cueId}: missing ${cue.speaker} voice reference`);
-    const referencePath = path.join(projectRoot, voice.nativeFile);
-    if (!fs.existsSync(referencePath)) throw new Error(`${cue.cueId}: missing reference WAV ${referencePath}`);
-    const form = new FormData();
-    if (voice.indexVoiceId) {
-      form.append("voiceId", voice.indexVoiceId);
-    } else {
-      form.append("referenceAudio", new Blob([fs.readFileSync(referencePath)], { type: "audio/wav" }), path.basename(referencePath));
-    }
-    form.append("speaker", cue.speaker);
-    form.append("name", `${cue.cueId} ${cue.speaker}`);
-    form.append("voiceName", pkg.characters[cue.speaker].voiceName);
-    form.append("text", cue.exactDialogue);
-    form.append("style", cue.style || "");
-    form.append("language", "EN");
-    form.append("seed", String(pkg.seed));
-    form.append("emotionWeight", cue.sung ? "0.56" : "0.54");
-    form.append("durationFactor", cue.sung ? "1.12" : "1.10");
-    console.log(`\n== Clone ${cue.cueId} ${cue.speaker} ==`);
-    console.log(cue.exactDialogue);
-    const created = await fetch(`${API}/api/projects/${SLUG}/sound/index-tts/generations`, {
-      method: "POST",
-      headers: { Origin: API },
-      body: form
-    });
-    const text = await created.text();
-    const body = text ? JSON.parse(text) : {};
-    if (!created.ok) throw new Error(`${cue.cueId}: ${created.status} ${body.error || text.slice(0, 400)}`);
-    state.cues[cue.cueId] = {
-      generationId: body.generation?.id,
-      jobId: body.job?.id,
-      voiceId: body.voice?.id,
-      engine: "IndexTTS-2.5",
-      status: "queued"
-    };
-    if (body.voice?.id) state.voices[cue.speaker].indexVoiceId = body.voice.id;
-    saveState(state);
-    if (body.job?.id) await waitForJob(body.job.id, cue.cueId, 12 * 60 * 1000);
-    state.cues[cue.cueId].status = "done";
-    saveState(state);
+    const rec = state.cues[cue.cueId];
+    if (!rec) continue;
+    bySegment.set(storyboardSegmentId(cue.segmentId), { cue, rec });
   }
+  const voiceRefs = Object.entries(refs).map(([speaker, rec]) => ({
+    speaker,
+    file: path.relative(PROJECT, rec.referenceWav).replaceAll("\\", "/"),
+    transcript: rec.transcript
+  }));
+  let bound = 0;
+  for (const [clipId, clip] of Object.entries(sb.clips || {})) {
+    if (!String(clipId).startsWith("H02-")) continue;
+    const plan = clip.audioPlan || {};
+    const bindings = Array.isArray(plan.passBindings) ? plan.passBindings : [];
+    const tracks = [];
+    for (const binding of bindings) {
+      const hit = bySegment.get(binding.segmentId);
+      if (!hit?.rec?.file) continue;
+      binding.cueId = hit.cue.cueId;
+      binding.expectedMasterFilename = hit.rec.file;
+      binding.authoritativeTrack = {
+        file: hit.rec.file,
+        mediaUrl: hit.rec.mediaUrl,
+        generationId: hit.rec.generationId,
+        speaker: hit.cue.speaker,
+        engine: "Qwen3-TTS Base",
+        packageId: "h02_v3_provided_voices"
+      };
+      binding.status = "cloned_provided_voice";
+      tracks.push(binding.authoritativeTrack);
+      bound += 1;
+    }
+    plan.mode = "post_dialogue_only";
+    plan.status = "provided_voices_cloned";
+    plan.voiceIdentityReferences = voiceRefs;
+    plan.authoritativeTracks = tracks;
+    plan.authoritativeTrack = tracks[0] || null;
+    plan.instruction = "H02 V3 dialogue cloned from the director-provided Gradio voice references. Bind only these masters. Picture remains silent I2V.";
+    clip.audioPlan = plan;
+    clip.voiceReferences = voiceRefs.map((item) => item.file);
+    const vp = sb.videoPlans?.[clip.videoPlanId];
+    if (vp) {
+      vp.audioPlan = plan;
+      vp.h02VoicePackage = "h02_v3_provided_voices";
+    }
+  }
+  sb.updatedAt = new Date().toISOString();
+  fs.writeFileSync(STORYBOARD_FILE, `${JSON.stringify(sb)}\n`);
+  console.log(`Storyboard updated (${bound} spoken bindings). Backup: ${backup}`);
 }
 
 async function main() {
   const pkg = loadJson(CUE_FILE);
+  const refs = loadJson(REF_MANIFEST);
   if (!pkg?.cues?.length) throw new Error(`Cue file missing: ${CUE_FILE}`);
-  const state = loadJson(STATE_FILE, { voices: {}, cues: {}, startedAt: new Date().toISOString() });
-  console.log(`H02 V3 LOTR TTS: ${pkg.cues.length} locked lines, Qwen clone via ${API}`);
-  for (const [speaker, meta] of Object.entries(pkg.characters)) {
-    state.voices[speaker] = await designVoice(speaker, meta, state.voices[speaker]);
-    saveState(state);
-    console.log(`${speaker}: ${state.voices[speaker].nativeFile} (${state.voices[speaker].durationSec}s)`);
+  if (!refs?.ADAM) throw new Error(`Provided-voice manifest missing: ${REF_MANIFEST}`);
+  const state = loadJson(STATE_FILE, { voices: {}, cues: {}, startedAt: new Date().toISOString() }) || { voices: {}, cues: {} };
+  state.source = "provided-gradio-voices";
+  state.startedAt = state.startedAt || new Date().toISOString();
+  console.log(`H02 V3 provided-voice clone: ${pkg.cues.length} lines via Qwen3-TTS @ ${API}`);
+  await loadQwen();
+  for (const speaker of Object.keys(pkg.characters)) {
+    const rec = refs[speaker];
+    if (!rec) throw new Error(`No provided reference for ${speaker}`);
+    state.voices[speaker] = {
+      ...(state.voices[speaker] || {}),
+      referenceWav: rec.referenceWav,
+      transcript: rec.transcript,
+      durationSec: rec.durationSec
+    };
   }
-  await unloadVoiceDesign();
-  await registerAndClone(pkg, state);
+  saveState(state);
+  for (const cue of pkg.cues) {
+    await cloneCue(pkg, cue, state.voices[cue.speaker], state);
+  }
   state.finishedAt = new Date().toISOString();
   saveState(state);
-  console.log("\nAll H02 V3 dialogue clones queued/completed.");
+  updateStoryboard(pkg, state, refs);
+  console.log("\nH02 V3 provided-voice clones complete.");
   console.log(`State: ${STATE_FILE}`);
 }
 

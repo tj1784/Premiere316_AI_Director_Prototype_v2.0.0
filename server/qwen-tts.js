@@ -15,6 +15,7 @@ import {
 import { ensureProjectSound } from "./index-tts.js";
 import { loadProject, mediaDir, saveProject } from "./projects.js";
 import { PACKAGE_ROOT, projectDir } from "./paths.js";
+import { mixQwenEmotions } from "./qwen-emotional.js";
 
 export const QWEN_TTS_PROVIDER = "qwenTts";
 export const QWEN_TTS_ENGINE = "Qwen3-TTS Base";
@@ -527,11 +528,20 @@ export async function createQwenTtsGeneration(projectSlug, input = {}) {
   const seed = requestedSeed == null
     ? Number.parseInt(crypto.createHash("sha256").update(id).digest("hex").slice(0, 8), 16) & 0x7fffffff
     : Math.max(0, Math.min(0x7fffffff, Math.trunc(requestedSeed)));
+  const emotionMix = mixQwenEmotions({
+    primaryEmotion: input.primaryEmotion || input.emotion || "neutral",
+    secondaryEmotion: input.secondaryEmotion || "none",
+    tertiaryEmotion: input.tertiaryEmotion || "none",
+    emotionIntensity: input.emotionIntensity,
+    temperature: finite(input.temperature, 0.9),
+    topP: finite(input.topP, 0.8),
+    repetitionPenalty: finite(input.repetitionPenalty, 1.05)
+  });
   const sampling = {
     topK: Math.max(1, Math.min(200, Math.trunc(finite(input.topK, 20)))),
-    topP: rounded(Math.max(0.05, Math.min(1, finite(input.topP, 0.8)))),
-    temperature: rounded(Math.max(0.1, Math.min(2, finite(input.temperature, 0.9)))),
-    repetitionPenalty: rounded(Math.max(0.5, Math.min(2, finite(input.repetitionPenalty, 1.05)))),
+    topP: rounded(emotionMix.topP),
+    temperature: rounded(emotionMix.temperature),
+    repetitionPenalty: rounded(emotionMix.repetitionPenalty),
     maxNewTokens: Math.max(128, Math.min(8192, Math.trunc(finite(input.maxNewTokens, 4096))))
   };
   const outputFile = `${fileSlug(name)}_${id.slice(-12)}.wav`;
@@ -547,10 +557,15 @@ export async function createQwenTtsGeneration(projectSlug, input = {}) {
     name,
     text,
     style,
-    styleMode: "reference-prosody",
+    styleMode: emotionMix.emotions.some((name) => name !== "neutral") ? "qwen-emotional-mix" : "reference-prosody",
     language,
     seed,
     sampling,
+    emotionalClone: {
+      source: "ComfyUI-Qwen3TTS-Emotional",
+      emotions: emotionMix.emotions,
+      intensity: emotionMix.intensity
+    },
     voiceId: voice.id,
     reference: {
       file: voice.referenceFile,
@@ -1000,6 +1015,8 @@ export async function generateQwenTtsJob(job) {
       language: generation.language,
       seed: generation.seed,
       settings: generation.sampling,
+      instruct: generation.style || "",
+      style: generation.style || "",
       nativePath: nativeFile,
       productionPath: partial
     }, {
