@@ -1161,10 +1161,20 @@ function normalizedFileHashes(version) {
   return [];
 }
 
+function safeAssetRelative(value) {
+  const normalized = String(value || "")
+    .replace(/\\/g, "/")
+    .replace(/^media\/assets\//i, "")
+    .split("/")
+    .filter(Boolean);
+  if (!normalized.length || normalized.some((part) => part === "." || part === "..")) return "";
+  return normalized.join("/");
+}
+
 function generatedFileHashes(project, files) {
-  return [...new Set((files || []).map((file) => path.basename(String(file || ""))).filter(Boolean))]
+  return [...new Set((files || []).map(safeAssetRelative).filter(Boolean))]
     .map((file) => {
-      const absolute = path.join(mediaDir(project, "assets"), file);
+      const absolute = path.join(mediaDir(project, "assets"), ...file.split("/"));
       if (!fs.existsSync(absolute) || !fs.statSync(absolute).isFile()) throw new Error(`Generated asset file is missing: ${file}`);
       const buffer = fs.readFileSync(absolute);
       return {

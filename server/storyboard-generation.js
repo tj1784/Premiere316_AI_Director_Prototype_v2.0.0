@@ -840,10 +840,20 @@ function assetVersionForReference(project, reference) {
   return { asset, version };
 }
 
+function safeAssetRelative(value) {
+  const normalized = String(value || "")
+    .replace(/\\/g, "/")
+    .replace(/^media\/assets\//i, "")
+    .split("/")
+    .filter(Boolean);
+  if (!normalized.length || normalized.some((part) => part === "." || part === "..")) return "";
+  return normalized.join("/");
+}
+
 function storyboardReferenceSourcePath(project, reference) {
-  const file = path.basename(String(reference?.sourceAssetFile || ""));
+  const file = safeAssetRelative(reference?.sourceAssetFile);
   if (!file) return null;
-  const direct = path.join(mediaDir(project, "assets"), file);
+  const direct = path.join(mediaDir(project, "assets"), ...file.split("/"));
   if (fs.existsSync(direct) && fs.statSync(direct).isFile()) return direct;
   return null;
 }
@@ -856,7 +866,7 @@ function storyboardReferenceEntries(project, frame, uploaded = new Map()) {
   return (frame.references || [])
     .map((reference, index) => {
       const { asset, version } = assetVersionForReference(project, reference);
-      const sourceFile = path.basename(String(reference.sourceAssetFile || version?.file || ""));
+      const sourceFile = safeAssetRelative(reference.sourceAssetFile || version?.file || "");
       const sourcePath = storyboardReferenceSourcePath(project, { ...reference, sourceAssetFile: sourceFile });
       const subfolder = storyboardReferenceSubfolder(project);
       const fallbackComfyImage = sourceFile ? `${subfolder}/${sourceFile}` : null;
