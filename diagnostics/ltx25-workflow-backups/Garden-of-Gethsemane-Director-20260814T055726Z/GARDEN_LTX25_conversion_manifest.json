@@ -1,0 +1,36 @@
+{
+  "status": "converted_with_director_not_rendered",
+  "created_at": "2026-08-14T05:54:00.171Z",
+  "backup_dir": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\diagnostics\\ltx25-workflow-backups\\Garden-of-Gethsemane-Director-20260814T055400Z",
+  "originals_preserved": true,
+  "source_sha256": "716B654DBD0FA5EEFA4BAA18FB0A9900C7D2EACC2B08599861799E5FC013A5C0",
+  "generator": {
+    "path": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\Premiere316\\Garden of Gethsemane\\LTX 2.5\\GARDEN_first_segment_R31_LTX25_native_AV_1128x480_25fps.json",
+    "sha256": "D0654DF72E6590CDCEDB580FABFD742C9973DB1F78EFFECD4EA22681AD2BFCDC",
+    "nodes": 30,
+    "links": 56
+  },
+  "face_correction": {
+    "path": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\Premiere316\\Garden of Gethsemane\\LTX 2.5\\GARDEN_first_segment_R32_LTX25_face_correction.json",
+    "sha256": "DBABA7DD87DDA79A285B7D289C7EB2EA9C3573209A6AFB696A5B13972A99CAB2",
+    "expected_input": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\output\\identity_tests\\garden-first-segment-r31-ltx25-director_00001-audio.mp4"
+  },
+  "validation": {
+    "director_node": "LTXDirector node 46 preserved",
+    "native_ltx25_selectors": true,
+    "exact_final_resolution": [
+      1128,
+      480
+    ],
+    "fps": 25,
+    "frames": 169,
+    "nag": "absent",
+    "tiled_decode": [
+      512,
+      64,
+      64,
+      8
+    ],
+    "render": "not submitted"
+  }
+}

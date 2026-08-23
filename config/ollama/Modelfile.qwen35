@@ -1,0 +1,4 @@
+FROM C:/Users/Blokey/.ollama/models/blobs/sha256-bbef58c37ce88820be9d98b6437f1cf4bac890c947bd55fc7b68e22098574231
+PARAMETER num_ctx 32768
+PARAMETER temperature 0.6
+PARAMETER top_p 0.9

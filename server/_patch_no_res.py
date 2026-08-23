@@ -1,0 +1,13 @@
+from pathlib import Path
+p = Path(r'C:/Users/Blokey/Documents/Premiere316_AI_Director_Prototype_v2.0.0/server/hell-comfy-push.js')
+t = p.read_text(encoding='utf-8')
+t = t.replace('  if (prompt["372"]?.inputs && Number.isFinite(width)) prompt["372"].inputs.value = width;\n', '')
+t = t.replace('  if (prompt["360"]?.inputs && Number.isFinite(height)) prompt["360"].inputs.value = height;\n', '')
+t = t.replace('  if (prompt["361"]?.inputs && Number.isFinite(fps)) prompt["361"].inputs.value = fps;\n', '')
+t = t.replace('  const width = Number(wv[3]);\n', '')
+t = t.replace('  const height = Number(wv[4]);\n', '')
+t = t.replace('  const fps = Number(wv[6]);\n', '')
+p.write_text(t, encoding='utf-8')
+print('372', 'prompt["372"]' in t)
+print('360', 'prompt["360"]' in t)
+print('361 stamp', 'prompt["361"]?.inputs && Number.isFinite(fps)' in t)

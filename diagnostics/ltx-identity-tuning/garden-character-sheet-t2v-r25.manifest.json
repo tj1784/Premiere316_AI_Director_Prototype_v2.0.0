@@ -1,0 +1,35 @@
+{
+  "created_at": "2026-08-12T04:14:07.220Z",
+  "comfy_url": "http://127.0.0.1:8188",
+  "mode": "reference-to-video identity benchmark; no I2V scene guide",
+  "requested": {
+    "width": 512,
+    "height": 512,
+    "frames": 49,
+    "fps": 24,
+    "steps": 8,
+    "cfg": 1,
+    "sampler": "euler",
+    "scheduler": "linear_quadratic"
+  },
+  "base_model": "ltx2\\ltx-2.3-22b-distilled-1.1-fp8.safetensors",
+  "loras": [
+    {
+      "selector": "LTX\\LTX-2.3-OmniNFT-RL-Lora_bf16.safetensors",
+      "strength": 1
+    },
+    {
+      "selector": "faceID\\Best_FaceID_v1.0_LoRA.safetensors",
+      "strength": 0.2
+    },
+    {
+      "selector": "faceID\\Best_FaceID_CharacterSheet_v1.0_LoRA.safetensors",
+      "strength": 1
+    }
+  ],
+  "reference": "whatdreamscost/jesus-character-sheet-1536x1024.v1.png",
+  "reference_mode": "native_resolution",
+  "seed": 488441818004763,
+  "output_prefix": "identity_tests/garden-character-sheet-t2v-r25",
+  "api_prompt": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\diagnostics\\ltx-identity-tuning\\garden-character-sheet-t2v-r25.api.json"
+}

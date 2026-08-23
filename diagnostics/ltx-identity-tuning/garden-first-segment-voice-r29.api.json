@@ -1,0 +1,778 @@
+{
+  "3": {
+    "inputs": {
+      "vae_name": "LTX23_video_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    },
+    "class_type": "VAELoaderKJ",
+    "_meta": {
+      "title": "Video VAELoader"
+    }
+  },
+  "4": {
+    "inputs": {
+      "vae_name": "LTX23_audio_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    },
+    "class_type": "VAELoaderKJ",
+    "_meta": {
+      "title": "Audio VAELoader"
+    }
+  },
+  "5": {
+    "inputs": {
+      "frame_rate": [
+        "46",
+        6
+      ],
+      "positive": [
+        "46",
+        1
+      ],
+      "negative": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "LTXVConditioning",
+    "_meta": {
+      "title": "LTXVConditioning"
+    }
+  },
+  "7": {
+    "inputs": {
+      "video_latent": [
+        "128",
+        3
+      ],
+      "audio_latent": [
+        "46",
+        3
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "8": {
+    "inputs": {
+      "ic_lora_name": "None",
+      "ic_lora_strength": 0,
+      "scale_by": 0.5,
+      "upscale_method": "bicubic",
+      "image_attention_strength": 0.85,
+      "crop": "center",
+      "auto_snap_ic_grid": true,
+      "use_tiled_encode": false,
+      "tile_size": 256,
+      "tile_overlap": 64,
+      "retake_mode": false,
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "5",
+        1
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "latent": [
+        "46",
+        2
+      ],
+      "guide_data": [
+        "46",
+        4
+      ]
+    },
+    "class_type": "LTXDirectorGuide",
+    "_meta": {
+      "title": "LTX Director Guide"
+    }
+  },
+  "9": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "130",
+        0
+      ],
+      "positive": [
+        "130",
+        1
+      ],
+      "negative": [
+        "130",
+        2
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG Guider"
+    }
+  },
+  "10": {
+    "inputs": {
+      "noise": [
+        "28",
+        0
+      ],
+      "guider": [
+        "9",
+        0
+      ],
+      "sampler": [
+        "29",
+        0
+      ],
+      "sigmas": [
+        "11",
+        0
+      ],
+      "latent_image": [
+        "7",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "11": {
+    "inputs": {
+      "scheduler": "linear_quadratic",
+      "steps": 8,
+      "denoise": 1,
+      "model": [
+        "130",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "13": {
+    "inputs": {
+      "av_latent": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTXVSeparateAVLatent"
+    }
+  },
+  "14": {
+    "inputs": {
+      "positive": [
+        "132",
+        1
+      ],
+      "negative": [
+        "132",
+        2
+      ],
+      "latent": [
+        "48",
+        0
+      ]
+    },
+    "class_type": "LTXVCropGuides",
+    "_meta": {
+      "title": "LTXVCropGuides"
+    }
+  },
+  "15": {
+    "inputs": {
+      "samples": [
+        "14",
+        2
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "16": {
+    "inputs": {
+      "samples": [
+        "48",
+        1
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "LTXVAudioVAEDecode",
+    "_meta": {
+      "title": "LTXV Audio VAE Decode"
+    }
+  },
+  "26": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "84",
+        0
+      ],
+      "text": "character sheet, collage, split screen, reference background, merely animating the reference image, United States Senate, podium, crowd, duplicate Jesus, multiple Jesuses, clone, different actor, identity drift, face morphing, short hair, straight hair, light hair, sparse beard, shaved face, costume change, armor, crown, halo, pendant, sandals, malformed hands, fused fingers, extra fingers, missing fingers, malformed feet, fused toes, extra toes, missing toes, floating feet, backwards feet, broken limbs, extra limbs, sliding feet, walking backward, close-up, camera orbit, reverse dolly, abrupt cut, dissolve, scene transition, exaggerated crying, sudden head motion, wrong words, robotic voice, wrong voice, silent speech, subtitles, captions, text overlay, logo, watermark, blurry face, warped mouth, bad lip sync, flicker, jitter, worst quality, low quality"
+    },
+    "_meta": {
+      "title": "Garden negative prompt"
+    }
+  },
+  "28": {
+    "inputs": {
+      "noise_seed": 488441818004763
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "29": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "46": {
+    "inputs": {
+      "start_second": 0,
+      "end_second": 6.54,
+      "duration_seconds": 6.54,
+      "start_frame": 0,
+      "end_frame": 164,
+      "duration_frames": 164,
+      "timeline_data": "{\"mainTrackEnabled\":true,\"audioTrackEnabled\":true,\"motionTrackEnabled\":false,\"propHeight\":93,\"globalPropHeight\":341,\"showFilenames\":true,\"overrideAudio\":false,\"inpaint_audio\":false,\"global_prompt\":\"ref_t2v: d3m0p0s3.\\n[VISUAL]: Photorealistic live-action biblical drama at night in the Garden of Gethsemane on the Mount of Olives. This is the actual Garden scene, not an animated portrait or character sheet. Ancient gnarled olive trees, exposed silver-gray roots, dark earth, scattered limestone, sparse grass moving in a cool night wind, faint distant Jerusalem glow, cool blue-silver moonlight, subtle warm rim light, and restrained volumetric haze.\\n\\nThe exact same olive-brown-skinned Middle Eastern adult man shown in the hidden identity reference is Jesus: long angular oval face, deep-set hazel-brown eyes, strong narrow slightly convex nose, thick dark eyebrows, shoulder-length dense black corkscrew curls, and a dense tapered full black beard. He wears an off-white linen tunic and a dark earth-brown wool mantle and is barefoot. Preserve his exact face, hairline, curls, beard, eyes, skin, robe, hands, feet, and identity in every visible frame.\\n\\nOne continuous 6.54-second 35mm anamorphic wide-medium master shot, no cut, dissolve, close-up, reframing, or camera orbit. Begin exactly from the supplied Garden first-frame composition: the camera peers past a softly blurred ancient olive trunk; Jesus stands alone on the right third, facing front-left about 35 degrees. The camera makes one very slow three-foot lateral slide to the right while keeping the same visual axis and natural scale.\\n\\n([0.0-2.0 sec]) Jesus takes exactly two heavy measured forward steps with grounded bare-foot contact. Both anatomically correct hands have five fingers and both anatomically correct feet have five toes. His shoulders are burdened, his breathing labored but controlled, and his mantle and curls move naturally in the wind.\\n\\n([2.0-5.7 sec]) He stops. His fingers tighten once around the edge of his mantle and release. He looks toward the dark earth and speaks quietly in prayer with natural synchronized mouth motion and the supplied Jesus voice.\\n\\n([5.7-6.54 sec]) He closes his eyes, draws one unsteady breath, and begins lowering himself toward the ground. End while he is clearly beginning to kneel; hold the established identity, scene, and camera axis.\\n\\n[SPEECH]: Jesus says exactly once: \\\"My Father, if it is possible, let this cup pass from me.\\\"\\n\\n[SOUNDS]: Preserve the supplied Jesus reference voice: warm, resonant adult male timbre. Clear quiet prayer with natural outdoor space, two audible footsteps on dark earth, labored breathing, cloth movement, olive leaves, and cool night wind. No music.\",\"retake_global_prompt\":\"\",\"retakeMode\":false,\"retakeStart\":0,\"retakeLength\":164,\"retakePrompt\":\"\",\"retakeStrength\":1,\"retakeVideo\":null,\"normalStartFrame\":0,\"normalDurationFrames\":164,\"segments\":[{\"id\":\"1786433861807d4eat\",\"start\":0,\"length\":164,\"prompt\":\"ref_t2v: d3m0p0s3.\\n[VISUAL]: Photorealistic live-action biblical drama at night in the Garden of Gethsemane on the Mount of Olives. This is the actual Garden scene, not an animated portrait or character sheet. Ancient gnarled olive trees, exposed silver-gray roots, dark earth, scattered limestone, sparse grass moving in a cool night wind, faint distant Jerusalem glow, cool blue-silver moonlight, subtle warm rim light, and restrained volumetric haze.\\n\\nThe exact same olive-brown-skinned Middle Eastern adult man shown in the hidden identity reference is Jesus: long angular oval face, deep-set hazel-brown eyes, strong narrow slightly convex nose, thick dark eyebrows, shoulder-length dense black corkscrew curls, and a dense tapered full black beard. He wears an off-white linen tunic and a dark earth-brown wool mantle and is barefoot. Preserve his exact face, hairline, curls, beard, eyes, skin, robe, hands, feet, and identity in every visible frame.\\n\\nOne continuous 6.54-second 35mm anamorphic wide-medium master shot, no cut, dissolve, close-up, reframing, or camera orbit. Begin exactly from the supplied Garden first-frame composition: the camera peers past a softly blurred ancient olive trunk; Jesus stands alone on the right third, facing front-left about 35 degrees. The camera makes one very slow three-foot lateral slide to the right while keeping the same visual axis and natural scale.\\n\\n([0.0-2.0 sec]) Jesus takes exactly two heavy measured forward steps with grounded bare-foot contact. Both anatomically correct hands have five fingers and both anatomically correct feet have five toes. His shoulders are burdened, his breathing labored but controlled, and his mantle and curls move naturally in the wind.\\n\\n([2.0-5.7 sec]) He stops. His fingers tighten once around the edge of his mantle and release. He looks toward the dark earth and speaks quietly in prayer with natural synchronized mouth motion and the supplied Jesus voice.\\n\\n([5.7-6.54 sec]) He closes his eyes, draws one unsteady breath, and begins lowering himself toward the ground. End while he is clearly beginning to kneel; hold the established identity, scene, and camera axis.\\n\\n[SPEECH]: Jesus says exactly once: \\\"My Father, if it is possible, let this cup pass from me.\\\"\\n\\n[SOUNDS]: Preserve the supplied Jesus reference voice: warm, resonant adult male timbre. Clear quiet prayer with natural outdoor space, two audible footsteps on dark earth, labored breathing, cloth movement, olive leaves, and cool night wind. No music.\",\"type\":\"image\",\"imageFile\":\"whatdreamscost/ChatGPT Image Aug 11, 2026, 12_36_25 AM (1).png\",\"imageB64\":\"/api/view?filename=ChatGPT%20Image%20Aug%2011%2C%202026%2C%2012_36_25%20AM%20(1).png&type=input&subfolder=whatdreamscost\",\"isEndFrame\":false}],\"motionSegments\":[],\"audioSegments\":[]}",
+      "local_prompts": "ref_t2v: d3m0p0s3.\n[VISUAL]: Photorealistic live-action biblical drama at night in the Garden of Gethsemane on the Mount of Olives. This is the actual Garden scene, not an animated portrait or character sheet. Ancient gnarled olive trees, exposed silver-gray roots, dark earth, scattered limestone, sparse grass moving in a cool night wind, faint distant Jerusalem glow, cool blue-silver moonlight, subtle warm rim light, and restrained volumetric haze.\n\nThe exact same olive-brown-skinned Middle Eastern adult man shown in the hidden identity reference is Jesus: long angular oval face, deep-set hazel-brown eyes, strong narrow slightly convex nose, thick dark eyebrows, shoulder-length dense black corkscrew curls, and a dense tapered full black beard. He wears an off-white linen tunic and a dark earth-brown wool mantle and is barefoot. Preserve his exact face, hairline, curls, beard, eyes, skin, robe, hands, feet, and identity in every visible frame.\n\nOne continuous 6.54-second 35mm anamorphic wide-medium master shot, no cut, dissolve, close-up, reframing, or camera orbit. Begin exactly from the supplied Garden first-frame composition: the camera peers past a softly blurred ancient olive trunk; Jesus stands alone on the right third, facing front-left about 35 degrees. The camera makes one very slow three-foot lateral slide to the right while keeping the same visual axis and natural scale.\n\n([0.0-2.0 sec]) Jesus takes exactly two heavy measured forward steps with grounded bare-foot contact. Both anatomically correct hands have five fingers and both anatomically correct feet have five toes. His shoulders are burdened, his breathing labored but controlled, and his mantle and curls move naturally in the wind.\n\n([2.0-5.7 sec]) He stops. His fingers tighten once around the edge of his mantle and release. He looks toward the dark earth and speaks quietly in prayer with natural synchronized mouth motion and the supplied Jesus voice.\n\n([5.7-6.54 sec]) He closes his eyes, draws one unsteady breath, and begins lowering himself toward the ground. End while he is clearly beginning to kneel; hold the established identity, scene, and camera axis.\n\n[SPEECH]: Jesus says exactly once: \"My Father, if it is possible, let this cup pass from me.\"\n\n[SOUNDS]: Preserve the supplied Jesus reference voice: warm, resonant adult male timbre. Clear quiet prayer with natural outdoor space, two audible footsteps on dark earth, labored breathing, cloth movement, olive leaves, and cool night wind. No music.",
+      "segment_lengths": "164",
+      "epsilon": 0.99,
+      "guide_strength": "0.82",
+      "use_custom_audio": false,
+      "use_custom_motion": false,
+      "inpaint_audio": false,
+      "frame_rate": 25,
+      "display_mode": "seconds",
+      "custom_width": 1128,
+      "custom_height": 480,
+      "resize_method": "maintain aspect ratio",
+      "divisible_by": 32,
+      "img_compression": 18,
+      "override_audio": false,
+      "queue_i2v_segments": false,
+      "timeline_ui": "",
+      "model": [
+        "95",
+        0
+      ],
+      "clip": [
+        "84",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "LTXDirector",
+    "_meta": {
+      "title": "LTX Director"
+    }
+  },
+  "47": {
+    "inputs": {
+      "noise": [
+        "28",
+        0
+      ],
+      "guider": [
+        "49",
+        0
+      ],
+      "sampler": [
+        "53",
+        0
+      ],
+      "sigmas": [
+        "96",
+        0
+      ],
+      "latent_image": [
+        "50",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "48": {
+    "inputs": {
+      "av_latent": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTXVSeparateAVLatent"
+    }
+  },
+  "49": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "132",
+        0
+      ],
+      "positive": [
+        "132",
+        1
+      ],
+      "negative": [
+        "132",
+        2
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG Guider"
+    }
+  },
+  "50": {
+    "inputs": {
+      "video_latent": [
+        "131",
+        3
+      ],
+      "audio_latent": [
+        "13",
+        1
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "52": {
+    "inputs": {
+      "samples": [
+        "55",
+        2
+      ],
+      "upscale_model": [
+        "57",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "LTXVLatentUpsampler",
+    "_meta": {
+      "title": "LTXVLatentUpsampler"
+    }
+  },
+  "53": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "55": {
+    "inputs": {
+      "positive": [
+        "130",
+        1
+      ],
+      "negative": [
+        "130",
+        2
+      ],
+      "latent": [
+        "13",
+        0
+      ]
+    },
+    "class_type": "LTXVCropGuides",
+    "_meta": {
+      "title": "LTXVCropGuides"
+    }
+  },
+  "57": {
+    "inputs": {
+      "model_name": "LTX\\2.3\\Director\\ltx-2.3-spatial-upscaler-x2-1.1.safetensors"
+    },
+    "class_type": "LatentUpscaleModelLoader",
+    "_meta": {
+      "title": "Load Latent Upscale Model"
+    }
+  },
+  "58": {
+    "inputs": {
+      "ic_lora_name": "None",
+      "ic_lora_strength": 0,
+      "scale_by": 1,
+      "upscale_method": "bicubic",
+      "image_attention_strength": 0.85,
+      "crop": "center",
+      "auto_snap_ic_grid": true,
+      "use_tiled_encode": false,
+      "tile_size": 256,
+      "tile_overlap": 64,
+      "retake_mode": false,
+      "positive": [
+        "55",
+        0
+      ],
+      "negative": [
+        "55",
+        1
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "latent": [
+        "52",
+        0
+      ],
+      "guide_data": [
+        "46",
+        4
+      ]
+    },
+    "class_type": "LTXDirectorGuide",
+    "_meta": {
+      "title": "LTX Director Guide"
+    }
+  },
+  "84": {
+    "inputs": {
+      "clip_name1": "gemma_3_12B_it_fp8_e4m3fn.safetensors",
+      "clip_name2": "ltx-2.3_text_projection_bf16.safetensors",
+      "type": "ltxv",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "Load CLIP (Dual)"
+    }
+  },
+  "94": {
+    "inputs": {
+      "frame_rate": [
+        "46",
+        6
+      ],
+      "loop_count": 0,
+      "filename_prefix": "identity_tests/garden-first-segment-voice-r29",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "15",
+        0
+      ],
+      "audio": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "95": {
+    "inputs": {
+      "unet_name": "LTX\\2.3\\Director\\ltx-2.3-22b-distilled-1.1_transformer_only_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "96": {
+    "inputs": {
+      "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "ManualSigmas"
+    }
+  },
+  "120": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "whatdreamscost/jesus-character-sheet-1536x1024.v1.png"
+    },
+    "_meta": {
+      "title": "Jesus CharacterSheet identity reference"
+    }
+  },
+  "121": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "46",
+        0
+      ],
+      "lora_name": "LTX\\LTX-2.3-OmniNFT-RL-Lora_bf16.safetensors",
+      "strength_model": 1
+    },
+    "_meta": {
+      "title": "OmniNFT coherence"
+    }
+  },
+  "122": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "121",
+        0
+      ],
+      "lora_name": "faceID\\Best_FaceID_v1.0_LoRA.safetensors",
+      "strength_model": 0.2
+    },
+    "_meta": {
+      "title": "Best Face support"
+    }
+  },
+  "123": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "122",
+        0
+      ],
+      "lora_name": "faceID\\Best_FaceID_CharacterSheet_v1.0_LoRA.safetensors",
+      "strength_model": 1
+    },
+    "_meta": {
+      "title": "Best Face CharacterSheet"
+    }
+  },
+  "124": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "123",
+        0
+      ],
+      "lora_name": "LTX\\2.3\\Pose\\ltx23__demopose_d3m0p0s3.safetensors",
+      "strength_model": 0.75
+    },
+    "_meta": {
+      "title": "Pose helper for walking, hands, and feet"
+    }
+  },
+  "125": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "124",
+        0
+      ],
+      "lora_name": "LTX\\2.3\\LTX2.3_Crisp_Enhance.safetensors",
+      "strength_model": 0.3
+    },
+    "_meta": {
+      "title": "Conservative anatomy detail enhancement"
+    }
+  },
+  "126": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "125",
+        0
+      ],
+      "lora_name": "LTX\\2.3\\ID-LoRA\\id-lora-talkvid-ltx2.3.safetensors",
+      "strength_model": 1
+    },
+    "_meta": {
+      "title": "TalkVid Jesus voice identity"
+    }
+  },
+  "128": {
+    "class_type": "LTXIdentityOverlapConditioning",
+    "inputs": {
+      "model": [
+        "126",
+        0
+      ],
+      "positive": [
+        "8",
+        0
+      ],
+      "negative": [
+        "8",
+        1
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "latent": [
+        "8",
+        2
+      ],
+      "reference_image": [
+        "120",
+        0
+      ],
+      "source_id": 2,
+      "phase_scale": 1,
+      "ref_resize_mode": "native_resolution",
+      "debug_log": true,
+      "crop_anchor": "center",
+      "layout": "overlap",
+      "reference_guidance_scale": 1
+    },
+    "_meta": {
+      "title": "Best Face CharacterSheet identity conditioning"
+    }
+  },
+  "129": {
+    "class_type": "LoadAudio",
+    "inputs": {
+      "audio": "whatdreamscost/voice-jesus-reference-5s.v1.wav"
+    },
+    "_meta": {
+      "title": "Exact supplied Jesus voice reference"
+    }
+  },
+  "130": {
+    "class_type": "LTXVReferenceAudio",
+    "inputs": {
+      "model": [
+        "128",
+        0
+      ],
+      "positive": [
+        "128",
+        1
+      ],
+      "negative": [
+        "128",
+        2
+      ],
+      "reference_audio": [
+        "129",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ],
+      "identity_guidance_scale": 3,
+      "start_percent": 0,
+      "end_percent": 1
+    },
+    "_meta": {
+      "title": "Generate Garden prayer in Jesus voice · pass 1"
+    }
+  },
+  "131": {
+    "class_type": "LTXIdentityOverlapConditioning",
+    "inputs": {
+      "model": [
+        "126",
+        0
+      ],
+      "positive": [
+        "58",
+        0
+      ],
+      "negative": [
+        "58",
+        1
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "latent": [
+        "58",
+        2
+      ],
+      "reference_image": [
+        "120",
+        0
+      ],
+      "source_id": 2,
+      "phase_scale": 1,
+      "ref_resize_mode": "native_resolution",
+      "debug_log": true,
+      "crop_anchor": "center",
+      "layout": "overlap",
+      "reference_guidance_scale": 1
+    },
+    "_meta": {
+      "title": "Best Face CharacterSheet identity conditioning"
+    }
+  },
+  "132": {
+    "class_type": "LTXVReferenceAudio",
+    "inputs": {
+      "model": [
+        "131",
+        0
+      ],
+      "positive": [
+        "131",
+        1
+      ],
+      "negative": [
+        "131",
+        2
+      ],
+      "reference_audio": [
+        "129",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ],
+      "identity_guidance_scale": 3,
+      "start_percent": 0,
+      "end_percent": 1
+    },
+    "_meta": {
+      "title": "Retain Jesus voice identity · refinement pass"
+    }
+  }
+}

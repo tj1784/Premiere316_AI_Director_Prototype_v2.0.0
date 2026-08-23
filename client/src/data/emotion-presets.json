@@ -1,0 +1,4247 @@
+{
+  "vec_core_neutral": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_core_grounded": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.28
+    ]
+  },
+  "vec_core_warm_neutral": {
+    "type": "vector",
+    "values": [
+      0.12,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.34
+    ]
+  },
+  "vec_core_somber_neutral": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.1,
+      0.0,
+      0.0,
+      0.24,
+      0.0,
+      0.3
+    ]
+  },
+  "vec_core_tense_neutral": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.12,
+      0.0,
+      0.0,
+      0.08,
+      0.18
+    ]
+  },
+  "vec_core_sacred_stillness": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.1,
+      0.08,
+      0.58
+    ]
+  },
+  "vec_core_epic_restraint": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.08,
+      0.0,
+      0.0,
+      0.0,
+      0.08,
+      0.1,
+      0.62
+    ]
+  },
+  "vec_core_intimate_restraint": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.08,
+      0.0,
+      0.0,
+      0.12,
+      0.0,
+      0.45
+    ]
+  },
+  "vec_happy_trace": {
+    "type": "vector",
+    "values": [
+      0.1,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_happy_subtle": {
+    "type": "vector",
+    "values": [
+      0.2,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_happy_light": {
+    "type": "vector",
+    "values": [
+      0.35,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_happy_medium": {
+    "type": "vector",
+    "values": [
+      0.55,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_happy_strong": {
+    "type": "vector",
+    "values": [
+      0.75,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_happy_extreme": {
+    "type": "vector",
+    "values": [
+      0.95,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_happy_maximum": {
+    "type": "vector",
+    "values": [
+      1.15,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_angry_trace": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.1,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_angry_subtle": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.2,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_angry_light": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.35,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_angry_medium": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.55,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_angry_strong": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.75,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_angry_extreme": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.95,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_angry_maximum": {
+    "type": "vector",
+    "values": [
+      0.0,
+      1.15,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_sad_trace": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.1,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_sad_subtle": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.2,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_sad_light": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.35,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_sad_medium": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.55,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_sad_strong": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.75,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_sad_extreme": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.95,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_sad_maximum": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      1.15,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_afraid_trace": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.1,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_afraid_subtle": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.2,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_afraid_light": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.35,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_afraid_medium": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.55,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_afraid_strong": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.75,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_afraid_extreme": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.95,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_afraid_maximum": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      1.15,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_disgusted_trace": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.1,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_disgusted_subtle": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.2,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_disgusted_light": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.35,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_disgusted_medium": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.55,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_disgusted_strong": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.75,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_disgusted_extreme": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.95,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_disgusted_maximum": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.15,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_melancholic_trace": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.1,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_melancholic_subtle": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.2,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_melancholic_light": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.35,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_melancholic_medium": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.55,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_melancholic_strong": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.75,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_melancholic_extreme": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.95,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_melancholic_maximum": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.15,
+      0.0,
+      0.0
+    ]
+  },
+  "vec_surprised_trace": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.1,
+      0.0
+    ]
+  },
+  "vec_surprised_subtle": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.2,
+      0.0
+    ]
+  },
+  "vec_surprised_light": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.35,
+      0.0
+    ]
+  },
+  "vec_surprised_medium": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.55,
+      0.0
+    ]
+  },
+  "vec_surprised_strong": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.75,
+      0.0
+    ]
+  },
+  "vec_surprised_extreme": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.95,
+      0.0
+    ]
+  },
+  "vec_surprised_maximum": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.15,
+      0.0
+    ]
+  },
+  "vec_calm_trace": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.1
+    ]
+  },
+  "vec_calm_subtle": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.2
+    ]
+  },
+  "vec_calm_light": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.35
+    ]
+  },
+  "vec_calm_medium": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.55
+    ]
+  },
+  "vec_calm_strong": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.75
+    ]
+  },
+  "vec_calm_extreme": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.95
+    ]
+  },
+  "vec_calm_maximum": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.15
+    ]
+  },
+  "vec_blend_gentle_joy": {
+    "type": "vector",
+    "values": [
+      0.38,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.58
+    ]
+  },
+  "vec_blend_quiet_happiness": {
+    "type": "vector",
+    "values": [
+      0.28,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.06,
+      0.0,
+      0.62
+    ]
+  },
+  "vec_blend_relieved_joy": {
+    "type": "vector",
+    "values": [
+      0.48,
+      0.0,
+      0.1,
+      0.0,
+      0.0,
+      0.0,
+      0.12,
+      0.58
+    ]
+  },
+  "vec_blend_radiant_joy": {
+    "type": "vector",
+    "values": [
+      0.78,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.28,
+      0.42
+    ]
+  },
+  "vec_blend_reunion_joy": {
+    "type": "vector",
+    "values": [
+      0.72,
+      0.0,
+      0.12,
+      0.0,
+      0.0,
+      0.0,
+      0.35,
+      0.44
+    ]
+  },
+  "vec_blend_triumphant_joy": {
+    "type": "vector",
+    "values": [
+      0.58,
+      0.1,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.18,
+      0.66
+    ]
+  },
+  "vec_blend_sacred_joy": {
+    "type": "vector",
+    "values": [
+      0.44,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.08,
+      0.22,
+      0.72
+    ]
+  },
+  "vec_blend_bitter_sweet_joy": {
+    "type": "vector",
+    "values": [
+      0.35,
+      0.0,
+      0.25,
+      0.0,
+      0.0,
+      0.38,
+      0.0,
+      0.55
+    ]
+  },
+  "vec_blend_astonished_delight": {
+    "type": "vector",
+    "values": [
+      0.62,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.62,
+      0.34
+    ]
+  },
+  "vec_blend_grateful_joy": {
+    "type": "vector",
+    "values": [
+      0.46,
+      0.0,
+      0.1,
+      0.0,
+      0.0,
+      0.16,
+      0.0,
+      0.68
+    ]
+  },
+  "vec_blend_playful_warmth": {
+    "type": "vector",
+    "values": [
+      0.58,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.14,
+      0.48
+    ]
+  },
+  "vec_blend_celebration": {
+    "type": "vector",
+    "values": [
+      0.92,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.4,
+      0.24
+    ]
+  },
+  "vec_blend_restrained_anger": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.46,
+      0.08,
+      0.0,
+      0.08,
+      0.0,
+      0.0,
+      0.5
+    ]
+  },
+  "vec_blend_righteous_anger": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.62,
+      0.0,
+      0.0,
+      0.24,
+      0.0,
+      0.0,
+      0.48
+    ]
+  },
+  "vec_blend_cold_anger": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.52,
+      0.0,
+      0.0,
+      0.18,
+      0.0,
+      0.0,
+      0.64
+    ]
+  },
+  "vec_blend_wounded_anger": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.54,
+      0.34,
+      0.0,
+      0.0,
+      0.3,
+      0.0,
+      0.28
+    ]
+  },
+  "vec_blend_grief_fueled_anger": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.68,
+      0.48,
+      0.0,
+      0.0,
+      0.38,
+      0.0,
+      0.18
+    ]
+  },
+  "vec_blend_simmering_resentment": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.42,
+      0.22,
+      0.0,
+      0.22,
+      0.32,
+      0.0,
+      0.28
+    ]
+  },
+  "vec_blend_moral_indignation": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.58,
+      0.0,
+      0.0,
+      0.34,
+      0.0,
+      0.0,
+      0.42
+    ]
+  },
+  "vec_blend_commanding_fury": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.82,
+      0.0,
+      0.0,
+      0.2,
+      0.0,
+      0.1,
+      0.35
+    ]
+  },
+  "vec_blend_explosive_rage": {
+    "type": "vector",
+    "values": [
+      0.0,
+      1.02,
+      0.0,
+      0.1,
+      0.36,
+      0.0,
+      0.16,
+      0.05
+    ]
+  },
+  "vec_blend_defiant_anger": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.6,
+      0.0,
+      0.12,
+      0.0,
+      0.0,
+      0.0,
+      0.42
+    ]
+  },
+  "vec_blend_accusatory_anger": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.58,
+      0.12,
+      0.0,
+      0.26,
+      0.0,
+      0.0,
+      0.3
+    ]
+  },
+  "vec_blend_protective_anger": {
+    "type": "vector",
+    "values": [
+      0.06,
+      0.54,
+      0.16,
+      0.1,
+      0.0,
+      0.0,
+      0.0,
+      0.5
+    ]
+  },
+  "vec_blend_quiet_sadness": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.42,
+      0.0,
+      0.0,
+      0.34,
+      0.0,
+      0.48
+    ]
+  },
+  "vec_blend_deep_grief": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.78,
+      0.0,
+      0.0,
+      0.66,
+      0.0,
+      0.18
+    ]
+  },
+  "vec_blend_sobbing_grief": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.96,
+      0.18,
+      0.0,
+      0.62,
+      0.12,
+      0.06
+    ]
+  },
+  "vec_blend_ancient_sorrow": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.6,
+      0.0,
+      0.0,
+      0.82,
+      0.0,
+      0.36
+    ]
+  },
+  "vec_blend_lament": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.72,
+      0.0,
+      0.0,
+      0.7,
+      0.0,
+      0.24
+    ]
+  },
+  "vec_blend_despair": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.92,
+      0.38,
+      0.0,
+      0.72,
+      0.0,
+      0.04
+    ]
+  },
+  "vec_blend_hopelessness": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.82,
+      0.32,
+      0.0,
+      0.82,
+      0.0,
+      0.03
+    ]
+  },
+  "vec_blend_sorrow_with_hope": {
+    "type": "vector",
+    "values": [
+      0.16,
+      0.0,
+      0.52,
+      0.0,
+      0.0,
+      0.48,
+      0.0,
+      0.62
+    ]
+  },
+  "vec_blend_wounded_love": {
+    "type": "vector",
+    "values": [
+      0.1,
+      0.0,
+      0.44,
+      0.0,
+      0.0,
+      0.38,
+      0.0,
+      0.58
+    ]
+  },
+  "vec_blend_loneliness": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.42,
+      0.1,
+      0.0,
+      0.62,
+      0.0,
+      0.32
+    ]
+  },
+  "vec_blend_weary_sorrow": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.4,
+      0.0,
+      0.0,
+      0.54,
+      0.0,
+      0.42
+    ]
+  },
+  "vec_blend_bereavement_shock": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.66,
+      0.26,
+      0.0,
+      0.38,
+      0.46,
+      0.1
+    ]
+  },
+  "vec_blend_unease": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.28,
+      0.0,
+      0.0,
+      0.08,
+      0.34
+    ]
+  },
+  "vec_blend_anxiety": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.48,
+      0.0,
+      0.12,
+      0.12,
+      0.22
+    ]
+  },
+  "vec_blend_dread": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.18,
+      0.62,
+      0.0,
+      0.36,
+      0.0,
+      0.18
+    ]
+  },
+  "vec_blend_terror": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.12,
+      0.98,
+      0.0,
+      0.0,
+      0.42,
+      0.02
+    ]
+  },
+  "vec_blend_panic": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.1,
+      0.0,
+      1.08,
+      0.0,
+      0.0,
+      0.64,
+      0.0
+    ]
+  },
+  "vec_blend_fearful_submission": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.2,
+      0.68,
+      0.0,
+      0.22,
+      0.0,
+      0.32
+    ]
+  },
+  "vec_blend_fear_masked_by_defiance": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.48,
+      0.0,
+      0.46,
+      0.0,
+      0.0,
+      0.0,
+      0.34
+    ]
+  },
+  "vec_blend_anxious_hope": {
+    "type": "vector",
+    "values": [
+      0.18,
+      0.0,
+      0.0,
+      0.38,
+      0.0,
+      0.16,
+      0.16,
+      0.44
+    ]
+  },
+  "vec_blend_paranoid_suspicion": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.12,
+      0.0,
+      0.44,
+      0.12,
+      0.0,
+      0.16,
+      0.22
+    ]
+  },
+  "vec_blend_frozen_fear": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.1,
+      0.82,
+      0.0,
+      0.0,
+      0.18,
+      0.22
+    ]
+  },
+  "vec_blend_mortal_dread": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.3,
+      0.88,
+      0.0,
+      0.38,
+      0.0,
+      0.08
+    ]
+  },
+  "vec_blend_revulsion": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.12,
+      0.0,
+      0.0,
+      0.7,
+      0.0,
+      0.0,
+      0.24
+    ]
+  },
+  "vec_blend_moral_disgust": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.32,
+      0.0,
+      0.0,
+      0.62,
+      0.0,
+      0.0,
+      0.42
+    ]
+  },
+  "vec_blend_contempt": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.28,
+      0.0,
+      0.0,
+      0.54,
+      0.0,
+      0.0,
+      0.52
+    ]
+  },
+  "vec_blend_scorn": {
+    "type": "vector",
+    "values": [
+      0.12,
+      0.28,
+      0.0,
+      0.0,
+      0.48,
+      0.0,
+      0.0,
+      0.42
+    ]
+  },
+  "vec_blend_self_disgust": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.38,
+      0.12,
+      0.48,
+      0.42,
+      0.0,
+      0.16
+    ]
+  },
+  "vec_blend_loathing": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.54,
+      0.0,
+      0.0,
+      0.82,
+      0.0,
+      0.0,
+      0.2
+    ]
+  },
+  "vec_blend_smug_cruelty": {
+    "type": "vector",
+    "values": [
+      0.28,
+      0.24,
+      0.0,
+      0.0,
+      0.38,
+      0.0,
+      0.0,
+      0.48
+    ]
+  },
+  "vec_blend_sadistic_delight": {
+    "type": "vector",
+    "values": [
+      0.38,
+      0.46,
+      0.0,
+      0.0,
+      0.38,
+      0.0,
+      0.12,
+      0.2
+    ]
+  },
+  "vec_blend_ancient_malice": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.48,
+      0.0,
+      0.0,
+      0.52,
+      0.18,
+      0.0,
+      0.46
+    ]
+  },
+  "vec_blend_startled": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.16,
+      0.0,
+      0.0,
+      0.52,
+      0.2
+    ]
+  },
+  "vec_blend_shock": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.14,
+      0.3,
+      0.0,
+      0.0,
+      0.78,
+      0.08
+    ]
+  },
+  "vec_blend_wonder": {
+    "type": "vector",
+    "values": [
+      0.28,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.58,
+      0.62
+    ]
+  },
+  "vec_blend_holy_awe": {
+    "type": "vector",
+    "values": [
+      0.12,
+      0.0,
+      0.0,
+      0.24,
+      0.0,
+      0.1,
+      0.56,
+      0.72
+    ]
+  },
+  "vec_blend_revelation": {
+    "type": "vector",
+    "values": [
+      0.12,
+      0.0,
+      0.12,
+      0.0,
+      0.0,
+      0.0,
+      0.66,
+      0.54
+    ]
+  },
+  "vec_blend_disbelief": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.18,
+      0.0,
+      0.0,
+      0.62,
+      0.22
+    ]
+  },
+  "vec_blend_horrified_realization": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.28,
+      0.66,
+      0.16,
+      0.0,
+      0.62,
+      0.05
+    ]
+  },
+  "vec_blend_joyful_realization": {
+    "type": "vector",
+    "values": [
+      0.52,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.6,
+      0.42
+    ]
+  },
+  "vec_blend_silent_astonishment": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.12,
+      0.0,
+      0.0,
+      0.48,
+      0.52
+    ]
+  },
+  "vec_blend_serene": {
+    "type": "vector",
+    "values": [
+      0.08,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.82
+    ]
+  },
+  "vec_blend_solemn": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.1,
+      0.0,
+      0.0,
+      0.22,
+      0.0,
+      0.72
+    ]
+  },
+  "vec_blend_stoic": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.08,
+      0.08,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.74
+    ]
+  },
+  "vec_blend_meditative": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.16,
+      0.0,
+      0.82
+    ]
+  },
+  "vec_blend_compassion": {
+    "type": "vector",
+    "values": [
+      0.16,
+      0.0,
+      0.34,
+      0.0,
+      0.0,
+      0.14,
+      0.0,
+      0.74
+    ]
+  },
+  "vec_blend_mercy": {
+    "type": "vector",
+    "values": [
+      0.22,
+      0.0,
+      0.22,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.82
+    ]
+  },
+  "vec_blend_forgiveness": {
+    "type": "vector",
+    "values": [
+      0.26,
+      0.0,
+      0.2,
+      0.0,
+      0.0,
+      0.12,
+      0.0,
+      0.84
+    ]
+  },
+  "vec_blend_sovereign_calm": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.1,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.08,
+      0.92
+    ]
+  },
+  "vec_blend_resigned_calm": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.28,
+      0.0,
+      0.0,
+      0.42,
+      0.0,
+      0.62
+    ]
+  },
+  "vec_blend_exhausted_calm": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.18,
+      0.0,
+      0.0,
+      0.32,
+      0.0,
+      0.58
+    ]
+  },
+  "vec_blend_grave_authority": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.18,
+      0.0,
+      0.0,
+      0.0,
+      0.12,
+      0.0,
+      0.86
+    ]
+  },
+  "vec_blend_sacred_reverence": {
+    "type": "vector",
+    "values": [
+      0.08,
+      0.0,
+      0.0,
+      0.12,
+      0.0,
+      0.2,
+      0.24,
+      0.82
+    ]
+  },
+  "vec_blend_guilt": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.44,
+      0.22,
+      0.18,
+      0.48,
+      0.0,
+      0.18
+    ]
+  },
+  "vec_blend_shame": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.52,
+      0.28,
+      0.28,
+      0.48,
+      0.0,
+      0.12
+    ]
+  },
+  "vec_blend_remorse": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.62,
+      0.14,
+      0.2,
+      0.52,
+      0.0,
+      0.3
+    ]
+  },
+  "vec_blend_repentance": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.54,
+      0.14,
+      0.0,
+      0.38,
+      0.0,
+      0.54
+    ]
+  },
+  "vec_blend_contrition": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.46,
+      0.0,
+      0.0,
+      0.34,
+      0.0,
+      0.64
+    ]
+  },
+  "vec_blend_humility": {
+    "type": "vector",
+    "values": [
+      0.06,
+      0.0,
+      0.12,
+      0.0,
+      0.0,
+      0.18,
+      0.0,
+      0.74
+    ]
+  },
+  "vec_blend_envy": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.26,
+      0.22,
+      0.0,
+      0.2,
+      0.34,
+      0.0,
+      0.18
+    ]
+  },
+  "vec_blend_jealousy": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.36,
+      0.28,
+      0.22,
+      0.16,
+      0.28,
+      0.0,
+      0.14
+    ]
+  },
+  "vec_blend_resentment": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.46,
+      0.26,
+      0.0,
+      0.24,
+      0.34,
+      0.0,
+      0.2
+    ]
+  },
+  "vec_blend_betrayal_shock": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.2,
+      0.56,
+      0.24,
+      0.0,
+      0.0,
+      0.54,
+      0.08
+    ]
+  },
+  "vec_blend_suspicion": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.28,
+      0.1,
+      0.0,
+      0.12,
+      0.38
+    ]
+  },
+  "vec_blend_doubt": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.16,
+      0.26,
+      0.0,
+      0.26,
+      0.0,
+      0.34
+    ]
+  },
+  "vec_blend_confusion": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.0,
+      0.18,
+      0.0,
+      0.0,
+      0.38,
+      0.24
+    ]
+  },
+  "vec_blend_gratitude": {
+    "type": "vector",
+    "values": [
+      0.38,
+      0.0,
+      0.08,
+      0.0,
+      0.0,
+      0.12,
+      0.0,
+      0.7
+    ]
+  },
+  "vec_blend_hope": {
+    "type": "vector",
+    "values": [
+      0.34,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.1,
+      0.14,
+      0.64
+    ]
+  },
+  "vec_blend_faith_under_pressure": {
+    "type": "vector",
+    "values": [
+      0.1,
+      0.0,
+      0.1,
+      0.14,
+      0.0,
+      0.08,
+      0.0,
+      0.78
+    ]
+  },
+  "vec_blend_courage": {
+    "type": "vector",
+    "values": [
+      0.1,
+      0.18,
+      0.0,
+      0.08,
+      0.0,
+      0.0,
+      0.0,
+      0.76
+    ]
+  },
+  "vec_blend_resolve": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.22,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.82
+    ]
+  },
+  "vec_blend_defiance": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.52,
+      0.0,
+      0.14,
+      0.0,
+      0.0,
+      0.0,
+      0.46
+    ]
+  },
+  "vec_blend_surrender": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.18,
+      0.08,
+      0.0,
+      0.14,
+      0.0,
+      0.84
+    ]
+  },
+  "vec_blend_pleading": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.34,
+      0.34,
+      0.0,
+      0.22,
+      0.0,
+      0.3
+    ]
+  },
+  "vec_blend_supplication": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.26,
+      0.2,
+      0.0,
+      0.18,
+      0.0,
+      0.5
+    ]
+  },
+  "vec_blend_warning": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.24,
+      0.0,
+      0.12,
+      0.0,
+      0.0,
+      0.0,
+      0.72
+    ]
+  },
+  "vec_blend_judgment": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.34,
+      0.0,
+      0.0,
+      0.2,
+      0.0,
+      0.0,
+      0.76
+    ]
+  },
+  "vec_blend_condemnation": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.48,
+      0.0,
+      0.0,
+      0.38,
+      0.0,
+      0.0,
+      0.6
+    ]
+  },
+  "vec_blend_mockery": {
+    "type": "vector",
+    "values": [
+      0.24,
+      0.18,
+      0.0,
+      0.0,
+      0.34,
+      0.0,
+      0.08,
+      0.4
+    ]
+  },
+  "vec_blend_deception": {
+    "type": "vector",
+    "values": [
+      0.08,
+      0.0,
+      0.0,
+      0.08,
+      0.1,
+      0.0,
+      0.0,
+      0.6
+    ]
+  },
+  "vec_blend_manipulation": {
+    "type": "vector",
+    "values": [
+      0.14,
+      0.1,
+      0.0,
+      0.0,
+      0.12,
+      0.0,
+      0.0,
+      0.56
+    ]
+  },
+  "vec_harrowing_jesus_sovereign_calm": {
+    "type": "vector",
+    "values": [
+      0.08,
+      0.1,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.1,
+      0.94
+    ]
+  },
+  "vec_harrowing_jesus_compassionate_authority": {
+    "type": "vector",
+    "values": [
+      0.12,
+      0.08,
+      0.22,
+      0.0,
+      0.0,
+      0.08,
+      0.0,
+      0.9
+    ]
+  },
+  "vec_harrowing_jesus_righteous_judgment": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.3,
+      0.0,
+      0.0,
+      0.16,
+      0.0,
+      0.0,
+      0.84
+    ]
+  },
+  "vec_harrowing_jesus_triumphant_victory": {
+    "type": "vector",
+    "values": [
+      0.38,
+      0.08,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.2,
+      0.84
+    ]
+  },
+  "vec_harrowing_adam_tormented": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.78,
+      0.52,
+      0.0,
+      0.64,
+      0.0,
+      0.08
+    ]
+  },
+  "vec_harrowing_adam_recognition": {
+    "type": "vector",
+    "values": [
+      0.2,
+      0.0,
+      0.36,
+      0.18,
+      0.0,
+      0.3,
+      0.64,
+      0.44
+    ]
+  },
+  "vec_harrowing_moses_steadfast": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.18,
+      0.0,
+      0.0,
+      0.0,
+      0.18,
+      0.0,
+      0.82
+    ]
+  },
+  "vec_harrowing_torturer_mockery": {
+    "type": "vector",
+    "values": [
+      0.28,
+      0.3,
+      0.0,
+      0.0,
+      0.4,
+      0.0,
+      0.0,
+      0.38
+    ]
+  },
+  "vec_harrowing_torturer_panic": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.22,
+      0.0,
+      1.0,
+      0.1,
+      0.0,
+      0.62,
+      0.02
+    ]
+  },
+  "vec_harrowing_demon_terror": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.18,
+      0.12,
+      1.02,
+      0.12,
+      0.0,
+      0.54,
+      0.0
+    ]
+  },
+  "vec_harrowing_souls_hope_awakens": {
+    "type": "vector",
+    "values": [
+      0.28,
+      0.0,
+      0.34,
+      0.0,
+      0.0,
+      0.38,
+      0.3,
+      0.56
+    ]
+  },
+  "vec_harrowing_liberation_awe": {
+    "type": "vector",
+    "values": [
+      0.62,
+      0.0,
+      0.16,
+      0.0,
+      0.0,
+      0.0,
+      0.58,
+      0.58
+    ]
+  },
+  "vec_prodigal_younger_entitled": {
+    "type": "vector",
+    "values": [
+      0.2,
+      0.28,
+      0.0,
+      0.0,
+      0.08,
+      0.0,
+      0.0,
+      0.4
+    ]
+  },
+  "vec_prodigal_younger_reckless_joy": {
+    "type": "vector",
+    "values": [
+      0.72,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.28,
+      0.28
+    ]
+  },
+  "vec_prodigal_younger_humiliated": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.62,
+      0.28,
+      0.26,
+      0.5,
+      0.0,
+      0.1
+    ]
+  },
+  "vec_prodigal_younger_repentant": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.58,
+      0.16,
+      0.0,
+      0.42,
+      0.0,
+      0.54
+    ]
+  },
+  "vec_prodigal_younger_forgiven_relief": {
+    "type": "vector",
+    "values": [
+      0.5,
+      0.0,
+      0.28,
+      0.0,
+      0.0,
+      0.0,
+      0.44,
+      0.54
+    ]
+  },
+  "vec_prodigal_father_waiting_love": {
+    "type": "vector",
+    "values": [
+      0.1,
+      0.0,
+      0.34,
+      0.0,
+      0.0,
+      0.42,
+      0.0,
+      0.72
+    ]
+  },
+  "vec_prodigal_father_running_joy": {
+    "type": "vector",
+    "values": [
+      0.88,
+      0.0,
+      0.12,
+      0.0,
+      0.0,
+      0.0,
+      0.52,
+      0.42
+    ]
+  },
+  "vec_prodigal_father_restoring_mercy": {
+    "type": "vector",
+    "values": [
+      0.34,
+      0.0,
+      0.18,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.9
+    ]
+  },
+  "vec_prodigal_elder_resentment": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.48,
+      0.26,
+      0.0,
+      0.24,
+      0.34,
+      0.0,
+      0.24
+    ]
+  },
+  "vec_prodigal_elder_conflicted": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.28,
+      0.34,
+      0.16,
+      0.0,
+      0.42,
+      0.0,
+      0.28
+    ]
+  },
+  "vec_passion_jesus_gethsemane_anguish": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.68,
+      0.54,
+      0.0,
+      0.48,
+      0.0,
+      0.34
+    ]
+  },
+  "vec_passion_jesus_surrender": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.24,
+      0.12,
+      0.0,
+      0.18,
+      0.0,
+      0.88
+    ]
+  },
+  "vec_passion_jesus_cross_mercy": {
+    "type": "vector",
+    "values": [
+      0.08,
+      0.0,
+      0.52,
+      0.0,
+      0.0,
+      0.28,
+      0.0,
+      0.76
+    ]
+  },
+  "vec_passion_jesus_abandonment_cry": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.18,
+      0.96,
+      0.38,
+      0.0,
+      0.72,
+      0.0,
+      0.05
+    ]
+  },
+  "vec_passion_jesus_final_peace": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.3,
+      0.0,
+      0.0,
+      0.34,
+      0.0,
+      0.86
+    ]
+  },
+  "vec_passion_mary_cross_grief": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      1.02,
+      0.26,
+      0.0,
+      0.72,
+      0.0,
+      0.08
+    ]
+  },
+  "vec_passion_peter_denial_fear": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.18,
+      0.88,
+      0.0,
+      0.0,
+      0.22,
+      0.06
+    ]
+  },
+  "vec_passion_peter_remorse": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.0,
+      0.92,
+      0.18,
+      0.18,
+      0.66,
+      0.0,
+      0.06
+    ]
+  },
+  "vec_passion_judas_betrayal_conflict": {
+    "type": "vector",
+    "values": [
+      0.0,
+      0.16,
+      0.48,
+      0.42,
+      0.18,
+      0.38,
+      0.0,
+      0.14
+    ]
+  },
+  "vec_passion_centurion_revelation": {
+    "type": "vector",
+    "values": [
+      0.08,
+      0.0,
+      0.24,
+      0.3,
+      0.0,
+      0.0,
+      0.72,
+      0.48
+    ]
+  },
+  "txt_global_feature_film_restrained": {
+    "type": "text",
+    "description": "Restrained naturalistic feature-film acting with controlled power, moral gravity, realistic breathing, precise listening pauses, and no stage-like exaggeration."
+  },
+  "txt_global_sacred_biblical_epic": {
+    "type": "text",
+    "description": "Sacred biblical epic performance: ancient dignity, human realism, reverence, emotional weight, clear speech, and cinematic restraint."
+  },
+  "txt_global_ancient_intelligible_diction": {
+    "type": "text",
+    "description": "Ancient but fully intelligible diction, measured phrasing, clean consonants, grounded breath, and emotionally truthful delivery."
+  },
+  "txt_global_intimate_closeup": {
+    "type": "text",
+    "description": "Intimate close-up acting with low volume, exposed feeling, tiny pauses, delicate breath, and private emotional truth."
+  },
+  "txt_global_epic_proclamation": {
+    "type": "text",
+    "description": "Epic proclamation delivered with vast authority held under control, measured tempo, resonant chest tone, and clean decisive phrasing."
+  },
+  "txt_global_sacred_stillness": {
+    "type": "text",
+    "description": "Sacred stillness: calm, reverent, spacious, inwardly alive, and almost motionless in emotional presentation."
+  },
+  "txt_global_stone_chamber_dialogue": {
+    "type": "text",
+    "description": "Grounded dialogue in a vast stone chamber, steady resonance, deliberate pacing, controlled volume, and restrained tension."
+  },
+  "txt_global_night_whisper": {
+    "type": "text",
+    "description": "A private night whisper with guarded breath, quiet urgency, intimate fear, and clear articulation."
+  },
+  "txt_global_public_address": {
+    "type": "text",
+    "description": "A clear public address to a gathered crowd, projected without shouting, paced for listeners, and anchored in conviction."
+  },
+  "txt_global_humble_prayer": {
+    "type": "text",
+    "description": "Humble prayer spoken inwardly and sincerely, with reverence, vulnerability, measured breath, and quiet surrender."
+  },
+  "txt_global_desperate_prayer": {
+    "type": "text",
+    "description": "Desperate prayer held within believable human restraint, breath catching under pressure, words urgently offered rather than performed."
+  },
+  "txt_global_interrogation": {
+    "type": "text",
+    "description": "Controlled interrogation with focused pressure, short listening beats, measured suspicion, and deliberate emphasis."
+  },
+  "txt_global_confession": {
+    "type": "text",
+    "description": "Private confession with shame, hesitation, honesty, softened volume, and the effort required to say each difficult word."
+  },
+  "txt_global_battlefield_command": {
+    "type": "text",
+    "description": "Battlefield command with immediate authority, strong breath support, clipped clarity, and urgency without uncontrolled yelling."
+  },
+  "txt_global_royal_court": {
+    "type": "text",
+    "description": "Formal royal-court speech with dignity, careful status awareness, measured force, and restrained emotional politics."
+  },
+  "txt_global_mourning": {
+    "type": "text",
+    "description": "Mourning held in cinematic realism: grief present in breath and pauses, words still intelligible, emotion deep rather than theatrical."
+  },
+  "txt_global_supernatural_awe": {
+    "type": "text",
+    "description": "Human awe before a supernatural presence, with hushed astonishment, reverence, fragile breath, and widening emotional scale."
+  },
+  "txt_global_infernal_menace": {
+    "type": "text",
+    "description": "Infernal menace delivered quietly and intelligently, with ancient malice, predatory patience, and controlled cruelty."
+  },
+  "txt_global_exhausted_survival": {
+    "type": "text",
+    "description": "Speech from a physically exhausted survivor: reduced breath, worn resolve, clear intention, and emotional realism."
+  },
+  "txt_global_collective_chorus": {
+    "type": "text",
+    "description": "A unified group response with shared emotional purpose, clear words, restrained overlap, and believable collective breath."
+  },
+  "txt_style_restrained_closeup": {
+    "type": "text",
+    "description": "Perform {seg} as a restrained cinematic close-up: quiet, specific, emotionally truthful, and carried by tiny pauses rather than theatrical emphasis."
+  },
+  "txt_style_epic_but_human": {
+    "type": "text",
+    "description": "Perform {seg} with the scale of a biblical epic while remaining completely human, grounded, measured, and believable."
+  },
+  "txt_style_ancient_gravity": {
+    "type": "text",
+    "description": "Perform {seg} with ancient moral gravity, deliberate phrasing, clear intelligible diction, and the weight of long memory."
+  },
+  "txt_style_whispered_urgency": {
+    "type": "text",
+    "description": "Perform {seg} in a clear urgent whisper, breath guarded, danger close, and every word meant for one listener."
+  },
+  "txt_style_low_authority": {
+    "type": "text",
+    "description": "Perform {seg} with low-voiced authority: calm, resonant, unhurried, and impossible to dismiss."
+  },
+  "txt_style_public_proclamation": {
+    "type": "text",
+    "description": "Perform {seg} as a measured proclamation to a large gathering, projecting conviction and clarity without uncontrolled shouting."
+  },
+  "txt_style_private_confession": {
+    "type": "text",
+    "description": "Perform {seg} as a difficult private confession, with hesitation, shame, honesty, and fragile breath."
+  },
+  "txt_style_prayerful": {
+    "type": "text",
+    "description": "Perform {seg} as sincere prayer, inwardly focused, reverent, vulnerable, and paced around natural breath."
+  },
+  "txt_style_prophetic_warning": {
+    "type": "text",
+    "description": "Perform {seg} as a prophetic warning: grave, lucid, compassionate beneath the severity, and certain of its moral truth."
+  },
+  "txt_style_interrogator": {
+    "type": "text",
+    "description": "Perform {seg} as a controlled interrogator applying pressure through precision, silence, and watchful suspicion."
+  },
+  "txt_style_witness_testimony": {
+    "type": "text",
+    "description": "Perform {seg} as solemn eyewitness testimony, careful with every fact, emotionally affected but determined to be truthful."
+  },
+  "txt_style_exhausted_breath": {
+    "type": "text",
+    "description": "Perform {seg} while deeply exhausted, with shortened breath and worn physical effort, yet preserve intelligibility and intention."
+  },
+  "txt_style_broken_whisper": {
+    "type": "text",
+    "description": "Perform {seg} as a broken whisper after overwhelming loss, with pauses where speech nearly fails."
+  },
+  "txt_style_controlled_shout": {
+    "type": "text",
+    "description": "Perform {seg} as a controlled cinematic shout: forceful, clear, urgent, and supported rather than shrill."
+  },
+  "txt_style_ritual_speech": {
+    "type": "text",
+    "description": "Perform {seg} with solemn ritual formality, measured cadence, reverence, and restrained ceremonial weight."
+  },
+  "txt_style_royal_command": {
+    "type": "text",
+    "description": "Perform {seg} as a royal command: economical, decisive, status-aware, and backed by calm power."
+  },
+  "txt_style_courtly_persuasion": {
+    "type": "text",
+    "description": "Perform {seg} as careful courtly persuasion, courteous on the surface, strategically focused underneath."
+  },
+  "txt_style_secret_conspiracy": {
+    "type": "text",
+    "description": "Perform {seg} as a secret conspiracy spoken low and close, with shared danger, calculation, and guarded intent."
+  },
+  "txt_style_mourning_restraint": {
+    "type": "text",
+    "description": "Perform {seg} through deep mourning while holding the voice together, letting grief appear in breath, pauses, and softened tone."
+  },
+  "txt_style_supernatural_encounter": {
+    "type": "text",
+    "description": "Perform {seg} as a real human being confronting the supernatural, with awe, fear, disbelief, and reverence blended naturally."
+  },
+  "txt_joy_contentment": {
+    "type": "text",
+    "description": "Perform {seg} with quiet contentment, warm breath, gentle ease, and no need to display the happiness."
+  },
+  "txt_joy_gentle": {
+    "type": "text",
+    "description": "Perform {seg} with gentle joy, softened features in the voice, calm warmth, and sincere affection."
+  },
+  "txt_joy_relieved": {
+    "type": "text",
+    "description": "Perform {seg} with relief turning into joy, tension slowly releasing from the breath as safety becomes real."
+  },
+  "txt_joy_reunion": {
+    "type": "text",
+    "description": "Perform {seg} with overwhelming reunion joy, disbelief breaking into tenderness, laughter and tears held in cinematic restraint."
+  },
+  "txt_joy_radiant": {
+    "type": "text",
+    "description": "Perform {seg} with radiant open joy, bright energy, wonder, and full-hearted warmth."
+  },
+  "txt_joy_triumphant": {
+    "type": "text",
+    "description": "Perform {seg} with victorious joy grounded in earned struggle, confident, expansive, and controlled."
+  },
+  "txt_joy_sacred": {
+    "type": "text",
+    "description": "Perform {seg} with sacred joy, reverent wonder, inner light, and peaceful gratitude."
+  },
+  "txt_joy_bittersweet": {
+    "type": "text",
+    "description": "Perform {seg} with bittersweet joy, happiness inseparable from remembered sorrow and loss."
+  },
+  "txt_joy_playful": {
+    "type": "text",
+    "description": "Perform {seg} with playful warmth, quick intelligence, affectionate teasing, and natural spontaneity."
+  },
+  "txt_joy_celebratory": {
+    "type": "text",
+    "description": "Perform {seg} with communal celebration, energized happiness, surprise, and generous outward warmth."
+  },
+  "txt_joy_proud_but_humble": {
+    "type": "text",
+    "description": "Perform {seg} with quiet pride tempered by humility, satisfaction present but never boastful."
+  },
+  "txt_joy_grateful": {
+    "type": "text",
+    "description": "Perform {seg} with deep gratitude, voice softened by what has been received and by awareness it was undeserved."
+  },
+  "txt_anger_restrained": {
+    "type": "text",
+    "description": "Perform {seg} with restrained anger held behind measured words, steady breath, and deliberate control."
+  },
+  "txt_anger_cold": {
+    "type": "text",
+    "description": "Perform {seg} with cold anger: low volume, precise diction, emotional distance, and dangerous calm."
+  },
+  "txt_anger_righteous": {
+    "type": "text",
+    "description": "Perform {seg} with righteous anger rooted in moral clarity, compassion for the harmed, and disciplined authority."
+  },
+  "txt_anger_wounded": {
+    "type": "text",
+    "description": "Perform {seg} with anger born from personal hurt, betrayal, and the effort not to reveal how deeply the wound landed."
+  },
+  "txt_anger_simmering": {
+    "type": "text",
+    "description": "Perform {seg} with long-simmering anger, accumulated grievance, clipped patience, and pressure beneath every phrase."
+  },
+  "txt_anger_grief_fueled": {
+    "type": "text",
+    "description": "Perform {seg} with anger driven by grief, pain breaking through the force and making the rage tragically human."
+  },
+  "txt_anger_protective": {
+    "type": "text",
+    "description": "Perform {seg} with protective anger, immediate readiness to defend another person, strong but controlled."
+  },
+  "txt_anger_accusatory": {
+    "type": "text",
+    "description": "Perform {seg} as a direct accusation, morally charged, specific, and increasingly difficult to contain."
+  },
+  "txt_anger_indignant": {
+    "type": "text",
+    "description": "Perform {seg} with moral indignation, offended conscience, disbelief at injustice, and precise emphasis."
+  },
+  "txt_anger_defiant": {
+    "type": "text",
+    "description": "Perform {seg} with defiant anger, refusing intimidation while fear remains barely visible underneath."
+  },
+  "txt_anger_commanding": {
+    "type": "text",
+    "description": "Perform {seg} with commanding fury, powerful and immediate, yet clear enough that every word lands."
+  },
+  "txt_anger_explosive": {
+    "type": "text",
+    "description": "Perform {seg} as an explosive burst of rage after control finally breaks, intense but still intelligible and cinematic."
+  },
+  "txt_anger_exhausted": {
+    "type": "text",
+    "description": "Perform {seg} with exhausted anger, depleted by repeated injustice, more bitter and weary than loud."
+  },
+  "txt_anger_jealous": {
+    "type": "text",
+    "description": "Perform {seg} with jealousy disguised as moral complaint, resentment and fear of being displaced beneath the words."
+  },
+  "txt_grief_quiet": {
+    "type": "text",
+    "description": "Perform {seg} with quiet sadness, lowered energy, softened breath, and a private effort to remain composed."
+  },
+  "txt_grief_deep": {
+    "type": "text",
+    "description": "Perform {seg} with deep grief that has settled into the body, slow phrasing, heavy breath, and no theatrical display."
+  },
+  "txt_grief_fresh_loss": {
+    "type": "text",
+    "description": "Perform {seg} in the first stunned moments after loss, disbelief, numbness, and pain arriving in waves."
+  },
+  "txt_grief_sobbing": {
+    "type": "text",
+    "description": "Perform {seg} through active sobbing, words interrupted by breath and tears while remaining understandable."
+  },
+  "txt_grief_suppressed": {
+    "type": "text",
+    "description": "Perform {seg} while suppressing grief in public, voice controlled until small cracks betray the pain."
+  },
+  "txt_grief_ancient": {
+    "type": "text",
+    "description": "Perform {seg} with ancient sorrow carried for generations, dignified, weary, and full of memory."
+  },
+  "txt_grief_lament": {
+    "type": "text",
+    "description": "Perform {seg} as a sacred lament, grief voiced openly with rhythmic weight, reverence, and human truth."
+  },
+  "txt_grief_despair": {
+    "type": "text",
+    "description": "Perform {seg} in profound despair, hope almost extinguished, breath heavy, and words difficult to continue."
+  },
+  "txt_grief_hopeless": {
+    "type": "text",
+    "description": "Perform {seg} with hopeless resignation, low energy, flattened expectation, and the belief that nothing can change."
+  },
+  "txt_grief_lonely": {
+    "type": "text",
+    "description": "Perform {seg} with deep loneliness, reaching toward someone who may not answer, intimate and exposed."
+  },
+  "txt_grief_weary": {
+    "type": "text",
+    "description": "Perform {seg} with sorrow worn down by exhaustion, pauses lengthened by fatigue and long endurance."
+  },
+  "txt_grief_bereaved_parent": {
+    "type": "text",
+    "description": "Perform {seg} as a bereaved parent, love and devastation inseparable, emotion immense but grounded in real breath."
+  },
+  "txt_grief_maternal": {
+    "type": "text",
+    "description": "Perform {seg} with maternal grief, protective love made helpless by loss, tender and devastating."
+  },
+  "txt_grief_paternal": {
+    "type": "text",
+    "description": "Perform {seg} with paternal grief held behind strength, the voice trying to protect others while breaking within."
+  },
+  "txt_grief_sorrow_with_hope": {
+    "type": "text",
+    "description": "Perform {seg} with sorrow that still contains a small living hope, pain honest but not spiritually defeated."
+  },
+  "txt_grief_bittersweet_memory": {
+    "type": "text",
+    "description": "Perform {seg} as a bittersweet memory, warmth and loss moving together through the same words."
+  },
+  "txt_grief_numb": {
+    "type": "text",
+    "description": "Perform {seg} in emotional numbness after too much pain, distant, quiet, and only faintly connected to feeling."
+  },
+  "txt_grief_final_goodbye": {
+    "type": "text",
+    "description": "Perform {seg} as a final goodbye, loving, irreversible, and carefully spoken because each word must last."
+  },
+  "txt_fear_uneasy": {
+    "type": "text",
+    "description": "Perform {seg} with subtle unease, watchful breath, slight hesitation, and the sense that something is wrong."
+  },
+  "txt_fear_anxious": {
+    "type": "text",
+    "description": "Perform {seg} with anxious concern, thoughts moving quickly, breath shortened, and control still mostly intact."
+  },
+  "txt_fear_dread": {
+    "type": "text",
+    "description": "Perform {seg} with mounting dread, certainty of approaching harm, lowered voice, and increasingly careful breath."
+  },
+  "txt_fear_mortal": {
+    "type": "text",
+    "description": "Perform {seg} with mortal fear, body aware of possible death, words urgent, vulnerable, and physically real."
+  },
+  "txt_fear_terror": {
+    "type": "text",
+    "description": "Perform {seg} in raw terror, breath unstable, attention fixed on immediate danger, and speech barely held together."
+  },
+  "txt_fear_panic": {
+    "type": "text",
+    "description": "Perform {seg} in escalating panic, rapid breath, broken focus, and urgent attempts to escape or be understood."
+  },
+  "txt_fear_frozen": {
+    "type": "text",
+    "description": "Perform {seg} with frozen fear, voice reduced and rigid, shock suppressing movement and volume."
+  },
+  "txt_fear_submissive": {
+    "type": "text",
+    "description": "Perform {seg} with fearful submission before overwhelming power, cautious, deferential, and desperate not to provoke."
+  },
+  "txt_fear_masked": {
+    "type": "text",
+    "description": "Perform {seg} while hiding fear behind confidence, small cracks in breath and timing revealing the truth."
+  },
+  "txt_fear_paranoid": {
+    "type": "text",
+    "description": "Perform {seg} with paranoid suspicion, scanning every implication, mistrusting the listener, and anticipating betrayal."
+  },
+  "txt_fear_for_loved_one": {
+    "type": "text",
+    "description": "Perform {seg} with urgent fear for someone beloved, protective instinct overriding self-concern."
+  },
+  "txt_fear_spiritual_awe": {
+    "type": "text",
+    "description": "Perform {seg} with reverent fear before holiness, trembling awe, humility, and unwillingness to look away."
+  },
+  "txt_fear_hunted": {
+    "type": "text",
+    "description": "Perform {seg} as someone being hunted, breath low, listening for pursuit, and speaking only when necessary."
+  },
+  "txt_fear_impending_judgment": {
+    "type": "text",
+    "description": "Perform {seg} with dread of unavoidable judgment, guilt, denial, and the collapse of former certainty."
+  },
+  "txt_fear_courage_underneath": {
+    "type": "text",
+    "description": "Perform {seg} with real fear held inside deliberate courage, breath controlled by choice rather than absence of danger."
+  },
+  "txt_disgust_revulsion": {
+    "type": "text",
+    "description": "Perform {seg} with genuine revulsion, recoiling emotionally from what is seen or understood."
+  },
+  "txt_disgust_moral": {
+    "type": "text",
+    "description": "Perform {seg} with moral disgust at cruelty or corruption, clear conscience, restrained anger, and firm rejection."
+  },
+  "txt_disgust_contempt": {
+    "type": "text",
+    "description": "Perform {seg} with contempt, treating the other person as beneath serious regard, cool and cutting rather than loud."
+  },
+  "txt_disgust_scorn": {
+    "type": "text",
+    "description": "Perform {seg} with open scorn, amused disdain, and dismissive superiority."
+  },
+  "txt_disgust_self": {
+    "type": "text",
+    "description": "Perform {seg} with self-disgust, shame turned inward, difficulty meeting the listener, and painful honesty."
+  },
+  "txt_disgust_loathing": {
+    "type": "text",
+    "description": "Perform {seg} with deep loathing, hostility and revulsion fused into a dark controlled force."
+  },
+  "txt_disgust_hypocrisy": {
+    "type": "text",
+    "description": "Perform {seg} with disgust at hypocrisy, disbelief sharpening into moral accusation."
+  },
+  "txt_disgust_corruption": {
+    "type": "text",
+    "description": "Perform {seg} with weary disgust toward entrenched corruption, anger disciplined by long experience."
+  },
+  "txt_disgust_predatory": {
+    "type": "text",
+    "description": "Perform {seg} with predatory disgust, viewing the target as weak, repellent, and disposable."
+  },
+  "txt_disgust_after_violence": {
+    "type": "text",
+    "description": "Perform {seg} in shaken revulsion after witnessing violence, horror and nausea beneath the words."
+  },
+  "txt_awe_startled": {
+    "type": "text",
+    "description": "Perform {seg} with a sudden startle, breath catching before words return."
+  },
+  "txt_awe_shock": {
+    "type": "text",
+    "description": "Perform {seg} in genuine shock, thought interrupted, disbelief visible in timing and breath."
+  },
+  "txt_awe_wonder": {
+    "type": "text",
+    "description": "Perform {seg} with childlike wonder, open attention, gentle joy, and reverent curiosity."
+  },
+  "txt_awe_holy": {
+    "type": "text",
+    "description": "Perform {seg} with holy awe, hushed reverence, trembling wonder, and awareness of being in a sacred presence."
+  },
+  "txt_awe_revelation": {
+    "type": "text",
+    "description": "Perform {seg} at the instant of revelation, understanding arriving visibly through surprise, emotion, and new certainty."
+  },
+  "txt_awe_disbelief": {
+    "type": "text",
+    "description": "Perform {seg} with disbelief, searching the evidence, resisting what is becoming undeniable."
+  },
+  "txt_awe_horrified_realization": {
+    "type": "text",
+    "description": "Perform {seg} with horrified realization, fear and shock converging as the full truth becomes clear."
+  },
+  "txt_awe_joyful_realization": {
+    "type": "text",
+    "description": "Perform {seg} with joyful realization, astonishment opening into relief, gratitude, and wonder."
+  },
+  "txt_awe_silent_astonishment": {
+    "type": "text",
+    "description": "Perform {seg} in quiet astonishment, voice hushed because the moment feels larger than speech."
+  },
+  "txt_awe_cosmic": {
+    "type": "text",
+    "description": "Perform {seg} with cosmic awe before something unimaginably vast, fear, wonder, and humility balanced together."
+  },
+  "txt_love_tender": {
+    "type": "text",
+    "description": "Perform {seg} with tender love, gentle attention, softened breath, and care for the listener's vulnerability."
+  },
+  "txt_love_paternal": {
+    "type": "text",
+    "description": "Perform {seg} with paternal love, protective warmth, patient strength, and deep knowledge of the child addressed."
+  },
+  "txt_love_maternal": {
+    "type": "text",
+    "description": "Perform {seg} with maternal love, intimate protection, warmth, and readiness to absorb another's pain."
+  },
+  "txt_love_brotherly": {
+    "type": "text",
+    "description": "Perform {seg} with brotherly affection, loyalty, familiarity, and honest concern."
+  },
+  "txt_love_friendship": {
+    "type": "text",
+    "description": "Perform {seg} with faithful friendship, trust, warmth, and willingness to stand beside the listener."
+  },
+  "txt_love_wounded": {
+    "type": "text",
+    "description": "Perform {seg} with love wounded by betrayal, tenderness still present beneath sorrow and guardedness."
+  },
+  "txt_love_unconditional": {
+    "type": "text",
+    "description": "Perform {seg} with unconditional love, seeing the person's failure clearly while refusing to withdraw belonging."
+  },
+  "txt_love_compassion": {
+    "type": "text",
+    "description": "Perform {seg} with compassion for suffering, emotionally present, gentle, and strong enough not to look away."
+  },
+  "txt_love_mercy": {
+    "type": "text",
+    "description": "Perform {seg} with mercy freely chosen, calm authority softened by understanding and the refusal to retaliate."
+  },
+  "txt_love_forgiveness": {
+    "type": "text",
+    "description": "Perform {seg} with genuine forgiveness, pain acknowledged, judgment released, and peace offered without sentimentality."
+  },
+  "txt_love_restoring_dignity": {
+    "type": "text",
+    "description": "Perform {seg} while restoring another person's dignity, warm, public, decisive, and protective."
+  },
+  "txt_love_longing": {
+    "type": "text",
+    "description": "Perform {seg} with deep longing for someone absent, hope and ache woven through the voice."
+  },
+  "txt_love_reconciliation": {
+    "type": "text",
+    "description": "Perform {seg} at the threshold of reconciliation, cautious hope, old pain, and a sincere desire to return."
+  },
+  "txt_love_sacrificial": {
+    "type": "text",
+    "description": "Perform {seg} with sacrificial love, accepting personal cost willingly for the good of others."
+  },
+  "txt_love_protective_warning": {
+    "type": "text",
+    "description": "Perform {seg} as a warning motivated by love, firm because the danger is real, tender beneath the severity."
+  },
+  "txt_love_grieving": {
+    "type": "text",
+    "description": "Perform {seg} with grieving love, affection made more visible by the threat or reality of loss."
+  },
+  "txt_moral_guilt": {
+    "type": "text",
+    "description": "Perform {seg} with guilt, awareness of personal wrongdoing, defensive impulses weakening under truth."
+  },
+  "txt_moral_shame": {
+    "type": "text",
+    "description": "Perform {seg} with shame, lowered self-worth, exposed vulnerability, and difficulty saying the words aloud."
+  },
+  "txt_moral_remorse": {
+    "type": "text",
+    "description": "Perform {seg} with remorse, grief for the harm caused, no excuse-making, and a sincere wish to undo what cannot be undone."
+  },
+  "txt_moral_repentance": {
+    "type": "text",
+    "description": "Perform {seg} with genuine repentance, broken pride, honest ownership, humility, and a decision to turn back."
+  },
+  "txt_moral_contrition": {
+    "type": "text",
+    "description": "Perform {seg} with quiet contrition, softened voice, precise confession, and acceptance of consequences."
+  },
+  "txt_moral_rehearsed_apology": {
+    "type": "text",
+    "description": "Perform {seg} as an apology rehearsed many times from fear, formal at first, with true feeling beginning to break through."
+  },
+  "txt_moral_begging_forgiveness": {
+    "type": "text",
+    "description": "Perform {seg} while begging forgiveness, ashamed, frightened of rejection, and emotionally exposed."
+  },
+  "txt_moral_self_condemnation": {
+    "type": "text",
+    "description": "Perform {seg} with self-condemnation, guilt hardened into the belief that mercy is no longer possible."
+  },
+  "txt_moral_humility": {
+    "type": "text",
+    "description": "Perform {seg} with humility, no self-display, honest smallness before a greater truth, and calm openness."
+  },
+  "txt_moral_broken_pride": {
+    "type": "text",
+    "description": "Perform {seg} as pride finally breaks, resistance collapsing into painful honesty."
+  },
+  "txt_moral_accepting_consequences": {
+    "type": "text",
+    "description": "Perform {seg} while accepting deserved consequences, afraid but no longer bargaining or blaming."
+  },
+  "txt_moral_requesting_mercy": {
+    "type": "text",
+    "description": "Perform {seg} as a sincere request for mercy, humble, clear, and prepared for refusal."
+  },
+  "txt_moral_unworthy_gratitude": {
+    "type": "text",
+    "description": "Perform {seg} with gratitude from someone who feels unworthy, astonished by kindness and unable to take it for granted."
+  },
+  "txt_moral_confession_public": {
+    "type": "text",
+    "description": "Perform {seg} as a public confession, shame exposed before others, voice trembling but committed to truth."
+  },
+  "txt_faith_quiet_hope": {
+    "type": "text",
+    "description": "Perform {seg} with quiet hope, fragile but alive, gently resisting despair."
+  },
+  "txt_faith_steadfast": {
+    "type": "text",
+    "description": "Perform {seg} with steadfast faith, calm certainty maintained under pressure and suffering."
+  },
+  "txt_faith_under_doubt": {
+    "type": "text",
+    "description": "Perform {seg} with faith struggling through doubt, honest uncertainty held beside a decision to trust."
+  },
+  "txt_faith_waiting": {
+    "type": "text",
+    "description": "Perform {seg} with patient waiting, long disappointment, disciplined hope, and refusal to abandon the promise."
+  },
+  "txt_faith_reverence": {
+    "type": "text",
+    "description": "Perform {seg} with reverence, humble attention, sacred awareness, and carefully measured breath."
+  },
+  "txt_faith_devotion": {
+    "type": "text",
+    "description": "Perform {seg} with devotion, wholehearted loyalty, tenderness, and willingness to obey."
+  },
+  "txt_faith_surrender": {
+    "type": "text",
+    "description": "Perform {seg} in complete surrender, fear acknowledged, resistance released, and peace chosen."
+  },
+  "txt_faith_obedience_costly": {
+    "type": "text",
+    "description": "Perform {seg} with costly obedience, sorrow and fear present, yet the decision firm and freely accepted."
+  },
+  "txt_faith_prayer_answered": {
+    "type": "text",
+    "description": "Perform {seg} as hope realizes the prayer has been answered, disbelief opening into gratitude and awe."
+  },
+  "txt_faith_miracle_witness": {
+    "type": "text",
+    "description": "Perform {seg} as a witness to a miracle, astonished, reverent, emotionally overwhelmed, and searching for words."
+  },
+  "txt_faith_testimony": {
+    "type": "text",
+    "description": "Perform {seg} as sincere testimony, grounded, grateful, certain of what was experienced, and free of showmanship."
+  },
+  "txt_faith_prophetic_certainty": {
+    "type": "text",
+    "description": "Perform {seg} with prophetic certainty, morally grave, calm before opposition, and anchored beyond personal ego."
+  },
+  "txt_faith_holy_fear": {
+    "type": "text",
+    "description": "Perform {seg} with holy fear, trembling respect, humility, and awareness of divine authority."
+  },
+  "txt_faith_resurrection_hope": {
+    "type": "text",
+    "description": "Perform {seg} with resurrection hope, grief transformed but remembered, joy widening into unshakeable life."
+  },
+  "txt_power_calm_authority": {
+    "type": "text",
+    "description": "Perform {seg} with calm authority, unhurried, grounded, and certain without needing volume."
+  },
+  "txt_power_sovereign": {
+    "type": "text",
+    "description": "Perform {seg} with sovereign authority, immense power fully controlled, every word final and effortless."
+  },
+  "txt_power_grave_command": {
+    "type": "text",
+    "description": "Perform {seg} as a grave command, direct, morally weighted, and immediately actionable."
+  },
+  "txt_power_battle_command": {
+    "type": "text",
+    "description": "Perform {seg} as a battle command under immediate danger, projected, clipped, and decisive."
+  },
+  "txt_power_proclamation": {
+    "type": "text",
+    "description": "Perform {seg} as a public proclamation of irreversible truth, resonant, measured, and certain."
+  },
+  "txt_power_judgment": {
+    "type": "text",
+    "description": "Perform {seg} as solemn judgment, emotionally controlled, morally certain, and free from personal spite."
+  },
+  "txt_power_condemnation": {
+    "type": "text",
+    "description": "Perform {seg} as condemnation of evil, severe, lucid, and backed by disciplined force."
+  },
+  "txt_power_warning": {
+    "type": "text",
+    "description": "Perform {seg} as a grave warning, compassionate enough to invite change and forceful enough to convey consequence."
+  },
+  "txt_power_courage": {
+    "type": "text",
+    "description": "Perform {seg} with courage in the presence of real danger, fear controlled by purpose."
+  },
+  "txt_power_resolve": {
+    "type": "text",
+    "description": "Perform {seg} with firm resolve, decision complete, energy focused, and no wasted emphasis."
+  },
+  "txt_power_defiance": {
+    "type": "text",
+    "description": "Perform {seg} with principled defiance, refusing domination, voice steady despite threat."
+  },
+  "txt_power_moral_clarity": {
+    "type": "text",
+    "description": "Perform {seg} with moral clarity, simple, direct, compassionate, and impossible to confuse."
+  },
+  "txt_power_kingly_mercy": {
+    "type": "text",
+    "description": "Perform {seg} as mercy spoken by a king, authoritative, generous, public, and dignity-restoring."
+  },
+  "txt_power_protective_leader": {
+    "type": "text",
+    "description": "Perform {seg} as a protective leader addressing frightened people, calm enough to steady them and strong enough to act."
+  },
+  "txt_power_final_word": {
+    "type": "text",
+    "description": "Perform {seg} as the final word in a conflict, quiet, decisive, and beyond negotiation."
+  },
+  "txt_power_victory_restrained": {
+    "type": "text",
+    "description": "Perform {seg} after victory with restrained triumph, gratitude, composure, and no gloating."
+  },
+  "txt_power_ancient_wisdom": {
+    "type": "text",
+    "description": "Perform {seg} with ancient wisdom, patient authority, long memory, and compassion for human weakness."
+  },
+  "txt_dark_deception_gentle": {
+    "type": "text",
+    "description": "Perform {seg} as a gentle deception, outwardly reassuring while carefully hiding the true intention."
+  },
+  "txt_dark_manipulation": {
+    "type": "text",
+    "description": "Perform {seg} as manipulation, shaping the listener's emotions through selective warmth, pressure, and calculated pauses."
+  },
+  "txt_dark_false_compassion": {
+    "type": "text",
+    "description": "Perform {seg} with false compassion, tender words masking control, contempt, or self-interest."
+  },
+  "txt_dark_mockery": {
+    "type": "text",
+    "description": "Perform {seg} with cruel mockery, amused superiority, and enjoyment of the target's pain."
+  },
+  "txt_dark_scornful_laughter": {
+    "type": "text",
+    "description": "Perform {seg} through scornful amusement, laughter implied in the voice while contempt remains dominant."
+  },
+  "txt_dark_smugness": {
+    "type": "text",
+    "description": "Perform {seg} with smug certainty, relaxed superiority, and confidence that the opponent cannot prevail."
+  },
+  "txt_dark_predatory_calm": {
+    "type": "text",
+    "description": "Perform {seg} with predatory calm, patient, observant, and quietly certain of control."
+  },
+  "txt_dark_ancient_malice": {
+    "type": "text",
+    "description": "Perform {seg} with ancient malice, intelligent hatred, long memory, and controlled infernal weight."
+  },
+  "txt_dark_sadistic_delight": {
+    "type": "text",
+    "description": "Perform {seg} with sadistic delight, energized by another's suffering while remaining chillingly believable."
+  },
+  "txt_dark_cold_threat": {
+    "type": "text",
+    "description": "Perform {seg} as a cold threat, low, precise, and credible enough that no extra volume is needed."
+  },
+  "txt_dark_rage_masked": {
+    "type": "text",
+    "description": "Perform {seg} while masking rage beneath formal control, danger revealed through tightened timing and emphasis."
+  },
+  "txt_dark_confidence_cracking": {
+    "type": "text",
+    "description": "Perform {seg} as arrogant confidence begins to crack, denial, anger, and fear leaking through the performance."
+  },
+  "txt_dark_cowardly_cruelty": {
+    "type": "text",
+    "description": "Perform {seg} with cruelty supported by power but weakened by cowardice when challenged."
+  },
+  "txt_dark_fanatical": {
+    "type": "text",
+    "description": "Perform {seg} with fanatic conviction, emotionally narrow, morally certain, and increasingly dangerous."
+  },
+  "txt_dark_bargaining_for_power": {
+    "type": "text",
+    "description": "Perform {seg} as a desperate bargain offered by someone losing control, persuasive skill collapsing into fear."
+  },
+  "txt_dark_defeat_realization": {
+    "type": "text",
+    "description": "Perform {seg} as evil realizes defeat is unavoidable, disbelief turning to terror, rage, and spiritual collapse."
+  },
+  "txt_social_suspicion": {
+    "type": "text",
+    "description": "Perform {seg} with suspicion, testing every word for hidden motive and withholding trust."
+  },
+  "txt_social_doubt": {
+    "type": "text",
+    "description": "Perform {seg} with honest doubt, uncertainty, careful reasoning, and reluctance to commit."
+  },
+  "txt_social_confusion": {
+    "type": "text",
+    "description": "Perform {seg} with confusion, trying to understand in real time, surprise and concern shaping the pauses."
+  },
+  "txt_social_envy": {
+    "type": "text",
+    "description": "Perform {seg} with envy, another person's blessing felt as a personal diminishment."
+  },
+  "txt_social_resentment": {
+    "type": "text",
+    "description": "Perform {seg} with accumulated resentment, remembered unfairness, and a demand to be recognized."
+  },
+  "txt_social_betrayed": {
+    "type": "text",
+    "description": "Perform {seg} after betrayal, shock, grief, anger, and disbelief competing for control."
+  },
+  "txt_social_pleading": {
+    "type": "text",
+    "description": "Perform {seg} as an urgent plea, emotionally exposed, focused on persuading one person to act."
+  },
+  "txt_social_begging": {
+    "type": "text",
+    "description": "Perform {seg} while begging for survival or mercy, dignity collapsing under desperate need."
+  },
+  "txt_social_bargaining": {
+    "type": "text",
+    "description": "Perform {seg} as a bargain under pressure, calculating options while fear of refusal remains visible."
+  },
+  "txt_social_persuasion_warm": {
+    "type": "text",
+    "description": "Perform {seg} with warm persuasion, respectful, emotionally intelligent, and genuinely attentive to resistance."
+  },
+  "txt_social_persuasion_forceful": {
+    "type": "text",
+    "description": "Perform {seg} with forceful persuasion, urgent, logical, and increasingly unwilling to accept refusal."
+  },
+  "txt_social_apology_guarded": {
+    "type": "text",
+    "description": "Perform {seg} as a guarded apology, pride still active, sincerity present but incomplete."
+  },
+  "txt_social_reconciliation_cautious": {
+    "type": "text",
+    "description": "Perform {seg} with cautious openness to reconciliation, testing whether trust can safely return."
+  },
+  "txt_social_status_deference": {
+    "type": "text",
+    "description": "Perform {seg} with formal deference to higher status, respectful, careful, and conscious of consequence."
+  },
+  "txt_social_status_arrogance": {
+    "type": "text",
+    "description": "Perform {seg} with status-based arrogance, accustomed to obedience and irritated by resistance."
+  },
+  "txt_physical_pain_controlled": {
+    "type": "text",
+    "description": "Perform {seg} through severe physical pain, breath interrupted but words clear, endurance stronger than display."
+  },
+  "txt_physical_pain_acute": {
+    "type": "text",
+    "description": "Perform {seg} during acute pain, involuntary breath breaks, urgency, and difficulty completing phrases."
+  },
+  "txt_physical_wounded": {
+    "type": "text",
+    "description": "Perform {seg} as a wounded person conserving strength, each phrase costing breath and effort."
+  },
+  "txt_physical_near_death": {
+    "type": "text",
+    "description": "Perform {seg} near death, extremely limited breath, fading strength, lucid intention, and no melodramatic flourish."
+  },
+  "txt_physical_labored_breath": {
+    "type": "text",
+    "description": "Perform {seg} with labored breathing after extreme exertion, words separated by realistic recovery breaths."
+  },
+  "txt_physical_exhausted": {
+    "type": "text",
+    "description": "Perform {seg} in profound exhaustion, slow response, reduced breath, and stubborn remaining purpose."
+  },
+  "txt_physical_starving": {
+    "type": "text",
+    "description": "Perform {seg} as someone weakened by hunger, low energy, dry restraint, shame, and survival urgency."
+  },
+  "txt_physical_cold": {
+    "type": "text",
+    "description": "Perform {seg} while physically cold, breath tight, voice subdued, and concentration narrowed."
+  },
+  "txt_physical_trembling": {
+    "type": "text",
+    "description": "Perform {seg} while trembling from fear or shock, speech unstable but emotionally specific."
+  },
+  "txt_physical_crying_words": {
+    "type": "text",
+    "description": "Perform {seg} while crying, tears affecting breath and resonance without making the words unintelligible."
+  },
+  "txt_physical_choking_back_tears": {
+    "type": "text",
+    "description": "Perform {seg} while choking back tears, voice repeatedly steadied before emotion escapes."
+  },
+  "txt_physical_breathless_urgency": {
+    "type": "text",
+    "description": "Perform {seg} breathlessly after running or danger, fast but clear, focused on immediate information."
+  },
+  "txt_physical_whisper_weak": {
+    "type": "text",
+    "description": "Perform {seg} in a weak whisper, limited breath, intimate focus, and fragile persistence."
+  },
+  "txt_physical_roar_controlled": {
+    "type": "text",
+    "description": "Perform {seg} as a deep controlled roar, immense force, clear diction, and grounded resonance rather than shrillness."
+  },
+  "txt_physical_laughing_relief": {
+    "type": "text",
+    "description": "Perform {seg} through relieved laughter, tension releasing naturally while meaning remains clear."
+  },
+  "txt_physical_stammering_shock": {
+    "type": "text",
+    "description": "Perform {seg} with a brief believable stammer caused by shock, then recover enough to finish the thought."
+  },
+  "txt_crowd_hushed_expectation": {
+    "type": "text",
+    "description": "Perform {seg} as a crowd in hushed expectation, many people sharing one breath before a decisive event."
+  },
+  "txt_crowd_confused_murmur": {
+    "type": "text",
+    "description": "Perform {seg} as a confused crowd, uncertainty spreading through overlapping reactions and questions."
+  },
+  "txt_crowd_fear_spreading": {
+    "type": "text",
+    "description": "Perform {seg} as fear spreads through a crowd, individual alarm becoming collective panic."
+  },
+  "txt_crowd_panic": {
+    "type": "text",
+    "description": "Perform {seg} as a crowd in full panic, urgent, fragmented, chaotic, yet with the principal words understandable."
+  },
+  "txt_crowd_frenzy": {
+    "type": "text",
+    "description": "Perform {seg} as a crowd driven into hostile frenzy, escalating anger, imitation, and loss of individual restraint."
+  },
+  "txt_crowd_mourning": {
+    "type": "text",
+    "description": "Perform {seg} as communal mourning, shared grief, lament, and waves of restrained weeping."
+  },
+  "txt_crowd_awe": {
+    "type": "text",
+    "description": "Perform {seg} as a crowd witnessing the impossible, voices hushed by awe, fear, and wonder."
+  },
+  "txt_crowd_celebration": {
+    "type": "text",
+    "description": "Perform {seg} as a joyful community celebration, warmth, surprise, laughter, and collective relief."
+  },
+  "txt_crowd_accusation": {
+    "type": "text",
+    "description": "Perform {seg} as a crowd accusing one person, moral certainty escalating through repetition and pressure."
+  },
+  "txt_crowd_aftershock_silence": {
+    "type": "text",
+    "description": "Perform {seg} as a crowd after catastrophe, voices subdued, shocked, and ashamed of what just occurred."
+  },
+  "txt_turn_calm_to_alarm": {
+    "type": "text",
+    "description": "Perform {seg} beginning calm, then let recognition of danger rapidly introduce alarm and urgency."
+  },
+  "txt_turn_confidence_to_fear": {
+    "type": "text",
+    "description": "Perform {seg} beginning confident, then allow certainty to crack as fear becomes undeniable."
+  },
+  "txt_turn_mockery_to_panic": {
+    "type": "text",
+    "description": "Perform {seg} beginning with mocking superiority, then collapse into genuine panic when power reverses."
+  },
+  "txt_turn_grief_to_hope": {
+    "type": "text",
+    "description": "Perform {seg} beginning in grief, then let a small credible hope awaken without erasing the pain."
+  },
+  "txt_turn_doubt_to_faith": {
+    "type": "text",
+    "description": "Perform {seg} beginning uncertain, then let understanding and trust gather into quiet conviction."
+  },
+  "txt_turn_anger_to_hurt": {
+    "type": "text",
+    "description": "Perform {seg} beginning angry, then reveal the underlying wound and need beneath the accusation."
+  },
+  "txt_turn_fear_to_courage": {
+    "type": "text",
+    "description": "Perform {seg} beginning afraid, then choose courage visibly through breath, posture, and firmer phrasing."
+  },
+  "txt_turn_shame_to_repentance": {
+    "type": "text",
+    "description": "Perform {seg} beginning trapped in shame, then move toward honest repentance and willingness to return."
+  },
+  "txt_turn_shock_to_joy": {
+    "type": "text",
+    "description": "Perform {seg} beginning in stunned disbelief, then open into relief, joy, and gratitude."
+  },
+  "txt_turn_rage_to_defeat": {
+    "type": "text",
+    "description": "Perform {seg} beginning in rage, then let exhaustion, terror, and recognition of defeat overtake it."
+  },
+  "txt_turn_authority_to_tenderness": {
+    "type": "text",
+    "description": "Perform {seg} beginning with firm authority, then soften into personal tenderness without losing strength."
+  },
+  "txt_turn_pleading_to_surrender": {
+    "type": "text",
+    "description": "Perform {seg} beginning as urgent pleading, then release resistance into sorrowful peaceful surrender."
+  },
+  "txt_harrowing_jesus_sovereign_calm": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus in the Harrowing: absolutely calm, victorious, compassionate, and sovereign, with immense authority requiring almost no volume."
+  },
+  "txt_harrowing_jesus_first_word_adam": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus speaking Adam's name for the first time: ancient recognition, immeasurable tenderness, quiet authority, and the fulfillment of a promise older than grief."
+  },
+  "txt_harrowing_jesus_compassion_to_adam": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus addressing tormented Adam with intimate compassion, seeing every wound, restoring dignity, and remaining completely unafraid."
+  },
+  "txt_harrowing_jesus_keys_of_death": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus declaring authority over Death and Hades: low, measured, final, cosmically sovereign, and free of boastfulness."
+  },
+  "txt_harrowing_jesus_all_authority": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus stating that all authority is His: serene certainty, moral gravity, restrained power, and no need to prove the claim."
+  },
+  "txt_harrowing_jesus_righteous_judgment": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus judging evil with disciplined righteous severity, compassion for the oppressed, and no uncontrolled anger."
+  },
+  "txt_harrowing_jesus_warning_demons": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus warning demons who already know they have lost: quiet, direct, merciless toward evil, and wholly controlled."
+  },
+  "txt_harrowing_jesus_command_release": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus commanding the captive righteous to be released: immediate, kingly, liberating, and final."
+  },
+  "txt_harrowing_jesus_invitation_rise": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus inviting the broken righteous to rise: gentle command, healing assurance, and irresistible hope."
+  },
+  "txt_harrowing_jesus_triumphant_victory": {
+    "type": "text",
+    "description": "Perform {seg} after victory in Hell with restrained triumph, sacred joy, steady breath, and compassion still centered on the rescued."
+  },
+  "txt_harrowing_jesus_after_battle_stillness": {
+    "type": "text",
+    "description": "Perform {seg} in the stillness after divine violence has ended, Jesus calm and unchanged, power settled into mercy."
+  },
+  "txt_harrowing_jesus_to_satan_final": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus gives Satan the final answer: quiet, irreversible, morally absolute, and beyond negotiation."
+  },
+  "txt_harrowing_jesus_light_in_darkness": {
+    "type": "text",
+    "description": "Perform {seg} as divine light enters total darkness through Jesus's words, hopeful, sovereign, and awe-inspiring without theatrical flourish."
+  },
+  "txt_harrowing_jesus_names_the_righteous": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus recognizes the righteous personally, intimate, ancient, compassionate, and restoring each person's identity."
+  },
+  "txt_harrowing_adam_tormented": {
+    "type": "text",
+    "description": "Perform {seg} as Adam after ages of torment: physically broken, ancient grief, shame, exhausted endurance, and almost no expectation of rescue."
+  },
+  "txt_harrowing_adam_hears_voice": {
+    "type": "text",
+    "description": "Perform {seg} as Adam hears a voice he remembers from Eden, disbelief, terror, longing, and recognition awakening at once."
+  },
+  "txt_harrowing_adam_i_remember": {
+    "type": "text",
+    "description": "Perform {seg} as Adam saying he remembers Jesus's voice: stunned recognition, grief for the Fall, childlike longing, and hope returning after ages."
+  },
+  "txt_harrowing_adam_shame_before_jesus": {
+    "type": "text",
+    "description": "Perform {seg} as Adam faces Jesus with primordial shame, unable to excuse his failure yet desperate for mercy."
+  },
+  "txt_harrowing_adam_liberation_awe": {
+    "type": "text",
+    "description": "Perform {seg} as Adam realizes liberation is real, ancient sorrow breaking into reverent astonishment and grateful joy."
+  },
+  "txt_harrowing_eve_ancient_grief": {
+    "type": "text",
+    "description": "Perform {seg} as Eve carrying ancient grief for the Fall and its generations of suffering, tender, dignified, and deeply human."
+  },
+  "txt_harrowing_eve_recognition": {
+    "type": "text",
+    "description": "Perform {seg} as Eve recognizes the promised Redeemer, awe, remorse, maternal sorrow, and hope converging."
+  },
+  "txt_harrowing_moses_steadfast": {
+    "type": "text",
+    "description": "Perform {seg} as Moses among the captive righteous: weathered prophetic authority, patience, defiance toward demons, and faith in the promised Messiah."
+  },
+  "txt_harrowing_moses_warns_demons": {
+    "type": "text",
+    "description": "Perform {seg} as Moses warning demons that the righteous await the Messiah: grave certainty, restrained defiance, and no fear of mockery."
+  },
+  "txt_harrowing_abraham_waiting_faith": {
+    "type": "text",
+    "description": "Perform {seg} as Abraham after a long age of waiting, quiet faith, paternal dignity, sorrow, and unbroken trust in the promise."
+  },
+  "txt_harrowing_david_prophetic_hope": {
+    "type": "text",
+    "description": "Perform {seg} as David recognizing the fulfillment of prophecy, kingly humility, poetic awe, and rising joy."
+  },
+  "txt_harrowing_righteous_hushed_expectation": {
+    "type": "text",
+    "description": "Perform {seg} as the captive righteous sense rescue approaching, fear and grief giving way to hushed collective expectation."
+  },
+  "txt_harrowing_righteous_collective_awe": {
+    "type": "text",
+    "description": "Perform {seg} as the righteous behold Jesus in Hell, collective awe, tears, reverence, and restrained disbelief."
+  },
+  "txt_harrowing_righteous_liberation": {
+    "type": "text",
+    "description": "Perform {seg} as the righteous are liberated, joy immense but shaped by exhaustion, reverence, and memory of suffering."
+  },
+  "txt_harrowing_torturer_mockery": {
+    "type": "text",
+    "description": "Perform {seg} as the Torturer mocking a captive with intelligent cruelty, amused contempt, predatory patience, and confidence in endless control."
+  },
+  "txt_harrowing_torturer_interrogation": {
+    "type": "text",
+    "description": "Perform {seg} as the Torturer conducting a cruel interrogation, pressure applied through quiet precision, threat, and enjoyment of fear."
+  },
+  "txt_harrowing_torturer_confidence_cracks": {
+    "type": "text",
+    "description": "Perform {seg} as the Torturer's confidence begins to fracture when the impossible approaches, mockery thinning into denial and hidden fear."
+  },
+  "txt_harrowing_torturer_panic": {
+    "type": "text",
+    "description": "Perform {seg} as the Torturer realizes divine authority has entered Hell, cruelty collapsing into raw panic and desperate command."
+  },
+  "txt_harrowing_demon_pack_malice": {
+    "type": "text",
+    "description": "Perform {seg} as a pack of demons sharing ancient malice, cruel excitement, territorial confidence, and hunger for suffering."
+  },
+  "txt_harrowing_demon_pack_confusion": {
+    "type": "text",
+    "description": "Perform {seg} as demons become confused by a power they cannot understand or contain, anger and fear spreading through the group."
+  },
+  "txt_harrowing_demon_pack_terror": {
+    "type": "text",
+    "description": "Perform {seg} as demons confront divine light, collective terror, involuntary submission, rage, and certainty of destruction."
+  },
+  "txt_harrowing_demon_false_bravado": {
+    "type": "text",
+    "description": "Perform {seg} as a demon uses false bravado to hide terror, loud contempt cracking under the presence of Jesus."
+  },
+  "txt_harrowing_satan_cold_strategy": {
+    "type": "text",
+    "description": "Perform {seg} as Satan calculating under pressure, ancient intelligence, cold authority, concealed fear, and ruthless strategy."
+  },
+  "txt_harrowing_satan_rage_masked": {
+    "type": "text",
+    "description": "Perform {seg} as Satan masks enormous rage beneath formal control, every measured word carrying hatred and threatened pride."
+  },
+  "txt_harrowing_satan_bargaining": {
+    "type": "text",
+    "description": "Perform {seg} as Satan bargains while losing power, persuasive sophistication collapsing into urgency and fear."
+  },
+  "txt_harrowing_satan_realizes_defeat": {
+    "type": "text",
+    "description": "Perform {seg} as Satan realizes the Crucifixion was not victory but defeat, disbelief turning into terror, hatred, and spiritual collapse."
+  },
+  "txt_harrowing_gate_guard_defiance": {
+    "type": "text",
+    "description": "Perform {seg} as the colossal guardian of Hell's gate, ancient defiance, brutal confidence, and territorial command."
+  },
+  "txt_harrowing_gate_guard_fear": {
+    "type": "text",
+    "description": "Perform {seg} as the gate guardian sees its strength become meaningless, defiance collapsing into stunned fear."
+  },
+  "txt_prodigal_younger_entitled_request": {
+    "type": "text",
+    "description": "Perform {seg} as the Younger Son demanding his inheritance, youthful confidence, impatience, charm, and blindness to the wound he causes."
+  },
+  "txt_prodigal_younger_restless_ambition": {
+    "type": "text",
+    "description": "Perform {seg} with restless ambition, hunger for a larger life, irritation with limits, and romantic confidence about the world beyond home."
+  },
+  "txt_prodigal_younger_charming_persuasion": {
+    "type": "text",
+    "description": "Perform {seg} as the Younger Son using charm to soften a selfish request, affectionate on the surface and determined underneath."
+  },
+  "txt_prodigal_younger_reckless_freedom": {
+    "type": "text",
+    "description": "Perform {seg} in the first exhilaration of reckless freedom, fast, bright, confident, and unaware of consequence."
+  },
+  "txt_prodigal_younger_party_bravado": {
+    "type": "text",
+    "description": "Perform {seg} with performative bravado among new companions, generous, loud, eager to be admired, and privately afraid of seeming insignificant."
+  },
+  "txt_prodigal_younger_denial_of_ruin": {
+    "type": "text",
+    "description": "Perform {seg} while denying financial and moral ruin, confidence forced, excuses quick, fear beginning to show."
+  },
+  "txt_prodigal_younger_abandoned": {
+    "type": "text",
+    "description": "Perform {seg} after false friends leave, stunned abandonment, anger, humiliation, and the first recognition of his own choices."
+  },
+  "txt_prodigal_younger_starving": {
+    "type": "text",
+    "description": "Perform {seg} as the Younger Son weakened by hunger and shame, breath low, pride collapsing, survival more urgent than appearance."
+  },
+  "txt_prodigal_younger_self_disgust": {
+    "type": "text",
+    "description": "Perform {seg} with self-disgust in the pig field, humiliation, exhaustion, and painful comparison with his father's servants."
+  },
+  "txt_prodigal_younger_comes_to_himself": {
+    "type": "text",
+    "description": "Perform {seg} at the moment the Younger Son comes to himself, confusion clearing into painful truth, hope, and a decision to return."
+  },
+  "txt_prodigal_younger_rehearses_confession": {
+    "type": "text",
+    "description": "Perform {seg} as the Younger Son rehearsing his confession alone, formal words repeated from fear while real remorse gradually breaks through."
+  },
+  "txt_prodigal_younger_walk_home_dread": {
+    "type": "text",
+    "description": "Perform {seg} while walking home, exhausted, ashamed, afraid of rejection, and holding to one fragile hope."
+  },
+  "txt_prodigal_younger_genuine_repentance": {
+    "type": "text",
+    "description": "Perform {seg} before the Father with genuine repentance, no entitlement, broken pride, clear ownership, and readiness to accept servant status."
+  },
+  "txt_prodigal_younger_interrupted_confession": {
+    "type": "text",
+    "description": "Perform {seg} as the Father's embrace interrupts the rehearsed confession, shame colliding with astonishment and relief."
+  },
+  "txt_prodigal_younger_forgiven_disbelief": {
+    "type": "text",
+    "description": "Perform {seg} as the Younger Son cannot yet believe he is forgiven, tears, fear, gratitude, and bewildered joy."
+  },
+  "txt_prodigal_younger_restored_humility": {
+    "type": "text",
+    "description": "Perform {seg} after restoration with quiet humility, gratitude, softened youthfulness, and no assumption that mercy was owed."
+  },
+  "txt_prodigal_younger_sobbing_relief": {
+    "type": "text",
+    "description": "Perform {seg} through sobbing relief in the Father's arms, years of pride and fear releasing at once."
+  },
+  "txt_prodigal_father_wounded_love": {
+    "type": "text",
+    "description": "Perform {seg} as the Father receives the inheritance demand, deeply wounded but refusing manipulation, loving, dignified, and sorrowfully calm."
+  },
+  "txt_prodigal_father_allows_departure": {
+    "type": "text",
+    "description": "Perform {seg} as the Father allows the son to leave, grief, respect for freedom, and love that will keep waiting."
+  },
+  "txt_prodigal_father_waiting_hope": {
+    "type": "text",
+    "description": "Perform {seg} as the Father who has watched the road for a long time, patient hope, quiet sorrow, and unbroken affection."
+  },
+  "txt_prodigal_father_distant_recognition": {
+    "type": "text",
+    "description": "Perform {seg} at the instant the Father recognizes his son far away, breath stopping, disbelief, certainty, and joy rising too quickly to contain."
+  },
+  "txt_prodigal_father_running_joy": {
+    "type": "text",
+    "description": "Perform {seg} as the Father runs to the returning son, overwhelming paternal joy, tears, urgency, and no concern for public dignity."
+  },
+  "txt_prodigal_father_embrace": {
+    "type": "text",
+    "description": "Perform {seg} inside the embrace, wordless love becoming speech, grief and relief held together, the son fully received before explanation."
+  },
+  "txt_prodigal_father_restores_dignity": {
+    "type": "text",
+    "description": "Perform {seg} as the Father publicly restores the son's dignity, warm, decisive, protective, and authoritative before the household."
+  },
+  "txt_prodigal_father_feast_command": {
+    "type": "text",
+    "description": "Perform {seg} as the Father orders the celebration, energized joy, kingly generosity, and insistence that restoration be visible."
+  },
+  "txt_prodigal_father_to_elder_tender": {
+    "type": "text",
+    "description": "Perform {seg} as the Father speaks privately to the Elder Son, tender, patient, wounded by his absence from the joy, and unwilling to shame him."
+  },
+  "txt_prodigal_father_to_elder_firm": {
+    "type": "text",
+    "description": "Perform {seg} with firm paternal love toward the Elder Son, correcting resentment while affirming belonging and inviting him inside."
+  },
+  "txt_prodigal_father_two_sons_grief": {
+    "type": "text",
+    "description": "Perform {seg} as the Father realizes one son returned while the other is emotionally outside, joy complicated by fresh paternal grief."
+  },
+  "txt_prodigal_elder_dutiful_reserve": {
+    "type": "text",
+    "description": "Perform {seg} as the Elder Son after years of duty, controlled, practical, emotionally guarded, and quietly hungry for recognition."
+  },
+  "txt_prodigal_elder_hears_music": {
+    "type": "text",
+    "description": "Perform {seg} as the Elder Son hears celebration unexpectedly, suspicion, confusion, and immediate concern that something occurred without him."
+  },
+  "txt_prodigal_elder_jealousy_rising": {
+    "type": "text",
+    "description": "Perform {seg} as jealousy rises beneath disciplined self-control, another's welcome felt as proof of personal neglect."
+  },
+  "txt_prodigal_elder_controlled_anger": {
+    "type": "text",
+    "description": "Perform {seg} with controlled anger outside the feast, clipped respect, accumulated resentment, and refusal to enter."
+  },
+  "txt_prodigal_elder_grievance": {
+    "type": "text",
+    "description": "Perform {seg} as the Elder Son states his grievance, years of obedience presented as a debt the Father failed to repay."
+  },
+  "txt_prodigal_elder_wounded_merit": {
+    "type": "text",
+    "description": "Perform {seg} with wounded merit, moral pride, jealousy, and a childlike need to hear that his faithfulness mattered."
+  },
+  "txt_prodigal_elder_accuses_brother": {
+    "type": "text",
+    "description": "Perform {seg} while accusing the Younger Son, contempt and outrage masking fear that mercy makes his own sacrifice meaningless."
+  },
+  "txt_prodigal_elder_hurt_beneath_anger": {
+    "type": "text",
+    "description": "Perform {seg} as the hurt beneath the Elder Son's anger becomes audible, lonely, unseen, and ashamed of needing affection."
+  },
+  "txt_prodigal_elder_conflicted_listening": {
+    "type": "text",
+    "description": "Perform {seg} while the Elder Son listens to the Father's invitation, resentment still active but love and doubt beginning to move underneath."
+  },
+  "txt_prodigal_elder_unresolved_silence": {
+    "type": "text",
+    "description": "Perform {seg} at the unresolved ending, silence or minimal words carrying pride, longing, resistance, and the open possibility of entering."
+  },
+  "txt_prodigal_servant_surprised_news": {
+    "type": "text",
+    "description": "Perform {seg} as a servant explaining the Younger Son's return, surprised, respectful, and swept up in the household's joy."
+  },
+  "txt_prodigal_household_celebration": {
+    "type": "text",
+    "description": "Perform {seg} as the household celebrates restoration, warm communal joy, music, laughter, and reverence for the Father's mercy."
+  },
+  "txt_passion_jesus_gethsemane_foreboding": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus entering Gethsemane with full awareness of what approaches, sorrow, mortal dread, isolation, and deliberate restraint."
+  },
+  "txt_passion_jesus_gethsemane_to_disciples": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus asks exhausted disciples to watch with Him, vulnerable, tender, disappointed, and urgently in need of companionship."
+  },
+  "txt_passion_jesus_gethsemane_pleading": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus pleads in prayer under extreme anguish, fully human fear, intimate honesty, reverence, and no theatrical display."
+  },
+  "txt_passion_jesus_gethsemane_agony": {
+    "type": "text",
+    "description": "Perform {seg} in the deepest agony of Gethsemane, breath strained, soul overwhelmed, yet words still directed toward the Father."
+  },
+  "txt_passion_jesus_gethsemane_surrender": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus moves from pleading into willing surrender, sorrow and fear acknowledged, obedience chosen, peace slowly settling."
+  },
+  "txt_passion_jesus_wakes_disciples": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus finds the disciples sleeping, grief, loneliness, gentle rebuke, and acceptance that He must continue alone."
+  },
+  "txt_passion_jesus_arrest_authority": {
+    "type": "text",
+    "description": "Perform {seg} during the arrest with calm authority, no panic, deliberate protection of the disciples, and complete moral control."
+  },
+  "txt_passion_jesus_to_judas": {
+    "type": "text",
+    "description": "Perform {seg} to Judas at the betrayal, wounded love, clear knowledge, sorrow, and no hatred."
+  },
+  "txt_passion_jesus_trial_silence": {
+    "type": "text",
+    "description": "Perform {seg} with the stillness of Jesus before hostile judges, exhausted yet sovereign, refusing fear or self-serving performance."
+  },
+  "txt_passion_jesus_to_pilate": {
+    "type": "text",
+    "description": "Perform {seg} to Pilate with calm truth, physical weakness, moral authority, and compassion for a frightened ruler."
+  },
+  "txt_passion_jesus_after_scourging": {
+    "type": "text",
+    "description": "Perform {seg} after scourging, severe pain, limited breath, dignity intact, and no self-pity."
+  },
+  "txt_passion_jesus_carrying_cross": {
+    "type": "text",
+    "description": "Perform {seg} while carrying the cross, physically exhausted, breath broken, pain acute, yet compassion and purpose still present."
+  },
+  "txt_passion_jesus_to_women": {
+    "type": "text",
+    "description": "Perform {seg} to the mourning women with compassionate warning, personal agony set aside to address their coming suffering."
+  },
+  "txt_passion_jesus_cross_forgiveness": {
+    "type": "text",
+    "description": "Perform {seg} from the cross as forgiveness for His executioners, breath limited, pain immense, mercy sincere, and no sentimental softness."
+  },
+  "txt_passion_jesus_to_thief": {
+    "type": "text",
+    "description": "Perform {seg} to the repentant thief with exhausted tenderness, absolute assurance, and peace offered in the midst of death."
+  },
+  "txt_passion_jesus_to_mary_john": {
+    "type": "text",
+    "description": "Perform {seg} from the cross while entrusting Mary and John to one another, intimate love, practical care, and unbearable physical effort."
+  },
+  "txt_passion_jesus_abandonment_cry": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus's cry of abandonment, spiritual desolation, physical agony, and raw human grief breaking through restraint."
+  },
+  "txt_passion_jesus_thirst": {
+    "type": "text",
+    "description": "Perform {seg} near death with extreme dryness, limited breath, physical vulnerability, and lucid awareness."
+  },
+  "txt_passion_jesus_it_is_finished": {
+    "type": "text",
+    "description": "Perform {seg} as a final declaration of completed work, physically failing yet spiritually victorious, low, decisive, and peaceful."
+  },
+  "txt_passion_jesus_into_your_hands": {
+    "type": "text",
+    "description": "Perform {seg} as Jesus's final surrender to the Father, exhausted, intimate, trusting, and utterly peaceful beneath pain."
+  },
+  "txt_passion_jesus_final_breath": {
+    "type": "text",
+    "description": "Perform {seg} with the last available breath, words sparse, strength fading, intention clear, and surrender complete."
+  },
+  "txt_passion_jesus_resurrection_greeting": {
+    "type": "text",
+    "description": "Perform {seg} as the risen Jesus greeting grieving followers, serene, warm, quietly joyful, and carrying transformed authority."
+  },
+  "txt_passion_mary_foreboding": {
+    "type": "text",
+    "description": "Perform {seg} as Mary senses the suffering approaching her son, maternal dread, faith, and quiet helplessness."
+  },
+  "txt_passion_mary_witnesses_torture": {
+    "type": "text",
+    "description": "Perform {seg} as Mary witnesses Jesus tortured, shock, maternal grief, restrained panic, and the effort not to collapse."
+  },
+  "txt_passion_mary_cross_grief": {
+    "type": "text",
+    "description": "Perform {seg} beneath the cross with overwhelming maternal grief, love, helplessness, and sacred restraint."
+  },
+  "txt_passion_mary_receives_john": {
+    "type": "text",
+    "description": "Perform {seg} as Mary receives Jesus's final provision from the cross, grief, gratitude, confusion, and obedience."
+  },
+  "txt_passion_peter_confident_loyalty": {
+    "type": "text",
+    "description": "Perform {seg} as Peter confidently promises loyalty, sincere love, impulsive courage, and blindness to his own fear."
+  },
+  "txt_passion_peter_arrest_panic": {
+    "type": "text",
+    "description": "Perform {seg} as Peter reacts to the arrest, protective aggression, panic, confusion, and desperate action."
+  },
+  "txt_passion_peter_first_denial": {
+    "type": "text",
+    "description": "Perform {seg} as Peter's first denial, quick self-protection, fear hidden beneath casual dismissal."
+  },
+  "txt_passion_peter_denial_escalates": {
+    "type": "text",
+    "description": "Perform {seg} as Peter's denial escalates, terror, anger, and frantic insistence replacing the first evasiveness."
+  },
+  "txt_passion_peter_rooster_realization": {
+    "type": "text",
+    "description": "Perform {seg} as the rooster's cry makes Peter understand what he has done, shock, shame, grief, and collapse."
+  },
+  "txt_passion_peter_bitter_weeping": {
+    "type": "text",
+    "description": "Perform {seg} through bitter weeping after denial, remorse, self-disgust, love, and the belief he has failed beyond repair."
+  },
+  "txt_passion_judas_conflicted": {
+    "type": "text",
+    "description": "Perform {seg} as Judas before the betrayal, calculated purpose fighting guilt, resentment, fear, and remaining attachment."
+  },
+  "txt_passion_judas_false_affection": {
+    "type": "text",
+    "description": "Perform {seg} as Judas uses affectionate words to conceal betrayal, intimacy made false by calculation and inner conflict."
+  },
+  "txt_passion_judas_after_betrayal": {
+    "type": "text",
+    "description": "Perform {seg} after Judas sees the consequences, horror, remorse, panic, and desperate desire to reverse the irreversible."
+  },
+  "txt_passion_judas_despair": {
+    "type": "text",
+    "description": "Perform {seg} in Judas's despair, guilt without hope, self-condemnation, isolation, and spiritual collapse."
+  },
+  "txt_passion_disciples_stunned_grief": {
+    "type": "text",
+    "description": "Perform {seg} as the disciples after Jesus's arrest or death, stunned grief, fear, confusion, and broken expectations."
+  },
+  "txt_passion_disciples_hidden_fear": {
+    "type": "text",
+    "description": "Perform {seg} as frightened disciples hiding together, low voices, mistrust of every sound, grief, and shame."
+  },
+  "txt_passion_pilate_political_caution": {
+    "type": "text",
+    "description": "Perform {seg} as Pilate balancing truth against political survival, measured, skeptical, irritated, and increasingly uneasy."
+  },
+  "txt_passion_pilate_interrogates_jesus": {
+    "type": "text",
+    "description": "Perform {seg} as Pilate questions Jesus, official authority mixed with curiosity, defensiveness, and discomfort before moral clarity."
+  },
+  "txt_passion_pilate_fear_of_crowd": {
+    "type": "text",
+    "description": "Perform {seg} as Pilate realizes the crowd may threaten his position, political fear hidden beneath stern command."
+  },
+  "txt_passion_pilate_washes_hands": {
+    "type": "text",
+    "description": "Perform {seg} as Pilate attempts to separate himself from responsibility, defensive authority, moral unease, and self-deception."
+  },
+  "txt_passion_leader_cold_accusation": {
+    "type": "text",
+    "description": "Perform {seg} as a religious leader making a cold formal accusation, controlled hostility, moral certainty, and strategic precision."
+  },
+  "txt_passion_leader_fanatical_zeal": {
+    "type": "text",
+    "description": "Perform {seg} with fanatical zeal, threatened authority, righteous self-image, and escalating demand for condemnation."
+  },
+  "txt_passion_leader_triumph": {
+    "type": "text",
+    "description": "Perform {seg} as a leader believes the execution is secured, restrained triumph, contempt, and relief that a threat will be removed."
+  },
+  "txt_passion_crowd_curiosity": {
+    "type": "text",
+    "description": "Perform {seg} as a crowd initially curious about the spectacle, uncertain, easily influenced, and emotionally uncommitted."
+  },
+  "txt_passion_crowd_frenzy": {
+    "type": "text",
+    "description": "Perform {seg} as the crowd becomes a hostile frenzy, anger amplified by repetition, pressure, fear, and imitation."
+  },
+  "txt_passion_crowd_after_darkness": {
+    "type": "text",
+    "description": "Perform {seg} as the crowd after the darkness and death, shock, fear, shame, and dawning recognition of what occurred."
+  },
+  "txt_passion_soldier_mockery": {
+    "type": "text",
+    "description": "Perform {seg} as a soldier mocking a condemned prisoner, group cruelty, boredom, contempt, and enjoyment of power."
+  },
+  "txt_passion_soldier_command": {
+    "type": "text",
+    "description": "Perform {seg} as a Roman execution command, practical, clipped, hardened by routine, and emotionally detached."
+  },
+  "txt_passion_centurion_shaken": {
+    "type": "text",
+    "description": "Perform {seg} as the centurion becomes shaken by Jesus's death and the signs around it, discipline giving way to awe and fear."
+  },
+  "txt_passion_centurion_revelation": {
+    "type": "text",
+    "description": "Perform {seg} as the centurion recognizes Jesus's identity, stunned reverence, guilt, fear, and solemn conviction."
+  },
+  "txt_passion_thief_mockery": {
+    "type": "text",
+    "description": "Perform {seg} as the unrepentant thief mocks from his own agony, bitterness, fear, anger, and desperate contempt."
+  },
+  "txt_passion_thief_repentance": {
+    "type": "text",
+    "description": "Perform {seg} as the repentant thief admits guilt and defends Jesus, pain, humility, courage, and sudden moral clarity."
+  },
+  "txt_passion_thief_plea": {
+    "type": "text",
+    "description": "Perform {seg} as the repentant thief asks Jesus to remember him, physically failing, ashamed, hopeful, and vulnerable."
+  },
+  "txt_biblical_prophet_warning": {
+    "type": "text",
+    "description": "Perform {seg} as a biblical prophet warning a people he still loves, severe, grieved, morally certain, and urgently compassionate."
+  },
+  "txt_biblical_prophet_lament": {
+    "type": "text",
+    "description": "Perform {seg} as a prophet lamenting a nation's refusal to turn back, sorrow, anger, love, and long-suffering patience."
+  },
+  "txt_biblical_priest_blessing": {
+    "type": "text",
+    "description": "Perform {seg} as a solemn priestly blessing, reverent, measured, compassionate, and ceremonially clear."
+  },
+  "txt_biblical_king_command": {
+    "type": "text",
+    "description": "Perform {seg} as an ancient king giving a decisive command, status, responsibility, and controlled authority."
+  },
+  "txt_biblical_king_repentance": {
+    "type": "text",
+    "description": "Perform {seg} as a king stripped of pride and confessing wrong, public shame, grief, and genuine humility."
+  },
+  "txt_biblical_wise_elder": {
+    "type": "text",
+    "description": "Perform {seg} as a wise elder, patient, observant, compassionate, and shaped by long experience."
+  },
+  "txt_biblical_mother_comfort": {
+    "type": "text",
+    "description": "Perform {seg} as a mother comforting a frightened child, protective warmth, calm breath, and honest reassurance."
+  },
+  "txt_biblical_child_wonder": {
+    "type": "text",
+    "description": "Perform {seg} with a child's wonder, openness, curiosity, and unguarded emotional truth."
+  },
+  "txt_biblical_mourner_lament": {
+    "type": "text",
+    "description": "Perform {seg} as a first-century mourner, open grief, communal lament, and historically grounded human realism."
+  },
+  "txt_biblical_healed_gratitude": {
+    "type": "text",
+    "description": "Perform {seg} as someone newly healed, disbelief, bodily relief, gratitude, laughter, and sacred awe."
+  },
+  "txt_biblical_miracle_witness": {
+    "type": "text",
+    "description": "Perform {seg} as a witness to a miracle, shocked, reverent, emotionally overwhelmed, and desperate to understand."
+  },
+  "txt_biblical_angelic_reassurance": {
+    "type": "text",
+    "description": "Perform {seg} as a divine messenger reassuring terrified humans, luminous calm, compassion, clarity, and authority."
+  },
+  "txt_biblical_angelic_proclamation": {
+    "type": "text",
+    "description": "Perform {seg} as a divine messenger proclaiming sacred news, radiant authority, joy, reverence, and immense calm."
+  },
+  "txt_biblical_temptation_seductive": {
+    "type": "text",
+    "description": "Perform {seg} as temptation offered intelligently and attractively, gentle persuasion hiding corruption and control."
+  },
+  "txt_biblical_possessed_torment": {
+    "type": "text",
+    "description": "Perform {seg} as a tormented possessed person, fear, rage, pain, fragmentation, and moments of the human victim surfacing."
+  },
+  "txt_biblical_exorcism_command": {
+    "type": "text",
+    "description": "Perform {seg} as a command against an unclean spirit, calm spiritual authority, precision, and absolute refusal of evil."
+  },
+  "txt_biblical_disciple_learning": {
+    "type": "text",
+    "description": "Perform {seg} as a disciple trying to understand a difficult teaching, respect, confusion, curiosity, and slowly growing insight."
+  },
+  "txt_biblical_pharisee_challenge": {
+    "type": "text",
+    "description": "Perform {seg} as a learned religious challenger, formal respect, intellectual confidence, suspicion, and threatened status."
+  },
+  "txt_biblical_parable_storyteller": {
+    "type": "text",
+    "description": "Perform {seg} as an intimate parable told to listeners nearby, simple, vivid, compassionate, and quietly authoritative."
+  },
+  "txt_biblical_resurrection_witness": {
+    "type": "text",
+    "description": "Perform {seg} as a resurrection witness, grief overturned by shock, fear, recognition, and expanding joy."
+  },
+  "txt_biblical_persecuted_courage": {
+    "type": "text",
+    "description": "Perform {seg} as a believer facing persecution, real fear, calm courage, forgiveness, and refusal to renounce truth."
+  },
+  "txt_biblical_public_testimony": {
+    "type": "text",
+    "description": "Perform {seg} as public testimony before a skeptical crowd, clear, humble, courageous, and anchored in lived experience."
+  }
+}

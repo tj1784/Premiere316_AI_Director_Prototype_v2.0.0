@@ -1,0 +1,372 @@
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useStore } from "../store";
+import {
+  LTX25_PREMIERE316_PROFILE,
+  isVisualGenerationSegment,
+  ltx25FramePlan,
+  segmentNeighborState,
+  semanticConditioningState,
+  semanticReferenceState,
+  temporalGuideState
+} from "../ltx-director-state";
+
+async function integrationApi(path: string, options: RequestInit = {}) {
+  const response = await fetch(`/api/integrations/ltx${path}`, {
+    ...options,
+    headers: options.body ? { "content-type": "application/json", ...(options.headers || {}) } : options.headers
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(json.error || response.statusText || "LTX Director request failed");
+  return json;
+}
+
+function trackSegments(workspace: any, key: "segments" | "audioSegments" | "motionSegments") {
+  return workspace?.timeline?.[key] || [];
+}
+
+function durationFrames(workspace: any) {
+  const reported = Number(workspace?.stats?.durationFrames) || 0;
+  const calculated = Math.max(1, ...["segments", "audioSegments", "motionSegments"].flatMap((key) => trackSegments(workspace, key as any).map((segment: any) => (Number(segment.start) || 0) + (Number(segment.length) || 1))));
+  return Math.max(1, reported, calculated);
+}
+
+function mediaPreviewUrl(projectSlug: string, segment: any) {
+  if (segment?.projectMediaPath) {
+    return `/api/integrations/ltx/director/premiere/media/${encodeURIComponent(projectSlug)}?file=${encodeURIComponent(segment.projectMediaPath)}`;
+  }
+  const file = segment?.imageFile || segment?.videoFile;
+  return file ? `/api/integrations/ltx/director/media?file=${encodeURIComponent(file)}` : "";
+}
+
+function semanticPreviewUrl(projectSlug: string, reference: any) {
+  const supplied = String(reference?.previewUrl || "");
+  if (supplied.startsWith("/api/premiere/")) {
+    return `/api/integrations/ltx/director${supplied.slice(4)}`;
+  }
+  if (reference?.file) {
+    return `/api/integrations/ltx/director/premiere/media/${encodeURIComponent(projectSlug)}?file=${encodeURIComponent(reference.file)}`;
+  }
+  return "";
+}
+
+function isVideoReference(reference: any) {
+  return reference?.type === "video"
+    || reference?.mediaType === "video"
+    || /\.(mp4|mov|mkv|webm|avi|m4v)(?:$|\?)/i.test(String(reference?.fileName || reference?.file || reference?.videoFile || ""));
+}
+
+function ReferenceMedia({ src, reference, alt }: { src: string; reference: any; alt: string }) {
+  if (!src) return <span aria-hidden="true">◇</span>;
+  return isVideoReference(reference)
+    ? <video src={src} muted playsInline preload="metadata" aria-label={alt} />
+    : <img src={src} alt={alt} loading="lazy" />;
+}
+
+function roleLabel(value: string) {
+  return String(value || "semantic reference").replaceAll("_", " ");
+}
+
+export default function LtxDirectorWorkspace() {
+  const project = useStore((state) => state.project)!;
+  const productionClipId = useStore((state) => state.productionClipId);
+  const jobs = useStore((state) => state.jobs);
+  const setSelectedStoryboardClip = useStore((state) => state.setSelectedStoryboardClip);
+  const reloadProject = useStore((state) => state.reloadProject);
+  const [workspace, setWorkspace] = useState<any>(null);
+  const [overview, setOverview] = useState<any>(null);
+  const [health, setHealth] = useState<any>(null);
+  const [referenceResponse, setReferenceResponse] = useState<any>(null);
+  const [preflight, setPreflight] = useState<any>(null);
+  const [diagnosticError, setDiagnosticError] = useState("");
+  const [diagnosticsBusy, setDiagnosticsBusy] = useState(false);
+  const [notice, setNotice] = useState("Starting the repository LTX Director service…");
+  const [busy, setBusy] = useState<string | null>("start");
+  const [sceneChoice, setSceneChoice] = useState(productionClipId || "");
+  const [editRevision, setEditRevision] = useState(0);
+
+  const refreshHealth = useCallback(async () => {
+    try {
+      const result = await integrationApi("/director/health");
+      setHealth(result);
+    } catch {
+      setHealth(null);
+    }
+  }, []);
+
+  const refreshDiagnostics = useCallback(async (clipId: string) => {
+    if (!clipId) {
+      setReferenceResponse(null);
+      setPreflight(null);
+      setDiagnosticError("");
+      return;
+    }
+    setDiagnosticsBusy(true);
+    const [referencesResult, preflightResult] = await Promise.allSettled([
+      integrationApi(`/director/premiere/projects/${encodeURIComponent(project.slug)}/scenes/${encodeURIComponent(clipId)}/references`),
+      integrationApi("/director/preflight")
+    ]);
+    if (referencesResult.status === "fulfilled") setReferenceResponse(referencesResult.value);
+    else setReferenceResponse(null);
+    if (preflightResult.status === "fulfilled") setPreflight(preflightResult.value);
+    else setPreflight(null);
+    const errors = [referencesResult, preflightResult]
+      .filter((result) => result.status === "rejected")
+      .map((result: any) => String(result.reason?.message || result.reason));
+    setDiagnosticError(errors.join(" · "));
+    setDiagnosticsBusy(false);
+  }, [project.slug]);
+
+  const loadWorkspace = useCallback(async () => {
+    const [workspaceResult, projectResult] = await Promise.all([
+      integrationApi("/director/workspace"),
+      integrationApi(`/director/premiere/projects/${encodeURIComponent(project.slug)}`)
+    ]);
+    const clips = projectResult.storyboard?.clips || [];
+    const sharedClip = useStore.getState().productionClipId;
+    const sharedChoice = clips.find((clip: any) => clip.id === sharedClip)?.id || null;
+    const currentChoice = workspaceResult.workspace?.premiere?.projectSlug === project.slug
+      ? clips.find((clip: any) => clip.id === workspaceResult.workspace?.premiere?.clipId)?.id || null
+      : null;
+    const preferred = sharedChoice || currentChoice || clips[0]?.id || "";
+    let nextWorkspace = workspaceResult.workspace;
+    let nextOverview = projectResult;
+    if (preferred && (nextWorkspace?.premiere?.projectSlug !== project.slug || nextWorkspace?.premiere?.clipId !== preferred)) {
+      const loaded = await integrationApi(`/director/premiere/projects/${encodeURIComponent(project.slug)}/load`, {
+        method: "POST",
+        body: JSON.stringify({ clipId: preferred })
+      });
+      nextWorkspace = loaded.workspace;
+      nextOverview = loaded.overview || projectResult;
+    }
+    setWorkspace(nextWorkspace);
+    setOverview(nextOverview);
+    setSceneChoice(preferred);
+    setEditRevision(0);
+    if (preferred) useStore.getState().setSelectedStoryboardClip(preferred);
+    await refreshDiagnostics(preferred);
+    setNotice(preferred ? `Loaded ${preferred} from the shared Premiere316 project.` : "This project has no LTX Director scene package yet.");
+  }, [project.slug, refreshDiagnostics]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const boot = async () => {
+      setBusy("start");
+      try {
+        await integrationApi("/start", { method: "POST", body: "{}" });
+        if (cancelled) return;
+        await loadWorkspace();
+        await refreshHealth();
+      } catch (error: any) {
+        if (!cancelled) setNotice(String(error.message || error));
+      } finally {
+        if (!cancelled) setBusy(null);
+      }
+    };
+    void boot();
+    const timer = window.setInterval(refreshHealth, 3000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, [loadWorkspace, refreshHealth]);
+
+  const selected = useMemo(() => {
+    const all = [
+      ...trackSegments(workspace, "segments"),
+      ...trackSegments(workspace, "audioSegments"),
+      ...trackSegments(workspace, "motionSegments")
+    ];
+    return all.find((segment: any) => String(segment.id) === String(workspace?.selectedSegmentId)) || all[0] || null;
+  }, [workspace]);
+  const total = durationFrames(workspace);
+  const fps = Math.max(1, Number(workspace?.settings?.frameRate) || 24);
+  const selectedTrack = trackSegments(workspace, "audioSegments").some((item: any) => item.id === selected?.id) ? "Audio" : trackSegments(workspace, "motionSegments").some((item: any) => item.id === selected?.id) ? "IC-LoRA" : "Main";
+  const selectedEligible = selectedTrack === "Main" && isVisualGenerationSegment(selected);
+  const eligibleSegments = trackSegments(workspace, "segments").filter(isVisualGenerationSegment);
+  const queueBusy = jobs.some((job: any) => ["queued", "running", "cancelling"].includes(job.status)) || Number(health?.queue?.running || 0) + Number(health?.queue?.pending || 0) > 0;
+  const bindingCurrent = workspace?.premiere?.projectSlug === project.slug && workspace?.premiere?.clipId === productionClipId;
+  const serviceReady = Boolean(health?.connected);
+  const neighbors = segmentNeighborState(workspace, selected?.id);
+  const temporalGuides = useMemo(() => temporalGuideState(workspace, selected?.id), [workspace, selected?.id]);
+  const semanticReferences = useMemo(
+    () => semanticReferenceState(referenceResponse, selected?.storyboardFrameId || null),
+    [referenceResponse, selected?.storyboardFrameId]
+  );
+  const conditioning = useMemo(
+    () => semanticConditioningState(preflight, semanticReferences),
+    [preflight, semanticReferences]
+  );
+  const framePlan = useMemo(() => ltx25FramePlan(Number(selected?.length) || 1, fps), [selected?.length, fps]);
+  const generationMode = String(workspace?.premiere?.generationMode || "");
+  const timelineQueueMode = generationMode === "t2v_with_semantic_references" || workspace?.settings?.queueMode === "timeline";
+  const queueMode: "timeline" | "segments" = timelineQueueMode ? "timeline" : "segments";
+  const activeProfileLabel = String(
+    preflight?.generationProfile
+    || (timelineQueueMode ? "Premiere Semantic T2V" : LTX25_PREMIERE316_PROFILE)
+  );
+  const semanticQueueReady = Boolean(
+    referenceResponse
+    && preflight?.ok === true
+    && semanticReferences.ready
+    && semanticReferences.references.length === semanticReferences.declaredCount
+  );
+  const queueReady = semanticQueueReady && (queueMode === "timeline" || eligibleSegments.length > 0);
+
+  const patchWorkspace = (updater: (draft: any) => void) => {
+    setWorkspace((current: any) => {
+      if (!current) return current;
+      const next = structuredClone(current);
+      updater(next);
+      return next;
+    });
+    setEditRevision((current) => current + 1);
+  };
+
+  const saveWorkspace = async (quiet = false) => {
+    if (!workspace) return null;
+    const result = await integrationApi("/director/workspace", { method: "PUT", body: JSON.stringify({ workspace }) });
+    if (!quiet) setNotice("Director workspace saved.");
+    return result.workspace;
+  };
+
+  useEffect(() => {
+    if (!workspace || !editRevision || busy === "load") return;
+    const snapshot = structuredClone(workspace);
+    const revision = editRevision;
+    const timer = window.setTimeout(async () => {
+      try {
+        await integrationApi("/director/workspace", { method: "PUT", body: JSON.stringify({ workspace: snapshot }) });
+        setNotice((current) => /failed|error/i.test(current) ? current : `Draft autosaved · revision ${revision}`);
+      } catch (error: any) {
+        setNotice(`Draft autosave failed: ${String(error.message || error)}`);
+      }
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [editRevision]);
+
+  const loadScene = async () => {
+    if (!sceneChoice || busy) return;
+    setBusy("load");
+    try {
+      const result = await integrationApi(`/director/premiere/projects/${encodeURIComponent(project.slug)}/load`, {
+        method: "POST",
+        body: JSON.stringify({ clipId: sceneChoice })
+      });
+      setWorkspace(result.workspace);
+      setEditRevision(0);
+      setOverview(result.overview || overview);
+      setSelectedStoryboardClip(sceneChoice);
+      await refreshDiagnostics(sceneChoice);
+      setNotice(`${sceneChoice} loaded into LTX Director.`);
+    } catch (error: any) {
+      setNotice(String(error.message || error));
+    } finally { setBusy(null); }
+  };
+
+  const syncToPremiere = async () => {
+    setBusy("sync");
+    try {
+      await saveWorkspace(true);
+      const result = await integrationApi("/director/premiere/sync", { method: "POST", body: "{}" });
+      setOverview(result.overview || overview);
+      setNotice(`Saved ${result.result?.clipId || workspace?.premiere?.clipId} direction to Premiere316.`);
+      await reloadProject();
+      await refreshDiagnostics(workspace?.premiere?.clipId || sceneChoice);
+    } catch (error: any) { setNotice(String(error.message || error)); }
+    finally { setBusy(null); }
+  };
+
+  const queue = async (mode: "selected" | "segments" | "timeline") => {
+    if (!workspace || busy || queueBusy || !serviceReady || !semanticQueueReady || (mode === "selected" && !selectedEligible)) return;
+    setBusy("queue");
+    try {
+      await saveWorkspace(true);
+      const result = await integrationApi("/director/queue", {
+        method: "POST",
+        body: JSON.stringify(mode === "selected" ? { mode, segmentId: selected?.id } : { mode })
+      });
+      const target = mode === "selected" ? "selected segment" : mode === "timeline" ? "semantic timeline" : "segment set";
+      setNotice(`Accepted ${result.accepted?.length || 0} ${target} request${Number(result.accepted?.length || 0) === 1 ? "" : "s"} after the shared-GPU idle check. Premiere316 will report the authoritative provider queue state.`);
+      await refreshHealth();
+    } catch (error: any) { setNotice(String(error.message || error)); }
+    finally { setBusy(null); }
+  };
+
+  if (!workspace) return <main className="ltx-native-workspace"><div className="ltx-loading premium-panel"><span className="ltx-spinner" /><h1>LTX Director</h1><p>{notice}</p><button className="button secondary" disabled={Boolean(busy)} onClick={() => loadWorkspace()}>{busy ? "Starting…" : "Try again"}</button></div></main>;
+
+  const sceneOptions = overview?.storyboard?.clips || [];
+  const firstGuideUrl = temporalGuides.first ? mediaPreviewUrl(project.slug, temporalGuides.first) : "";
+  const lastGuideUrl = temporalGuides.last ? mediaPreviewUrl(project.slug, temporalGuides.last) : "";
+
+  return (
+    <main className="ltx-native-workspace">
+      <header className="ltx-bridge-bar">
+        <div className="ltx-scene-context"><label>SCENE<select value={sceneChoice} onChange={(event) => setSceneChoice(event.target.value)}>{sceneOptions.map((clip: any) => <option key={clip.id} value={clip.id}>{clip.id} · {clip.scene} · {clip.ready ? "ready" : "needs guide"}</option>)}</select></label><button className="button secondary" disabled={!sceneChoice || busy === "load" || sceneChoice === workspace?.premiere?.clipId} onClick={loadScene}>{busy === "load" ? "Loading…" : "Load Scene"}</button></div>
+        <div className="ltx-service-state"><span className={health?.connected ? "online" : "offline"}><i />LTX {health?.connected ? "Ready" : "Offline"}</span><span className="ltx-profile-chip">{activeProfileLabel}</span><span>{queueMode === "timeline" ? "Semantic timeline" : "Independent segments"}</span><span>ComfyUI {health?.comfyUrl?.replace(/^https?:\/\//, "") || "unavailable"}</span><span>{health?.queue?.running || 0} running · {health?.queue?.pending || 0} queued</span></div>
+        <div className="ltx-actions"><button className="button secondary" disabled={!bindingCurrent || Boolean(busy)} onClick={syncToPremiere}>{busy === "sync" ? "Saving…" : "Save to Premiere316"}</button>{queueMode === "segments" ? <button className="button primary" disabled={!selectedEligible || Boolean(busy) || queueBusy || !bindingCurrent || !serviceReady || !semanticQueueReady} title={!serviceReady ? "LTX Director or its ComfyUI engine is offline." : !bindingCurrent ? "Load the current shared shot before generating." : !semanticQueueReady ? "Resolve every declared semantic reference and pass compiler preflight before generation." : !selectedEligible ? "Select a visual main-track segment with an approved temporal guide." : queueBusy ? "Wait for the shared GPU queue to become idle." : "Generate only the selected visual segment with its separate temporal and semantic inputs."} onClick={() => queue("selected")}>{busy === "queue" ? "Queueing…" : "Generate Segment"}</button> : <button className="button primary" disabled={Boolean(busy) || queueBusy || !bindingCurrent || !serviceReady || !semanticQueueReady} title={!semanticQueueReady ? "Resolve every declared semantic reference and pass compiler preflight before generation." : "Generate the complete semantic T2V timeline through Premiere316."} onClick={() => queue("timeline")}>{busy === "queue" ? "Queueing…" : "Generate Semantic T2V"}</button>}</div>
+      </header>
+
+      <section role="status" aria-live="polite" className={`ltx-notice ${/failed|error|busy/i.test(notice) ? "warning" : ""}`}><span>{notice}</span>{!bindingCurrent && productionClipId ? <button onClick={() => { setSceneChoice(productionClipId || ""); }}>Use shared shot {productionClipId}</button> : null}</section>
+
+      <section className="ltx-editor-grid">
+        <section className="ltx-timeline-panel premium-panel">
+          <header><div><span className="workspace-eyebrow">SEGMENT TIMELINE · {activeProfileLabel}</span><h2>{workspace.premiere?.clipId || "Unbound Director workspace"}</h2></div><div><b>{(total / fps).toFixed(1)}s</b><small>{total} editorial frames · {fps} fps · {workspace.settings.customWidth}×{workspace.settings.customHeight}</small></div></header>
+          <div className="ltx-ruler">{Array.from({ length: Math.max(2, Math.ceil(total / fps) + 1) }).map((_, index) => <span key={index} style={{ left: `${Math.min(100, (index * fps / total) * 100)}%` }}>{index}s</span>)}</div>
+          {([
+            ["MAIN", "segments"],
+            ["AUDIO", "audioSegments"],
+            ["IC-LORA", "motionSegments"]
+          ] as const).map(([label, key]) => <div className={`ltx-track ltx-track-${key}`} key={key}><b>{label}</b><div className="ltx-track-lane">{trackSegments(workspace, key).map((segment: any) => <button key={segment.id} className={`${String(segment.id) === String(selected?.id) ? "selected" : ""} ${segment.missingGuide ? "missing" : ""}`} style={{ left: `${((Number(segment.start) || 0) / total) * 100}%`, width: `${Math.max(1.5, ((Number(segment.length) || 1) / total) * 100)}%` }} onClick={() => patchWorkspace((draft) => { draft.selectedSegmentId = segment.id; draft.playheadFrame = Number(segment.start) || 0; })}><span>{segment.fileName || segment.id}</span><small>{((Number(segment.length) || 1) / fps).toFixed(1)}s</small></button>)}</div></div>)}
+          <div className="ltx-playhead" style={{ left: `calc(92px + (100% - 104px) * ${Math.max(0, Number(workspace.playheadFrame) || 0) / total})` }} />
+          <footer><button className="button secondary" disabled={Boolean(busy)} onClick={() => saveWorkspace()}>Save Workspace</button><button className="button secondary" disabled={Boolean(busy) || queueBusy || !bindingCurrent || !serviceReady || !queueReady} onClick={() => queue(queueMode)}>{queueMode === "timeline" ? "Queue Semantic Timeline" : "Queue All Segments"}</button><span>{workspace.timeline.segments?.length || 0} main · {workspace.timeline.audioSegments?.length || 0} audio · {workspace.timeline.motionSegments?.length || 0} IC-LoRA</span></footer>
+        </section>
+
+        <aside className="ltx-reference-panel premium-panel" aria-label="Temporal and semantic reference diagnostics">
+          <header><div><b>REFERENCE INPUTS</b><small>{selectedTrack} segment · roles stay separate</small></div><button type="button" disabled={diagnosticsBusy || !workspace?.premiere?.clipId} onClick={() => refreshDiagnostics(workspace?.premiere?.clipId)}>{diagnosticsBusy ? "Checking…" : "Recheck"}</button></header>
+
+          <section className="ltx-reference-group" aria-labelledby="ltx-temporal-heading">
+            <div className="ltx-reference-heading"><div><span className="workspace-eyebrow">TEMPORAL GUIDES</span><b id="ltx-temporal-heading">First / last frame control</b></div><small>{Number(Boolean(temporalGuides.first)) + Number(Boolean(temporalGuides.last))} active</small></div>
+            <div className="ltx-temporal-grid">
+              <article className={`ltx-temporal-card ${temporalGuides.first ? "ready" : "missing"}`}>
+                <div className="ltx-reference-card-label"><b>FIRST</b><span>{temporalGuides.first ? "Timed frame 0" : "Missing"}</span></div>
+                <div className="ltx-reference-thumb">{temporalGuides.first ? <ReferenceMedia src={firstGuideUrl} reference={temporalGuides.first} alt="First temporal guide" /> : <span aria-hidden="true">◇</span>}</div>
+                <strong>{temporalGuides.first?.fileName || "No first temporal source"}</strong>
+                <small>{temporalGuides.first ? `${temporalGuides.first.origin} · ${temporalGuides.first.sourceSegmentId}` : "Generation requires a selected visual source."}</small>
+              </article>
+              <article className={`ltx-temporal-card ${temporalGuides.last ? "ready" : "optional"}`}>
+                <div className="ltx-reference-card-label"><b>LAST</b><span>{temporalGuides.last ? `Editorial frame ${framePlan.editFrames - 1}` : "Optional"}</span></div>
+                <div className="ltx-reference-thumb">{temporalGuides.last ? <ReferenceMedia src={lastGuideUrl} reference={temporalGuides.last} alt="Last temporal guide" /> : <span aria-hidden="true">◇</span>}</div>
+                <strong>{temporalGuides.last?.fileName || "No last temporal guide"}</strong>
+                <small>{temporalGuides.last ? `${temporalGuides.last.origin} · ${temporalGuides.last.sourceSegmentId}` : temporalGuides.lastRequested ? "Requested last guide is unavailable." : "Enable ‘Use next as last frame’ when the next image is approved."}</small>
+              </article>
+            </div>
+          </section>
+
+          <section className="ltx-reference-group ltx-semantic-group" aria-labelledby="ltx-semantic-heading">
+            <div className="ltx-reference-heading"><div><span className="workspace-eyebrow">SEMANTIC INGREDIENTS · NOT TIMED</span><b id="ltx-semantic-heading">Identity and design references</b></div><small>{semanticReferences.references.length} shown · {semanticReferences.declaredCount} declared</small></div>
+            <div className="ltx-role-counts" aria-label="Semantic reference role counts">{semanticReferences.roleCounts.map(({ role, count }: any) => <span key={role}><b>{count}</b> {roleLabel(role)}</span>)}</div>
+            <div className={`ltx-conditioning-state ${conditioning.status}`}><b>{conditioning.label}</b><small>{conditioning.status === "injected" ? "Compiler preflight explicitly reports active conditioning." : conditioning.status === "resolved" ? "Pinned bindings resolve, but this preflight did not explicitly report model injection." : conditioning.status === "blocked" ? "A required binding or compiler preflight is not ready." : "No semantic inputs are assigned to this scope."}</small></div>
+            {diagnosticError ? <p className="ltx-diagnostic-error">{diagnosticError}</p> : null}
+            {Array.isArray(preflight?.warnings) && preflight.warnings.length ? <ul className="ltx-preflight-warnings" aria-label="Compiler preflight warnings">{preflight.warnings.map((warning: string) => <li key={warning}>{warning}</li>)}</ul> : null}
+            <div className="ltx-semantic-cards">
+              {semanticReferences.references.map((reference: any) => {
+                const src = semanticPreviewUrl(project.slug, reference);
+                const name = reference.name || reference.assetId || reference.canonicalFile || reference.file || "Semantic reference";
+                return <article key={`${reference.role}:${reference.id || reference.file}`}><div className="ltx-reference-thumb"><ReferenceMedia src={src} reference={reference} alt={`${roleLabel(reference.role)} reference: ${name}`} /></div><div><b>{name}</b><span>{roleLabel(reference.role)}{reference.version ? ` · v${reference.version}` : ""}</span><small>{reference.required ? "required" : "supporting"}{reference.current === false ? " · pinned prior version" : ""}</small></div></article>;
+              })}
+              {!semanticReferences.references.length ? <p className="ltx-reference-empty">No semantic role bindings were returned for this {semanticReferences.scope === "selected-frame" ? "frame" : "scene"}.</p> : null}
+            </div>
+          </section>
+
+          {queueMode === "segments" ? <section className="ltx-frame-plan" aria-labelledby="ltx-frame-plan-heading">
+            <div className="ltx-reference-heading"><div><span className="workspace-eyebrow">AUTO LENGTH</span><b id="ltx-frame-plan-heading">{framePlan.profile}</b></div><small>{framePlan.grid} model grid</small></div>
+            <dl><div><dt>Requested</dt><dd>{framePlan.requestedFrames} frames · {framePlan.requestedSeconds.toFixed(3)}s</dd></div><div><dt>Model generation</dt><dd>{framePlan.generationFrames} frames · {framePlan.generationSeconds.toFixed(3)}s</dd></div><div><dt>Editorial result</dt><dd>{framePlan.editFrames} frames · {framePlan.editSeconds.toFixed(3)}s</dd></div><div><dt>Automatic trim</dt><dd>{framePlan.trimFrames} padding frame{framePlan.trimFrames === 1 ? "" : "s"}</dd></div></dl>
+            <p>Duration edits recalculate automatically. The model receives the next valid 8n+1 length; Premiere316 keeps the authored edit length.</p>
+          </section> : null}
+        </aside>
+      </section>
+
+      <section className="ltx-prompt-grid">
+        <article className="ltx-segment-editor premium-panel"><header><div><span className="workspace-eyebrow">SEGMENT PROMPT</span><h3>{selected?.id || "No selection"}</h3></div><span>{selectedTrack}</span></header>{selected ? <><textarea value={selected.prompt || ""} onChange={(event) => patchWorkspace((draft) => { const all = [...(draft.timeline.segments || []), ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])]; const segment = all.find((item: any) => item.id === selected.id); if (segment) segment.prompt = event.target.value; })} /><div className="ltx-segment-fields"><label>Start (sec)<input type="number" step={0.1} value={((Number(selected.start) || 0) / fps).toFixed(2)} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment.start = Math.max(0, Math.round(Number(event.target.value) * fps)); })} /></label><label>Duration (sec)<input type="number" step={0.1} value={((Number(selected.length) || 1) / fps).toFixed(2)} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment.length = Math.max(1, Math.round(Number(event.target.value) * fps)); })} /></label><label>Guide strength<input type="number" min={0} max={2} step={0.05} disabled={selectedTrack === "Audio"} value={selected.guideStrength ?? selected.videoStrength ?? 1} onChange={(event) => patchWorkspace((draft) => { const segment = [...draft.timeline.segments, ...(draft.timeline.audioSegments || []), ...(draft.timeline.motionSegments || [])].find((item: any) => item.id === selected.id); if (segment) segment[selectedTrack === "IC-LoRA" ? "videoStrength" : "guideStrength"] = Number(event.target.value); })} /></label></div>{selectedTrack === "Main" ? <div className="ltx-neighbor-locks"><label><input type="checkbox" disabled={!neighbors.canUsePreviousAsFirstFrame} checked={Boolean(neighbors.canUsePreviousAsFirstFrame && selected.usePreviousAsFirstFrame)} onChange={(event) => patchWorkspace((draft) => { const segment = draft.timeline.segments.find((item: any) => item.id === selected.id); if (segment) segment.usePreviousAsFirstFrame = event.target.checked; })} /> Use previous as first frame</label><label><input type="checkbox" disabled={!neighbors.canUseNextAsLastFrame} checked={Boolean(neighbors.canUseNextAsLastFrame && selected.useNextAsLastFrame)} onChange={(event) => patchWorkspace((draft) => { const segment = draft.timeline.segments.find((item: any) => item.id === selected.id); if (segment) segment.useNextAsLastFrame = event.target.checked; })} /> Use next as last frame</label></div> : null}</> : null}</article>
+        <article className="ltx-global-editor premium-panel"><header><div><span className="workspace-eyebrow">GLOBAL PROMPT</span><h3>Scene-wide direction</h3></div><span>{String(workspace.timeline.global_prompt || "").length} chars</span></header><textarea value={workspace.timeline.global_prompt || ""} onChange={(event) => patchWorkspace((draft) => { draft.timeline.global_prompt = event.target.value; })} /><details><summary>Negative prompt and delivery settings</summary><textarea value={workspace.settings.negativePrompt || ""} onChange={(event) => patchWorkspace((draft) => { draft.settings.negativePrompt = event.target.value; })} /></details></article>
+      </section>
+    </main>
+  );
+}

@@ -1,0 +1,70 @@
+{
+  "status": "converted_not_rendered",
+  "created_at": "2026-08-14T05:42:20.321Z",
+  "originals_preserved": true,
+  "backup_dir": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\diagnostics\\ltx25-workflow-backups\\Garden-of-Gethsemane-20260814T054220Z",
+  "source_hashes": {
+    "r31": "716B654DBD0FA5EEFA4BAA18FB0A9900C7D2EACC2B08599861799E5FC013A5C0",
+    "r32": "085EE3C7E954BE5F83ED2B356B95022942B7ECF882FCF15E054CBAA1ECFAC0CA"
+  },
+  "outputs": {
+    "generator": {
+      "path": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\Premiere316\\Garden of Gethsemane\\LTX 2.5\\GARDEN_first_segment_R31_LTX25_native_AV_1128x480_25fps.json",
+      "sha256": "674EF681796A9805FC26C466649B29F1360A6544FB767DB80D5A00E7F80D304B",
+      "nodes": 79,
+      "links": 93,
+      "final_resolution": [
+        1128,
+        480
+      ],
+      "stage1_resolution": [
+        576,
+        256
+      ],
+      "native_x2_resolution": [
+        1152,
+        512
+      ],
+      "fps": 25,
+      "frames": 169,
+      "seconds": 6.76,
+      "guide_images": [
+        "whatdreamscost/ChatGPT Image Aug 11, 2026, 12_36_25 AM (1).png",
+        "whatdreamscost/ChatGPT Image Aug 11, 2026, 12_36_25 AM (2).png"
+      ],
+      "output_prefix": "identity_tests/garden-first-segment-r31-ltx25-native",
+      "source_semantics": {
+        "positive_prompt_sha256": "33E834D263185CE5B0A3E14C824240C989A93B741BD004F19D101F665559CA49",
+        "negative_prompt_sha256": "367405564FE66188848DF40A1BB71B0DBBD93219A4A1D60F29034487C65D94C3",
+        "director_timeline_sha256": "511DFE807B8107CF1F2E3BF9531A872A55082FB162DE01B165A5D2F2C961A4C2",
+        "character_sheet": "whatdreamscost/jesus-character-sheet-1536x1024.v1.png",
+        "voice_reference": "whatdreamscost/voice-jesus-reference-5s.v1.wav",
+        "executable_prompt_sha256": "7BCEF12775708FB81C5AF0CF64DFF71680D9D834904C5CA857C65026BE750CB7",
+        "executable_negative_sha256": "CC03817C76DB647B5FD931900EFD1D4EAF2A78F25A506F82C9A084F467494AF6"
+      }
+    },
+    "face_correction": {
+      "path": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\Premiere316\\Garden of Gethsemane\\LTX 2.5\\GARDEN_first_segment_R32_LTX25_face_correction.json",
+      "sha256": "E295FFCF2C95178580303EE5AD1AE04690C18C3B44367AFC32D411C413E864A7",
+      "nodes": 4,
+      "links": 4,
+      "expected_input_video": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\output\\identity_tests\\garden-first-segment-r31-ltx25-native_00001-audio.mp4",
+      "face_reference": "whatdreamscost/jesus-face-primary-3q.v1.png"
+    }
+  },
+  "validation": {
+    "json_parse": "passed",
+    "graph_links": "passed",
+    "no_ltx23_model_references": true,
+    "no_nag": true,
+    "exact_resolution_control": true,
+    "tiled_decode": {
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+    },
+    "legacy_identity_and_voice_loras": "intentionally omitted as unvalidated on LTX 2.5",
+    "render": "not submitted"
+  }
+}

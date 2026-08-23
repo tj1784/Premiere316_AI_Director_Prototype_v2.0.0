@@ -1,0 +1,210 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "LTX\\2.3\\Director\\ltx-2.3-22b-distilled-1.1_transformer_only_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": { "title": "LTX 2.3 distilled FP8" }
+  },
+  "2": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": ["1", 0],
+      "lora_name": "LTX\\LTX-2.3-OmniNFT-RL-Lora_bf16.safetensors",
+      "strength_model": 1.0
+    },
+    "_meta": { "title": "OmniNFT RL quality and temporal stability" }
+  },
+  "3": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": ["2", 0],
+      "lora_name": "faceID\\Best_FaceID_v1.0_LoRA.safetensors",
+      "strength_model": 0.2
+    },
+    "_meta": { "title": "Best Face ID base identity foundation" }
+  },
+  "4": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": ["3", 0],
+      "lora_name": "faceID\\Best_FaceID_CharacterSheet_v1.0_LoRA.safetensors",
+      "strength_model": 1.0
+    },
+    "_meta": { "title": "Best Face ID character-sheet continuation" }
+  },
+  "5": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+      "clip_name1": "gemma_3_12B_it_fp8_e4m3fn.safetensors",
+      "clip_name2": "ltx-2.3_text_projection_bf16.safetensors",
+      "type": "ltxv",
+      "device": "default"
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["5", 0],
+      "text": "ref_t2v: The exact same olive-brown-skinned Middle Eastern man shown in the supplied four-panel character sheet, with a long angular oval face, deep-set hazel-brown eyes, a strong narrow slightly convex nose, thick dark eyebrows, shoulder-length dense black corkscrew curls, a dense tapered full black beard, and the identical layered white linen robe with rope belt, is kneeling beneath ancient olive trees at night in the Garden of Gethsemane, medium close-up. He slowly raises his head toward the moonlight and breathes steadily, solemn and distressed. The camera remains stable and keeps his face large, unobscured, well-lit, and sharp. Photorealistic live-action biblical drama, cool blue moonlight, subtle warm rim light, natural skin texture."
+    },
+    "_meta": { "title": "Identity-explicit ref_t2v prompt" }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["5", 0],
+      "text": "different person, different actor, face drift, facial morphing, changing facial structure, changing eye color, changing skin tone, changing age, changing hairline, short hair, straight hair, blond hair, brown hair, changing hairstyle, changing beard shape, shaved face, costume change, modern clothing, armor, crown, glowing halo, duplicate character, multiple men, extra people, clone, contact sheet, character sheet, multi-panel grid, split screen, collage, tiled image, white background, panel border, duplicated subject, distorted face, deformed face, asymmetrical eyes, warped mouth, blurry face, obscured face, poorly detailed face, extra limbs, malformed hands, flickering, jittery motion, abrupt camera movement, jump cut, scene transition, text, subtitles, logo, watermark, worst quality, low quality, low resolution"
+    },
+    "_meta": { "title": "Negative identity and sheet-leak prompt" }
+  },
+  "8": {
+    "class_type": "LTXVConditioning",
+    "inputs": {
+      "positive": ["6", 0],
+      "negative": ["7", 0],
+      "frame_rate": 24.0
+    }
+  },
+  "9": {
+    "class_type": "EmptyLTXVLatentVideo",
+    "inputs": {
+      "width": 512,
+      "height": 512,
+      "length": 49,
+      "batch_size": 1
+    },
+    "_meta": { "title": "Low-resolution 512x512x49 target" }
+  },
+  "10": {
+    "class_type": "VAELoaderKJ",
+    "inputs": {
+      "vae_name": "LTX23_video_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    }
+  },
+  "11": {
+    "class_type": "VAELoaderKJ",
+    "inputs": {
+      "vae_name": "LTX23_audio_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    }
+  },
+  "12": {
+    "class_type": "LTXVEmptyLatentAudio",
+    "inputs": {
+      "frames_number": 49,
+      "frame_rate": 24.0,
+      "batch_size": 1,
+      "audio_vae": ["11", 0]
+    }
+  },
+  "13": {
+    "class_type": "LTXVConcatAVLatent",
+    "inputs": {
+      "video_latent": ["9", 0],
+      "audio_latent": ["12", 0]
+    }
+  },
+  "14": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "whatdreamscost/jesus-character-sheet-1536x1024.v1.png"
+    },
+    "_meta": { "title": "User Jesus character sheet, conformed without distortion" }
+  },
+  "15": {
+    "class_type": "LTXIdentityOverlapConditioning",
+    "inputs": {
+      "model": ["4", 0],
+      "positive": ["8", 0],
+      "negative": ["8", 1],
+      "vae": ["10", 0],
+      "latent": ["13", 0],
+      "reference_image": ["14", 0],
+      "source_id": 2.0,
+      "phase_scale": 1.0,
+      "ref_resize_mode": "native_resolution",
+      "debug_log": true,
+      "crop_anchor": "center",
+      "layout": "overlap",
+      "reference_guidance_scale": 1.0
+    },
+    "_meta": { "title": "Official BFS LTX Identity Transfer, CharacterSheet mode" }
+  },
+  "16": {
+    "class_type": "CFGGuider",
+    "inputs": {
+      "model": ["15", 0],
+      "positive": ["15", 1],
+      "negative": ["15", 2],
+      "cfg": 1.0
+    }
+  },
+  "17": {
+    "class_type": "BasicScheduler",
+    "inputs": {
+      "model": ["15", 0],
+      "scheduler": "linear_quadratic",
+      "steps": 8,
+      "denoise": 1.0
+    }
+  },
+  "18": {
+    "class_type": "RandomNoise",
+    "inputs": { "noise_seed": 488441818004763 }
+  },
+  "19": {
+    "class_type": "KSamplerSelect",
+    "inputs": { "sampler_name": "euler" }
+  },
+  "20": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["18", 0],
+      "guider": ["16", 0],
+      "sampler": ["19", 0],
+      "sigmas": ["17", 0],
+      "latent_image": ["15", 3]
+    }
+  },
+  "21": {
+    "class_type": "LTXVSeparateAVLatent",
+    "inputs": { "av_latent": ["20", 0] }
+  },
+  "22": {
+    "class_type": "LTXVCropGuides",
+    "inputs": {
+      "positive": ["15", 1],
+      "negative": ["15", 2],
+      "latent": ["21", 0]
+    }
+  },
+  "23": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["22", 2],
+      "vae": ["10", 0]
+    }
+  },
+  "24": {
+    "class_type": "VHS_VideoCombine",
+    "inputs": {
+      "images": ["23", 0],
+      "frame_rate": 24.0,
+      "loop_count": 0,
+      "filename_prefix": "identity_tests/garden-character-sheet-omninft-512-r25",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true
+    },
+    "_meta": { "title": "CharacterSheet plus OmniNFT test output" }
+  }
+}

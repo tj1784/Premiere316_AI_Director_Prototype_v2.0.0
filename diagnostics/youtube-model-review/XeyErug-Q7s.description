@@ -1,0 +1,58 @@
+Master LTX Best Face ID using LTX 2.3 Identity LoRA to keep characters consistent across your AI video generations.This guide demonstrates how to apply reference images to maintain identity preservation in your outputs. If you are struggling with character changes during generation, this workflow provides a direct method to lock in facial features using reference conditioning.The process relies on concatenating your reference latent with the video sequence. By following these steps, you can ensure your character remains recognizable throughout the entire animation. We cover the technical setup required to implement this technique effectively for your AI projects.Subscribe for weekly AI video workflow breakdowns and comment which model you want to see tested next. #comfyui  #LTX23 #AIAnimation #Storyboard #VideoGeneration #GenerativeAI #AITutorial #Seedance #LTXVideo #ComfyUITutorial #ideogram4 #comfyui #ltx2.3 #comfyuitutorial #imagetovideo #aivideo 
+
+Chapitres
+00:00 Intro
+00:36 BEST FACE ID
+03:34 Custom Workflow
+08:31 Results
+09:57 Outro 
+
+My patreon page
+https://www.patreon.com/cw/CGPIXELAI
+
+Reddit Profile
+https://www.reddit.com/user/cgpixel23
+
+
+
+-Workflow Patreon
+https://www.patreon.com/CGPIXELAI/posts/new-workflow-to-163510512?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link
+
+-Workflow Free Link
+https://civitai.com/articles/32491/comfyui-tutorial-generate-consistent-character-using-best-face-id-lora
+
+BEST FACE ID LORA LINK
+https://huggingface.co/Alissonerdx/LTX-Best-Face-ID
+
+LTX 2.3 VIDEOS
+1-LTX2.3 HOW TO INSTALL VIDEO TUTORIAL
+https://youtu.be/vuyBWr68vy0
+
+2-LTX 2.3 FACE SWAP LORA
+https://youtu.be/U-yW6hOVqSQ
+
+3-LTX 2.3 VIDEO REASONING LORA
+https://youtu.be/ONzGyVe61ko
+
+4-LTX 2.3 FIRST & LAST FRAME VIDEO
+https://youtu.be/O1gUVbfC2tI
+
+5-LTX2.3 ID LORA CLONE VOICE&FACE
+https://youtu.be/CWLs2vRG3_U
+
+6-LTX2.3 OUTPAINTING LORA
+https://youtu.be/L22ARC8GzYI
+
+7-LTX2.3 TRANSITION LORA
+https://youtu.be/egQb_iHc05Q
+
+AI VIDEO TUTORIALS PLAYLIST 
+ 
+3-ComfyUI Image Generation Playlist
+https://www.youtube.com/playlist?list=PLPqfAI4GsAMthl_FsGKmZYDqTy3aPgzUK
+
+4-ComfyUI Image Editing Playlist
+https://www.youtube.com/playlist?list=PLPqfAI4GsAMsg09i2HD8eRscGdFPR13wO
+
+5-ComfyUI Video Generation Playlist
+https://www.youtube.com/playlist?list=PLPqfAI4GsAMvqBKLNh43_sNV_8mQ7mjKs

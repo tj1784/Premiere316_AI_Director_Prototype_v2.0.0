@@ -1,0 +1,1760 @@
+
+UNETLoader
+{
+  "input": {
+    "required": {
+      "unet_name": [
+        [
+          "KREA 2\\Krea2-Turbo-HD-V1-int8_convrot.safetensors",
+          "KREA 2\\finepornV4TURBOFP8INT8_v4.safetensors",
+          "KREA 2\\krea2Intorealism_v10.safetensors",
+          "KREA 2\\krea2_turbo_bf16.safetensors",
+          "KREA 2\\krea2turbobadmilkmela_v10.safetensors",
+          "KREA 2\\realismByStableYogi_v15NVFP4.safetensors",
+          "LTX23_audio_vae_bf16.safetensors",
+          "LTX\\2.3\\Director\\ltx-2.3-22b-distilled-1.1_transformer_only_fp8_scaled.safetensors",
+          "MelBandRoformer_fp16.safetensors",
+          "SeedVR2\\seedvr2_ema_3b_fp16.safetensors",
+          "_Unclassified\\DarkBeast\\darkBeast30BF16INT8_darkBeast330.safetensors",
+          "_from_downloads\\1xDeNoise_realplksr_otf.safetensors",
+          "_from_downloads\\dark_video_ltx2-3_1_0.safetensors",
+          "_from_downloads\\ltx23Gtanimation25Frames_ltxv23INT4Convrot.safetensors",
+          "flux2\\darkBeast30BF16INT8_dbkleinv2BFS.safetensors",
+          "flux2\\flux-2-klein-4b-fp8.safetensors",
+          "flux2\\flux-2-klein-9b-fp8mixed.safetensors",
+          "flux2\\flux2-dev.safetensors",
+          "flux2\\realDream_klein9BBaseV1.safetensors",
+          "h3\\minimaxH3INT4Convrot_fl2vaPrunedInt4.safetensors",
+          "h3\\minimaxH3INT4Convrot_ref2vPrunedInt4.safetensors",
+          "h3\\minimaxH3INT8INT4_fl2vaINT8Pruned.safetensors",
+          "h3\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+          "krea2\\krea2_turbo_fp8_scaled.safetensors",
+          "krea2\\krea2_turbo_int8_convrot.safetensors",
+          "krea2\\moodyKrea2Mix_v50.safetensors",
+          "ltx-2.3-22b-distilled-1.1_transformer_only_int8_convrot.safetensors",
+          "ltx2\\ltx-2.3-22b-distilled-1.1-fp8.safetensors",
+          "ltx2\\ltx2310eros_v1.safetensors",
+          "ltx2\\ltx2310eros_v14.safetensors",
+          "ltx2\\sulphur2Base_distilled.safetensors",
+          "ltx2\\sulphur_distil_fp8mixed.safetensors",
+          "ltx2\\sulphur_distil_nvfp4.safetensors",
+          "sam3.1_multiplex_fp16.safetensors",
+          "stableaudio3\\stable_audio_3_medium.safetensors",
+          "wan2.1_vace_1.3B_fp16.safetensors"
+        ]
+      ],
+      "weight_dtype": [
+        [
+          "default",
+          "fp8_e4m3fn",
+          "fp8_e4m3fn_fast",
+          "fp8_e5m2"
+        ],
+        {
+          "advanced": true
+        }
+      ]
+    }
+  },
+  "output": [
+    "MODEL"
+  ],
+  "output_name": [
+    "MODEL"
+  ]
+}
+
+LoraLoaderModelOnly
+{
+  "input": {
+    "required": {
+      "model": [
+        "MODEL"
+      ],
+      "lora_name": [
+        [
+          "Flux.1 Dev\\AndroCore-1.3.safetensors",
+          "Flux.1 Dev\\BLUE_mk4_angel_FLUX_04.safetensors",
+          "Flux.1 Dev\\Big_Cock_Flux_Dev_-_Cruz_Flesh.safetensors",
+          "Flux.1 Dev\\Bottomless_Men_Flux.safetensors",
+          "Flux.1 Dev\\CHAD_Singlet_bf16.safetensors",
+          "Flux.1 Dev\\Detailed_Hands-000001.safetensors",
+          "Flux.1 Dev\\Fictional_Model_Bjorn_-_FLUX.safetensors",
+          "Flux.1 Dev\\Flaccid_Man_Flux_Dev_-_Cruz_Flesh-000209.safetensors",
+          "Flux.1 Dev\\FluxMythSharpL1nes.safetensors",
+          "Flux.1 Dev\\Flux_penis.safetensors",
+          "Flux.1 Dev\\HSMuscleboy.v2.style.Flux1D.safetensors",
+          "Flux.1 Dev\\Hairy_men_Flux_mamilla-000096.safetensors",
+          "Flux.1 Dev\\Hand v2.safetensors",
+          "Flux.1 Dev\\Handsome_big_dick.safetensors",
+          "Flux.1 Dev\\Handsome_male_models_face_FLUX.safetensors",
+          "Flux.1 Dev\\Hot_Shots_-_Gay_cumshots_for_FLUX_r1-000009 (3).safetensors",
+          "Flux.1 Dev\\Max_Danyel_Flux.safetensors",
+          "Flux.1 Dev\\Mens_Gay_Big_Feet.safetensors",
+          "Flux.1 Dev\\MuscleUp-@brtlmss1.v4.style.solo.flux1d_ep4.safetensors",
+          "Flux.1 Dev\\PresentingArmpit-CivitAi-V1-Flux.safetensors",
+          "Flux.1 Dev\\Realism 2.safetensors",
+          "Flux.1 Dev\\SIlverjowStyle_FLUX.safetensors",
+          "Flux.1 Dev\\Sweaty Shirt v7.5.safetensors",
+          "Flux.1 Dev\\Vintagemale1208_5800+_flux-step00000800.safetensors",
+          "Flux.1 Dev\\aidmaRealisticSkin-FLUX-v0.1.safetensors",
+          "Flux.1 Dev\\dadbod.safetensors",
+          "Flux.1 Dev\\flux_realism_lora.safetensors",
+          "Flux.1 Dev\\frecklesflux.safetensors",
+          "Flux.1 Dev\\ginger-2.0-000052.safetensors",
+          "Flux.1 Dev\\lickinpitz_FLUX_v1.safetensors",
+          "Flux.1 Dev\\manhole-1.0-0000318.safetensors",
+          "Flux.1 Dev\\penis_worship_flux.safetensors",
+          "Flux.1 Dev\\perfection style v2d.safetensors",
+          "Flux.1 Dev\\plus1caucmenalternatev5flux1dev.safetensors",
+          "Flux.1 Dev\\twinkcockFlux_alpha_cut_01-43000.safetensors",
+          "Flux.1 Dev\\xpenis-uncut-15.0-000098.safetensors",
+          "Flux.2 Klein\\9B\\60sPsyKlein9b.safetensors",
+          "Flux.2 Klein\\9B\\Childish01_CE_FLUX2_Klein9b_AIT4k.safetensors",
+          "Flux.2 Klein\\9B\\KELINw9B-PENIS_copy_000004250.safetensors",
+          "Flux.2 Klein\\9B\\MaleClimax_FluxKlein9B.safetensors",
+          "Flux.2 Klein\\9B\\OctaneRenderKlein9b.safetensors",
+          "Flux.2 Klein\\9B\\V1.safetensors",
+          "Flux.2 Klein\\9B\\diverse_male_nudity_Flux2_Klein_base_9b_000009600.safetensors",
+          "Flux.2 Klein\\9B\\klein_9B_Turbo_r128.safetensors",
+          "Gemma 3\\gemma-3-12b-it-abliterated_lora_rank64_bf16.safetensors",
+          "IPAdapter-FaceID\\ip-adapter-faceid-plusv2_sd15_lora.safetensors",
+          "IPAdapter-FaceID\\ip-adapter-faceid_sd15_lora.safetensors",
+          "LTX\\2.3\\Community\\Camera\\LTX2.3-22B_IC-LoRA-Cameraman_v2_14000.safetensors",
+          "LTX\\2.3\\Community\\Camera\\LTX2.3-22B_IC-LoRA-CrossView-Prompt_v0.9_13700.safetensors",
+          "LTX\\2.3\\Community\\Camera\\LTX2.3-22B_IC-LoRA-CrossView-Warp_v0.9_18000.safetensors",
+          "LTX\\2.3\\Community\\Camera\\ltx-2.3-lora-camera-controls.safetensors",
+          "LTX\\2.3\\Community\\Motion\\realisdance_ltx2.3_ic-lora_step_02000.safetensors",
+          "LTX\\2.3\\Custom\\licking_massage\\licking_massage_ltx23-step00000010.comfy.safetensors",
+          "LTX\\2.3\\Custom\\licking_massage\\licking_massage_ltx23-step00000010.safetensors",
+          "LTX\\2.3\\Custom\\licking_massage\\licking_massage_ltx23.comfy.safetensors",
+          "LTX\\2.3\\Custom\\licking_massage\\licking_massage_ltx23.safetensors",
+          "LTX\\2.3\\DR34ML4Y_LT3X_V3.safetensors",
+          "LTX\\2.3\\IC-LoRA\\ltx-2.3-IC-LoRA-ABERCROM-ME_coachbate_v3_02000.safetensors",
+          "LTX\\2.3\\LTX2.3_666asslick.safetensors",
+          "LTX\\2.3\\LTX2.3_Crisp_Enhance.safetensors",
+          "LTX\\2.3\\Licon\\MSR\\LTX-2.3-Licon-MSR-V2.safetensors",
+          "LTX\\2.3\\Official\\IC-LoRA\\DubIt\\ltx-2.3-22b-ic-lora-lipdub-0.9.safetensors",
+          "LTX\\2.3\\Official\\IC-LoRA\\HDR\\ltx-2.3-22b-ic-lora-hdr-0.9.safetensors",
+          "LTX\\2.3\\Official\\IC-LoRA\\HDR\\ltx-2.3-22b-ic-lora-hdr-scene-emb.safetensors",
+          "LTX\\2.3\\Official\\IC-LoRA\\In-Outpainting\\ltx-2.3-22b-ic-lora-in-outpainting-0.9.safetensors",
+          "LTX\\2.3\\Official\\IC-LoRA\\Ingredients\\ltx-2.3-22b-ic-lora-ingredients-0.9.safetensors",
+          "LTX\\2.3\\Official\\IC-LoRA\\Pixel-Spatial-Upscaler\\ltx-2.3-22b-ic-lora-pixel-spatial-upscaler-x2-0.9.safetensors",
+          "LTX\\2.3\\Official\\IC-LoRA\\Pixel-Spatial-Upscaler\\ltx-2.3-22b-ic-lora-pixel-spatial-upscaler-x4-0.9.safetensors",
+          "LTX\\2.3\\Official\\IC-LoRA\\ltx-2.3-22b-ic-lora-motion-track-control-ref0.5.safetensors",
+          "LTX\\2.3\\Official\\IC-LoRA\\ltx-2.3-22b-ic-lora-union-control-ref0.5.safetensors",
+          "LTX\\2.3\\SEX\\CGS23.safetensors",
+          "LTX\\2.3\\SEX\\Cr3ampi3_animation_sulphur-2_i2v_v1.0.safetensors",
+          "LTX\\2.3\\SEX\\Doggy_mission_sulphur-2_v0.5.safetensors",
+          "LTX\\2.3\\SEX\\LTX 2.3 _60 FPS_Buttery_Smooth Motion_LoRa.safetensors",
+          "LTX\\2.3\\SEX\\LTX2.3_DISTILLED-1.1_BAKED_LTX_10Eros_v15_r768(1).safetensors",
+          "LTX\\2.3\\SEX\\LTX2.3_DISTILLED-1.1_BAKED_LTX_10Eros_v15_r768.safetensors",
+          "LTX\\2.3\\SEX\\LTX2_3_NSFW_furry_concat_v2.safetensors",
+          "LTX\\2.3\\SEX\\epic_cumshots-V1-LTX_2_3-CUMSH0T.safetensors",
+          "LTX\\2.3\\SEX\\nsfw_anal_insertion_ltx23_v1.0.safetensors",
+          "LTX\\2.3\\SEX\\sfbehind_LTX2_3_v0_1.safetensors",
+          "LTX\\2.3\\SEX\\stomach_bulge_10eros_sulphur_v1.safetensors",
+          "LTX\\2.3\\SOLO\\CGS23.safetensors",
+          "LTX\\2.3\\SOLO\\Defined_Muscle.safetensors",
+          "LTX\\2.3\\SOLO\\ltx-23-bodybuilder-lora-v01.safetensors",
+          "LTX\\2.3\\SOLO\\ltx-23-bodybuilder-lora-v10.safetensors",
+          "LTX\\2.3\\SOLO\\ltx-23-most-muscular-pose-lora-v10.safetensors",
+          "LTX\\2.3\\SOLO\\ltx-front-lat-spread-pose.safetensors",
+          "LTX\\2.3\\SOLO\\ltx-side-bicep-flex.safetensors",
+          "LTX\\2.3\\SOLO\\solo-male-ltx2-4000.safetensors",
+          "LTX\\2.3\\Sulphur\\distill_loras\\ltx-2.3-22b-distilled-lora-1.1_fro90_ceil72_condsafe.safetensors",
+          "LTX\\2.3\\VBVR\\LTX2.3_Multi_step_video_reasoning_V0.1.safetensors",
+          "LTX\\2.3\\VBVR\\LTX2.3_reasoning_Sulphur-2_I2V_V4.safetensors",
+          "LTX\\2.3\\epic_cumshots-V1-LTX_2_3-CUMSH0T.safetensors",
+          "LTX\\2.3\\ltx23-ultimatedt-NSFW-sulphured_audio_final_k3nk.safetensors",
+          "LTX\\2.3\\ltxdeepthroat_v01.safetensors",
+          "LTX\\2.3\\plora_sulfter_i2v-step00008500.comfy.safetensors",
+          "LTX\\2.3\\sulphur2_gay_sex_coachbate_v2.safetensors",
+          "LTX\\LTX-2.3-OmniNFT-RL-Lora_bf16.safetensors",
+          "LTX\\ltx-2-19b-ic-lora-detailer.safetensors",
+          "LTX\\ltx-2.3-22b-distilled-1.1_lora-dynamic_fro09_avg_rank_111_bf16.safetensors",
+          "LTX\\ltx-2.3-22b-distilled-lora-384-1.1.safetensors",
+          "LTX\\ltx23_anime2real_rank64_v1_4500.safetensors",
+          "LTX\\ltx23_edit_anything_global_rank128_v1_9000steps_adamw.safetensors",
+          "LTX\\ltx23_inpaint_masked_r2v_rank32_v1_3000steps.safetensors",
+          "LTX\\ltx23_real2anime_rank64_v1_5000.safetensors",
+          "Lora\\H3\\Turbo\\MinimaxTurbo4step.safetensors",
+          "MINIMAX\\minimax_h3_turbo_4step_ckpt850.safetensors",
+          "MiniMax H3\\H3_Motion_Booster.safetensors",
+          "MiniMax H3\\HMNSFW_AIO_V2.safetensors",
+          "MiniMax H3\\MM-H3 - Ahegao Face.safetensors",
+          "MiniMax H3\\SexGod-NaughtyTimes-lora-MINIMAXH3.safetensors",
+          "MiniMax H3\\deepthroat_v1.safetensors",
+          "MiniMax H3\\minimax_h3_fl2v_lightx2v_turbo_4step_v0.1_comfy.safetensors",
+          "MiniMax H3\\minimax_h3_turbo_4step_ckpt500.safetensors",
+          "MiniMax H3\\minimax_h3_turbo_4step_ckpt850_pruned_comfyui.safetensors",
+          "Pony\\VirileStallion\\Uncut_For_VirileStallion-000008.safetensors",
+          "Qwen\\2512_foreteafour_000030000.safetensors",
+          "Qwen\\CockQwen-v3.safetensors",
+          "Qwen\\ErectCirQwen-V1.safetensors",
+          "Qwen\\Qwen Image Edit 2511_v2.safetensors",
+          "Qwen\\Qwen-Image-2512\\Qwen-Image-Lightning-4steps-V1.0-bf16.safetensors",
+          "Qwen\\Qwen-Image-2512\\Qwen4Play2512_v2.safetensors",
+          "Qwen\\Qwen_Nsfw_Body_V23c-12K.safetensors",
+          "Qwen\\The Hairy Man-QWEN-GMR.safetensors",
+          "Qwen\\[QWEN] SendDudes.safetensors",
+          "Qwen\\qwen-image-penis-lora-coachbate-v3.safetensors",
+          "Qwen\\qwen-image_nsfw_bodybuilder_v1_e44.safetensors",
+          "Qwen\\xfucked-1.3-qwen-1216c-step00000300.safetensors",
+          "SDXL 1.0\\Sliders\\detailed_notrigger.safetensors",
+          "WAN\\14B\\T2V\\detailz-wan.safetensors",
+          "WAN\\14B\\T2V\\penisonface101.safetensors",
+          "WAN\\2.1\\Lightx2v\\lightx2v_I2V_14B_480p_cfg_step_distill_rank128_bf16.safetensors",
+          "WAN\\2.1\\Lightx2v\\lightx2v_I2V_14B_480p_cfg_step_distill_rank16_bf16.safetensors",
+          "WAN\\2.1\\Lightx2v\\lightx2v_I2V_14B_480p_cfg_step_distill_rank32_bf16.safetensors",
+          "WAN\\2.1\\Lightx2v\\lightx2v_I2V_14B_480p_cfg_step_distill_rank4_bf16.safetensors",
+          "WAN\\2.1\\Lightx2v\\lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors",
+          "WAN\\2.1\\Lightx2v\\lightx2v_I2V_14B_480p_cfg_step_distill_rank8_bf16.safetensors",
+          "WAN\\2.1\\Lightx2v\\lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank128_bf16.safetensors",
+          "WAN\\2.1\\Lightx2v\\lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank16_bf16.safetensors",
+          "WAN\\2.1\\Lightx2v\\lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank32_bf16.safetensors",
+          "WAN\\2.1\\Lightx2v\\lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank4_bf16.safetensors",
+          "WAN\\2.1\\Lightx2v\\lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank64_bf16.safetensors",
+          "WAN\\2.1\\Lightx2v\\lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank8_bf16.safetensors",
+          "WAN\\2.1\\Wan21_CausVid_14B_T2V_lora_rank32.safetensors",
+          "WAN\\2.2\\I2V-A14B\\DR34ML4Y_I2V_14B_HIGH_V2.safetensors",
+          "WAN\\2.2\\I2V-A14B\\DR34ML4Y_I2V_14B_LOW_V2.safetensors",
+          "WAN\\2.2\\I2V-A14B\\E68993E884B890E9AB98.uiDs.safetensors",
+          "WAN\\2.2\\I2V-A14B\\Lightx2v\\Wan_2_2_I2V_A14B_HIGH_lightx2v_4step_lora_260412_rank_64_fp16.safetensors",
+          "WAN\\2.2\\I2V-A14B\\Lightx2v\\Wan_2_2_I2V_A14B_HIGH_lightx2v_4step_lora_v1030_rank_64_bf16.safetensors",
+          "WAN\\2.2\\I2V-A14B\\Lightx2v\\Wan_2_2_I2V_A14B_HIGH_lightx2v_MoE_distill_lora_rank_64_bf16.safetensors",
+          "WAN\\2.2\\I2V-A14B\\Lightx2v\\Wan_2_2_I2V_A14B_LOW_lightx2v_4step_lora_260412_rank_64_fp16.safetensors",
+          "WAN\\2.2\\I2V-A14B\\Wan22_ThroatV3_High.safetensors",
+          "WAN\\2.2\\I2V-A14B\\Wan22_ThroatV3_Low.safetensors",
+          "WAN\\2.2\\I2V-A14B\\wan_finger_licking_i2vA14B_HIGHNOISE_v01.safetensors",
+          "WAN\\2.2\\I2V-A14B\\wan_finger_licking_i2vA14B_LOWNOISE_v01-000065.safetensors",
+          "WAN\\2.2\\T2V-A14B\\wan22_penis_coachbate_v2_high_noise.safetensors",
+          "WAN\\2.2\\T2V-A14B\\wan22_penis_coachbate_v2_low_noise.safetensors",
+          "faceID\\Best_FaceID_CharacterSheet_v1.0_LoRA.safetensors",
+          "faceID\\Best_FaceID_v1.0_LoRA.safetensors",
+          "krea2\\(Krea 2) MASC V2026.1.safetensors",
+          "krea2\\(Krea 2) Manrotica V2026.1.safetensors",
+          "krea2\\Andis_-_CCC__Krea2__epoch_7.safetensors",
+          "krea2\\Chest Size KreaV1.safetensors",
+          "krea2\\Damp_Armpit_v1_Full_Krea2.safetensors",
+          "krea2\\Declan_-_CCC__Krea2__epoch_10.safetensors",
+          "krea2\\Face_and_Emotions_V01_5000.safetensors",
+          "krea2\\Gay Couple_000002000.safetensors",
+          "krea2\\Hunter_Krea2_CCC.safetensors",
+          "krea2\\INPAINTKREA-V1.safetensors",
+          "krea2\\IdeoKrea-test.safetensors",
+          "krea2\\Leif_-_CCC__Krea2__epoch_10.safetensors",
+          "krea2\\Sven_-_CCC__Krea2__epoch_10.safetensors",
+          "krea2\\Thirst_Aid_Kit_V1.0.safetensors",
+          "krea2\\Truman_-_CCC__Krea2__epoch_10.safetensors",
+          "krea2\\V1.safetensors",
+          "krea2\\Zoran_-_CCC__Krea2__epoch_10.safetensors",
+          "krea2\\assrimming_krea2_v1 (1).safetensors",
+          "krea2\\blowbang_krea2_v1.safetensors",
+          "krea2\\detail\\Detailer-KREA2.safetensors",
+          "krea2\\detail\\Krea_2_zidiusArt_Melancholy_v2.safetensors",
+          "krea2\\detail\\PornMaster_Detail_Slider_Krea2_V1_000000225.safetensors",
+          "krea2\\detail\\V1.safetensors",
+          "krea2\\detail\\krea2_Enhancer.safetensors",
+          "krea2\\detail\\wetness_krea2_loraholic.safetensors",
+          "krea2\\general-purpose\\KNP_000003000.safetensors",
+          "krea2\\general-purpose\\Krea2_HMNSFW_AIO.safetensors",
+          "krea2\\general-purpose\\MysticXXX_KREA2_v3.safetensors",
+          "krea2\\identity\\krea2_identity_edit_v1_1.safetensors",
+          "krea2\\krea2_darkbrush.safetensors",
+          "krea2\\krea2_kidsdrawing.safetensors",
+          "krea2\\krea2_vintagetarot.safetensors",
+          "krea2\\male-focused\\(Krea 2) MASC V2026.1.safetensors",
+          "krea2\\male-focused\\KREA2 - DickTatorV1 - Release.safetensors",
+          "krea2\\male-focused\\penis_size_krea2_loraholic.safetensors",
+          "krea2\\male-focused\\penis_size_krea2_v2_loraholic.safetensors",
+          "krea2\\male-focused\\yng_male_000006000.safetensors",
+          "krea2\\prompting\\Krea-2-Turbo-Projector-Scale-LoRA-Diffusers.safetensors",
+          "krea2\\prompting\\Krea2_TextFusion_Refusal_Reduction.safetensors",
+          "krea2\\prompting\\krea2filterbypass3.safetensors",
+          "krea2\\realism\\Krea2-realism-V1.safetensors",
+          "krea2\\realism\\SummerVibesHM_krea2_epoch8.safetensors",
+          "krea2\\realism\\bloomgirls-ultrarealism-krea2_4k.safetensors",
+          "krea2\\realism\\lenovo_krea2.safetensors",
+          "krea2\\realism\\real_3d_krea2_loraholic.safetensors",
+          "krea2\\realism\\realism_engine_krea2_v3.1.safetensors",
+          "krea2\\style\\Krea2_DC120.safetensors",
+          "krea2\\style\\PornMaster_Krea2_Shot_Size_Slider_V1.safetensors",
+          "krea2\\style\\phone_photography_2020_krea2.safetensors",
+          "krea2\\style\\ultra_real_krea2_v1.safetensors",
+          "krea2_turbo_lora_rank_64_bf16.safetensors",
+          "minimax-h3\\H3_Motion_Booster.safetensors",
+          "minimax-h3\\minimax_h3_turbo_4step_ckpt850.safetensors",
+          "minimax_h3_turbo_4step_pruned_comfyui.safetensors",
+          "zimage\\Hands + Feet + skin perfection style zib v1.safetensors"
+        ]
+      ],
+      "strength_model": [
+        "FLOAT",
+        {
+          "default": 1.0,
+          "min": -100.0,
+          "max": 100.0,
+          "step": 0.01
+        }
+      ]
+    }
+  },
+  "output": [
+    "MODEL"
+  ],
+  "output_name": [
+    "MODEL"
+  ]
+}
+
+CLIPTextEncode
+{
+  "input": {
+    "required": {
+      "text": [
+        "STRING",
+        {
+          "multiline": true,
+          "dynamicPrompts": true,
+          "tooltip": "The text to be encoded."
+        }
+      ],
+      "clip": [
+        "CLIP",
+        {
+          "tooltip": "The CLIP model used for encoding the text."
+        }
+      ]
+    }
+  },
+  "output": [
+    "CONDITIONING"
+  ],
+  "output_name": [
+    "CONDITIONING"
+  ]
+}
+
+DualCLIPLoader
+{
+  "input": {
+    "required": {
+      "clip_name1": [
+        [
+          "Huihui-Qwen3-VL-4B-Instruct-abliterated-fp8_scaled.safetensors",
+          "LTX\\2.3\\Director\\gemma_3_12B_it_fp4_mixed.safetensors",
+          "clip_l.safetensors",
+          "gemma4_e4b_it_fp8_scaled.safetensors",
+          "gemma_3_12B_it-int8_convrot.safetensors",
+          "gemma_3_12B_it.safetensors",
+          "gemma_3_12B_it_fp4_mixed.safetensors",
+          "gemma_3_12B_it_fp8_e4m3fn.safetensors",
+          "ltx-2.3_text_projection_bf16.safetensors",
+          "minimax-h3\\qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+          "minimaxH3INT4Convrot_qwen3vl32bInt4.safetensors",
+          "mistral_3_small_flux2_fp4_mixed.safetensors",
+          "qwen3-vl-4b-heretic_int8.safetensors",
+          "qwen3-vl\\Huihui-Qwen3-VL-4B-Instruct-abliterated-fp8_scaled.safetensors",
+          "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+          "qwen3vl_4b_bf16.safetensors",
+          "qwen3vl_4b_fp8_scaled.safetensors",
+          "qwen_3_4b.safetensors",
+          "qwen_3_8b_fp8mixed.safetensors",
+          "t5gemma_b_b_ul2.safetensors",
+          "t5xxl_fp16.safetensors",
+          "t5xxl_fp8_e4m3fn.safetensors",
+          "umt5_xxl_fp8_e4m3fn_scaled.safetensors"
+        ]
+      ],
+      "clip_name2": [
+        [
+          "Huihui-Qwen3-VL-4B-Instruct-abliterated-fp8_scaled.safetensors",
+          "LTX\\2.3\\Director\\gemma_3_12B_it_fp4_mixed.safetensors",
+          "clip_l.safetensors",
+          "gemma4_e4b_it_fp8_scaled.safetensors",
+          "gemma_3_12B_it-int8_convrot.safetensors",
+          "gemma_3_12B_it.safetensors",
+          "gemma_3_12B_it_fp4_mixed.safetensors",
+          "gemma_3_12B_it_fp8_e4m3fn.safetensors",
+          "ltx-2.3_text_projection_bf16.safetensors",
+          "minimax-h3\\qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+          "minimaxH3INT4Convrot_qwen3vl32bInt4.safetensors",
+          "mistral_3_small_flux2_fp4_mixed.safetensors",
+          "qwen3-vl-4b-heretic_int8.safetensors",
+          "qwen3-vl\\Huihui-Qwen3-VL-4B-Instruct-abliterated-fp8_scaled.safetensors",
+          "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+          "qwen3vl_4b_bf16.safetensors",
+          "qwen3vl_4b_fp8_scaled.safetensors",
+          "qwen_3_4b.safetensors",
+          "qwen_3_8b_fp8mixed.safetensors",
+          "t5gemma_b_b_ul2.safetensors",
+          "t5xxl_fp16.safetensors",
+          "t5xxl_fp8_e4m3fn.safetensors",
+          "umt5_xxl_fp8_e4m3fn_scaled.safetensors"
+        ]
+      ],
+      "type": [
+        [
+          "sdxl",
+          "sd3",
+          "flux",
+          "hunyuan_video",
+          "hidream",
+          "hunyuan_image",
+          "hunyuan_video_15",
+          "kandinsky5",
+          "kandinsky5_image",
+          "ltxv",
+          "newbie",
+          "ace"
+        ]
+      ]
+    },
+    "optional": {
+      "device": [
+        [
+          "default",
+          "cpu"
+        ],
+        {
+          "advanced": true
+        }
+      ]
+    }
+  },
+  "output": [
+    "CLIP"
+  ],
+  "output_name": [
+    "CLIP"
+  ]
+}
+
+LTXVConditioning
+{
+  "input": {
+    "required": {
+      "positive": [
+        "CONDITIONING",
+        {}
+      ],
+      "negative": [
+        "CONDITIONING",
+        {}
+      ],
+      "frame_rate": [
+        "FLOAT",
+        {
+          "default": 25.0,
+          "min": 0.0,
+          "max": 1000.0,
+          "step": 0.01
+        }
+      ]
+    }
+  },
+  "output": [
+    "CONDITIONING",
+    "CONDITIONING"
+  ],
+  "output_name": [
+    "positive",
+    "negative"
+  ]
+}
+
+EmptyLTXVLatentVideo
+{
+  "input": {
+    "required": {
+      "width": [
+        "INT",
+        {
+          "default": 768,
+          "min": 64,
+          "max": 16384,
+          "step": 32
+        }
+      ],
+      "height": [
+        "INT",
+        {
+          "default": 512,
+          "min": 64,
+          "max": 16384,
+          "step": 32
+        }
+      ],
+      "length": [
+        "INT",
+        {
+          "default": 97,
+          "min": 1,
+          "max": 16384,
+          "step": 8
+        }
+      ],
+      "batch_size": [
+        "INT",
+        {
+          "default": 1,
+          "min": 1,
+          "max": 4096
+        }
+      ]
+    }
+  },
+  "output": [
+    "LATENT"
+  ],
+  "output_name": [
+    "LATENT"
+  ]
+}
+
+LTXIdentityOverlapConditioning
+{
+  "input": {
+    "required": {
+      "model": [
+        "MODEL"
+      ],
+      "positive": [
+        "CONDITIONING"
+      ],
+      "negative": [
+        "CONDITIONING"
+      ],
+      "vae": [
+        "VAE"
+      ],
+      "latent": [
+        "LATENT"
+      ],
+      "reference_image": [
+        "IMAGE",
+        {
+          "tooltip": "Reference to copy into the generation -- any subject (object, animal, character, person...), not just a face. Accepts a BATCH of N images (use an Image Batch node to combine several) for checkpoints trained on multiple STACKED references (layout='strata') -- each image in the batch becomes its own reference block with source_id = source_id + its index (0-based: 1st image keeps 'source_id' as-is, 2nd gets source_id+1, ...). A single image (the default/old behavior) works exactly as before."
+        }
+      ],
+      "source_id": [
+        "FLOAT",
+        {
+          "default": 2.0,
+          "min": 0.0,
+          "max": 8.0,
+          "step": 1.0,
+          "tooltip": "source_phase segment id (training used 2). 0 = no phase."
+        }
+      ],
+      "phase_scale": [
+        "FLOAT",
+        {
+          "default": 1.0,
+          "min": 0.0,
+          "max": 4.0,
+          "step": 0.1
+        }
+      ],
+      "ref_resize_mode": [
+        [
+          "match_target",
+          "match_target_letterbox",
+          "native_resolution"
+        ],
+        {
+          "default": "match_target",
+          "tooltip": "match_target: resize ref to the OUTPUT video's pixel size via a CENTER-CROP then resize (old single-face-crop recipes \u2014 ref resolution never mattered, but this silently discards whatever isn't in the middle of the ref for mismatched aspect ratios, e.g. a landscape character sheet used for a portrait output loses the side panels/face closeup). match_target_letterbox: same target pixel size, but fits the WHOLE ref inside it preserving aspect ratio (no crop, pads with white) -- use this for a landscape composite sheet + portrait (or any mismatched-aspect) output so no panel/face-detail gets cut off. native_resolution: encode the ref at ITS OWN size (rounded to the nearest 32px), independent of the video size \u2014 REQUIRED for checkpoints trained on a fixed ref resolution bucket that differs from the video's own bucket (e.g. the composite face+3views ref, trained at 2048x1024 regardless of output video size) -- but for aspect-mismatched outputs (e.g. portrait video) this can bias the model toward the ref's own (landscape) composition, causing an off-center/cropped-looking result; try match_target_letterbox first if you hit that."
+        }
+      ],
+      "debug_log": [
+        "BOOLEAN",
+        {
+          "default": false,
+          "tooltip": "Print per-step [LTXIdOverlap] shape logs to the console (for debugging)."
+        }
+      ]
+    },
+    "optional": {
+      "crop_anchor": [
+        [
+          "center",
+          "top",
+          "bottom",
+          "left",
+          "right"
+        ],
+        {
+          "default": "center",
+          "tooltip": "New in v1.10.13, optional -- old workflows without this input keep the previous always-center-crop behavior. Only used by match_target (the crop-then-resize mode). Which part of the reference survives the crop when its aspect ratio doesn't match the output -- e.g. if your sheet's face closeup is in the top row, set 'top' instead of the default center crop so it doesn't get cut off. No effect on match_target_letterbox or native_resolution (neither ever crops)."
+        }
+      ],
+      "layout": [
+        [
+          "overlap",
+          "st_drc",
+          "strata"
+        ],
+        {
+          "default": "overlap",
+          "tooltip": "New, optional -- old workflows without this input keep the default 'overlap' behavior (reference shares the target's own RoPE coordinate range, distinguished only by source_phase -- what every checkpoint so far was trained with). 'st_drc' shifts the WHOLE reference block past the target's coordinate extent on every axis (non-overlapping region). 'strata' shifts ONLY the temporal axis to a slot past the target's own length -- one slot per image in the reference_image batch (1st image -> slot 0, 2nd -> slot 1, ...), leaving H/W overlapping the target; this is the 'stacked references' convention (ltx_trainer TASS strata layout). Only use whichever layout the loaded checkpoint was actually trained with -- using the wrong one is not a quality hit, it's a coordinate convention the model never learned, so identity transfer likely won't work at all."
+        }
+      ],
+      "reference_guidance_scale": [
+        "FLOAT",
+        {
+          "default": 1.0,
+          "min": 1.0,
+          "max": 10.0,
+          "step": 0.1,
+          "tooltip": "ST-DRC-style reference-CFG (arxiv 2606.02441). 1.0 = off (identical to before this input existed). >1.0 adds a THIRD forward pass per step with the reference tokens dropped, and amplifies the reference's own contribution: denoised += (scale-1)*(with_ref - without_ref) -- the same way CFG amplifies the text prompt's. Costs one extra (cheaper, ref-token-free) forward pass per step when enabled. Start around 2-4; same units/convention as CFG scale on the sampler."
+        }
+      ]
+    }
+  },
+  "output": [
+    "MODEL",
+    "CONDITIONING",
+    "CONDITIONING",
+    "LATENT",
+    "STRING",
+    "IMAGE",
+    "IMAGE"
+  ],
+  "output_name": [
+    "model",
+    "positive",
+    "negative",
+    "latent",
+    "debug",
+    "ref_preview",
+    "crop_overlay"
+  ]
+}
+
+LTXVEmptyLatentAudio
+{
+  "input": {
+    "required": {
+      "frames_number": [
+        "INT",
+        {
+          "tooltip": "Number of frames.",
+          "default": 97,
+          "min": 1,
+          "max": 1000,
+          "step": 1,
+          "display": "number"
+        }
+      ],
+      "frame_rate": [
+        "FLOAT,INT",
+        {
+          "tooltip": "Number of frames per second.",
+          "default": 25.0,
+          "widgetType": "FLOAT",
+          "min": 1.0,
+          "max": 1000.0,
+          "step": 0.01,
+          "display": "number"
+        }
+      ],
+      "batch_size": [
+        "INT",
+        {
+          "tooltip": "The number of latent audio samples in the batch.",
+          "default": 1,
+          "min": 1,
+          "max": 4096,
+          "display": "number"
+        }
+      ],
+      "audio_vae": [
+        "VAE",
+        {
+          "display_name": "Audio VAE",
+          "tooltip": "The Audio VAE model to get configuration from."
+        }
+      ]
+    }
+  },
+  "output": [
+    "LATENT"
+  ],
+  "output_name": [
+    "Latent"
+  ]
+}
+
+LTXVConcatAVLatent
+{
+  "input": {
+    "required": {
+      "video_latent": [
+        "LATENT",
+        {}
+      ],
+      "audio_latent": [
+        "LATENT",
+        {}
+      ]
+    }
+  },
+  "output": [
+    "LATENT"
+  ],
+  "output_name": [
+    "latent"
+  ]
+}
+
+CFGGuider
+{
+  "input": {
+    "required": {
+      "model": [
+        "MODEL",
+        {}
+      ],
+      "positive": [
+        "CONDITIONING",
+        {}
+      ],
+      "negative": [
+        "CONDITIONING",
+        {}
+      ],
+      "cfg": [
+        "FLOAT",
+        {
+          "default": 8.0,
+          "min": 0.0,
+          "max": 100.0,
+          "step": 0.1,
+          "round": 0.01
+        }
+      ]
+    }
+  },
+  "output": [
+    "GUIDER"
+  ],
+  "output_name": [
+    "GUIDER"
+  ]
+}
+
+BasicScheduler
+{
+  "input": {
+    "required": {
+      "model": [
+        "MODEL",
+        {}
+      ],
+      "scheduler": [
+        "COMBO",
+        {
+          "multiselect": false,
+          "options": [
+            "simple",
+            "sgm_uniform",
+            "karras",
+            "exponential",
+            "ddim_uniform",
+            "beta",
+            "normal",
+            "linear_quadratic",
+            "kl_optimal",
+            "bong_tangent",
+            "beta57"
+          ]
+        }
+      ],
+      "steps": [
+        "INT",
+        {
+          "default": 20,
+          "min": 1,
+          "max": 10000
+        }
+      ],
+      "denoise": [
+        "FLOAT",
+        {
+          "default": 1.0,
+          "min": 0.0,
+          "max": 1.0,
+          "step": 0.01
+        }
+      ]
+    }
+  },
+  "output": [
+    "SIGMAS"
+  ],
+  "output_name": [
+    "SIGMAS"
+  ]
+}
+
+KSamplerSelect
+{
+  "input": {
+    "required": {
+      "sampler_name": [
+        "COMBO",
+        {
+          "multiselect": false,
+          "options": [
+            "euler",
+            "euler_cfg_pp",
+            "euler_ancestral",
+            "euler_ancestral_cfg_pp",
+            "heun",
+            "heunpp2",
+            "exp_heun_2_x0",
+            "exp_heun_2_x0_sde",
+            "dpm_2",
+            "dpm_2_ancestral",
+            "lms",
+            "dpm_fast",
+            "dpm_adaptive",
+            "dpmpp_2s_ancestral",
+            "dpmpp_2s_ancestral_cfg_pp",
+            "dpmpp_sde",
+            "dpmpp_sde_gpu",
+            "dpmpp_2m",
+            "dpmpp_2m_cfg_pp",
+            "dpmpp_2m_sde",
+            "dpmpp_2m_sde_gpu",
+            "dpmpp_2m_sde_heun",
+            "dpmpp_2m_sde_heun_gpu",
+            "dpmpp_3m_sde",
+            "dpmpp_3m_sde_gpu",
+            "ddpm",
+            "lcm",
+            "ipndm",
+            "ipndm_v",
+            "deis",
+            "res_multistep",
+            "res_multistep_cfg_pp",
+            "res_multistep_ancestral",
+            "res_multistep_ancestral_cfg_pp",
+            "gradient_estimation",
+            "gradient_estimation_cfg_pp",
+            "er_sde",
+            "seeds_2",
+            "seeds_3",
+            "sa_solver",
+            "sa_solver_pece",
+            "ddim",
+            "uni_pc",
+            "uni_pc_bh2",
+            "legacy_rk",
+            "rk",
+            "rk_beta",
+            "deis_3m_ode",
+            "deis_2m_ode",
+            "deis_3m",
+            "deis_2m",
+            "res_6s_ode",
+            "res_5s_ode",
+            "res_3s_ode",
+            "res_2s_ode",
+            "res_3m_ode",
+            "res_2m_ode",
+            "res_6s",
+            "res_5s",
+            "res_3s",
+            "res_2s",
+            "res_3m",
+            "res_2m"
+          ]
+        }
+      ]
+    }
+  },
+  "output": [
+    "SAMPLER"
+  ],
+  "output_name": [
+    "SAMPLER"
+  ]
+}
+
+SamplerCustomAdvanced
+{
+  "input": {
+    "required": {
+      "noise": [
+        "NOISE",
+        {}
+      ],
+      "guider": [
+        "GUIDER",
+        {}
+      ],
+      "sampler": [
+        "SAMPLER",
+        {}
+      ],
+      "sigmas": [
+        "SIGMAS",
+        {}
+      ],
+      "latent_image": [
+        "LATENT",
+        {}
+      ]
+    }
+  },
+  "output": [
+    "LATENT",
+    "LATENT"
+  ],
+  "output_name": [
+    "output",
+    "denoised_output"
+  ]
+}
+
+LTXVSeparateAVLatent
+{
+  "input": {
+    "required": {
+      "av_latent": [
+        "LATENT",
+        {}
+      ]
+    }
+  },
+  "output": [
+    "LATENT",
+    "LATENT"
+  ],
+  "output_name": [
+    "video_latent",
+    "audio_latent"
+  ]
+}
+
+VAEDecode
+{
+  "input": {
+    "required": {
+      "samples": [
+        "LATENT",
+        {
+          "tooltip": "The latent to be decoded."
+        }
+      ],
+      "vae": [
+        "VAE",
+        {
+          "tooltip": "The VAE model used for decoding the latent."
+        }
+      ]
+    }
+  },
+  "output": [
+    "IMAGE"
+  ],
+  "output_name": [
+    "IMAGE"
+  ]
+}
+
+VHS_VideoCombine
+{
+  "input": {
+    "required": {
+      "images": [
+        "IMAGE"
+      ],
+      "frame_rate": [
+        "FLOAT",
+        {
+          "default": 8,
+          "min": 1,
+          "step": 1
+        }
+      ],
+      "loop_count": [
+        "INT",
+        {
+          "default": 0,
+          "min": 0,
+          "max": 100,
+          "step": 1
+        }
+      ],
+      "filename_prefix": [
+        "STRING",
+        {
+          "default": "AnimateDiff"
+        }
+      ],
+      "format": [
+        [
+          "image/gif",
+          "image/webp",
+          "video/16bit-png",
+          "video/8bit-png",
+          "video/av1-webm",
+          "video/ffmpeg-gif",
+          "video/ffv1-mkv",
+          "video/h264-mp4",
+          "video/h265-mp4",
+          "video/nvenc_av1-mp4",
+          "video/nvenc_h264-mp4",
+          "video/nvenc_hevc-mp4",
+          "video/ProRes",
+          "video/webm"
+        ],
+        {
+          "formats": {
+            "video/av1-webm": [
+              [
+                "pix_fmt",
+                [
+                  "yuv420p10le",
+                  "yuv420p"
+                ]
+              ],
+              [
+                "crf",
+                "INT",
+                {
+                  "default": 23,
+                  "min": 0,
+                  "max": 100,
+                  "step": 1
+                }
+              ],
+              [
+                "input_color_depth",
+                [
+                  "8bit",
+                  "16bit"
+                ]
+              ],
+              [
+                "save_metadata",
+                "BOOLEAN",
+                {
+                  "default": true
+                }
+              ]
+            ],
+            "video/ffmpeg-gif": [
+              [
+                "dither",
+                [
+                  "bayer",
+                  "heckbert",
+                  "floyd_steinberg",
+                  "sierra2",
+                  "sierra2_4a",
+                  "sierra3",
+                  "burkes",
+                  "atkinson",
+                  "none"
+                ],
+                {
+                  "default": "sierra2_4a"
+                },
+                "[0:v] split [a][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletteuse=dither=$val"
+              ]
+            ],
+            "video/ffv1-mkv": [
+              [
+                "level",
+                [
+                  "0",
+                  "1",
+                  "3"
+                ],
+                {
+                  "default": "3"
+                }
+              ],
+              [
+                "coder",
+                [
+                  "0",
+                  "1",
+                  "2"
+                ],
+                {
+                  "default": "1"
+                }
+              ],
+              [
+                "context",
+                [
+                  "0",
+                  "1"
+                ],
+                {
+                  "default": "1"
+                }
+              ],
+              [
+                "gop_size",
+                "INT",
+                {
+                  "default": 1,
+                  "min": 1,
+                  "max": 300,
+                  "step": 1
+                }
+              ],
+              [
+                "slices",
+                [
+                  "4",
+                  "6",
+                  "9",
+                  "12",
+                  "16",
+                  "20",
+                  "24",
+                  "30"
+                ],
+                {
+                  "default": "16"
+                }
+              ],
+              [
+                "slicecrc",
+                [
+                  "0",
+                  "1"
+                ],
+                {
+                  "default": "1"
+                }
+              ],
+              [
+                "pix_fmt",
+                [
+                  "rgba64le",
+                  "bgra",
+                  "yuv420p",
+                  "yuv422p",
+                  "yuv444p",
+                  "yuva420p",
+                  "yuva422p",
+                  "yuva444p",
+                  "yuv420p10le",
+                  "yuv422p10le",
+                  "yuv444p10le",
+                  "yuv420p12le",
+                  "yuv422p12le",
+                  "yuv444p12le",
+                  "yuv420p14le",
+                  "yuv422p14le",
+                  "yuv444p14le",
+                  "yuv420p16le",
+                  "yuv422p16le",
+                  "yuv444p16le",
+                  "gray",
+                  "gray10le",
+                  "gray12le",
+                  "gray16le"
+                ],
+                {
+                  "default": "rgba64le"
+                }
+              ],
+              [
+                "save_metadata",
+                "BOOLEAN",
+                {
+                  "default": true
+                }
+              ],
+              [
+                "trim_to_audio",
+                "BOOLEAN",
+                {
+                  "default": false
+                }
+              ]
+            ],
+            "video/h264-mp4": [
+              [
+                "pix_fmt",
+                [
+                  "yuv420p",
+                  "yuv420p10le"
+                ]
+              ],
+              [
+                "crf",
+                "INT",
+                {
+                  "default": 19,
+                  "min": 0,
+                  "max": 100,
+                  "step": 1
+                }
+              ],
+              [
+                "save_metadata",
+                "BOOLEAN",
+                {
+                  "default": true
+                }
+              ],
+              [
+                "trim_to_audio",
+                "BOOLEAN",
+                {
+                  "default": false
+                }
+              ]
+            ],
+            "video/h265-mp4": [
+              [
+                "pix_fmt",
+                [
+                  "yuv420p10le",
+                  "yuv420p"
+                ]
+              ],
+              [
+                "crf",
+                "INT",
+                {
+                  "default": 22,
+                  "min": 0,
+                  "max": 100,
+                  "step": 1
+                }
+              ],
+              [
+                "save_metadata",
+                "BOOLEAN",
+                {
+                  "default": true
+                }
+              ]
+            ],
+            "video/nvenc_av1-mp4": [
+              [
+                "pix_fmt",
+                [
+                  "yuv420p",
+                  "p010le"
+                ]
+              ],
+              [
+                "bitrate",
+                "INT",
+                {
+                  "default": 10,
+                  "min": 1,
+                  "max": 999,
+                  "step": 1
+                }
+              ],
+              [
+                "megabit",
+                "BOOLEAN",
+                {
+                  "default": true
+                }
+              ],
+              [
+                "save_metadata",
+                "BOOLEAN",
+                {
+                  "default": true
+                }
+              ]
+            ],
+            "video/nvenc_h264-mp4": [
+              [
+                "pix_fmt",
+                [
+                  "yuv420p",
+                  "p010le"
+                ]
+              ],
+              [
+                "bitrate",
+                "INT",
+                {
+                  "default": 10,
+                  "min": 1,
+                  "max": 999,
+                  "step": 1
+                }
+              ],
+              [
+                "megabit",
+                "BOOLEAN",
+                {
+                  "default": true
+                }
+              ],
+              [
+                "save_metadata",
+                "BOOLEAN",
+                {
+                  "default": true
+                }
+              ]
+            ],
+            "video/nvenc_hevc-mp4": [
+              [
+                "pix_fmt",
+                [
+                  "yuv420p",
+                  "p010le"
+                ]
+              ],
+              [
+                "bitrate",
+                "INT",
+                {
+                  "default": 10,
+                  "min": 1,
+                  "max": 999,
+                  "step": 1
+                }
+              ],
+              [
+                "megabit",
+                "BOOLEAN",
+                {
+                  "default": true
+                }
+              ],
+              [
+                "save_metadata",
+                "BOOLEAN",
+                {
+                  "default": true
+                }
+              ]
+            ],
+            "video/ProRes": [
+              [
+                "profile",
+                [
+                  "lt",
+                  "standard",
+                  "hq",
+                  "4444",
+                  "4444xq"
+                ],
+                {
+                  "default": "hq"
+                }
+              ]
+            ],
+            "video/webm": [
+              [
+                "pix_fmt",
+                [
+                  "yuv420p",
+                  "yuva420p"
+                ]
+              ],
+              [
+                "crf",
+                "INT",
+                {
+                  "default": 20,
+                  "min": 0,
+                  "max": 100,
+                  "step": 1
+                }
+              ],
+              [
+                "save_metadata",
+                "BOOLEAN",
+                {
+                  "default": true
+                }
+              ],
+              [
+                "trim_to_audio",
+                "BOOLEAN",
+                {
+                  "default": false
+                }
+              ]
+            ],
+            "image/webp": [
+              [
+                "lossless",
+                "BOOLEAN",
+                {
+                  "default": true
+                }
+              ]
+            ]
+          }
+        }
+      ],
+      "pingpong": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ],
+      "save_output": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ]
+    },
+    "optional": {
+      "audio": [
+        "AUDIO"
+      ],
+      "meta_batch": [
+        "VHS_BatchManager"
+      ],
+      "vae": [
+        "VAE"
+      ]
+    },
+    "hidden": {
+      "prompt": "PROMPT",
+      "extra_pnginfo": "EXTRA_PNGINFO",
+      "unique_id": "UNIQUE_ID"
+    }
+  },
+  "output": [
+    "VHS_FILENAMES"
+  ],
+  "output_name": [
+    "Filenames"
+  ]
+}
+
+LoadImage
+{
+  "input": {
+    "required": {
+      "image": [
+        [
+          "01 (3).jfif",
+          "02 (3).jfif",
+          "03 (4).jfif",
+          "62733319f3ce0c9ae3416e75a3216373.jpg",
+          "87b4bac377f92c7b61ce9de3be146f79.jpg",
+          "Blokey.png",
+          "Blokey_01.png",
+          "Blokey_03.png",
+          "Blokey_13.png",
+          "Blokey_16.png",
+          "Blokey_20.png",
+          "Blokey_22.png",
+          "Blokey_25.png",
+          "Blokey_28.png",
+          "CI_REF_01_LAYOUT.png",
+          "CI_REF_02_FACE.png",
+          "CI_REF_03_COSTUME_BODY.png",
+          "CI_REF_04_LIGHTING.png",
+          "CI_STYLE_REF_01_GLOBAL_GOLDEN_LIGHT_PALETTE.png",
+          "CI_STYLE_REF_02_SMOKE_CAVE_EMBER_PALETTE.png",
+          "CI_STYLE_REF_03_FILMIC_SKIN_LINEN_TONALITY.png",
+          "CI_STYLE_REF_04_IVORY_LINEN_BLOOD_MATERIAL_DETAIL_OPTIONAL.png",
+          "CI_STYLE_REF_05_GOLD_VFX_GLOW_OPTIONAL.png",
+          "CI_STYLE_REF_06_CHARACTER_SHEET_ART_DIRECTION_OPTIONAL.png",
+          "ChatGPT Image Aug 1, 2026, 05_22_59 PM.png",
+          "ChatGPT Image Aug 1, 2026, 05_23_04 PM.png",
+          "ChatGPT Image Aug 1, 2026, 05_23_09 PM.png",
+          "ChatGPT Image Aug 11, 2026, 02_33_01 AM.png",
+          "ChatGPT Image Aug 11, 2026, 12_36_25 AM (3).png",
+          "ChatGPT Image Aug 6, 2026, 03_48_37 PM (1).png",
+          "ChatGPT Image Aug 6, 2026, 06_07_51 PM (5).png",
+          "ComfyUI_temp_klhlm_00002_.png",
+          "Jesus.png",
+          "Krea2_00001_.png",
+          "Krea2_00002_.png",
+          "Krea2_00003_.png",
+          "Krea2_00004_.png",
+          "Krea2_00006_.png",
+          "Krea2_00012_.png",
+          "Krea2_00027_.png",
+          "Krea2_00041_.png",
+          "Krea2_00047_.png",
+          "Krea2_00055_.png",
+          "Krea2_00056_.png",
+          "Krea2_00060_.png",
+          "Krea2_00066_.png",
+          "Krea2_00081_.png",
+          "Krea2_00088_.png",
+          "Krea2_Character_Consistency_00002_.png",
+          "MV5BOWI5NTkzNTItMTMyNS00NDg5LTkwZTYtMDMxZWE4NTk4NTBmXkEyXkFqcGc@._V1_.jpg",
+          "S01A.webp",
+          "S01B.webp",
+          "S01C.webp",
+          "S01D.webp",
+          "S01E.webp",
+          "S01F.webp",
+          "Screenshot 2026-04-12 183811.png",
+          "Screenshot 2026-04-27 140552.png",
+          "Screenshot 2026-05-09 080438.png",
+          "Screenshot 2026-05-24 112530.png",
+          "Screenshot 2026-05-30 013737.png",
+          "Screenshot 2026-06-02 022706.png",
+          "Screenshot 2026-06-02 025035.png",
+          "Screenshot 2026-06-02 133818.png",
+          "Screenshot 2026-06-03 025013.png",
+          "Screenshot 2026-06-05 182609.png",
+          "Screenshot 2026-06-05 182817 - Copy.png",
+          "Screenshot 2026-06-06 131855.png",
+          "Screenshot 2026-06-06 154021.png",
+          "Screenshot 2026-06-11 211843.png",
+          "Screenshot 2026-06-11 234842.png",
+          "Screenshot 2026-06-12 011247.png",
+          "Screenshot 2026-06-12 011544.png",
+          "Screenshot 2026-06-12 013135.png",
+          "Screenshot 2026-06-15 233641.png",
+          "Screenshot 2026-06-18 233436.png",
+          "Screenshot 2026-06-18 233534.png",
+          "Screenshot 2026-06-29 014410.png",
+          "Screenshot 2026-07-04 002530.png",
+          "Screenshot 2026-07-15 020226.png",
+          "Screenshot 2026-07-15 034728.png",
+          "Screenshot 2026-07-26 131627.png",
+          "Screenshot 2026-07-29 011300.png",
+          "Screenshot 2026-07-29 194215.png",
+          "Screenshot 2026-07-29 214939.png",
+          "Screenshot 2026-07-30 012745.png",
+          "Screenshot 2026-07-30 024526.png",
+          "Screenshot 2026-07-30 024535.png",
+          "Screenshot 2026-07-30 040434.png",
+          "Screenshot 2026-07-30 104200.png",
+          "Screenshot 2026-07-31 003744.png",
+          "Screenshot 2026-07-31 044728.png",
+          "Screenshot 2026-07-31 044802.png",
+          "Screenshot 2026-08-02 043702.png",
+          "Screenshot 2026-08-02 043713.png",
+          "Screenshot 2026-08-02 161034.png",
+          "Screenshot 2026-08-05 041457.png",
+          "Screenshot 2026-08-05 140638.png",
+          "Screenshot 2026-08-07 054931.png",
+          "Screenshot 2026-08-07 115801.png",
+          "Screenshot 2026-08-08 041852.png",
+          "Screenshot 2026-08-08 124427.png",
+          "Screenshot 2026-08-08 132946.png",
+          "Screenshot 2026-08-08 133133.png",
+          "Screenshot 2026-08-08 180128.png",
+          "Screenshot 2026-08-08 180209.png",
+          "Screenshot 2026-08-08 180238.png",
+          "Screenshot 2026-08-08 180509.png",
+          "Screenshot 2026-08-08 204058.png",
+          "Screenshot 2026-08-08 204651.png",
+          "Screenshot 2026-08-09 072115.png",
+          "Screenshot 2026-08-09 072939.png",
+          "Screenshot 2026-08-11 022005.png",
+          "Screenshot 2026-08-11 023136.png",
+          "atmo-smoke.v1.png",
+          "b0f3fba260dfcfd7400d78a051766892.jpg",
+          "char-jesus-main.v4.png",
+          "char-moses.v2.png",
+          "character-guardian-leader-hells-champion-appearance.v2.png",
+          "character-jesus-the-harrower-primary-appearance.v4.png",
+          "clipspace-mask-1786185512991.png",
+          "clipspace-mask-1786185771284.png",
+          "clipspace-mask-1786186948952.png",
+          "clipspace-mask-1786192700106.png",
+          "clipspace-mask-1786221314360.png",
+          "clipspace-mask-1786223095438.png",
+          "clipspace-mask-1786223660801.png",
+          "clipspace-mask-1786224004185.png",
+          "clipspace-mask-1786224484038.png",
+          "clipspace-mask-1786228809636.png",
+          "clipspace-mask-1786254772918.png",
+          "clipspace-paint-1786185512991.png",
+          "clipspace-paint-1786185771284.png",
+          "clipspace-paint-1786186948952.png",
+          "clipspace-paint-1786192700106.png",
+          "clipspace-paint-1786221314360.png",
+          "clipspace-paint-1786223095438.png",
+          "clipspace-paint-1786223660801.png",
+          "clipspace-paint-1786224004185.png",
+          "clipspace-paint-1786224484038.png",
+          "clipspace-paint-1786228809636.png",
+          "clipspace-paint-1786254772918.png",
+          "clipspace-painted-1786185512991.png",
+          "clipspace-painted-1786185771284.png",
+          "clipspace-painted-1786186948952.png",
+          "clipspace-painted-1786192700106.png",
+          "clipspace-painted-1786221314360.png",
+          "clipspace-painted-1786223095438.png",
+          "clipspace-painted-1786223660801.png",
+          "clipspace-painted-1786224004185.png",
+          "clipspace-painted-1786224484038.png",
+          "clipspace-painted-1786228809636.png",
+          "clipspace-painted-1786254772918.png",
+          "clipspace-painted-masked-1786185512991.png",
+          "clipspace-painted-masked-1786185771284.png",
+          "clipspace-painted-masked-1786186948952.png",
+          "clipspace-painted-masked-1786192700106.png",
+          "clipspace-painted-masked-1786221314360.png",
+          "clipspace-painted-masked-1786223095438.png",
+          "clipspace-painted-masked-1786223660801.png",
+          "clipspace-painted-masked-1786224004185.png",
+          "clipspace-painted-masked-1786224484038.png",
+          "clipspace-painted-masked-1786228809636.png",
+          "clipspace-painted-masked-1786254772918.png",
+          "example.png",
+          "extra-cc-board.v1.png",
+          "extra-crowds-and-creatures-four-agent-overview-master-reference-board.v1.png",
+          "extra-freed-tormented-crowds-demonic-guards-inner-chamber-reference-master-reference-board.v1.png",
+          "extra-hell-crowd.v1.png",
+          "extra-men-faith.v1.png",
+          "extra-restraints.v1.png",
+          "extra-women-kids.v1.png",
+          "f8ccd1d47ce3e52f41e657eb73685da4.jpg",
+          "fx-blue-flame.v1.png",
+          "fx-blue.v1.png",
+          "fx-smoke-ash.v1.png",
+          "grok-827bfded-2410-481b-9b2b-ca6fc88663f1.jpg",
+          "grok-aefa2dc0-bb28-4701-b9e4-5730a4c9e0ca.jpg",
+          "grok-image-0bcd9370-1e9d-4452-af46-4733d20a3873.jpg",
+          "grok-image-cdbfd3ac-8fa4-4e11-8248-674dbe212c00.jpg",
+          "image.jpg",
+          "img_00026_.png",
+          "img_00027_.png",
+          "img_00030_.png",
+          "img_00040_.png",
+          "img_00060_.png",
+          "krea2_native_identity_v3_final_test_00001_.png",
+          "loc-abyss.v1.png",
+          "loc-chamber-dark.v1.png",
+          "loc-chamber-wide.v1.png",
+          "loc-gate-close.v1.png",
+          "loc-hell-abyss-approach.v1.png",
+          "loc-inner-chamber-dark.v1.png",
+          "location-hells-gate-the-fortress-entrance-wide-shot.v2.png",
+          "prop-chains.v1.png",
+          "prop-hell-chains.v1.png",
+          "target_identity_sheet_dark_curly_beard.png",
+          "videoframe_10041.png",
+          "vrgdg_placeholder_i2i.png"
+        ],
+        {
+          "image_upload": true
+        }
+      ]
+    }
+  },
+  "output": [
+    "IMAGE",
+    "MASK"
+  ],
+  "output_name": [
+    "IMAGE",
+    "MASK"
+  ]
+}
+
+VAELoaderKJ
+{
+  "input": {
+    "required": {
+      "vae_name": [
+        [
+          "LTX23_audio_vae_bf16.safetensors",
+          "LTX23_video_vae_bf16.safetensors",
+          "ae.safetensors",
+          "diffusion_pytorch_model.safetensors",
+          "ema_vae_fp16.safetensors",
+          "flux2-vae.safetensors",
+          "full_encoder_small_decoder (1).safetensors",
+          "ltx-2.3-22b-distilled_audio_vae.safetensors",
+          "ltx-2.3-22b-distilled_video_vae.safetensors",
+          "minimax-h3\\minimax_h3_audio_vae_fp32.safetensors",
+          "minimax-h3\\minimax_h3_video_vae_fp16.safetensors",
+          "minimax-h3\\minimax_h3_video_vae_int8_convrot.safetensors",
+          "minimax_h3_audio_vae_fp32.safetensors",
+          "minimax_h3_video_vae_fp16.safetensors",
+          "pruna_ltx2.3_vae_comfy_bf16.safetensors",
+          "qwen-image\\qwen_image_vae.safetensors",
+          "qwen_image_vae.safetensors",
+          "taeltx2_3.safetensors",
+          "wan_2.1_vae.safetensors",
+          "taesd",
+          "taesdxl",
+          "taesd3",
+          "taef1",
+          "pixel_space"
+        ]
+      ],
+      "device": [
+        [
+          "main_device",
+          "cpu"
+        ]
+      ],
+      "weight_dtype": [
+        [
+          "bf16",
+          "fp16",
+          "fp32"
+        ]
+      ]
+    }
+  },
+  "output": [
+    "VAE"
+  ],
+  "output_name": [
+    "VAE"
+  ]
+}
+
+VAELoader
+{
+  "input": {
+    "required": {
+      "vae_name": [
+        [
+          "LTX23_audio_vae_bf16.safetensors",
+          "LTX23_video_vae_bf16.safetensors",
+          "ae.safetensors",
+          "diffusion_pytorch_model.safetensors",
+          "ema_vae_fp16.safetensors",
+          "flux2-vae.safetensors",
+          "full_encoder_small_decoder (1).safetensors",
+          "ltx-2.3-22b-distilled_audio_vae.safetensors",
+          "ltx-2.3-22b-distilled_video_vae.safetensors",
+          "minimax-h3\\minimax_h3_audio_vae_fp32.safetensors",
+          "minimax-h3\\minimax_h3_video_vae_fp16.safetensors",
+          "minimax-h3\\minimax_h3_video_vae_int8_convrot.safetensors",
+          "minimax_h3_audio_vae_fp32.safetensors",
+          "minimax_h3_video_vae_fp16.safetensors",
+          "pruna_ltx2.3_vae_comfy_bf16.safetensors",
+          "qwen-image\\qwen_image_vae.safetensors",
+          "qwen_image_vae.safetensors",
+          "taeltx2_3.safetensors",
+          "wan_2.1_vae.safetensors",
+          "taesd3",
+          "taef1",
+          "taesd",
+          "taesdxl",
+          "pixel_space"
+        ]
+      ]
+    }
+  },
+  "output": [
+    "VAE"
+  ],
+  "output_name": [
+    "VAE"
+  ]
+}

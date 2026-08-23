@@ -1,0 +1,30 @@
+{
+  "status": "prepared_not_queued",
+  "comfy_url": "http://127.0.0.1:8188",
+  "purpose": "Low-resolution official CharacterSheet + Best Face ID + OmniNFT identity test using the user's supplied Jesus character sheet.",
+  "reference_source": "BlokeyUI/ComfyUI/input/whatdreamscost/ChatGPT Image Aug 11, 2026, 02_33_01 AM.png",
+  "reference_source_sha256": "8DC161AA938DE41499705CD24EC9875F0B38888093643C52236F2351869B7033",
+  "reference_conformed": "BlokeyUI/ComfyUI/input/whatdreamscost/jesus-character-sheet-1536x1024.v1.png",
+  "reference_conformed_sha256": "AFB43CDEC8C79951F4E1D6B7D98A772D96F3553F400DF5013129BDB694374EDD",
+  "reference_dimensions": [1536, 1024],
+  "reference_transform": "Lanczos fit 1536x1024 with centered white padding; no crop, no stretch, original preserved.",
+  "target": { "width": 512, "height": 512, "frames": 49, "fps": 24, "duration_seconds": 2.0416666667 },
+  "model_chain": [
+    { "selector": "LTX\\2.3\\Director\\ltx-2.3-22b-distilled-1.1_transformer_only_fp8_scaled.safetensors", "kind": "UNET", "strength": null },
+    { "selector": "LTX\\LTX-2.3-OmniNFT-RL-Lora_bf16.safetensors", "kind": "LoRA", "strength": 1.0 },
+    { "selector": "faceID\\Best_FaceID_v1.0_LoRA.safetensors", "kind": "LoRA", "strength": 0.2 },
+    { "selector": "faceID\\Best_FaceID_CharacterSheet_v1.0_LoRA.safetensors", "kind": "LoRA", "strength": 1.0 }
+  ],
+  "identity_conditioning": {
+    "class_type": "LTXIdentityOverlapConditioning",
+    "source_id": 2.0,
+    "phase_scale": 1.0,
+    "ref_resize_mode": "native_resolution",
+    "layout": "overlap",
+    "reference_guidance_scale": 1.0
+  },
+  "sampling": { "cfg": 1.0, "sampler": "euler", "scheduler": "linear_quadratic", "steps": 8, "denoise": 1.0, "seed": 488441818004763 },
+  "api_prompt": "diagnostics/ltx-identity-tuning/garden-character-sheet-omninft-512-r25.api.json",
+  "runner": "scripts/run-garden-character-sheet-omninft.mjs",
+  "output_prefix": "identity_tests/garden-character-sheet-omninft-512-r25"
+}

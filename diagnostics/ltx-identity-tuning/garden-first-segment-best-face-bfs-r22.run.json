@@ -1,0 +1,32 @@
+{
+  "created_at": "2026-08-12T02:52:59.252Z",
+  "comfy_url": "http://127.0.0.1:8188",
+  "segment": {
+    "start_seconds": 0,
+    "end_seconds": 6.54,
+    "frames": 164,
+    "fps": 25
+  },
+  "requested_resolution": {
+    "width": 720,
+    "height": 480,
+    "resize_method": "maintain aspect ratio"
+  },
+  "scene_image": "whatdreamscost/ChatGPT Image Aug 11, 2026, 12_36_25 AM (1).png",
+  "identity_reference": "whatdreamscost/jesus-face-primary-3q.v1.png",
+  "identity_lora": "faceID\\Best_FaceID_v1.0_LoRA.safetensors",
+  "identity_node": "LTXIdentityOverlapConditioning",
+  "reference_resize_mode": "match_target",
+  "lora_strength": 1,
+  "cfg": 1,
+  "steps": 8,
+  "seed": 488441818004763,
+  "output_prefix": "identity_tests/garden-first-segment-best-face-bfs-r22",
+  "api_prompt": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\diagnostics\\ltx-identity-tuning\\garden-first-segment-best-face-bfs-r22.api.json",
+  "workflow": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\user\\default\\workflows\\GARDEN_first_segment_best_face_fixed.json",
+  "submitted_at": "2026-08-12T02:52:59.291Z",
+  "prompt_id": "15dd834f-f532-4510-ba33-8c233d22f37b",
+  "queue_number": 0,
+  "client_id": "1aa39772-da0b-4acf-8b1c-3c92b00a408c",
+  "node_errors": {}
+}

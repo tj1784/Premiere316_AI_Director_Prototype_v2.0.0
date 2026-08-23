@@ -1,0 +1,415 @@
+{
+  "3": {
+    "inputs": {
+      "vae_name": "LTX23_video_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    },
+    "class_type": "VAELoaderKJ",
+    "_meta": {
+      "title": "Video VAELoader"
+    }
+  },
+  "4": {
+    "inputs": {
+      "vae_name": "LTX23_audio_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    },
+    "class_type": "VAELoaderKJ",
+    "_meta": {
+      "title": "Audio VAELoader"
+    }
+  },
+  "5": {
+    "inputs": {
+      "frame_rate": [
+        "46",
+        6
+      ],
+      "positive": [
+        "46",
+        1
+      ],
+      "negative": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "LTXVConditioning",
+    "_meta": {
+      "title": "LTXVConditioning"
+    }
+  },
+  "7": {
+    "inputs": {
+      "video_latent": [
+        "110",
+        3
+      ],
+      "audio_latent": [
+        "46",
+        3
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "8": {
+    "inputs": {
+      "ic_lora_name": "None",
+      "ic_lora_strength": 0,
+      "scale_by": 1,
+      "upscale_method": "bicubic",
+      "image_attention_strength": 1,
+      "crop": "disabled",
+      "auto_snap_ic_grid": true,
+      "use_tiled_encode": false,
+      "tile_size": 256,
+      "tile_overlap": 64,
+      "retake_mode": false,
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "5",
+        1
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "latent": [
+        "46",
+        2
+      ],
+      "guide_data": [
+        "46",
+        4
+      ]
+    },
+    "class_type": "LTXDirectorGuide",
+    "_meta": {
+      "title": "LTX Director Guide"
+    }
+  },
+  "9": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "110",
+        0
+      ],
+      "positive": [
+        "110",
+        1
+      ],
+      "negative": [
+        "110",
+        2
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG Guider"
+    }
+  },
+  "10": {
+    "inputs": {
+      "noise": [
+        "28",
+        0
+      ],
+      "guider": [
+        "9",
+        0
+      ],
+      "sampler": [
+        "29",
+        0
+      ],
+      "sigmas": [
+        "11",
+        0
+      ],
+      "latent_image": [
+        "7",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "11": {
+    "inputs": {
+      "scheduler": "linear_quadratic",
+      "steps": 8,
+      "denoise": 1,
+      "model": [
+        "110",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "13": {
+    "inputs": {
+      "av_latent": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTXVSeparateAVLatent"
+    }
+  },
+  "15": {
+    "inputs": {
+      "samples": [
+        "55",
+        2
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "16": {
+    "inputs": {
+      "samples": [
+        "13",
+        1
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "LTXVAudioVAEDecode",
+    "_meta": {
+      "title": "LTXV Audio VAE Decode"
+    }
+  },
+  "26": {
+    "inputs": {
+      "text": "worst quality, low quality, inconsistent identity, different actor, face drift, facial morphing, changing facial structure, changing eye color, changing skin tone, changing age, changing hairline, short hair, straight hair, blond hair, brown hair, changing hairstyle, changing beard shape, shaved face, duplicate character, multiple men, extra people, clone, contact sheet, reference board, multi-panel grid, split screen, collage, tiled image, panel border, duplicated subject, distorted face, deformed face, asymmetrical eyes, warped mouth, blurry face, obscured face, poorly detailed face, costume change, modern clothing, armor, crown, glowing halo, extra limbs, malformed hands, flickering, jittery motion, inconsistent motion, abrupt camera movement, jump cut, scene transition, text, subtitles, logo, watermark",
+      "clip": [
+        "84",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Negative Prompt)"
+    }
+  },
+  "28": {
+    "inputs": {
+      "noise_seed": 488441818004763
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "29": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "46": {
+    "inputs": {
+      "start_second": 0,
+      "end_second": 6.54,
+      "duration_seconds": 6.54,
+      "start_frame": 0,
+      "end_frame": 164,
+      "duration_frames": 164,
+      "timeline_data": "{\"mainTrackEnabled\":true,\"audioTrackEnabled\":true,\"motionTrackEnabled\":false,\"propHeight\":93,\"globalPropHeight\":341,\"showFilenames\":true,\"overrideAudio\":false,\"inpaint_audio\":true,\"global_prompt\":\"ref_t2v: The generated man is exactly the same olive-brown-skinned Middle Eastern man shown in the face reference: long angular oval face, deep-set hazel-brown eyes, strong narrow slightly convex nose, thick dark eyebrows, shoulder-length dense black corkscrew curls, and a dense tapered full black beard. Preserve those exact facial proportions, hairline, curl pattern, beard shape, eye color, and identity in every frame. Photorealistic live-action biblical drama set at night in the Garden of Gethsemane on the Mount of Olives, immediately before the arrest of Jesus. Ancient gnarled olive trees, exposed silver-gray roots, dark earth, scattered limestone, sparse grass moving in a cool night wind and distant moonlit hills. Jerusalem glows faintly beyond the valley. No mountain summit, sunset, golden-hour sky or wilderness plateau.\\n\\nThe same historically grounded Jesus appears in every shot with absolute facial, anatomical, hair, beard and wardrobe continuity. He wears an off-white linen tunic and dark earth-brown wool mantle. He is emotionally overwhelmed yet spiritually resolute. His breathing, swallowing, trembling fingers, tear formation, cloth movement and changes in posture must remain physically realistic and restrained.\\n\\nPreserve a consistent front-left visual axis inspired by the supplied portrait. Use deliberate cuts between six separate shots rather than attempting one impossible continuous camera orbit. The camera never passes behind Jesus’s head, never crosses the established axis and never performs a full orbit. His face remains visible and recognizable whenever the framing permits.\\n\\nLighting is moonlit chiaroscuro: cool blue-silver ambient moonlight through olive branches, one soft warm practical glow from distant Jerusalem and subtle volumetric haze. Deep natural shadows without crushing facial detail. Intimate sacred anguish rather than fantasy spectacle.\\n\\n2.39:1 anamorphic composition, 24 fps, realistic cinematic motion blur, restrained shallow depth of field, organic handheld micro-movement, natural lens breathing, realistic skin and fabric physics, fine film grain and high dynamic range.\\n\\nNo visible angel, supernatural beam, halo, crowd, demon, cross, crown of thorns, armor, modern object, written text, subtitle, logo or generated dialogue. Dialogue, breathing, ambience, Foley and score will be added separately.\",\"retake_global_prompt\":\"\",\"retakeMode\":false,\"retakeStart\":0,\"retakeLength\":164,\"retakePrompt\":\"\",\"retakeStrength\":1,\"retakeVideo\":null,\"normalStartFrame\":0,\"normalDurationFrames\":164,\"segments\":[{\"id\":\"1786433861807d4eat\",\"start\":0,\"length\":164,\"prompt\":\"Shot 1 — Entering the place of prayer\\n\\n00:00–00:10 · 35mm wide-medium · slow lateral reveal\\n\\nFirst-frame image prompt\\n\\nGethsemane at night, cinematic 2.39:1. Viewed through the softly blurred trunk and leaves of an ancient olive tree, Jesus stands alone in a small moonlit clearing, positioned on the right third of the frame and facing front-left approximately 35 degrees toward camera. Preserve the supplied facial identity exactly.\\n\\nHe wears an off-white linen tunic and dark brown wool mantle. His shoulders are burdened, head lowered and hands loosely clasped near his abdomen. Cool blue moonlight traces his hair and mantle while a faint warm glow from distant Jerusalem separates him from the dark grove. Gnarled olive roots, limestone and wind-stirred grass surround him. Photorealistic live-action biblical cinematography, 35mm anamorphic lens, restrained depth of field, natural night exposure, no wounds or blood.\\n\\nVideo prompt\\n\\nThe shot begins behind a softly blurred olive trunk. The camera performs a very slow three-foot lateral slide to the right, revealing Jesus alone in the clearing without changing the established front-left axis.\\n\\nJesus takes two heavy, measured steps and stops. His breathing is labored but controlled. His fingers tighten briefly around the edge of his mantle, then release. He looks toward the dark earth, closes his eyes and draws one unsteady breath. Wind moves individual curls, olive leaves and the hem of his mantle with realistic weight.\\n\\nEnd with Jesus beginning to lower himself toward the ground. No orbit, facial drift, sudden head movement, exaggerated crying or camera shake.\",\"type\":\"image\",\"imageFile\":\"whatdreamscost/ChatGPT Image Aug 11, 2026, 12_36_25 AM (1).png\",\"imageB64\":\"/api/view?filename=ChatGPT%20Image%20Aug%2011%2C%202026%2C%2012_36_25%20AM%20(1).png&type=input&subfolder=whatdreamscost\",\"isEndFrame\":false}],\"motionSegments\":[],\"audioSegments\":[]}",
+      "local_prompts": "Shot 1 — Entering the place of prayer\n\n00:00–00:10 · 35mm wide-medium · slow lateral reveal\n\nFirst-frame image prompt\n\nGethsemane at night, cinematic 2.39:1. Viewed through the softly blurred trunk and leaves of an ancient olive tree, Jesus stands alone in a small moonlit clearing, positioned on the right third of the frame and facing front-left approximately 35 degrees toward camera. Preserve the supplied facial identity exactly.\n\nHe wears an off-white linen tunic and dark brown wool mantle. His shoulders are burdened, head lowered and hands loosely clasped near his abdomen. Cool blue moonlight traces his hair and mantle while a faint warm glow from distant Jerusalem separates him from the dark grove. Gnarled olive roots, limestone and wind-stirred grass surround him. Photorealistic live-action biblical cinematography, 35mm anamorphic lens, restrained depth of field, natural night exposure, no wounds or blood.\n\nVideo prompt\n\nThe shot begins behind a softly blurred olive trunk. The camera performs a very slow three-foot lateral slide to the right, revealing Jesus alone in the clearing without changing the established front-left axis.\n\nJesus takes two heavy, measured steps and stops. His breathing is labored but controlled. His fingers tighten briefly around the edge of his mantle, then release. He looks toward the dark earth, closes his eyes and draws one unsteady breath. Wind moves individual curls, olive leaves and the hem of his mantle with realistic weight.\n\nEnd with Jesus beginning to lower himself toward the ground. No orbit, facial drift, sudden head movement, exaggerated crying or camera shake.",
+      "segment_lengths": "164",
+      "epsilon": 0.99,
+      "guide_strength": "1.00",
+      "use_custom_audio": true,
+      "use_custom_motion": false,
+      "inpaint_audio": true,
+      "frame_rate": 25,
+      "display_mode": "seconds",
+      "custom_width": 720,
+      "custom_height": 480,
+      "resize_method": "maintain aspect ratio",
+      "divisible_by": 32,
+      "img_compression": 18,
+      "override_audio": false,
+      "queue_i2v_segments": false,
+      "timeline_ui": "",
+      "model": [
+        "95",
+        0
+      ],
+      "clip": [
+        "84",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "LTXDirector",
+    "_meta": {
+      "title": "LTX Director"
+    }
+  },
+  "55": {
+    "inputs": {
+      "positive": [
+        "8",
+        0
+      ],
+      "negative": [
+        "8",
+        1
+      ],
+      "latent": [
+        "13",
+        0
+      ]
+    },
+    "class_type": "LTXVCropGuides",
+    "_meta": {
+      "title": "LTXVCropGuides"
+    }
+  },
+  "84": {
+    "inputs": {
+      "clip_name1": "gemma_3_12B_it_fp8_e4m3fn.safetensors",
+      "clip_name2": "ltx-2.3_text_projection_bf16.safetensors",
+      "type": "ltxv",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "Load CLIP (Dual)"
+    }
+  },
+  "94": {
+    "inputs": {
+      "frame_rate": [
+        "46",
+        6
+      ],
+      "loop_count": 0,
+      "filename_prefix": "identity_tests/garden-first-segment-best-face-bfs-r23",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "15",
+        0
+      ],
+      "audio": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "95": {
+    "inputs": {
+      "unet_name": "ltx2\\ltx-2.3-22b-distilled-1.1-fp8.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "107": {
+    "inputs": {
+      "image": "whatdreamscost/jesus-face-primary-trained-wide.v1.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Best Face ID · Jesus primary 3/4 portrait"
+    }
+  },
+  "109": {
+    "inputs": {
+      "model": [
+        "46",
+        0
+      ],
+      "lora_name": "faceID\\Best_FaceID_v1.0_LoRA.safetensors",
+      "strength_model": 1
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Best Face ID · Load trained face LoRA"
+    }
+  },
+  "110": {
+    "inputs": {
+      "model": [
+        "109",
+        0
+      ],
+      "positive": [
+        "8",
+        0
+      ],
+      "negative": [
+        "8",
+        1
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "latent": [
+        "8",
+        2
+      ],
+      "reference_image": [
+        "107",
+        0
+      ],
+      "source_id": 2,
+      "phase_scale": 1,
+      "ref_resize_mode": "match_target",
+      "debug_log": true,
+      "crop_anchor": "center",
+      "layout": "overlap",
+      "reference_guidance_scale": 2.5
+    },
+    "class_type": "LTXIdentityOverlapConditioning",
+    "_meta": {
+      "title": "Official BFS · LTX Identity Transfer"
+    }
+  }
+}

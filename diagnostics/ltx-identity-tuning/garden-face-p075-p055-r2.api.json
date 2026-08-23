@@ -1,0 +1,626 @@
+{
+  "3": {
+    "inputs": {
+      "vae_name": "LTX23_video_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    },
+    "class_type": "VAELoaderKJ",
+    "_meta": {
+      "title": "Video VAELoader"
+    }
+  },
+  "4": {
+    "inputs": {
+      "vae_name": "LTX23_audio_vae_bf16.safetensors",
+      "device": "main_device",
+      "weight_dtype": "bf16"
+    },
+    "class_type": "VAELoaderKJ",
+    "_meta": {
+      "title": "Audio VAELoader"
+    }
+  },
+  "5": {
+    "inputs": {
+      "frame_rate": [
+        "46",
+        6
+      ],
+      "positive": [
+        "46",
+        1
+      ],
+      "negative": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "LTXVConditioning",
+    "_meta": {
+      "title": "LTXVConditioning"
+    }
+  },
+  "7": {
+    "inputs": {
+      "video_latent": [
+        "8",
+        2
+      ],
+      "audio_latent": [
+        "46",
+        3
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "8": {
+    "inputs": {
+      "ic_lora_name": "None",
+      "ic_lora_strength": 1,
+      "scale_by": 0.5,
+      "upscale_method": "bicubic",
+      "image_attention_strength": 1,
+      "crop": "center",
+      "auto_snap_ic_grid": true,
+      "use_tiled_encode": false,
+      "tile_size": 256,
+      "tile_overlap": 64,
+      "retake_mode": false,
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "5",
+        1
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "latent": [
+        "46",
+        2
+      ],
+      "guide_data": [
+        "46",
+        4
+      ]
+    },
+    "class_type": "LTXDirectorGuide",
+    "_meta": {
+      "title": "LTX Director Guide"
+    }
+  },
+  "9": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "101",
+        0
+      ],
+      "positive": [
+        "8",
+        0
+      ],
+      "negative": [
+        "8",
+        1
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG Guider"
+    }
+  },
+  "10": {
+    "inputs": {
+      "noise": [
+        "28",
+        0
+      ],
+      "guider": [
+        "9",
+        0
+      ],
+      "sampler": [
+        "29",
+        0
+      ],
+      "sigmas": [
+        "11",
+        0
+      ],
+      "latent_image": [
+        "7",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "11": {
+    "inputs": {
+      "scheduler": "linear_quadratic",
+      "steps": 8,
+      "denoise": 1,
+      "model": [
+        "101",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "13": {
+    "inputs": {
+      "av_latent": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTXVSeparateAVLatent"
+    }
+  },
+  "14": {
+    "inputs": {
+      "positive": [
+        "8",
+        0
+      ],
+      "negative": [
+        "8",
+        1
+      ],
+      "latent": [
+        "48",
+        0
+      ]
+    },
+    "class_type": "LTXVCropGuides",
+    "_meta": {
+      "title": "LTXVCropGuides"
+    }
+  },
+  "15": {
+    "inputs": {
+      "samples": [
+        "14",
+        2
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "16": {
+    "inputs": {
+      "samples": [
+        "48",
+        1
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "LTXVAudioVAEDecode",
+    "_meta": {
+      "title": "LTXV Audio VAE Decode"
+    }
+  },
+  "26": {
+    "inputs": {
+      "conditioning": [
+        "46",
+        1
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "Conditioning Zero Out"
+    }
+  },
+  "28": {
+    "inputs": {
+      "noise_seed": 488441818004763
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "29": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "46": {
+    "inputs": {
+      "start_second": 0,
+      "end_second": 2.0416666666666665,
+      "duration_seconds": 2.0416666666666665,
+      "start_frame": 0,
+      "end_frame": 49,
+      "duration_frames": 49,
+      "timeline_data": "{\"mainTrackEnabled\":true,\"audioTrackEnabled\":true,\"motionTrackEnabled\":true,\"propHeight\":93,\"globalPropHeight\":341,\"showFilenames\":true,\"overrideAudio\":false,\"inpaint_audio\":true,\"global_prompt\":\"Photorealistic live-action biblical drama set at night in the Garden of Gethsemane on the Mount of Olives, immediately before the arrest of Jesus. Ancient gnarled olive trees, exposed silver-gray roots, dark earth, scattered limestone, sparse grass moving in a cool night wind and distant moonlit hills. Jerusalem glows faintly beyond the valley. No mountain summit, sunset, golden-hour sky or wilderness plateau.\\n\\nThe same historically grounded Jesus appears in every shot with absolute facial, anatomical, hair, beard and wardrobe continuity. He wears an off-white linen tunic and dark earth-brown wool mantle. He is emotionally overwhelmed yet spiritually resolute. His breathing, swallowing, trembling fingers, tear formation, cloth movement and changes in posture must remain physically realistic and restrained.\\n\\nPreserve a consistent front-left visual axis inspired by the supplied portrait. Use deliberate cuts between six separate shots rather than attempting one impossible continuous camera orbit. The camera never passes behind Jesus’s head, never crosses the established axis and never performs a full orbit. His face remains visible and recognizable whenever the framing permits.\\n\\nLighting is moonlit chiaroscuro: cool blue-silver ambient moonlight through olive branches, one soft warm practical glow from distant Jerusalem and subtle volumetric haze. Deep natural shadows without crushing facial detail. Intimate sacred anguish rather than fantasy spectacle.\\n\\n2.39:1 anamorphic composition, 24 fps, realistic cinematic motion blur, restrained shallow depth of field, organic handheld micro-movement, natural lens breathing, realistic skin and fabric physics, fine film grain and high dynamic range.\\n\\nNo visible angel, supernatural beam, halo, crowd, demon, cross, crown of thorns, armor, modern object, written text, subtitle, logo or generated dialogue. Dialogue, breathing, ambience, Foley and score will be added separately.\\n\",\"retake_global_prompt\":\"\",\"retakeMode\":false,\"retakeStart\":0,\"retakeLength\":49,\"retakePrompt\":\"\",\"retakeStrength\":1,\"retakeVideo\":null,\"normalStartFrame\":0,\"normalDurationFrames\":49,\"segments\":[{\"id\":\"17864346702225z2s1\",\"start\":0,\"length\":49,\"prompt\":\"Shot 3 — “Let this cup pass”\\n\\n00:20–00:30 · 85mm intimate close-up · image-matching angle\\n\\nFirst-frame image prompt\\n\\nIntimate 85mm close-up of Jesus praying in Gethsemane from the exact front-left three-quarter facial angle of the supplied identity image. Preserve the same facial geometry and recognizable likeness, but remove the forehead wound and dried blood.\\n\\nHis deep brown eyes are wet with anguish, his brow naturally furrowed and his lips barely parted in prayer. Fine perspiration covers his temples and upper lip. Cool moonlight defines one side of his face while a restrained warm rim light outlines individual curls. The olive grove becomes soft blue-black bokeh behind him. Photorealistic pores, tear film and beard detail, cinematic 2.39:1, no crown or wounds.\\n\\nVideo prompt\\n\\nHold the intimate front-left close-up with an almost imperceptible slow push toward Jesus’s eyes. His lips form a quiet prayer with subtle, realistic articulation suitable for later dialogue replacement: “Father, if You are willing, take this cup from Me.”\\n\\nHis lower lip trembles once and settles. A tear gathers in his right eye, releases naturally and travels down the visible cheek. His gaze lifts slightly beyond the camera, then falls again beneath the weight of sorrow. Breathing remains visible through tiny movements of his nostrils, beard and shoulders.\\n\\nKeep the same face and frontal orientation for the entire shot. No exaggerated sobbing, open-mouth speech, wandering pupils, rubbery lips or identity drift.\",\"type\":\"image\",\"imageFile\":\"whatdreamscost/ChatGPT Image Aug 11, 2026, 12_36_25 AM (3).png\",\"imageB64\":\"/api/view?filename=ChatGPT%20Image%20Aug%2011%2C%202026%2C%2012_36_25%20AM%20(3).png&type=input&subfolder=whatdreamscost\",\"isEndFrame\":false}],\"motionSegments\":[],\"audioSegments\":[]}",
+      "local_prompts": "Shot 3 — “Let this cup pass”\n\n00:20–00:30 · 85mm intimate close-up · image-matching angle\n\nFirst-frame image prompt\n\nIntimate 85mm close-up of Jesus praying in Gethsemane from the exact front-left three-quarter facial angle of the supplied identity image. Preserve the same facial geometry and recognizable likeness, but remove the forehead wound and dried blood.\n\nHis deep brown eyes are wet with anguish, his brow naturally furrowed and his lips barely parted in prayer. Fine perspiration covers his temples and upper lip. Cool moonlight defines one side of his face while a restrained warm rim light outlines individual curls. The olive grove becomes soft blue-black bokeh behind him. Photorealistic pores, tear film and beard detail, cinematic 2.39:1, no crown or wounds.\n\nVideo prompt\n\nHold the intimate front-left close-up with an almost imperceptible slow push toward Jesus’s eyes. His lips form a quiet prayer with subtle, realistic articulation suitable for later dialogue replacement: “Father, if You are willing, take this cup from Me.”\n\nHis lower lip trembles once and settles. A tear gathers in his right eye, releases naturally and travels down the visible cheek. His gaze lifts slightly beyond the camera, then falls again beneath the weight of sorrow. Breathing remains visible through tiny movements of his nostrils, beard and shoulders.\n\nKeep the same face and frontal orientation for the entire shot. No exaggerated sobbing, open-mouth speech, wandering pupils, rubbery lips or identity drift.",
+      "segment_lengths": "49",
+      "epsilon": 0.99,
+      "guide_strength": "1.00",
+      "use_custom_audio": false,
+      "use_custom_motion": false,
+      "inpaint_audio": false,
+      "frame_rate": 24,
+      "display_mode": "seconds",
+      "custom_width": 768,
+      "custom_height": 320,
+      "resize_method": "maintain aspect ratio",
+      "divisible_by": 32,
+      "img_compression": 18,
+      "override_audio": false,
+      "queue_i2v_segments": false,
+      "timeline_ui": "",
+      "model": [
+        "95",
+        0
+      ],
+      "clip": [
+        "84",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "LTXDirector",
+    "_meta": {
+      "title": "LTX Director"
+    }
+  },
+  "47": {
+    "inputs": {
+      "noise": [
+        "28",
+        0
+      ],
+      "guider": [
+        "49",
+        0
+      ],
+      "sampler": [
+        "53",
+        0
+      ],
+      "sigmas": [
+        "96",
+        0
+      ],
+      "latent_image": [
+        "50",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "48": {
+    "inputs": {
+      "av_latent": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "LTXVSeparateAVLatent"
+    }
+  },
+  "49": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "102",
+        0
+      ],
+      "positive": [
+        "58",
+        0
+      ],
+      "negative": [
+        "58",
+        1
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG Guider"
+    }
+  },
+  "50": {
+    "inputs": {
+      "video_latent": [
+        "58",
+        2
+      ],
+      "audio_latent": [
+        "13",
+        1
+      ]
+    },
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "52": {
+    "inputs": {
+      "samples": [
+        "55",
+        2
+      ],
+      "upscale_model": [
+        "57",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "LTXVLatentUpsampler",
+    "_meta": {
+      "title": "LTXVLatentUpsampler"
+    }
+  },
+  "53": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "55": {
+    "inputs": {
+      "positive": [
+        "8",
+        0
+      ],
+      "negative": [
+        "8",
+        1
+      ],
+      "latent": [
+        "13",
+        0
+      ]
+    },
+    "class_type": "LTXVCropGuides",
+    "_meta": {
+      "title": "LTXVCropGuides"
+    }
+  },
+  "57": {
+    "inputs": {
+      "model_name": "LTX\\2.3\\Director\\ltx-2.3-spatial-upscaler-x2-1.1.safetensors"
+    },
+    "class_type": "LatentUpscaleModelLoader",
+    "_meta": {
+      "title": "Load Latent Upscale Model"
+    }
+  },
+  "58": {
+    "inputs": {
+      "ic_lora_name": "None",
+      "ic_lora_strength": 1,
+      "scale_by": 1,
+      "upscale_method": "bicubic",
+      "image_attention_strength": 1,
+      "crop": "center",
+      "auto_snap_ic_grid": true,
+      "use_tiled_encode": false,
+      "tile_size": 256,
+      "tile_overlap": 64,
+      "retake_mode": false,
+      "positive": [
+        "55",
+        0
+      ],
+      "negative": [
+        "55",
+        1
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "latent": [
+        "52",
+        0
+      ],
+      "guide_data": [
+        "46",
+        4
+      ]
+    },
+    "class_type": "LTXDirectorGuide",
+    "_meta": {
+      "title": "LTX Director Guide"
+    }
+  },
+  "84": {
+    "inputs": {
+      "clip_name1": "gemma_3_12B_it_fp8_e4m3fn.safetensors",
+      "clip_name2": "ltx-2.3_text_projection_bf16.safetensors",
+      "type": "ltxv",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "Load CLIP (Dual)"
+    }
+  },
+  "94": {
+    "inputs": {
+      "frame_rate": [
+        "46",
+        6
+      ],
+      "loop_count": 0,
+      "filename_prefix": "identity_tests/garden-face-p075-p055-r2",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "15",
+        0
+      ],
+      "audio": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "95": {
+    "inputs": {
+      "unet_name": "ltx2\\ltx-2.3-22b-distilled-1.1-fp8.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "96": {
+    "inputs": {
+      "sigmas": "0.85, 0.7250, 0.4219, 0.0"
+    },
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "ManualSigmas"
+    }
+  },
+  "98": {
+    "inputs": {
+      "image": "whatdreamscost/char-jesus-close.v3.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Jesus identity portrait (global reference)"
+    }
+  },
+  "99": {
+    "inputs": {
+      "model": [
+        "46",
+        0
+      ],
+      "lora_name": "LTX\\2.3\\Official\\IC-LoRA\\Ingredients\\ltx-2.3-22b-ic-lora-ingredients-0.9.safetensors",
+      "strength_model": 1
+    },
+    "class_type": "LTXICLoRALoaderModelOnly",
+    "_meta": {
+      "title": "Identity · Official Ingredients IC-LoRA"
+    }
+  },
+  "100": {
+    "inputs": {
+      "model": [
+        "99",
+        0
+      ],
+      "zero_ref_timesteps": false,
+      "verbose": false
+    },
+    "class_type": "LTXReferenceEnable",
+    "_meta": {
+      "title": "Identity · Enable reference tokens"
+    }
+  },
+  "101": {
+    "inputs": {
+      "model": [
+        "100",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "image": [
+        "98",
+        0
+      ],
+      "target_latent": [
+        "8",
+        2
+      ],
+      "strength": 0.75,
+      "position_mode": "reference",
+      "verbose": true
+    },
+    "class_type": "LTXReferenceConditioning",
+    "_meta": {
+      "title": "Identity · Pass 1 exact latent"
+    }
+  },
+  "102": {
+    "inputs": {
+      "model": [
+        "100",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "image": [
+        "98",
+        0
+      ],
+      "target_latent": [
+        "58",
+        2
+      ],
+      "strength": 0.55,
+      "position_mode": "reference",
+      "verbose": true
+    },
+    "class_type": "LTXReferenceConditioning",
+    "_meta": {
+      "title": "Identity · Pass 2 exact latent"
+    }
+  }
+}

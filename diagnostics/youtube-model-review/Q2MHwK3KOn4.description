@@ -1,0 +1,15 @@
+LTX 2.3 Face Consistency Fix in ComfyUI — 10S Nodes Full Workflow Tutorial
+
+WORKFLOW & Links - https://www.patreon.com/posts/ltx-2-3-face-fix-159823483?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link
+
+LTX 2.3 has two problems that kill most workflows — face drift across frames and lip sync breaking the moment you run an upscale pass. In this video, I'm covering the 10S ComfyUI nodes that fix both of these at the architectural level, with no extra models required.
+
+I'll walk you through the full workflow including the LTX Latent Anchor Aware node, LTX Latent Upsampler Tiled, and the LTX Tiled Sampler — plus a side-by-side comparison so you can see exactly what difference these nodes make in practice.
+
+
+Full workflow demo at 720p using the GGUF version of LTX 2.3
+Multi-action prompt test on an RTX 4090 — first try, no SageAttention
+
+Honest take: LTX still isn't WAN 2.2 level on face consistency, but these nodes close the gap significantly.
+
+#LTX23 #ComfyUI #AIVideo #FaceConsistency #LTXVideo #ComfyUIWorkflow #AIImageToVideo #10SNodes #LTXUpscale #IdentityPreservation #ComfyUITutorial #AIGirlie #OpenSource #AITools #VideoGeneration

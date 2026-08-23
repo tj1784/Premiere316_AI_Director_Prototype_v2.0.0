@@ -1,0 +1,1592 @@
+WEBVTT
+Kind: captions
+Language: en
+
+00:00:00.000 --> 00:00:02.590 align:start position:0%
+ 
+LTX<00:00:00.800><c> 2.3</c><00:00:01.440><c> has</c><00:00:01.640><c> two</c><00:00:01.800><c> problems</c><00:00:02.200><c> that</c><00:00:02.320><c> nobody</c>
+
+00:00:02.590 --> 00:00:02.600 align:start position:0%
+LTX 2.3 has two problems that nobody
+ 
+
+00:00:02.600 --> 00:00:04.790 align:start position:0%
+LTX 2.3 has two problems that nobody
+really<00:00:02.840><c> talks</c><00:00:03.160><c> about.</c><00:00:03.920><c> Your</c><00:00:04.120><c> subject's</c><00:00:04.560><c> face</c>
+
+00:00:04.790 --> 00:00:04.800 align:start position:0%
+really talks about. Your subject's face
+ 
+
+00:00:04.800 --> 00:00:06.550 align:start position:0%
+really talks about. Your subject's face
+slowly<00:00:05.160><c> drifts</c><00:00:05.560><c> and</c><00:00:05.680><c> falls</c><00:00:05.920><c> apart</c><00:00:06.200><c> across</c>
+
+00:00:06.550 --> 00:00:06.560 align:start position:0%
+slowly drifts and falls apart across
+ 
+
+00:00:06.560 --> 00:00:07.710 align:start position:0%
+slowly drifts and falls apart across
+frames.
+
+00:00:07.710 --> 00:00:07.720 align:start position:0%
+frames.
+ 
+
+00:00:07.720 --> 00:00:09.630 align:start position:0%
+frames.
+And<00:00:07.920><c> the</c><00:00:08.000><c> moment</c><00:00:08.280><c> you</c><00:00:08.400><c> run</c><00:00:08.520><c> an</c><00:00:08.640><c> upscale</c><00:00:09.040><c> pass,</c>
+
+00:00:09.630 --> 00:00:09.640 align:start position:0%
+And the moment you run an upscale pass,
+ 
+
+00:00:09.640 --> 00:00:11.150 align:start position:0%
+And the moment you run an upscale pass,
+lip<00:00:09.880><c> sync</c><00:00:10.120><c> breaks</c><00:00:10.520><c> and</c><00:00:10.640><c> detail</c><00:00:10.960><c> goes</c>
+
+00:00:11.150 --> 00:00:11.160 align:start position:0%
+lip sync breaks and detail goes
+ 
+
+00:00:11.160 --> 00:00:12.670 align:start position:0%
+lip sync breaks and detail goes
+inconsistent.
+
+00:00:12.670 --> 00:00:12.680 align:start position:0%
+inconsistent.
+ 
+
+00:00:12.680 --> 00:00:14.510 align:start position:0%
+inconsistent.
+There<00:00:12.920><c> are</c><00:00:13.000><c> new</c><00:00:13.160><c> comfy</c><00:00:13.520><c> UI</c><00:00:13.760><c> nodes</c><00:00:14.120><c> that</c><00:00:14.240><c> fix</c>
+
+00:00:14.510 --> 00:00:14.520 align:start position:0%
+There are new comfy UI nodes that fix
+ 
+
+00:00:14.520 --> 00:00:15.910 align:start position:0%
+There are new comfy UI nodes that fix
+both<00:00:14.800><c> of</c><00:00:14.880><c> these.</c>
+
+00:00:15.910 --> 00:00:15.920 align:start position:0%
+both of these.
+ 
+
+00:00:15.920 --> 00:00:17.470 align:start position:0%
+both of these.
+And<00:00:16.080><c> in</c><00:00:16.160><c> this</c><00:00:16.320><c> video,</c><00:00:16.680><c> I'm</c><00:00:16.800><c> going</c><00:00:17.040><c> to</c><00:00:17.160><c> walk</c><00:00:17.400><c> you</c>
+
+00:00:17.470 --> 00:00:17.480 align:start position:0%
+And in this video, I'm going to walk you
+ 
+
+00:00:17.480 --> 00:00:19.590 align:start position:0%
+And in this video, I'm going to walk you
+through<00:00:17.760><c> exactly</c><00:00:18.280><c> how</c><00:00:18.400><c> they</c><00:00:18.560><c> work,</c><00:00:19.240><c> show</c><00:00:19.480><c> you</c>
+
+00:00:19.590 --> 00:00:19.600 align:start position:0%
+through exactly how they work, show you
+ 
+
+00:00:19.600 --> 00:00:21.310 align:start position:0%
+through exactly how they work, show you
+the<00:00:19.720><c> full</c><00:00:19.960><c> workflow,</c><00:00:20.560><c> and</c><00:00:20.720><c> then</c><00:00:20.880><c> show</c><00:00:21.040><c> you</c><00:00:21.240><c> a</c>
+
+00:00:21.310 --> 00:00:21.320 align:start position:0%
+the full workflow, and then show you a
+ 
+
+00:00:21.320 --> 00:00:23.110 align:start position:0%
+the full workflow, and then show you a
+side-by-side<00:00:21.960><c> comparison</c><00:00:22.640><c> so</c><00:00:22.720><c> you</c><00:00:22.840><c> can</c><00:00:23.000><c> see</c>
+
+00:00:23.110 --> 00:00:23.120 align:start position:0%
+side-by-side comparison so you can see
+ 
+
+00:00:23.120 --> 00:00:25.390 align:start position:0%
+side-by-side comparison so you can see
+the<00:00:23.320><c> actual</c><00:00:23.640><c> difference.</c><00:00:24.760><c> So,</c><00:00:25.000><c> let's</c><00:00:25.200><c> go</c><00:00:25.320><c> to</c>
+
+00:00:25.390 --> 00:00:25.400 align:start position:0%
+the actual difference. So, let's go to
+ 
+
+00:00:25.400 --> 00:00:27.590 align:start position:0%
+the actual difference. So, let's go to
+the<00:00:25.520><c> GitHub</c><00:00:25.800><c> page</c><00:00:26.080><c> and</c><00:00:26.200><c> look</c><00:00:26.320><c> at</c><00:00:26.400><c> these</c><00:00:26.560><c> nodes.</c>
+
+00:00:27.590 --> 00:00:27.600 align:start position:0%
+the GitHub page and look at these nodes.
+ 
+
+00:00:27.600 --> 00:00:29.510 align:start position:0%
+the GitHub page and look at these nodes.
+Over<00:00:27.840><c> here,</c><00:00:28.200><c> you</c><00:00:28.320><c> can</c><00:00:28.480><c> see</c><00:00:28.640><c> 10S</c><00:00:29.120><c> nodes</c><00:00:29.400><c> for</c>
+
+00:00:29.510 --> 00:00:29.520 align:start position:0%
+Over here, you can see 10S nodes for
+ 
+
+00:00:29.520 --> 00:00:31.630 align:start position:0%
+Over here, you can see 10S nodes for
+comfy<00:00:29.880><c> UI.</c><00:00:30.720><c> These</c><00:00:30.960><c> are</c><00:00:31.080><c> a</c><00:00:31.120><c> collection</c><00:00:31.520><c> of</c>
+
+00:00:31.630 --> 00:00:31.640 align:start position:0%
+comfy UI. These are a collection of
+ 
+
+00:00:31.640 --> 00:00:33.230 align:start position:0%
+comfy UI. These are a collection of
+custom<00:00:32.000><c> nodes</c><00:00:32.320><c> focused</c><00:00:32.680><c> on</c><00:00:32.800><c> identity</c>
+
+00:00:33.230 --> 00:00:33.240 align:start position:0%
+custom nodes focused on identity
+ 
+
+00:00:33.240 --> 00:00:34.790 align:start position:0%
+custom nodes focused on identity
+preservation<00:00:33.880><c> and</c><00:00:34.000><c> latent</c><00:00:34.280><c> space</c><00:00:34.680><c> and</c>
+
+00:00:34.790 --> 00:00:34.800 align:start position:0%
+preservation and latent space and
+ 
+
+00:00:34.800 --> 00:00:37.910 align:start position:0%
+preservation and latent space and
+upscale<00:00:35.240><c> pass</c><00:00:35.520><c> quality</c><00:00:35.920><c> for</c><00:00:36.120><c> LTX</c><00:00:36.640><c> 2.3.</c><00:00:37.800><c> The</c>
+
+00:00:37.910 --> 00:00:37.920 align:start position:0%
+upscale pass quality for LTX 2.3. The
+ 
+
+00:00:37.920 --> 00:00:39.270 align:start position:0%
+upscale pass quality for LTX 2.3. The
+important<00:00:38.280><c> thing</c><00:00:38.400><c> to</c><00:00:38.520><c> note</c><00:00:38.720><c> up</c><00:00:38.800><c> front</c><00:00:39.040><c> is</c><00:00:39.120><c> that</c>
+
+00:00:39.270 --> 00:00:39.280 align:start position:0%
+important thing to note up front is that
+ 
+
+00:00:39.280 --> 00:00:41.070 align:start position:0%
+important thing to note up front is that
+these<00:00:39.520><c> nodes</c><00:00:39.760><c> operate</c><00:00:40.120><c> via</c><00:00:40.280><c> PyTorch</c><00:00:40.800><c> forward</c>
+
+00:00:41.070 --> 00:00:41.080 align:start position:0%
+these nodes operate via PyTorch forward
+ 
+
+00:00:41.080 --> 00:00:43.230 align:start position:0%
+these nodes operate via PyTorch forward
+hooks<00:00:41.360><c> on</c><00:00:41.480><c> the</c><00:00:41.560><c> DT</c><00:00:41.880><c> backbone,</c><00:00:42.680><c> which</c><00:00:42.840><c> means</c><00:00:43.080><c> no</c>
+
+00:00:43.230 --> 00:00:43.240 align:start position:0%
+hooks on the DT backbone, which means no
+ 
+
+00:00:43.240 --> 00:00:45.310 align:start position:0%
+hooks on the DT backbone, which means no
+additional<00:00:43.640><c> models</c><00:00:43.960><c> are</c><00:00:44.080><c> required</c><00:00:44.480><c> at</c><00:00:44.600><c> all.</c>
+
+00:00:45.310 --> 00:00:45.320 align:start position:0%
+additional models are required at all.
+ 
+
+00:00:45.320 --> 00:00:47.230 align:start position:0%
+additional models are required at all.
+You<00:00:45.480><c> just</c><00:00:45.680><c> install</c><00:00:46.080><c> the</c><00:00:46.200><c> nodes</c><00:00:46.640><c> and</c><00:00:46.760><c> they</c><00:00:46.880><c> slot</c>
+
+00:00:47.230 --> 00:00:47.240 align:start position:0%
+You just install the nodes and they slot
+ 
+
+00:00:47.240 --> 00:00:49.510 align:start position:0%
+You just install the nodes and they slot
+straight<00:00:47.600><c> into</c><00:00:47.800><c> your</c><00:00:47.880><c> existing</c><00:00:48.320><c> workflow.</c><00:00:49.280><c> To</c>
+
+00:00:49.510 --> 00:00:49.520 align:start position:0%
+straight into your existing workflow. To
+ 
+
+00:00:49.520 --> 00:00:52.550 align:start position:0%
+straight into your existing workflow. To
+install,<00:00:50.320><c> just</c><00:00:50.560><c> copy</c><00:00:50.880><c> the</c><00:00:50.960><c> repository</c><00:00:51.600><c> link,</c>
+
+00:00:52.550 --> 00:00:52.560 align:start position:0%
+install, just copy the repository link,
+ 
+
+00:00:52.560 --> 00:00:54.830 align:start position:0%
+install, just copy the repository link,
+open<00:00:52.880><c> your</c><00:00:53.000><c> comfy</c><00:00:53.320><c> UI</c><00:00:53.520><c> manager,</c><00:00:54.400><c> search</c><00:00:54.720><c> for</c>
+
+00:00:54.830 --> 00:00:54.840 align:start position:0%
+open your comfy UI manager, search for
+ 
+
+00:00:54.840 --> 00:00:57.510 align:start position:0%
+open your comfy UI manager, search for
+10S<00:00:55.280><c> nodes,</c><00:00:56.200><c> and</c><00:00:56.320><c> install</c><00:00:56.680><c> from</c><00:00:56.840><c> there.</c>
+
+00:00:57.510 --> 00:00:57.520 align:start position:0%
+10S nodes, and install from there.
+ 
+
+00:00:57.520 --> 00:00:59.750 align:start position:0%
+10S nodes, and install from there.
+Alternatively,<00:00:58.640><c> you</c><00:00:58.800><c> can</c><00:00:58.960><c> clone</c><00:00:59.200><c> it</c><00:00:59.320><c> directly</c>
+
+00:00:59.750 --> 00:00:59.760 align:start position:0%
+Alternatively, you can clone it directly
+ 
+
+00:00:59.760 --> 00:01:02.190 align:start position:0%
+Alternatively, you can clone it directly
+into<00:01:00.000><c> your</c><00:01:00.160><c> custom</c><00:01:00.600><c> nodes</c><00:01:00.880><c> folder</c><00:01:01.200><c> manually.</c>
+
+00:01:02.190 --> 00:01:02.200 align:start position:0%
+into your custom nodes folder manually.
+ 
+
+00:01:02.200 --> 00:01:05.189 align:start position:0%
+into your custom nodes folder manually.
+Either<00:01:02.560><c> way,</c><00:01:03.120><c> no</c><00:01:03.400><c> extra</c><00:01:03.760><c> model</c><00:01:04.040><c> downloads,</c><00:01:05.000><c> no</c>
+
+00:01:05.189 --> 00:01:05.199 align:start position:0%
+Either way, no extra model downloads, no
+ 
+
+00:01:05.199 --> 00:01:07.830 align:start position:0%
+Either way, no extra model downloads, no
+extra<00:01:05.519><c> setup.</c><00:01:06.720><c> That's</c><00:01:07.040><c> it,</c><00:01:07.400><c> and</c><00:01:07.520><c> you're</c><00:01:07.640><c> ready</c>
+
+00:01:07.830 --> 00:01:07.840 align:start position:0%
+extra setup. That's it, and you're ready
+ 
+
+00:01:07.840 --> 00:01:10.910 align:start position:0%
+extra setup. That's it, and you're ready
+to<00:01:07.960><c> go.</c><00:01:08.720><c> Now,</c><00:01:09.320><c> let's</c><00:01:09.520><c> get</c><00:01:09.680><c> into</c><00:01:09.880><c> the</c><00:01:09.960><c> workflow.</c>
+
+00:01:10.910 --> 00:01:10.920 align:start position:0%
+to go. Now, let's get into the workflow.
+ 
+
+00:01:10.920 --> 00:01:12.990 align:start position:0%
+to go. Now, let's get into the workflow.
+As<00:01:11.080><c> you</c><00:01:11.160><c> can</c><00:01:11.320><c> see,</c><00:01:11.840><c> this</c><00:01:12.080><c> workflow</c><00:01:12.560><c> is</c><00:01:12.720><c> using</c>
+
+00:01:12.990 --> 00:01:13.000 align:start position:0%
+As you can see, this workflow is using
+ 
+
+00:01:13.000 --> 00:01:16.550 align:start position:0%
+As you can see, this workflow is using
+the<00:01:13.120><c> GGUF</c><00:01:13.880><c> version</c><00:01:14.360><c> of</c><00:01:14.600><c> LTX</c><00:01:15.240><c> 2.3.</c>
+
+00:01:16.550 --> 00:01:16.560 align:start position:0%
+the GGUF version of LTX 2.3.
+ 
+
+00:01:16.560 --> 00:01:17.990 align:start position:0%
+the GGUF version of LTX 2.3.
+You<00:01:16.720><c> can</c><00:01:16.880><c> absolutely</c><00:01:17.440><c> use</c><00:01:17.640><c> the</c><00:01:17.760><c> full</c>
+
+00:01:17.990 --> 00:01:18.000 align:start position:0%
+You can absolutely use the full
+ 
+
+00:01:18.000 --> 00:01:20.310 align:start position:0%
+You can absolutely use the full
+precision<00:01:18.520><c> diffusion</c><00:01:18.920><c> model</c><00:01:19.240><c> as</c><00:01:19.400><c> well.</c>
+
+00:01:20.310 --> 00:01:20.320 align:start position:0%
+precision diffusion model as well.
+ 
+
+00:01:20.320 --> 00:01:22.510 align:start position:0%
+precision diffusion model as well.
+It's<00:01:20.520><c> around</c><00:01:20.760><c> 25</c><00:01:21.240><c> to</c><00:01:21.360><c> 30</c><00:01:21.640><c> GB,</c>
+
+00:01:22.510 --> 00:01:22.520 align:start position:0%
+It's around 25 to 30 GB,
+ 
+
+00:01:22.520 --> 00:01:24.750 align:start position:0%
+It's around 25 to 30 GB,
+but<00:01:22.680><c> GGUF</c><00:01:23.320><c> will</c><00:01:23.440><c> consume</c><00:01:23.800><c> significantly</c><00:01:24.480><c> less</c>
+
+00:01:24.750 --> 00:01:24.760 align:start position:0%
+but GGUF will consume significantly less
+ 
+
+00:01:24.760 --> 00:01:26.510 align:start position:0%
+but GGUF will consume significantly less
+VRAM,<00:01:25.520><c> and</c><00:01:25.680><c> the</c><00:01:25.760><c> quality</c><00:01:26.120><c> difference</c><00:01:26.440><c> in</c>
+
+00:01:26.510 --> 00:01:26.520 align:start position:0%
+VRAM, and the quality difference in
+ 
+
+00:01:26.520 --> 00:01:29.030 align:start position:0%
+VRAM, and the quality difference in
+practice<00:01:26.960><c> is</c><00:01:27.080><c> minimal</c><00:01:27.440><c> for</c><00:01:27.560><c> most</c><00:01:27.840><c> use</c><00:01:28.000><c> cases.</c>
+
+00:01:29.030 --> 00:01:29.040 align:start position:0%
+practice is minimal for most use cases.
+ 
+
+00:01:29.040 --> 00:01:30.910 align:start position:0%
+practice is minimal for most use cases.
+So,<00:01:29.200><c> if</c><00:01:29.280><c> you're</c><00:01:29.400><c> on</c><00:01:29.520><c> a</c><00:01:29.560><c> single</c><00:01:30.000><c> GPU</c><00:01:30.360><c> setup,</c>
+
+00:01:30.910 --> 00:01:30.920 align:start position:0%
+So, if you're on a single GPU setup,
+ 
+
+00:01:30.920 --> 00:01:32.790 align:start position:0%
+So, if you're on a single GPU setup,
+that's<00:01:31.160><c> what</c><00:01:31.280><c> I</c><00:01:31.320><c> recommend.</c><00:01:32.320><c> This</c><00:01:32.560><c> is</c><00:01:32.680><c> the</c>
+
+00:01:32.790 --> 00:01:32.800 align:start position:0%
+that's what I recommend. This is the
+ 
+
+00:01:32.800 --> 00:01:34.790 align:start position:0%
+that's what I recommend. This is the
+reference<00:01:33.160><c> image</c><00:01:33.440><c> we're</c><00:01:33.560><c> feeding</c><00:01:33.880><c> in.</c><00:01:34.640><c> We're</c>
+
+00:01:34.790 --> 00:01:34.800 align:start position:0%
+reference image we're feeding in. We're
+ 
+
+00:01:34.800 --> 00:01:38.030 align:start position:0%
+reference image we're feeding in. We're
+working<00:01:35.160><c> at</c><00:01:35.360><c> 720p</c><00:01:36.720><c> for</c><00:01:36.880><c> this</c><00:01:37.120><c> run.</c>
+
+00:01:38.030 --> 00:01:38.040 align:start position:0%
+working at 720p for this run.
+ 
+
+00:01:38.040 --> 00:01:39.630 align:start position:0%
+working at 720p for this run.
+And<00:01:38.240><c> this</c><00:01:38.400><c> right</c><00:01:38.560><c> here</c><00:01:38.800><c> is</c><00:01:39.000><c> the</c><00:01:39.120><c> first</c><00:01:39.480><c> new</c>
+
+00:01:39.630 --> 00:01:39.640 align:start position:0%
+And this right here is the first new
+ 
+
+00:01:39.640 --> 00:01:42.670 align:start position:0%
+And this right here is the first new
+node,<00:01:40.400><c> LTX</c><00:01:41.080><c> latent</c><00:01:41.440><c> anchor</c><00:01:41.720><c> aware.</c>
+
+00:01:42.670 --> 00:01:42.680 align:start position:0%
+node, LTX latent anchor aware.
+ 
+
+00:01:42.680 --> 00:01:44.470 align:start position:0%
+node, LTX latent anchor aware.
+So,<00:01:42.880><c> what</c><00:01:43.040><c> this</c><00:01:43.240><c> node</c><00:01:43.480><c> does</c><00:01:43.800><c> is</c><00:01:43.960><c> wrap</c><00:01:44.200><c> around</c>
+
+00:01:44.470 --> 00:01:44.480 align:start position:0%
+So, what this node does is wrap around
+ 
+
+00:01:44.480 --> 00:01:46.750 align:start position:0%
+So, what this node does is wrap around
+your<00:01:44.560><c> model</c><00:01:44.880><c> after</c><00:01:45.120><c> model</c><00:01:45.440><c> loading.</c><00:01:46.320><c> You</c><00:01:46.520><c> feed</c>
+
+00:01:46.750 --> 00:01:46.760 align:start position:0%
+your model after model loading. You feed
+ 
+
+00:01:46.760 --> 00:01:48.030 align:start position:0%
+your model after model loading. You feed
+it<00:01:46.840><c> your</c><00:01:47.000><c> reference</c><00:01:47.440><c> image</c><00:01:47.800><c> in</c><00:01:47.920><c> an</c>
+
+00:01:48.030 --> 00:01:48.040 align:start position:0%
+it your reference image in an
+ 
+
+00:01:48.040 --> 00:01:49.910 align:start position:0%
+it your reference image in an
+image-to-video<00:01:48.800><c> workflow</c><00:01:49.320><c> that's</c><00:01:49.560><c> just</c><00:01:49.760><c> your</c>
+
+00:01:49.910 --> 00:01:49.920 align:start position:0%
+image-to-video workflow that's just your
+ 
+
+00:01:49.920 --> 00:01:51.870 align:start position:0%
+image-to-video workflow that's just your
+input<00:01:50.280><c> frame,</c><00:01:50.880><c> and</c><00:01:51.040><c> it</c><00:01:51.160><c> snapshots</c><00:01:51.800><c> the</c>
+
+00:01:51.870 --> 00:01:51.880 align:start position:0%
+input frame, and it snapshots the
+ 
+
+00:01:51.880 --> 00:01:53.750 align:start position:0%
+input frame, and it snapshots the
+model's<00:01:52.240><c> internal</c><00:01:52.640><c> representation</c><00:01:53.440><c> at</c><00:01:53.560><c> peak</c>
+
+00:01:53.750 --> 00:01:53.760 align:start position:0%
+model's internal representation at peak
+ 
+
+00:01:53.760 --> 00:01:55.910 align:start position:0%
+model's internal representation at peak
+conditioning<00:01:54.280><c> alignment,</c><00:01:55.360><c> which</c><00:01:55.600><c> happens</c>
+
+00:01:55.910 --> 00:01:55.920 align:start position:0%
+conditioning alignment, which happens
+ 
+
+00:01:55.920 --> 00:01:58.430 align:start position:0%
+conditioning alignment, which happens
+roughly<00:01:56.200><c> mid-sampling</c><00:01:56.840><c> around</c><00:01:57.120><c> step</c><00:01:57.360><c> six.</c>
+
+00:01:58.430 --> 00:01:58.440 align:start position:0%
+roughly mid-sampling around step six.
+ 
+
+00:01:58.440 --> 00:02:00.230 align:start position:0%
+roughly mid-sampling around step six.
+Every<00:01:58.680><c> sampling</c><00:01:59.120><c> step</c><00:01:59.360><c> after</c><00:01:59.600><c> that,</c><00:02:00.000><c> gets</c>
+
+00:02:00.230 --> 00:02:00.240 align:start position:0%
+Every sampling step after that, gets
+ 
+
+00:02:00.240 --> 00:02:02.510 align:start position:0%
+Every sampling step after that, gets
+pulled<00:02:00.520><c> back</c><00:02:00.720><c> toward</c><00:02:00.960><c> that</c><00:02:01.120><c> cash</c><00:02:01.400><c> snapshot.</c>
+
+00:02:02.510 --> 00:02:02.520 align:start position:0%
+pulled back toward that cash snapshot.
+ 
+
+00:02:02.520 --> 00:02:03.910 align:start position:0%
+pulled back toward that cash snapshot.
+Think<00:02:02.680><c> of</c><00:02:02.800><c> it</c><00:02:02.920><c> like</c><00:02:03.080><c> giving</c><00:02:03.360><c> the</c><00:02:03.440><c> model</c><00:02:03.840><c> a</c>
+
+00:02:03.910 --> 00:02:03.920 align:start position:0%
+Think of it like giving the model a
+ 
+
+00:02:03.920 --> 00:02:05.950 align:start position:0%
+Think of it like giving the model a
+reference<00:02:04.360><c> point</c><00:02:04.640><c> it</c><00:02:04.760><c> has</c><00:02:05.000><c> to</c><00:02:05.120><c> stay</c><00:02:05.360><c> close</c><00:02:05.720><c> to</c>
+
+00:02:05.950 --> 00:02:05.960 align:start position:0%
+reference point it has to stay close to
+ 
+
+00:02:05.960 --> 00:02:08.109 align:start position:0%
+reference point it has to stay close to
+throughout<00:02:06.320><c> the</c><00:02:06.440><c> entire</c><00:02:06.840><c> generation</c><00:02:07.840><c> instead</c>
+
+00:02:08.109 --> 00:02:08.119 align:start position:0%
+throughout the entire generation instead
+ 
+
+00:02:08.119 --> 00:02:10.190 align:start position:0%
+throughout the entire generation instead
+of<00:02:08.240><c> freely</c><00:02:08.600><c> drifting</c><00:02:09.119><c> wherever</c><00:02:09.440><c> it</c><00:02:09.520><c> wants.</c>
+
+00:02:10.190 --> 00:02:10.200 align:start position:0%
+of freely drifting wherever it wants.
+ 
+
+00:02:10.200 --> 00:02:11.550 align:start position:0%
+of freely drifting wherever it wants.
+The<00:02:10.360><c> other</c><00:02:10.560><c> important</c><00:02:10.960><c> thing</c><00:02:11.080><c> is</c><00:02:11.200><c> it</c><00:02:11.320><c> doesn't</c>
+
+00:02:11.550 --> 00:02:11.560 align:start position:0%
+The other important thing is it doesn't
+ 
+
+00:02:11.560 --> 00:02:13.710 align:start position:0%
+The other important thing is it doesn't
+apply<00:02:11.840><c> this</c><00:02:12.080><c> to</c><00:02:12.160><c> the</c><00:02:12.240><c> whole</c><00:02:12.440><c> model.</c><00:02:13.400><c> It</c><00:02:13.520><c> only</c>
+
+00:02:13.710 --> 00:02:13.720 align:start position:0%
+apply this to the whole model. It only
+ 
+
+00:02:13.720 --> 00:02:15.470 align:start position:0%
+apply this to the whole model. It only
+targets<00:02:14.080><c> specific</c><00:02:14.520><c> transformer</c><00:02:15.040><c> blocks</c><00:02:15.400><c> in</c>
+
+00:02:15.470 --> 00:02:15.480 align:start position:0%
+targets specific transformer blocks in
+ 
+
+00:02:15.480 --> 00:02:17.550 align:start position:0%
+targets specific transformer blocks in
+this<00:02:15.680><c> workflow.</c><00:02:16.560><c> That's</c><00:02:16.800><c> blocks</c><00:02:17.120><c> 10</c><00:02:17.360><c> through</c>
+
+00:02:17.550 --> 00:02:17.560 align:start position:0%
+this workflow. That's blocks 10 through
+ 
+
+00:02:17.560 --> 00:02:18.870 align:start position:0%
+this workflow. That's blocks 10 through
+30,<00:02:17.959><c> which</c><00:02:18.160><c> keeps</c><00:02:18.400><c> the</c><00:02:18.480><c> node</c><00:02:18.720><c> from</c>
+
+00:02:18.870 --> 00:02:18.880 align:start position:0%
+30, which keeps the node from
+ 
+
+00:02:18.880 --> 00:02:20.470 align:start position:0%
+30, which keeps the node from
+overcooking<00:02:19.400><c> the</c><00:02:19.520><c> output</c><00:02:19.959><c> or</c><00:02:20.080><c> making</c><00:02:20.400><c> the</c>
+
+00:02:20.470 --> 00:02:20.480 align:start position:0%
+overcooking the output or making the
+ 
+
+00:02:20.480 --> 00:02:22.790 align:start position:0%
+overcooking the output or making the
+motion<00:02:20.840><c> look</c><00:02:21.000><c> unnatural</c><00:02:21.600><c> and</c><00:02:21.800><c> stiff.</c><00:02:22.720><c> The</c>
+
+00:02:22.790 --> 00:02:22.800 align:start position:0%
+motion look unnatural and stiff. The
+ 
+
+00:02:22.800 --> 00:02:25.710 align:start position:0%
+motion look unnatural and stiff. The
+strength<00:02:23.240><c> is</c><00:02:23.360><c> set</c><00:02:23.640><c> at</c><00:02:23.760><c> around</c><00:02:24.080><c> 0.11,</c>
+
+00:02:25.710 --> 00:02:25.720 align:start position:0%
+strength is set at around 0.11,
+ 
+
+00:02:25.720 --> 00:02:27.949 align:start position:0%
+strength is set at around 0.11,
+which<00:02:25.959><c> is</c><00:02:26.040><c> intentionally</c><00:02:26.720><c> low.</c><00:02:27.600><c> This</c><00:02:27.760><c> is</c><00:02:27.880><c> a</c>
+
+00:02:27.949 --> 00:02:27.959 align:start position:0%
+which is intentionally low. This is a
+ 
+
+00:02:27.959 --> 00:02:30.270 align:start position:0%
+which is intentionally low. This is a
+stabilization<00:02:28.840><c> layer,</c><00:02:29.360><c> not</c><00:02:29.640><c> a</c><00:02:29.680><c> heavy-handed</c>
+
+00:02:30.270 --> 00:02:30.280 align:start position:0%
+stabilization layer, not a heavy-handed
+ 
+
+00:02:30.280 --> 00:02:32.510 align:start position:0%
+stabilization layer, not a heavy-handed
+correction.<00:02:31.320><c> The</c><00:02:31.400><c> lower</c><00:02:31.680><c> the</c><00:02:31.800><c> strength,</c><00:02:32.440><c> the</c>
+
+00:02:32.510 --> 00:02:32.520 align:start position:0%
+correction. The lower the strength, the
+ 
+
+00:02:32.520 --> 00:02:34.710 align:start position:0%
+correction. The lower the strength, the
+more<00:02:32.720><c> natural</c><00:02:33.200><c> the</c><00:02:33.280><c> motion</c><00:02:33.680><c> feels.</c><00:02:34.560><c> You're</c>
+
+00:02:34.710 --> 00:02:34.720 align:start position:0%
+more natural the motion feels. You're
+ 
+
+00:02:34.720 --> 00:02:36.670 align:start position:0%
+more natural the motion feels. You're
+just<00:02:34.920><c> keeping</c><00:02:35.200><c> the</c><00:02:35.280><c> identity</c><00:02:35.760><c> from</c><00:02:35.920><c> drifting,</c>
+
+00:02:36.670 --> 00:02:36.680 align:start position:0%
+just keeping the identity from drifting,
+ 
+
+00:02:36.680 --> 00:02:37.910 align:start position:0%
+just keeping the identity from drifting,
+not<00:02:36.920><c> locking</c><00:02:37.240><c> the</c><00:02:37.320><c> face</c><00:02:37.600><c> in</c><00:02:37.680><c> place</c>
+
+00:02:37.910 --> 00:02:37.920 align:start position:0%
+not locking the face in place
+ 
+
+00:02:37.920 --> 00:02:39.870 align:start position:0%
+not locking the face in place
+completely.<00:02:39.040><c> You</c><00:02:39.120><c> can</c><00:02:39.280><c> check</c><00:02:39.480><c> the</c><00:02:39.560><c> GitHub</c>
+
+00:02:39.870 --> 00:02:39.880 align:start position:0%
+completely. You can check the GitHub
+ 
+
+00:02:39.880 --> 00:02:41.390 align:start position:0%
+completely. You can check the GitHub
+page<00:02:40.160><c> for</c><00:02:40.280><c> the</c><00:02:40.360><c> full</c><00:02:40.560><c> breakdown</c><00:02:41.040><c> of</c><00:02:41.160><c> all</c><00:02:41.280><c> the</c>
+
+00:02:41.390 --> 00:02:41.400 align:start position:0%
+page for the full breakdown of all the
+ 
+
+00:02:41.400 --> 00:02:43.150 align:start position:0%
+page for the full breakdown of all the
+parameters<00:02:42.000><c> and</c><00:02:42.120><c> recommended</c><00:02:42.640><c> ranges</c><00:02:43.040><c> for</c>
+
+00:02:43.150 --> 00:02:43.160 align:start position:0%
+parameters and recommended ranges for
+ 
+
+00:02:43.160 --> 00:02:44.750 align:start position:0%
+parameters and recommended ranges for
+different<00:02:43.520><c> use</c><00:02:43.640><c> cases.</c>
+
+00:02:44.750 --> 00:02:44.760 align:start position:0%
+different use cases.
+ 
+
+00:02:44.760 --> 00:02:46.470 align:start position:0%
+different use cases.
+Now,<00:02:45.480><c> moving</c><00:02:45.800><c> to</c><00:02:45.880><c> the</c><00:02:46.000><c> right</c><00:02:46.200><c> side</c><00:02:46.360><c> of</c><00:02:46.440><c> the</c>
+
+00:02:46.470 --> 00:02:46.480 align:start position:0%
+Now, moving to the right side of the
+ 
+
+00:02:46.480 --> 00:02:47.590 align:start position:0%
+Now, moving to the right side of the
+workflow.
+
+00:02:47.590 --> 00:02:47.600 align:start position:0%
+workflow.
+ 
+
+00:02:47.600 --> 00:02:49.270 align:start position:0%
+workflow.
+Over<00:02:47.840><c> here,</c><00:02:48.080><c> you</c><00:02:48.200><c> can</c><00:02:48.360><c> see</c><00:02:48.520><c> the</c><00:02:48.640><c> sampler</c><00:02:49.040><c> set</c>
+
+00:02:49.270 --> 00:02:49.280 align:start position:0%
+Over here, you can see the sampler set
+ 
+
+00:02:49.280 --> 00:02:51.350 align:start position:0%
+Over here, you can see the sampler set
+up<00:02:49.400><c> with</c><00:02:49.560><c> the</c><00:02:49.640><c> Laura</c><00:02:49.920><c> stack.</c><00:02:50.800><c> All</c><00:02:50.959><c> the</c><00:02:51.080><c> Laura</c>
+
+00:02:51.350 --> 00:02:51.360 align:start position:0%
+up with the Laura stack. All the Laura
+ 
+
+00:02:51.360 --> 00:02:52.710 align:start position:0%
+up with the Laura stack. All the Laura
+model<00:02:51.640><c> links</c><00:02:51.880><c> will</c><00:02:51.959><c> be</c><00:02:52.080><c> in</c><00:02:52.160><c> the</c><00:02:52.240><c> description</c>
+
+00:02:52.710 --> 00:02:52.720 align:start position:0%
+model links will be in the description
+ 
+
+00:02:52.720 --> 00:02:53.990 align:start position:0%
+model links will be in the description
+down<00:02:52.920><c> below,</c><00:02:53.240><c> so</c><00:02:53.400><c> don't</c><00:02:53.600><c> worry</c><00:02:53.800><c> about</c>
+
+00:02:53.990 --> 00:02:54.000 align:start position:0%
+down below, so don't worry about
+ 
+
+00:02:54.000 --> 00:02:55.550 align:start position:0%
+down below, so don't worry about
+tracking<00:02:54.400><c> those</c><00:02:54.600><c> down.</c>
+
+00:02:55.550 --> 00:02:55.560 align:start position:0%
+tracking those down.
+ 
+
+00:02:55.560 --> 00:02:57.710 align:start position:0%
+tracking those down.
+This<00:02:55.760><c> is</c><00:02:55.920><c> the</c><00:02:56.040><c> first</c><00:02:56.400><c> pass.</c>
+
+00:02:57.710 --> 00:02:57.720 align:start position:0%
+This is the first pass.
+ 
+
+00:02:57.720 --> 00:02:59.750 align:start position:0%
+This is the first pass.
+And<00:02:57.840><c> as</c><00:02:58.000><c> you</c><00:02:58.080><c> can</c><00:02:58.280><c> see</c><00:02:58.440><c> from</c><00:02:58.600><c> the</c><00:02:58.800><c> output,</c><00:02:59.640><c> the</c>
+
+00:02:59.750 --> 00:02:59.760 align:start position:0%
+And as you can see from the output, the
+ 
+
+00:02:59.760 --> 00:03:01.910 align:start position:0%
+And as you can see from the output, the
+first<00:03:00.080><c> pass</c><00:03:00.320><c> is</c><00:03:00.480><c> always</c><00:03:00.680><c> a</c><00:03:00.720><c> bit</c><00:03:00.959><c> rough.</c>
+
+00:03:01.910 --> 00:03:01.920 align:start position:0%
+first pass is always a bit rough.
+ 
+
+00:03:01.920 --> 00:03:04.190 align:start position:0%
+first pass is always a bit rough.
+That's<00:03:02.160><c> completely</c><00:03:02.680><c> expected</c><00:03:03.239><c> and</c><00:03:03.360><c> normal.</c>
+
+00:03:04.190 --> 00:03:04.200 align:start position:0%
+That's completely expected and normal.
+ 
+
+00:03:04.200 --> 00:03:05.790 align:start position:0%
+That's completely expected and normal.
+The<00:03:04.320><c> first</c><00:03:04.640><c> pass</c><00:03:04.920><c> is</c><00:03:05.040><c> just</c><00:03:05.239><c> giving</c><00:03:05.519><c> us</c><00:03:05.680><c> the</c>
+
+00:03:05.790 --> 00:03:05.800 align:start position:0%
+The first pass is just giving us the
+ 
+
+00:03:05.800 --> 00:03:08.110 align:start position:0%
+The first pass is just giving us the
+base<00:03:06.160><c> motion</c><00:03:06.560><c> and</c><00:03:06.680><c> structure.</c><00:03:07.720><c> The</c><00:03:07.840><c> real</c>
+
+00:03:08.110 --> 00:03:08.120 align:start position:0%
+base motion and structure. The real
+ 
+
+00:03:08.120 --> 00:03:10.550 align:start position:0%
+base motion and structure. The real
+quality<00:03:08.560><c> comes</c><00:03:08.840><c> from</c><00:03:09.000><c> what</c><00:03:09.160><c> happens</c><00:03:09.519><c> next.</c>
+
+00:03:10.550 --> 00:03:10.560 align:start position:0%
+quality comes from what happens next.
+ 
+
+00:03:10.560 --> 00:03:12.229 align:start position:0%
+quality comes from what happens next.
+This<00:03:10.760><c> is</c><00:03:10.880><c> where</c><00:03:11.000><c> the</c><00:03:11.120><c> two</c><00:03:11.320><c> upscale</c><00:03:11.760><c> nodes</c><00:03:12.040><c> come</c>
+
+00:03:12.229 --> 00:03:12.239 align:start position:0%
+This is where the two upscale nodes come
+ 
+
+00:03:12.239 --> 00:03:14.110 align:start position:0%
+This is where the two upscale nodes come
+in,<00:03:12.840><c> and</c><00:03:12.959><c> this</c><00:03:13.120><c> is</c><00:03:13.280><c> where</c><00:03:13.400><c> the</c><00:03:13.480><c> workflow</c><00:03:13.880><c> gets</c>
+
+00:03:14.110 --> 00:03:14.120 align:start position:0%
+in, and this is where the workflow gets
+ 
+
+00:03:14.120 --> 00:03:16.070 align:start position:0%
+in, and this is where the workflow gets
+genuinely<00:03:14.680><c> interesting.</c>
+
+00:03:16.070 --> 00:03:16.080 align:start position:0%
+genuinely interesting.
+ 
+
+00:03:16.080 --> 00:03:19.229 align:start position:0%
+genuinely interesting.
+First<00:03:16.320><c> up</c><00:03:16.480><c> is</c><00:03:16.640><c> LTX</c><00:03:17.160><c> latent</c><00:03:17.560><c> up</c><00:03:17.720><c> sampler</c><00:03:18.080><c> tiled.</c>
+
+00:03:19.229 --> 00:03:19.239 align:start position:0%
+First up is LTX latent up sampler tiled.
+ 
+
+00:03:19.239 --> 00:03:20.590 align:start position:0%
+First up is LTX latent up sampler tiled.
+What<00:03:19.400><c> this</c><00:03:19.560><c> node</c><00:03:19.800><c> does</c><00:03:20.080><c> is</c><00:03:20.239><c> take</c><00:03:20.480><c> your</c>
+
+00:03:20.590 --> 00:03:20.600 align:start position:0%
+What this node does is take your
+ 
+
+00:03:20.600 --> 00:03:22.509 align:start position:0%
+What this node does is take your
+generated<00:03:21.040><c> latent</c><00:03:21.400><c> from</c><00:03:21.560><c> the</c><00:03:21.640><c> first</c><00:03:22.000><c> pass</c><00:03:22.360><c> and</c>
+
+00:03:22.509 --> 00:03:22.519 align:start position:0%
+generated latent from the first pass and
+ 
+
+00:03:22.519 --> 00:03:24.630 align:start position:0%
+generated latent from the first pass and
+upscale<00:03:22.920><c> it</c><00:03:23.040><c> spatially</c><00:03:23.680><c> using</c><00:03:24.000><c> a</c><00:03:24.040><c> dedicated</c>
+
+00:03:24.630 --> 00:03:24.640 align:start position:0%
+upscale it spatially using a dedicated
+ 
+
+00:03:24.640 --> 00:03:27.070 align:start position:0%
+upscale it spatially using a dedicated
+upscale<00:03:25.000><c> model.</c><00:03:25.920><c> But</c><00:03:26.160><c> instead</c><00:03:26.480><c> of</c><00:03:26.600><c> upscaling</c>
+
+00:03:27.070 --> 00:03:27.080 align:start position:0%
+upscale model. But instead of upscaling
+ 
+
+00:03:27.080 --> 00:03:29.470 align:start position:0%
+upscale model. But instead of upscaling
+the<00:03:27.160><c> whole</c><00:03:27.400><c> latent</c><00:03:27.840><c> in</c><00:03:28.040><c> one</c><00:03:28.280><c> shot,</c><00:03:29.000><c> it</c><00:03:29.120><c> does</c><00:03:29.360><c> it</c>
+
+00:03:29.470 --> 00:03:29.480 align:start position:0%
+the whole latent in one shot, it does it
+ 
+
+00:03:29.480 --> 00:03:31.430 align:start position:0%
+the whole latent in one shot, it does it
+in<00:03:29.600><c> overlapping</c><00:03:30.160><c> tiles</c><00:03:30.600><c> with</c><00:03:30.800><c> smooth</c><00:03:31.160><c> blend</c>
+
+00:03:31.430 --> 00:03:31.440 align:start position:0%
+in overlapping tiles with smooth blend
+ 
+
+00:03:31.440 --> 00:03:33.509 align:start position:0%
+in overlapping tiles with smooth blend
+regions<00:03:31.840><c> between</c><00:03:32.239><c> them.</c><00:03:32.959><c> The</c><00:03:33.040><c> reason</c><00:03:33.320><c> this</c>
+
+00:03:33.509 --> 00:03:33.519 align:start position:0%
+regions between them. The reason this
+ 
+
+00:03:33.519 --> 00:03:35.710 align:start position:0%
+regions between them. The reason this
+matters<00:03:33.920><c> is</c><00:03:34.040><c> that</c><00:03:34.280><c> upscaling</c><00:03:34.800><c> a</c><00:03:34.880><c> large</c><00:03:35.280><c> latent</c>
+
+00:03:35.710 --> 00:03:35.720 align:start position:0%
+matters is that upscaling a large latent
+ 
+
+00:03:35.720 --> 00:03:37.509 align:start position:0%
+matters is that upscaling a large latent
+all<00:03:35.880><c> at</c><00:03:36.000><c> once</c><00:03:36.360><c> causes</c><00:03:36.800><c> color</c><00:03:37.080><c> drift,</c>
+
+00:03:37.509 --> 00:03:37.519 align:start position:0%
+all at once causes color drift,
+ 
+
+00:03:37.519 --> 00:03:39.710 align:start position:0%
+all at once causes color drift,
+inconsistent<00:03:38.239><c> detail,</c><00:03:39.000><c> and</c><00:03:39.200><c> distortion</c>
+
+00:03:39.710 --> 00:03:39.720 align:start position:0%
+inconsistent detail, and distortion
+ 
+
+00:03:39.720 --> 00:03:41.830 align:start position:0%
+inconsistent detail, and distortion
+across<00:03:40.080><c> the</c><00:03:40.200><c> frame,</c><00:03:40.800><c> especially</c><00:03:41.400><c> at</c><00:03:41.519><c> wider</c>
+
+00:03:41.830 --> 00:03:41.840 align:start position:0%
+across the frame, especially at wider
+ 
+
+00:03:41.840 --> 00:03:44.350 align:start position:0%
+across the frame, especially at wider
+aspect<00:03:42.239><c> ratios.</c><00:03:43.360><c> Processing</c><00:03:43.880><c> it</c><00:03:44.000><c> tile</c><00:03:44.239><c> by</c>
+
+00:03:44.350 --> 00:03:44.360 align:start position:0%
+aspect ratios. Processing it tile by
+ 
+
+00:03:44.360 --> 00:03:46.190 align:start position:0%
+aspect ratios. Processing it tile by
+tile<00:03:44.800><c> and</c><00:03:44.920><c> then</c><00:03:45.080><c> blending</c><00:03:45.519><c> the</c><00:03:45.640><c> tiles</c><00:03:46.000><c> back</c>
+
+00:03:46.190 --> 00:03:46.200 align:start position:0%
+tile and then blending the tiles back
+ 
+
+00:03:46.200 --> 00:03:47.550 align:start position:0%
+tile and then blending the tiles back
+together<00:03:46.519><c> with</c><00:03:46.680><c> cosine</c><00:03:47.080><c> windowing</c>
+
+00:03:47.550 --> 00:03:47.560 align:start position:0%
+together with cosine windowing
+ 
+
+00:03:47.560 --> 00:03:49.670 align:start position:0%
+together with cosine windowing
+eliminates<00:03:48.160><c> all</c><00:03:48.320><c> of</c><00:03:48.440><c> that.</c><00:03:49.360><c> You</c><00:03:49.519><c> get</c>
+
+00:03:49.670 --> 00:03:49.680 align:start position:0%
+eliminates all of that. You get
+ 
+
+00:03:49.680 --> 00:03:51.590 align:start position:0%
+eliminates all of that. You get
+consistent<00:03:50.200><c> detail</c><00:03:50.640><c> edge</c><00:03:50.880><c> to</c><00:03:51.000><c> edge</c><00:03:51.280><c> with</c><00:03:51.440><c> no</c>
+
+00:03:51.590 --> 00:03:51.600 align:start position:0%
+consistent detail edge to edge with no
+ 
+
+00:03:51.600 --> 00:03:53.830 align:start position:0%
+consistent detail edge to edge with no
+seams.<00:03:52.560><c> Then</c><00:03:52.720><c> immediately</c><00:03:53.200><c> after</c><00:03:53.480><c> that</c><00:03:53.720><c> is</c>
+
+00:03:53.830 --> 00:03:53.840 align:start position:0%
+seams. Then immediately after that is
+ 
+
+00:03:53.840 --> 00:03:56.230 align:start position:0%
+seams. Then immediately after that is
+the<00:03:53.960><c> LTX</c><00:03:54.480><c> tiled</c><00:03:54.880><c> sampler.</c><00:03:55.760><c> This</c><00:03:56.000><c> is</c><00:03:56.120><c> the</c>
+
+00:03:56.230 --> 00:03:56.240 align:start position:0%
+the LTX tiled sampler. This is the
+ 
+
+00:03:56.240 --> 00:03:58.390 align:start position:0%
+the LTX tiled sampler. This is the
+refinement<00:03:56.760><c> pass</c><00:03:57.600><c> and</c><00:03:57.760><c> this</c><00:03:57.920><c> is</c><00:03:58.040><c> the</c><00:03:58.160><c> node</c>
+
+00:03:58.390 --> 00:03:58.400 align:start position:0%
+refinement pass and this is the node
+ 
+
+00:03:58.400 --> 00:03:59.950 align:start position:0%
+refinement pass and this is the node
+that<00:03:58.520><c> actually</c><00:03:58.880><c> fixes</c><00:03:59.320><c> the</c><00:03:59.440><c> artifacts</c>
+
+00:03:59.950 --> 00:03:59.960 align:start position:0%
+that actually fixes the artifacts
+ 
+
+00:03:59.960 --> 00:04:01.950 align:start position:0%
+that actually fixes the artifacts
+introduced<00:04:00.560><c> by</c><00:04:00.720><c> upscaling.</c>
+
+00:04:01.950 --> 00:04:01.960 align:start position:0%
+introduced by upscaling.
+ 
+
+00:04:01.960 --> 00:04:03.830 align:start position:0%
+introduced by upscaling.
+It<00:04:02.080><c> works</c><00:04:02.320><c> similarly.</c><00:04:03.240><c> It</c><00:04:03.400><c> splits</c><00:04:03.720><c> the</c>
+
+00:04:03.830 --> 00:04:03.840 align:start position:0%
+It works similarly. It splits the
+ 
+
+00:04:03.840 --> 00:04:05.950 align:start position:0%
+It works similarly. It splits the
+upscaled<00:04:04.240><c> latent</c><00:04:04.560><c> into</c><00:04:04.760><c> tiles,</c><00:04:05.600><c> runs</c><00:04:05.840><c> the</c>
+
+00:04:05.950 --> 00:04:05.960 align:start position:0%
+upscaled latent into tiles, runs the
+ 
+
+00:04:05.960 --> 00:04:08.230 align:start position:0%
+upscaled latent into tiles, runs the
+sampler<00:04:06.400><c> on</c><00:04:06.560><c> each</c><00:04:06.800><c> tile</c><00:04:07.080><c> independently,</c><00:04:08.080><c> and</c>
+
+00:04:08.230 --> 00:04:08.240 align:start position:0%
+sampler on each tile independently, and
+ 
+
+00:04:08.240 --> 00:04:10.990 align:start position:0%
+sampler on each tile independently, and
+blends<00:04:08.520><c> everything</c><00:04:08.920><c> back.</c><00:04:09.760><c> The</c><00:04:09.880><c> stock</c><00:04:10.280><c> LTX</c><00:04:10.840><c> up</c>
+
+00:04:10.990 --> 00:04:11.000 align:start position:0%
+blends everything back. The stock LTX up
+ 
+
+00:04:11.000 --> 00:04:13.070 align:start position:0%
+blends everything back. The stock LTX up
+sampler<00:04:11.440><c> has</c><00:04:11.640><c> absolutely</c><00:04:12.120><c> no</c><00:04:12.320><c> concept</c><00:04:12.840><c> of</c><00:04:12.959><c> the</c>
+
+00:04:13.070 --> 00:04:13.080 align:start position:0%
+sampler has absolutely no concept of the
+ 
+
+00:04:13.080 --> 00:04:16.229 align:start position:0%
+sampler has absolutely no concept of the
+audio<00:04:13.440><c> latent.</c><00:04:14.560><c> It</c><00:04:14.680><c> ignores</c><00:04:15.040><c> it</c><00:04:15.160><c> completely,</c>
+
+00:04:16.229 --> 00:04:16.239 align:start position:0%
+audio latent. It ignores it completely,
+ 
+
+00:04:16.239 --> 00:04:17.990 align:start position:0%
+audio latent. It ignores it completely,
+which<00:04:16.400><c> is</c><00:04:16.519><c> why</c><00:04:16.640><c> lip</c><00:04:16.840><c> sync</c><00:04:17.160><c> always</c><00:04:17.519><c> breaks</c><00:04:17.880><c> when</c>
+
+00:04:17.990 --> 00:04:18.000 align:start position:0%
+which is why lip sync always breaks when
+ 
+
+00:04:18.000 --> 00:04:20.470 align:start position:0%
+which is why lip sync always breaks when
+you<00:04:18.079><c> try</c><00:04:18.239><c> to</c><00:04:18.359><c> upscale.</c><00:04:19.359><c> This</c><00:04:19.560><c> node</c><00:04:19.799><c> fixes</c><00:04:20.239><c> that</c>
+
+00:04:20.470 --> 00:04:20.480 align:start position:0%
+you try to upscale. This node fixes that
+ 
+
+00:04:20.480 --> 00:04:22.470 align:start position:0%
+you try to upscale. This node fixes that
+at<00:04:20.600><c> the</c><00:04:20.720><c> architectural</c><00:04:21.320><c> level.</c>
+
+00:04:22.470 --> 00:04:22.480 align:start position:0%
+at the architectural level.
+ 
+
+00:04:22.480 --> 00:04:23.870 align:start position:0%
+at the architectural level.
+Now,<00:04:22.640><c> let</c><00:04:22.760><c> me</c><00:04:22.880><c> show</c><00:04:23.000><c> you</c><00:04:23.080><c> the</c><00:04:23.160><c> comparison</c><00:04:23.760><c> so</c>
+
+00:04:23.870 --> 00:04:23.880 align:start position:0%
+Now, let me show you the comparison so
+ 
+
+00:04:23.880 --> 00:04:25.190 align:start position:0%
+Now, let me show you the comparison so
+you<00:04:23.960><c> can</c><00:04:24.080><c> actually</c><00:04:24.400><c> see</c><00:04:24.640><c> what</c><00:04:24.800><c> difference</c>
+
+00:04:25.190 --> 00:04:25.200 align:start position:0%
+you can actually see what difference
+ 
+
+00:04:25.200 --> 00:04:26.390 align:start position:0%
+you can actually see what difference
+this<00:04:25.360><c> makes.</c>
+
+00:04:26.390 --> 00:04:26.400 align:start position:0%
+this makes.
+ 
+
+00:04:26.400 --> 00:04:29.030 align:start position:0%
+this makes.
+Here<00:04:26.640><c> is</c><00:04:26.760><c> the</c><00:04:26.960><c> output</c><00:04:27.360><c> from</c><00:04:27.520><c> this</c><00:04:27.720><c> workflow.</c>
+
+00:04:29.030 --> 00:04:29.040 align:start position:0%
+Here is the output from this workflow.
+ 
+
+00:04:29.040 --> 00:04:31.590 align:start position:0%
+Here is the output from this workflow.
+And<00:04:29.160><c> now</c><00:04:29.400><c> let</c><00:04:29.600><c> me</c><00:04:29.760><c> open</c><00:04:30.040><c> a</c><00:04:30.080><c> standard</c><00:04:30.600><c> LTX</c><00:04:31.240><c> image</c>
+
+00:04:31.590 --> 00:04:31.600 align:start position:0%
+And now let me open a standard LTX image
+ 
+
+00:04:31.600 --> 00:04:33.390 align:start position:0%
+And now let me open a standard LTX image
+to<00:04:31.720><c> video</c><00:04:32.000><c> setup.</c>
+
+00:04:33.390 --> 00:04:33.400 align:start position:0%
+to video setup.
+ 
+
+00:04:33.400 --> 00:04:36.110 align:start position:0%
+to video setup.
+Same<00:04:33.720><c> image,</c><00:04:34.360><c> same</c><00:04:34.680><c> prompt,</c><00:04:35.360><c> same</c><00:04:35.680><c> sampler</c>
+
+00:04:36.110 --> 00:04:36.120 align:start position:0%
+Same image, same prompt, same sampler
+ 
+
+00:04:36.120 --> 00:04:38.750 align:start position:0%
+Same image, same prompt, same sampler
+settings<00:04:36.800><c> with</c><00:04:37.000><c> no</c><00:04:37.240><c> 10S</c><00:04:37.800><c> nodes,</c><00:04:38.320><c> just</c><00:04:38.640><c> the</c>
+
+00:04:38.750 --> 00:04:38.760 align:start position:0%
+settings with no 10S nodes, just the
+ 
+
+00:04:38.760 --> 00:04:40.230 align:start position:0%
+settings with no 10S nodes, just the
+stock<00:04:39.120><c> workflow.</c>
+
+00:04:40.230 --> 00:04:40.240 align:start position:0%
+stock workflow.
+ 
+
+00:04:40.240 --> 00:04:42.350 align:start position:0%
+stock workflow.
+As<00:04:40.400><c> you</c><00:04:40.520><c> can</c><00:04:40.680><c> see</c><00:04:40.919><c> with</c><00:04:41.080><c> a</c><00:04:41.160><c> standard</c><00:04:41.600><c> output,</c>
+
+00:04:42.350 --> 00:04:42.360 align:start position:0%
+As you can see with a standard output,
+ 
+
+00:04:42.360 --> 00:04:44.110 align:start position:0%
+As you can see with a standard output,
+the<00:04:42.480><c> face</c><00:04:42.760><c> morphs</c><00:04:43.120><c> noticeably</c><00:04:43.760><c> across</c>
+
+00:04:44.110 --> 00:04:44.120 align:start position:0%
+the face morphs noticeably across
+ 
+
+00:04:44.120 --> 00:04:46.830 align:start position:0%
+the face morphs noticeably across
+frames.<00:04:44.919><c> The</c><00:04:45.040><c> identity</c><00:04:45.600><c> is</c><00:04:45.760><c> drifting.</c><00:04:46.720><c> The</c>
+
+00:04:46.830 --> 00:04:46.840 align:start position:0%
+frames. The identity is drifting. The
+ 
+
+00:04:46.840 --> 00:04:48.670 align:start position:0%
+frames. The identity is drifting. The
+likeness<00:04:47.240><c> to</c><00:04:47.320><c> the</c><00:04:47.440><c> input</c><00:04:47.760><c> image</c><00:04:48.120><c> weakens</c><00:04:48.480><c> over</c>
+
+00:04:48.670 --> 00:04:48.680 align:start position:0%
+likeness to the input image weakens over
+ 
+
+00:04:48.680 --> 00:04:50.510 align:start position:0%
+likeness to the input image weakens over
+time<00:04:49.320><c> and</c><00:04:49.440><c> the</c><00:04:49.560><c> overall</c><00:04:49.960><c> quality</c><00:04:50.320><c> of</c><00:04:50.400><c> the</c>
+
+00:04:50.510 --> 00:04:50.520 align:start position:0%
+time and the overall quality of the
+ 
+
+00:04:50.520 --> 00:04:53.270 align:start position:0%
+time and the overall quality of the
+upscale<00:04:50.919><c> pass</c><00:04:51.280><c> is</c><00:04:51.480><c> visibly</c><00:04:51.919><c> softer.</c><00:04:53.080><c> That</c><00:04:53.160><c> is</c>
+
+00:04:53.270 --> 00:04:53.280 align:start position:0%
+upscale pass is visibly softer. That is
+ 
+
+00:04:53.280 --> 00:04:56.030 align:start position:0%
+upscale pass is visibly softer. That is
+the<00:04:53.400><c> typical</c><00:04:54.400><c> LTX</c><00:04:55.000><c> face</c><00:04:55.240><c> drift</c><00:04:55.480><c> problem</c><00:04:55.919><c> and</c>
+
+00:04:56.030 --> 00:04:56.040 align:start position:0%
+the typical LTX face drift problem and
+ 
+
+00:04:56.040 --> 00:04:57.790 align:start position:0%
+the typical LTX face drift problem and
+it<00:04:56.120><c> gets</c><00:04:56.320><c> worse</c><00:04:56.640><c> the</c><00:04:56.720><c> longer</c><00:04:57.080><c> your</c><00:04:57.240><c> generation</c>
+
+00:04:57.790 --> 00:04:57.800 align:start position:0%
+it gets worse the longer your generation
+ 
+
+00:04:57.800 --> 00:04:58.710 align:start position:0%
+it gets worse the longer your generation
+is.
+
+00:04:58.710 --> 00:04:58.720 align:start position:0%
+is.
+ 
+
+00:04:58.720 --> 00:05:00.390 align:start position:0%
+is.
+And<00:04:58.800><c> now</c><00:04:58.960><c> here's</c><00:04:59.200><c> the</c><00:04:59.360><c> output</c><00:04:59.720><c> with</c><00:04:59.840><c> the</c><00:04:59.960><c> 10S</c>
+
+00:05:00.390 --> 00:05:00.400 align:start position:0%
+And now here's the output with the 10S
+ 
+
+00:05:00.400 --> 00:05:01.590 align:start position:0%
+And now here's the output with the 10S
+nodes.
+
+00:05:01.590 --> 00:05:01.600 align:start position:0%
+nodes.
+ 
+
+00:05:01.600 --> 00:05:04.030 align:start position:0%
+nodes.
+There's<00:05:01.800><c> still</c><00:05:02.080><c> a</c><00:05:02.120><c> small</c><00:05:02.480><c> amount</c><00:05:02.880><c> of</c><00:05:03.000><c> drift</c>
+
+00:05:04.030 --> 00:05:04.040 align:start position:0%
+There's still a small amount of drift
+ 
+
+00:05:04.040 --> 00:05:05.630 align:start position:0%
+There's still a small amount of drift
+and<00:05:04.200><c> I</c><00:05:04.280><c> want</c><00:05:04.480><c> to</c><00:05:04.560><c> be</c><00:05:04.680><c> up</c><00:05:04.840><c> front</c><00:05:05.000><c> about</c><00:05:05.280><c> that,</c>
+
+00:05:05.630 --> 00:05:05.640 align:start position:0%
+and I want to be up front about that,
+ 
+
+00:05:05.640 --> 00:05:08.950 align:start position:0%
+and I want to be up front about that,
+but<00:05:06.000><c> the</c><00:05:06.120><c> improvement</c><00:05:06.919><c> is</c><00:05:07.520><c> substantial.</c>
+
+00:05:08.950 --> 00:05:08.960 align:start position:0%
+but the improvement is substantial.
+ 
+
+00:05:08.960 --> 00:05:10.390 align:start position:0%
+but the improvement is substantial.
+The<00:05:09.000><c> face</c><00:05:09.280><c> holds</c><00:05:09.520><c> together</c><00:05:09.880><c> much</c><00:05:10.160><c> better</c>
+
+00:05:10.390 --> 00:05:10.400 align:start position:0%
+The face holds together much better
+ 
+
+00:05:10.400 --> 00:05:12.430 align:start position:0%
+The face holds together much better
+across<00:05:10.760><c> the</c><00:05:10.880><c> clip.</c><00:05:11.440><c> The</c><00:05:11.600><c> upscale</c><00:05:11.960><c> pass</c><00:05:12.320><c> is</c>
+
+00:05:12.430 --> 00:05:12.440 align:start position:0%
+across the clip. The upscale pass is
+ 
+
+00:05:12.440 --> 00:05:14.710 align:start position:0%
+across the clip. The upscale pass is
+sharper<00:05:12.880><c> and</c><00:05:13.000><c> more</c><00:05:13.160><c> consistent</c><00:05:14.160><c> and</c><00:05:14.320><c> lip</c><00:05:14.480><c> sync</c>
+
+00:05:14.710 --> 00:05:14.720 align:start position:0%
+sharper and more consistent and lip sync
+ 
+
+00:05:14.720 --> 00:05:16.830 align:start position:0%
+sharper and more consistent and lip sync
+is<00:05:14.800><c> intact.</c><00:05:15.640><c> With</c><00:05:15.880><c> further</c><00:05:16.160><c> tuning</c><00:05:16.560><c> of</c><00:05:16.680><c> the</c>
+
+00:05:16.830 --> 00:05:16.840 align:start position:0%
+is intact. With further tuning of the
+ 
+
+00:05:16.840 --> 00:05:18.350 align:start position:0%
+is intact. With further tuning of the
+anchor<00:05:17.160><c> wear</c><00:05:17.320><c> strength</c><00:05:17.760><c> and</c><00:05:17.880><c> the</c><00:05:17.960><c> sampler</c>
+
+00:05:18.350 --> 00:05:18.360 align:start position:0%
+anchor wear strength and the sampler
+ 
+
+00:05:18.360 --> 00:05:20.110 align:start position:0%
+anchor wear strength and the sampler
+settings,<00:05:19.160><c> you</c><00:05:19.280><c> can</c><00:05:19.400><c> push</c><00:05:19.640><c> this</c><00:05:19.880><c> even</c>
+
+00:05:20.110 --> 00:05:20.120 align:start position:0%
+settings, you can push this even
+ 
+
+00:05:20.120 --> 00:05:21.110 align:start position:0%
+settings, you can push this even
+further.
+
+00:05:21.110 --> 00:05:21.120 align:start position:0%
+further.
+ 
+
+00:05:21.120 --> 00:05:23.070 align:start position:0%
+further.
+I<00:05:21.160><c> want</c><00:05:21.360><c> to</c><00:05:21.400><c> be</c><00:05:21.560><c> honest</c><00:05:21.919><c> though,</c><00:05:22.240><c> LTX</c><00:05:22.760><c> is</c><00:05:22.880><c> still</c>
+
+00:05:23.070 --> 00:05:23.080 align:start position:0%
+I want to be honest though, LTX is still
+ 
+
+00:05:23.080 --> 00:05:25.430 align:start position:0%
+I want to be honest though, LTX is still
+not<00:05:23.280><c> as</c><00:05:23.360><c> strong</c><00:05:23.680><c> as</c><00:05:23.800><c> 1111</c><00:05:24.040><c> 2.2</c><00:05:24.919><c> when</c><00:05:25.040><c> it</c><00:05:25.160><c> comes</c>
+
+00:05:25.430 --> 00:05:25.440 align:start position:0%
+not as strong as 1111 2.2 when it comes
+ 
+
+00:05:25.440 --> 00:05:27.670 align:start position:0%
+not as strong as 1111 2.2 when it comes
+to<00:05:25.520><c> face</c><00:05:25.760><c> consistency</c><00:05:26.400><c> overall.</c><00:05:27.400><c> But</c><00:05:27.520><c> with</c>
+
+00:05:27.670 --> 00:05:27.680 align:start position:0%
+to face consistency overall. But with
+ 
+
+00:05:27.680 --> 00:05:29.390 align:start position:0%
+to face consistency overall. But with
+these<00:05:27.960><c> nodes,</c><00:05:28.560><c> the</c><00:05:28.680><c> gap</c><00:05:28.960><c> closes</c>
+
+00:05:29.390 --> 00:05:29.400 align:start position:0%
+these nodes, the gap closes
+ 
+
+00:05:29.400 --> 00:05:31.870 align:start position:0%
+these nodes, the gap closes
+significantly.<00:05:30.600><c> For</c><00:05:30.720><c> the</c><00:05:30.840><c> second</c><00:05:31.160><c> demo,</c><00:05:31.760><c> I</c>
+
+00:05:31.870 --> 00:05:31.880 align:start position:0%
+significantly. For the second demo, I
+ 
+
+00:05:31.880 --> 00:05:34.030 align:start position:0%
+significantly. For the second demo, I
+used<00:05:32.120><c> the</c><00:05:32.240><c> LTX</c><00:05:32.840><c> face</c><00:05:33.080><c> attention</c><00:05:33.520><c> anchor</c><00:05:33.880><c> on</c><00:05:34.000><c> a</c>
+
+00:05:34.030 --> 00:05:34.040 align:start position:0%
+used the LTX face attention anchor on a
+ 
+
+00:05:34.040 --> 00:05:36.390 align:start position:0%
+used the LTX face attention anchor on a
+more<00:05:34.280><c> complex</c><00:05:34.840><c> motion</c><00:05:35.160><c> prompt.</c><00:05:36.080><c> I</c><00:05:36.120><c> took</c><00:05:36.360><c> a</c>
+
+00:05:36.390 --> 00:05:36.400 align:start position:0%
+more complex motion prompt. I took a
+ 
+
+00:05:36.400 --> 00:05:38.030 align:start position:0%
+more complex motion prompt. I took a
+shot<00:05:36.640><c> of</c><00:05:36.720><c> a</c><00:05:36.800><c> girl</c><00:05:37.040><c> eating</c><00:05:37.280><c> toast</c><00:05:37.680><c> and</c><00:05:37.840><c> wrote</c>
+
+00:05:38.030 --> 00:05:38.040 align:start position:0%
+shot of a girl eating toast and wrote
+ 
+
+00:05:38.040 --> 00:05:40.030 align:start position:0%
+shot of a girl eating toast and wrote
+out<00:05:38.200><c> a</c><00:05:38.240><c> full</c><00:05:38.560><c> action</c><00:05:38.880><c> sequence.</c>
+
+00:05:40.030 --> 00:05:40.040 align:start position:0%
+out a full action sequence.
+ 
+
+00:05:40.040 --> 00:05:41.750 align:start position:0%
+out a full action sequence.
+She<00:05:40.200><c> puts</c><00:05:40.400><c> the</c><00:05:40.480><c> toast</c><00:05:40.840><c> down,</c><00:05:41.320><c> the</c><00:05:41.440><c> phone</c>
+
+00:05:41.750 --> 00:05:41.760 align:start position:0%
+She puts the toast down, the phone
+ 
+
+00:05:41.760 --> 00:05:43.390 align:start position:0%
+She puts the toast down, the phone
+rings,<00:05:42.120><c> she</c><00:05:42.240><c> picks</c><00:05:42.520><c> it</c><00:05:42.640><c> up,</c><00:05:42.800><c> tilts</c><00:05:43.040><c> her</c><00:05:43.160><c> head,</c>
+
+00:05:43.390 --> 00:05:43.400 align:start position:0%
+rings, she picks it up, tilts her head,
+ 
+
+00:05:43.400 --> 00:05:45.950 align:start position:0%
+rings, she picks it up, tilts her head,
+and<00:05:43.560><c> answers.</c><00:05:44.520><c> Here's</c><00:05:44.760><c> the</c><00:05:44.880><c> full</c><00:05:45.080><c> output.</c>
+
+00:05:45.950 --> 00:05:45.960 align:start position:0%
+and answers. Here's the full output.
+ 
+
+00:05:45.960 --> 00:05:48.630 align:start position:0%
+and answers. Here's the full output.
+Hello?<00:05:46.840><c> Yes,</c><00:05:47.400><c> who's</c><00:05:47.600><c> this?</c>
+
+00:05:48.630 --> 00:05:48.640 align:start position:0%
+Hello? Yes, who's this?
+ 
+
+00:05:48.640 --> 00:05:50.550 align:start position:0%
+Hello? Yes, who's this?
+She<00:05:48.800><c> puts</c><00:05:49.040><c> the</c><00:05:49.120><c> toast</c><00:05:49.400><c> down,</c><00:05:50.120><c> the</c><00:05:50.240><c> phone</c>
+
+00:05:50.550 --> 00:05:50.560 align:start position:0%
+She puts the toast down, the phone
+ 
+
+00:05:50.560 --> 00:05:52.070 align:start position:0%
+She puts the toast down, the phone
+rings,<00:05:51.080><c> she</c><00:05:51.280><c> picks</c><00:05:51.520><c> up</c><00:05:51.640><c> the</c><00:05:51.720><c> call</c><00:05:51.960><c> and</c>
+
+00:05:52.070 --> 00:05:52.080 align:start position:0%
+rings, she picks up the call and
+ 
+
+00:05:52.080 --> 00:05:54.710 align:start position:0%
+rings, she picks up the call and
+answers,<00:05:53.000><c> and</c><00:05:53.120><c> the</c><00:05:53.200><c> face</c><00:05:53.480><c> holds</c><00:05:53.760><c> around</c><00:05:54.040><c> 90%</c>
+
+00:05:54.710 --> 00:05:54.720 align:start position:0%
+answers, and the face holds around 90%
+ 
+
+00:05:54.720 --> 00:05:56.630 align:start position:0%
+answers, and the face holds around 90%
+consistent<00:05:55.360><c> all</c><00:05:55.480><c> the</c><00:05:55.560><c> way</c><00:05:55.680><c> through.</c>
+
+00:05:56.630 --> 00:05:56.640 align:start position:0%
+consistent all the way through.
+ 
+
+00:05:56.640 --> 00:05:58.550 align:start position:0%
+consistent all the way through.
+That's<00:05:56.800><c> a</c><00:05:56.880><c> first</c><00:05:57.160><c> try.</c>
+
+00:05:58.550 --> 00:05:58.560 align:start position:0%
+That's a first try.
+ 
+
+00:05:58.560 --> 00:06:00.790 align:start position:0%
+That's a first try.
+No<00:05:58.800><c> stage</c><00:05:59.160><c> attention,</c><00:06:00.080><c> no</c><00:06:00.360><c> extra</c>
+
+00:06:00.790 --> 00:06:00.800 align:start position:0%
+No stage attention, no extra
+ 
+
+00:06:00.800 --> 00:06:05.190 align:start position:0%
+No stage attention, no extra
+optimization,<00:06:02.120><c> running</c><00:06:02.480><c> on</c><00:06:02.600><c> an</c><00:06:02.720><c> RTX</c><00:06:03.400><c> 4090.</c>
+
+00:06:05.190 --> 00:06:05.200 align:start position:0%
+optimization, running on an RTX 4090.
+ 
+
+00:06:05.200 --> 00:06:07.510 align:start position:0%
+optimization, running on an RTX 4090.
+Total<00:06:05.480><c> generation</c><00:06:06.040><c> time</c><00:06:06.360><c> was</c><00:06:06.480><c> around</c><00:06:06.800><c> 6</c><00:06:07.080><c> to</c><00:06:07.200><c> 7</c>
+
+00:06:07.510 --> 00:06:07.520 align:start position:0%
+Total generation time was around 6 to 7
+ 
+
+00:06:07.520 --> 00:06:08.670 align:start position:0%
+Total generation time was around 6 to 7
+minutes.
+
+00:06:08.670 --> 00:06:08.680 align:start position:0%
+minutes.
+ 
+
+00:06:08.680 --> 00:06:09.510 align:start position:0%
+minutes.
+For<00:06:08.769><c> [snorts]</c><00:06:08.800><c> a</c><00:06:08.840><c> first</c><00:06:09.120><c> attempt</c><00:06:09.400><c> with</c><00:06:09.480><c> a</c>
+
+00:06:09.510 --> 00:06:09.520 align:start position:0%
+For [snorts] a first attempt with a
+ 
+
+00:06:09.520 --> 00:06:11.270 align:start position:0%
+For [snorts] a first attempt with a
+multi-action<00:06:10.120><c> prompt,</c><00:06:10.800><c> that's</c><00:06:11.000><c> a</c><00:06:11.040><c> really</c>
+
+00:06:11.270 --> 00:06:11.280 align:start position:0%
+multi-action prompt, that's a really
+ 
+
+00:06:11.280 --> 00:06:14.270 align:start position:0%
+multi-action prompt, that's a really
+solid<00:06:11.560><c> result.</c><00:06:12.520><c> If</c><00:06:12.640><c> you're</c><00:06:12.800><c> using</c><00:06:13.160><c> LCM</c><00:06:13.560><c> 2.3</c>
+
+00:06:14.270 --> 00:06:14.280 align:start position:0%
+solid result. If you're using LCM 2.3
+ 
+
+00:06:14.280 --> 00:06:16.030 align:start position:0%
+solid result. If you're using LCM 2.3
+for<00:06:14.440><c> any</c><00:06:14.640><c> kind</c><00:06:14.800><c> of</c><00:06:14.920><c> talking</c><00:06:15.400><c> head</c><00:06:15.760><c> or</c>
+
+00:06:16.030 --> 00:06:16.040 align:start position:0%
+for any kind of talking head or
+ 
+
+00:06:16.040 --> 00:06:18.070 align:start position:0%
+for any kind of talking head or
+character-driven<00:06:16.760><c> generation,</c><00:06:17.760><c> I</c><00:06:17.880><c> would</c>
+
+00:06:18.070 --> 00:06:18.080 align:start position:0%
+character-driven generation, I would
+ 
+
+00:06:18.080 --> 00:06:19.870 align:start position:0%
+character-driven generation, I would
+genuinely<00:06:18.600><c> recommend</c><00:06:19.080><c> adding</c><00:06:19.360><c> these</c><00:06:19.560><c> nodes</c>
+
+00:06:19.870 --> 00:06:19.880 align:start position:0%
+genuinely recommend adding these nodes
+ 
+
+00:06:19.880 --> 00:06:21.990 align:start position:0%
+genuinely recommend adding these nodes
+to<00:06:19.960><c> your</c><00:06:20.080><c> workflow.</c><00:06:21.000><c> The</c><00:06:21.120><c> face</c><00:06:21.360><c> consistency</c>
+
+00:06:21.990 --> 00:06:22.000 align:start position:0%
+to your workflow. The face consistency
+ 
+
+00:06:22.000 --> 00:06:23.790 align:start position:0%
+to your workflow. The face consistency
+improvement<00:06:22.520><c> is</c><00:06:22.760><c> real.</c>
+
+00:06:23.790 --> 00:06:23.800 align:start position:0%
+improvement is real.
+ 
+
+00:06:23.800 --> 00:06:26.750 align:start position:0%
+improvement is real.
+The<00:06:23.880><c> upscale</c><00:06:24.280><c> pass</c><00:06:24.680><c> is</c><00:06:24.840><c> noticeably</c><00:06:25.480><c> cleaner,</c>
+
+00:06:26.750 --> 00:06:26.760 align:start position:0%
+The upscale pass is noticeably cleaner,
+ 
+
+00:06:26.760 --> 00:06:28.630 align:start position:0%
+The upscale pass is noticeably cleaner,
+and<00:06:26.960><c> lip</c><00:06:27.160><c> sync</c><00:06:27.560><c> actually</c><00:06:27.960><c> survives</c><00:06:28.520><c> the</c>
+
+00:06:28.630 --> 00:06:28.640 align:start position:0%
+and lip sync actually survives the
+ 
+
+00:06:28.640 --> 00:06:30.510 align:start position:0%
+and lip sync actually survives the
+refinement<00:06:29.120><c> stage</c><00:06:29.480><c> now.</c>
+
+00:06:30.510 --> 00:06:30.520 align:start position:0%
+refinement stage now.
+ 
+
+00:06:30.520 --> 00:06:32.230 align:start position:0%
+refinement stage now.
+There<00:06:30.680><c> are</c><00:06:30.800><c> also</c><00:06:31.120><c> other</c><00:06:31.360><c> nodes</c><00:06:31.640><c> in</c><00:06:31.720><c> the</c><00:06:31.840><c> 10S</c>
+
+00:06:32.230 --> 00:06:32.240 align:start position:0%
+There are also other nodes in the 10S
+ 
+
+00:06:32.240 --> 00:06:34.590 align:start position:0%
+There are also other nodes in the 10S
+pack<00:06:32.600><c> beyond</c><00:06:33.000><c> what</c><00:06:33.160><c> I</c><00:06:33.200><c> covered</c><00:06:33.560><c> today.</c>
+
+00:06:34.590 --> 00:06:34.600 align:start position:0%
+pack beyond what I covered today.
+ 
+
+00:06:34.600 --> 00:06:35.870 align:start position:0%
+pack beyond what I covered today.
+The<00:06:34.640><c> full</c><00:06:34.880><c> repo</c><00:06:35.240><c> link</c><00:06:35.560><c> is</c><00:06:35.680><c> in</c><00:06:35.800><c> the</c>
+
+00:06:35.870 --> 00:06:35.880 align:start position:0%
+The full repo link is in the
+ 
+
+00:06:35.880 --> 00:06:38.630 align:start position:0%
+The full repo link is in the
+description.<00:06:37.080><c> Go</c><00:06:37.240><c> check</c><00:06:37.520><c> it</c><00:06:37.640><c> out.</c><00:06:38.360><c> If</c><00:06:38.520><c> you</c>
+
+00:06:38.630 --> 00:06:38.640 align:start position:0%
+description. Go check it out. If you
+ 
+
+00:06:38.640 --> 00:06:41.310 align:start position:0%
+description. Go check it out. If you
+found<00:06:38.880><c> this</c><00:06:39.040><c> useful,</c><00:06:39.720><c> please</c><00:06:40.080><c> like,</c><00:06:40.600><c> comment,</c>
+
+00:06:41.310 --> 00:06:41.320 align:start position:0%
+found this useful, please like, comment,
+ 
+
+00:06:41.320 --> 00:06:43.790 align:start position:0%
+found this useful, please like, comment,
+and<00:06:41.480><c> subscribe.</c><00:06:42.640><c> It</c><00:06:42.760><c> genuinely</c><00:06:43.280><c> helps</c><00:06:43.640><c> and</c>
+
+00:06:43.790 --> 00:06:43.800 align:start position:0%
+and subscribe. It genuinely helps and
+ 
+
+00:06:43.800 --> 00:06:46.150 align:start position:0%
+and subscribe. It genuinely helps and
+lets<00:06:44.040><c> me</c><00:06:44.160><c> keep</c><00:06:44.360><c> covering</c><00:06:44.760><c> new</c><00:06:44.880><c> models,</c><00:06:45.600><c> nodes,</c>
+
+00:06:46.150 --> 00:06:46.160 align:start position:0%
+lets me keep covering new models, nodes,
+ 
+
+00:06:46.160 --> 00:06:50.240 align:start position:0%
+lets me keep covering new models, nodes,
+and<00:06:46.320><c> workflows</c><00:06:46.840><c> as</c><00:06:47.000><c> they</c><00:06:47.120><c> drop.</c><00:06:47.800><c> Peace.</c>
+

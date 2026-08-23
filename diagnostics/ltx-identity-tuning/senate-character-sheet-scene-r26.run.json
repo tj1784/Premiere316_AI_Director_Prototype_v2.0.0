@@ -1,0 +1,19 @@
+{
+  "submitted_at": "2026-08-12T04:29:56.371Z",
+  "prompt_id": "426ea874-59b9-43dd-8098-3a98a9e2b697",
+  "queue_number": 3,
+  "client_id": "2bd9816a-1605-42c7-9460-eee5e515a6bd",
+  "node_errors": {},
+  "comfy_url": "http://127.0.0.1:8188",
+  "requested": {
+    "width": 768,
+    "height": 448,
+    "frames": 121,
+    "fps": 24,
+    "seconds": 5.04
+  },
+  "identity_reference": "whatdreamscost/jesus-character-sheet-1536x1024.v1.png",
+  "scene_conditioning": "Five-second U.S. Senate text prompt only; no source scene image or I2V latent",
+  "api": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\diagnostics\\ltx-identity-tuning\\senate-character-sheet-scene-r26.api.json",
+  "output_prefix": "identity_tests/senate-character-sheet-scene-r26"
+}

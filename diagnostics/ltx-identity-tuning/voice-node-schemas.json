@@ -1,0 +1,1825 @@
+{
+  "UnifiedTTSTextNode": {
+    "input": {
+      "required": {
+        "TTS_engine": [
+          "TTS_ENGINE",
+          {
+            "tooltip": "TTS engine configuration from ChatterBox Engine or F5 TTS Engine nodes"
+          }
+        ],
+        "text": [
+          "STRING",
+          {
+            "multiline": true,
+            "default": "Hello! This is unified TTS with character switching support.\n[Alice] Hi there! I'm Alice speaking with the selected TTS engine.\n[Bob] And I'm Bob! This works with any TTS engine.\nBack to the main narrator voice for the conclusion.",
+            "tooltip": "Text to convert to speech. Use [Character] tags for voice switching. Characters not found in voice folders will use the narrator voice."
+          }
+        ],
+        "narrator_voice": [
+          [
+            "none",
+            "voices_examples/higgs_audio/belinda.wav",
+            "voices_examples/higgs_audio/broom_salesman.wav",
+            "voices_examples/higgs_audio/chadwick.wav",
+            "voices_examples/Clint_Eastwood CC3 (enhanced2).wav",
+            "voices_examples/David_Attenborough CC3.wav",
+            "voices_examples/higgs_audio/en_man.wav",
+            "voices_examples/higgs_audio/en_woman.wav",
+            "voices_examples/female/female_01.wav",
+            "voices_examples/female/female_02.wav",
+            "voices_examples/higgs_audio/mabel.wav",
+            "voices_examples/male/male_01.wav",
+            "voices_examples/male/male_02.wav",
+            "voices_examples/Morgan_Freeman CC3.wav",
+            "voices_examples/Sophie_Anderson CC3.wav",
+            "voices_examples/higgs_audio/vex.wav",
+            "voices_examples/higgs_audio/zh_man_sichuan.wav"
+          ],
+          {
+            "default": "none",
+            "tooltip": "Fallback narrator voice from voice folders. Used when opt_narrator is not connected. Select 'none' for engines that support direct TTS without voice cloning, such as MOSS."
+          }
+        ],
+        "seed": [
+          "INT",
+          {
+            "default": 1,
+            "min": 0,
+            "max": 4294967295,
+            "tooltip": "Seed for reproducible TTS generation. Same seed with same inputs will produce identical results. Set to 0 for random generation."
+          }
+        ]
+      },
+      "optional": {
+        "opt_narrator": [
+          "*",
+          {
+            "tooltip": "Voice reference: Connect Character Voices node output OR direct audio input. Takes priority over narrator_voice dropdown when connected."
+          }
+        ],
+        "enable_chunking": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "Enable text chunking for long texts. When enabled, long texts are split into smaller chunks for more stable generation."
+          }
+        ],
+        "max_chars_per_chunk": [
+          "INT",
+          {
+            "default": 400,
+            "min": 100,
+            "max": 1000,
+            "step": 50,
+            "tooltip": "Maximum characters per chunk when chunking is enabled. Smaller chunks = more stable but potentially less coherent speech."
+          }
+        ],
+        "chunk_combination_method": [
+          [
+            "auto",
+            "concatenate",
+            "silence_padding",
+            "crossfade"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Method to combine audio chunks: 'auto' chooses best method, 'concatenate' joins directly, 'silence_padding' adds silence between chunks, 'crossfade' smoothly blends chunks."
+          }
+        ],
+        "silence_between_chunks_ms": [
+          "INT",
+          {
+            "default": 100,
+            "min": 0,
+            "max": 500,
+            "step": 25,
+            "tooltip": "Silence duration between chunks in milliseconds when using 'silence_padding' combination method. Longer silences = more distinct separation between chunks."
+          }
+        ],
+        "enable_audio_cache": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "If enabled, generated audio segments will be cached in memory to speed up subsequent runs with identical parameters."
+          }
+        ],
+        "batch_size": [
+          "INT",
+          {
+            "default": 0,
+            "min": 0,
+            "max": 32,
+            "step": 1,
+            "tooltip": "Parallel processing workers. 0-1 = sequential (recommended for most cases), 2+ = streaming mode. Note: Streaming may be slower than sequential for small texts. F5-TTS doesn't support streaming yet."
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "TTS_engine",
+        "text",
+        "narrator_voice",
+        "seed"
+      ],
+      "optional": [
+        "opt_narrator",
+        "enable_chunking",
+        "max_chars_per_chunk",
+        "chunk_combination_method",
+        "silence_between_chunks_ms",
+        "enable_audio_cache",
+        "batch_size"
+      ]
+    },
+    "is_input_list": false,
+    "output": [
+      "AUDIO",
+      "STRING"
+    ],
+    "output_is_list": [
+      false,
+      false
+    ],
+    "output_name": [
+      "audio",
+      "generation_info"
+    ],
+    "name": "UnifiedTTSTextNode",
+    "display_name": "🎤 TTS Text",
+    "description": "",
+    "python_module": "custom_nodes.tts_audio_suite",
+    "category": "TTS Audio Suite/🎤 Text to Speech",
+    "output_node": false,
+    "has_intermediate_output": false,
+    "search_aliases": []
+  },
+  "ChatterBoxEngineNode": {
+    "input": {
+      "required": {
+        "language": [
+          [
+            "English",
+            "German",
+            "German (SebastianBodza)",
+            "German (havok2)",
+            "Norwegian",
+            "French",
+            "Russian",
+            "Armenian",
+            "Georgian",
+            "Japanese",
+            "Korean",
+            "Italian"
+          ],
+          {
+            "default": "English",
+            "tooltip": "ChatterBox language model to use for text-to-speech generation. Local models are preferred over remote downloads."
+          }
+        ],
+        "device": [
+          [
+            "auto",
+            "cuda",
+            "xpu",
+            "cpu",
+            "mps"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Device to run ChatterBox model on:\n• auto: Automatically select best available (MPS on Apple Silicon, CUDA on NVIDIA, XPU on Intel, CPU fallback)\n• cuda: NVIDIA GPU (requires CUDA-capable GPU)\n• xpu: Intel GPU (requires Intel PyTorch XPU)\n• cpu: CPU-only processing (slower)\n• mps: Apple Metal Performance Shaders (Apple Silicon Macs only)"
+          }
+        ],
+        "exaggeration": [
+          "FLOAT",
+          {
+            "default": 0.5,
+            "min": 0.25,
+            "max": 2.0,
+            "step": 0.05,
+            "tooltip": "Speech exaggeration level for ChatterBox. Higher values create more dramatic and expressive speech."
+          }
+        ],
+        "temperature": [
+          "FLOAT",
+          {
+            "default": 0.8,
+            "min": 0.05,
+            "max": 5.0,
+            "step": 0.05,
+            "tooltip": "Controls randomness in ChatterBox generation. Higher values = more creative/varied speech, lower values = more consistent speech."
+          }
+        ],
+        "cfg_weight": [
+          "FLOAT",
+          {
+            "default": 0.5,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.05,
+            "tooltip": "Classifier-Free Guidance weight for ChatterBox. Controls how strongly the model follows the text prompt."
+          }
+        ],
+        "crash_protection_template": [
+          "STRING",
+          {
+            "default": "hmm ,, {seg} hmm ,,",
+            "tooltip": "Custom padding template for short text segments to prevent ChatterBox crashes. ChatterBox has a bug where text shorter than ~21 characters causes CUDA tensor errors. Use {seg} as placeholder for the original text. Examples: '...ummmmm {seg}' (default hesitation), '{seg}... yes... {seg}' (repetition), 'Well, {seg}' (natural prefix), or empty string to disable padding."
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "language",
+        "device",
+        "exaggeration",
+        "temperature",
+        "cfg_weight",
+        "crash_protection_template"
+      ]
+    },
+    "is_input_list": false,
+    "output": [
+      "TTS_ENGINE"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "TTS_engine"
+    ],
+    "name": "ChatterBoxEngineNode",
+    "display_name": "⚙️ ChatterBox TTS Engine",
+    "description": "",
+    "python_module": "custom_nodes.tts_audio_suite",
+    "category": "TTS Audio Suite/⚙️ Engines",
+    "output_node": false,
+    "has_intermediate_output": false,
+    "search_aliases": []
+  },
+  "F5TTSEngineNode": {
+    "input": {
+      "required": {
+        "language": [
+          [
+            "F5TTS_Base",
+            "F5TTS_v1_Base",
+            "E2TTS_Base",
+            "F5-DE",
+            "F5-ES",
+            "F5-FR",
+            "F5-JP",
+            "F5-IT",
+            "F5-TH",
+            "F5-PT-BR",
+            "F5-Polish",
+            "F5-Hindi-Small"
+          ],
+          {
+            "default": "F5TTS_v1_Base",
+            "tooltip": "F5-TTS model variant to use. F5TTS_Base is the standard model, F5TTS_v1_Base is improved version, E2TTS_Base is enhanced variant. Note: This was previously called 'model' in individual nodes."
+          }
+        ],
+        "device": [
+          [
+            "auto",
+            "cuda",
+            "xpu",
+            "cpu",
+            "mps"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Device to run F5-TTS model on:\n• auto: Automatically select best available (MPS on Apple Silicon, CUDA on NVIDIA, XPU on Intel, CPU fallback)\n• cuda: NVIDIA GPU (requires CUDA-capable GPU)\n• xpu: Intel GPU (requires Intel PyTorch XPU)\n• cpu: CPU-only processing (slower)\n• mps: Apple Metal Performance Shaders (Apple Silicon Macs only)"
+          }
+        ],
+        "temperature": [
+          "FLOAT",
+          {
+            "default": 0.8,
+            "min": 0.1,
+            "max": 2.0,
+            "step": 0.1,
+            "tooltip": "Controls randomness in F5-TTS generation. Higher values = more creative/varied speech, lower values = more consistent/predictable speech."
+          }
+        ],
+        "speed": [
+          "FLOAT",
+          {
+            "default": 1.0,
+            "min": 0.5,
+            "max": 2.0,
+            "step": 0.1,
+            "tooltip": "F5-TTS native speech speed control. 1.0 = normal speed, 0.5 = half speed (slower), 2.0 = double speed (faster)."
+          }
+        ],
+        "target_rms": [
+          "FLOAT",
+          {
+            "default": 0.1,
+            "min": 0.01,
+            "max": 1.0,
+            "step": 0.01,
+            "tooltip": "Target audio volume level (Root Mean Square). Controls output loudness normalization. Higher values = louder audio output."
+          }
+        ],
+        "cross_fade_duration": [
+          "FLOAT",
+          {
+            "default": 0.15,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.01,
+            "tooltip": "Duration in seconds for smooth audio transitions between F5-TTS segments. Prevents audio clicks/pops by blending segment boundaries."
+          }
+        ],
+        "nfe_step": [
+          "INT",
+          {
+            "default": 32,
+            "min": 1,
+            "max": 71,
+            "tooltip": "Neural Function Evaluation steps for F5-TTS inference. Higher values = better quality but slower generation. 32 is a good balance. Values above 71 may cause ODE solver issues."
+          }
+        ],
+        "cfg_strength": [
+          "FLOAT",
+          {
+            "default": 2.0,
+            "min": 0.0,
+            "max": 10.0,
+            "step": 0.1,
+            "tooltip": "Speech generation control. Lower values (1.0-1.5) = more natural, conversational delivery. Higher values (3.0-5.0) = crisper, more articulated speech with stronger emphasis. Default 2.0 balances naturalness and clarity."
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "language",
+        "device",
+        "temperature",
+        "speed",
+        "target_rms",
+        "cross_fade_duration",
+        "nfe_step",
+        "cfg_strength"
+      ]
+    },
+    "is_input_list": false,
+    "output": [
+      "TTS_ENGINE"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "TTS_engine"
+    ],
+    "name": "F5TTSEngineNode",
+    "display_name": "⚙️ F5 TTS Engine",
+    "description": "",
+    "python_module": "custom_nodes.tts_audio_suite",
+    "category": "TTS Audio Suite/⚙️ Engines",
+    "output_node": false,
+    "has_intermediate_output": false,
+    "search_aliases": []
+  },
+  "CosyVoiceEngineNode": {
+    "input": {
+      "required": {
+        "model_path": [
+          [
+            "Fun-CosyVoice3-0.5B-RL",
+            "Fun-CosyVoice3-0.5B"
+          ],
+          {
+            "default": "Fun-CosyVoice3-0.5B-RL",
+            "tooltip": "CosyVoice3 model variant:\n• Fun-CosyVoice3-0.5B-RL: Reinforcement learning trained variant with improved quality (0.81 CER, 77.4 speaker similarity - recommended)\n• Fun-CosyVoice3-0.5B: Base model\n• local:ModelName: Use locally installed model"
+          }
+        ],
+        "device": [
+          [
+            "auto",
+            "cuda",
+            "cpu"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Device to run CosyVoice3 model on:\n• auto: Best available (CUDA > CPU)\n• cuda: NVIDIA GPU\n• cpu: CPU-only processing (slower)"
+          }
+        ],
+        "speed": [
+          "FLOAT",
+          {
+            "default": 1.0,
+            "min": 0.5,
+            "max": 2.0,
+            "step": 0.1,
+            "tooltip": "Speech speed multiplier (0.5=slow, 1.0=normal, 2.0=fast).\n\nIMPORTANT: CosyVoice's official implementation uses mel-spectrogram interpolation for speed control - this is post-processing time-stretching applied AFTER generation, NOT natural prosody/rhythm changes during synthesis. This is a limitation of the official model architecture. Result will sound like artificially sped up or slowed down audio (like playing a recording faster/slower)."
+          }
+        ],
+        "use_fp16": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "Use FP16 for faster inference. Disable if you encounter numerical issues."
+          }
+        ]
+      },
+      "optional": {
+        "instruct_text": [
+          "STRING",
+          {
+            "multiline": true,
+            "default": "",
+            "tooltip": "Optional instruction for dialect/emotion/speed control.\n\n⚠️ IMPORTANT: Instruction mode is mutually exclusive with transcript-based voice cloning.\n• When instruction is provided: Uses instruction mode (ignores transcripts)\n• When empty: Uses zero-shot cloning with transcripts (.txt files) for BEST QUALITY\n\nExamples:\n• 请用广东话表达。 (Use Cantonese dialect)\n• 请用四川话说。 (Use Sichuan dialect)\n• 请用尽可能快地语速说一句话。 (Speak as fast as possible)\n• 请用温柔的语气说。 (Use gentle tone)\n• 请用生气的语气说。 (Use angry tone)\n\nFor best voice cloning quality: Leave this empty and provide .txt transcripts via Character Voices"
+          }
+        ],
+        "load_trt": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "TensorRT for flow decoder (FP32 only, <1% speedup). Included for compatibility with official repo but provides negligible benefit. Use load_vllm for real LLM acceleration."
+          }
+        ],
+        "load_vllm": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "vLLM for LLM acceleration (~3x faster token generation, ~2.5x total speedup). Linux only - does not work on Windows. Requires vLLM installation and model conversion."
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "model_path",
+        "device",
+        "speed",
+        "use_fp16"
+      ],
+      "optional": [
+        "instruct_text",
+        "load_trt",
+        "load_vllm"
+      ]
+    },
+    "is_input_list": false,
+    "output": [
+      "TTS_ENGINE"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "TTS_engine"
+    ],
+    "name": "CosyVoiceEngineNode",
+    "display_name": "⚙️ CosyVoice3 Engine",
+    "description": "",
+    "python_module": "custom_nodes.tts_audio_suite",
+    "category": "TTS Audio Suite/⚙️ Engines",
+    "output_node": false,
+    "has_intermediate_output": false,
+    "search_aliases": []
+  },
+  "Qwen3TTSEngineNode": {
+    "input": {
+      "required": {
+        "model_variant": [
+          [
+            "TTS - Base 1.7B (Voice Clone)",
+            "TTS - CustomVoice 1.7B (Presets + Instruction)",
+            "TTS - Base 0.6B (Voice Clone)",
+            "TTS - CustomVoice 0.6B (Presets)",
+            "Voice Design - 1.7B VoiceDesign",
+            "1.7B",
+            "0.6B"
+          ],
+          {
+            "default": "TTS - Base 1.7B (Voice Clone)",
+            "tooltip": "Explicit Qwen3-TTS checkpoint. Local installations use the local: prefix. Base models clone a reference voice, CustomVoice models use preset speakers, and VoiceDesign works only with Voice Designer."
+          }
+        ],
+        "device": [
+          [
+            "auto",
+            "cuda",
+            "cpu"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Device to run Qwen3-TTS model on:\n• auto: Automatically select best available\n• cuda: NVIDIA GPU (requires CUDA)\n• cpu: CPU-only processing (very slow)"
+          }
+        ],
+        "voice_preset": [
+          [
+            "None (Zero-shot / Custom)",
+            "Vivian",
+            "Serena",
+            "Uncle_Fu",
+            "Dylan",
+            "Eric",
+            "Ryan",
+            "Aiden",
+            "Ono_Anna",
+            "Sohee"
+          ],
+          {
+            "default": "None (Zero-shot / Custom)",
+            "tooltip": "Preset speaker for CustomVoice checkpoints. Ignored by Base and VoiceDesign models."
+          }
+        ],
+        "language": [
+          [
+            "Auto",
+            "Chinese",
+            "English",
+            "Japanese",
+            "Korean",
+            "German",
+            "French",
+            "Russian",
+            "Portuguese",
+            "Spanish",
+            "Italian"
+          ],
+          {
+            "default": "Auto",
+            "tooltip": "Target language for speech generation:\n• Auto: Automatically detect from text\n• Portuguese: European Portuguese only for Base model\n  - Brazilian Portuguese: Only available with CustomVoice presets + instruction\n  - Example instruction: 'Speak with Brazilian Portuguese accent'"
+          }
+        ],
+        "instruct": [
+          "STRING",
+          {
+            "default": "",
+            "multiline": true,
+            "tooltip": "Delivery instruction for the 1.7B CustomVoice checkpoint. Voice Designer owns the voice description when a VoiceDesign checkpoint is selected, so this field is disabled there. Base and 0.6B CustomVoice models ignore it."
+          }
+        ],
+        "top_k": [
+          "INT",
+          {
+            "default": 50,
+            "min": 1,
+            "max": 100,
+            "step": 1,
+            "tooltip": "Top-K sampling:\n• Lower (10-30): More focused, consistent\n• Default (50): Balanced\n• Higher (80-100): More varied output"
+          }
+        ],
+        "top_p": [
+          "FLOAT",
+          {
+            "default": 1.0,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.05,
+            "tooltip": "Top-P (nucleus) sampling:\n• Lower (0.7-0.9): More focused\n• Default (1.0): All tokens considered\n• Combine with top_k for fine control"
+          }
+        ],
+        "temperature": [
+          "FLOAT",
+          {
+            "default": 0.9,
+            "min": 0.1,
+            "max": 2.0,
+            "step": 0.1,
+            "tooltip": "Sampling temperature:\n• Lower (0.5-0.7): More predictable\n• Default (0.9): Balanced\n• Higher (1.2+): More creative, potentially unstable"
+          }
+        ],
+        "repetition_penalty": [
+          "FLOAT",
+          {
+            "default": 1.05,
+            "min": 1.0,
+            "max": 2.0,
+            "step": 0.05,
+            "tooltip": "Repetition penalty:\n• 1.0: No penalty\n• 1.05: Slight penalty (default)\n• 1.2+: Strong penalty (may affect quality)"
+          }
+        ],
+        "max_new_tokens": [
+          "INT",
+          {
+            "default": 2048,
+            "min": 64,
+            "max": 8192,
+            "step": 64,
+            "tooltip": "Maximum tokens to generate:\n• 64-512: Very short\n• 2048: Standard (default)\n• 4096-8192: Long generation\nHigher = more VRAM + longer generation"
+          }
+        ]
+      },
+      "optional": {
+        "dtype": [
+          [
+            "auto",
+            "bfloat16",
+            "float16",
+            "float32"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Model precision:\n• auto: Selects bfloat16 if GPU supports it (SM 8.0+), else float16\n• bfloat16: Best quality, stable (RTX 30xx+, A100+)\n• float16: Good quality, wider compatibility\n• float32: Maximum precision, 2x VRAM"
+          }
+        ],
+        "attn_implementation": [
+          [
+            "auto",
+            "sage_attn",
+            "flash_attention_2",
+            "sdpa",
+            "eager"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Attention mechanism:\n• auto: Best available (priority: sage_attn > flash_attention_2 > sdpa > eager)\n• sage_attn: Fastest (requires sageattention package)\n• flash_attention_2: Very fast (requires flash-attn installed)\n• sdpa: Good balance (PyTorch native)\n• eager: Slowest, most compatible"
+          }
+        ],
+        "x_vector_only_mode": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "X-vector only mode (Base model only):\n• False: Full voice cloning (high quality, requires ref_text)\n• True: Fast speaker embedding only (lower quality, no ref_text needed)\nOnly applies when voice_preset = None"
+          }
+        ],
+        "use_torch_compile": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Enable torch.compile for decoder (~1.5-2x speedup):\n• False: Standard inference (RECOMMENDED - works with all PyTorch versions)\n• True: Compiled decoder (REQUIRES PyTorch 2.10+ and triton-windows 3.6+)\n⚠️ REQUIREMENTS: PyTorch 2.10.0+cu130, triton-windows 3.6.0+, and Visual Studio C++ Build Tools on Windows\n⚠️ Shared/Dedicated Runtime will try to detect the toolchain automatically, but it still must be installed\n⚠️ See docs/qwen3_tts_optimizations.md for installation\nFirst generation slower due to compilation, then ~1.5-2x faster"
+          }
+        ],
+        "use_cuda_graphs": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Enable manual CUDA graph capture:\n• False: RECOMMENDED (reduce-overhead mode already has auto CUDA graphs)\n• True: Manual capture - minimal gain (~0.1 it/s), only works with mode='default'\nNote: reduce-overhead/max-autotune include CUDA graphs automatically"
+          }
+        ],
+        "compile_mode": [
+          [
+            "default",
+            "reduce-overhead",
+            "max-autotune"
+          ],
+          {
+            "default": "default",
+            "tooltip": "torch.compile mode (if use_torch_compile enabled):\n• default: RECOMMENDED - Standard torch.compile, ~1.7x speedup, works on Windows\n• reduce-overhead: Auto CUDA graphs, ~2-3x speedup, LINUX ONLY (fails on Windows)\n• max-autotune: Best optimization, longest compile, LINUX ONLY\n⚠️ Windows: Only 'default' works - reduce-overhead/max-autotune fail with cudaMallocAsync error\n⚠️ Model must be reloaded to test different modes (cache reuse otherwise)"
+          }
+        ],
+        "asr_use_forced_aligner": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "Enable Qwen3 forced aligner (required for word timestamps + accurate SRT).\nTurn OFF to save VRAM and skip downloading the extra aligner model if you only need text (no timestamps)."
+          }
+        ],
+        "asr_translate_target_language": [
+          [
+            "English",
+            "Chinese",
+            "Cantonese",
+            "Arabic",
+            "German",
+            "French",
+            "Spanish",
+            "Portuguese",
+            "Indonesian",
+            "Italian",
+            "Korean",
+            "Russian",
+            "Thai",
+            "Vietnamese",
+            "Japanese",
+            "Turkish",
+            "Hindi",
+            "Malay",
+            "Dutch",
+            "Swedish",
+            "Danish",
+            "Finnish",
+            "Polish",
+            "Czech",
+            "Filipino",
+            "Persian",
+            "Greek",
+            "Romanian",
+            "Hungarian",
+            "Macedonian"
+          ],
+          {
+            "default": "English",
+            "tooltip": "Experimental ASR translation target for ✏️ ASR Transcribe when task=translate.\n\nThis is ASR-only and does NOT affect Qwen TTS generation language.\n\nImportant:\n• Qwen translation in this integration is prompt-driven through the ASR wrapper, not a dedicated native target-language API\n• Translation quality currently depends heavily on language pair and backend behavior\n• English is the safest default\n• Non-English targets should be treated as experimental until you validate them on real audio"
+          }
+        ],
+        "asr_translate_instruction_override": [
+          "STRING",
+          {
+            "default": "Translate the speech from {source_language} into {target_language} text. Return only the translated text.",
+            "multiline": true,
+            "tooltip": "Qwen ASR-only experimental translation instruction template for ✏️ ASR Transcribe when task=translate.\n\nThis field shows the actual default instruction used by this integration. Edit it if you want to experiment.\n\nAvailable placeholders:\n• {source_language}: Replaced with the unified ASR source language, or 'the spoken source language' when ASR language is Auto\n• {target_language}: Replaced with this engine node's ASR translation target\n\nImportant:\n• This does NOT affect Qwen TTS generation or the TTS 'instruct' field\n• Qwen translation here is prompt-driven through the ASR wrapper context\n• Results can vary a lot by language pair, and some pairs may not behave reliably at all\n• Weak or malformed custom instructions can produce worse translations or unexpected output"
+          }
+        ],
+        "runtime_mode": [
+          [
+            "Main Environment",
+            "⚠️ Shared Runtime",
+            "⚠️ Dedicated Runtime"
+          ],
+          {
+            "default": "⚠️ Shared Runtime",
+            "tooltip": "IMPORTANT: Qwen3-TTS is fragile on Transformers 5 in the main environment.\n\nRuntime Isolation:\n• Main Environment: Use the main ComfyUI Python environment\n• Shared Runtime: Use the shared secondary legacy runtime already used by compatible engines\n• Dedicated Runtime: Create a separate secondary runtime just for Qwen3-TTS\n\nWhy this matters:\n• The main ComfyUI env is on Transformers 5\n• Qwen3-TTS is more stable on the legacy Transformers 4 stack\n• Runtime isolation keeps Qwen3-TTS working without downgrading the whole app\n\n⚠️ Shared/Dedicated runtimes currently reuse heavy base packages from the main env (like PyTorch) and install pinned Qwen3-TTS-specific packages on top.\n⚠️ First run may create the secondary runtime and take a while."
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "model_variant",
+        "device",
+        "voice_preset",
+        "language",
+        "instruct",
+        "top_k",
+        "top_p",
+        "temperature",
+        "repetition_penalty",
+        "max_new_tokens"
+      ],
+      "optional": [
+        "dtype",
+        "attn_implementation",
+        "x_vector_only_mode",
+        "use_torch_compile",
+        "use_cuda_graphs",
+        "compile_mode",
+        "asr_use_forced_aligner",
+        "asr_translate_target_language",
+        "asr_translate_instruction_override",
+        "runtime_mode"
+      ]
+    },
+    "is_input_list": false,
+    "output": [
+      "TTS_ENGINE"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "TTS_engine"
+    ],
+    "name": "Qwen3TTSEngineNode",
+    "display_name": "⚙️ Qwen3-TTS Engine",
+    "description": "",
+    "python_module": "custom_nodes.tts_audio_suite",
+    "category": "TTS Audio Suite/⚙️ Engines",
+    "output_node": false,
+    "has_intermediate_output": false,
+    "search_aliases": []
+  },
+  "FB_Qwen3TTSVoiceClone": {
+    "input": {
+      "required": {
+        "target_text": [
+          "STRING",
+          {
+            "multiline": true,
+            "default": "Good one. Okay, fine, I'm just gonna leave this sock monkey here. Goodbye."
+          }
+        ],
+        "model_choice": [
+          [
+            "0.6B",
+            "1.7B"
+          ],
+          {
+            "default": "0.6B"
+          }
+        ],
+        "device": [
+          [
+            "auto",
+            "cuda",
+            "xpu",
+            "mps",
+            "cpu"
+          ],
+          {
+            "default": "auto"
+          }
+        ],
+        "precision": [
+          [
+            "bf16",
+            "fp32"
+          ],
+          {
+            "default": "bf16"
+          }
+        ],
+        "language": [
+          [
+            "Auto",
+            "Chinese",
+            "English",
+            "Japanese",
+            "Korean",
+            "French",
+            "German",
+            "Spanish",
+            "Portuguese",
+            "Russian",
+            "Italian"
+          ],
+          {
+            "default": "Auto"
+          }
+        ]
+      },
+      "optional": {
+        "ref_audio": [
+          "AUDIO",
+          {
+            "tooltip": "Reference audio (ComfyUI Audio)"
+          }
+        ],
+        "ref_text": [
+          "STRING",
+          {
+            "multiline": true,
+            "default": "",
+            "placeholder": "Reference audio text (optional)"
+          }
+        ],
+        "voice_clone_prompt": [
+          "VOICE_CLONE_PROMPT",
+          {
+            "tooltip": "Reusable voice clone prompt from VoiceClonePromptNode"
+          }
+        ],
+        "seed": [
+          "INT",
+          {
+            "default": 0,
+            "min": 0,
+            "max": 18446744073709551615,
+            "control_after_generate": true
+          }
+        ],
+        "max_new_tokens": [
+          "INT",
+          {
+            "default": 2048,
+            "min": 512,
+            "max": 4096,
+            "step": 256
+          }
+        ],
+        "top_p": [
+          "FLOAT",
+          {
+            "default": 0.8,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.05,
+            "tooltip": "Nucleus sampling probability"
+          }
+        ],
+        "top_k": [
+          "INT",
+          {
+            "default": 20,
+            "min": 0,
+            "max": 100,
+            "step": 1,
+            "tooltip": "Top-k sampling parameter"
+          }
+        ],
+        "temperature": [
+          "FLOAT",
+          {
+            "default": 1.0,
+            "min": 0.1,
+            "max": 2.0,
+            "step": 0.1,
+            "tooltip": "Sampling temperature"
+          }
+        ],
+        "repetition_penalty": [
+          "FLOAT",
+          {
+            "default": 1.05,
+            "min": 1.0,
+            "max": 2.0,
+            "step": 0.05,
+            "tooltip": "Penalty for repetition"
+          }
+        ],
+        "x_vector_only": [
+          "BOOLEAN",
+          {
+            "default": false
+          }
+        ],
+        "attention": [
+          [
+            "auto",
+            "sage_attn",
+            "flash_attn",
+            "sdpa",
+            "eager"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Attention implementation"
+          }
+        ],
+        "unload_model_after_generate": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Unload model from memory after generation"
+          }
+        ],
+        "custom_model_path": [
+          "STRING",
+          {
+            "default": "",
+            "placeholder": "Absolute path to local fine-tuned model"
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "target_text",
+        "model_choice",
+        "device",
+        "precision",
+        "language"
+      ],
+      "optional": [
+        "ref_audio",
+        "ref_text",
+        "voice_clone_prompt",
+        "seed",
+        "max_new_tokens",
+        "top_p",
+        "top_k",
+        "temperature",
+        "repetition_penalty",
+        "x_vector_only",
+        "attention",
+        "unload_model_after_generate",
+        "custom_model_path"
+      ]
+    },
+    "is_input_list": false,
+    "output": [
+      "AUDIO"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "audio"
+    ],
+    "name": "FB_Qwen3TTSVoiceClone",
+    "display_name": "🎭 Qwen3-TTS VoiceClone",
+    "description": "VoiceClone: Clone voice from reference audio.",
+    "python_module": "custom_nodes.ComfyUI-Qwen-TTS",
+    "category": "Qwen3-TTS",
+    "output_node": false,
+    "has_intermediate_output": false,
+    "search_aliases": []
+  },
+  "FB_Qwen3TTSVoiceClonePrompt": {
+    "input": {
+      "required": {
+        "ref_audio": [
+          "AUDIO",
+          {
+            "tooltip": "Reference audio (ComfyUI Audio)"
+          }
+        ],
+        "ref_text": [
+          "STRING",
+          {
+            "multiline": true,
+            "default": "",
+            "placeholder": "Reference audio text (highly recommended for better quality)"
+          }
+        ],
+        "model_choice": [
+          [
+            "0.6B",
+            "1.7B"
+          ],
+          {
+            "default": "0.6B"
+          }
+        ],
+        "device": [
+          [
+            "auto",
+            "cuda",
+            "xpu",
+            "mps",
+            "cpu"
+          ],
+          {
+            "default": "auto"
+          }
+        ],
+        "precision": [
+          [
+            "bf16",
+            "fp32"
+          ],
+          {
+            "default": "bf16"
+          }
+        ],
+        "attention": [
+          [
+            "auto",
+            "sage_attn",
+            "flash_attn",
+            "sdpa",
+            "eager"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Attention implementation"
+          }
+        ]
+      },
+      "optional": {
+        "x_vector_only": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "If True, only speaker embedding is extracted (ref_text not needed)"
+          }
+        ],
+        "unload_model_after_generate": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Unload model from memory after generation"
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "ref_audio",
+        "ref_text",
+        "model_choice",
+        "device",
+        "precision",
+        "attention"
+      ],
+      "optional": [
+        "x_vector_only",
+        "unload_model_after_generate"
+      ]
+    },
+    "is_input_list": false,
+    "output": [
+      "VOICE_CLONE_PROMPT"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "voice_clone_prompt"
+    ],
+    "name": "FB_Qwen3TTSVoiceClonePrompt",
+    "display_name": "🎭 Qwen3-TTS VoiceClonePrompt",
+    "description": "VoiceClonePrompt: Extract and cache voice features for reuse in VoiceClone node.",
+    "python_module": "custom_nodes.ComfyUI-Qwen-TTS",
+    "category": "Qwen3-TTS",
+    "output_node": false,
+    "has_intermediate_output": false,
+    "search_aliases": []
+  },
+  "FishS2VoiceCloneTTS": {
+    "input": {
+      "required": {
+        "model_path": [
+          [
+            "s2-pro (auto download)",
+            "s2-pro",
+            "s2-pro-fp8 (auto download)",
+            "s2-pro-fp8",
+            "s2-pro-bnb-int8 (auto download)",
+            "s2-pro-bnb-int8",
+            "s2-pro-bnb-nf4 (auto download)",
+            "s2-pro-bnb-nf4"
+          ],
+          {
+            "tooltip": "S2-Pro checkpoint folder name. Place model folders in ComfyUI/models/fishaudioS2/"
+          }
+        ],
+        "text": [
+          "STRING",
+          {
+            "multiline": true,
+            "default": "Hello! [excited] This is my cloned voice.",
+            "tooltip": "Text to synthesise in the cloned voice. Supports inline tags: [laugh], [whisper], [pause], [excited], [sad], [angry], [volume up], etc."
+          }
+        ],
+        "reference_audio": [
+          "AUDIO",
+          {
+            "tooltip": "Reference audio to clone the voice from. 5-30 seconds gives the best results; longer clips make the prompt very large and slow."
+          }
+        ],
+        "language": [
+          [
+            "auto",
+            "en",
+            "zh",
+            "ja",
+            "ko",
+            "es",
+            "pt",
+            "ar",
+            "ru",
+            "fr",
+            "de",
+            "it",
+            "tr",
+            "nl",
+            "sv",
+            "no",
+            "da",
+            "fi",
+            "pl",
+            "hi",
+            "vi",
+            "th",
+            "id",
+            "ms",
+            "uk",
+            "bg",
+            "hr",
+            "cs",
+            "sk",
+            "sl",
+            "ro",
+            "hu",
+            "et",
+            "lv",
+            "lt",
+            "el",
+            "he",
+            "fa",
+            "bn",
+            "ta",
+            "te",
+            "kn",
+            "ml",
+            "si",
+            "my",
+            "km",
+            "am",
+            "ka",
+            "az",
+            "kk",
+            "mn",
+            "sw",
+            "yo",
+            "eu",
+            "ca",
+            "gl",
+            "cy",
+            "la",
+            "sa",
+            "ur",
+            "ne",
+            "tl",
+            "jw"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Language hint. 'auto' lets the model detect it."
+          }
+        ],
+        "device": [
+          [
+            "auto",
+            "cuda",
+            "cpu",
+            "mps"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Compute device. 'auto' picks CUDA > MPS > CPU."
+          }
+        ],
+        "precision": [
+          [
+            "auto",
+            "bfloat16",
+            "float16",
+            "float32"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Model precision. 'auto' picks bfloat16 for full model, float16 for quantized model. bfloat16 recommended for CUDA."
+          }
+        ],
+        "attention": [
+          [
+            "auto",
+            "sdpa",
+            "sage_attention",
+            "flash_attention"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Attention kernel. 'auto' uses the model default (sdpa/flash). 'sdpa' forces PyTorch SDPA. 'flash_attention' forces FlashAttention via SDPBackend. 'sage_attention' monkey-patches with SageAttention (requires sageattention). BNB models (s2-pro-bnb-int8/nf4) always use sdpa regardless of this setting. Changing this unloads and reloads the model."
+          }
+        ],
+        "max_new_tokens": [
+          "INT",
+          {
+            "default": 0,
+            "min": 0,
+            "max": 4096,
+            "step": 64,
+            "tooltip": "Maximum acoustic tokens to generate. 0 = auto (no limit, model decides)."
+          }
+        ],
+        "chunk_length": [
+          "INT",
+          {
+            "default": 200,
+            "min": 100,
+            "max": 400,
+            "step": 10,
+            "tooltip": "Chunk length for iterative synthesis (100-400). Lower = faster first audio, slightly lower quality. Higher = better prosody across long sentences."
+          }
+        ],
+        "temperature": [
+          "FLOAT",
+          {
+            "default": 0.8,
+            "min": 0.1,
+            "max": 1.0,
+            "step": 0.05,
+            "tooltip": "Sampling temperature. Lower = more deterministic output."
+          }
+        ],
+        "top_p": [
+          "FLOAT",
+          {
+            "default": 0.8,
+            "min": 0.1,
+            "max": 1.0,
+            "step": 0.05,
+            "tooltip": "Top-p nucleus sampling cutoff."
+          }
+        ],
+        "repetition_penalty": [
+          "FLOAT",
+          {
+            "default": 1.1,
+            "min": 0.9,
+            "max": 2.0,
+            "step": 0.05,
+            "tooltip": "Penalises repeated tokens. Higher = less repetition."
+          }
+        ],
+        "seed": [
+          "INT",
+          {
+            "default": 0,
+            "min": 0,
+            "max": 2147483647,
+            "tooltip": "Random seed."
+          }
+        ],
+        "keep_model_loaded": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "ON = model stays in VRAM between runs (faster). OFF = model unloaded after each run (frees VRAM)."
+          }
+        ],
+        "offload_to_cpu": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "After generation, move the model to CPU instead of keeping it in VRAM. Frees VRAM while avoiding the full reload penalty. Slower than keep_model_loaded but faster than a cold load. Ignored if keep_model_loaded is OFF."
+          }
+        ],
+        "compile_model": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Enable torch.compile (~10x speedup after warmup). First run is slow while compiling. Not supported on Windows. For best results pin max_new_tokens to a fixed value — each new larger length triggers a recompile."
+          }
+        ]
+      },
+      "optional": {
+        "reference_text": [
+          "STRING",
+          {
+            "multiline": true,
+            "default": "",
+            "tooltip": "Transcript of the reference audio. Strongly recommended for stable voice cloning."
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "model_path",
+        "text",
+        "reference_audio",
+        "language",
+        "device",
+        "precision",
+        "attention",
+        "max_new_tokens",
+        "chunk_length",
+        "temperature",
+        "top_p",
+        "repetition_penalty",
+        "seed",
+        "keep_model_loaded",
+        "offload_to_cpu",
+        "compile_model"
+      ],
+      "optional": [
+        "reference_text"
+      ]
+    },
+    "is_input_list": false,
+    "output": [
+      "AUDIO"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "audio"
+    ],
+    "name": "FishS2VoiceCloneTTS",
+    "display_name": "Fish S2 Voice Clone TTS",
+    "description": "Fish Audio S2-Pro Voice Clone TTS. Clones any voice from a short reference audio clip and synthesises new speech in that voice.",
+    "python_module": "custom_nodes.ComfyUI-FishAudioS2",
+    "category": "FishAudioS2",
+    "output_node": false,
+    "has_intermediate_output": false,
+    "search_aliases": []
+  },
+  "DotsTTSEngineNode": {
+    "input": {
+      "required": {
+        "model_variant": [
+          [
+            "dots.tts-soar",
+            "dots.tts-mf",
+            "dots.tts-base"
+          ],
+          {
+            "default": "dots.tts-soar",
+            "tooltip": "Official Dots checkpoint.\n• dots.tts-soar: best zero-shot voice cloning\n• dots.tts-mf: fastest distilled MeanFlow checkpoint; use 4 steps\n• dots.tts-base: pretrained baseline"
+          }
+        ],
+        "device": [
+          [
+            "auto",
+            "cuda",
+            "cpu"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Device to run Dots TTS on.\n• auto: use the best available device\n• cuda: NVIDIA GPU\n• cpu: CPU-only (very slow for 2B model)"
+          }
+        ],
+        "language": [
+          [
+            "Auto",
+            "None",
+            "Arabic",
+            "Czech",
+            "German",
+            "Greek",
+            "English",
+            "Spanish",
+            "Finnish",
+            "French",
+            "Hindi",
+            "Indonesian",
+            "Italian",
+            "Japanese",
+            "Korean",
+            "Dutch",
+            "Polish",
+            "Portuguese",
+            "Romanian",
+            "Russian",
+            "Thai",
+            "Turkish",
+            "Ukrainian",
+            "Vietnamese",
+            "Cantonese",
+            "Chinese"
+          ],
+          {
+            "default": "Auto",
+            "tooltip": "Official Dots language tag.\n• Auto: let Dots detect language from text\n• None: disable explicit language tagging\n• Full language names: force the model-side language tag\n\nVoice-cloning note: reference/narrator audio works best when the generated language matches the language spoken in the reference. Cross-language cloning can degrade quality, accent, and speaker similarity."
+          }
+        ],
+        "num_steps": [
+          "INT",
+          {
+            "default": 10,
+            "min": 1,
+            "max": 64,
+            "step": 1,
+            "tooltip": "Flow-matching sampling steps.\nOfficial recommendation: 10-32 for base/soar, 4 for mf."
+          }
+        ],
+        "guidance_scale": [
+          "FLOAT",
+          {
+            "default": 1.2,
+            "min": 0.0,
+            "max": 5.0,
+            "step": 0.1,
+            "tooltip": "Official CFG guidance scale.\nHigher values can increase energy and instability."
+          }
+        ],
+        "speaker_scale": [
+          "FLOAT",
+          {
+            "default": 1.5,
+            "min": 0.0,
+            "max": 5.0,
+            "step": 0.1,
+            "tooltip": "Official speaker embedding scale for reference audio conditioning."
+          }
+        ],
+        "max_generate_length": [
+          "INT",
+          {
+            "default": 500,
+            "min": 32,
+            "max": 1024,
+            "step": 32,
+            "tooltip": "Official maximum audio patch budget.\n500 is roughly 160 seconds of output budget."
+          }
+        ]
+      },
+      "optional": {
+        "template_mode": [
+          [
+            "TTS",
+            "Instruction TTS"
+          ],
+          {
+            "default": "TTS",
+            "tooltip": "Official non-standard Dots template mode from upstream.\n• TTS: standard Dots speech synthesis template\n• Instruction TTS: uses the same text field as normal TTS\nUpstream does not clearly document what behavior difference this mode is meant to produce.\nIt may yield different results, or little noticeable difference, versus standard TTS. Needs testing."
+          }
+        ],
+        "precision": [
+          [
+            "auto",
+            "bfloat16",
+            "float16",
+            "float32"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Runtime precision.\n• auto: bfloat16 on newer CUDA GPUs, else float16, cpu -> float32"
+          }
+        ],
+        "normalize_text": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Use Dots native text normalization before inference."
+          }
+        ],
+        "optimize": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Enable official Dots runtime optimization / warmup.\nFirst load is slower; steady-state inference is faster."
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "model_variant",
+        "device",
+        "language",
+        "num_steps",
+        "guidance_scale",
+        "speaker_scale",
+        "max_generate_length"
+      ],
+      "optional": [
+        "template_mode",
+        "precision",
+        "normalize_text",
+        "optimize"
+      ]
+    },
+    "is_input_list": false,
+    "output": [
+      "TTS_ENGINE"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "TTS_engine"
+    ],
+    "name": "DotsTTSEngineNode",
+    "display_name": "⚙️ Dots TTS Engine",
+    "description": "",
+    "python_module": "custom_nodes.tts_audio_suite",
+    "category": "TTS Audio Suite/⚙️ Engines",
+    "output_node": false,
+    "has_intermediate_output": false,
+    "search_aliases": []
+  },
+  "IndexTTSEngineNode": {
+    "input": {
+      "required": {
+        "model_path": [
+          [
+            "IndexTTS-2"
+          ],
+          {
+            "default": "IndexTTS-2",
+            "tooltip": "IndexTTS-2 model selection:\n• local:ModelName: Use locally installed model (respects extra_model_paths.yaml)\n• ModelName: Auto-download model if not found locally\n• Downloads respect extra_model_paths.yaml configuration"
+          }
+        ],
+        "device": [
+          [
+            "auto",
+            "cuda",
+            "xpu",
+            "cpu",
+            "mps"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Device to run IndexTTS-2 model on:\n• auto: Automatically select best available (MPS on Apple Silicon, CUDA on NVIDIA, XPU on Intel, CPU fallback)\n• cuda: NVIDIA GPU (requires CUDA-capable GPU)\n• xpu: Intel GPU (requires Intel PyTorch XPU)\n• cpu: CPU-only processing (slower)\n• mps: Apple Metal Performance Shaders (Apple Silicon Macs only)"
+          }
+        ],
+        "emotion_alpha": [
+          "FLOAT",
+          {
+            "default": 1.0,
+            "min": 0.0,
+            "max": 2.0,
+            "step": 0.1,
+            "tooltip": "Emotion intensity control (0.0-2.0). Affects emotion control from connected emotion nodes. 1.0=full emotion, 0.5=50% blend, 0.0=neutral."
+          }
+        ],
+        "use_random": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Enable random sampling for more varied generation. Can improve diversity."
+          }
+        ],
+        "max_text_tokens_per_segment": [
+          "INT",
+          {
+            "default": 120,
+            "min": 50,
+            "max": 300,
+            "step": 10,
+            "tooltip": "Maximum text tokens per segment. Longer segments may cause quality issues."
+          }
+        ],
+        "interval_silence": [
+          "INT",
+          {
+            "default": 200,
+            "min": 0,
+            "max": 1000,
+            "step": 50,
+            "tooltip": "Silence duration between segments in milliseconds."
+          }
+        ],
+        "temperature": [
+          "FLOAT",
+          {
+            "default": 0.8,
+            "min": 0.1,
+            "max": 2.0,
+            "step": 0.1,
+            "tooltip": "Controls randomness. Higher values = more creative, lower = more consistent."
+          }
+        ],
+        "top_p": [
+          "FLOAT",
+          {
+            "default": 0.8,
+            "min": 0.1,
+            "max": 1.0,
+            "step": 0.05,
+            "tooltip": "Nucleus sampling threshold. Controls probability mass of tokens to consider."
+          }
+        ],
+        "top_k": [
+          "INT",
+          {
+            "default": 30,
+            "min": 1,
+            "max": 100,
+            "step": 5,
+            "tooltip": "Top-k sampling parameter. Lower values = more focused generation."
+          }
+        ],
+        "do_sample": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "Enable sampling for generation. Disable for deterministic output."
+          }
+        ],
+        "length_penalty": [
+          "FLOAT",
+          {
+            "default": 0.0,
+            "min": -2.0,
+            "max": 2.0,
+            "step": 0.1,
+            "tooltip": "Length penalty for beam search. Positive values favor longer sequences."
+          }
+        ],
+        "num_beams": [
+          "INT",
+          {
+            "default": 3,
+            "min": 1,
+            "max": 10,
+            "step": 1,
+            "tooltip": "Number of beams for beam search. Higher values = better quality but slower."
+          }
+        ],
+        "repetition_penalty": [
+          "FLOAT",
+          {
+            "default": 10.0,
+            "min": 1.0,
+            "max": 20.0,
+            "step": 0.5,
+            "tooltip": "Penalty for repeated tokens. Higher values reduce repetition."
+          }
+        ],
+        "max_mel_tokens": [
+          "INT",
+          {
+            "default": 1500,
+            "min": 500,
+            "max": 3000,
+            "step": 100,
+            "tooltip": "Maximum mel-spectrogram tokens to generate. Controls output length limit."
+          }
+        ],
+        "use_fp16": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "Use FP16 for faster inference. Disable if you encounter numerical issues."
+          }
+        ],
+        "use_deepspeed": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Use DeepSpeed optimization. Requires DeepSpeed installation."
+          }
+        ]
+      },
+      "optional": {
+        "emotion_control": [
+          "*",
+          {
+            "tooltip": "Vector/text emotion control (legacy unified input):\n• 🌈 Emotion Vectors - Manual emotion control sliders\n• 🌈 Text Emotion - AI-analyzed emotion from text\nConnect audio separately to 'emotion_audio' when you want to blend both.\nCharacter emotion tags [Alice:emotion_ref] can provide per-segment audio emotion."
+          }
+        ],
+        "emotion_audio": [
+          "*",
+          {
+            "tooltip": "Dedicated emotion-reference audio input.\nConnect Character Voices, opt_narrator, or AUDIO here.\nThis can be connected together with the vector/text emotion input above; IndexTTS-2 blends both."
+          }
+        ],
+        "use_cuda_kernel": [
+          [
+            "auto",
+            "true",
+            "false"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Use BigVGAN CUDA kernels for faster vocoding. Auto-detects availability."
+          }
+        ],
+        "use_torch_compile": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Enable torch.compile optimization for S2Mel mel-spectrogram generation stage. Provides 1.5-2x speedup. Requires a compatible PyTorch version and Triton on CUDA systems (triton-windows on Windows)."
+          }
+        ],
+        "use_accel": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Enable GPT2 acceleration with FlashAttention and KV-cache optimization. Provides 1.5-3x speedup for GPT2 stage. REQUIRES: flash-attn library (pip install flash-attn)"
+          }
+        ],
+        "stream_return": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Enable streaming mode for low-latency audio generation. Returns generator yielding audio chunks instead of complete file."
+          }
+        ],
+        "more_segment_before": [
+          "INT",
+          {
+            "default": 0,
+            "min": 0,
+            "max": 80,
+            "step": 5,
+            "tooltip": "Streaming segmentation parameter. Higher values produce first audio chunk faster but may affect quality. Only used when stream_return is enabled. Recommended: 0-20."
+          }
+        ],
+        "low_vram": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Enable Low VRAM mode. Keeps models on CPU and only moves them to GPU when needed. Prevents OOM on 8GB cards but is slower."
+          }
+        ]
+      }
+    },
+    "input_order": {
+      "required": [
+        "model_path",
+        "device",
+        "emotion_alpha",
+        "use_random",
+        "max_text_tokens_per_segment",
+        "interval_silence",
+        "temperature",
+        "top_p",
+        "top_k",
+        "do_sample",
+        "length_penalty",
+        "num_beams",
+        "repetition_penalty",
+        "max_mel_tokens",
+        "use_fp16",
+        "use_deepspeed"
+      ],
+      "optional": [
+        "emotion_control",
+        "emotion_audio",
+        "use_cuda_kernel",
+        "use_torch_compile",
+        "use_accel",
+        "stream_return",
+        "more_segment_before",
+        "low_vram"
+      ]
+    },
+    "is_input_list": false,
+    "output": [
+      "TTS_ENGINE"
+    ],
+    "output_is_list": [
+      false
+    ],
+    "output_name": [
+      "TTS_engine"
+    ],
+    "name": "IndexTTSEngineNode",
+    "display_name": "⚙️ IndexTTS-2 Engine",
+    "description": "",
+    "python_module": "custom_nodes.tts_audio_suite",
+    "category": "TTS Audio Suite/⚙️ Engines",
+    "output_node": false,
+    "has_intermediate_output": false,
+    "search_aliases": []
+  }
+}

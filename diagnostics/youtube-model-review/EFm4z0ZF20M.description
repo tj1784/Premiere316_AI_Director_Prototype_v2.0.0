@@ -1,0 +1,24 @@
+This video covers the MSR V2 (Multi-Subject Reference version 2) LoRA model for LTX Video 2.3, an update from Licon Studio that improves character consistency, object stability, and scene logic in reference-to-video generation. The V2 model is trained to maintain outfit styles, accessories, and body type across multiple scenes and camera angles — about 80 percent style consistency with a single reference image. We compare V1 vs V2 side by side, test close-up vs non-close-up reference images, and demonstrate the results with a music video demo.
+
+This is for ComfyUI users who work with LTX 2.3 and want to generate multiple scenes from a single character reference image. If you have been using reference-to-video but struggling with flickering, inconsistent outfits, or characters that disappear mid-clip, MSR V2 addresses those issues. The workflow uses the LiconMSR custom node for character sheet input, Prompt Relay for text prompts, and NAG for guided generation. It works with the same workflow as V1 — just swap the LoRA file.
+
+The key finding: MSR V2 excels at outfit and style consistency (about 80 percent) but facial recognition remains the limitation of all reference-to-video approaches. For exact character face identity across scenes, training a character LoRA with Krea 2 or similar tools is still the best path. Reference-to-video is a quick way to mimic overall character style, not a replacement for dedicated character LoRA training.
+
+Resources:
+
+Attached Freebie workflow here for the LTX 2.3 22B + MSR V2 LoRA + LiconMSR :
+https://www.patreon.com/aifuturetech/posts/ltx-2-3-msr-v2-164795767?utm_source=youtube&utm_medium=video&utm_campaign=20260725
+
+LiconStudio/LTX-2.3-Multiple-Subject-Reference  by @liconstudio 
+https://huggingface.co/LiconStudio/LTX-2.3-Multiple-Subject-Reference
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------
+Local Workstation GPU : https://amzn.to/3XfXsAO
+--------------------------------------------------------------------------------------------------------------------------------
+
+If You Like tutorial like this, You Can Support Our Work In Patreon:
+https://www.patreon.com/c/aifuturetech
+
+#comfyui #ltx2 #aivideoediting #referneceTovideo

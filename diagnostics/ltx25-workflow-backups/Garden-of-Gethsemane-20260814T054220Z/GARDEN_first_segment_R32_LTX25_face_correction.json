@@ -1,0 +1,429 @@
+{
+  "id": "ed5e2259-1287-4198-a082-398bf86066db",
+  "revision": 0,
+  "last_node_id": 4,
+  "last_link_id": 4,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "VHS_LoadVideoPath",
+      "pos": [
+        100,
+        100
+      ],
+      "size": [
+        221.27618408203125,
+        413.1552734375
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "meta_batch",
+          "shape": 7,
+          "type": "VHS_BatchManager",
+          "link": null
+        },
+        {
+          "name": "vae",
+          "shape": 7,
+          "type": "VAE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "frame_count",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "video_info",
+          "type": "VHS_VIDEOINFO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VHS_LoadVideoPath"
+      },
+      "widgets_values": {
+        "video": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\output\\identity_tests\\garden-first-segment-r31-ltx25-native_00001-audio.mp4",
+        "force_rate": 25,
+        "custom_width": 0,
+        "custom_height": 0,
+        "frame_load_cap": 169,
+        "skip_first_frames": 0,
+        "select_every_nth": 1,
+        "format": "None",
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {
+            "filename": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\output\\identity_tests\\garden-first-segment-r31-ltx25-native_00001-audio.mp4",
+            "type": "path",
+            "force_rate": 25,
+            "custom_width": 0,
+            "custom_height": 0,
+            "frame_load_cap": 169,
+            "skip_first_frames": 0,
+            "select_every_nth": 1
+          }
+        }
+      },
+      "title": "Load LTX 2.5 Garden R31 output"
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        100,
+        330
+      ],
+      "size": [
+        360,
+        430
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "COMBO",
+          "widget": {
+            "name": "image"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "python_module": "nodes"
+      },
+      "widgets_values": [
+        "whatdreamscost/jesus-face-primary-3q.v1.png"
+      ],
+      "title": "Canonical Jesus face reference"
+    },
+    {
+      "id": 3,
+      "type": "ReActorFaceSwap",
+      "pos": [
+        490,
+        100
+      ],
+      "size": [
+        470,
+        420
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "enabled",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "enabled"
+          },
+          "link": null
+        },
+        {
+          "name": "input_image",
+          "type": "IMAGE",
+          "link": 1
+        },
+        {
+          "name": "swap_model",
+          "type": "COMBO",
+          "widget": {
+            "name": "swap_model"
+          },
+          "link": null
+        },
+        {
+          "name": "facedetection",
+          "type": "COMBO",
+          "widget": {
+            "name": "facedetection"
+          },
+          "link": null
+        },
+        {
+          "name": "face_restore_model",
+          "type": "COMBO",
+          "widget": {
+            "name": "face_restore_model"
+          },
+          "link": null
+        },
+        {
+          "name": "face_restore_visibility",
+          "type": "FLOAT",
+          "widget": {
+            "name": "face_restore_visibility"
+          },
+          "link": null
+        },
+        {
+          "name": "codeformer_weight",
+          "type": "FLOAT",
+          "widget": {
+            "name": "codeformer_weight"
+          },
+          "link": null
+        },
+        {
+          "name": "detect_gender_input",
+          "type": "COMBO",
+          "widget": {
+            "name": "detect_gender_input"
+          },
+          "link": null
+        },
+        {
+          "name": "detect_gender_source",
+          "type": "COMBO",
+          "widget": {
+            "name": "detect_gender_source"
+          },
+          "link": null
+        },
+        {
+          "name": "input_faces_index",
+          "type": "STRING",
+          "widget": {
+            "name": "input_faces_index"
+          },
+          "link": null
+        },
+        {
+          "name": "source_faces_index",
+          "type": "STRING",
+          "widget": {
+            "name": "source_faces_index"
+          },
+          "link": null
+        },
+        {
+          "name": "console_log_level",
+          "type": "COMBO",
+          "widget": {
+            "name": "console_log_level"
+          },
+          "link": null
+        },
+        {
+          "name": "source_image",
+          "type": "IMAGE",
+          "shape": 7,
+          "link": 2
+        },
+        {
+          "name": "face_model",
+          "type": "FACE_MODEL",
+          "shape": 7,
+          "link": null
+        },
+        {
+          "name": "face_boost",
+          "type": "FACE_BOOST",
+          "shape": 7,
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SWAPPED_IMAGE",
+          "type": "IMAGE",
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "FACE_MODEL",
+          "type": "FACE_MODEL",
+          "links": null
+        },
+        {
+          "name": "ORIGINAL_IMAGE",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "title": "R32 · Canonical face correction after LTX 2.5 decode",
+      "properties": {
+        "cnr_id": "comfyui-reactor",
+        "ver": "0.7.0-a2",
+        "Node name for S&R": "ReActorFaceSwap"
+      },
+      "widgets_values": [
+        true,
+        "inswapper_128.onnx",
+        "retinaface_resnet50",
+        "none",
+        1,
+        0.5,
+        "no",
+        "no",
+        "0",
+        "0",
+        1
+      ],
+      "color": "#332043",
+      "bgcolor": "#24162f"
+    },
+    {
+      "id": 4,
+      "type": "VHS_VideoCombine",
+      "pos": [
+        880,
+        100
+      ],
+      "size": [
+        210,
+        334
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 3
+        },
+        {
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": 4
+        },
+        {
+          "name": "meta_batch",
+          "shape": 7,
+          "type": "VHS_BatchManager",
+          "link": null
+        },
+        {
+          "name": "vae",
+          "shape": 7,
+          "type": "VAE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Filenames",
+          "type": "VHS_FILENAMES",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VHS_VideoCombine"
+      },
+      "widgets_values": {
+        "frame_rate": 25,
+        "loop_count": 0,
+        "filename_prefix": "identity_tests/garden-first-segment-r32-ltx25-face-correction",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 16,
+        "save_metadata": true,
+        "trim_to_audio": false,
+        "pingpong": false,
+        "save_output": true,
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {}
+        }
+      },
+      "title": "GARDEN R32 · LTX 2.5 face-corrected · original audio"
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      3,
+      1,
+      "IMAGE"
+    ],
+    [
+      2,
+      2,
+      0,
+      3,
+      12,
+      "IMAGE"
+    ],
+    [
+      3,
+      3,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      4,
+      1,
+      2,
+      4,
+      1,
+      "AUDIO"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "info": {
+      "name": "GARDEN R32 · LTX 2.5 face correction",
+      "source_workflow": "BlokeyUI/ComfyUI/user/default/workflows/Premiere316/Garden of Gethsemane/GARDEN_first_segment_R32_face_correction.json",
+      "generator_workflow": "GARDEN_first_segment_R31_LTX25_native_AV_1128x480_25fps.json",
+      "input_video": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\output\\identity_tests\\garden-first-segment-r31-ltx25-native_00001-audio.mp4",
+      "face_reference": "whatdreamscost/jesus-face-primary-3q.v1.png",
+      "audio": "Passed through unchanged from the native LTX 2.5 R31 output"
+    },
+    "ds": {
+      "scale": 0.6,
+      "offset": [
+        0,
+        0
+      ]
+    }
+  },
+  "version": 0.4,
+  "seed_widgets": {}
+}

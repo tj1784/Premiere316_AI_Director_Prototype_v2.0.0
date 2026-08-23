@@ -1,0 +1,580 @@
+{
+  "schema": "premiere316.ltx25-music-video-analysis.v1",
+  "source": {
+    "path": "C:\\Users\\Blokey\\Documents\\Premiere316_AI_Director_Prototype_v2.0.0\\BlokeyUI\\ComfyUI\\output\\audio\\audio_minimax_music3_00010.flac",
+    "durationSeconds": 241.870658,
+    "masterFrames24fps": 5805,
+    "visualCoreFrames": 5800,
+    "tailHoldFrames": 5,
+    "sampleRate": 44100,
+    "channels": 2,
+    "codec": "flac"
+  },
+  "embeddedGeneration": {
+    "workflowId": "84709fc6-f3e1-4c97-99ac-75f7f11ed8e0",
+    "caption": "solo male baritone vocal performance: extreme epic vocal performance exhibiton with multiple crescendos and multiple vocal techinques. soundtrack for passion of christ movie",
+    "lyrics": "\n```text\n[Intro]\nFather...\nInto Your hands\n\n[Verse]\nThe sky has lost its color\nThe earth has learned Your name\nLove hangs between the heavens\nAnd bears the weight of shame\n\nNo answer in the thunder\nNo mercy in the crowd\nOnly the breath You offer\nGrowing weaker now\n\n[Pre Chorus]\nStill You remain\nStill You forgive\nStill in the dying\nYou teach us how to live\n\n[Build Up]\nThere is no depth\nYou would not enter\nNo wound\nYou would refuse\n\nNo night so dark\nNo soul so broken\nYou would not choose\n\n[Break]\n\n[Build Up]\nFrom the dust\nInto the sorrow\nFrom the garden\nTo the tree\n\nEvery step\nBecame surrender\nEvery wound\nBecame mercy\n\nFather...\nInto Your hands\n\n[Break]\n\n[Build Up]\nIf the grave\nCould hold the morning\nIf the stone\nCould silence light\n\nThen let darkness\nKeep its kingdom\n\nBut the dawn\nHas learned to rise\n\nThe veil is torn\nThe earth is waking\nDeath itself\nHas lost its claim\n\nJesus...\nJesus...\n\n[Final Climax]\nYou carried us\nThrough every darkness\nYou carried us\nThrough every scar\n\nThrough the cross\nThrough the grave\n\nInto the arms\nOf God\n\nInto the arms\nOf God\n\nJesus...\n\nInto Your hands\n\n[Outro]\nInto Your hands\nI give my life\n```\n",
+    "seed": 701168013214206,
+    "unet": "minimax_music3_dit_fp16.safetensors",
+    "clip": "minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
+    "vae": "minimax_music3_dav.safetensors"
+  },
+  "analysis": {
+    "estimatedTempoBpm": 123.046875,
+    "detectedBeatCount": 472,
+    "transitionCandidates": [
+      {
+        "seconds": 3.181134,
+        "frame": 76,
+        "score": 1.201148
+      },
+      {
+        "seconds": 10.3561,
+        "frame": 249,
+        "score": 1.440453
+      },
+      {
+        "seconds": 17.136327,
+        "frame": 411,
+        "score": 2.02988
+      },
+      {
+        "seconds": 25.49551,
+        "frame": 612,
+        "score": 2.361529
+      },
+      {
+        "seconds": 31.648798,
+        "frame": 760,
+        "score": 2.343052
+      },
+      {
+        "seconds": 39.682902,
+        "frame": 952,
+        "score": 2.405286
+      },
+      {
+        "seconds": 46.672109,
+        "frame": 1120,
+        "score": 1.668417
+      },
+      {
+        "seconds": 51.10712,
+        "frame": 1227,
+        "score": 1.518555
+      },
+      {
+        "seconds": 55.588571,
+        "frame": 1334,
+        "score": 1.809105
+      },
+      {
+        "seconds": 62.484898,
+        "frame": 1500,
+        "score": 1.605343
+      },
+      {
+        "seconds": 71.4478,
+        "frame": 1715,
+        "score": 2.211654
+      },
+      {
+        "seconds": 79.319365,
+        "frame": 1904,
+        "score": 1.457952
+      },
+      {
+        "seconds": 85.356553,
+        "frame": 2049,
+        "score": 1.631941
+      },
+      {
+        "seconds": 90.046984,
+        "frame": 2161,
+        "score": 1.802227
+      },
+      {
+        "seconds": 94.621315,
+        "frame": 2271,
+        "score": 1.798343
+      },
+      {
+        "seconds": 99.845805,
+        "frame": 2396,
+        "score": 1.624408
+      },
+      {
+        "seconds": 105.070295,
+        "frame": 2522,
+        "score": 1.617581
+      },
+      {
+        "seconds": 113.986757,
+        "frame": 2736,
+        "score": 1.495879
+      },
+      {
+        "seconds": 121.022404,
+        "frame": 2905,
+        "score": 1.375543
+      },
+      {
+        "seconds": 128.801088,
+        "frame": 3091,
+        "score": 1.325196
+      },
+      {
+        "seconds": 138.06585,
+        "frame": 3314,
+        "score": 1.834355
+      },
+      {
+        "seconds": 142.942041,
+        "frame": 3431,
+        "score": 1.366275
+      },
+      {
+        "seconds": 148.027211,
+        "frame": 3553,
+        "score": 1.706476
+      },
+      {
+        "seconds": 157.733152,
+        "frame": 3786,
+        "score": 1.42192
+      },
+      {
+        "seconds": 164.350839,
+        "frame": 3944,
+        "score": 1.308797
+      },
+      {
+        "seconds": 171.432925,
+        "frame": 4114,
+        "score": 1.723514
+      },
+      {
+        "seconds": 180.419048,
+        "frame": 4330,
+        "score": 1.43179
+      },
+      {
+        "seconds": 189.103311,
+        "frame": 4538,
+        "score": 1.437712
+      },
+      {
+        "seconds": 195.094059,
+        "frame": 4682,
+        "score": 1.410265
+      },
+      {
+        "seconds": 214.575601,
+        "frame": 5150,
+        "score": 1.591834
+      },
+      {
+        "seconds": 220.682449,
+        "frame": 5296,
+        "score": 1.35932
+      },
+      {
+        "seconds": 234.614422,
+        "frame": 5631,
+        "score": 1.343415
+      }
+    ]
+  },
+  "shots": [
+    {
+      "id": "shot-01",
+      "startFrame": 0,
+      "lengthFrames": 208,
+      "endFrameExclusive": 208,
+      "startSeconds": 0.0,
+      "durationSeconds": 8.666667,
+      "generationFrames": 209,
+      "boundaryNovelty": 1.377438
+    },
+    {
+      "id": "shot-02",
+      "startFrame": 208,
+      "lengthFrames": 192,
+      "endFrameExclusive": 400,
+      "startSeconds": 8.666667,
+      "durationSeconds": 8.0,
+      "generationFrames": 193,
+      "boundaryNovelty": 2.02988
+    },
+    {
+      "id": "shot-03",
+      "startFrame": 400,
+      "lengthFrames": 192,
+      "endFrameExclusive": 592,
+      "startSeconds": 16.666667,
+      "durationSeconds": 8.0,
+      "generationFrames": 193,
+      "boundaryNovelty": 2.361529
+    },
+    {
+      "id": "shot-04",
+      "startFrame": 592,
+      "lengthFrames": 184,
+      "endFrameExclusive": 776,
+      "startSeconds": 24.666667,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 2.343052
+    },
+    {
+      "id": "shot-05",
+      "startFrame": 776,
+      "lengthFrames": 184,
+      "endFrameExclusive": 960,
+      "startSeconds": 32.333333,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 2.405286
+    },
+    {
+      "id": "shot-06",
+      "startFrame": 960,
+      "lengthFrames": 176,
+      "endFrameExclusive": 1136,
+      "startSeconds": 40.0,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 1.668417
+    },
+    {
+      "id": "shot-07",
+      "startFrame": 1136,
+      "lengthFrames": 176,
+      "endFrameExclusive": 1312,
+      "startSeconds": 47.333333,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 1.809105
+    },
+    {
+      "id": "shot-08",
+      "startFrame": 1312,
+      "lengthFrames": 176,
+      "endFrameExclusive": 1488,
+      "startSeconds": 54.666667,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 1.605343
+    },
+    {
+      "id": "shot-09",
+      "startFrame": 1488,
+      "lengthFrames": 176,
+      "endFrameExclusive": 1664,
+      "startSeconds": 62.0,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 1.944391
+    },
+    {
+      "id": "shot-10",
+      "startFrame": 1664,
+      "lengthFrames": 176,
+      "endFrameExclusive": 1840,
+      "startSeconds": 69.333333,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 1.428636
+    },
+    {
+      "id": "shot-11",
+      "startFrame": 1840,
+      "lengthFrames": 184,
+      "endFrameExclusive": 2024,
+      "startSeconds": 76.666667,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 1.624161
+    },
+    {
+      "id": "shot-12",
+      "startFrame": 2024,
+      "lengthFrames": 176,
+      "endFrameExclusive": 2200,
+      "startSeconds": 84.333333,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 1.680289
+    },
+    {
+      "id": "shot-13",
+      "startFrame": 2200,
+      "lengthFrames": 176,
+      "endFrameExclusive": 2376,
+      "startSeconds": 91.666667,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 1.624408
+    },
+    {
+      "id": "shot-14",
+      "startFrame": 2376,
+      "lengthFrames": 168,
+      "endFrameExclusive": 2544,
+      "startSeconds": 99.0,
+      "durationSeconds": 7.0,
+      "generationFrames": 169,
+      "boundaryNovelty": 1.617581
+    },
+    {
+      "id": "shot-15",
+      "startFrame": 2544,
+      "lengthFrames": 184,
+      "endFrameExclusive": 2728,
+      "startSeconds": 106.0,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 1.495879
+    },
+    {
+      "id": "shot-16",
+      "startFrame": 2728,
+      "lengthFrames": 176,
+      "endFrameExclusive": 2904,
+      "startSeconds": 113.666667,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 1.375543
+    },
+    {
+      "id": "shot-17",
+      "startFrame": 2904,
+      "lengthFrames": 176,
+      "endFrameExclusive": 3080,
+      "startSeconds": 121.0,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 1.325196
+    },
+    {
+      "id": "shot-18",
+      "startFrame": 3080,
+      "lengthFrames": 176,
+      "endFrameExclusive": 3256,
+      "startSeconds": 128.333333,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 1.695356
+    },
+    {
+      "id": "shot-19",
+      "startFrame": 3256,
+      "lengthFrames": 176,
+      "endFrameExclusive": 3432,
+      "startSeconds": 135.666667,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 1.366275
+    },
+    {
+      "id": "shot-20",
+      "startFrame": 3432,
+      "lengthFrames": 176,
+      "endFrameExclusive": 3608,
+      "startSeconds": 143.0,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 1.659979
+    },
+    {
+      "id": "shot-21",
+      "startFrame": 3608,
+      "lengthFrames": 184,
+      "endFrameExclusive": 3792,
+      "startSeconds": 150.333333,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 1.42192
+    },
+    {
+      "id": "shot-22",
+      "startFrame": 3792,
+      "lengthFrames": 176,
+      "endFrameExclusive": 3968,
+      "startSeconds": 158.0,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 1.308797
+    },
+    {
+      "id": "shot-23",
+      "startFrame": 3968,
+      "lengthFrames": 184,
+      "endFrameExclusive": 4152,
+      "startSeconds": 165.333333,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 1.693684
+    },
+    {
+      "id": "shot-24",
+      "startFrame": 4152,
+      "lengthFrames": 184,
+      "endFrameExclusive": 4336,
+      "startSeconds": 173.0,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 1.43179
+    },
+    {
+      "id": "shot-25",
+      "startFrame": 4336,
+      "lengthFrames": 184,
+      "endFrameExclusive": 4520,
+      "startSeconds": 180.666667,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 1.437712
+    },
+    {
+      "id": "shot-26",
+      "startFrame": 4520,
+      "lengthFrames": 184,
+      "endFrameExclusive": 4704,
+      "startSeconds": 188.333333,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 1.410265
+    },
+    {
+      "id": "shot-27",
+      "startFrame": 4704,
+      "lengthFrames": 184,
+      "endFrameExclusive": 4888,
+      "startSeconds": 196.0,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 1.174147
+    },
+    {
+      "id": "shot-28",
+      "startFrame": 4888,
+      "lengthFrames": 184,
+      "endFrameExclusive": 5072,
+      "startSeconds": 203.666667,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 1.202468
+    },
+    {
+      "id": "shot-29",
+      "startFrame": 5072,
+      "lengthFrames": 184,
+      "endFrameExclusive": 5256,
+      "startSeconds": 211.333333,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 1.355164
+    },
+    {
+      "id": "shot-30",
+      "startFrame": 5256,
+      "lengthFrames": 184,
+      "endFrameExclusive": 5440,
+      "startSeconds": 219.0,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 1.247174
+    },
+    {
+      "id": "shot-31",
+      "startFrame": 5440,
+      "lengthFrames": 184,
+      "endFrameExclusive": 5624,
+      "startSeconds": 226.666667,
+      "durationSeconds": 7.666667,
+      "generationFrames": 185,
+      "boundaryNovelty": 1.343415
+    },
+    {
+      "id": "shot-32",
+      "startFrame": 5624,
+      "lengthFrames": 176,
+      "endFrameExclusive": 5800,
+      "startSeconds": 234.333333,
+      "durationSeconds": 7.333333,
+      "generationFrames": 177,
+      "boundaryNovelty": 0.677495
+    }
+  ],
+  "blocks": [
+    {
+      "id": "block-01",
+      "shotIds": [
+        "shot-01",
+        "shot-02",
+        "shot-03",
+        "shot-04",
+        "shot-05",
+        "shot-06",
+        "shot-07",
+        "shot-08"
+      ],
+      "startFrame": 0,
+      "lengthFrames": 1488,
+      "startSeconds": 0.0,
+      "durationSeconds": 62.0
+    },
+    {
+      "id": "block-02",
+      "shotIds": [
+        "shot-09",
+        "shot-10",
+        "shot-11",
+        "shot-12",
+        "shot-13",
+        "shot-14",
+        "shot-15",
+        "shot-16"
+      ],
+      "startFrame": 1488,
+      "lengthFrames": 1416,
+      "startSeconds": 62.0,
+      "durationSeconds": 59.0
+    },
+    {
+      "id": "block-03",
+      "shotIds": [
+        "shot-17",
+        "shot-18",
+        "shot-19",
+        "shot-20",
+        "shot-21",
+        "shot-22",
+        "shot-23",
+        "shot-24"
+      ],
+      "startFrame": 2904,
+      "lengthFrames": 1432,
+      "startSeconds": 121.0,
+      "durationSeconds": 59.666667
+    },
+    {
+      "id": "block-04",
+      "shotIds": [
+        "shot-25",
+        "shot-26",
+        "shot-27",
+        "shot-28",
+        "shot-29",
+        "shot-30",
+        "shot-31",
+        "shot-32"
+      ],
+      "startFrame": 4336,
+      "lengthFrames": 1464,
+      "startSeconds": 180.666667,
+      "durationSeconds": 61.0
+    }
+  ]
+}
