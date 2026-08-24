@@ -166,7 +166,16 @@ test("MiniMax is never treated as a frame generator", () => {
 
 test("last decoded frame is the exact zero-based nb_frames-1 index", () => {
   assert.equal(lastDecodedFrameIndex({ video: { nb_frames: "48" } }), 47);
+  assert.notEqual(lastDecodedFrameIndex({ video: { nb_frames: "48" } }), 0);
+  assert.equal(lastDecodedFrameIndex({ video: { nb_read_frames: 24 } }), 23);
   assert.throws(() => lastDecodedFrameIndex({ video: {} }), ContinuityError);
+});
+
+test("carry-forward accepts exact versions from assetVersionId when assetVersion is omitted", () => {
+  assert.deepEqual(
+    carryForwardReferences([{ assetId: "character-jesus", assetVersionId: "character-jesus:v3", role: "character" }]),
+    [{ assetId: "character-jesus", assetVersion: 3, role: "identity" }]
+  );
 });
 
 test("ordered chain promotes an approved take last frame as the next first continuity guide", async () => {
@@ -262,6 +271,117 @@ test("refuses an unapproved take", async () => {
       (error) => error instanceof ContinuityError && error.code === "TAKE_NOT_APPROVED"
     );
     assert.equal(fx.extracted.length, 0);
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test("extracts last frame of the assembled full take, not the first range piece", async () => {
+  const fx = fixture({ takeKind: "version", includeStoryboard: false });
+  const firstPiece = "H01-S01-C01_r00000-00024_v01.mp4";
+  const lastPiece = "H01-S01-C01_r00024-00048_v02.mp4";
+  const assembled = "H01-S01-C01_assembled_v01.mp4";
+  fs.writeFileSync(path.join(fx.root, "media", "clips", firstPiece), Buffer.from("first-piece"));
+  fs.writeFileSync(path.join(fx.root, "media", "clips", lastPiece), Buffer.from("last-piece"));
+  fs.writeFileSync(path.join(fx.root, "media", "clips", assembled), Buffer.from("assembled"));
+  const source = fx.project.sequence.clips[0];
+  source.rangeVersions = [
+    { v: 1, file: firstPiece, startFrame: 0, endFrame: 24, active: true, approved: true, source: "ltx-director" },
+    { v: 2, file: lastPiece, startFrame: 24, endFrame: 48, active: true, approved: true, source: "ltx-director" }
+  ];
+  source.versions = [{ v: 1, file: assembled, approved: true, source: "assembled-ranges" }];
+  source.activeVersion = 1;
+  source.status = "done";
+  try {
+    await promoteLastFrame(fx.project, { clipId: "H01-S01-C01" }, fx.deps);
+    assert.equal(fx.extracted.length, 1);
+    assert.equal(path.basename(fx.extracted[0].input), assembled);
+    assert.equal(fx.extracted[0].index, 47);
+    assert.notEqual(fx.extracted[0].index, 0);
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test("without a full version, extracts the last active range covering the clip end", async () => {
+  const fx = fixture({ takeKind: "rangeVersion", includeStoryboard: false });
+  const firstPiece = "H01-S01-C01_r00000-00024_v01.mp4";
+  const lastPiece = "H01-S01-C01_r00024-00048_v02.mp4";
+  fs.writeFileSync(path.join(fx.root, "media", "clips", firstPiece), Buffer.from("first-piece"));
+  fs.writeFileSync(path.join(fx.root, "media", "clips", lastPiece), Buffer.from("last-piece"));
+  const source = fx.project.sequence.clips[0];
+  source.rangeVersions = [
+    { v: 1, file: firstPiece, startFrame: 0, endFrame: 24, active: true, approved: true, source: "ltx-director" },
+    { v: 2, file: lastPiece, startFrame: 24, endFrame: 48, active: true, approved: true, source: "ltx-director" }
+  ];
+  source.versions = [];
+  source.activeVersion = 0;
+  source.status = "ranges-ready";
+  try {
+    await promoteLastFrame(fx.project, { clipId: "H01-S01-C01" }, fx.deps);
+    assert.equal(path.basename(fx.extracted[0].input), lastPiece);
+    assert.equal(fx.extracted[0].index, 47);
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test("uses the selected storyboard take, not an earlier generated take", async () => {
+  const fx = fixture({ approved: false, takeKind: "version" });
+  const firstTake = "H01-S01-C01_segment-h01-s01-c01-01_director_v1.mp4";
+  const lastTake = "H01-S01-C01_segment-h01-s01-c01-01_director_v2.mp4";
+  fs.writeFileSync(path.join(fx.root, "media", "clips", firstTake), Buffer.from("take-v1"));
+  fs.writeFileSync(path.join(fx.root, "media", "clips", lastTake), Buffer.from("take-v2"));
+  const source = fx.project.sequence.clips[0];
+  source.versions = [];
+  source.rangeVersions = [];
+  source.activeVersion = 0;
+  source.status = "ready";
+  const segment = fx.storyboard.segments["segment-h01-s01-c01-01"];
+  segment.generatedVersions = [
+    { id: "take-v1", v: 1, file: `media/clips/${firstTake}`, source: "ltx-director" },
+    { id: "take-v2", v: 2, file: `media/clips/${lastTake}`, source: "ltx-director" }
+  ];
+  segment.activeTakeId = "take-v2";
+  segment.activeGeneratedVersion = 2;
+  segment.activeTakeLocked = true;
+  try {
+    await promoteLastFrame(fx.project, { clipId: "H01-S01-C01", storyboard: fx.storyboard }, fx.deps);
+    assert.equal(path.basename(fx.extracted[0].input), lastTake);
+    assert.equal(fx.extracted[0].index, 47);
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test("promotes a T2V video-plan take from the storyboard library as next first guide", async () => {
+  const fx = fixture({ approved: false, takeKind: "version" });
+  const t2vFile = "H01-S01-C01.v1.mp4";
+  fs.writeFileSync(path.join(fx.root, "media", "storyboard", t2vFile), Buffer.from("t2v-take"));
+  const source = fx.project.sequence.clips[0];
+  source.versions = [];
+  source.rangeVersions = [];
+  source.activeVersion = 0;
+  source.status = "ready";
+  const plan = fx.storyboard.videoPlans["video-h01-s01-c01"];
+  plan.generatedVersions = [{
+    v: 1,
+    file: t2vFile,
+    files: [t2vFile],
+    generatedInputPath: `media/storyboard/${t2vFile}`,
+    mediaType: "video",
+    workflowId: "ltx25-t2v",
+    source: "ltx-director"
+  }];
+  plan.activeGeneratedVersion = 1;
+  plan.status = "generated";
+  fx.storyboard.clips["H01-S01-C01"].renderStatus = "completed";
+  try {
+    const result = await promoteLastFrame(fx.project, { clipId: "H01-S01-C01", storyboard: fx.storyboard }, fx.deps);
+    assert.equal(path.basename(fx.extracted[0].input), t2vFile);
+    assert.equal(fx.extracted[0].index, 47);
+    assert.equal(result.frame.source, CONTINUITY_SOURCE);
+    assert.equal(result.nextClipId, "H01-S01-C02");
   } finally {
     fx.cleanup();
   }

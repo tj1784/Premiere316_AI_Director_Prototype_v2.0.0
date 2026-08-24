@@ -6,6 +6,8 @@ import { extractVideoFrameExact, probeMediaExact } from "./ffmpeg.js";
 import { mediaDir } from "./paths.js";
 import { canonicalStoryboardReferenceRole } from "./storyboard.js";
 
+const VIDEO_TAKE_RE = /\.(mp4|webm|mov|mkv|m4v)$/i;
+
 function framesOf(sec, fps = 24) {
   const seconds = Number(sec);
   const rate = Number(fps || 24);
@@ -51,7 +53,6 @@ function syncGuideAliases(clip, fps = 24) {
   }
 }
 
-
 export const CONTINUITY_SOURCE = "take-continuity";
 export const CONTINUITY_GENERATOR = "extracted-take-frame";
 export const CARRY_FORWARD_ROLES = Object.freeze(["identity", "wardrobe"]);
@@ -94,10 +95,16 @@ export function takeIsMiniMaxGenerator(take) {
     || Boolean(take.h3Mode);
 }
 
+function positiveDecodedFrameCount(value) {
+  if (value == null || value === "" || String(value).toUpperCase() === "N/A") return null;
+  const counted = Number(value);
+  return Number.isInteger(counted) && counted > 0 ? counted : null;
+}
+
 export function lastDecodedFrameIndex(probe) {
   const video = probe?.video || {};
-  const counted = Math.round(Number(video.nb_frames));
-  if (Number.isInteger(counted) && counted > 0) return counted - 1;
+  const counted = positiveDecodedFrameCount(video.nb_frames) ?? positiveDecodedFrameCount(video.nb_read_frames);
+  if (counted) return counted - 1;
   continuityError(
     "Cannot determine the last decoded frame; ffprobe did not report nb_frames",
     "DECODED_FRAME_INDEX_UNKNOWN"
@@ -108,6 +115,15 @@ export function canonicalContinuityRole(value) {
   return canonicalStoryboardReferenceRole(value) || textBlob(value).replace(/[\s-]+/g, "_") || null;
 }
 
+function exactAssetVersion(reference) {
+  const direct = Number(reference?.assetVersion);
+  if (Number.isInteger(direct) && direct >= 1) return direct;
+  const match = String(reference?.assetVersionId || "").match(/:v(\d+)$/i);
+  if (!match) return null;
+  const version = Number(match[1]);
+  return Number.isInteger(version) && version >= 1 ? version : null;
+}
+
 export function carryForwardReferences(references) {
   const seen = new Set();
   const carried = [];
@@ -115,8 +131,8 @@ export function carryForwardReferences(references) {
     const role = canonicalContinuityRole(reference?.role);
     if (!CARRY_FORWARD_ROLE_SET.has(role)) continue;
     const assetId = String(reference.assetId || "").trim();
-    const assetVersion = Number(reference.assetVersion);
-    if (!assetId || !Number.isInteger(assetVersion) || assetVersion < 1) continue;
+    const assetVersion = exactAssetVersion(reference);
+    if (!assetId || assetVersion == null) continue;
     const key = `${assetId}:${assetVersion}:${role}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -178,21 +194,47 @@ function takeMatchesVersion(take, takeVersion) {
   return version != null && String(version) === wanted;
 }
 
-function takeIsApproved(take, clip, kind) {
+function idsMatch(left, right) {
+  return left != null && right != null && String(left) !== "" && String(left) === String(right);
+}
+
+function storyboardTakeOwner(take, storyboardClip, storyboard) {
+  const plan = storyboard?.videoPlans?.[storyboardClip?.videoPlanId];
+  if (take?.origin === "storyboard-video-plan") return plan || null;
+  const segment = storyboardLastSegment(storyboard, storyboardClip);
+  if (take?.origin === "storyboard-timeline") {
+    return plan?.timelineData?.segments?.find((entry) => String(entry?.id) === String(segment?.id)) || null;
+  }
+  return segment;
+}
+
+function storyboardTakeIsSelected(take, storyboardClip, storyboard) {
+  const owner = storyboardTakeOwner(take, storyboardClip, storyboard);
+  if (!owner) return false;
+  if (idsMatch(owner.activeTakeId, take?.id)) return true;
+  const version = takeVersionNumber(take);
+  if (version != null && Number(owner.activeGeneratedVersion) === version) return true;
+  if (take?.origin === "storyboard-video-plan") {
+    return version != null
+      && Number(owner.activeGeneratedVersion) === version
+      && (owner.status === "generated" || storyboardClip?.renderStatus === "completed");
+  }
+  return false;
+}
+
+function takeIsApproved(take, { sequenceClip, storyboardClip, storyboard } = {}) {
   if (take?.approved === true) return true;
   if (textBlob(take?.approvalStatus) === "approved") return true;
   if (textBlob(take?.approval?.status) === "approved") return true;
-  if (take?.activeTakeLocked === true) return true;
-  if (clip?.approvedTakeVersion != null && Number(clip.approvedTakeVersion) === takeVersionNumber(take)) return true;
-  if (kind === "version" && Number(clip?.activeVersion) === takeVersionNumber(take) && (clip.status === "done" || clip.approved === true)) {
+  const version = takeVersionNumber(take);
+  if (sequenceClip?.approvedTakeVersion != null && Number(sequenceClip.approvedTakeVersion) === version) return true;
+  if (take.kind === "version" && Number(sequenceClip?.activeVersion) === version && (sequenceClip.status === "done" || sequenceClip.approved === true)) {
     return true;
   }
-  if (kind === "rangeVersion" && take?.active !== false && (clip?.status === "done" || clip?.status === "ranges-ready" || clip?.approved === true)) {
+  if (take.kind === "rangeVersion" && take?.active !== false && (sequenceClip?.status === "done" || sequenceClip?.status === "ranges-ready" || sequenceClip?.approved === true)) {
     return true;
   }
-  if (kind === "storyboard" && clip?.activeTakeLocked && String(clip.activeTakeId || "") === String(take?.id || "")) {
-    return true;
-  }
+  if (take.kind === "storyboard") return storyboardTakeIsSelected(take, storyboardClip, storyboard);
   return false;
 }
 
@@ -213,6 +255,18 @@ function storyboardLastSegment(storyboard, clip) {
   return lastId ? storyboard.segments?.[lastId] || null : null;
 }
 
+function takeVideoFile(take) {
+  if (VIDEO_TAKE_RE.test(String(take?.file || ""))) return take.file;
+  if (VIDEO_TAKE_RE.test(String(take?.generatedInputPath || ""))) return take.generatedInputPath;
+  const listed = Array.isArray(take?.files)
+    ? take.files.find((file) => VIDEO_TAKE_RE.test(String(file?.file || file?.filename || file || "")))
+    : null;
+  if (listed) return listed.file || listed.filename || listed;
+  if (VIDEO_TAKE_RE.test(String(take?.outputFile || ""))) return take.outputFile;
+  if (VIDEO_TAKE_RE.test(String(take?.previewFile || ""))) return take.previewFile;
+  return take?.file || take?.generatedInputPath || take?.outputFile || take?.previewFile || null;
+}
+
 export function listCandidateTakes(project, { sequenceClip, storyboard, storyboardClip } = {}) {
   const takes = [];
   if (sequenceClip) {
@@ -223,25 +277,45 @@ export function listCandidateTakes(project, { sequenceClip, storyboard, storyboa
       takes.push(describeTake(take, "version", "sequence"));
     }
   }
+  const plan = storyboard?.videoPlans?.[storyboardClip?.videoPlanId];
+  if (plan) {
+    for (const take of plan.generatedVersions || []) {
+      takes.push(describeTake({ ...take, file: takeVideoFile(take) }, "storyboard", "storyboard-video-plan"));
+    }
+  }
   const segment = storyboardLastSegment(storyboard, storyboardClip);
   if (segment) {
     for (const take of segment.generatedVersions || []) {
-      takes.push(describeTake({
-        ...take,
-        approved: take.approved === true || (segment.activeTakeLocked && String(segment.activeTakeId || "") === String(take.id || "")),
-        activeTakeLocked: segment.activeTakeLocked
-      }, "storyboard", "storyboard-segment"));
+      takes.push(describeTake({ ...take, file: takeVideoFile(take) }, "storyboard", "storyboard-segment"));
     }
-    const plan = storyboard.videoPlans?.[storyboardClip?.videoPlanId];
     const timelineSegment = plan?.timelineData?.segments?.find((entry) => String(entry?.id) === String(segment.id));
     for (const take of timelineSegment?.generatedTakes || []) {
-      takes.push(describeTake({
-        ...take,
-        approved: take.approved === true || (timelineSegment.activeTakeLocked && String(timelineSegment.activeTakeId || "") === String(take.id || ""))
-      }, "storyboard", "storyboard-timeline"));
+      takes.push(describeTake({ ...take, file: takeVideoFile(take) }, "storyboard", "storyboard-timeline"));
     }
   }
   return takes;
+}
+
+function preferredApprovedTake(approved, sequenceClip) {
+  const activeFull = approved.find((take) => take.kind === "version" && Number(sequenceClip?.activeVersion) === Number(take.v));
+  if (activeFull) return activeFull;
+  const anyFull = approved.filter((take) => take.kind === "version").at(-1);
+  if (anyFull) return anyFull;
+
+  const ranges = approved.filter((take) => take.kind === "rangeVersion" && take.active !== false);
+  if (ranges.length) {
+    return [...ranges].sort((left, right) => {
+      const byEnd = (Number(left.endFrame) || 0) - (Number(right.endFrame) || 0);
+      if (byEnd) return byEnd;
+      return (Number(left.v) || 0) - (Number(right.v) || 0);
+    }).at(-1);
+  }
+
+  const videoPlan = approved.filter((take) => take.origin === "storyboard-video-plan").at(-1);
+  if (videoPlan) return videoPlan;
+  const segmentTake = approved.filter((take) => take.origin === "storyboard-segment").at(-1);
+  if (segmentTake) return segmentTake;
+  return approved.filter((take) => take.kind === "storyboard").at(-1) || approved.at(-1);
 }
 
 export function resolveApprovedTake(project, { sequenceClip, storyboard, storyboardClip, takeVersion } = {}) {
@@ -267,7 +341,7 @@ export function resolveApprovedTake(project, { sequenceClip, storyboard, storybo
     );
   }
 
-  const approved = usable.filter((take) => takeIsApproved(take, sequenceClip || storyboardClip || {}, take.kind));
+  const approved = usable.filter((take) => takeIsApproved(take, { sequenceClip, storyboardClip, storyboard }));
   if (!approved.length) {
     continuityError(
       "Promote last frame requires an already-approved take (clip rangeVersion or full version)",
@@ -276,11 +350,7 @@ export function resolveApprovedTake(project, { sequenceClip, storyboard, storybo
     );
   }
 
-  const preferred = approved.find((take) => take.kind === "rangeVersion" && take.active !== false)
-    || approved.find((take) => take.kind === "version" && Number((sequenceClip || {}).activeVersion) === Number(take.v))
-    || approved.find((take) => take.kind === "storyboard")
-    || approved.at(-1);
-  return preferred;
+  return preferredApprovedTake(approved, sequenceClip);
 }
 
 function resolveNextClip({ project, storyboard, sourceSequenceClip, sourceStoryboardClip, nextClipId }) {
@@ -320,33 +390,75 @@ function resolveNextClip({ project, storyboard, sourceSequenceClip, sourceStoryb
   continuityError("There is no next shot in sequence to receive the first continuity guide", "NEXT_CLIP_NOT_FOUND", 409);
 }
 
-function normalizeStoredClipFile(value) {
+function relativeMediaPath(value) {
   const relative = String(value || "")
     .replaceAll("\\", "/")
-    .replace(/^media\/clips\//i, "")
     .replace(/^\/+/, "");
-  if (
-    !relative
-    || relative.split("/").some((part) => !part || part === "." || part === "..")
-    || !/^(?:(?:H|MV)\d{2}\/)?[^/]+$/i.test(relative)
-  ) {
-    continuityError(`Invalid take media path: ${value || "missing"}`, "TAKE_FILE_MISSING", 409);
-  }
+  if (!relative || relative.split("/").some((part) => !part || part === "." || part === "..")) return null;
   return relative;
 }
 
-function takeDiskPath(project, take, resolveMediaDir) {
-  const raw = take?.file || take?.files?.find((file) => /\.(mp4|webm|mov|mkv)$/i.test(String(file || ""))) || take?.previewFile || take?.outputFile;
-  const relative = normalizeStoredClipFile(raw);
-  const root = path.resolve(resolveMediaDir(project, "clips"));
-  const disk = path.resolve(root, ...relative.split("/"));
-  if (disk !== root && !disk.startsWith(`${root}${path.sep}`)) {
-    continuityError("Take media escaped the clip library", "TAKE_FILE_MISSING", 409);
+function chapterFolderFromClip(clip) {
+  for (const value of [clip?.id, clip?.name, clip?.chapterId, clip?.sceneId, clip?.storyboardClipId]) {
+    const match = String(value || "").match(/(?:^|[^a-z0-9])((?:H|MV)\d{2})(?=$|[^a-z0-9])/i);
+    if (match) return match[1].toUpperCase();
   }
-  if (!fs.existsSync(disk) || !fs.statSync(disk).isFile()) {
-    continuityError(`Approved take file is missing: ${relative}`, "TAKE_FILE_MISSING", 409);
+  return null;
+}
+
+function takeFileHints(take) {
+  const hints = [];
+  const push = (value) => {
+    const text = String(value || "").trim();
+    if (text && !hints.includes(text)) hints.push(text);
+  };
+  push(take?.file);
+  push(take?.generatedInputPath);
+  push(take?.outputFile);
+  push(take?.previewFile);
+  for (const file of Array.isArray(take?.files) ? take.files : []) {
+    if (typeof file === "string") push(file);
+    else if (file && typeof file === "object") push(file.file || file.filename);
   }
-  return disk;
+  return hints.filter((value) => VIDEO_TAKE_RE.test(value) || !/\.[a-z0-9]+$/i.test(path.posix.basename(value.replaceAll("\\", "/"))));
+}
+
+function pathInside(root, disk) {
+  const resolvedRoot = path.resolve(root);
+  const resolvedDisk = path.resolve(disk);
+  return resolvedDisk === resolvedRoot || resolvedDisk.startsWith(`${resolvedRoot}${path.sep}`);
+}
+
+function takeDiskPath(project, take, resolveMediaDir, { sequenceClip, storyboardClip } = {}) {
+  const clipsRoot = path.resolve(resolveMediaDir(project, "clips"));
+  const storyboardRoot = path.resolve(resolveMediaDir(project, "storyboard"));
+  const chapter = chapterFolderFromClip(sequenceClip) || chapterFolderFromClip(storyboardClip);
+  const candidates = [];
+  const add = (root, relative) => {
+    const rel = relativeMediaPath(relative);
+    if (!rel) return;
+    const disk = path.resolve(root, ...rel.split("/"));
+    if (pathInside(root, disk) && !candidates.includes(disk)) candidates.push(disk);
+  };
+
+  for (const hint of takeFileHints(take)) {
+    const rel = relativeMediaPath(hint);
+    if (!rel) continue;
+    if (/^media\/clips\//i.test(rel)) add(clipsRoot, rel.replace(/^media\/clips\//i, ""));
+    else if (/^media\/storyboard\//i.test(rel)) add(storyboardRoot, rel.replace(/^media\/storyboard\//i, ""));
+    else if (/^clips\//i.test(rel)) add(clipsRoot, rel.replace(/^clips\//i, ""));
+    else if (/^storyboard\//i.test(rel)) add(storyboardRoot, rel.replace(/^storyboard\//i, ""));
+    else {
+      add(clipsRoot, rel);
+      if (chapter && !rel.includes("/")) add(clipsRoot, `${chapter}/${rel}`);
+      add(storyboardRoot, path.posix.basename(rel));
+    }
+  }
+
+  for (const disk of candidates) {
+    if (fs.existsSync(disk) && fs.statSync(disk).isFile()) return disk;
+  }
+  continuityError(`Approved take file is missing: ${takeFileHints(take)[0] || "missing"}`, "TAKE_FILE_MISSING", 409);
 }
 
 function safeToken(value, fallback = "clip") {
@@ -479,7 +591,7 @@ function copyToStoryboardLibrary(project, sourcePath, filename, resolveMediaDir)
   const destinationDir = resolveMediaDir(project, "storyboard");
   fs.mkdirSync(destinationDir, { recursive: true });
   const destination = path.join(destinationDir, filename);
-  if (!fs.existsSync(destination)) fs.copyFileSync(sourcePath, destination);
+  fs.copyFileSync(sourcePath, destination);
   return destination;
 }
 
@@ -523,7 +635,7 @@ export async function promoteLastFrame(project, body = {}, deps = {}) {
   const resolveMediaDir = deps.mediaDir || mediaDir;
   const probe = deps.probeMediaExact || probeMediaExact;
   const extract = deps.extractVideoFrameExact || extractVideoFrameExact;
-  const takePath = takeDiskPath(project, take, resolveMediaDir);
+  const takePath = takeDiskPath(project, take, resolveMediaDir, { sequenceClip, storyboardClip });
   const probeInfo = await probe(takePath);
   const decodedFrameIndex = lastDecodedFrameIndex(probeInfo);
 
