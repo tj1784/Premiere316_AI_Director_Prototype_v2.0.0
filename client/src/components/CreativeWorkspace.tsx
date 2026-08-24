@@ -255,7 +255,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
       : !h3ModeReady
         ? (store.h3Diagnostics.actionableErrors?.[0] || selectedH3Mode?.disabledReason || "MiniMax H3 is not ready.")
         : h3ModeNeedsApprovedGuides && !selectedClipGuidesApproved
-          ? "Use approved Asset Library first/last guides for this H3 mode."
+          ? "Use approved Assets/Storyboard stills (Krea2 or Klein2) for this H3 video mode."
           : "";
   const h3CanRender = Boolean(selectedClip && store.health.comfy && h3ModeReady && (!h3ModeNeedsApprovedGuides || selectedClipGuidesApproved) && !store.h3Busy);
 
@@ -625,10 +625,10 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
           <button
             className="button secondary h3-toolbar-button"
             disabled={!h3CanRender}
-            title={h3PrimaryIssue || `Render with ${selectedH3Mode?.label || "MiniMax H3"}`}
+            title={h3PrimaryIssue || `Queue MiniMax H3 video (${selectedH3Mode?.label || "video render"})`}
             onClick={() => queueH3Selection()}
           >
-            MiniMax H3
+            H3 Video
           </button>
           <span className="toolbar-spacer" />
           <span className="zoom-label">−</span>
@@ -779,22 +779,23 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
             </div>
             <div className={`h3-mini-panel ${h3ModeReady ? "ready" : "blocked"}`}>
               <div className="h3-mini-heading">
-                <h4>MINIMAX H3 LOCAL</h4>
-                <button className="mini-icon" title="Recheck MiniMax H3 models and native nodes" onClick={() => store.refreshH3Diagnostics(true)}>↻</button>
+                <h4>MINIMAX H3 VIDEO</h4>
+                <button className="mini-icon" title="Recheck MiniMax H3 video models and native nodes" onClick={() => store.refreshH3Diagnostics(true)}>↻</button>
               </div>
+              <p>Video render only. First-frame stills come from Assets/Storyboard (Krea2 or Klein2).</p>
               <label>
                 Mode
                 <select value={store.h3Mode} onChange={(event) => store.setH3Mode(event.target.value as any)}>
                   <option value="t2v">Text to Video</option>
-                  <option value="first_frame">First Frame to Video</option>
-                  <option value="last_frame">Last Frame to Video</option>
-                  <option value="first_last">First + Last Frame</option>
+                  <option value="first_frame">Video from first-frame still</option>
+                  <option value="last_frame">Video from last-frame still</option>
+                  <option value="first_last">Video from first + last stills</option>
                   <option value="reference">Reference to Video</option>
                 </select>
               </label>
               <div className="h3-reference-controls">
-                <button className="button secondary" type="button" disabled={!selectedClip} onClick={() => setH3ReferencePickerOpen(true)}>Image Refs <small>{h3ReferenceLabel}</small></button>
-                {h3References.length ? <button className="mini-icon" title="Clear H3 image references" onClick={() => setH3References([])}>×</button> : null}
+                <button className="button secondary" type="button" disabled={!selectedClip} onClick={() => setH3ReferencePickerOpen(true)}>Video refs <small>{h3ReferenceLabel}</small></button>
+                {h3References.length ? <button className="mini-icon" title="Clear H3 video references" onClick={() => setH3References([])}>×</button> : null}
               </div>
               <dl>
                 <div><dt>Backend</dt><dd>{store.h3Diagnostics?.comfyVersion ? `Comfy ${store.h3Diagnostics.comfyVersion}` : "Checking"}</dd></div>
@@ -804,18 +805,18 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
               </dl>
               {h3PrimaryIssue ? <p>{h3PrimaryIssue}</p> : <p>Ready: raw H3 MP4 is preserved, and an exact timeline copy is conformed after render.</p>}
               <button
-                className="button primary"
+                className="button secondary"
                 disabled={!h3CanRender}
                 onClick={() => queueH3Selection()}
               >
-                {store.h3Busy ? "Queueing H3…" : "Render Selected with H3"}
+                {store.h3Busy ? "Queueing H3 video…" : "Queue H3 Video"}
               </button>
             </div>
             <div className="timeline-actions">
               <h4>ACTIONS</h4>
               <button className="button primary" disabled={!selectedClip || !store.health.comfy || !selectedClipGuidesApproved} onClick={() => selectedClip && store.renderSelection(selectedClip.id)}>Render Selection</button>
               <button className="button secondary" disabled={!selectedClip || !store.health.comfy || !selectedClipGuidesApproved} onClick={() => selectedClip && store.renderDirty(selectedClip.id)}>Render Dirty</button>
-              <button className="button secondary" disabled={!h3CanRender} onClick={() => queueH3Selection()}>Render H3 Selection</button>
+              <button className="button secondary" disabled={!h3CanRender} onClick={() => queueH3Selection()}>Queue H3 Video</button>
               <button className="button secondary" disabled={!selectedClip} onClick={() => selectedClip && store.assembleClip(selectedClip.id)}>Assemble Clip</button>
               <button className="button secondary" disabled={!selectedClip || !selectedFrameApproved} onClick={() => {
                  if (selectedClip && store.selFrameFile) store.attachGuide(selectedClip.id, { frameFile: store.selFrameFile, role: "first", frame: 0 });
@@ -1030,15 +1031,15 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
       {h3ReferencePickerOpen ? (
         <AssetReferencePicker
           project={project}
-          targetLabel={selectedClip?.name || "MiniMax H3"}
+          targetLabel={selectedClip?.name || "MiniMax H3 video"}
           targetId={selectedClip?.id}
           targetKind="h3"
           initialReferences={h3References}
           saving={false}
           maxReferences={12}
-          eyebrow="MINIMAX H3 REFERENCES"
-          title="Add H3 image references"
-          description={`${selectedClip?.name || "Selected clip"} · choose up to 12 image assets for H3 reference conditioning.`}
+          eyebrow="MINIMAX H3 VIDEO REFS"
+          title="Condition H3 video with existing stills"
+          description={`${selectedClip?.name || "Selected clip"} · pick up to 12 approved stills to condition MiniMax H3 video. First-frame stills come from Assets/Storyboard (Krea2 or Klein2).`}
           sourceRoute="/edit"
           relationship="edit.h3ImageReference"
           emptyCategory="character"
