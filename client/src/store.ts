@@ -266,7 +266,7 @@ export const useStore = create<Store>((set, get) => ({
   lmStudioGpu: null,
   h3Diagnostics: null,
   h3Busy: false,
-  h3Mode: "first_frame",
+  h3Mode: "t2v",
   activeWorkbench: "guide",
 
   setError: (error) => set({ error }),
@@ -769,7 +769,7 @@ export const useStore = create<Store>((set, get) => ({
         storyboardSummary: json.summary || get().storyboardSummary,
         storyboardFrameNotices: {
           ...get().storyboardFrameNotices,
-          [frameId]: `Queued image guide${json.job?.id ? ` · ${json.job.id}` : ""}`
+          [frameId]: `Queued Krea2/Klein2 still${json.job?.id ? ` · ${json.job.id}` : ""}`
         }
       });
       await get().refreshQueue();
