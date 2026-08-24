@@ -179,7 +179,121 @@ function intentAnalysis({ text, primaryEngine, motionEngine, filters }) {
   return text.trim() ? "Enhancement directive parsed with no upscale engine required." : "No enhancement directive supplied.";
 }
 
-export function buildUpscaleManifest(directive = "") {
+export const SOURCE_TAKE_REQUIRED = "Upscale Plan requires one exact approved source take.";
+
+function nonEmpty(value) {
+  return String(value == null ? "" : value).trim();
+}
+
+function fingerprintsOf(record) {
+  if (!record || typeof record !== "object") return undefined;
+  const fingerprints = {};
+  const sha256 = String(record.sha256 || record.sourceSha256 || "").trim().toLowerCase();
+  if (/^[a-f0-9]{64}$/.test(sha256)) fingerprints.sha256 = sha256;
+  const assetFingerprint = String(record.assetFingerprint || record.versionFingerprint || "").trim();
+  if (assetFingerprint) fingerprints.assetFingerprint = assetFingerprint;
+  if (Array.isArray(record.fileHashes) && record.fileHashes.length) fingerprints.fileHashes = record.fileHashes;
+  return Object.keys(fingerprints).length ? fingerprints : undefined;
+}
+
+export function normalizeTakeVersion(value) {
+  if (value == null || value === "") return null;
+  if (typeof value === "number") {
+    if (!Number.isFinite(value) || value <= 0) return null;
+    return { kind: "full", v: value };
+  }
+  if (typeof value === "string") {
+    const text = value.trim().toLowerCase();
+    const range = text.match(/^range[:\s-]*v?(\d+)$/i);
+    if (range) return { kind: "range", v: Number(range[1]) };
+    const full = text.match(/^v?(\d+)$/i);
+    if (full) return { kind: "full", v: Number(full[1]) };
+    return null;
+  }
+  if (typeof value !== "object") return null;
+  const v = Number(value.v ?? value.version);
+  if (!Number.isFinite(v) || v <= 0) return null;
+  const kindRaw = String(value.kind || value.type || "").trim().toLowerCase();
+  const hasRangeFrames = value.startFrame != null || value.endFrame != null;
+  const kind = kindRaw === "range" || (kindRaw !== "full" && hasRangeFrames) ? "range" : "full";
+  const takeVersion = { kind, v };
+  if (kind === "range") {
+    if (Number.isFinite(Number(value.startFrame))) takeVersion.startFrame = Number(value.startFrame);
+    if (Number.isFinite(Number(value.endFrame))) takeVersion.endFrame = Number(value.endFrame);
+  }
+  return takeVersion;
+}
+
+export function normalizeSourceTake(sourceTake) {
+  if (!sourceTake || typeof sourceTake !== "object") return null;
+  const projectSlug = nonEmpty(sourceTake.projectSlug);
+  const clipId = nonEmpty(sourceTake.clipId);
+  const file = nonEmpty(sourceTake.file);
+  const takeVersion = normalizeTakeVersion(sourceTake.takeVersion);
+  if (!projectSlug || !clipId || !file || !takeVersion) return null;
+  const fingerprints = fingerprintsOf(sourceTake.fingerprints);
+  return {
+    projectSlug,
+    clipId,
+    takeVersion,
+    file,
+    ...(fingerprints ? { fingerprints } : {})
+  };
+}
+
+function takeFromClip(clip) {
+  if (!clip || typeof clip !== "object") return null;
+  const versions = Array.isArray(clip.versions) ? clip.versions : [];
+  const activeFull = versions.find((version) => (
+    Number(version?.v) === Number(clip.activeVersion)
+    && Number(clip.activeVersion) > 0
+    && nonEmpty(version?.file)
+  ));
+  if (activeFull) {
+    return {
+      takeVersion: { kind: "full", v: Number(activeFull.v) },
+      file: nonEmpty(activeFull.file),
+      fingerprints: fingerprintsOf(activeFull)
+    };
+  }
+  const ranges = Array.isArray(clip.rangeVersions) ? clip.rangeVersions : [];
+  const activeRange = ranges
+    .filter((range) => range && range.active !== false && nonEmpty(range.file))
+    .sort((left, right) => (
+      Number(right.v) - Number(left.v)
+      || String(right.createdAt || "").localeCompare(String(left.createdAt || ""))
+    ))[0];
+  if (!activeRange) return null;
+  const takeVersion = { kind: "range", v: Number(activeRange.v) };
+  if (Number.isFinite(Number(activeRange.startFrame))) takeVersion.startFrame = Number(activeRange.startFrame);
+  if (Number.isFinite(Number(activeRange.endFrame))) takeVersion.endFrame = Number(activeRange.endFrame);
+  return {
+    takeVersion,
+    file: nonEmpty(activeRange.file),
+    fingerprints: fingerprintsOf(activeRange)
+  };
+}
+
+export function resolveApprovedSourceTake(project, preferredClipId) {
+  const projectSlug = nonEmpty(project?.slug);
+  if (!projectSlug) return null;
+  const clips = Array.isArray(project?.sequence?.clips) ? project.sequence.clips : [];
+  const wantedId = nonEmpty(preferredClipId);
+  const clip = wantedId
+    ? clips.find((item) => nonEmpty(item?.id) === wantedId) || null
+    : clips.find((item) => takeFromClip(item)) || null;
+  const take = takeFromClip(clip);
+  if (!clip || !take) return null;
+  return normalizeSourceTake({
+    projectSlug,
+    clipId: nonEmpty(clip.id),
+    takeVersion: take.takeVersion,
+    file: take.file,
+    fingerprints: take.fingerprints
+  });
+}
+
+export function routeUpscaleDirective(directive = "") {
   const text = textOf(directive);
   const upscaleFactor = parseUpscaleFactor(text);
   const targetFps = parseTargetFps(text);
@@ -207,5 +321,14 @@ export function buildUpscaleManifest(directive = "") {
       scene_intent_analysis: intentAnalysis({ text: directive, primaryEngine, motionEngine, filters: preprocessFilters }),
       hardware_safety_tier: hardware
     }
+  };
+}
+
+export function buildUpscaleManifest(directive = "", sourceTake) {
+  const identity = normalizeSourceTake(sourceTake);
+  if (!identity) throw new Error(SOURCE_TAKE_REQUIRED);
+  return {
+    source_take: identity,
+    ...routeUpscaleDirective(directive)
   };
 }

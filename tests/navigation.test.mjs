@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  TOP_LEVEL_ROUTES,
   resolveProductionRoute,
   routeForShorts,
   routeSection,
@@ -28,6 +29,7 @@ test("route helpers preserve the locked production taxonomy", () => {
   assert.equal(resolveProductionRoute("/unknown"), "/edit");
   assert.equal(resolveProductionRoute("/upscale"), "/upscale");
   assert.equal(routeSection("/upscale"), "upscale");
+  assert.equal(TOP_LEVEL_ROUTES.upscale, "/upscale");
 });
 
 test("Create Sound is a stable top-level production route", () => {
