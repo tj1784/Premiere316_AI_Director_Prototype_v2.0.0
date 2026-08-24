@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   TOP_LEVEL_ROUTES,
   resolveProductionRoute,
@@ -30,6 +33,9 @@ test("route helpers preserve the locked production taxonomy", () => {
   assert.equal(resolveProductionRoute("/upscale"), "/upscale");
   assert.equal(routeSection("/upscale"), "upscale");
   assert.equal(TOP_LEVEL_ROUTES.upscale, "/upscale");
+  const app = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "../client/src/App.tsx"), "utf8");
+  assert.match(app, /navButton\("upscale", "Upscale Plan", "\/upscale"/);
+  assert.match(app, /if \(route === "\/upscale"\) return <UpscaleWorkspace/);
 });
 
 test("Create Sound is a stable top-level production route", () => {

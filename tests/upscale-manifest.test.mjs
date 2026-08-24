@@ -1,11 +1,16 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   SOURCE_TAKE_REQUIRED,
   buildUpscaleManifest,
   normalizeSourceTake,
   resolveApprovedSourceTake
 } from "../client/src/upscale-manifest.js";
+
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const SOURCE_TAKE = Object.freeze({
   projectSlug: "fixture-project",
@@ -78,6 +83,8 @@ test("upscale plan refuses to emit without one exact source take", () => {
   assert.throws(() => buildUpscaleManifest("upscale 2x", { ...SOURCE_TAKE, clipId: " " }), { message: SOURCE_TAKE_REQUIRED });
   assert.throws(() => buildUpscaleManifest("upscale 2x", { ...SOURCE_TAKE, projectSlug: "" }), { message: SOURCE_TAKE_REQUIRED });
   assert.throws(() => buildUpscaleManifest("upscale 2x", { ...SOURCE_TAKE, takeVersion: null }), { message: SOURCE_TAKE_REQUIRED });
+  assert.throws(() => buildUpscaleManifest("upscale 2x", { ...SOURCE_TAKE, takeVersion: 1.5 }), { message: SOURCE_TAKE_REQUIRED });
+  assert.throws(() => buildUpscaleManifest("upscale 2x", { ...SOURCE_TAKE, takeVersion: { kind: "full", v: 0 } }), { message: SOURCE_TAKE_REQUIRED });
 });
 
 test("upscale plan binds downloaded JSON to the supplied source take identity", () => {
@@ -104,6 +111,21 @@ test("source take versions accept a numeric full v", () => {
     file: "opener_v04.mp4"
   });
   assert.deepEqual(manifest.source_take.takeVersion, { kind: "full", v: 4 });
+});
+
+test("source take identity accepts assetVersion and root-level fingerprints", () => {
+  const sha256 = "c".repeat(64);
+  const manifest = buildUpscaleManifest("sharpen", {
+    projectSlug: "fixture-project",
+    clipId: "clip-opener",
+    assetVersion: 5,
+    file: "opener_v05.mp4",
+    sha256,
+    fileHashes: [{ file: "opener_v05.mp4", sha256 }]
+  });
+  assert.deepEqual(manifest.source_take.takeVersion, { kind: "full", v: 5 });
+  assert.equal(manifest.source_take.fingerprints.sha256, sha256);
+  assert.equal(manifest.source_take.fingerprints.fileHashes[0].sha256, sha256);
 });
 
 test("resolveApprovedSourceTake picks the clip activeVersion take", () => {
@@ -151,6 +173,40 @@ test("resolveApprovedSourceTake falls back to the active range version", () => {
     takeVersion: { kind: "range", v: 4, startFrame: 12, endFrame: 36 },
     file: "stairs_range_v04.mp4"
   });
+});
+
+test("resolveApprovedSourceTake skips a malformed range and binds the valid active range", () => {
+  const sha256 = "d".repeat(64);
+  const project = {
+    slug: "fixture-project",
+    sequence: {
+      clips: [{
+        id: "clip-stairs",
+        activeVersion: 0,
+        versions: [],
+        rangeVersions: [
+          { file: "stairs_poison.mp4", active: true, createdAt: "2099-01-01T00:00:00.000Z" },
+          { v: 2, file: "stairs_range_v02.mp4", active: true, startFrame: 0, endFrame: 24, fileHashes: [{ file: "stairs_range_v02.mp4", sha256 }] }
+        ]
+      }]
+    }
+  };
+  assert.deepEqual(resolveApprovedSourceTake(project, "clip-stairs"), {
+    projectSlug: "fixture-project",
+    clipId: "clip-stairs",
+    takeVersion: { kind: "range", v: 2, startFrame: 0, endFrame: 24 },
+    file: "stairs_range_v02.mp4",
+    fingerprints: { sha256, fileHashes: [{ file: "stairs_range_v02.mp4", sha256 }] }
+  });
+});
+
+test("Upscale Plan workspace stays a plan: named Upscale Plan, banner, no executor", () => {
+  const workspace = fs.readFileSync(path.join(ROOT, "client/src/components/UpscaleWorkspace.tsx"), "utf8");
+  assert.match(workspace, /<h1>Upscale Plan<\/h1>/);
+  assert.match(workspace, /Execution handoff not connected\./);
+  assert.match(workspace, /SOURCE_TAKE_REQUIRED/);
+  assert.doesNotMatch(workspace, /queueUpscale|runUpscale|executeUpscale|startUpscale/);
+  assert.doesNotMatch(workspace, /upscale-manifest\.json/);
 });
 
 test("resolveApprovedSourceTake returns null when the current clip has no approved take", () => {

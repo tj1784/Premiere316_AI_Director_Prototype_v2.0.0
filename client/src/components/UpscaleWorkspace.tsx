@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useStore } from "../store";
 import {
+  SOURCE_TAKE_REQUIRED,
   buildUpscaleManifest,
   resolveApprovedSourceTake,
   routeUpscaleDirective
@@ -68,6 +69,7 @@ function sourceTakeLabel(sourceTake: any) {
 export default function UpscaleWorkspace() {
   const project = useStore((state) => state.project);
   const selClipId = useStore((state) => state.selClipId);
+  const productionClipId = useStore((state) => state.productionClipId);
   const slug = String(project?.slug || "project");
   const jobs = useStore((state) => state.jobs);
   const health = useStore((state) => state.health);
@@ -78,10 +80,14 @@ export default function UpscaleWorkspace() {
     try { localStorage.setItem(storageKey(slug), directive); } catch {}
   }, [slug, directive]);
 
-  const sourceTake = useMemo(
-    () => resolveApprovedSourceTake(project, selClipId),
-    [project, selClipId]
-  );
+  const sourceTake = useMemo(() => {
+    const clips = Array.isArray(project?.sequence?.clips) ? project.sequence.clips : [];
+    const productionId = String(productionClipId || "").trim();
+    const productionInSequence = Boolean(
+      productionId && clips.some((clip: any) => String(clip?.id || "").trim() === productionId)
+    );
+    return resolveApprovedSourceTake(project, productionInSequence ? productionId : selClipId);
+  }, [project, selClipId, productionClipId]);
   const routing = useMemo(() => routeUpscaleDirective(directive), [directive]);
   const manifest = useMemo(() => {
     if (!sourceTake) return null;
@@ -101,9 +107,11 @@ export default function UpscaleWorkspace() {
 
   const copyManifest = async () => {
     if (!canExport) return;
-    await copyText(manifestJson);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1200);
+    try {
+      await copyText(manifestJson);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1200);
+    } catch {}
   };
 
   return (
@@ -117,15 +125,19 @@ export default function UpscaleWorkspace() {
           <span className="status-chip draft" role="status">Execution handoff not connected.</span>
           <span className={`status-chip ${health?.comfy ? "approved" : "draft"}`}>{health?.comfy ? "ComfyUI ready" : "ComfyUI offline"}</span>
           <span className="status-chip draft">{activeJobs.length + queueCount} active</span>
-          <button className="button secondary" type="button" disabled={!canExport} onClick={() => downloadJson(`${slug}-upscale-plan.json`, manifestJson)}>Download JSON</button>
+          <button className="button secondary" type="button" disabled={!canExport} onClick={() => { if (canExport) downloadJson(`${slug}-upscale-plan.json`, manifestJson); }}>Download JSON</button>
           <button className="button primary" type="button" disabled={!canExport} onClick={() => void copyManifest()}>{copied ? "Copied" : "Copy JSON"}</button>
         </div>
       </header>
 
+      <div className="error-banner" role="status">
+        <span>!</span>
+        Execution handoff not connected.
+      </div>
       {canExport ? null : (
         <div className="error-banner" role="status">
           <span>!</span>
-          No approved source take. Bind this plan to one active clip take before copy or download.
+          {SOURCE_TAKE_REQUIRED}
         </div>
       )}
 

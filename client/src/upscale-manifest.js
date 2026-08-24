@@ -185,22 +185,43 @@ function nonEmpty(value) {
   return String(value == null ? "" : value).trim();
 }
 
+function positiveInt(value) {
+  const n = typeof value === "number" ? value : Number(String(value == null ? "" : value).trim());
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+function fileName(value) {
+  return nonEmpty(value).split(/[/\\]/).pop().toLowerCase();
+}
+
 function fingerprintsOf(record) {
   if (!record || typeof record !== "object") return undefined;
   const fingerprints = {};
-  const sha256 = String(record.sha256 || record.sourceSha256 || "").trim().toLowerCase();
+  let sha256 = String(record.sha256 || record.sourceSha256 || "").trim().toLowerCase();
+  const hashes = Array.isArray(record.fileHashes) ? record.fileHashes : [];
+  if (!/^[a-f0-9]{64}$/.test(sha256) && hashes.length) {
+    const hashed = hashes.filter((entry) => /^[a-f0-9]{64}$/i.test(String(entry?.sha256 || "")));
+    const wanted = fileName(record.file);
+    const matched = wanted
+      ? hashed.find((entry) => fileName(entry?.file) === wanted)
+      : null;
+    const pick = matched || (hashed.length === 1 ? hashed[0] : null);
+    if (pick) sha256 = String(pick.sha256).trim().toLowerCase();
+  }
   if (/^[a-f0-9]{64}$/.test(sha256)) fingerprints.sha256 = sha256;
   const assetFingerprint = String(record.assetFingerprint || record.versionFingerprint || "").trim();
   if (assetFingerprint) fingerprints.assetFingerprint = assetFingerprint;
-  if (Array.isArray(record.fileHashes) && record.fileHashes.length) fingerprints.fileHashes = record.fileHashes;
+  if (hashes.length) {
+    fingerprints.fileHashes = hashes.map((entry) => (entry && typeof entry === "object" ? { ...entry } : entry));
+  }
   return Object.keys(fingerprints).length ? fingerprints : undefined;
 }
 
 export function normalizeTakeVersion(value) {
   if (value == null || value === "") return null;
   if (typeof value === "number") {
-    if (!Number.isFinite(value) || value <= 0) return null;
-    return { kind: "full", v: value };
+    const v = positiveInt(value);
+    return v ? { kind: "full", v } : null;
   }
   if (typeof value === "string") {
     const text = value.trim().toLowerCase();
@@ -211,8 +232,8 @@ export function normalizeTakeVersion(value) {
     return null;
   }
   if (typeof value !== "object") return null;
-  const v = Number(value.v ?? value.version);
-  if (!Number.isFinite(v) || v <= 0) return null;
+  const v = positiveInt(value.v ?? value.version ?? value.assetVersion);
+  if (!v) return null;
   const kindRaw = String(value.kind || value.type || "").trim().toLowerCase();
   const hasRangeFrames = value.startFrame != null || value.endFrame != null;
   const kind = kindRaw === "range" || (kindRaw !== "full" && hasRangeFrames) ? "range" : "full";
@@ -229,9 +250,9 @@ export function normalizeSourceTake(sourceTake) {
   const projectSlug = nonEmpty(sourceTake.projectSlug);
   const clipId = nonEmpty(sourceTake.clipId);
   const file = nonEmpty(sourceTake.file);
-  const takeVersion = normalizeTakeVersion(sourceTake.takeVersion);
+  const takeVersion = normalizeTakeVersion(sourceTake.takeVersion ?? sourceTake.assetVersion ?? sourceTake.v);
   if (!projectSlug || !clipId || !file || !takeVersion) return null;
-  const fingerprints = fingerprintsOf(sourceTake.fingerprints);
+  const fingerprints = fingerprintsOf(sourceTake.fingerprints) || fingerprintsOf(sourceTake);
   return {
     projectSlug,
     clipId,
@@ -244,27 +265,26 @@ export function normalizeSourceTake(sourceTake) {
 function takeFromClip(clip) {
   if (!clip || typeof clip !== "object") return null;
   const versions = Array.isArray(clip.versions) ? clip.versions : [];
-  const activeFull = versions.find((version) => (
-    Number(version?.v) === Number(clip.activeVersion)
-    && Number(clip.activeVersion) > 0
-    && nonEmpty(version?.file)
-  ));
+  const activeV = positiveInt(clip.activeVersion);
+  const activeFull = activeV
+    ? versions.find((version) => positiveInt(version?.v) === activeV && nonEmpty(version?.file))
+    : null;
   if (activeFull) {
     return {
-      takeVersion: { kind: "full", v: Number(activeFull.v) },
+      takeVersion: { kind: "full", v: activeV },
       file: nonEmpty(activeFull.file),
       fingerprints: fingerprintsOf(activeFull)
     };
   }
   const ranges = Array.isArray(clip.rangeVersions) ? clip.rangeVersions : [];
   const activeRange = ranges
-    .filter((range) => range && range.active !== false && nonEmpty(range.file))
+    .filter((range) => range && range.active !== false && nonEmpty(range.file) && positiveInt(range.v))
     .sort((left, right) => (
-      Number(right.v) - Number(left.v)
+      (positiveInt(right.v) || 0) - (positiveInt(left.v) || 0)
       || String(right.createdAt || "").localeCompare(String(left.createdAt || ""))
     ))[0];
   if (!activeRange) return null;
-  const takeVersion = { kind: "range", v: Number(activeRange.v) };
+  const takeVersion = { kind: "range", v: positiveInt(activeRange.v) };
   if (Number.isFinite(Number(activeRange.startFrame))) takeVersion.startFrame = Number(activeRange.startFrame);
   if (Number.isFinite(Number(activeRange.endFrame))) takeVersion.endFrame = Number(activeRange.endFrame);
   return {
