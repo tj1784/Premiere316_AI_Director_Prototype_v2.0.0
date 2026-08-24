@@ -219,7 +219,7 @@ export default function AssetReferencePicker({
         useMode: "direct_conditioning",
         required: true,
         cropRegion: "Use relevant subject/design region only",
-        notes: sourceRoute === "/edit" ? "Selected to condition MiniMax H3 video from existing stills and pinned for reproducible video renders." : "Selected in the Storyboard reference picker and pinned for reproducible generation.",
+        notes: targetKind === "h3" ? "Selected to condition MiniMax H3 video from existing stills and pinned for reproducible video renders." : "Selected in the Storyboard reference picker and pinned for reproducible generation.",
         pinnedActiveAtImport: Number(asset.activeVersion) === Number(active?.v || 1)
       }];
     });

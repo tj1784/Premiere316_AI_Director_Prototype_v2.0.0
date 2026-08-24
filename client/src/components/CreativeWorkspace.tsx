@@ -251,9 +251,9 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
   const h3PrimaryIssue = !store.health.comfy
     ? "ComfyUI is offline."
     : !store.h3Diagnostics
-      ? "Checking MiniMax H3…"
+      ? "Checking MiniMax H3 video…"
       : !h3ModeReady
-        ? (store.h3Diagnostics.actionableErrors?.[0] || selectedH3Mode?.disabledReason || "MiniMax H3 is not ready.")
+        ? (store.h3Diagnostics.actionableErrors?.[0] || selectedH3Mode?.disabledReason || "MiniMax H3 video is not ready.")
         : h3ModeNeedsApprovedGuides && !selectedClipGuidesApproved
           ? "Use approved Assets/Storyboard stills (Krea2 or Klein2) for this H3 video mode."
           : "";
@@ -625,7 +625,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
           <button
             className="button secondary h3-toolbar-button"
             disabled={!h3CanRender}
-            title={h3PrimaryIssue || `Queue MiniMax H3 video (${selectedH3Mode?.label || "video render"})`}
+            title={h3PrimaryIssue || "Queue MiniMax H3 video"}
             onClick={() => queueH3Selection()}
           >
             H3 Video
@@ -1011,7 +1011,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
         <aside className="system-status">
           <h4>SYSTEM STATUS</h4>
           <span className={store.health.comfy ? "good" : "bad"}><i /> ComfyUI <b>{store.health.comfy ? (store.health.capabilities?.dedicatedComfyUI ? "Dedicated · 8190" : "Connected") : "Offline"}</b></span>
-          <span className={store.h3Diagnostics?.fl2vaReady ? "good" : "bad"}><i /> MiniMax H3 <b>{store.h3Diagnostics?.fl2vaReady ? "FL2VA Ready" : store.h3Diagnostics?.comfyVersion ? `Needs 0.30+ · ${store.h3Diagnostics.comfyVersion}` : "Checking"}</b></span>
+          <span className={store.h3Diagnostics?.fl2vaReady ? "good" : "bad"}><i /> MiniMax H3 Video <b>{store.h3Diagnostics?.fl2vaReady ? "FL2VA Ready" : store.h3Diagnostics?.comfyVersion ? `Needs 0.30+ · ${store.h3Diagnostics.comfyVersion}` : "Checking"}</b></span>
           <span className={runningJobs.length ? "working" : "good"}><i /> Queue <b>{runningJobs.length ? `${runningJobs.length} Active` : "Idle"}</b></span>
           <span className={store.health.ffmpeg ? "good" : "bad"}><i /> FFmpeg <b>{store.health.ffmpeg ? "Ready" : "Missing"}</b></span>
           <button
