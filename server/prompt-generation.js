@@ -37,7 +37,7 @@ import {
 import {
   compileStoryboardFramePrompt,
   compileStoryboardVideoPlanPrompt,
-  isForbiddenMinimaxStillsClass,
+  assertStillsJobCompiledPrompt,
   KREA2_CINEMATIC_STILL_WORKFLOW_ID,
   KLEIN2_STILLS_WORKFLOW_ID,
   storyboardRuntimeProbeGraphs,
@@ -146,10 +146,16 @@ export function assertPromptStillsWorkflowId(workflowId, outputKind) {
       { status: 400, code: "PROMPT_STILLS_LTX_FORBIDDEN" }
     );
   }
-  if (isForbiddenMinimaxStillsClass(id)) {
+  if (/MiniMax/i.test(id)) {
     throw new PromptGenerationError(
       `Guide-frame and stills jobs cannot use MiniMax workflow ${id || "missing"}`,
       { status: 400, code: "PROMPT_STILLS_MINIMAX_FORBIDDEN" }
+    );
+  }
+  if (!PROMPT_GENERATION_STILLS_WORKFLOW_IDS.includes(id)) {
+    throw new PromptGenerationError(
+      `Guide-frame and stills jobs must use Krea2 or Klein2, received ${id || "missing"}`,
+      { status: 400, code: "PROMPT_STILLS_WORKFLOW_FORBIDDEN" }
     );
   }
   return id;
@@ -1160,6 +1166,9 @@ export async function generatePromptAssetJob(job, overrides = {}) {
     job.stage = "Generating LTX-2.5 semantic-reference video";
   } else {
     throw new Error(`Unsupported prompt-generation execution adapter: ${generation.workflowId}`);
+  }
+  if (["image", "design"].includes(generation.outputKind)) {
+    assertStillsJobCompiledPrompt(compiled);
   }
   job.progress = 0.05;
   throwIfCancelled(job);

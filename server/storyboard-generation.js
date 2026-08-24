@@ -118,26 +118,44 @@ export function isForbiddenMinimaxStillsClass(classType) {
   return MINIMAX_NAME_RE.test(name) && !isClearlyMinimaxAudioOnlyClass(name);
 }
 
+function stillsNodeClassType(node) {
+  if (!node || typeof node !== "object") return "";
+  return String(node.class_type || node.type || node.classType || "");
+}
+
+function stillsGraphContainers(source) {
+  const containers = [];
+  const queue = [source];
+  const seen = new Set();
+  while (queue.length) {
+    const container = queue.shift();
+    if (!container || typeof container !== "object" || seen.has(container)) continue;
+    seen.add(container);
+    containers.push(container);
+    for (const subgraph of container.definitions?.subgraphs || []) queue.push(subgraph);
+  }
+  return containers;
+}
+
 function stillsClassEntries(source) {
   if (!source || typeof source !== "object") return [];
   if (Array.isArray(source)) {
     return source.map((node, index) => ({
       id: node?.id ?? index,
-      classType: String(node?.class_type || node?.type || "")
+      classType: stillsNodeClassType(node)
     }));
   }
   if (Array.isArray(source.nodes) || Array.isArray(source.definitions?.subgraphs)) {
-    const containers = [source, ...(source.definitions?.subgraphs || [])];
-    return containers.flatMap((container) =>
+    return stillsGraphContainers(source).flatMap((container) =>
       (container.nodes || []).map((node) => ({
         id: node?.id,
-        classType: String(node?.class_type || node?.type || "")
+        classType: stillsNodeClassType(node)
       }))
     );
   }
   return Object.entries(source).map(([id, node]) => ({
     id,
-    classType: String(node?.class_type || node?.type || "")
+    classType: stillsNodeClassType(node)
   }));
 }
 
@@ -151,6 +169,14 @@ export function assertStillsApiPromptRejectsMinimax(apiPrompt) {
     );
   }
   return apiPrompt;
+}
+
+export function assertStillsJobCompiledPrompt(compiled) {
+  if (!compiled || typeof compiled !== "object") return compiled;
+  if (compiled.apiPrompt) assertStillsApiPromptRejectsMinimax(compiled.apiPrompt);
+  if (compiled.graph) assertStillsApiPromptRejectsMinimax(compiled.graph);
+  if (compiled.executionGraph) assertStillsApiPromptRejectsMinimax(compiled.executionGraph);
+  return compiled;
 }
 
 function assertKreaStillsCompilation(graph, executionGraph, frame) {
@@ -1668,6 +1694,7 @@ export async function generateStoryboardFrameJob(job) {
   const project = loadProject(job.projectSlug);
   const storyboard = loadStoryboard(job.projectSlug);
   const compiled = await compileStoryboardFramePrompt(project, storyboard, job.refs.frameId);
+  assertStillsJobCompiledPrompt(compiled);
   const fingerprint = storyboardFrameGenerationFingerprint(compiled.frame, compiled.workflowHash);
   if (job.refs?.generationFingerprint && job.refs.generationFingerprint !== fingerprint) {
     throw new Error("Storyboard image job cancelled because the frame prompt, references, or workflow changed after queueing");

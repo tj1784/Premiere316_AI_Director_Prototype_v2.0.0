@@ -10,10 +10,12 @@ import {
 import {
   assertLtxVideoPlanIsNotStillsGenerator,
   assertStillsApiPromptRejectsMinimax,
+  assertStillsJobCompiledPrompt,
   buildStoryboardFrameWorkflowGraph,
   buildStoryboardVideoPlanWorkflowGraph,
   compileStoryboardVideoPlanPrompt,
   isForbiddenMinimaxStillsClass,
+  KLEIN2_STILLS_WORKFLOW_ID,
   KREA2_CINEMATIC_STILL_WORKFLOW_ID,
   storyboardFrameGenerationFingerprint,
   STORYBOARD_KREA_WORKFLOW_ID,
@@ -719,7 +721,8 @@ test("first and last frames compile through Krea2 stills, never MiniMax H3 templ
   const fixture = {
     frames: {
       "frame-h01-s01-c01-first": stillsFrameFixture("frame-h01-s01-c01-first", "first_frame"),
-      "frame-h01-s01-c01-last": stillsFrameFixture("frame-h01-s01-c01-last", "last_frame")
+      "frame-h01-s01-c01-last": stillsFrameFixture("frame-h01-s01-c01-last", "last_frame"),
+      "frame-h01-s01-c01-guide": stillsFrameFixture("frame-h01-s01-c01-guide", "guide_frame")
     }
   };
 
@@ -755,6 +758,8 @@ test("first and last frames compile through Krea2 stills, never MiniMax H3 templ
 test("stills compilers fail closed on MiniMax image class_type and spare audio-only MiniMax", () => {
   assert.equal(isForbiddenMinimaxStillsClass("MiniMaxH3ImageToVideo"), true);
   assert.equal(isForbiddenMinimaxStillsClass("MiniMaxH3ReferenceToVideo"), true);
+  assert.equal(isForbiddenMinimaxStillsClass("EmptyMiniMaxH3LatentAV"), true);
+  assert.equal(isForbiddenMinimaxStillsClass("MiniMaxH3SigmaShift"), true);
   assert.equal(isForbiddenMinimaxStillsClass("MiniMaxImage"), true);
   assert.equal(isForbiddenMinimaxStillsClass("MiniMaxMusic3TextEncode"), false);
   assert.equal(isForbiddenMinimaxStillsClass("EmptyMiniMaxMusic3LatentAudio"), false);
@@ -774,6 +779,30 @@ test("stills compilers fail closed on MiniMax image class_type and spare audio-o
     }),
     /MiniMax image class_type/
   );
+  assert.throws(
+    () => assertStillsApiPromptRejectsMinimax({
+      nodes: [{ id: 1, type: "outer-subgraph" }],
+      definitions: {
+        subgraphs: [{
+          id: "outer-subgraph",
+          nodes: [],
+          definitions: {
+            subgraphs: [{
+              id: "nested-h3",
+              nodes: [{ id: 99, type: "MiniMaxH3ImageToVideo" }]
+            }]
+          }
+        }]
+      }
+    }),
+    /MiniMax image class_type/
+  );
+  assert.throws(
+    () => assertStillsJobCompiledPrompt({
+      apiPrompt: { "9": { class_type: "MiniMaxH3ImageToVideo", inputs: {} } }
+    }),
+    /MiniMax image class_type/
+  );
   assert.doesNotThrow(() => assertStillsApiPromptRejectsMinimax({
     "3": { class_type: "MiniMaxMusic3TextEncode", inputs: {} },
     "4": { class_type: "EmptyMiniMaxMusic3LatentAudio", inputs: {} }
@@ -781,17 +810,23 @@ test("stills compilers fail closed on MiniMax image class_type and spare audio-o
   assert.doesNotThrow(() => assertStillsApiPromptRejectsMinimax({
     "1": { class_type: "UNETLoader", inputs: { unet_name: "KREA 2\\krea2_turbo_bf16.safetensors" } }
   }));
+  assert.doesNotThrow(() => assertStillsJobCompiledPrompt({
+    apiPrompt: { mocked: "image" },
+    graph: { nodes: [], extra: { premiere316: { outputKind: "image" } } }
+  }));
 });
 
 test("guide-frame stills workflow ids are Krea2/Klein2 and never MiniMax", () => {
   assert.equal(GUIDE_FRAME_STILLS_WORKFLOW_ID, "krea2-cinematic-still-fp8");
   assert.equal(KREA2_CINEMATIC_STILL_WORKFLOW_ID, "krea2-cinematic-still-fp8");
+  assert.equal(KLEIN2_STILLS_WORKFLOW_ID, "flux2-klein-9b-prop-fp8");
   assert.ok(PROMPT_GENERATION_STILLS_WORKFLOW_IDS.includes(STORYBOARD_KREA_WORKFLOW_ID));
   assert.ok(PROMPT_GENERATION_STILLS_WORKFLOW_IDS.includes("krea2-cinematic-still-fp8"));
   assert.ok(PROMPT_GENERATION_STILLS_WORKFLOW_IDS.includes("flux2-klein-9b-prop-fp8"));
   assert.ok(PROMPT_GENERATION_STILLS_WORKFLOW_IDS.every((id) => !/minimax/i.test(id)));
   assert.equal(assertPromptStillsWorkflowId("krea2-cinematic-still-fp8", "image"), "krea2-cinematic-still-fp8");
   assert.equal(assertPromptStillsWorkflowId(STORYBOARD_KREA_WORKFLOW_ID, "design"), STORYBOARD_KREA_WORKFLOW_ID);
+  assert.equal(assertPromptStillsWorkflowId(KLEIN2_STILLS_WORKFLOW_ID, "image"), KLEIN2_STILLS_WORKFLOW_ID);
   assert.equal(assertPromptStillsWorkflowId("minimax-music-3", "audio"), "minimax-music-3");
   assert.throws(
     () => assertPromptStillsWorkflowId("minimax-h3-i2v", "image"),
@@ -802,8 +837,16 @@ test("guide-frame stills workflow ids are Krea2/Klein2 and never MiniMax", () =>
     /cannot use MiniMax workflow/
   );
   assert.throws(
+    () => assertPromptStillsWorkflowId("minimax-music-3", "image"),
+    /cannot use MiniMax workflow/
+  );
+  assert.throws(
     () => assertPromptStillsWorkflowId(STORYBOARD_T2V_WORKFLOW_ID, "image"),
     /cannot generate stills/
+  );
+  assert.throws(
+    () => assertPromptStillsWorkflowId("ci-flux2-p316-style-only-16x9-max", "image"),
+    /must use Krea2 or Klein2/
   );
 });
 
