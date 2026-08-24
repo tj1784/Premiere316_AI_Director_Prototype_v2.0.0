@@ -382,7 +382,7 @@ export default function App() {
           {navButton("direct", "Direct", `/direct/${localStorage.getItem("premiere316.direct-tab") || "sequence"}`, section === "direct")}
           <button className={section === "edit" ? "active" : ""} onClick={() => navigate("/edit")}>Edit</button>
           <button className={section === "generate" ? "active" : ""} onClick={() => navigate("/generate")}>Generate</button>
-          {navButton("upscale", "Upscale", "/upscale", section === "upscale")}
+          {navButton("upscale", "Upscale Plan", "/upscale", section === "upscale")}
           {navButton("master", "Master", "/master", section === "master")}
           {navButton("export", "Export", "/export", section === "export")}
         </nav>

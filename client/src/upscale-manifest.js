@@ -179,7 +179,141 @@ function intentAnalysis({ text, primaryEngine, motionEngine, filters }) {
   return text.trim() ? "Enhancement directive parsed with no upscale engine required." : "No enhancement directive supplied.";
 }
 
-export function buildUpscaleManifest(directive = "") {
+export const SOURCE_TAKE_REQUIRED = "Upscale Plan requires one exact approved source take.";
+
+function nonEmpty(value) {
+  return String(value == null ? "" : value).trim();
+}
+
+function positiveInt(value) {
+  const n = typeof value === "number" ? value : Number(String(value == null ? "" : value).trim());
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+function fileName(value) {
+  return nonEmpty(value).split(/[/\\]/).pop().toLowerCase();
+}
+
+function fingerprintsOf(record) {
+  if (!record || typeof record !== "object") return undefined;
+  const fingerprints = {};
+  let sha256 = String(record.sha256 || record.sourceSha256 || "").trim().toLowerCase();
+  const hashes = Array.isArray(record.fileHashes) ? record.fileHashes : [];
+  if (!/^[a-f0-9]{64}$/.test(sha256) && hashes.length) {
+    const hashed = hashes.filter((entry) => /^[a-f0-9]{64}$/i.test(String(entry?.sha256 || "")));
+    const wanted = fileName(record.file);
+    const matched = wanted
+      ? hashed.find((entry) => fileName(entry?.file) === wanted)
+      : null;
+    const pick = matched || (hashed.length === 1 ? hashed[0] : null);
+    if (pick) sha256 = String(pick.sha256).trim().toLowerCase();
+  }
+  if (/^[a-f0-9]{64}$/.test(sha256)) fingerprints.sha256 = sha256;
+  const assetFingerprint = String(record.assetFingerprint || record.versionFingerprint || "").trim();
+  if (assetFingerprint) fingerprints.assetFingerprint = assetFingerprint;
+  if (hashes.length) {
+    fingerprints.fileHashes = hashes.map((entry) => (entry && typeof entry === "object" ? { ...entry } : entry));
+  }
+  return Object.keys(fingerprints).length ? fingerprints : undefined;
+}
+
+export function normalizeTakeVersion(value) {
+  if (value == null || value === "") return null;
+  if (typeof value === "number") {
+    const v = positiveInt(value);
+    return v ? { kind: "full", v } : null;
+  }
+  if (typeof value === "string") {
+    const text = value.trim().toLowerCase();
+    const range = text.match(/^range[:\s-]*v?(\d+)$/i);
+    if (range) return { kind: "range", v: Number(range[1]) };
+    const full = text.match(/^v?(\d+)$/i);
+    if (full) return { kind: "full", v: Number(full[1]) };
+    return null;
+  }
+  if (typeof value !== "object") return null;
+  const v = positiveInt(value.v ?? value.version ?? value.assetVersion);
+  if (!v) return null;
+  const kindRaw = String(value.kind || value.type || "").trim().toLowerCase();
+  const hasRangeFrames = value.startFrame != null || value.endFrame != null;
+  const kind = kindRaw === "range" || (kindRaw !== "full" && hasRangeFrames) ? "range" : "full";
+  const takeVersion = { kind, v };
+  if (kind === "range") {
+    if (Number.isFinite(Number(value.startFrame))) takeVersion.startFrame = Number(value.startFrame);
+    if (Number.isFinite(Number(value.endFrame))) takeVersion.endFrame = Number(value.endFrame);
+  }
+  return takeVersion;
+}
+
+export function normalizeSourceTake(sourceTake) {
+  if (!sourceTake || typeof sourceTake !== "object") return null;
+  const projectSlug = nonEmpty(sourceTake.projectSlug);
+  const clipId = nonEmpty(sourceTake.clipId);
+  const file = nonEmpty(sourceTake.file);
+  const takeVersion = normalizeTakeVersion(sourceTake.takeVersion ?? sourceTake.assetVersion ?? sourceTake.v);
+  if (!projectSlug || !clipId || !file || !takeVersion) return null;
+  const fingerprints = fingerprintsOf(sourceTake.fingerprints) || fingerprintsOf(sourceTake);
+  return {
+    projectSlug,
+    clipId,
+    takeVersion,
+    file,
+    ...(fingerprints ? { fingerprints } : {})
+  };
+}
+
+function takeFromClip(clip) {
+  if (!clip || typeof clip !== "object") return null;
+  const versions = Array.isArray(clip.versions) ? clip.versions : [];
+  const activeV = positiveInt(clip.activeVersion);
+  const activeFull = activeV
+    ? versions.find((version) => positiveInt(version?.v) === activeV && nonEmpty(version?.file))
+    : null;
+  if (activeFull) {
+    return {
+      takeVersion: { kind: "full", v: activeV },
+      file: nonEmpty(activeFull.file),
+      fingerprints: fingerprintsOf(activeFull)
+    };
+  }
+  const ranges = Array.isArray(clip.rangeVersions) ? clip.rangeVersions : [];
+  const activeRange = ranges
+    .filter((range) => range && range.active !== false && nonEmpty(range.file) && positiveInt(range.v))
+    .sort((left, right) => (
+      (positiveInt(right.v) || 0) - (positiveInt(left.v) || 0)
+      || String(right.createdAt || "").localeCompare(String(left.createdAt || ""))
+    ))[0];
+  if (!activeRange) return null;
+  const takeVersion = { kind: "range", v: positiveInt(activeRange.v) };
+  if (Number.isFinite(Number(activeRange.startFrame))) takeVersion.startFrame = Number(activeRange.startFrame);
+  if (Number.isFinite(Number(activeRange.endFrame))) takeVersion.endFrame = Number(activeRange.endFrame);
+  return {
+    takeVersion,
+    file: nonEmpty(activeRange.file),
+    fingerprints: fingerprintsOf(activeRange)
+  };
+}
+
+export function resolveApprovedSourceTake(project, preferredClipId) {
+  const projectSlug = nonEmpty(project?.slug);
+  if (!projectSlug) return null;
+  const clips = Array.isArray(project?.sequence?.clips) ? project.sequence.clips : [];
+  const wantedId = nonEmpty(preferredClipId);
+  const clip = wantedId
+    ? clips.find((item) => nonEmpty(item?.id) === wantedId) || null
+    : clips.find((item) => takeFromClip(item)) || null;
+  const take = takeFromClip(clip);
+  if (!clip || !take) return null;
+  return normalizeSourceTake({
+    projectSlug,
+    clipId: nonEmpty(clip.id),
+    takeVersion: take.takeVersion,
+    file: take.file,
+    fingerprints: take.fingerprints
+  });
+}
+
+export function routeUpscaleDirective(directive = "") {
   const text = textOf(directive);
   const upscaleFactor = parseUpscaleFactor(text);
   const targetFps = parseTargetFps(text);
@@ -207,5 +341,14 @@ export function buildUpscaleManifest(directive = "") {
       scene_intent_analysis: intentAnalysis({ text: directive, primaryEngine, motionEngine, filters: preprocessFilters }),
       hardware_safety_tier: hardware
     }
+  };
+}
+
+export function buildUpscaleManifest(directive = "", sourceTake) {
+  const identity = normalizeSourceTake(sourceTake);
+  if (!identity) throw new Error(SOURCE_TAKE_REQUIRED);
+  return {
+    source_take: identity,
+    ...routeUpscaleDirective(directive)
   };
 }
