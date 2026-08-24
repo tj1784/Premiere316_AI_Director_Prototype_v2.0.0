@@ -26,3 +26,6 @@ config/premiere316.local.json
 *.db
 *.db-*
 *.lock
+
+# Accidental Windows NUL device artifact at repo root.
+/nul
