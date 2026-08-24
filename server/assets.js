@@ -1770,6 +1770,11 @@ async function generateAssetJobInner(job) {
   target.status = target.workflowId === "ltx-2.3-native-audio" ? "ready-for-shot" : "generated";
   target.approval = null;
   saveAssetPackageFiles(fresh);
+  const written = target.versions.find((entry) => Number(entry.v) === Number(version));
+  if (written) {
+    written.workflowHash = target.workflowHash || written.workflowHash;
+    written.assetFingerprint = assetGenerationFingerprint(target);
+  }
   saveProject(fresh);
   job.result = { assetId: target.id, files, version };
   job.progress = 0.98;

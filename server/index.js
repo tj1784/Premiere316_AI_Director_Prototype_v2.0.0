@@ -2332,11 +2332,11 @@ app.post("/api/projects/:slug/assets/:assetId/approve", (req, res) => {
     const generationFingerprint = assetGenerationFingerprint(asset);
     const revision = currentScreenplayRevision(project);
     if (
-      active.assetFingerprint !== generationFingerprint ||
       active.workflowId !== asset.workflowId ||
       !assetVersionFilesCurrent(project, asset) ||
       (!shorts && (
-        String(active.workflowHash || "") !== String(asset.workflowHash || "")
+        active.assetFingerprint !== generationFingerprint
+        || String(active.workflowHash || "") !== String(asset.workflowHash || "")
         || active.screenplayRevision !== revision
         || active.manifestScreenplayHash !== project.assets.screenplayHash
       ))
