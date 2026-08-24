@@ -37,6 +37,9 @@ import {
 import {
   compileStoryboardFramePrompt,
   compileStoryboardVideoPlanPrompt,
+  assertStillsJobCompiledPrompt,
+  KREA2_CINEMATIC_STILL_WORKFLOW_ID,
+  KLEIN2_STILLS_WORKFLOW_ID,
   storyboardRuntimeProbeGraphs,
   validateStoryboardRuntimeGraph
 } from "./storyboard-generation.js";
@@ -47,6 +50,12 @@ export const PROMPT_GENERATION_JOB_TYPE = "generate_prompt_asset";
 export const PROMPT_GENERATION_EXECUTABLE_WORKFLOWS = Object.freeze([
   STORYBOARD_KREA_GENERATION_WORKFLOW_ID,
   STORYBOARD_LTX25_GENERATION_WORKFLOW_ID
+]);
+export const GUIDE_FRAME_STILLS_WORKFLOW_ID = KREA2_CINEMATIC_STILL_WORKFLOW_ID;
+export const PROMPT_GENERATION_STILLS_WORKFLOW_IDS = Object.freeze([
+  STORYBOARD_KREA_GENERATION_WORKFLOW_ID,
+  GUIDE_FRAME_STILLS_WORKFLOW_ID,
+  KLEIN2_STILLS_WORKFLOW_ID
 ]);
 export const PROMPT_COMPOSER_IMMUTABLE_ASSET_FIELDS = Object.freeze([
   "name",
@@ -108,7 +117,7 @@ const MENTION_CATEGORY_PRIORITY = Object.freeze([
 
 const WORKFLOW_RUNTIME_REQUIREMENTS = Object.freeze({
   [STORYBOARD_KREA_GENERATION_WORKFLOW_ID]: {
-    baselineAssetWorkflowId: "krea2-cinematic-still-fp8",
+    baselineAssetWorkflowId: GUIDE_FRAME_STILLS_WORKFLOW_ID,
     probeKind: "image"
   },
   [STORYBOARD_LTX25_GENERATION_WORKFLOW_ID]: {
@@ -125,6 +134,31 @@ export class PromptGenerationError extends Error {
     this.code = code;
     this.errors = errors;
   }
+}
+
+export function assertPromptStillsWorkflowId(workflowId, outputKind) {
+  const id = String(workflowId || "").trim();
+  const kind = String(outputKind || "");
+  if (!["image", "design"].includes(kind)) return id;
+  if (id === STORYBOARD_LTX25_GENERATION_WORKFLOW_ID) {
+    throw new PromptGenerationError(
+      "LTX-2.5 video-plan compilation cannot generate stills, first frames, or guide frames.",
+      { status: 400, code: "PROMPT_STILLS_LTX_FORBIDDEN" }
+    );
+  }
+  if (/MiniMax/i.test(id)) {
+    throw new PromptGenerationError(
+      `Guide-frame and stills jobs cannot use MiniMax workflow ${id || "missing"}`,
+      { status: 400, code: "PROMPT_STILLS_MINIMAX_FORBIDDEN" }
+    );
+  }
+  if (!PROMPT_GENERATION_STILLS_WORKFLOW_IDS.includes(id)) {
+    throw new PromptGenerationError(
+      `Guide-frame and stills jobs must use Krea2 or Klein2, received ${id || "missing"}`,
+      { status: 400, code: "PROMPT_STILLS_WORKFLOW_FORBIDDEN" }
+    );
+  }
+  return id;
 }
 
 function clone(value) {
@@ -632,6 +666,7 @@ export function createPromptGeneration(project, body, {
   assertPinsFn = assertPinnedReferencesCurrent
 } = {}) {
   const canonicalRequest = normalizePromptGenerationPayload(project, body);
+  assertPromptStillsWorkflowId(canonicalRequest.workflowId, canonicalRequest.outputKind);
   const catalog = Array.isArray(workflows) ? workflows : [];
   const selectedWorkflow = catalog.find((workflow) => workflow.id === canonicalRequest.workflowId);
   if (!selectedWorkflow || selectedWorkflow.ready !== true || selectedWorkflow.availableNow === false) {
@@ -1116,6 +1151,7 @@ export async function generatePromptAssetJob(job, overrides = {}) {
   dependencies.saveProject(project);
 
   throwIfCancelled(job);
+  assertPromptStillsWorkflowId(generation.workflowId, generation.outputKind);
   let compiled;
   if (generation.workflowId === STORYBOARD_KREA_GENERATION_WORKFLOW_ID) {
     const synthetic = buildSyntheticImageStoryboardInput(project, preflight);
@@ -1130,6 +1166,9 @@ export async function generatePromptAssetJob(job, overrides = {}) {
     job.stage = "Generating LTX-2.5 semantic-reference video";
   } else {
     throw new Error(`Unsupported prompt-generation execution adapter: ${generation.workflowId}`);
+  }
+  if (["image", "design"].includes(generation.outputKind)) {
+    assertStillsJobCompiledPrompt(compiled);
   }
   job.progress = 0.05;
   throwIfCancelled(job);
