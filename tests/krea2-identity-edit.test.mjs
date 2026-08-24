@@ -93,6 +93,7 @@ test("compileAssetWorkflow identity-edit uses Krea2 turbo, Qwen3-VL, VAE, and id
   assert.equal(compiled?.["72"]?.inputs?.image, "approved-jesus.v1.png");
   assert.equal(compiled?.["84"]?.class_type, "Krea2EditGroundedEncode");
   assert.equal(compiled?.["84"]?.inputs?.prompt, "Preserve the exact facial identity. Relight with warm golden hour.");
+  assert.equal(compiled?.["85"]?.inputs?.prompt, "");
   assert.equal(compiled?.["79"]?.class_type, "Krea2EditModelPatch");
   assert.ok(!JSON.stringify(compiled).toLowerCase().includes("minimax"));
 

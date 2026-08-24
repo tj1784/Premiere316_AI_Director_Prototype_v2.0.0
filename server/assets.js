@@ -1511,11 +1511,20 @@ export async function validateAssetWorkflow(project, asset) {
     }
     for (const [inputName, definition] of Object.entries(schema?.input?.required || {})) {
       const value = node?.inputs?.[inputName];
-      if (value == null || value === "") {
+      const widgetType = definition?.[0];
+      const stringWidget = widgetType === "STRING";
+      if (value == null || (value === "" && !stringWidget)) {
         errors.push(`${nodeId} ${node.class_type}: missing required input ${inputName}`);
         continue;
       }
-      const allowed = Array.isArray(definition?.[0]) ? definition[0] : null;
+      const allowed = Array.isArray(widgetType) ? widgetType : null;
+      // Identity-edit LoadImage is uploaded at job start from the exact active
+      // project asset file, so Comfy's current input-folder combo is not the source of truth.
+      if (
+        isIdentityEditWorkflow(asset.workflowId)
+        && node.class_type === "LoadImage"
+        && inputName === "image"
+      ) continue;
       if (allowed && !Array.isArray(value) && !allowed.includes(value)) {
         errors.push(`${nodeId} ${node.class_type}: unavailable ${inputName}=${value}`);
       }
