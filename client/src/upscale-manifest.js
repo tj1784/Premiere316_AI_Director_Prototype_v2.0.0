@@ -1,0 +1,211 @@
+export const UPSCALE_ENGINES = Object.freeze({
+  SUPIR: "SUPIR",
+  REAL_ESRGAN: "Real_ESRGAN",
+  NONE: "None",
+  FRAME_INTERPOLATION: "Frame_Interpolation"
+});
+
+const SUPIR_TERMS = [
+  /\bsupir\b/,
+  /\bphotoreal/i,
+  /\bhyper[- ]?real/i,
+  /\brealistic detail/i,
+  /\bface(s)?\b/,
+  /\bfacial\b/,
+  /\bskin\b/,
+  /\bfabric\b/,
+  /\bhistorical\b/,
+  /\bold\b/,
+  /\bdegraded\b/,
+  /\blow[- ]?quality\b/,
+  /\bblurry\b/,
+  /\brestore/i
+];
+
+const REAL_ESRGAN_TERMS = [
+  /\breal[-_ ]?esrgan\b/i,
+  /\bfast\b/,
+  /\bbulk\b/,
+  /\bbatch\b/,
+  /\bgameplay\b/,
+  /\btext overlay/i,
+  /\bui\b/,
+  /\binterface\b/,
+  /\bgraphic/i,
+  /\banime\b/,
+  /\bcartoon\b/,
+  /\bwithout changing/i,
+  /\bpreserve (the )?art style/i,
+  /\bdo not hallucinate/i,
+  /\bno hallucination/i
+];
+
+const UPSCALE_TERMS = [
+  /\bupscale\b/,
+  /\bupscal/i,
+  /\benhance\b/,
+  /\bsharpen\b/,
+  /\bsharp\b/,
+  /\b4k\b/,
+  /\buhd\b/,
+  /\b2x\b/,
+  /\b4x\b/,
+  /\bblow it up\b/,
+  /\bincrease resolution\b/,
+  /\bresolution\b/
+];
+
+const DENOISE_TERMS = [
+  /\bdenoise\b/,
+  /\bde[- ]?noise\b/,
+  /\bnoise\b/,
+  /\bgrain\b/,
+  /\bblocky\b/,
+  /\bcompression\b/,
+  /\bartifact/i,
+  /\blow[- ]?light\b/,
+  /\bsensor grain\b/,
+  /\bweb video\b/
+];
+
+const HEAVY_DENOISE_TERMS = [
+  /\bheavy\b/,
+  /\bsevere\b/,
+  /\bblocky\b/,
+  /\bcompression block/i,
+  /\bheavily degraded\b/,
+  /\bawful\b/,
+  /\bterrible\b/
+];
+
+const COLOR_TERMS = [
+  /\bcolor correct/i,
+  /\bcolour correct/i,
+  /\bwhite balance\b/,
+  /\bexposure\b/,
+  /\bcontrast\b/,
+  /\bsaturation\b/,
+  /\bgrade\b/,
+  /\bwashed out\b/
+];
+
+const MOTION_TERMS = [
+  /\bsmooth motion\b/,
+  /\bslow motion\b/,
+  /\binterpolat/i,
+  /\bfps conversion\b/,
+  /\bconvert .*fps\b/,
+  /\b\d{2,3}\s*fps\b/
+];
+
+function textOf(value) {
+  return String(value || "").toLowerCase();
+}
+
+function hasAny(text, patterns) {
+  return patterns.some((pattern) => pattern.test(text));
+}
+
+function round2(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function parseTargetFps(text) {
+  const match = text.match(/\b(24|25|30|48|50|60|72|90|96|100|120)\s*fps\b/i);
+  if (match) return Number(match[1]);
+  if (/\bslow motion\b|\bsmooth motion\b|\bfps conversion\b|\binterpolat/i.test(text)) return 60;
+  return null;
+}
+
+function parseUpscaleFactor(text) {
+  const explicit = text.match(/\b([23468])\s*x\b|\bx\s*([23468])\b/i);
+  if (explicit) return Math.min(4, Number(explicit[1] || explicit[2]));
+  if (/\b4k\b|\buhd\b|\b2160p\b/i.test(text)) {
+    if (/\b1080p\b|\bfull hd\b/i.test(text)) return 2;
+    return 4;
+  }
+  if (/\b2k\b|\b1440p\b|\bdouble\b|\btwice\b/i.test(text)) return 2;
+  if (/\b480p\b|\b360p\b|\b240p\b|\bvhs\b|\bvery low[- ]?res\b|\blow[- ]?res\b/i.test(text)) return 4;
+  if (hasAny(text, UPSCALE_TERMS)) return 2;
+  return 1;
+}
+
+function choosePrimaryEngine(text, upscaleFactor) {
+  const wantsUpscale = upscaleFactor > 1 || hasAny(text, UPSCALE_TERMS) || hasAny(text, SUPIR_TERMS) || hasAny(text, REAL_ESRGAN_TERMS);
+  if (!wantsUpscale) return UPSCALE_ENGINES.NONE;
+  const realHint = hasAny(text, REAL_ESRGAN_TERMS);
+  const supirHint = hasAny(text, SUPIR_TERMS);
+  if (realHint && !/\bsupir\b|\bphotoreal|\bfacial|\bface(s)?\b|\bskin\b|\brestore/i.test(text)) return UPSCALE_ENGINES.REAL_ESRGAN;
+  if (supirHint) return UPSCALE_ENGINES.SUPIR;
+  return UPSCALE_ENGINES.REAL_ESRGAN;
+}
+
+function denoiseStrength(text) {
+  if (!hasAny(text, DENOISE_TERMS)) return 0.0;
+  if (hasAny(text, HEAVY_DENOISE_TERMS)) return 0.85;
+  if (/\blow[- ]?light\b|\bsensor grain\b|\bgrain\b/i.test(text)) return 0.55;
+  return 0.35;
+}
+
+function generativeFidelity(text, primaryEngine) {
+  if (primaryEngine === UPSCALE_ENGINES.NONE) return 0.0;
+  if (primaryEngine === UPSCALE_ENGINES.REAL_ESRGAN) {
+    return /\bwithout changing|\bpreserve|\bdo not hallucinate|\bno hallucination/i.test(text) ? 0.1 : 0.2;
+  }
+  if (/\bwithout changing|\bpreserve|\bfaithful|\bsource texture|\bdo not hallucinate|\bno hallucination/i.test(text)) return 0.35;
+  if (/\bincredibly sharp|\bhyper[- ]?real|\bmicro[- ]?detail|\bskin|\bfabric|\bfaces?\b/i.test(text)) return 0.75;
+  return 0.6;
+}
+
+function safetyTier({ primaryEngine, motionEngine, upscaleFactor, denoise }) {
+  if (primaryEngine === UPSCALE_ENGINES.SUPIR || (upscaleFactor === 4 && denoise >= 0.65) || motionEngine === UPSCALE_ENGINES.FRAME_INTERPOLATION && upscaleFactor === 4) {
+    return "Extreme_VRAM";
+  }
+  if (motionEngine === UPSCALE_ENGINES.FRAME_INTERPOLATION || primaryEngine === UPSCALE_ENGINES.REAL_ESRGAN && upscaleFactor >= 2) return "Performance";
+  return "Standard";
+}
+
+function intentAnalysis({ text, primaryEngine, motionEngine, filters }) {
+  if (primaryEngine === UPSCALE_ENGINES.SUPIR && filters.includes("Denoise_Deartifact")) {
+    return "Restoration, deartifacting, and photoreal detail recovery for degraded source footage.";
+  }
+  if (primaryEngine === UPSCALE_ENGINES.SUPIR) return "Photoreal source enhancement with controlled generative detail recovery.";
+  if (primaryEngine === UPSCALE_ENGINES.REAL_ESRGAN && motionEngine === UPSCALE_ENGINES.FRAME_INTERPOLATION) {
+    return "Fast upscale with motion smoothing while preserving graphic and editorial structure.";
+  }
+  if (primaryEngine === UPSCALE_ENGINES.REAL_ESRGAN) return "Fast non-generative sharpening and resolution increase for production media.";
+  if (motionEngine === UPSCALE_ENGINES.FRAME_INTERPOLATION) return "Frame interpolation requested without spatial upscaling.";
+  if (filters.length) return "Preprocessing pass requested without spatial upscaling.";
+  return text.trim() ? "Enhancement directive parsed with no upscale engine required." : "No enhancement directive supplied.";
+}
+
+export function buildUpscaleManifest(directive = "") {
+  const text = textOf(directive);
+  const upscaleFactor = parseUpscaleFactor(text);
+  const targetFps = parseTargetFps(text);
+  const motionEngine = hasAny(text, MOTION_TERMS) || targetFps ? UPSCALE_ENGINES.FRAME_INTERPOLATION : UPSCALE_ENGINES.NONE;
+  const primaryEngine = choosePrimaryEngine(text, upscaleFactor);
+  const denoise = denoiseStrength(text);
+  const preprocessFilters = [];
+  if (denoise > 0) preprocessFilters.push("Denoise_Deartifact");
+  if (hasAny(text, COLOR_TERMS)) preprocessFilters.push("Color_Correction");
+  const fidelity = generativeFidelity(text, primaryEngine);
+  const hardware = safetyTier({ primaryEngine, motionEngine, upscaleFactor, denoise });
+  return {
+    pipeline_routing: {
+      primary_engine: primaryEngine,
+      motion_engine: motionEngine,
+      preprocess_filters: preprocessFilters
+    },
+    parameters: {
+      upscale_factor: upscaleFactor,
+      denoise_strength: round2(denoise),
+      target_fps: targetFps,
+      generative_fidelity: round2(fidelity)
+    },
+    director_metadata: {
+      scene_intent_analysis: intentAnalysis({ text: directive, primaryEngine, motionEngine, filters: preprocessFilters }),
+      hardware_safety_tier: hardware
+    }
+  };
+}

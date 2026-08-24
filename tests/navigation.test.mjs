@@ -26,6 +26,8 @@ test("route helpers preserve the locked production taxonomy", () => {
   assert.equal(routeSubtab("/assets/ost"), "ost");
   assert.equal(routeForShorts("/screenplay"), "/direct/sequence");
   assert.equal(resolveProductionRoute("/unknown"), "/edit");
+  assert.equal(resolveProductionRoute("/upscale"), "/upscale");
+  assert.equal(routeSection("/upscale"), "upscale");
 });
 
 test("Create Sound is a stable top-level production route", () => {

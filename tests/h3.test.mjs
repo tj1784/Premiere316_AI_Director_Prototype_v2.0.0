@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   H3_FPS,
+  H3_MODE_FIRST,
   H3_MODE_FIRST_LAST,
   H3_MODE_REFERENCE,
   H3_PROVIDER_ID,
@@ -35,7 +36,9 @@ function fakeObjectInfo() {
         },
         optional: {
           first_frame: ["IMAGE", {}],
-          last_frame: ["IMAGE", {}]
+          last_frame: ["IMAGE", {}],
+          ref_image_size: fakeCombo(["match", "max"]),
+          ref_images: ["COMFY_AUTOGROW_V3", { max: 12 }]
         }
       }
     },
@@ -143,6 +146,23 @@ test("Ref2VA reference validation enforces limits and stable tags", () => {
   assert.match(invalid.errors.join(" "), /Audio cannot be the only/);
 });
 
+test("H3 image references allow twelve images and offset tags after first-frame anchors", () => {
+  const refs = Array.from({ length: 12 }, (_, index) => ({
+    type: "image",
+    role: `identity ${index + 1}`,
+    comfyFile: `ref-${index + 1}.png`
+  }));
+  const valid = validateH3ReferenceManifest(refs, { imageTagOffset: 1 });
+  assert.equal(valid.ok, true);
+  assert.equal(valid.counts.images, 12);
+  assert.equal(valid.references[0].tag, "<Picture 2>");
+  assert.equal(valid.references.at(-1).tag, "<Picture 13>");
+
+  const invalid = validateH3ReferenceManifest([...refs, { type: "image", comfyFile: "ref-13.png" }]);
+  assert.equal(invalid.ok, false);
+  assert.match(invalid.errors.join(" "), /at most 12 image references/);
+});
+
 test("deterministic H3 prompt compiler preserves timeline, guides, and audio intent", () => {
   const compiled = compileH3Prompt({ project, clip, mode: H3_MODE_FIRST_LAST, rangeStartFrame: 0, rangeEndFrame: 144 });
   assert.match(compiled.prompt, /PREMIERE316 LOCAL MINIMAX H3 DIRECTOR PROMPT/);
@@ -150,6 +170,18 @@ test("deterministic H3 prompt compiler preserves timeline, guides, and audio int
   assert.match(compiled.prompt, /Jesus lifts his head/);
   assert.match(compiled.prompt, /low reverent choir/);
   assert.equal(compiled.timing.requestedFrames, 144);
+});
+
+test("first-frame H3 prompt compiler binds extra image references after the hard anchor", () => {
+  const refs = Array.from({ length: 12 }, (_, index) => ({
+    type: "image",
+    role: `visual reference ${index + 1}`,
+    comfyFile: `ref-${index + 1}.png`
+  }));
+  const compiled = compileH3Prompt({ project, clip, mode: H3_MODE_FIRST, rangeStartFrame: 0, rangeEndFrame: 144, referenceManifest: refs });
+  assert.match(compiled.prompt, /Frame anchor: the first image is the hard opening frame/);
+  assert.match(compiled.prompt, /<Picture 2> = visual reference 1/);
+  assert.match(compiled.prompt, /<Picture 13> = visual reference 12/);
 });
 
 test("official FL2VA template can be converted and patched by semantic slots", () => {
@@ -174,6 +206,33 @@ test("official FL2VA template can be converted and patched by semantic slots", (
   assert.deepEqual(h3.inputs.first_frame, ["p316_h3_first_frame", 0]);
   assert.deepEqual(h3.inputs.last_frame, ["p316_h3_last_frame", 0]);
   assert.equal(workflow.prompt.p316_h3_save.inputs.filename_prefix, "premiere316/test/h3");
+});
+
+test("official first-frame FL2VA template can include twelve extra image references", () => {
+  const references = Array.from({ length: 12 }, (_, index) => ({
+    type: "image",
+    role: "identity",
+    comfyFile: `ref-${index + 1}.png`
+  }));
+  const workflow = buildH3Workflow({
+    objectInfo: fakeObjectInfo(),
+    mode: H3_MODE_FIRST,
+    promptText: "Use <Picture 1> as the hard opening frame and <Picture 2> through <Picture 13> as references.",
+    width: 1344,
+    height: 768,
+    frames: 158,
+    seed: 333,
+    filenamePrefix: "premiere316/test/h3-first-ref",
+    firstFrameComfyFile: "first.png",
+    references
+  });
+  const h3 = workflow.prompt["104"];
+  assert.equal(h3.class_type, "MiniMaxH3ImageToVideo");
+  assert.deepEqual(h3.inputs.first_frame, ["p316_h3_first_frame", 0]);
+  assert.deepEqual(h3.inputs["ref_images.ref_image_0"], ["p316_h3_ref_image_2", 0]);
+  assert.deepEqual(h3.inputs["ref_images.ref_image_11"], ["p316_h3_ref_image_13", 0]);
+  assert.equal(h3.inputs.ref_image_size, "match");
+  assert.equal(workflow.prompt.p316_h3_save.inputs.filename_prefix, "premiere316/test/h3-first-ref");
 });
 
 test("official Ref2VA template can be patched with ordered reference tags", () => {

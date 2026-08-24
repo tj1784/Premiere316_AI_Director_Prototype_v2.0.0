@@ -24,7 +24,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   "guide-frame": "▣",
   graphic: "T"
 };
-const MAX_REFERENCES = 9;
+const DEFAULT_MAX_REFERENCES = 9;
 const ROLE_OPTIONS = ["identity", "wardrobe", "location", "prop", "crowd", "atmosphere"];
 const ROLE_ALIASES: Record<string, string> = {
   identity: "identity", character: "identity", face: "identity", actor: "identity",
@@ -92,7 +92,14 @@ export default function AssetReferencePicker({
   initialReferences,
   saving,
   onCancel,
-  onApply
+  onApply,
+  maxReferences = DEFAULT_MAX_REFERENCES,
+  eyebrow = "STORYBOARD REFERENCES",
+  title = "Add visual references",
+  description,
+  sourceRoute = "/storyboard",
+  relationship = "storyboardFrame.locationReference",
+  emptyCategory = "location"
 }: {
   project: any;
   targetLabel: string;
@@ -102,6 +109,13 @@ export default function AssetReferencePicker({
   saving: boolean;
   onCancel: () => void;
   onApply: (references: DraftReference[]) => Promise<void>;
+  maxReferences?: number;
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  sourceRoute?: string;
+  relationship?: string;
+  emptyCategory?: string;
 }) {
   const lastResult = useAssetActionStore((state) => state.lastResult);
   const consumedResult = React.useRef<string | null>(null);
@@ -190,12 +204,12 @@ export default function AssetReferencePicker({
     return `${asset.name} ${asset.variant} ${asset.id}`.toLowerCase().includes(normalizedQuery);
   });
   const selectedIds = useMemo(() => new Set(draft.map((reference) => reference.assetId)), [draft]);
-  const referenceLimitReached = draft.length >= MAX_REFERENCES;
+  const referenceLimitReached = draft.length >= maxReferences;
 
   const toggleAsset = (asset: any) => {
     setDraft((current) => {
       if (current.some((reference) => reference.assetId === asset.id)) return current.filter((reference) => reference.assetId !== asset.id);
-      if (current.length >= MAX_REFERENCES) return current;
+      if (current.length >= maxReferences) return current;
       const versions = visualVersions(asset);
       const active = versions.find((version: any) => Number(version.v) === Number(asset.activeVersion)) || versions.at(-1);
       return [...current, {
@@ -205,7 +219,7 @@ export default function AssetReferencePicker({
         useMode: "direct_conditioning",
         required: true,
         cropRegion: "Use relevant subject/design region only",
-        notes: "Selected in the Storyboard reference picker and pinned for reproducible generation.",
+        notes: sourceRoute === "/edit" ? "Selected for MiniMax H3 image reference conditioning and pinned for reproducible generation." : "Selected in the Storyboard reference picker and pinned for reproducible generation.",
         pinnedActiveAtImport: Number(asset.activeVersion) === Number(active?.v || 1)
       }];
     });
@@ -218,6 +232,7 @@ export default function AssetReferencePicker({
     consumedResult.current = lastResult.assetId;
     setDraft((current) => {
       if (current.some((reference) => reference.assetId === asset.id)) return current;
+      if (current.length >= maxReferences) return current;
       return [...current, {
         assetId: asset.id,
         assetVersion: Number(lastResult.version || asset.activeVersion || 1),
@@ -232,12 +247,12 @@ export default function AssetReferencePicker({
   }, [lastResult?.assetId, lastResult?.version, project.assets?.items]);
 
   const openMissing = (action: "create" | "generate" | "upload") => {
-    const categoryKey = category === "all" ? "location" : category;
+    const categoryKey = category === "all" ? emptyCategory : category;
     openAssetAction({
-      sourceRoute: "/storyboard",
-      sourceEntity: { type: "storyboard-frame", id: targetId || targetLabel, label: targetLabel },
+      sourceRoute,
+      sourceEntity: { type: targetKind === "h3" ? "sequence" : "storyboard-frame", id: targetId || targetLabel, label: targetLabel },
       requirement: {
-        relationship: "storyboardFrame.locationReference",
+        relationship,
         category: categoryKey as any,
         expectedMediaType: "image"
       },
@@ -268,9 +283,9 @@ export default function AssetReferencePicker({
       <div ref={dialogRef} className="reference-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="reference-picker-title" aria-describedby="reference-picker-description">
         <header className="reference-picker-header">
           <div>
-            <p className="eyebrow">STORYBOARD REFERENCES</p>
-            <h2 id="reference-picker-title">Add visual references</h2>
-            <p id="reference-picker-description">{targetLabel} · choose exact Asset Library versions and their conditioning roles.</p>
+            <p className="eyebrow">{eyebrow}</p>
+            <h2 id="reference-picker-title">{title}</h2>
+            <p id="reference-picker-description">{description || `${targetLabel} · choose exact Asset Library versions and their conditioning roles.`}</p>
           </div>
           <button type="button" className="asset-dialog-close" aria-label="Close reference picker" onClick={onCancel} disabled={saving || applying}>×</button>
         </header>
@@ -285,7 +300,7 @@ export default function AssetReferencePicker({
             <div className="reference-picker-search">
               <label htmlFor="reference-asset-search">Search production assets</label>
               <input ref={searchRef} id="reference-asset-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by name, variant, or asset ID…" />
-              <span aria-live="polite">{visible.length} shown · {draft.length}/{MAX_REFERENCES} selected{referenceLimitReached ? ` · Maximum ${MAX_REFERENCES} reached` : ""}</span>
+              <span aria-live="polite">{visible.length} shown · {draft.length}/{maxReferences} selected{referenceLimitReached ? ` · Maximum ${maxReferences} reached` : ""}</span>
             </div>
             <div className="reference-picker-grid" role="listbox" aria-label="Available visual assets" aria-multiselectable="true">
               {visible.map((asset: any) => {
@@ -294,7 +309,7 @@ export default function AssetReferencePicker({
                 const versions = visualVersions(asset);
                 const version = selectedDraft?.assetVersion || Number(asset.activeVersion || versions.at(-1)?.v || 1);
                 return (
-                  <button type="button" role="option" aria-selected={selected} key={asset.id} className={`reference-asset-card ${selected ? "selected" : ""}`} onClick={() => toggleAsset(asset)} disabled={!selected && referenceLimitReached} aria-disabled={!selected && referenceLimitReached} title={!selected && referenceLimitReached ? `Remove a reference before adding another (maximum ${MAX_REFERENCES}).` : undefined}>
+                  <button type="button" role="option" aria-selected={selected} key={asset.id} className={`reference-asset-card ${selected ? "selected" : ""}`} onClick={() => toggleAsset(asset)} disabled={!selected && referenceLimitReached} aria-disabled={!selected && referenceLimitReached} title={!selected && referenceLimitReached ? `Remove a reference before adding another (maximum ${maxReferences}).` : undefined}>
                     <span className="reference-asset-preview"><AssetThumbnail projectSlug={project.slug} asset={asset} version={version} /><i aria-hidden="true">{selected ? "✓" : ""}</i></span>
                     <span className="reference-asset-copy"><b>{asset.name}</b><small>{asset.variant}</small><code>{asset.id}</code></span>
                     <span className={`reference-approval ${exactVersionApproved(asset, version) ? "approved" : "review"}`}>{exactVersionApproved(asset, version) ? `Approved v${version}` : `Needs approval · v${version}`}</span>
@@ -336,7 +351,7 @@ export default function AssetReferencePicker({
         </div>
 
         <footer className="reference-picker-footer">
-          <p>{referenceLimitReached ? `Maximum ${MAX_REFERENCES} references selected. Remove one to choose another.` : `Choose up to ${MAX_REFERENCES} planning references. Video generation remains locked until required images and exact asset versions are approved.`}</p>
+          <p>{referenceLimitReached ? `Maximum ${maxReferences} references selected. Remove one to choose another.` : `Choose up to ${maxReferences} planning references. Video generation remains locked until required images and exact asset versions are approved.`}</p>
           <button type="button" className="secondary-action" onClick={onCancel} disabled={saving || applying}>Cancel</button>
           <button type="button" className="primary-action" onClick={() => void apply()} disabled={saving || applying}>{saving || applying ? "Applying…" : `Apply ${draft.length} Reference${draft.length === 1 ? "" : "s"}`}</button>
         </footer>

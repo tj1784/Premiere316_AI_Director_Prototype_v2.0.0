@@ -12,31 +12,37 @@
       "family": "fl2va",
       "nodeClass": "MiniMaxH3ImageToVideo",
       "hardFirstFrame": false,
-      "hardLastFrame": false
+      "hardLastFrame": false,
+      "maxImageReferences": 12
     },
     "first_frame": {
       "family": "fl2va",
       "nodeClass": "MiniMaxH3ImageToVideo",
       "hardFirstFrame": true,
-      "hardLastFrame": false
+      "hardLastFrame": false,
+      "maxImageReferences": 12,
+      "note": "The first_frame image remains the hard opening anchor; optional image references continue after it as <Picture 2> through <Picture 13>."
     },
     "last_frame": {
       "family": "fl2va",
       "nodeClass": "MiniMaxH3ImageToVideo",
       "hardFirstFrame": false,
-      "hardLastFrame": true
+      "hardLastFrame": true,
+      "maxImageReferences": 12
     },
     "first_last": {
       "family": "fl2va",
       "nodeClass": "MiniMaxH3ImageToVideo",
       "hardFirstFrame": true,
-      "hardLastFrame": true
+      "hardLastFrame": true,
+      "maxImageReferences": 12
     },
     "reference": {
       "family": "ref2va",
       "nodeClass": "MiniMaxH3ReferenceToVideo",
       "hardFirstFrame": false,
       "hardLastFrame": false,
+      "maxImageReferences": 12,
       "note": "Ref2VA references guide identity/style/motion/audio; they are not hard first/last-frame constraints."
     }
   },
@@ -67,6 +73,7 @@
     "fps": 24,
     "minSeconds": 4,
     "maxSeconds": 15,
+    "maxImageReferences": 12,
     "frameFormula": "max(5, round(requestedSeconds * 24)) + (5 - (max(5, round(requestedSeconds * 24)) % 17)) % 17",
     "dimensions": "Multiples of 32 within the 768p-class native pixel budget; 16:9 full is approximately 1344x768."
   }

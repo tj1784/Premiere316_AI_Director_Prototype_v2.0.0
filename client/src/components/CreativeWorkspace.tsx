@@ -7,6 +7,7 @@ import {
   masterUrl
 } from "../store";
 import { openAssetAction } from "../contextual-agency";
+import AssetReferencePicker from "./AssetReferencePicker";
 
 function currentCreativeRoute() {
   const path = String(window.location.pathname || "").toLowerCase();
@@ -104,6 +105,8 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
   const masterVideoRef = useRef<HTMLVideoElement>(null);
   const [search, setSearch] = useState("");
   const [queueFilter, setQueueFilter] = useState<"all" | "running" | "done" | "error">("all");
+  const [h3ReferencePickerOpen, setH3ReferencePickerOpen] = useState(false);
+  const [h3References, setH3References] = useState<any[]>([]);
   const [guideDraft, setGuideDraft] = useState({
     role: "middle",
     frame: 24,
@@ -119,6 +122,11 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
       frame: Math.max(1, Math.round((selectedClip.durationSec * fps) / 2))
     }));
   }, [selectedClip?.id]);
+
+  useEffect(() => {
+    setH3References([]);
+    setH3ReferencePickerOpen(false);
+  }, [project.slug, selectedClip?.id]);
 
   const totalDurationSec = useMemo(
     () => clips.reduce((sum: number, clip: any) => sum + Number(clip.durationSec || 0), 0),
@@ -168,6 +176,12 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
   const selectedH3Mode = (store.h3Diagnostics?.modes || []).find((mode: any) => mode.id === store.h3Mode);
   const h3ModeNeedsApprovedGuides = ["first_frame", "last_frame", "first_last"].includes(store.h3Mode);
   const h3ModeReady = selectedH3Mode ? Boolean(selectedH3Mode.enabled) : store.h3Mode === "reference" ? Boolean(store.h3Diagnostics?.ref2vaReady) : Boolean(store.h3Diagnostics?.fl2vaReady);
+  const h3ReferenceNames = h3References
+    .map((reference: any) => (project.assets?.items || []).find((asset: any) => asset.id === reference.assetId)?.name || reference.display || reference.assetId)
+    .filter(Boolean);
+  const h3ReferenceLabel = h3References.length
+    ? `${h3References.length}/12 · ${h3ReferenceNames.slice(0, 3).join(", ")}${h3ReferenceNames.length > 3 ? " +" + (h3ReferenceNames.length - 3) : ""}`
+    : "0/12";
 
   const latestSelectedRange = useMemo(() => {
     if (!selectedClip?.rangeVersions?.length) return null;
@@ -284,6 +298,11 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
         clip.status = clip.versions?.length ? "dirty" : "ready";
       }
     });
+  };
+
+  const queueH3Selection = () => {
+    if (!selectedClip) return;
+    store.renderH3Selection(selectedClip.id, undefined, { references: h3References, refImageSize: "match" });
   };
 
   const commitClipSegments = async () => {
@@ -607,7 +626,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
             className="button secondary h3-toolbar-button"
             disabled={!h3CanRender}
             title={h3PrimaryIssue || `Render with ${selectedH3Mode?.label || "MiniMax H3"}`}
-            onClick={() => selectedClip && store.renderH3Selection(selectedClip.id)}
+            onClick={() => queueH3Selection()}
           >
             MiniMax H3
           </button>
@@ -773,6 +792,10 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
                   <option value="reference">Reference to Video</option>
                 </select>
               </label>
+              <div className="h3-reference-controls">
+                <button className="button secondary" type="button" disabled={!selectedClip} onClick={() => setH3ReferencePickerOpen(true)}>Image Refs <small>{h3ReferenceLabel}</small></button>
+                {h3References.length ? <button className="mini-icon" title="Clear H3 image references" onClick={() => setH3References([])}>×</button> : null}
+              </div>
               <dl>
                 <div><dt>Backend</dt><dd>{store.h3Diagnostics?.comfyVersion ? `Comfy ${store.h3Diagnostics.comfyVersion}` : "Checking"}</dd></div>
                 <div><dt>FL2VA</dt><dd>{store.h3Diagnostics?.fl2vaReady ? "Ready" : "Blocked"}</dd></div>
@@ -783,7 +806,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
               <button
                 className="button primary"
                 disabled={!h3CanRender}
-                onClick={() => selectedClip && store.renderH3Selection(selectedClip.id)}
+                onClick={() => queueH3Selection()}
               >
                 {store.h3Busy ? "Queueing H3…" : "Render Selected with H3"}
               </button>
@@ -792,7 +815,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
               <h4>ACTIONS</h4>
               <button className="button primary" disabled={!selectedClip || !store.health.comfy || !selectedClipGuidesApproved} onClick={() => selectedClip && store.renderSelection(selectedClip.id)}>Render Selection</button>
               <button className="button secondary" disabled={!selectedClip || !store.health.comfy || !selectedClipGuidesApproved} onClick={() => selectedClip && store.renderDirty(selectedClip.id)}>Render Dirty</button>
-              <button className="button secondary" disabled={!h3CanRender} onClick={() => selectedClip && store.renderH3Selection(selectedClip.id)}>Render H3 Selection</button>
+              <button className="button secondary" disabled={!h3CanRender} onClick={() => queueH3Selection()}>Render H3 Selection</button>
               <button className="button secondary" disabled={!selectedClip} onClick={() => selectedClip && store.assembleClip(selectedClip.id)}>Assemble Clip</button>
               <button className="button secondary" disabled={!selectedClip || !selectedFrameApproved} onClick={() => {
                  if (selectedClip && store.selFrameFile) store.attachGuide(selectedClip.id, { frameFile: store.selFrameFile, role: "first", frame: 0 });
@@ -1004,6 +1027,25 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
           </button>
         </aside>
       </section>
+      {h3ReferencePickerOpen ? (
+        <AssetReferencePicker
+          project={project}
+          targetLabel={selectedClip?.name || "MiniMax H3"}
+          targetId={selectedClip?.id}
+          targetKind="h3"
+          initialReferences={h3References}
+          saving={false}
+          maxReferences={12}
+          eyebrow="MINIMAX H3 REFERENCES"
+          title="Add H3 image references"
+          description={`${selectedClip?.name || "Selected clip"} · choose up to 12 image assets for H3 reference conditioning.`}
+          sourceRoute="/edit"
+          relationship="edit.h3ImageReference"
+          emptyCategory="character"
+          onCancel={() => setH3ReferencePickerOpen(false)}
+          onApply={async (references) => { setH3References(references); }}
+        />
+      ) : null}
     </main>
   );
 }

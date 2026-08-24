@@ -11,6 +11,8 @@ export const H3_DISPLAY_NAME = "MiniMax H3";
 export const H3_FPS = 24;
 export const H3_MIN_SECONDS = 4;
 export const H3_MAX_SECONDS = 15;
+export const H3_MAX_REFERENCE_FILES = 12;
+export const H3_MAX_IMAGE_REFERENCES = 12;
 
 export const H3_MODE_T2V = "t2v";
 export const H3_MODE_FIRST = "first_frame";
@@ -429,7 +431,11 @@ export function splitH3Ranges(ranges = [], fps = H3_FPS) {
   return out;
 }
 
-export function validateH3ReferenceManifest(references = []) {
+function h3AnchorImageCount(modeInfo) {
+  return (modeInfo?.needsFirst ? 1 : 0) + (modeInfo?.needsLast ? 1 : 0);
+}
+
+export function validateH3ReferenceManifest(references = [], { imageTagOffset = 0 } = {}) {
   const refs = (Array.isArray(references) ? references : []).map((ref, index) => ({
     id: ref.id || `ref_${index + 1}`,
     type: String(ref.type || "image").toLowerCase(),
@@ -443,8 +449,8 @@ export function validateH3ReferenceManifest(references = []) {
   const videos = refs.filter((ref) => ref.type === "video");
   const audios = refs.filter((ref) => ref.type === "audio");
   const errors = [];
-  if (refs.length > 12) errors.push("Ref2VA accepts at most 12 logical files across images, videos, and standalone audio.");
-  if (images.length > 9) errors.push("Ref2VA accepts at most 9 images.");
+  if (refs.length > H3_MAX_REFERENCE_FILES) errors.push(`MiniMax H3 accepts at most ${H3_MAX_REFERENCE_FILES} logical reference files across images, videos, and standalone audio.`);
+  if (images.length > H3_MAX_IMAGE_REFERENCES) errors.push(`MiniMax H3 accepts at most ${H3_MAX_IMAGE_REFERENCES} image references.`);
   if (videos.length > 3) errors.push("Ref2VA accepts at most 3 videos.");
   if (audios.length > 3) errors.push("Ref2VA accepts at most 3 standalone audio clips.");
   if (audios.length && !images.length && !videos.length) errors.push("Audio cannot be the only Ref2VA reference modality; add an image or video reference.");
@@ -462,7 +468,7 @@ export function validateH3ReferenceManifest(references = []) {
   let videoIndex = 0;
   let audioIndex = 0;
   const tagged = refs.map((ref) => {
-    if (ref.type === "image") return { ...ref, tag: `<Picture ${++imageIndex}>`, ordinal: imageIndex };
+    if (ref.type === "image") return { ...ref, tag: `<Picture ${imageTagOffset + ++imageIndex}>`, ordinal: imageIndex };
     if (ref.type === "video") return { ...ref, tag: `<Video ${++videoIndex}>`, ordinal: videoIndex };
     if (ref.type === "audio") return { ...ref, tag: `<Audio ${++audioIndex}>`, ordinal: audioIndex };
     errors.push(`Unsupported Ref2VA reference type: ${ref.type}`);
@@ -500,8 +506,12 @@ export function compileH3Prompt({
   const scene = cleanForPrompt(clip.globalPrompt || project?.screenplay?.settings?.storyBrief || project?.name || "Cinematic biblical scene");
   const score = project?.score || {};
   const modeInfo = H3_MODES[mode] || H3_MODES[H3_MODE_FIRST];
-  const refValidation = validateH3ReferenceManifest(referenceManifest);
-  if (mode === H3_MODE_REFERENCE && !refValidation.ok) throw new Error(refValidation.errors.join(" "));
+  const imageTagOffset = mode === H3_MODE_REFERENCE ? 0 : h3AnchorImageCount(modeInfo);
+  const refValidation = validateH3ReferenceManifest(referenceManifest, { imageTagOffset });
+  if (referenceManifest?.length && !refValidation.ok) throw new Error(refValidation.errors.join(" "));
+  if (mode !== H3_MODE_REFERENCE && refValidation.references.some((ref) => ref.type !== "image")) {
+    throw new Error(`${modeInfo.label} accepts image references only. Use Reference to Video for video or audio references.`);
+  }
 
   const lines = [];
   lines.push("PREMIERE316 LOCAL MINIMAX H3 DIRECTOR PROMPT");
@@ -509,7 +519,7 @@ export function compileH3Prompt({
   lines.push(`Render mode: ${modeInfo.label}.`);
   lines.push("Continuity: preserve character identity, anatomy, wardrobe, props, terrain, lighting direction, scale, and camera geography from start to finish. Do not add captions, subtitles, written labels, UI overlays, watermarks, or extra faces on the rear of any head.");
   lines.push("Camera and style: photorealistic cinematic realism, controlled motion, rich texture, volumetric light, atmospheric dust, natural cloth and hair movement, realistic motion blur, high dynamic range, delicate film grain.");
-  if (mode === H3_MODE_REFERENCE) {
+  if (mode === H3_MODE_REFERENCE && refValidation.references.length) {
     lines.push("Reference binding:");
     for (const ref of refValidation.references) {
       lines.push(`${ref.tag} = ${ref.role || "reference"}; use it only for its assigned purpose and preserve the requested identity/style/order.`);
@@ -520,6 +530,12 @@ export function compileH3Prompt({
     lines.push("Frame anchor: the first image is the hard opening frame; continue motion naturally from it without identity drift.");
   } else if (modeInfo.needsLast) {
     lines.push("Frame anchor: the last image is the hard ending frame; approach it naturally without identity drift.");
+  }
+  if (mode !== H3_MODE_REFERENCE && refValidation.references.length) {
+    lines.push("Additional image reference binding:");
+    for (const ref of refValidation.references) {
+      lines.push(`${ref.tag} = ${ref.role || "reference"}; use it as visual reference conditioning only. Keep the hard frame anchor authoritative.`);
+    }
   }
   lines.push(`Timeline: requested ${timing.requestedSeconds.toFixed(3)} seconds; H3 raw generation ${timing.rawDurationSec.toFixed(3)} seconds at ${H3_FPS} fps (${timing.resolvedFrames} frames).`);
   for (const [index, segment] of localSegments.entries()) {
@@ -587,6 +603,19 @@ function addLoadImage(prompt, id, comfyFile) {
   return [id, 0];
 }
 
+function addImageReferencesToH3Node(prompt, h3, references, {
+  startId = 1,
+  maxImages = H3_MAX_IMAGE_REFERENCES
+} = {}) {
+  const imageRefs = references.filter((ref) => ref.type === "image");
+  if (imageRefs.length > maxImages) throw new Error(`MiniMax H3 accepts at most ${maxImages} image references.`);
+  for (const ref of imageRefs) {
+    if (!ref.comfyFile) throw new Error(`${ref.tag} has no staged ComfyUI file`);
+    const id = `p316_h3_ref_image_${startId + ref.ordinal - 1}`;
+    h3.inputs[`ref_images.ref_image_${ref.ordinal - 1}`] = addLoadImage(prompt, id, ref.comfyFile);
+  }
+}
+
 function validateApiPrompt(prompt, objectInfo) {
   for (const [id, node] of Object.entries(prompt)) {
     if (!objectInfo?.[node.class_type]) throw new Error(`Generated H3 API prompt contains unavailable node ${node.class_type} (${id})`);
@@ -626,7 +655,7 @@ function patchCommonH3Nodes(prompt, objectInfo, {
   h3.inputs.width = width;
   h3.inputs.height = height;
   h3.inputs.length = frames;
-  if (family === "ref2va") setInputIfPresent(objectInfo, h3, "ref_image_size", refImageSize);
+  setInputIfPresent(objectInfo, h3, "ref_image_size", refImageSize);
 
   unet.inputs.unet_name = H3_MODEL_FILES[family].filename;
   setInputIfPresent(objectInfo, unet, "weight_dtype", "default");
@@ -705,6 +734,14 @@ export function buildH3Workflow({
   const family = modeInfo.family;
   assertH3ReadyForBuild(objectInfo, family);
   if (family === "fl2va") {
+    const refValidation = validateH3ReferenceManifest(references, { imageTagOffset: h3AnchorImageCount(modeInfo) });
+    if (!refValidation.ok) throw new Error(refValidation.errors.join(" "));
+    if (refValidation.references.some((ref) => ref.type !== "image")) {
+      throw new Error(`${modeInfo.label} accepts image references only. Use Reference to Video for video or audio references.`);
+    }
+    if (refValidation.references.length && !hasInput(objectInfo, H3_NODE_CLASSES.fl2va, "ref_images")) {
+      throw new Error(`${H3_NODE_CLASSES.fl2va} does not expose ref_images yet. Restart or update the MiniMax H3 ComfyUI node before using image references with ${modeInfo.label}.`);
+    }
     const templateName = mode === H3_MODE_T2V ? "video_minimax_h3_t2v.json" : "video_minimax_h3_i2v.json";
     const template = loadH3Template(templateName);
     const subgraph = (template.definitions?.subgraphs || []).find((item) => item.name === H3_WORKFLOW_SLOTS.fl2va.subgraph);
@@ -720,6 +757,7 @@ export function buildH3Workflow({
       if (!lastFrameComfyFile) throw new Error(`${modeInfo.label} needs an approved last-frame guide.`);
       h3.inputs.last_frame = addLoadImage(prompt, "p316_h3_last_frame", lastFrameComfyFile);
     }
+    addImageReferencesToH3Node(prompt, h3, refValidation.references, { startId: h3AnchorImageCount(modeInfo) + 1 });
     patchCommonH3Nodes(prompt, objectInfo, {
       family,
       promptText,
@@ -727,7 +765,8 @@ export function buildH3Workflow({
       height,
       frames,
       seed,
-      filenamePrefix
+      filenamePrefix,
+      refImageSize
     });
     validateApiPrompt(prompt, objectInfo);
     return { prompt, warnings, sourceTemplate: templateName, family, semanticSlots: H3_WORKFLOW_SLOTS.fl2va };
@@ -742,12 +781,13 @@ export function buildH3Workflow({
     if (/^ref_(images|videos|video_audios|audios)\./.test(inputName)) delete h3.inputs[inputName];
   }
   let extraId = 9000;
+  addImageReferencesToH3Node(prompt, h3, refValidation.references);
   for (const ref of refValidation.references) {
-    if (!ref.comfyFile) throw new Error(`${ref.tag} has no staged ComfyUI file`);
     if (ref.type === "image") {
-      const id = `p316_h3_ref_image_${ref.ordinal}`;
-      h3.inputs[`ref_images.ref_image_${ref.ordinal - 1}`] = addLoadImage(prompt, id, ref.comfyFile);
-    } else if (ref.type === "audio") {
+      continue;
+    }
+    if (!ref.comfyFile) throw new Error(`${ref.tag} has no staged ComfyUI file`);
+    if (ref.type === "audio") {
       const id = String(extraId++);
       prompt[id] = { class_type: H3_NODE_CLASSES.loadAudio, inputs: { audio: ref.comfyFile } };
       h3.inputs[`ref_audios.ref_audio_${ref.ordinal - 1}`] = [id, 0];

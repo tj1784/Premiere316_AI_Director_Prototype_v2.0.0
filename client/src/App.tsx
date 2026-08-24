@@ -7,6 +7,7 @@ import StoryboardWorkspace from "./components/StoryboardWorkspace";
 import AssetsWorkspaceOutlet from "./components/AssetsWorkspaces";
 import DirectWorkspace from "./components/DirectWorkspace";
 import CreateSoundWorkspace from "./components/CreateSoundWorkspace";
+import UpscaleWorkspace from "./components/UpscaleWorkspace";
 import ProjectContextStrip from "./components/ProjectContextStrip";
 import GlobalQueueDrawer from "./components/GlobalQueueDrawer";
 import AssetActionDrawer from "./components/AssetActionDrawer";
@@ -330,6 +331,7 @@ export default function App() {
     if (section === "assets") return <AssetsWorkspaceOutlet tab={subtab || "prompts"} onNavigate={navigate} onOpenEditor={() => navigate("/direct/sequence")} />;
     if (route === "/sound") return <CreateSoundWorkspace key={store.project.slug} />;
     if (route === "/storyboard") return <StoryboardWorkspace onOpenAssets={() => navigate("/assets/library")} />;
+    if (route === "/upscale") return <UpscaleWorkspace />;
     if (section === "direct") return <DirectWorkspace tab={subtab || "sequence"} onOpenAssets={() => navigate("/assets/library")} onReviewOutputs={() => navigate("/assets/generate")} />;
     return <CreativeWorkspace onOpenAssets={() => navigate("/assets/library")} />;
   };
@@ -380,6 +382,7 @@ export default function App() {
           {navButton("direct", "Direct", `/direct/${localStorage.getItem("premiere316.direct-tab") || "sequence"}`, section === "direct")}
           <button className={section === "edit" ? "active" : ""} onClick={() => navigate("/edit")}>Edit</button>
           <button className={section === "generate" ? "active" : ""} onClick={() => navigate("/generate")}>Generate</button>
+          {navButton("upscale", "Upscale", "/upscale", section === "upscale")}
           {navButton("master", "Master", "/master", section === "master")}
           {navButton("export", "Export", "/export", section === "export")}
         </nav>

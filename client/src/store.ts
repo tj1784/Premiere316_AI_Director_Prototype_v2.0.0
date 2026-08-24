@@ -206,7 +206,7 @@ type Store = {
   deleteGuide: (clipId: string, guideId: string) => Promise<void>;
 
   renderSelection: (clipId?: string) => Promise<void>;
-  renderH3Selection: (clipId?: string, mode?: Store["h3Mode"]) => Promise<void>;
+  renderH3Selection: (clipId?: string, mode?: Store["h3Mode"], options?: { references?: any[]; refImageSize?: "match" | "max" }) => Promise<void>;
   renderDirty: (clipId?: string) => Promise<void>;
   renderAll: () => Promise<void>;
   renderAllDirty: () => Promise<void>;
@@ -1525,7 +1525,7 @@ export const useStore = create<Store>((set, get) => ({
       set({ error: String(error.message) });
     }
   },
-  renderH3Selection: async (clipId, mode) => {
+  renderH3Selection: async (clipId, mode, options = {}) => {
     const project = get().project;
     const id = clipId || get().selClipId;
     if (!project || !id) return;
@@ -1533,6 +1533,8 @@ export const useStore = create<Store>((set, get) => ({
     set({ h3Busy: true, error: null });
     try {
       const body: any = { clipId: id, mode: mode || get().h3Mode };
+      if (Array.isArray(options.references) && options.references.length) body.references = options.references;
+      if (options.refImageSize) body.refImageSize = options.refImageSize;
       const selected = get().selectedSegmentIds;
       if (selected.length) body.segmentIds = selected;
       else if (get().markInFrame != null && get().markOutFrame != null) {

@@ -905,6 +905,66 @@ async function uploadClipGuides(project, clip) {
   return out;
 }
 
+function assetVisualFile(asset, requestedVersion) {
+  const versionNumber = Number(requestedVersion ?? asset?.activeVersion);
+  const versions = Array.isArray(asset?.versions) ? asset.versions : [];
+  const version = versions.find((item) => Number(item.v) === versionNumber) || versions.at(-1);
+  if (!version) return null;
+  return version.file || (Array.isArray(version.files) ? version.files.find((file) => /\.(png|jpe?g|webp)$/i.test(String(file || ""))) : null);
+}
+
+function h3ReferenceDisk(project, reference) {
+  const storedFile = reference?.file || reference?.sourceAssetFile || null;
+  if (storedFile) {
+    for (const kind of ["assets", "frames"]) {
+      const disk = path.resolve(mediaDir(project, kind), path.basename(storedFile));
+      if (fs.existsSync(disk)) return { disk, file: path.basename(storedFile) };
+    }
+  }
+  if (!reference?.assetId) throw new Error(`MiniMax H3 reference ${reference?.id || reference?.display || "item"} has no asset binding or file`);
+  const asset = (project.assets?.items || []).find((item) => item.id === reference.assetId);
+  if (!asset) throw new Error(`MiniMax H3 reference asset is missing: ${reference.assetId}`);
+  const requestedVersion = Number(reference.assetVersion ?? asset.activeVersion);
+  if (!skipApproval(project) && (!assetApprovalCurrent(project, asset) || Number(asset.approval?.activeVersion) !== requestedVersion)) {
+    throw new Error(`MiniMax H3 reference ${asset.name || asset.id} must use its currently approved active version.`);
+  }
+  const file = assetVisualFile(asset, requestedVersion);
+  if (!file) throw new Error(`MiniMax H3 reference ${asset.name || asset.id} has no image file for v${reference.assetVersion || asset.activeVersion || "active"}`);
+  const disk = path.resolve(mediaDir(project, "assets"), path.basename(file));
+  if (!fs.existsSync(disk)) throw new Error(`MiniMax H3 reference file is missing on disk: ${file}`);
+  return { disk, file: path.basename(file), asset };
+}
+
+async function uploadH3References(project, references = []) {
+  const subfolder = `premiere316/${project.slug}/h3`;
+  const uploaded = new Map();
+  const out = [];
+  for (const [index, reference] of (Array.isArray(references) ? references : []).entries()) {
+    if (reference?.comfyFile) {
+      out.push({ ...reference, type: String(reference.type || "image").toLowerCase(), comfyFile: reference.comfyFile });
+      continue;
+    }
+    if (String(reference?.type || "image").toLowerCase() !== "image") {
+      throw new Error(`MiniMax H3 reference ${reference?.id || reference?.display || index + 1} must be pre-staged as a ComfyUI file unless it is an image asset.`);
+    }
+    const { disk, file, asset } = h3ReferenceDisk(project, reference);
+    let comfyFile = uploaded.get(disk);
+    if (!comfyFile) {
+      comfyFile = await uploadImage(disk, subfolder);
+      uploaded.set(disk, comfyFile);
+    }
+    out.push({
+      ...reference,
+      id: reference.id || reference.assetId || `h3_ref_${index + 1}`,
+      type: String(reference.type || "image").toLowerCase(),
+      role: reference.role || asset?.category || "reference",
+      file,
+      comfyFile
+    });
+  }
+  return out;
+}
+
 async function renderRange(job) {
   const project = loadProject(job.projectSlug);
   const clip = findClip(project, job.refs.clipId);
@@ -1081,6 +1141,7 @@ async function renderH3Range(job) {
   job.progress = 0.06;
   const guides = await uploadClipGuides(project, clip);
   const anchors = h3AnchorsForRange(guides, mode, rangeStartFrame, rangeEndFrame, totalFrames);
+  const h3References = await uploadH3References(project, job.refs.references || []);
 
   const aspect = job.refs.h3Aspect || project.settings?.aspectRatio || `${project.settings.width || 1344}:${project.settings.height || 768}`;
   const dimensions = h3Dimensions({
@@ -1099,7 +1160,8 @@ async function renderH3Range(job) {
     mode,
     rangeStartFrame,
     rangeEndFrame,
-    audioMode: job.refs.h3AudioMode || "mixed"
+    audioMode: job.refs.h3AudioMode || "mixed",
+    referenceManifest: h3References
   });
   const objectInfo = await getObjectInfo();
   const workflow = buildH3Workflow({
@@ -1113,7 +1175,7 @@ async function renderH3Range(job) {
     filenamePrefix: clipComfyOutputPrefix(project, clip, `${baseName}_raw`),
     firstFrameComfyFile: anchors.first?.comfyFile,
     lastFrameComfyFile: anchors.last?.comfyFile,
-    references: job.refs.references || [],
+    references: h3References,
     refImageSize: job.refs.refImageSize || "match"
   });
   if (workflow.warnings?.length) console.warn("[render_h3_range] conversion warnings:", workflow.warnings);

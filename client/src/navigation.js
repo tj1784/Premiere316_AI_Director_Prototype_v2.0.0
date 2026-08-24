@@ -9,6 +9,7 @@ export const TOP_LEVEL_ROUTES = Object.freeze({
   direct: "/direct/sequence",
   edit: "/edit",
   generate: "/generate",
+  upscale: "/upscale",
   master: "/master",
   export: "/export"
 });
