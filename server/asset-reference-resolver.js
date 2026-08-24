@@ -82,12 +82,19 @@ function rejectClientOwnedFields(value, pathValue) {
   );
 }
 
+function sha256OrNull(value) {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toLowerCase();
+  return SHA256_RE.test(normalized) ? normalized : null;
+}
+
 export function findExactAssetVersion(asset, assetVersion) {
   // Exact pin only: never versions.at(-1), never activeVersion, never newest.
-  if (!Number.isInteger(assetVersion) || assetVersion < 1) return null;
+  if (!Number.isSafeInteger(assetVersion) || assetVersion < 1) return null;
   const versions = Array.isArray(asset?.versions) ? asset.versions : [];
   for (const candidate of versions) {
-    if (Number(candidate?.v) === assetVersion) return candidate;
+    const versionNumber = Number(candidate?.v);
+    if (Number.isSafeInteger(versionNumber) && versionNumber === assetVersion) return candidate;
   }
   return null;
 }
@@ -177,37 +184,55 @@ function fingerprintVersionRecord(asset, version) {
 function approvalFingerprintOf(asset) {
   const approval = asset?.approval;
   if (!approval || typeof approval !== "object") return null;
-  if (typeof approval.fingerprint === "string" && SHA256_RE.test(approval.fingerprint)) {
-    return approval.fingerprint.toLowerCase();
-  }
-  if (typeof approval.approvalFingerprint === "string" && SHA256_RE.test(approval.approvalFingerprint)) {
-    return approval.approvalFingerprint.toLowerCase();
-  }
-  if (typeof approval.versionFingerprint === "string" && SHA256_RE.test(approval.versionFingerprint)) {
-    return approval.versionFingerprint.toLowerCase();
-  }
-  return crypto.createHash("sha256").update(JSON.stringify({
-    status: approval.status || null,
-    activeVersion: Number(approval.activeVersion) || null,
-    screenplayRevision: approval.screenplayRevision || null,
-    generationFingerprint: approval.generationFingerprint || null,
-    versionFingerprint: approval.versionFingerprint || null,
-    approvedAt: approval.approvedAt || null
-  })).digest("hex");
+  return sha256OrNull(approval.fingerprint)
+    || sha256OrNull(approval.approvalFingerprint)
+    || crypto.createHash("sha256").update(JSON.stringify({
+      status: approval.status || null,
+      activeVersion: Number(approval.activeVersion) || null,
+      screenplayRevision: approval.screenplayRevision || null,
+      generationFingerprint: approval.generationFingerprint || null,
+      versionFingerprint: approval.versionFingerprint || null,
+      approvedAt: approval.approvedAt || null
+    })).digest("hex");
 }
 
 function exactVersionCurrentlyApproved(project, asset, requestedVersion) {
   // Keep composer tests free of assets.js/Comfy imports. Equivalent fail-closed
   // rule: skipApproval projects may pin the exact existing version; otherwise
-  // the exact requested version must be the currently approved version.
+  // the requested version must be the currently approved *and* active version.
   if (!asset) return false;
   if (projectSkipsApproval(project)) return true;
   const approval = asset.approval;
-  return Boolean(
-    approval &&
-    approval.status === "approved" &&
-    Number(approval.activeVersion) === Number(requestedVersion)
-  );
+  if (!approval || approval.status !== "approved") return false;
+  const approvedVersion = Number(approval.activeVersion);
+  const activeVersion = Number(asset.activeVersion);
+  return Number.isSafeInteger(approvedVersion)
+    && Number.isSafeInteger(activeVersion)
+    && approvedVersion === requestedVersion
+    && activeVersion === requestedVersion;
+}
+
+function assertInsideAssetDir(diskPath, assetRoot, details) {
+  let realFile;
+  let realRoot;
+  try {
+    realFile = fs.realpathSync(diskPath);
+    realRoot = fs.realpathSync(assetRoot);
+  } catch {
+    fail(
+      "path_escape",
+      `${details.assetId}:v${details.assetVersion} source file is outside the project asset directory`,
+      details
+    );
+  }
+  const relative = path.relative(realRoot, realFile);
+  if (relative === "" || path.isAbsolute(relative) || relative === ".." || relative.startsWith(`..${path.sep}`)) {
+    fail(
+      "path_escape",
+      `${details.assetId}:v${details.assetVersion} source file is outside the project asset directory`,
+      details
+    );
+  }
 }
 
 function resolveOneStillsReference(project, pin, index, assetById, seenOrders) {
@@ -220,7 +245,7 @@ function resolveOneStillsReference(project, pin, index, assetById, seenOrders) {
   const assetId = typeof pin.assetId === "string" ? pin.assetId.trim() : "";
   if (!assetId) fail("missing_asset_id", "assetId is required", { path: `${basePath}.assetId` });
 
-  if (!Number.isInteger(pin.assetVersion) || pin.assetVersion < 1) {
+  if (!Number.isSafeInteger(pin.assetVersion) || pin.assetVersion < 1) {
     fail(
       "invalid_asset_version",
       "assetVersion must be a positive integer; missing versions are not filled from active or newest",
@@ -233,7 +258,7 @@ function resolveOneStillsReference(project, pin, index, assetById, seenOrders) {
     fail("invalid_reference_role", "role is required", { path: `${basePath}.role` });
   }
 
-  if (!Number.isInteger(pin.order) || pin.order < 1) {
+  if (!Number.isSafeInteger(pin.order) || pin.order < 1) {
     fail("invalid_reference_order", "order must be a unique positive 1-based integer", { path: `${basePath}.order` });
   }
   if (seenOrders.has(pin.order)) {
@@ -298,7 +323,8 @@ function resolveOneStillsReference(project, pin, index, assetById, seenOrders) {
   const slug = typeof project?.slug === "string" ? project.slug.trim() : "";
   if (!slug) fail("invalid_project", "A server-loaded project with a slug is required", { path: "project" });
 
-  const diskPath = resolveProjectMediaFile(projectsRootOf(project), slug, "assets", relative);
+  const projectsRoot = projectsRootOf(project);
+  const diskPath = resolveProjectMediaFile(projectsRoot, slug, "assets", relative);
   if (!diskPath) {
     fail("path_escape", `${assetId}:v${pin.assetVersion} source file is outside the project asset directory`, {
       path: basePath,
@@ -311,9 +337,15 @@ function resolveOneStillsReference(project, pin, index, assetById, seenOrders) {
       path: basePath,
       assetId,
       assetVersion: pin.assetVersion,
-      sourceFile: path.posix.basename(relative)
+      sourceFile: relative
     });
   }
+  const assetRoot = path.resolve(projectsRoot, slug, "media", "assets");
+  assertInsideAssetDir(diskPath, assetRoot, {
+    path: basePath,
+    assetId,
+    assetVersion: pin.assetVersion
+  });
 
   const buffer = fs.readFileSync(diskPath);
   const fileSha256 = crypto.createHash("sha256").update(buffer).digest("hex");
@@ -346,7 +378,7 @@ function resolveOneStillsReference(project, pin, index, assetById, seenOrders) {
     assetVersion: pin.assetVersion,
     type,
     role,
-    sourceFile: path.posix.basename(relative),
+    sourceFile: relative,
     fileSha256,
     generationFingerprint,
     versionFingerprint,

@@ -436,10 +436,15 @@ function mediaTypeFromFile(file) {
   return null;
 }
 
-function rejectClientOwnedReferenceFields(pin, basePath, errors) {
+function isStillsPinWorkflow(item) {
+  return item?.compiler === "compileStoryboardFramePrompt";
+}
+
+function rejectClientOwnedReferenceFields(pin, basePath, errors, rejectFile = false) {
   for (const field of CLIENT_OWNED_REFERENCE_FIELDS) {
-    // Existing composer tests treat `file` as an ignored client claim, not a 400.
-    if (field === "file") continue;
+    // LTX/video composer tests treat `file` as an ignored client claim.
+    // Stills pins reject every client-owned filesystem field, including `file`.
+    if (field === "file" && !rejectFile) continue;
     if (Object.hasOwn(pin, field)) {
       errors.push(issue(
         "client_owned_file_rejected",
@@ -469,7 +474,7 @@ function resolveProjectReferences(project, rawReferences, item, errors, warnings
       errors.push(issue("invalid_reference", basePath, "Each reference must be an object"));
       return;
     }
-    if (rejectClientOwnedReferenceFields(pin, basePath, errors)) return;
+    if (rejectClientOwnedReferenceFields(pin, basePath, errors, isStillsPinWorkflow(item))) return;
     const assetId = typeof pin.assetId === "string" ? pin.assetId.trim() : "";
     if (!assetId) {
       errors.push(issue("missing_asset_id", `${basePath}.assetId`, "assetId is required"));

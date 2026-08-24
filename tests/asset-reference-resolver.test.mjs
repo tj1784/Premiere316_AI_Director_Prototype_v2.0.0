@@ -6,6 +6,7 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  STORYBOARD_KREA_GENERATION_WORKFLOW_ID,
   STORYBOARD_LTX25_GENERATION_WORKFLOW_ID,
   preflightGenerationRequest
 } from "../server/generation-composer.js";
@@ -158,6 +159,17 @@ test("unapproved versions are rejected even when the exact file exists", () => {
       () => resolveStillsReferences(approvedOther, [pin("character-adam", 1, { assetVersion: 1 })]),
       "unapproved_asset_version"
     );
+
+    const approvalDriftedFromActive = projectWithAssets(harness, [{
+      id: "character-adam",
+      activeVersion: 2,
+      versions: [versionRecord(1, "adam.v1.png"), versionRecord(2, "adam.v2.png")],
+      approval: { status: "approved", activeVersion: 1 }
+    }], { skipApproval: false });
+    assertCode(
+      () => resolveStillsReferences(approvalDriftedFromActive, [pin("character-adam", 1, { assetVersion: 1 })]),
+      "unapproved_asset_version"
+    );
   } finally {
     harness.close();
   }
@@ -230,6 +242,40 @@ test("resolved stills snapshots are immutable, hashed from disk, and revalidate 
   }
 });
 
+test("subfolder source files keep relative provenance and stay inside media/assets", () => {
+  const harness = makeHarness();
+  try {
+    const sha = writeAssetFile(harness.assetDir, "imported/adam.v1.png", "imported-adam");
+    const project = projectWithAssets(harness, [{
+      id: "character-adam",
+      activeVersion: 1,
+      versions: [versionRecord(1, "imported/adam.v1.png")]
+    }]);
+    const snapshots = resolveStillsReferences(project, [pin("character-adam", 1)]);
+    assert.equal(snapshots[0].sourceFile, "imported/adam.v1.png");
+    assert.equal(snapshots[0].fileSha256, sha);
+  } finally {
+    harness.close();
+  }
+});
+
+test("manifest SHA-256 that does not match disk fails closed", () => {
+  const harness = makeHarness();
+  try {
+    writeAssetFile(harness.assetDir, "adam.v1.png", "adam-bytes");
+    const project = projectWithAssets(harness, [{
+      id: "character-adam",
+      activeVersion: 1,
+      versions: [versionRecord(1, "adam.v1.png", {
+        fileHashes: [{ file: "adam.v1.png", sha256: "0".repeat(64), bytes: 10 }]
+      })]
+    }]);
+    assertCode(() => resolveStillsReferences(project, [pin("character-adam", 1)]), "file_hash_mismatch");
+  } finally {
+    harness.close();
+  }
+});
+
 test("path-escape source files and missing disks fail closed", () => {
   const harness = makeHarness();
   try {
@@ -294,4 +340,31 @@ test("generation-composer rejects client-owned path fields without using version
   assert.equal(missing.ok, false);
   assert.ok(missing.errors.some((error) => error.code === "stale_asset_version" || error.code === "missing_asset_version"));
   assert.equal(missing.resolvedReferences.some((reference) => reference.assetVersion === 1), false);
+
+  const activeMissing = {
+    ...project,
+    assets: {
+      items: [{
+        ...project.assets.items[0],
+        activeVersion: 9,
+        versions: project.assets.items[0].versions
+      }]
+    }
+  };
+  const noFallback = preflightGenerationRequest(activeMissing, request({ assetVersion: 9 }));
+  assert.equal(noFallback.ok, false);
+  assert.ok(noFallback.errors.some((error) => error.code === "missing_asset_version"));
+  assert.equal(noFallback.resolvedReferences.some((reference) => reference.assetVersion === 1), false);
+
+  const stillsFile = preflightGenerationRequest(project, {
+    schemaVersion: 1,
+    outputKind: "image",
+    workflowId: STORYBOARD_KREA_GENERATION_WORKFLOW_ID,
+    promptText: "Adam still",
+    references: [{ assetId: "character-adam", assetVersion: 1, role: "identity", order: 1, file: "forged.png" }],
+    unresolvedMentions: [],
+    options: { aspectRatio: "16:9" }
+  });
+  assert.equal(stillsFile.ok, false);
+  assert.ok(stillsFile.errors.some((error) => error.code === "client_owned_file_rejected"));
 });
