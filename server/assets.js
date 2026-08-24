@@ -15,6 +15,7 @@ import {
   STYLE_FLUX_CLIP,
   STYLE_FLUX_MODEL,
   STYLE_FLUX_VAE,
+  STYLE_LOCK_PROMPT,
   STYLE_LOCK_WORKFLOWS,
   STYLE_UPSCALER,
   applyStyleLockToAsset,
@@ -300,8 +301,10 @@ export function assetMediaType(category) {
 }
 
 export function defaultAssetWorkflow(category, variant, name, id) {
-  if (isApprovedAssetEditRequest(variant, name, id)) return visualEditWorkflow();
-  if (CATEGORY_MEDIA_TYPES[category] === "image") return visualWorkflow(category, variant, name, id);
+  if (CATEGORY_MEDIA_TYPES[category] === "image") {
+    if (isApprovedAssetEditRequest(variant, name, id)) return visualEditWorkflow();
+    return visualWorkflow(category, variant, name, id);
+  }
   if (category === "voice") return "qwen3-tts-voice-design-1.7b";
   if (category === "music") return "ace-step-1.5-xl-turbo";
   if (category === "sound") return "ltx-2.3-native-audio";
@@ -351,8 +354,10 @@ export function createDirectorAsset(input = {}, existingItems = []) {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
-  asset.prompt = withAssetPromptHeader(asset, asset.prompt);
-  applyStyleLockToAsset(asset);
+  if (!isIdentityEditWorkflow(asset.workflowId)) {
+    asset.prompt = withAssetPromptHeader(asset, asset.prompt);
+    applyStyleLockToAsset(asset);
+  }
   return asset;
 }
 
@@ -365,6 +370,10 @@ export function updateAssetManifestCounts(assets) {
   assets.total = items.length;
   assets.generatedAt = new Date().toISOString();
   return assets;
+}
+
+function isIdentityEditWorkflow(workflowId) {
+  return workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID;
 }
 
 function isApprovedAssetEditRequest(variant = "", name = "", id = "") {
@@ -984,6 +993,7 @@ export function buildAssetPackage(markdown, { productionBreakdown = null, previo
   const preserved = preserveAssetState(deduped, sameRevision ? previous : null);
   for (const item of preserved) {
     const promptComposerAsset = item.generationComposer === true || item.regenerationMode === "prompt-composer" || item.source === "prompt-generation-composer";
+    if (isIdentityEditWorkflow(item.workflowId)) continue;
     if (!promptComposerAsset) item.prompt = withAssetPromptHeader(item, item.prompt);
     applyStyleLockToAsset(item);
   }
@@ -1343,14 +1353,30 @@ function kreaPrompt(project, asset) {
 }
 
 function identityEditSourceName(asset) {
+  const uploaded = String(asset?.sourceImage || "").replace(/\\/g, "/").trim();
+  if (uploaded) return uploaded;
   const active = activeAssetVersion(asset);
-  const named = asset?.sourceImage || active?.file || active?.files?.[0] || "";
-  return path.basename(String(named).replace(/\\/g, "/")) || "example.png";
+  const named = String(active?.file || active?.files?.[0] || "").replace(/\\/g, "/");
+  return path.posix.basename(named) || "example.png";
+}
+
+function identityEditInstruction(asset) {
+  let text = String(asset?.prompt || "").replace(/\r\n/g, "\n").trim();
+  const header = String(asset?.promptHeader || "").trim();
+  if (header && (text === header || text.startsWith(`${header}\n`))) {
+    text = text.slice(header.length).trim();
+  }
+  const lock = String(STYLE_LOCK_PROMPT || "").trim();
+  if (lock && text.includes(lock)) {
+    text = text.split(lock).join("").replace(/\n{3,}/g, "\n\n").trim();
+  }
+  return text;
 }
 
 function kreaIdentityEditPrompt(project, asset) {
   const seed = seededInt(asset);
   const sourceImage = identityEditSourceName(asset);
+  const instruction = identityEditInstruction(asset);
   return {
     "55": { class_type: "UNETLoader", inputs: { unet_name: KREA_MODEL, weight_dtype: "default" } },
     "56": { class_type: "CLIPLoader", inputs: { clip_name: KREA_CLIP, type: "krea2", device: "default" } },
@@ -1361,7 +1387,7 @@ function kreaIdentityEditPrompt(project, asset) {
     "82": { class_type: "EmptySD3LatentImage", inputs: { width: 1024, height: 1024, batch_size: 1 } },
     "84": {
       class_type: "Krea2EditGroundedEncode",
-      inputs: { clip: ["56", 0], prompt: asset.prompt, image: ["72", 0], grounding_px: 768, system_prompt: "" }
+      inputs: { clip: ["56", 0], prompt: instruction, image: ["72", 0], grounding_px: 768, system_prompt: "" }
     },
     "85": {
       class_type: "Krea2EditGroundedEncode",
@@ -1460,7 +1486,7 @@ function acePrompt(project, asset) {
 
 export function compileAssetWorkflow(project, asset) {
   if (isStyleLockWorkflow(asset.workflowId)) return compileStyleLockWorkflow(project, asset, seededInt(asset));
-  if (asset.workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID) return kreaIdentityEditPrompt(project, asset);
+  if (isIdentityEditWorkflow(asset.workflowId)) return kreaIdentityEditPrompt(project, asset);
   if (asset.workflowId.startsWith("krea2")) return kreaPrompt(project, asset);
   if (asset.workflowId === "flux2-klein-9b-prop-fp8") return fluxPrompt(project, asset);
   if (asset.workflowId === "qwen3-tts-voice-design-1.7b") return voicePrompt(project, asset);
@@ -1514,9 +1540,11 @@ export function saveAssetPackageFiles(project, {
   for (const asset of project.assets?.items || []) {
     const promptComposerAsset = asset.generationComposer === true || asset.regenerationMode === "prompt-composer" || asset.source === "prompt-generation-composer";
     if (promptComposerAsset) continue;
-    if (asset.category === "voice") asset.prompt = normalizeVoiceDesignPrompt(asset, asset.prompt);
-    else if (!isAuthoritativeStyleLockAsset(asset.id)) asset.prompt = withAssetPromptHeader(asset, asset.prompt);
-    applyStyleLockToAsset(asset);
+    if (!isIdentityEditWorkflow(asset.workflowId)) {
+      if (asset.category === "voice") asset.prompt = normalizeVoiceDesignPrompt(asset, asset.prompt);
+      else if (!isAuthoritativeStyleLockAsset(asset.id)) asset.prompt = withAssetPromptHeader(asset, asset.prompt);
+      applyStyleLockToAsset(asset);
+    }
     const compiled = compileAssetWorkflow(project, asset);
     const filename = `${asset.id}.${compiled ? "api" : "recipe"}.json`;
     asset.workflowSnapshot = `workflows/${filename}`;
@@ -1642,7 +1670,7 @@ async function generateAssetJobInner(job) {
   const state = catalog.find((entry) => entry.id === workflow.id);
   if (!state?.ready) throw new Error(state?.reason || `${workflow.label} is not ready`);
   if (state.availableNow === false) throw new Error(state.runtimeWarning || `${workflow.label} is waiting for GPU memory`);
-  if (runAsset.workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID) {
+  if (isIdentityEditWorkflow(runAsset.workflowId)) {
     const sourceName = activeAssetVersion(runAsset)?.file || activeAssetVersion(runAsset)?.files?.[0];
     if (!sourceName) {
       throw new Error("Krea 2 Identity Edit is for approved-asset touch-ups and needs an existing source image");
@@ -1705,7 +1733,7 @@ async function generateAssetJobInner(job) {
     fresh,
     runAsset,
     version,
-    runAsset.workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID ? prompt : null
+    isIdentityEditWorkflow(runAsset.workflowId) ? prompt : null
   );
   target.versions = target.versions || [];
   target.versions.push({
