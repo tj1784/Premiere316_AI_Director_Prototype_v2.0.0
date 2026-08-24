@@ -1,6 +1,11 @@
 import crypto from "crypto";
 import path from "path";
 
+import {
+  CLIENT_OWNED_REFERENCE_FIELDS,
+  findExactAssetVersion
+} from "./asset-reference-resolver.js";
+
 export const GENERATION_COMPOSER_SCHEMA_VERSION = 1;
 export const GENERATION_OUTPUT_KINDS = Object.freeze([
   "image",
@@ -431,6 +436,22 @@ function mediaTypeFromFile(file) {
   return null;
 }
 
+function rejectClientOwnedReferenceFields(pin, basePath, errors) {
+  for (const field of CLIENT_OWNED_REFERENCE_FIELDS) {
+    // Existing composer tests treat `file` as an ignored client claim, not a 400.
+    if (field === "file") continue;
+    if (Object.hasOwn(pin, field)) {
+      errors.push(issue(
+        "client_owned_file_rejected",
+        `${basePath}.${field}`,
+        `Client-supplied ${field} is not accepted; the server resolves the asset file`
+      ));
+      return true;
+    }
+  }
+  return false;
+}
+
 function resolveProjectReferences(project, rawReferences, item, errors, warnings) {
   if (rawReferences === undefined) rawReferences = [];
   if (!Array.isArray(rawReferences)) {
@@ -448,6 +469,7 @@ function resolveProjectReferences(project, rawReferences, item, errors, warnings
       errors.push(issue("invalid_reference", basePath, "Each reference must be an object"));
       return;
     }
+    if (rejectClientOwnedReferenceFields(pin, basePath, errors)) return;
     const assetId = typeof pin.assetId === "string" ? pin.assetId.trim() : "";
     if (!assetId) {
       errors.push(issue("missing_asset_id", `${basePath}.assetId`, "assetId is required"));
@@ -496,7 +518,7 @@ function resolveProjectReferences(project, rawReferences, item, errors, warnings
       errors.push(issue("stale_asset_version", `${basePath}.assetVersion`, `${assetId}:v${pin.assetVersion} is not active; the current version is v${activeVersion}`, { activeVersion }));
       return;
     }
-    const version = Array.isArray(asset.versions) ? asset.versions.find((candidate) => Number(candidate?.v) === pin.assetVersion) : null;
+    const version = findExactAssetVersion(asset, pin.assetVersion);
     if (!version) {
       errors.push(issue("missing_asset_version", `${basePath}.assetVersion`, `Project manifest has no ${assetId}:v${pin.assetVersion}`));
       return;
