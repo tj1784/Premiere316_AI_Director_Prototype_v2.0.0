@@ -436,14 +436,10 @@ function mediaTypeFromFile(file) {
   return null;
 }
 
-function isStillsPinWorkflow(item) {
-  return item?.compiler === "compileStoryboardFramePrompt";
-}
-
 function rejectClientOwnedReferenceFields(pin, basePath, errors, rejectFile = false) {
   for (const field of CLIENT_OWNED_REFERENCE_FIELDS) {
-    // LTX/video composer tests treat `file` as an ignored client claim.
-    // Stills pins reject every client-owned filesystem field, including `file`.
+    // Ignore `file`: stored stills pins include the server-resolved basename.
+    // Never trust it; findExactAssetVersion supplies the real path.
     if (field === "file" && !rejectFile) continue;
     if (Object.hasOwn(pin, field)) {
       errors.push(issue(
@@ -474,7 +470,7 @@ function resolveProjectReferences(project, rawReferences, item, errors, warnings
       errors.push(issue("invalid_reference", basePath, "Each reference must be an object"));
       return;
     }
-    if (rejectClientOwnedReferenceFields(pin, basePath, errors, isStillsPinWorkflow(item))) return;
+    if (rejectClientOwnedReferenceFields(pin, basePath, errors, false)) return;
     const assetId = typeof pin.assetId === "string" ? pin.assetId.trim() : "";
     if (!assetId) {
       errors.push(issue("missing_asset_id", `${basePath}.assetId`, "assetId is required"));

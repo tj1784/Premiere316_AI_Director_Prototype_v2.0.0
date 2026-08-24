@@ -365,6 +365,6 @@ test("generation-composer rejects client-owned path fields without using version
     unresolvedMentions: [],
     options: { aspectRatio: "16:9" }
   });
-  assert.equal(stillsFile.ok, false);
-  assert.ok(stillsFile.errors.some((error) => error.code === "client_owned_file_rejected"));
+  assert.equal(stillsFile.ok, true);
+  assert.equal(stillsFile.resolvedReferences[0].file, "character-adam.v1.png");
 });
