@@ -2315,7 +2315,15 @@ app.post("/api/projects/:slug/assets/:assetId/approve", (req, res) => {
     const asset = project.assets?.items?.find((item) => item.id === req.params.assetId);
     if (!asset) return res.status(404).json({ error: "Asset not found" });
     const active = (asset.versions || []).find((version) => Number(version.v) === Number(asset.activeVersion));
-    if (!active || !active.createdAt || !active.workflowId || !active.assetFingerprint || !active.workflowHash || !active.screenplayRevision || !active.manifestScreenplayHash || !active.fileHashes?.length) {
+    const shorts = skipApproval(project) || skipScreenplay(project);
+    const provenanceReady = Boolean(
+      active?.createdAt
+      && active.workflowId
+      && active.assetFingerprint
+      && active.fileHashes?.length
+      && (shorts || (active.workflowHash && active.screenplayRevision && active.manifestScreenplayHash))
+    );
+    if (!provenanceReady) {
       return res.status(409).json({ error: "This version predates exact provenance. Generate a fresh immutable version before approving it." });
     }
     if (req.body?.expectedVersion != null && Number(req.body.expectedVersion) !== Number(asset.activeVersion)) {
@@ -2326,10 +2334,12 @@ app.post("/api/projects/:slug/assets/:assetId/approve", (req, res) => {
     if (
       active.assetFingerprint !== generationFingerprint ||
       active.workflowId !== asset.workflowId ||
-      String(active.workflowHash || "") !== String(asset.workflowHash || "") ||
-      active.screenplayRevision !== revision ||
-      active.manifestScreenplayHash !== project.assets.screenplayHash ||
-      !assetVersionFilesCurrent(project, asset)
+      !assetVersionFilesCurrent(project, asset) ||
+      (!shorts && (
+        String(active.workflowHash || "") !== String(asset.workflowHash || "")
+        || active.screenplayRevision !== revision
+        || active.manifestScreenplayHash !== project.assets.screenplayHash
+      ))
     ) {
       return res.status(409).json({ error: "The active version was generated from older direction. Generate a fresh version before approval." });
     }
