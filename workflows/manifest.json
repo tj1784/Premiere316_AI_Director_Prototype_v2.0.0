@@ -22,6 +22,12 @@
       "rel": "storyboard-krea2-reference-subgraphs.ui.json",
       "label": "Storyboard Krea2 reference subgraphs",
       "source": "package"
+    },
+    {
+      "id": "krea2-identity-edit-v1-2",
+      "rel": "krea2-identity-edit-v1-2.ui.json",
+      "label": "Krea 2 Identity Edit v1.2",
+      "source": "package"
     }
   ]
 }

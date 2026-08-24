@@ -6,7 +6,8 @@ import {
   collectOutputFiles,
   downloadOutput,
   getObjectInfo,
-  runPrompt
+  runPrompt,
+  uploadImage
 } from "./comfy.js";
 import { loadProject, mediaDir, registerFrame, saveProject, skipApproval } from "./projects.js";
 import { projectDir } from "./paths.js";
@@ -19,8 +20,7 @@ import {
   applyStyleLockToAsset,
   compileStyleLockWorkflow,
   isAuthoritativeStyleLockAsset,
-  isStyleLockWorkflow,
-  styleLockWorkflowIdForAsset
+  isStyleLockWorkflow
 } from "./style-lock.js";
 
 // Keep the stable workflow IDs, but compile and validate against the models
@@ -29,6 +29,8 @@ import {
 const KREA_MODEL = "KREA 2\\krea2_turbo_bf16.safetensors";
 const KREA_CLIP = "qwen3vl_4b_bf16.safetensors";
 const KREA_VAE = "qwen_image_vae.safetensors";
+const KREA_IDENTITY_EDIT_LORA = "krea2\\krea2_identity_edit_v1_2.safetensors";
+export const KREA2_IDENTITY_EDIT_WORKFLOW_ID = "krea2-identity-edit-v1-2";
 const FLUX_MODEL = "flux2\\flux-2-klein-9b-fp8mixed.safetensors";
 const FLUX_CLIP = "qwen_3_8b_fp8mixed.safetensors";
 const FLUX_VAE = "flux2-vae.safetensors";
@@ -65,6 +67,28 @@ export const ASSET_WORKFLOWS = [
     purpose: "Clean artifact, weapon, prop, and material reference plates with precise construction details.",
     requiredNodes: ["UNETLoader", "CLIPLoader", "CLIPTextEncode", "EmptyFlux2LatentImage", "KSampler", "VAEDecode", "SaveImage"],
     requiredModels: [FLUX_MODEL, FLUX_CLIP, FLUX_VAE]
+  },
+  {
+    id: KREA2_IDENTITY_EDIT_WORKFLOW_ID,
+    label: "Krea 2 Identity Edit v1.2",
+    mediaType: "image",
+    model: "Krea 2 Turbo BF16 + Qwen3-VL 4B BF16 + Identity Edit LoRA v1.2",
+    purpose: "Identity-preserving edit and touch-up of an approved still. Not from-scratch generation.",
+    requiredNodes: [
+      "UNETLoader",
+      "CLIPLoader",
+      "VAELoader",
+      "LoraLoaderModelOnly",
+      "LoadImage",
+      "VAEEncode",
+      "EmptySD3LatentImage",
+      "Krea2EditGroundedEncode",
+      "Krea2EditModelPatch",
+      "KSampler",
+      "VAEDecode",
+      "SaveImage"
+    ],
+    requiredModels: [KREA_MODEL, KREA_CLIP, KREA_VAE, KREA_IDENTITY_EDIT_LORA]
   },
   {
     id: "qwen3-tts-voice-design-1.7b",
@@ -276,6 +300,7 @@ export function assetMediaType(category) {
 }
 
 export function defaultAssetWorkflow(category, variant, name, id) {
+  if (isApprovedAssetEditRequest(variant, name, id)) return visualEditWorkflow();
   if (CATEGORY_MEDIA_TYPES[category] === "image") return visualWorkflow(category, variant, name, id);
   if (category === "voice") return "qwen3-tts-voice-design-1.7b";
   if (category === "music") return "ace-step-1.5-xl-turbo";
@@ -342,9 +367,15 @@ export function updateAssetManifestCounts(assets) {
   return assets;
 }
 
-function visualWorkflow(category, variant, name = "", id = "") {
-  const styleLockId = styleLockWorkflowIdForAsset({ category, variant, name, id, mediaType: "image" });
-  if (styleLockId) return styleLockId;
+function isApprovedAssetEditRequest(variant = "", name = "", id = "") {
+  return /\b(touch-?ups?|identity[ -]?edit|img2img)\b/i.test(`${variant} ${name} ${id}`);
+}
+
+export function visualEditWorkflow() {
+  return KREA2_IDENTITY_EDIT_WORKFLOW_ID;
+}
+
+export function visualWorkflow(category, variant, name = "", id = "") {
   if (category === "artifact") return "flux2-klein-9b-prop-fp8";
   if (["character", "wardrobe"].includes(category) && /appearance|primary|identity|reference/i.test(variant)) {
     return "krea2-character-ingredients-fp8";
@@ -1022,7 +1053,11 @@ function workflowReadiness(workflow, objectInfo, { comfyOnline = false } = {}) {
     const missing = [
       enumValues(objectInfo, "UNETLoader", "unet_name").includes(KREA_MODEL) ? null : KREA_MODEL,
       enumValues(objectInfo, "CLIPLoader", "clip_name").includes(KREA_CLIP) ? null : KREA_CLIP,
-      enumValues(objectInfo, "VAELoader", "vae_name").includes(KREA_VAE) ? null : KREA_VAE
+      enumValues(objectInfo, "VAELoader", "vae_name").includes(KREA_VAE) ? null : KREA_VAE,
+      workflow.id === KREA2_IDENTITY_EDIT_WORKFLOW_ID
+        && !enumValues(objectInfo, "LoraLoaderModelOnly", "lora_name").includes(KREA_IDENTITY_EDIT_LORA)
+        ? KREA_IDENTITY_EDIT_LORA
+        : null
     ].filter(Boolean);
     return missing.length ? { ready: false, reason: `Missing models: ${missing.join(", ")}` } : { ready: true, reason: "Installed locally" };
   }
@@ -1307,6 +1342,64 @@ function kreaPrompt(project, asset) {
   return prompt;
 }
 
+function identityEditSourceName(asset) {
+  const active = activeAssetVersion(asset);
+  const named = asset?.sourceImage || active?.file || active?.files?.[0] || "";
+  return path.basename(String(named).replace(/\\/g, "/")) || "example.png";
+}
+
+function kreaIdentityEditPrompt(project, asset) {
+  const seed = seededInt(asset);
+  const sourceImage = identityEditSourceName(asset);
+  return {
+    "55": { class_type: "UNETLoader", inputs: { unet_name: KREA_MODEL, weight_dtype: "default" } },
+    "56": { class_type: "CLIPLoader", inputs: { clip_name: KREA_CLIP, type: "krea2", device: "default" } },
+    "57": { class_type: "VAELoader", inputs: { vae_name: KREA_VAE } },
+    "71": { class_type: "LoraLoaderModelOnly", inputs: { model: ["55", 0], lora_name: KREA_IDENTITY_EDIT_LORA, strength_model: 1 } },
+    "72": { class_type: "LoadImage", inputs: { image: sourceImage } },
+    "73": { class_type: "VAEEncode", inputs: { pixels: ["72", 0], vae: ["57", 0] } },
+    "82": { class_type: "EmptySD3LatentImage", inputs: { width: 1024, height: 1024, batch_size: 1 } },
+    "84": {
+      class_type: "Krea2EditGroundedEncode",
+      inputs: { clip: ["56", 0], prompt: asset.prompt, image: ["72", 0], grounding_px: 768, system_prompt: "" }
+    },
+    "85": {
+      class_type: "Krea2EditGroundedEncode",
+      inputs: { clip: ["56", 0], prompt: "", image: ["72", 0], grounding_px: 768, system_prompt: "" }
+    },
+    "79": {
+      class_type: "Krea2EditModelPatch",
+      inputs: {
+        model: ["71", 0],
+        source_latent: ["73", 0],
+        ref_boost: 4,
+        ref_boost_a: 1,
+        fit_mode: "fit",
+        vae: ["57", 0],
+        source_image: ["72", 0],
+        target_latent: ["82", 0]
+      }
+    },
+    "53": {
+      class_type: "KSampler",
+      inputs: {
+        model: ["79", 0],
+        seed,
+        steps: 10,
+        cfg: 1,
+        sampler_name: "euler",
+        scheduler: "simple",
+        positive: ["84", 0],
+        negative: ["85", 0],
+        latent_image: ["82", 0],
+        denoise: 1
+      }
+    },
+    "54": { class_type: "VAEDecode", inputs: { samples: ["53", 0], vae: ["57", 0] } },
+    "29": { class_type: "SaveImage", inputs: { images: ["54", 0], filename_prefix: `premiere316/${project.slug}/assets/${asset.id}` } }
+  };
+}
+
 function fluxPrompt(project, asset) {
   const seed = seededInt(asset);
   return {
@@ -1367,6 +1460,7 @@ function acePrompt(project, asset) {
 
 export function compileAssetWorkflow(project, asset) {
   if (isStyleLockWorkflow(asset.workflowId)) return compileStyleLockWorkflow(project, asset, seededInt(asset));
+  if (asset.workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID) return kreaIdentityEditPrompt(project, asset);
   if (asset.workflowId.startsWith("krea2")) return kreaPrompt(project, asset);
   if (asset.workflowId === "flux2-klein-9b-prop-fp8") return fluxPrompt(project, asset);
   if (asset.workflowId === "qwen3-tts-voice-design-1.7b") return voicePrompt(project, asset);
@@ -1548,6 +1642,15 @@ async function generateAssetJobInner(job) {
   const state = catalog.find((entry) => entry.id === workflow.id);
   if (!state?.ready) throw new Error(state?.reason || `${workflow.label} is not ready`);
   if (state.availableNow === false) throw new Error(state.runtimeWarning || `${workflow.label} is waiting for GPU memory`);
+  if (runAsset.workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID) {
+    const sourceName = activeAssetVersion(runAsset)?.file || activeAssetVersion(runAsset)?.files?.[0];
+    if (!sourceName) {
+      throw new Error("Krea 2 Identity Edit is for approved-asset touch-ups and needs an existing source image");
+    }
+    const sourcePath = path.join(mediaDir(project, "assets"), path.basename(String(sourceName)));
+    if (!fs.existsSync(sourcePath)) throw new Error("Krea 2 Identity Edit source image is missing");
+    runAsset.sourceImage = await uploadImage(sourcePath, "premiere316_identity_edit");
+  }
   job.label = `Generate asset · ${asset.name}`;
   job.stage = `Preparing ${workflow.label}`;
   job.progress = 0.05;
@@ -1598,7 +1701,12 @@ async function generateAssetJobInner(job) {
   }
   const version = plannedVersion;
   const fileHashes = generatedFileHashes(fresh, files);
-  const workflowSnapshot = archiveWorkflowSnapshot(fresh, runAsset, version);
+  const workflowSnapshot = archiveWorkflowSnapshot(
+    fresh,
+    runAsset,
+    version,
+    runAsset.workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID ? prompt : null
+  );
   target.versions = target.versions || [];
   target.versions.push({
     v: version,
