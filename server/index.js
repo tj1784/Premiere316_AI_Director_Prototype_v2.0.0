@@ -189,6 +189,7 @@ import {
   applyStoryboardDirection,
   applyStoryboardStructure
 } from "./storyboard.js";
+import { ContinuityError, promoteLastFrame } from "./continuity.js";
 import {
   compileStoryboardFramePrompt,
   compileStoryboardVideoPlanPrompt,
@@ -3880,6 +3881,40 @@ app.delete("/api/projects/:slug/clips/:clipId/guides/:guideId", (req, res) => {
     res.status(400).json({ error: String(e.message) });
   }
 });
+
+// ---------- continuity (extracted take last-frame → next first guide) ----------
+// BEGIN CONTINUITY ROUTES
+app.post("/api/projects/:slug/continuity/promote-last-frame", async (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    let storyboard = null;
+    try { storyboard = loadStoryboard(req.params.slug); } catch { storyboard = null; }
+    const result = await promoteLastFrame(project, {
+      clipId: req.body?.clipId,
+      takeVersion: req.body?.takeVersion,
+      nextClipId: req.body?.nextClipId,
+      storyboard
+    }, {
+      registerFrame,
+      saveProject,
+      saveStoryboard: storyboard ? saveStoryboard : undefined
+    });
+    res.json({
+      frame: result.frame,
+      bindings: result.bindings,
+      guide: result.guide,
+      nextClipId: result.nextClipId,
+      sourceClipId: result.sourceClipId,
+      take: result.take,
+      project,
+      storyboard: result.storyboard || storyboard
+    });
+  } catch (e) {
+    const status = e instanceof ContinuityError ? e.status : 400;
+    res.status(status || 400).json({ error: String(e.message), code: e.code || undefined });
+  }
+});
+// END CONTINUITY ROUTES
 
 // ---------- render ----------
 function enqueueRanges(project, clip, ranges, prefix = "Render") {

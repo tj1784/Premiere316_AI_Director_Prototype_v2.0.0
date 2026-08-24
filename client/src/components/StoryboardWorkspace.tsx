@@ -1,6 +1,7 @@
 import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { assetUrl, storyboardUrl, useStore } from "../store";
 import AssetReferencePicker from "./AssetReferencePicker";
+import ContinuityAction from "./ContinuityAction";
 import { AudioOffChip, ClipDirectionEditor, SegmentDirectionEditor, openLtxDirector } from "./StoryboardDirection";
 
 function formatTimecode(frames: number, fps: number) {
@@ -509,6 +510,7 @@ export default function StoryboardWorkspace({ onOpenAssets: _onOpenAssets }: { o
             ) : null}
             
             <button type="button" className="secondary-action" onClick={() => goDirectLtx(clip.id)}>Open in LTX Director</button>
+            <ContinuityAction clipId={clip.id} />
             {!isT2V ? <button type="button" className="secondary-action" onClick={() => {
               const frameFile = (frame: any) => frame?.generatedFile || frame?.generatedVersions?.find((version: any) => Number(version.v) === Number(frame?.activeGeneratedVersion))?.file;
               const missing = [firstFrame].filter((frame: any) => frame && frame.id && !frameFile(frame) && frame.status !== "generated");
