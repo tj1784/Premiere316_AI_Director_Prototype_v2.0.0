@@ -19,6 +19,11 @@ import {
 
 export const STORYBOARD_KREA_WORKFLOW_ID = "premiere316-storyboard-krea2-reference-subgraphs";
 export const STORYBOARD_T2V_WORKFLOW_ID = "premiere316-storyboard-ltx25-t2v-semantic-reference";
+export const KREA2_CINEMATIC_STILL_WORKFLOW_ID = "krea2-cinematic-still-fp8";
+export const KLEIN2_STILLS_WORKFLOW_ID = "flux2-klein-9b-prop-fp8";
+const MINIMAX_NAME_RE = /MiniMax/i;
+const MINIMAX_AUDIO_NAME_RE = /Music|Audio/i;
+const MINIMAX_VISUAL_NAME_RE = /Image|Video|Visual|I2V|FL2VA|Ref2VA|ToImage/i;
 
 const SOURCE_WORKFLOW_NAME = "storyboard-krea2-reference-subgraphs.ui.json";
 const SOURCE_WORKFLOW_PATH = path.join(
@@ -102,6 +107,81 @@ function hashJson(value) {
   return crypto.createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
 
+export function isClearlyMinimaxAudioOnlyClass(classType) {
+  const name = String(classType || "");
+  if (!MINIMAX_NAME_RE.test(name) || !MINIMAX_AUDIO_NAME_RE.test(name)) return false;
+  return !MINIMAX_VISUAL_NAME_RE.test(name);
+}
+
+export function isForbiddenMinimaxStillsClass(classType) {
+  const name = String(classType || "");
+  return MINIMAX_NAME_RE.test(name) && !isClearlyMinimaxAudioOnlyClass(name);
+}
+
+function stillsClassEntries(source) {
+  if (!source || typeof source !== "object") return [];
+  if (Array.isArray(source)) {
+    return source.map((node, index) => ({
+      id: node?.id ?? index,
+      classType: String(node?.class_type || node?.type || "")
+    }));
+  }
+  if (Array.isArray(source.nodes) || Array.isArray(source.definitions?.subgraphs)) {
+    const containers = [source, ...(source.definitions?.subgraphs || [])];
+    return containers.flatMap((container) =>
+      (container.nodes || []).map((node) => ({
+        id: node?.id,
+        classType: String(node?.class_type || node?.type || "")
+      }))
+    );
+  }
+  return Object.entries(source).map(([id, node]) => ({
+    id,
+    classType: String(node?.class_type || node?.type || "")
+  }));
+}
+
+export function assertStillsApiPromptRejectsMinimax(apiPrompt) {
+  const offenders = stillsClassEntries(apiPrompt)
+    .filter((entry) => isForbiddenMinimaxStillsClass(entry.classType))
+    .map((entry) => `${entry.id}:${entry.classType}`);
+  if (offenders.length) {
+    throw new Error(
+      `Storyboard stills API prompt cannot include MiniMax image class_type: ${offenders.join(", ")}`
+    );
+  }
+  return apiPrompt;
+}
+
+function assertKreaStillsCompilation(graph, executionGraph, frame) {
+  const meta = graph?.extra?.premiere316 || {};
+  const frameId = frame?.id || meta.frameId || "unknown";
+  if (meta.workflowId !== STORYBOARD_KREA_WORKFLOW_ID) {
+    throw new Error(
+      `Storyboard first/last/guide frame ${frameId} must compile through ${STORYBOARD_KREA_WORKFLOW_ID}, received ${meta.workflowId || "missing"}`
+    );
+  }
+  if (meta.type !== "storyboard-image-guide") {
+    throw new Error(`Storyboard frame ${frameId} is not a stills image-guide compilation`);
+  }
+  if (meta.sourceWorkflow !== SOURCE_WORKFLOW_NAME) {
+    throw new Error(`Storyboard stills must use ${SOURCE_WORKFLOW_NAME}, not MiniMax H3 templates`);
+  }
+  assertStillsApiPromptRejectsMinimax(graph);
+  assertStillsApiPromptRejectsMinimax(executionGraph);
+}
+
+export function assertLtxVideoPlanIsNotStillsGenerator(graph) {
+  const meta = graph?.extra?.premiere316 || {};
+  if (meta.type === "storyboard-image-guide" || meta.workflowId === STORYBOARD_KREA_WORKFLOW_ID) {
+    throw new Error("Storyboard LTX-2.5 T2V cannot be used as a stills or first-frame generator");
+  }
+  if (meta.temporalGuides?.firstFrame || meta.temporalGuides?.lastFrame || meta.temporalGuides?.timedImages) {
+    throw new Error("Storyboard LTX-2.5 T2V cannot generate first-frame or last-frame stills");
+  }
+  return graph;
+}
+
 function sourceWorkflowHash() {
   const buffer = fs.readFileSync(SOURCE_WORKFLOW_PATH);
   return crypto.createHash("sha256").update(buffer).digest("hex");
@@ -118,6 +198,8 @@ function loadSourceWorkflowGraph() {
   if (!Array.isArray(graph.definitions?.subgraphs) || !graph.definitions.subgraphs.length) {
     throw new Error(`Storyboard Krea workflow is missing its reference/model subgraphs: ${SOURCE_WORKFLOW_PATH}`);
   }
+  // Official first/last/guide stills are Krea2; MiniMax H3 templates must never load here.
+  assertStillsApiPromptRejectsMinimax(graph);
   return graph;
 }
 
@@ -1395,6 +1477,7 @@ export function buildStoryboardFrameWorkflowGraph(project, storyboard, frameId, 
   };
 
   const executionGraph = flattenStoryboardWorkflowGraph(graph);
+  assertKreaStillsCompilation(graph, executionGraph, frame);
 
   return {
     graph,
@@ -1461,6 +1544,7 @@ export async function compileStoryboardFramePrompt(project, storyboard, frameId)
     throw new Error(`Storyboard Krea workflow could not compile cleanly: ${converted.warnings.join("; ")}`);
   }
   normalizeStoryboardApiPrompt(converted.prompt, built.seed);
+  assertStillsApiPromptRejectsMinimax(converted.prompt);
   const inputErrors = validateApiPromptRequiredInputs(converted.prompt, objectInfo);
   if (inputErrors.length) {
     throw new Error(
@@ -2115,6 +2199,7 @@ export function buildStoryboardVideoPlanWorkflowGraph(project, storyboard, video
   };
 
   const executionGraph = flattenStoryboardWorkflowGraph(graph);
+  assertLtxVideoPlanIsNotStillsGenerator(graph);
   return {
     graph,
     executionGraph,

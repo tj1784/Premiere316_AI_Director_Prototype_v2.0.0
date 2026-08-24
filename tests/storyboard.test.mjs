@@ -8,13 +8,22 @@ import {
   validateStoryboard
 } from "../server/storyboard.js";
 import {
+  assertLtxVideoPlanIsNotStillsGenerator,
+  assertStillsApiPromptRejectsMinimax,
   buildStoryboardFrameWorkflowGraph,
   buildStoryboardVideoPlanWorkflowGraph,
   compileStoryboardVideoPlanPrompt,
+  isForbiddenMinimaxStillsClass,
+  KREA2_CINEMATIC_STILL_WORKFLOW_ID,
   storyboardFrameGenerationFingerprint,
   STORYBOARD_KREA_WORKFLOW_ID,
   STORYBOARD_T2V_WORKFLOW_ID
 } from "../server/storyboard-generation.js";
+import {
+  assertPromptStillsWorkflowId,
+  GUIDE_FRAME_STILLS_WORKFLOW_ID,
+  PROMPT_GENERATION_STILLS_WORKFLOW_IDS
+} from "../server/prompt-generation.js";
 import { graphToApi } from "../server/comfy.js";
 
 const project = JSON.parse(fs.readFileSync(new URL("../projects/harrowing_of_hell/project.json", import.meta.url), "utf8"));
@@ -31,6 +40,29 @@ const attachedT2vWorkflow = fileURLToPath(new URL("../workflows/storyboard-ltx25
 
 function workflowNodes(graph) {
   return [graph, ...(graph.definitions?.subgraphs || [])].flatMap((container) => container.nodes || []);
+}
+
+function stillsFrameFixture(id, purpose) {
+  return {
+    id,
+    purpose,
+    ownerKind: "clip",
+    ownerId: "H01-S01-C01",
+    prompt: "Begin exactly from the supplied frame. Jesus stands on the descent causeway.",
+    negativePrompt: "text, captions, MiniMax H3 stills",
+    seed: 7,
+    references: [{
+      id: `ref-${id}`,
+      assetId: "character-jesus",
+      assetVersion: 4,
+      assetVersionId: "character-jesus:v4",
+      sourceAssetFile: "char-jesus-main.v4.png",
+      role: "identity",
+      required: true,
+      useMode: "direct_conditioning",
+      order: 1
+    }]
+  };
 }
 
 // H10 is now production I2V. Keep the T2V compiler tests honest by adapting a
@@ -678,4 +710,127 @@ test("all legacy image-guide prompts compile through the attached Krea workflow"
     assert.ok(built.prompt.includes(storyboard.frames[frameId].prompt), `${frameId} must contain its authored image-generation prompt`);
     assert.ok(built.prompt.includes(storyboard.frames[frameId].negativePrompt), `${frameId} must contain its negative prompt`);
   }
+});
+
+test("first and last frames compile through Krea2 stills, never MiniMax H3 templates", {
+  skip: !fs.existsSync(attachedKreaWorkflow) && "Attached Krea workflow is not installed in the local BlokeyUI profile"
+}, () => {
+  const fixtureProject = { slug: "harrowing_of_hell", settings: { width: 1280, height: 720 } };
+  const fixture = {
+    frames: {
+      "frame-h01-s01-c01-first": stillsFrameFixture("frame-h01-s01-c01-first", "first_frame"),
+      "frame-h01-s01-c01-last": stillsFrameFixture("frame-h01-s01-c01-last", "last_frame")
+    }
+  };
+
+  for (const frameId of Object.keys(fixture.frames)) {
+    const built = buildStoryboardFrameWorkflowGraph(fixtureProject, fixture, frameId);
+    assert.equal(built.graph.extra.premiere316.workflowId, STORYBOARD_KREA_WORKFLOW_ID);
+    assert.equal(built.graph.extra.premiere316.type, "storyboard-image-guide");
+    assert.equal(built.graph.extra.premiere316.sourceWorkflow, "storyboard-krea2-reference-subgraphs.ui.json");
+    assert.notEqual(built.graph.extra.premiere316.workflowId, STORYBOARD_T2V_WORKFLOW_ID);
+    assert.equal(workflowNodes(built.graph).some((node) => isForbiddenMinimaxStillsClass(node.type)), false);
+    assertStillsApiPromptRejectsMinimax(built.graph);
+    assertStillsApiPromptRejectsMinimax(built.executionGraph);
+
+    const objectInfo = Object.fromEntries(
+      built.executionGraph.nodes.map((node) => [node.type, { input: { required: {}, optional: {} } }])
+    );
+    const converted = graphToApi({ nodes: built.executionGraph.nodes, links: built.executionGraph.links }, objectInfo);
+    assertStillsApiPromptRejectsMinimax(converted.prompt);
+    assert.equal(
+      Object.values(converted.prompt).some((node) => isForbiddenMinimaxStillsClass(node.class_type)),
+      false
+    );
+
+    const poisoned = structuredClone(converted.prompt);
+    poisoned["minimax-still"] = { class_type: "MiniMaxH3ImageToVideo", inputs: {} };
+    assert.throws(
+      () => assertStillsApiPromptRejectsMinimax(poisoned),
+      /MiniMax image class_type/
+    );
+  }
+});
+
+test("stills compilers fail closed on MiniMax image class_type and spare audio-only MiniMax", () => {
+  assert.equal(isForbiddenMinimaxStillsClass("MiniMaxH3ImageToVideo"), true);
+  assert.equal(isForbiddenMinimaxStillsClass("MiniMaxH3ReferenceToVideo"), true);
+  assert.equal(isForbiddenMinimaxStillsClass("MiniMaxImage"), true);
+  assert.equal(isForbiddenMinimaxStillsClass("MiniMaxMusic3TextEncode"), false);
+  assert.equal(isForbiddenMinimaxStillsClass("EmptyMiniMaxMusic3LatentAudio"), false);
+  assert.equal(isForbiddenMinimaxStillsClass("UNETLoader"), false);
+
+  assert.throws(
+    () => assertStillsApiPromptRejectsMinimax({ "9": { class_type: "MiniMaxH3ImageToVideo", inputs: {} } }),
+    /MiniMax image class_type/
+  );
+  assert.throws(
+    () => assertStillsApiPromptRejectsMinimax({ "12": { class_type: "MiniMaxH3ReferenceToVideo", inputs: {} } }),
+    /MiniMax image class_type/
+  );
+  assert.throws(
+    () => assertStillsApiPromptRejectsMinimax({
+      nodes: [{ id: 77, type: "MiniMaxH3ImageToVideo", widgets_values: [] }]
+    }),
+    /MiniMax image class_type/
+  );
+  assert.doesNotThrow(() => assertStillsApiPromptRejectsMinimax({
+    "3": { class_type: "MiniMaxMusic3TextEncode", inputs: {} },
+    "4": { class_type: "EmptyMiniMaxMusic3LatentAudio", inputs: {} }
+  }));
+  assert.doesNotThrow(() => assertStillsApiPromptRejectsMinimax({
+    "1": { class_type: "UNETLoader", inputs: { unet_name: "KREA 2\\krea2_turbo_bf16.safetensors" } }
+  }));
+});
+
+test("guide-frame stills workflow ids are Krea2/Klein2 and never MiniMax", () => {
+  assert.equal(GUIDE_FRAME_STILLS_WORKFLOW_ID, "krea2-cinematic-still-fp8");
+  assert.equal(KREA2_CINEMATIC_STILL_WORKFLOW_ID, "krea2-cinematic-still-fp8");
+  assert.ok(PROMPT_GENERATION_STILLS_WORKFLOW_IDS.includes(STORYBOARD_KREA_WORKFLOW_ID));
+  assert.ok(PROMPT_GENERATION_STILLS_WORKFLOW_IDS.includes("krea2-cinematic-still-fp8"));
+  assert.ok(PROMPT_GENERATION_STILLS_WORKFLOW_IDS.includes("flux2-klein-9b-prop-fp8"));
+  assert.ok(PROMPT_GENERATION_STILLS_WORKFLOW_IDS.every((id) => !/minimax/i.test(id)));
+  assert.equal(assertPromptStillsWorkflowId("krea2-cinematic-still-fp8", "image"), "krea2-cinematic-still-fp8");
+  assert.equal(assertPromptStillsWorkflowId(STORYBOARD_KREA_WORKFLOW_ID, "design"), STORYBOARD_KREA_WORKFLOW_ID);
+  assert.equal(assertPromptStillsWorkflowId("minimax-music-3", "audio"), "minimax-music-3");
+  assert.throws(
+    () => assertPromptStillsWorkflowId("minimax-h3-i2v", "image"),
+    /cannot use MiniMax workflow/
+  );
+  assert.throws(
+    () => assertPromptStillsWorkflowId("MiniMaxH3ImageToVideo", "design"),
+    /cannot use MiniMax workflow/
+  );
+  assert.throws(
+    () => assertPromptStillsWorkflowId(STORYBOARD_T2V_WORKFLOW_ID, "image"),
+    /cannot generate stills/
+  );
+});
+
+test("LTX video-plan compilation cannot be used as a stills generator", () => {
+  const t2vGraph = {
+    extra: {
+      premiere316: {
+        type: "storyboard-t2v-video-plan",
+        workflowId: STORYBOARD_T2V_WORKFLOW_ID,
+        temporalGuides: { firstFrame: false, lastFrame: false, timedImages: false }
+      }
+    }
+  };
+  assertLtxVideoPlanIsNotStillsGenerator(t2vGraph);
+
+  const asStills = structuredClone(t2vGraph);
+  asStills.extra.premiere316.type = "storyboard-image-guide";
+  asStills.extra.premiere316.workflowId = STORYBOARD_KREA_WORKFLOW_ID;
+  assert.throws(
+    () => assertLtxVideoPlanIsNotStillsGenerator(asStills),
+    /cannot be used as a stills or first-frame generator/
+  );
+
+  const temporal = structuredClone(t2vGraph);
+  temporal.extra.premiere316.temporalGuides.firstFrame = true;
+  assert.throws(
+    () => assertLtxVideoPlanIsNotStillsGenerator(temporal),
+    /cannot generate first-frame or last-frame stills/
+  );
 });
