@@ -1,0 +1,2992 @@
+{
+  "id": "4c85eff7-a8da-48e6-9c61-24d9fe7ac6cf",
+  "revision": 0,
+  "last_node_id": 207,
+  "last_link_id": 103,
+  "nodes": [
+    {
+      "id": 3,
+      "type": "VAELoader",
+      "pos": [
+        100,
+        100
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            8,
+            25,
+            45,
+            51
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.31.0",
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "LTX\\2.5\\ltx-2.5-video-vae-bf16.safetensors"
+      ],
+      "title": "LTX 2.5 Video VAE BF16"
+    },
+    {
+      "id": 4,
+      "type": "VAELoader",
+      "pos": [
+        100,
+        330
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            27,
+            31
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.31.0",
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "LTX\\2.5\\ltx-2.5-audio-vae-bf16.safetensors"
+      ],
+      "title": "LTX 2.5 Audio VAE BF16 · soundtrack encode"
+    },
+    {
+      "id": 5,
+      "type": "LTXVConditioning",
+      "pos": [
+        880,
+        100
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 2
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 3
+        },
+        {
+          "name": "frame_rate",
+          "type": "FLOAT",
+          "widget": {
+            "name": "frame_rate"
+          },
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            6
+          ]
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": [
+            7
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LTXVConditioning",
+        "python_module": "comfy_extras.nodes_lt"
+      },
+      "widgets_values": [
+        25
+      ],
+      "title": "LTXVConditioning"
+    },
+    {
+      "id": 7,
+      "type": "LTXVConcatAVLatent",
+      "pos": [
+        3610,
+        100
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video_latent",
+          "type": "LATENT",
+          "link": 80
+        },
+        {
+          "name": "audio_latent",
+          "type": "LATENT",
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            18
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LTXVConcatAVLatent",
+        "python_module": "comfy_extras.nodes_lt"
+      },
+      "widgets_values": [],
+      "title": "LTXVConcatAVLatent"
+    },
+    {
+      "id": 8,
+      "type": "LTXDirectorGuide",
+      "pos": [
+        1270,
+        100
+      ],
+      "size": [
+        420,
+        430
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 6
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 7
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 8
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "link": 9
+        },
+        {
+          "name": "guide_data",
+          "type": "GUIDE_DATA",
+          "link": 10
+        },
+        {
+          "name": "motion_guide_data",
+          "type": "MOTION_GUIDE_DATA",
+          "shape": 7,
+          "link": null
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "shape": 7,
+          "link": null
+        },
+        {
+          "name": "ic_lora_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "ic_lora_name"
+          },
+          "link": null
+        },
+        {
+          "name": "ic_lora_strength",
+          "type": "FLOAT",
+          "widget": {
+            "name": "ic_lora_strength"
+          },
+          "link": null
+        },
+        {
+          "name": "scale_by",
+          "type": "FLOAT",
+          "widget": {
+            "name": "scale_by"
+          },
+          "link": null
+        },
+        {
+          "name": "upscale_method",
+          "type": "COMBO",
+          "widget": {
+            "name": "upscale_method"
+          },
+          "link": null
+        },
+        {
+          "name": "image_attention_strength",
+          "type": "FLOAT",
+          "widget": {
+            "name": "image_attention_strength"
+          },
+          "link": null
+        },
+        {
+          "name": "crop",
+          "type": "COMBO",
+          "widget": {
+            "name": "crop"
+          },
+          "link": null
+        },
+        {
+          "name": "auto_snap_ic_grid",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "auto_snap_ic_grid"
+          },
+          "link": null
+        },
+        {
+          "name": "use_tiled_encode",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "use_tiled_encode"
+          },
+          "link": null
+        },
+        {
+          "name": "tile_size",
+          "type": "INT",
+          "widget": {
+            "name": "tile_size"
+          },
+          "link": null
+        },
+        {
+          "name": "tile_overlap",
+          "type": "INT",
+          "widget": {
+            "name": "tile_overlap"
+          },
+          "link": null
+        },
+        {
+          "name": "retake_mode",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "retake_mode"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            82,
+            84
+          ]
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": [
+            83,
+            85
+          ]
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            80
+          ]
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": null
+        },
+        {
+          "name": "latent_downscale_factor",
+          "type": "FLOAT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LTXDirectorGuide",
+        "python_module": "custom_nodes.WhatDreamsCost-ComfyUI"
+      },
+      "widgets_values": [
+        "None",
+        0,
+        0.5,
+        "bicubic",
+        0.75,
+        "center",
+        true,
+        false,
+        256,
+        64,
+        false
+      ],
+      "title": "LTX Director Guide"
+    },
+    {
+      "id": 9,
+      "type": "CFGGuider",
+      "pos": [
+        4000,
+        100
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 81
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 82
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 83
+        },
+        {
+          "name": "cfg",
+          "type": "FLOAT",
+          "widget": {
+            "name": "cfg"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            15
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CFGGuider",
+        "python_module": "comfy_extras.nodes_custom_sampler"
+      },
+      "widgets_values": [
+        1
+      ],
+      "title": "CFG Guider"
+    },
+    {
+      "id": 10,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        4390,
+        100
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "noise",
+          "type": "NOISE",
+          "link": 14
+        },
+        {
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 15
+        },
+        {
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 16
+        },
+        {
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 17
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 18
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            20
+          ]
+        },
+        {
+          "name": "denoised_output",
+          "type": "LATENT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SamplerCustomAdvanced",
+        "python_module": "comfy_extras.nodes_custom_sampler"
+      },
+      "widgets_values": [],
+      "title": "SamplerCustomAdvanced"
+    },
+    {
+      "id": 11,
+      "type": "ManualSigmas",
+      "pos": [
+        4000,
+        330
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "SIGMAS",
+          "type": "SIGMAS",
+          "links": [
+            17
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.31.0",
+        "Node name for S&R": "ManualSigmas"
+      },
+      "widgets_values": [
+        "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+      ],
+      "title": "Distilled stage 1 · official 8-step sigmas"
+    },
+    {
+      "id": 13,
+      "type": "LTXVSeparateAVLatent",
+      "pos": [
+        4780,
+        100
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "av_latent",
+          "type": "LATENT",
+          "link": 20
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video_latent",
+          "type": "LATENT",
+          "links": [
+            48
+          ]
+        },
+        {
+          "name": "audio_latent",
+          "type": "LATENT",
+          "links": [
+            26,
+            42
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LTXVSeparateAVLatent",
+        "python_module": "comfy_extras.nodes_lt"
+      },
+      "widgets_values": [],
+      "title": "LTXVSeparateAVLatent"
+    },
+    {
+      "id": 14,
+      "type": "LTXVCropGuides",
+      "pos": [
+        7900,
+        100
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 90
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 91
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "link": 23
+        }
+      ],
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": null
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": null
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            24
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LTXVCropGuides",
+        "python_module": "comfy_extras.nodes_lt"
+      },
+      "widgets_values": [],
+      "title": "LTXVCropGuides"
+    },
+    {
+      "id": 15,
+      "type": "VAEDecodeTiled",
+      "pos": [
+        8290,
+        100
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 24
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 25
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            92
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.31.0",
+        "Node name for S&R": "VAEDecodeTiled"
+      },
+      "widgets_values": [
+        512,
+        64,
+        64,
+        8
+      ],
+      "title": "Tiled video decode · 24GB-safe temporal chunks"
+    },
+    {
+      "id": 16,
+      "type": "LTXVAudioVAEDecode",
+      "pos": [
+        5170,
+        100
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 26
+        },
+        {
+          "name": "audio_vae",
+          "type": "VAE",
+          "link": 27
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LTXVAudioVAEDecode",
+        "python_module": "comfy_extras.nodes_lt_audio"
+      },
+      "widgets_values": [],
+      "title": "Optional sampled-audio monitor · not used as music master"
+    },
+    {
+      "id": 26,
+      "type": "CLIPTextEncode",
+      "pos": [
+        490,
+        100
+      ],
+      "size": [
+        430,
+        300
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "widget": {
+            "name": "text"
+          },
+          "link": null
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 28
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode",
+        "python_module": "nodes"
+      },
+      "widgets_values": [
+        "worst quality, inconsistent motion, blurry, jittery, distorted, duplicate Jesus, identity drift, face morphing, extra limbs, malformed hands, malformed feet, costume change, text, subtitles, logo, watermark"
+      ],
+      "title": "Short safety negative · CFG 1 has limited negative leverage"
+    },
+    {
+      "id": 28,
+      "type": "RandomNoise",
+      "pos": [
+        100,
+        560
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "noise_seed",
+          "type": "INT",
+          "widget": {
+            "name": "noise_seed"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "NOISE",
+          "type": "NOISE",
+          "links": [
+            14,
+            32
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RandomNoise",
+        "python_module": "comfy_extras.nodes_custom_sampler"
+      },
+      "widgets_values": [
+        488441818004763,
+        "fixed"
+      ],
+      "title": "RandomNoise"
+    },
+    {
+      "id": 29,
+      "type": "KSamplerSelect",
+      "pos": [
+        100,
+        790
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "sampler_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "sampler_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SAMPLER",
+          "type": "SAMPLER",
+          "links": [
+            16
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSamplerSelect",
+        "python_module": "comfy_extras.nodes_custom_sampler"
+      },
+      "widgets_values": [
+        "euler_ancestral"
+      ],
+      "title": "KSamplerSelect"
+    },
+    {
+      "id": 46,
+      "type": "LTXDirector",
+      "pos": [
+        490,
+        330
+      ],
+      "size": [
+        1120,
+        1320
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 29
+        },
+        {
+          "label": "clip",
+          "name": "clip",
+          "type": "CLIP",
+          "link": 30
+        },
+        {
+          "label": "audio_vae",
+          "name": "audio_vae",
+          "shape": 7,
+          "type": "VAE",
+          "link": 31
+        },
+        {
+          "label": "optional_latent",
+          "name": "optional_latent",
+          "shape": 7,
+          "type": "LATENT",
+          "link": null
+        },
+        {
+          "label": "global_prompt",
+          "name": "global_prompt",
+          "shape": 7,
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "label": "frame_rate",
+          "name": "frame_rate",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "frame_rate"
+          },
+          "link": null
+        },
+        {
+          "label": "custom_width",
+          "name": "custom_width",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "custom_width"
+          },
+          "link": 97
+        },
+        {
+          "label": "custom_height",
+          "name": "custom_height",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "custom_height"
+          },
+          "link": 98
+        },
+        {
+          "label": "resize_method",
+          "name": "resize_method",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "resize_method"
+          },
+          "link": null
+        },
+        {
+          "label": "timeline_data",
+          "name": "timeline_data",
+          "type": "STRING",
+          "widget": {
+            "name": "timeline_data"
+          },
+          "link": null
+        },
+        {
+          "label": "local_prompts",
+          "name": "local_prompts",
+          "type": "STRING",
+          "widget": {
+            "name": "local_prompts"
+          },
+          "link": null
+        },
+        {
+          "label": "segment_lengths",
+          "name": "segment_lengths",
+          "type": "STRING",
+          "widget": {
+            "name": "segment_lengths"
+          },
+          "link": null
+        },
+        {
+          "label": "guide_strength",
+          "name": "guide_strength",
+          "type": "STRING",
+          "widget": {
+            "name": "guide_strength"
+          },
+          "link": null
+        },
+        {
+          "label": "use_custom_audio",
+          "name": "use_custom_audio",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "use_custom_audio"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "model",
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            81,
+            86
+          ]
+        },
+        {
+          "label": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            2
+          ]
+        },
+        {
+          "label": "video_latent",
+          "name": "video_latent",
+          "type": "LATENT",
+          "links": [
+            9
+          ]
+        },
+        {
+          "label": "audio_latent",
+          "name": "audio_latent",
+          "type": "LATENT",
+          "links": [
+            5
+          ]
+        },
+        {
+          "label": "guide_data",
+          "name": "guide_data",
+          "type": "GUIDE_DATA",
+          "links": [
+            10,
+            53
+          ]
+        },
+        {
+          "label": "motion_guide_data",
+          "name": "motion_guide_data",
+          "type": "MOTION_GUIDE_DATA",
+          "links": null
+        },
+        {
+          "label": "frame_rate",
+          "name": "frame_rate",
+          "type": "FLOAT",
+          "links": [
+            1,
+            54
+          ]
+        },
+        {
+          "name": "combined_audio",
+          "type": "AUDIO",
+          "links": [
+            56
+          ]
+        }
+      ],
+      "properties": {
+        "queue_i2v_segments": false,
+        "cnr_id": "whatdreamscost-comfyui",
+        "ver": "5cae3c00186ff2eb79771070f05a2c4e02f329bb",
+        "Node name for S&R": "LTXDirector",
+        "global_prompt": "Photorealistic live-action biblical epic for a theatrical Passion of Christ music video. The same historically grounded Jesus remains recognizable across every shot: olive-brown Middle Eastern skin, long angular oval face, deep-set dark brown eyes, thick dark eyebrows, strong narrow slightly convex nose, shoulder-length dense dark wavy curls, and a full tapered dark beard. He wears weathered off-white linen and a dark earth-brown mantle. Preserve face, hair, beard, anatomy, wardrobe, screen direction, lighting logic, and emotional continuity. Cinematic 35 mm anamorphic photography, restrained natural camera movement, realistic skin and cloth physics, deep blacks with readable facial detail, no generated text, no logo, no duplicate Jesus, no identity drift, and no abrupt transformation. The supplied soundtrack is the temporal source of truth: motion intensity, cuts, gesture energy, and camera acceleration follow its phrasing without changing the audio.",
+        "mainTrackEnabled": true,
+        "audioTrackEnabled": true,
+        "motionTrackEnabled": false,
+        "audioTrackWasEnabledBeforeOverride": false,
+        "inpaint_audio": false,
+        "override_audio": false,
+        "overrideAudio": false,
+        "showFilenames": true,
+        "use_custom_audio": false,
+        "use_custom_motion": false,
+        "frame_rate": 24,
+        "display_mode": "seconds",
+        "custom_width": 512,
+        "custom_height": 288,
+        "resize_method": "crop",
+        "divisible_by": 32,
+        "img_compression": 22,
+        "guide_strength": "1.00",
+        "local_prompts": "Shot 1, 00:00-00:10 — Gethsemane prelude. Begin from the supplied approved first-frame image. Jesus stands alone among ancient olive trees at night while leaves and linen move in a cold wind. The camera makes a slow chest-height lateral move; he takes two burdened steps and stops. Keep his face readable and his motion restrained as the music establishes grief. One continuous shot, no cut inside this segment.",
+        "segment_lengths": "240",
+        "timeline_data": "{\"mainTrackEnabled\":true,\"audioTrackEnabled\":true,\"motionTrackEnabled\":false,\"propHeight\":96,\"globalPropHeight\":330,\"showFilenames\":true,\"overrideAudio\":false,\"inpaint_audio\":false,\"global_prompt\":\"Photorealistic live-action biblical epic for a theatrical Passion of Christ music video. The same historically grounded Jesus remains recognizable across every shot: olive-brown Middle Eastern skin, long angular oval face, deep-set dark brown eyes, thick dark eyebrows, strong narrow slightly convex nose, shoulder-length dense dark wavy curls, and a full tapered dark beard. He wears weathered off-white linen and a dark earth-brown mantle. Preserve face, hair, beard, anatomy, wardrobe, screen direction, lighting logic, and emotional continuity. Cinematic 35 mm anamorphic photography, restrained natural camera movement, realistic skin and cloth physics, deep blacks with readable facial detail, no generated text, no logo, no duplicate Jesus, no identity drift, and no abrupt transformation. The supplied soundtrack is the temporal source of truth: motion intensity, cuts, gesture energy, and camera acceleration follow its phrasing without changing the audio.\",\"retake_global_prompt\":\"\",\"retakeMode\":false,\"retakeStart\":0,\"retakeLength\":240,\"retakePrompt\":\"\",\"retakeStrength\":1,\"retakeVideo\":null,\"normalStartFrame\":0,\"normalDurationFrames\":240,\"segments\":[{\"id\":\"music-block01-shot01\",\"start\":0,\"length\":240,\"prompt\":\"Shot 1, 00:00-00:10 — Gethsemane prelude. Begin from the supplied approved first-frame image. Jesus stands alone among ancient olive trees at night while leaves and linen move in a cold wind. The camera makes a slow chest-height lateral move; he takes two burdened steps and stops. Keep his face readable and his motion restrained as the music establishes grief. One continuous shot, no cut inside this segment.\",\"type\":\"image\",\"imageFile\":\"char-jesus-main.v4.png\",\"imageB64\":\"/api/view?filename=char-jesus-main.v4.png&type=input\",\"isEndFrame\":false,\"guideStrength\":1},{\"id\":\"music-block01-shot02\",\"start\":240,\"length\":240,\"prompt\":\"Shot 2, 00:10-00:20 — Betrayal approaches. Continue exactly from the prior accepted final frame. Torchlight grows between the trees and distant figures approach while Jesus turns toward the sound without changing identity or wardrobe. The camera eases backward on the established axis as the soundtrack gains pressure. One continuous shot, no teleportation or duplicate subject.\",\"type\":\"text\"},{\"id\":\"music-block01-shot03\",\"start\":480,\"length\":240,\"prompt\":\"Shot 3, 00:20-00:30 — Arrest and resolve. Continue from the prior final frame. Jesus remains calm as guards enter the deep background; chains, torch smoke, and wind react to the musical accents. Use a controlled medium-wide tracking move and preserve the same facial geometry, hair, beard, costume, and night palette. One continuous shot.\",\"type\":\"text\"},{\"id\":\"music-block01-shot04\",\"start\":720,\"length\":240,\"prompt\":\"Shot 4, 00:30-00:40 — Procession toward Calvary. Continue from the prior final frame with coherent geography. Jesus advances under increasing physical burden while the camera tracks beside him at waist height. Dust, cloth, breath, and crowd motion rise with the soundtrack, but his body remains anatomically stable and his identity unchanged. One continuous shot.\",\"type\":\"text\"},{\"id\":\"music-block01-shot05\",\"start\":960,\"length\":240,\"prompt\":\"Shot 5, 00:40-00:50 — The cross and gathering darkness. Continue from the prior final frame. The camera widens gradually as storm clouds close over the hill and the surrounding world darkens. Keep the visual treatment solemn and historically grounded; no fantasy halo, no text, and no discontinuous costume or face change. One continuous shot.\",\"type\":\"text\"},{\"id\":\"music-block01-shot06\",\"start\":1200,\"length\":240,\"prompt\":\"Shot 6, 00:50-01:00 — Sacrifice into promised victory. Continue from the prior final frame. The soundtrack reaches its first-block climax as darkness, wind, and distant light build around Jesus. The camera performs one deliberate rising pullback, preserving his exact face and silhouette, then settles on a strong handoff composition for the next block. One continuous shot with a stable final frame.\",\"type\":\"text\"}],\"motionSegments\":[],\"audioSegments\":[]}",
+        "epsilon": 0.99,
+        "start_second": 0,
+        "end_second": 10,
+        "duration_seconds": 10,
+        "start_frame": 0,
+        "end_frame": 240,
+        "duration_frames": 240,
+        "aux_id": "kijai/ComfyUI-PromptRelay",
+        "timeline_ui": "",
+        "has_serialized_properties": true,
+        "ue_properties": {
+          "version": "7.8",
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "propHeight": 96,
+        "globalPropHeight": 330,
+        "retakeMode": false
+      },
+      "widgets_values": [
+        0,
+        10,
+        10,
+        0,
+        240,
+        240,
+        "{\"mainTrackEnabled\":true,\"audioTrackEnabled\":true,\"motionTrackEnabled\":false,\"propHeight\":96,\"globalPropHeight\":330,\"showFilenames\":true,\"overrideAudio\":false,\"inpaint_audio\":false,\"global_prompt\":\"Photorealistic live-action biblical epic for a theatrical Passion of Christ music video. The same historically grounded Jesus remains recognizable across every shot: olive-brown Middle Eastern skin, long angular oval face, deep-set dark brown eyes, thick dark eyebrows, strong narrow slightly convex nose, shoulder-length dense dark wavy curls, and a full tapered dark beard. He wears weathered off-white linen and a dark earth-brown mantle. Preserve face, hair, beard, anatomy, wardrobe, screen direction, lighting logic, and emotional continuity. Cinematic 35 mm anamorphic photography, restrained natural camera movement, realistic skin and cloth physics, deep blacks with readable facial detail, no generated text, no logo, no duplicate Jesus, no identity drift, and no abrupt transformation. The supplied soundtrack is the temporal source of truth: motion intensity, cuts, gesture energy, and camera acceleration follow its phrasing without changing the audio.\",\"retake_global_prompt\":\"\",\"retakeMode\":false,\"retakeStart\":0,\"retakeLength\":240,\"retakePrompt\":\"\",\"retakeStrength\":1,\"retakeVideo\":null,\"normalStartFrame\":0,\"normalDurationFrames\":240,\"segments\":[{\"id\":\"music-block01-shot01\",\"start\":0,\"length\":240,\"prompt\":\"Shot 1, 00:00-00:10 — Gethsemane prelude. Begin from the supplied approved first-frame image. Jesus stands alone among ancient olive trees at night while leaves and linen move in a cold wind. The camera makes a slow chest-height lateral move; he takes two burdened steps and stops. Keep his face readable and his motion restrained as the music establishes grief. One continuous shot, no cut inside this segment.\",\"type\":\"image\",\"imageFile\":\"char-jesus-main.v4.png\",\"imageB64\":\"/api/view?filename=char-jesus-main.v4.png&type=input\",\"isEndFrame\":false,\"guideStrength\":1},{\"id\":\"music-block01-shot02\",\"start\":240,\"length\":240,\"prompt\":\"Shot 2, 00:10-00:20 — Betrayal approaches. Continue exactly from the prior accepted final frame. Torchlight grows between the trees and distant figures approach while Jesus turns toward the sound without changing identity or wardrobe. The camera eases backward on the established axis as the soundtrack gains pressure. One continuous shot, no teleportation or duplicate subject.\",\"type\":\"text\"},{\"id\":\"music-block01-shot03\",\"start\":480,\"length\":240,\"prompt\":\"Shot 3, 00:20-00:30 — Arrest and resolve. Continue from the prior final frame. Jesus remains calm as guards enter the deep background; chains, torch smoke, and wind react to the musical accents. Use a controlled medium-wide tracking move and preserve the same facial geometry, hair, beard, costume, and night palette. One continuous shot.\",\"type\":\"text\"},{\"id\":\"music-block01-shot04\",\"start\":720,\"length\":240,\"prompt\":\"Shot 4, 00:30-00:40 — Procession toward Calvary. Continue from the prior final frame with coherent geography. Jesus advances under increasing physical burden while the camera tracks beside him at waist height. Dust, cloth, breath, and crowd motion rise with the soundtrack, but his body remains anatomically stable and his identity unchanged. One continuous shot.\",\"type\":\"text\"},{\"id\":\"music-block01-shot05\",\"start\":960,\"length\":240,\"prompt\":\"Shot 5, 00:40-00:50 — The cross and gathering darkness. Continue from the prior final frame. The camera widens gradually as storm clouds close over the hill and the surrounding world darkens. Keep the visual treatment solemn and historically grounded; no fantasy halo, no text, and no discontinuous costume or face change. One continuous shot.\",\"type\":\"text\"},{\"id\":\"music-block01-shot06\",\"start\":1200,\"length\":240,\"prompt\":\"Shot 6, 00:50-01:00 — Sacrifice into promised victory. Continue from the prior final frame. The soundtrack reaches its first-block climax as darkness, wind, and distant light build around Jesus. The camera performs one deliberate rising pullback, preserving his exact face and silhouette, then settles on a strong handoff composition for the next block. One continuous shot with a stable final frame.\",\"type\":\"text\"}],\"motionSegments\":[],\"audioSegments\":[]}",
+        "Shot 1, 00:00-00:10 — Gethsemane prelude. Begin from the supplied approved first-frame image. Jesus stands alone among ancient olive trees at night while leaves and linen move in a cold wind. The camera makes a slow chest-height lateral move; he takes two burdened steps and stops. Keep his face readable and his motion restrained as the music establishes grief. One continuous shot, no cut inside this segment.",
+        "240",
+        0.99,
+        "1.00",
+        false,
+        false,
+        false,
+        24,
+        "seconds",
+        512,
+        288,
+        "crop",
+        32,
+        22,
+        false,
+        null,
+        ""
+      ],
+      "title": "LTX Director · 24GB music-video shot worker · 60s block / 6 x 10s"
+    },
+    {
+      "id": 47,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        7120,
+        100
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "noise",
+          "type": "NOISE",
+          "link": 32
+        },
+        {
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 33
+        },
+        {
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 34
+        },
+        {
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 35
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 36
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            37
+          ]
+        },
+        {
+          "name": "denoised_output",
+          "type": "LATENT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SamplerCustomAdvanced",
+        "python_module": "comfy_extras.nodes_custom_sampler"
+      },
+      "widgets_values": [],
+      "title": "SamplerCustomAdvanced"
+    },
+    {
+      "id": 48,
+      "type": "LTXVSeparateAVLatent",
+      "pos": [
+        7510,
+        100
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "av_latent",
+          "type": "LATENT",
+          "link": 37
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video_latent",
+          "type": "LATENT",
+          "links": [
+            23
+          ]
+        },
+        {
+          "name": "audio_latent",
+          "type": "LATENT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LTXVSeparateAVLatent",
+        "python_module": "comfy_extras.nodes_lt"
+      },
+      "widgets_values": [],
+      "title": "LTXVSeparateAVLatent"
+    },
+    {
+      "id": 49,
+      "type": "CFGGuider",
+      "pos": [
+        6730,
+        100
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 86
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 87
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 88
+        },
+        {
+          "name": "cfg",
+          "type": "FLOAT",
+          "widget": {
+            "name": "cfg"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            33
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CFGGuider",
+        "python_module": "comfy_extras.nodes_custom_sampler"
+      },
+      "widgets_values": [
+        1
+      ],
+      "title": "CFG Guider"
+    },
+    {
+      "id": 50,
+      "type": "LTXVConcatAVLatent",
+      "pos": [
+        6730,
+        330
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video_latent",
+          "type": "LATENT",
+          "link": 89
+        },
+        {
+          "name": "audio_latent",
+          "type": "LATENT",
+          "link": 42
+        }
+      ],
+      "outputs": [
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            36
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LTXVConcatAVLatent",
+        "python_module": "comfy_extras.nodes_lt"
+      },
+      "widgets_values": [],
+      "title": "LTXVConcatAVLatent"
+    },
+    {
+      "id": 52,
+      "type": "LTXVLatentUpsampler",
+      "pos": [
+        5560,
+        100
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 43
+        },
+        {
+          "name": "upscale_model",
+          "type": "LATENT_UPSCALE_MODEL",
+          "link": 44
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 45
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            52
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LTXVLatentUpsampler",
+        "python_module": "comfy_extras.nodes_lt_upsampler"
+      },
+      "widgets_values": [],
+      "title": "LTXVLatentUpsampler"
+    },
+    {
+      "id": 53,
+      "type": "KSamplerSelect",
+      "pos": [
+        100,
+        1020
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "sampler_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "sampler_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SAMPLER",
+          "type": "SAMPLER",
+          "links": [
+            34
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSamplerSelect",
+        "python_module": "comfy_extras.nodes_custom_sampler"
+      },
+      "widgets_values": [
+        "euler"
+      ],
+      "title": "KSamplerSelect"
+    },
+    {
+      "id": 55,
+      "type": "LTXVCropGuides",
+      "pos": [
+        5170,
+        330
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 84
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 85
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "link": 48
+        }
+      ],
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            49
+          ]
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": [
+            50
+          ]
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            43
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LTXVCropGuides",
+        "python_module": "comfy_extras.nodes_lt"
+      },
+      "widgets_values": [],
+      "title": "LTXVCropGuides"
+    },
+    {
+      "id": 57,
+      "type": "LatentUpscaleModelLoader",
+      "pos": [
+        100,
+        1250
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "model_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT_UPSCALE_MODEL",
+          "type": "LATENT_UPSCALE_MODEL",
+          "links": [
+            44
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LatentUpscaleModelLoader",
+        "python_module": "comfy_extras.nodes_hunyuan"
+      },
+      "widgets_values": [
+        "LTX\\2.5\\ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors"
+      ],
+      "title": "Native latent x2 · size follows blue resolution control"
+    },
+    {
+      "id": 58,
+      "type": "LTXDirectorGuide",
+      "pos": [
+        5950,
+        100
+      ],
+      "size": [
+        420,
+        430
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 49
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 50
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 51
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "link": 52
+        },
+        {
+          "name": "guide_data",
+          "type": "GUIDE_DATA",
+          "link": 53
+        },
+        {
+          "name": "motion_guide_data",
+          "type": "MOTION_GUIDE_DATA",
+          "shape": 7,
+          "link": null
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "shape": 7,
+          "link": null
+        },
+        {
+          "name": "ic_lora_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "ic_lora_name"
+          },
+          "link": null
+        },
+        {
+          "name": "ic_lora_strength",
+          "type": "FLOAT",
+          "widget": {
+            "name": "ic_lora_strength"
+          },
+          "link": null
+        },
+        {
+          "name": "scale_by",
+          "type": "FLOAT",
+          "widget": {
+            "name": "scale_by"
+          },
+          "link": null
+        },
+        {
+          "name": "upscale_method",
+          "type": "COMBO",
+          "widget": {
+            "name": "upscale_method"
+          },
+          "link": null
+        },
+        {
+          "name": "image_attention_strength",
+          "type": "FLOAT",
+          "widget": {
+            "name": "image_attention_strength"
+          },
+          "link": null
+        },
+        {
+          "name": "crop",
+          "type": "COMBO",
+          "widget": {
+            "name": "crop"
+          },
+          "link": null
+        },
+        {
+          "name": "auto_snap_ic_grid",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "auto_snap_ic_grid"
+          },
+          "link": null
+        },
+        {
+          "name": "use_tiled_encode",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "use_tiled_encode"
+          },
+          "link": null
+        },
+        {
+          "name": "tile_size",
+          "type": "INT",
+          "widget": {
+            "name": "tile_size"
+          },
+          "link": null
+        },
+        {
+          "name": "tile_overlap",
+          "type": "INT",
+          "widget": {
+            "name": "tile_overlap"
+          },
+          "link": null
+        },
+        {
+          "name": "retake_mode",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "retake_mode"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            87,
+            90
+          ]
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": [
+            88,
+            91
+          ]
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            89
+          ]
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": null
+        },
+        {
+          "name": "latent_downscale_factor",
+          "type": "FLOAT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LTXDirectorGuide",
+        "python_module": "custom_nodes.WhatDreamsCost-ComfyUI"
+      },
+      "widgets_values": [
+        "None",
+        0,
+        1,
+        "bicubic",
+        0.75,
+        "center",
+        true,
+        false,
+        256,
+        64,
+        false
+      ],
+      "title": "LTX Director Guide"
+    },
+    {
+      "id": 84,
+      "type": "CLIPLoader",
+      "pos": [
+        100,
+        1480
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            28,
+            30
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.31.0",
+        "Node name for S&R": "CLIPLoader"
+      },
+      "widgets_values": [
+        "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+        "ltxv",
+        "default"
+      ],
+      "title": "Gemma 4 12B projected INT8 · unloads before diffusion"
+    },
+    {
+      "id": 94,
+      "type": "VHS_VideoCombine",
+      "pos": [
+        9410,
+        100
+      ],
+      "size": [
+        210,
+        334
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 101
+        },
+        {
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": 56
+        },
+        {
+          "name": "meta_batch",
+          "shape": 7,
+          "type": "VHS_BatchManager",
+          "link": null
+        },
+        {
+          "name": "vae",
+          "shape": 7,
+          "type": "VAE",
+          "link": null
+        },
+        {
+          "name": "frame_rate",
+          "type": "FLOAT",
+          "link": 54
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Filenames",
+          "type": "VHS_FILENAMES",
+          "links": [
+            96
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VHS_VideoCombine"
+      },
+      "widgets_values": {
+        "frame_rate": [
+          "46",
+          6
+        ],
+        "loop_count": 0,
+        "filename_prefix": "music_video/ltx25_24gb/block01_shot01",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 18,
+        "save_metadata": true,
+        "trim_to_audio": true,
+        "pingpong": false,
+        "save_output": true,
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {}
+        }
+      },
+      "title": "Save exact 240-frame shot · Director soundtrack must be loaded"
+    },
+    {
+      "id": 95,
+      "type": "UNETLoader",
+      "pos": [
+        100,
+        1710
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "unet_name"
+          },
+          "link": null
+        },
+        {
+          "name": "weight_dtype",
+          "type": "COMBO",
+          "widget": {
+            "name": "weight_dtype"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            29
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "UNETLoader",
+        "python_module": "nodes"
+      },
+      "widgets_values": [
+        "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+        "default"
+      ],
+      "title": "CURRENT GPU · LTX 2.5 Distilled INT8 ConvRot"
+    },
+    {
+      "id": 96,
+      "type": "ManualSigmas",
+      "pos": [
+        100,
+        1940
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "sigmas",
+          "type": "STRING",
+          "widget": {
+            "name": "sigmas"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SIGMAS",
+          "type": "SIGMAS",
+          "links": [
+            35
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ManualSigmas",
+        "python_module": "comfy_extras.nodes_custom_sampler"
+      },
+      "widgets_values": [
+        "0.909375, 0.725, 0.421875, 0.0"
+      ],
+      "title": "Distilled stage 2 · official refinement sigmas"
+    },
+    {
+      "id": 132,
+      "type": "ImageScale",
+      "pos": [
+        8680,
+        100
+      ],
+      "size": [
+        270,
+        130
+      ],
+      "flags": {},
+      "order": 29,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 92
+        },
+        {
+          "localized_name": "width",
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": 99
+        },
+        {
+          "localized_name": "height",
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": 100
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            93,
+            94
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.30.2",
+        "Node name for S&R": "ImageScale"
+      },
+      "widgets_values": [
+        "lanczos",
+        1024,
+        576,
+        "center"
+      ],
+      "title": "Exact delivery size · driven by blue resolution control"
+    },
+    {
+      "id": 200,
+      "type": "ImageFromBatch",
+      "pos": [
+        9050,
+        500
+      ],
+      "size": [
+        250,
+        150
+      ],
+      "flags": {},
+      "order": 30,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 94
+        },
+        {
+          "localized_name": "batch_index",
+          "name": "batch_index",
+          "type": "INT",
+          "widget": {
+            "name": "batch_index"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "length",
+          "name": "length",
+          "type": "INT",
+          "widget": {
+            "name": "length"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            95
+          ]
+        }
+      ],
+      "title": "Get absolute last frame for next shot",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.1",
+        "Node name for S&R": "ImageFromBatch"
+      },
+      "widgets_values": [
+        -1,
+        1
+      ]
+    },
+    {
+      "id": 201,
+      "type": "SaveImage",
+      "pos": [
+        9410,
+        500
+      ],
+      "size": [
+        330,
+        310
+      ],
+      "flags": {},
+      "order": 31,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 95
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            102
+          ]
+        }
+      ],
+      "title": "Save handoff frame · orchestrator uploads into next shot",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.1",
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "music_video/ltx25_24gb/handoff/block01_shot01_last"
+      ]
+    },
+    {
+      "id": 202,
+      "type": "easy cleanGpuUsed",
+      "pos": [
+        9790,
+        100
+      ],
+      "size": [
+        270,
+        60
+      ],
+      "flags": {},
+      "order": 32,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "anything",
+          "name": "anything",
+          "type": "*",
+          "link": 103
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "output",
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "title": "After save · release cached VRAM",
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "Node name for S&R": "easy cleanGpuUsed"
+      },
+      "widgets_values": [],
+      "color": "#332922",
+      "bgcolor": "#593930"
+    },
+    {
+      "id": 203,
+      "type": "MarkdownNote",
+      "pos": [
+        100,
+        -520
+      ],
+      "size": [
+        690,
+        390
+      ],
+      "flags": {},
+      "order": 33,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "CURRENT HARDWARE PROFILE · READ FIRST",
+      "properties": {},
+      "widgets_values": [
+        "# CURRENT GPU: RTX 5090 Laptop · 24 GB\n\n- Uses LTX 2.5 **Distilled INT8 ConvRot** and projected Gemma 4 INT8.\n- Enter any delivery size in the blue **FINAL RESOLUTION** node; it automatically chooses a safe 32-aligned stage-one canvas and preserves native x2 refinement.\n- Default is **1024x576**. Weight quantization does not reduce pixel resolution.\n- Render one 5-10 second shot at a time. A 60-90 second block is assembled from 6-9 shots.\n- Do not switch this file to the 42 GB BF16 Dev transformer on a 24 GB card."
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 204,
+      "type": "MarkdownNote",
+      "pos": [
+        830,
+        -520
+      ],
+      "size": [
+        760,
+        390
+      ],
+      "flags": {},
+      "order": 34,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "AUDIO + BLOCK WORKFLOW",
+      "properties": {},
+      "widgets_values": [
+        "# 4-minute soundtrack workflow\n\n**Do not queue until the soundtrack is loaded.**\n\n1. Open the LTX Director node or the 8791 Director UI.\n2. Add the full soundtrack once on the AUDIO track at frame 0.\n3. Keep **Inpaint Audio OFF** so the encoded soundtrack slice is frozen, not regenerated.\n4. Select one 10-second main-track shot and queue it. The node slices audio by the selected start frame automatically.\n5. The saved 241st-frame PNG is the exact next-boundary I2V anchor; the MP4 is cropped to 240 frames. The 8791 sequential runner should upload and patch it automatically; in raw ComfyUI select it manually.\n6. Concatenate requested frames and remux the original soundtrack when the 60-90 second block is complete."
+      ],
+      "color": "#243b4a",
+      "bgcolor": "#31576b"
+    },
+    {
+      "id": 205,
+      "type": "LTX25ResolutionPlan",
+      "pos": [
+        1680,
+        -500
+      ],
+      "size": [
+        430,
+        190
+      ],
+      "flags": {},
+      "order": 35,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "localized_name": "final_width",
+          "name": "final_width",
+          "type": "INT",
+          "links": [
+            99
+          ]
+        },
+        {
+          "localized_name": "final_height",
+          "name": "final_height",
+          "type": "INT",
+          "links": [
+            100
+          ]
+        },
+        {
+          "localized_name": "stage1_width",
+          "name": "stage1_width",
+          "type": "INT",
+          "links": [
+            97
+          ]
+        },
+        {
+          "localized_name": "stage1_height",
+          "name": "stage1_height",
+          "type": "INT",
+          "links": [
+            98
+          ]
+        },
+        {
+          "localized_name": "native_x2_width",
+          "name": "native_x2_width",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "native_x2_height",
+          "name": "native_x2_height",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "resolution_summary",
+          "name": "resolution_summary",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "title": "FINAL RESOLUTION · enter any width/height (default 1024x576)",
+      "properties": {
+        "Node name for S&R": "LTX25ResolutionPlan",
+        "bundle_path": "custom_nodes/ltx25_smart_controls/__init__.py"
+      },
+      "widgets_values": [
+        1024,
+        576
+      ],
+      "color": "#173c50",
+      "bgcolor": "#245e7b"
+    },
+    {
+      "id": 206,
+      "type": "ImageFromBatch",
+      "pos": [
+        8990,
+        80
+      ],
+      "size": [
+        290,
+        150
+      ],
+      "flags": {},
+      "order": 30,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 93
+        },
+        {
+          "localized_name": "batch_index",
+          "name": "batch_index",
+          "type": "INT",
+          "widget": {
+            "name": "batch_index"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "length",
+          "name": "length",
+          "type": "INT",
+          "widget": {
+            "name": "length"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            101
+          ]
+        }
+      ],
+      "title": "Conform LTX 241 frames to exact 240-frame editorial shot",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.1",
+        "Node name for S&R": "ImageFromBatch"
+      },
+      "widgets_values": [
+        0,
+        240
+      ]
+    },
+    {
+      "id": 207,
+      "type": "easy batchAnything",
+      "pos": [
+        9790,
+        250
+      ],
+      "size": [
+        270,
+        90
+      ],
+      "flags": {},
+      "order": 36,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "any_1",
+          "name": "any_1",
+          "type": "*",
+          "link": 96
+        },
+        {
+          "localized_name": "any_2",
+          "name": "any_2",
+          "type": "*",
+          "link": 102
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "batch",
+          "name": "batch",
+          "type": "*",
+          "links": [
+            103
+          ]
+        }
+      ],
+      "title": "Wait for MP4 + boundary-frame PNG",
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "Node name for S&R": "easy batchAnything"
+      },
+      "widgets_values": []
+    }
+  ],
+  "links": [
+    [
+      1,
+      46,
+      6,
+      5,
+      2,
+      "FLOAT"
+    ],
+    [
+      2,
+      46,
+      1,
+      5,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      3,
+      26,
+      0,
+      5,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      5,
+      46,
+      3,
+      7,
+      1,
+      "LATENT"
+    ],
+    [
+      6,
+      5,
+      0,
+      8,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      7,
+      5,
+      1,
+      8,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      8,
+      3,
+      0,
+      8,
+      2,
+      "VAE"
+    ],
+    [
+      9,
+      46,
+      2,
+      8,
+      3,
+      "LATENT"
+    ],
+    [
+      10,
+      46,
+      4,
+      8,
+      4,
+      "GUIDE_DATA"
+    ],
+    [
+      14,
+      28,
+      0,
+      10,
+      0,
+      "NOISE"
+    ],
+    [
+      15,
+      9,
+      0,
+      10,
+      1,
+      "GUIDER"
+    ],
+    [
+      16,
+      29,
+      0,
+      10,
+      2,
+      "SAMPLER"
+    ],
+    [
+      17,
+      11,
+      0,
+      10,
+      3,
+      "SIGMAS"
+    ],
+    [
+      18,
+      7,
+      0,
+      10,
+      4,
+      "LATENT"
+    ],
+    [
+      20,
+      10,
+      0,
+      13,
+      0,
+      "LATENT"
+    ],
+    [
+      23,
+      48,
+      0,
+      14,
+      2,
+      "LATENT"
+    ],
+    [
+      24,
+      14,
+      2,
+      15,
+      0,
+      "LATENT"
+    ],
+    [
+      25,
+      3,
+      0,
+      15,
+      1,
+      "VAE"
+    ],
+    [
+      26,
+      13,
+      1,
+      16,
+      0,
+      "LATENT"
+    ],
+    [
+      27,
+      4,
+      0,
+      16,
+      1,
+      "VAE"
+    ],
+    [
+      28,
+      84,
+      0,
+      26,
+      1,
+      "CLIP"
+    ],
+    [
+      29,
+      95,
+      0,
+      46,
+      0,
+      "MODEL"
+    ],
+    [
+      30,
+      84,
+      0,
+      46,
+      1,
+      "CLIP"
+    ],
+    [
+      31,
+      4,
+      0,
+      46,
+      2,
+      "VAE"
+    ],
+    [
+      32,
+      28,
+      0,
+      47,
+      0,
+      "NOISE"
+    ],
+    [
+      33,
+      49,
+      0,
+      47,
+      1,
+      "GUIDER"
+    ],
+    [
+      34,
+      53,
+      0,
+      47,
+      2,
+      "SAMPLER"
+    ],
+    [
+      35,
+      96,
+      0,
+      47,
+      3,
+      "SIGMAS"
+    ],
+    [
+      36,
+      50,
+      0,
+      47,
+      4,
+      "LATENT"
+    ],
+    [
+      37,
+      47,
+      0,
+      48,
+      0,
+      "LATENT"
+    ],
+    [
+      42,
+      13,
+      1,
+      50,
+      1,
+      "LATENT"
+    ],
+    [
+      43,
+      55,
+      2,
+      52,
+      0,
+      "LATENT"
+    ],
+    [
+      44,
+      57,
+      0,
+      52,
+      1,
+      "LATENT_UPSCALE_MODEL"
+    ],
+    [
+      45,
+      3,
+      0,
+      52,
+      2,
+      "VAE"
+    ],
+    [
+      48,
+      13,
+      0,
+      55,
+      2,
+      "LATENT"
+    ],
+    [
+      49,
+      55,
+      0,
+      58,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      50,
+      55,
+      1,
+      58,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      51,
+      3,
+      0,
+      58,
+      2,
+      "VAE"
+    ],
+    [
+      52,
+      52,
+      0,
+      58,
+      3,
+      "LATENT"
+    ],
+    [
+      53,
+      46,
+      4,
+      58,
+      4,
+      "GUIDE_DATA"
+    ],
+    [
+      54,
+      46,
+      6,
+      94,
+      4,
+      "FLOAT"
+    ],
+    [
+      56,
+      46,
+      7,
+      94,
+      1,
+      "AUDIO"
+    ],
+    [
+      80,
+      8,
+      2,
+      7,
+      0,
+      "LATENT"
+    ],
+    [
+      81,
+      46,
+      0,
+      9,
+      0,
+      "MODEL"
+    ],
+    [
+      82,
+      8,
+      0,
+      9,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      83,
+      8,
+      1,
+      9,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      84,
+      8,
+      0,
+      55,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      85,
+      8,
+      1,
+      55,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      86,
+      46,
+      0,
+      49,
+      0,
+      "MODEL"
+    ],
+    [
+      87,
+      58,
+      0,
+      49,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      88,
+      58,
+      1,
+      49,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      89,
+      58,
+      2,
+      50,
+      0,
+      "LATENT"
+    ],
+    [
+      90,
+      58,
+      0,
+      14,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      91,
+      58,
+      1,
+      14,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      92,
+      15,
+      0,
+      132,
+      0,
+      "IMAGE"
+    ],
+    [
+      93,
+      132,
+      0,
+      206,
+      0,
+      "IMAGE"
+    ],
+    [
+      94,
+      132,
+      0,
+      200,
+      0,
+      "IMAGE"
+    ],
+    [
+      95,
+      200,
+      0,
+      201,
+      0,
+      "IMAGE"
+    ],
+    [
+      96,
+      94,
+      0,
+      207,
+      0,
+      "VHS_FILENAMES"
+    ],
+    [
+      97,
+      205,
+      2,
+      46,
+      6,
+      "INT"
+    ],
+    [
+      98,
+      205,
+      3,
+      46,
+      7,
+      "INT"
+    ],
+    [
+      99,
+      205,
+      0,
+      132,
+      1,
+      "INT"
+    ],
+    [
+      100,
+      205,
+      1,
+      132,
+      2,
+      "INT"
+    ],
+    [
+      101,
+      206,
+      0,
+      94,
+      0,
+      "IMAGE"
+    ],
+    [
+      102,
+      201,
+      0,
+      207,
+      1,
+      "IMAGE"
+    ],
+    [
+      103,
+      207,
+      0,
+      202,
+      0,
+      "*"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "01 · LOADERS / CURRENT 24GB INT8",
+      "bounding": [
+        40,
+        20,
+        410,
+        1880
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "02 · RESOLUTION + GEMMA 4 + LTX DIRECTOR TIMELINE / AUDIO SLICER",
+      "bounding": [
+        455,
+        -540,
+        1660,
+        2220
+      ],
+      "color": "#6f4a8e",
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "03 · DISTILLED STAGE 1 / JOINT A-V",
+      "bounding": [
+        3560,
+        20,
+        1550,
+        580
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 4,
+      "title": "04 · NATIVE LATENT X2 + STAGE 2",
+      "bounding": [
+        5120,
+        20,
+        2790,
+        580
+      ],
+      "color": "#477a4a",
+      "flags": {}
+    },
+    {
+      "id": 5,
+      "title": "05 · TILED DECODE / EXACT 240-FRAME OUTPUT / BOUNDARY HANDOFF",
+      "bounding": [
+        7860,
+        20,
+        2240,
+        840
+      ],
+      "color": "#8a653a",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "info": {
+      "name": "LTX 2.5 Music Video · current 24GB GPU · 60s block / 6 x 10s shots",
+      "hardware": "NVIDIA GeForce RTX 5090 Laptop GPU, 23.89 GiB",
+      "execution_unit": "One 240-frame editorial shot; LTX generates 241 frames (8n+1), then block assembly conforms to 240.",
+      "block_plan": "Six 10-second shots = 60 seconds; nine 10-second shots = 90 seconds. Keep 720p-class jobs at 10 seconds or less on the current GPU.",
+      "final_resolution": "Adjustable from the LTX25ResolutionPlan node; default 1024x576",
+      "stage1_resolution": "Automatically selected on a 32-pixel grid; default 512x288",
+      "model": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+      "clip": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+      "video_vae": "LTX\\2.5\\ltx-2.5-video-vae-bf16.safetensors",
+      "audio_vae": "LTX\\2.5\\ltx-2.5-audio-vae-bf16.safetensors",
+      "upscaler": "LTX\\2.5\\ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
+      "audio_contract": "Required before queue: add the full soundtrack to the Director AUDIO track, set use_custom_audio=true and inpaint_audio=false. The Director combined_audio output is the MP4 audio master.",
+      "handoff_contract": "The 241st generated frame is saved as the exact next-boundary guide; the MP4 contains frames 0..239. Cross-job injection is orchestrator-owned."
+    },
+    "ds": {
+      "scale": 0.55,
+      "offset": [
+        40,
+        560
+      ]
+    }
+  },
+  "version": 0.4,
+  "seed_widgets": {
+    "28": 0
+  }
+}

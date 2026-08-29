@@ -95,6 +95,27 @@ test("packaged workflow inventory is present without the local BlokeyUI library"
   assert.ok(graph.graph);
 });
 
+test("code-referenced Director presets have tracked package sources", () => {
+  const expected = [
+    ["ltx25-premiere316-segmented-i2v", "director-presets/ltx25-premiere316-segmented-i2v.ui.json"],
+    ["harrowing-of-hell-ltx25-i2v", "director-presets/harrowing-of-hell-ltx25-i2v.ui.json"],
+    ["harrowing-of-hell-ltx25-director", "director-presets/harrowing-of-hell-ltx25-director.ui.json"],
+    [
+      "ltx25-music-video-24gb-60s-director",
+      "director-presets/ltx25-music-video-24gb-60s-director.ui.json"
+    ]
+  ];
+  const library = listWorkflows();
+  for (const [id, rel] of expected) {
+    assert.ok(library.items.some((item) => item.id === id && item.rel === rel && item.source === "package"));
+    const loaded = readWorkflowGraph({ id });
+    assert.equal(loaded.source, "package");
+    assert.equal(loaded.rel, rel);
+    assert.ok(loaded.hash);
+    assert.ok(Array.isArray(loaded.graph?.nodes));
+  }
+});
+
 test("ambiguous packaged workflow ids fail closed", () => {
   assert.throws(() => readWorkflowGraph({ id: "storyboard" }), /Ambiguous workflow/i);
 });

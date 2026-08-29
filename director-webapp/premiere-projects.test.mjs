@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import {
@@ -29,7 +28,12 @@ const expectedProductionCounts = hasH10Import
   : hasH06H09Import
     ? { frames: 325, references: 0, segmentedClips: 108, semanticClips: 45, imageSegments: 325, textSegments: 67 }
     : { frames: 190, references: 0, segmentedClips: 63, semanticClips: 90, imageSegments: 190, textSegments: 202 };
-const sourcePath = process.env.DIRECTOR_WORKFLOW_PATH || path.join(os.homedir(), "Downloads", "LTX2.5_DIRECTOR.json");
+const sourcePath = path.join(
+  repoRoot,
+  "workflows",
+  "director-presets",
+  "ltx25-premiere316-segmented-i2v.ui.json"
+);
 const sourceText = fs.readFileSync(sourcePath, "utf8");
 const sourceGraph = JSON.parse(sourceText);
 

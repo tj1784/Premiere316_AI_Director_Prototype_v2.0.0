@@ -10,14 +10,19 @@ export const LTX25_PREMIERE316_PROFILE = Object.freeze({
   maxSemanticReferences: 9
 });
 
+export const HARROWING_AAA_I2V_WORKFLOW = "workflows/director-presets/harrowing-of-hell-ltx25-i2v.ui.json";
+export const HARROWING_LTX25_DIRECTOR_WORKFLOW = "workflows/director-presets/harrowing-of-hell-ltx25-director.ui.json";
+export const LTX25_PREMIERE316_SEGMENTED_I2V_WORKFLOW = "workflows/director-presets/ltx25-premiere316-segmented-i2v.ui.json";
+export const LTX25_MUSIC_VIDEO_24GB_60S_WORKFLOW = "workflows/director-presets/ltx25-music-video-24gb-60s-director.ui.json";
+
 export const HARROWING_AAA_I2V_GENERATE_OPTION = Object.freeze({
   id: "harrowing_aaa_i2v_segmented",
   label: "Harrowing of Hell",
   generationMode: LTX25_PREMIERE316_PROFILE.generationMode,
   queueMode: "segments",
   workflowProfileId: LTX25_PREMIERE316_PROFILE.id,
-  directorWorkflow: "BlokeyUI/ComfyUI/user/default/workflows/HARROWING OF HELL.json",
-  catalogWorkflow: "BlokeyUI/ComfyUI/user/default/workflows/HARROWING OF HELL.json",
+  directorWorkflow: HARROWING_AAA_I2V_WORKFLOW,
+  catalogWorkflow: HARROWING_AAA_I2V_WORKFLOW,
   description: "One I2V Comfy job per authored segment. First frame is graph-wired. Ingredients stay IC-LoRA/identity, never extra timeline frames."
 });
 
@@ -28,8 +33,8 @@ export const HARROWING_LTX25_DIRECTOR_GENERATE_OPTION = Object.freeze({
   generationMode: LTX25_PREMIERE316_PROFILE.generationMode,
   queueMode: "segments",
   workflowProfileId: LTX25_PREMIERE316_PROFILE.id,
-  directorWorkflow: "BlokeyUI/ComfyUI/user/default/workflows/harrowing_of_hell_LTX2.5_Director.json",
-  catalogWorkflow: "BlokeyUI/ComfyUI/user/default/workflows/harrowing_of_hell_LTX2.5_Director.json",
+  directorWorkflow: HARROWING_LTX25_DIRECTOR_WORKFLOW,
+  catalogWorkflow: HARROWING_LTX25_DIRECTOR_WORKFLOW,
   description: "Harrowing of Hell LTX 2.5 Director graph as a first-class LTX Director generate preset."
 });
 export const PREMIERE_GENERATE_OPTIONS = Object.freeze([
@@ -41,8 +46,8 @@ export const PREMIERE_GENERATE_OPTIONS = Object.freeze([
     generationMode: LTX25_PREMIERE316_PROFILE.generationMode,
     queueMode: "segments",
     workflowProfileId: LTX25_PREMIERE316_PROFILE.id,
-    directorWorkflow: "BlokeyUI/ComfyUI/user/default/workflows/Premiere316/LTX2.5_Premiere316.json",
-    catalogWorkflow: "BlokeyUI/ComfyUI/user/default/workflows/Premiere316/LTX2.5_Premiere316.json",
+    directorWorkflow: LTX25_PREMIERE316_SEGMENTED_I2V_WORKFLOW,
+    catalogWorkflow: LTX25_PREMIERE316_SEGMENTED_I2V_WORKFLOW,
     description: "Compiler-bound Premiere316 subgraph used by LTX Director Queue All."
   }),
   Object.freeze({
@@ -62,6 +67,11 @@ export const HARROWING_PROJECT_SLUG = "harrowing_of_hell";
 
 export function isSegmentedI2vGenerationMode(generationMode) {
   return String(generationMode || "") === LTX25_PREMIERE316_PROFILE.generationMode;
+}
+
+export function isHarrowingLtx25DirectorGenerate(workspace) {
+  const id = String(workspace?.premiere?.generateOptionId || workspace?.premiere?.generateOption?.id || "");
+  return id === HARROWING_LTX25_DIRECTOR_GENERATE_OPTION.id;
 }
 
 export function semanticT2vLockedForContext({ projectSlug, generationMode } = {}) {

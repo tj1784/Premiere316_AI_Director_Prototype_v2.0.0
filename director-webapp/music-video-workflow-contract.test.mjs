@@ -17,14 +17,9 @@ import {
 
 const workflowFile = path.join(
   path.resolve(import.meta.dirname, ".."),
-  "BlokeyUI",
-  "ComfyUI",
-  "user",
-  "default",
   "workflows",
-  "Premiere316",
-  "LTX 2.5 Music Video",
-  "LTX25_MUSIC_VIDEO_24GB_60s_BLOCK_6x10s_DIRECTOR.json"
+  "director-presets",
+  "ltx25-music-video-24gb-60s-director.ui.json"
 );
 
 test("the 24 GB music-video workflow satisfies the sequential node contract", async (context) => {

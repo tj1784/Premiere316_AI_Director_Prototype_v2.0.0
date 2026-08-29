@@ -28,6 +28,30 @@
       "rel": "krea2-identity-edit-v1-2.ui.json",
       "label": "Krea 2 Identity Edit v1.2",
       "source": "package"
+    },
+    {
+      "id": "ltx25-premiere316-segmented-i2v",
+      "rel": "director-presets/ltx25-premiere316-segmented-i2v.ui.json",
+      "label": "Premiere316 LTX 2.5 Segmented I2V",
+      "source": "package"
+    },
+    {
+      "id": "harrowing-of-hell-ltx25-i2v",
+      "rel": "director-presets/harrowing-of-hell-ltx25-i2v.ui.json",
+      "label": "Harrowing of Hell LTX 2.5 I2V",
+      "source": "package"
+    },
+    {
+      "id": "harrowing-of-hell-ltx25-director",
+      "rel": "director-presets/harrowing-of-hell-ltx25-director.ui.json",
+      "label": "Harrowing of Hell LTX 2.5 Director",
+      "source": "package"
+    },
+    {
+      "id": "ltx25-music-video-24gb-60s-director",
+      "rel": "director-presets/ltx25-music-video-24gb-60s-director.ui.json",
+      "label": "LTX 2.5 Music Video 24GB 60s Director",
+      "source": "package"
     }
   ]
 }

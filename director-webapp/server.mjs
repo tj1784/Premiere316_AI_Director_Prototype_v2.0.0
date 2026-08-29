@@ -72,6 +72,14 @@ import {
   isSegmentedI2vGenerationMode
 } from "./premiere-api-delegation.mjs";
 import {
+  directorWorkflowFileForWorkspace,
+  HARROWING_AAA_I2V_PACKAGE_FILE,
+  LTX25_MUSIC_VIDEO_24GB_60S_PACKAGE_FILE,
+  LTX25_PREMIERE316_SEGMENTED_I2V_PACKAGE_FILE,
+  loadDirectorWorkflowSource,
+  workflowFileWithLocalCompatibility
+} from "./director-workflow-source.mjs";
+import {
   directorJobConflictsWithQueueRequest,
   queueReservationSegmentIds,
   SegmentQueueReservationConflict,
@@ -94,7 +102,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(HERE, "public");
 const STATE_DIR = path.join(HERE, "state");
 const STATE_FILE = path.join(STATE_DIR, "workspace.local.json");
-const DEFAULT_SOURCE = path.join(
+const LOCAL_DEFAULT_SOURCE = path.join(
   HERE,
   "..",
   "BlokeyUI",
@@ -105,9 +113,8 @@ const DEFAULT_SOURCE = path.join(
   "Premiere316",
   "LTX2.5_Premiere316.json"
 );
-const SOURCE_WORKFLOW = path.resolve(process.env.DIRECTOR_WORKFLOW_PATH || DEFAULT_SOURCE);
-const HARROWING_HELL_WORKFLOW = path.resolve(HERE, "..", "BlokeyUI", "ComfyUI", "user", "default", "workflows", "HARROWING OF HELL.json");
-const MUSIC_VIDEO_WORKFLOW = path.resolve(process.env.DIRECTOR_MUSIC_VIDEO_WORKFLOW_PATH || path.join(
+const LOCAL_HARROWING_HELL_WORKFLOW = path.resolve(HERE, "..", "BlokeyUI", "ComfyUI", "user", "default", "workflows", "HARROWING OF HELL.json");
+const LOCAL_MUSIC_VIDEO_WORKFLOW = path.join(
   HERE,
   "..",
   "BlokeyUI",
@@ -118,12 +125,28 @@ const MUSIC_VIDEO_WORKFLOW = path.resolve(process.env.DIRECTOR_MUSIC_VIDEO_WORKF
   "Premiere316",
   "LTX 2.5 Music Video",
   "LTX25_MUSIC_VIDEO_24GB_60s_BLOCK_6x10s_DIRECTOR.json"
-));
+);
+const SOURCE_WORKFLOW = workflowFileWithLocalCompatibility({
+  configuredFile: process.env.DIRECTOR_WORKFLOW_PATH,
+  localFile: LOCAL_DEFAULT_SOURCE,
+  packageFile: LTX25_PREMIERE316_SEGMENTED_I2V_PACKAGE_FILE
+});
+const HARROWING_HELL_WORKFLOW = workflowFileWithLocalCompatibility({
+  configuredFile: process.env.DIRECTOR_HARROWING_WORKFLOW_PATH,
+  localFile: LOCAL_HARROWING_HELL_WORKFLOW,
+  packageFile: HARROWING_AAA_I2V_PACKAGE_FILE
+});
+const MUSIC_VIDEO_WORKFLOW = workflowFileWithLocalCompatibility({
+  configuredFile: process.env.DIRECTOR_MUSIC_VIDEO_WORKFLOW_PATH,
+  localFile: LOCAL_MUSIC_VIDEO_WORKFLOW,
+  packageFile: LTX25_MUSIC_VIDEO_24GB_60S_PACKAGE_FILE
+});
 const HOST = "127.0.0.1";
 const PORT = Number(process.env.DIRECTOR_PORT || 8791);
 const PREMIERE_API_URL = premiereApiBaseUrl();
 const UPLOAD_DIR = path.join(os.tmpdir(), "premiere316-director-uploads");
 const COMFY_AUDIO_OUTPUT_ROOT = path.resolve(HERE, "..", "BlokeyUI", "ComfyUI", "output", "audio");
+const SEGMENT_WORKFLOW_DIR = path.join(HERE, "..", "BlokeyUI", "ComfyUI", "user", "default", "workflows", "Premiere316", "Segments");
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 const upload = multer({ dest: UPLOAD_DIR, limits: { fileSize: 2 * 1024 * 1024 * 1024 } });
 const ensureUploadDir = ensureDirectoryMiddleware(UPLOAD_DIR);
@@ -144,6 +167,14 @@ function readSource() {
   if (!fs.existsSync(SOURCE_WORKFLOW)) throw new Error(`Director workflow not found: ${SOURCE_WORKFLOW}`);
   sourceText = fs.readFileSync(SOURCE_WORKFLOW, "utf8");
   sourceGraph = JSON.parse(sourceText);
+}
+
+function workflowSourceForWorkspace(workspaceValue) {
+  return loadDirectorWorkflowSource(workspaceValue, {
+    defaultFile: SOURCE_WORKFLOW,
+    defaultGraph: sourceGraph,
+    defaultText: sourceText
+  });
 }
 
 function atomicWrite(file, value) {
@@ -226,7 +257,7 @@ function isComfyInputName(name) {
   return Boolean(value) && !/[\\/]/.test(value) && /\.(png|jpe?g|webp)$/i.test(value);
 }
 
-function writeHarrowingPromptToHell(text) {
+function harrowingWorkflowWithPrompt(text) {
   if (!fs.existsSync(HARROWING_HELL_WORKFLOW)) throw new Error("HARROWING OF HELL.json not found");
   const graph = JSON.parse(fs.readFileSync(HARROWING_HELL_WORKFLOW, "utf8"));
   const visit = (nodes) => {
@@ -238,8 +269,15 @@ function writeHarrowingPromptToHell(text) {
   };
   visit(graph.nodes);
   for (const sub of graph.definitions?.subgraphs || []) visit(sub.nodes);
-  fs.writeFileSync(HARROWING_HELL_WORKFLOW, `${JSON.stringify(graph, null, 2)}\n`);
-  return HARROWING_HELL_WORKFLOW;
+  return graph;
+}
+
+function writeHarrowingPromptToHell(text) {
+  const graph = harrowingWorkflowWithPrompt(text);
+  fs.mkdirSync(SEGMENT_WORKFLOW_DIR, { recursive: true });
+  const workflowFile = path.join(SEGMENT_WORKFLOW_DIR, "HARROWING OF HELL.json");
+  fs.writeFileSync(workflowFile, `${JSON.stringify(graph, null, 2)}\n`);
+  return workflowFile;
 }
 
 function applyHarrowingPromptOnly(apiPrompt, text, imageFile) {
@@ -271,13 +309,21 @@ async function compileHarrowingHell(workspaceValue, job, forceObjectInfo = false
 async function compile(workspaceValue = workspace, job = null, forceObjectInfo = false) {
   if (isHarrowingGenerate(workspaceValue)) return compileHarrowingHell(workspaceValue, job, forceObjectInfo);
   const objectInfo = await getObjectInfo(forceObjectInfo);
-  const flat = flattenWorkflow(sourceGraph);
+  const selectedSource = workflowSourceForWorkspace(workspaceValue);
+  const flat = flattenWorkflow(selectedSource.graph);
   const converted = graphToApi(flat, objectInfo);
   if (converted.warnings.length) throw new Error(converted.warnings.join("; "));
   const patched = patchPrompt(converted.prompt, workspaceValue, job);
   const errors = validatePrompt(patched.prompt, objectInfo);
   if (errors.length) throw new Error(errors.join("; "));
-  return { ...patched, nodeCount: Object.keys(patched.prompt).length, flatNodeCount: flat.nodes.length, flatLinkCount: flat.links.length };
+  return {
+    ...patched,
+    workflowSource: selectedSource.file,
+    workflowSha256: selectedSource.sha256,
+    nodeCount: Object.keys(patched.prompt).length,
+    flatNodeCount: flat.nodes.length,
+    flatLinkCount: flat.links.length
+  };
 }
 
 function readMusicVideoWorkflow() {
@@ -1953,7 +1999,10 @@ app.get("/api/workspace", (_req, res) => {
     workspace = refreshed.workspace;
     atomicWrite(STATE_FILE, workspace);
   }
-  res.json({ workspace: workspaceForClient(workspace), sourceWorkflow: SOURCE_WORKFLOW });
+  res.json({
+    workspace: workspaceForClient(workspace),
+    sourceWorkflow: directorWorkflowFileForWorkspace(workspace, SOURCE_WORKFLOW)
+  });
 });
 
 app.put("/api/workspace", (req, res) => {
@@ -2536,8 +2585,8 @@ app.get("/api/workflow", async (req, res) => {
     const { preparedWorkspace, job, built } = await compileSelectedSegment(req.query.segmentId);
     const name = segmentWorkflowName(preparedWorkspace, job);
     const extraWorkflow = isHarrowingGenerate(preparedWorkspace)
-      ? JSON.parse(fs.readFileSync(HARROWING_HELL_WORKFLOW, "utf8"))
-      : sourceGraph;
+      ? harrowingWorkflowWithPrompt(harrowingPromptText(preparedWorkspace, job))
+      : workflowSourceForWorkspace(preparedWorkspace).graph;
     const body = JSON.stringify({ prompt: built.prompt, extra_pnginfo: { workflow: extraWorkflow } }, null, 2);
     res.setHeader("content-type", "application/json");
     res.setHeader("content-disposition", "attachment; filename=\"" + name + "\"");
@@ -2572,7 +2621,10 @@ app.post("/api/push-to-comfyui", async (req, res) => {
     const name = segmentWorkflowName(preparedWorkspace, job);
     fs.mkdirSync(SEGMENT_WORKFLOW_DIR, { recursive: true });
     const workflowFile = path.join(SEGMENT_WORKFLOW_DIR, name);
-    const payload = { prompt: built.prompt, extra_pnginfo: { workflow: sourceGraph } };
+    const payload = {
+      prompt: built.prompt,
+      extra_pnginfo: { workflow: workflowSourceForWorkspace(preparedWorkspace).graph }
+    };
     fs.writeFileSync(workflowFile, JSON.stringify(payload, null, 2));
     res.json({
       ok: true,
@@ -2590,8 +2642,6 @@ app.use("/api", (_req, res) => res.status(404).json({ error: "Director API route
 
 app.get("*", (_req, res) => res.sendFile(path.join(PUBLIC_DIR, "index.html")));
 
-
-const SEGMENT_WORKFLOW_DIR = path.join(HERE, "..", "BlokeyUI", "ComfyUI", "user", "default", "workflows", "Premiere316", "Segments");
 
 function segmentWorkflowName(workspaceValue, job) {
   const clip = String(workspaceValue?.premiere?.clipId || "clip").replace(/[^\w.-]+/g, "_");

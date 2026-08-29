@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -17,19 +16,21 @@ import {
   workspaceFromWorkflow
 } from "./workflow-compiler.mjs";
 
-const sourcePath = process.env.DIRECTOR_WORKFLOW_PATH || path.join(os.homedir(), "Downloads", "LTX2.5_DIRECTOR.json");
+const sourcePath = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "workflows",
+  "director-presets",
+  "harrowing-of-hell-ltx25-director.ui.json"
+);
 const sourceText = fs.readFileSync(sourcePath, "utf8");
 const sourceGraph = JSON.parse(sourceText);
 const premiere316SourcePath = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
-  "BlokeyUI",
-  "ComfyUI",
-  "user",
-  "default",
   "workflows",
-  "Premiere316",
-  "LTX2.5_Premiere316.json"
+  "director-presets",
+  "ltx25-premiere316-segmented-i2v.ui.json"
 );
 
 test("flattens the supplied Director subgraph without UUID execution nodes", () => {
@@ -57,12 +58,12 @@ test("the named LTX2.5_Premiere316 workflow exposes the fixed compiler seam and 
   assert.equal(flat.nodes.some((node) => node.type === "LTX2.5_Premiere316Trim"), false);
 });
 
-test("preserves the supplied timeline truth and builds six segment jobs", () => {
+test("preserves the packaged timeline truth and builds its segment job", () => {
   const workspace = workspaceFromWorkflow(sourceGraph, sourceText);
-  assert.equal(workspace.settings.frameRate, 50);
-  assert.equal(workspace.timeline.segments.length, 6);
-  assert.equal(buildSegmentJobs(workspace).length, 6);
-  assert.equal(workspace.stats.durationFrames, 2723);
+  assert.equal(workspace.settings.frameRate, 24);
+  assert.equal(workspace.timeline.segments.length, 1);
+  assert.equal(buildSegmentJobs(workspace).length, 1);
+  assert.equal(workspace.stats.durationFrames, 251);
 });
 
 test("aligns requested Premiere frames to the LTX 8n+1 generation grid", () => {

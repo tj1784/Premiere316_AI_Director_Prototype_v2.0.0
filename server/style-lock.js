@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
-import crypto from "crypto";
 import { WORKFLOWS_DIR } from "./paths.js";
+import { jsonSha256Matches } from "./workflow-integrity.js";
 
 export const STYLE_FLUX_MODEL = "flux2-dev.safetensors";
 export const STYLE_FLUX_CLIP = "mistral_3_small_flux2_fp4_mixed.safetensors";
@@ -157,8 +157,7 @@ function loadAuthoritativeAssetWorkflow(project, asset) {
     throw new Error(`Authoritative production workflow file is missing: ${row.max_workflow_snapshot}`);
   }
   const contents = fs.readFileSync(source);
-  const actualHash = crypto.createHash("sha256").update(contents).digest("hex");
-  if (actualHash !== String(row.max_workflow_hash || "").toLowerCase()) {
+  if (!jsonSha256Matches(row.max_workflow_hash, contents)) {
     throw new Error(`Authoritative workflow hash mismatch for ${asset.id}`);
   }
   return addLiveSchemaCompatibility(JSON.parse(contents.toString("utf-8")));

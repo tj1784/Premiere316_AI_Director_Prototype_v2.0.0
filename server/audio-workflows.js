@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { PACKAGE_ROOT, WORKFLOWS_DIR } from "./paths.js";
 import { getObjectInfo, graphToApi } from "./comfy.js";
+import { jsonSha256Matches } from "./workflow-integrity.js";
 
 export const AUDIO_WORKFLOW_SCHEMA = "premiere316.audio-workflow-registry.v1";
 export const AUDIO_WORKFLOW_ROOT = path.join(WORKFLOWS_DIR, "audio");
@@ -346,7 +347,7 @@ export async function evaluateAudioWorkflowProfile(profile, options = {}) {
     source = { path: sourcePath, relativePath: packageRelative(sourcePath), sha256: read.sha256 };
     const expected = expectedHash(profile, "sourceWorkflowSha256", "source");
     if (!expected) drift.push("Source workflow checksum is not bound");
-    else if (String(expected).toLowerCase() !== read.sha256) drift.push("Source workflow changed since binding");
+    else if (!jsonSha256Matches(expected, read.bytes)) drift.push("Source workflow changed since binding");
   } catch (error) { errors.push(error.message); }
   try {
     const apiPath = resolveContainedPath(profile.appOwnedApiWorkflowPath || profile.apiWorkflowPath, [AUDIO_WORKFLOW_API_ROOT], { label: "API workflow" });
@@ -356,7 +357,7 @@ export async function evaluateAudioWorkflowProfile(profile, options = {}) {
     if (!prompt) errors.push("API workflow is not a ComfyUI API prompt");
     const expected = expectedHash(profile, "apiWorkflowSha256", "api");
     if (!expected) drift.push("API workflow checksum is not bound");
-    else if (String(expected).toLowerCase() !== read.sha256) drift.push("API workflow changed since binding");
+    else if (!jsonSha256Matches(expected, read.bytes)) drift.push("API workflow changed since binding");
   } catch (error) { errors.push(error.message); }
   const outputBindings = Array.isArray(profile.outputNodeBindings)
     ? Object.fromEntries(profile.outputNodeBindings.map((binding, index) => [`output${index || ""}`, binding]))

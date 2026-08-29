@@ -14,9 +14,8 @@ test("Harrowing AAA I2V is the Premiere generate option for segmented first-fram
   const option = generateOptionForMode("i2v_segmented_first_frames");
   assert.equal(option.id, HARROWING_AAA_I2V_GENERATE_OPTION.id);
   assert.equal(option.queueMode, "segments");
-  assert.match(option.catalogWorkflow, /HARROWING OF HELL\.json$/);
-  assert.doesNotMatch(option.catalogWorkflow, /Premiere316\/02_GENERATE/);
-  assert.match(option.directorWorkflow, /HARROWING OF HELL\.json$/);
+  assert.equal(option.catalogWorkflow, "workflows/director-presets/harrowing-of-hell-ltx25-i2v.ui.json");
+  assert.equal(option.directorWorkflow, option.catalogWorkflow);
   assert.ok(PREMIERE_GENERATE_OPTIONS.some((item) => item.id === "harrowing_aaa_i2v_segmented"));
   assert.ok(PREMIERE_GENERATE_OPTIONS.some((item) => item.id === "harrowing_of_hell_ltx25_director"));
 });
