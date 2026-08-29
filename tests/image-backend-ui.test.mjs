@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
+import ts from "typescript";
 
 const workspace = fs.readFileSync(fileURLToPath(new URL("../client/src/components/CreativeWorkspace.tsx", import.meta.url)), "utf8");
 const store = fs.readFileSync(fileURLToPath(new URL("../client/src/store.ts", import.meta.url)), "utf8");
@@ -11,6 +13,31 @@ const h3Panel = workspace.match(/className=\{`h3-mini-panel[\s\S]*?<div classNam
 const h3Picker = workspace.match(/h3ReferencePickerOpen[\s\S]*?<AssetReferencePicker[\s\S]*?\/>/)?.[0] || "";
 const h3Notes = picker.match(/targetKind === "h3" \? "([^"]+)"/)?.[1] || "";
 const h3Default = store.match(/h3Busy:\s*false,\s*h3Mode:\s*"[^"]+",/)?.[0] || "";
+
+function loadPickerExports() {
+  const compiled = ts.transpileModule(picker, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+      jsx: ts.JsxEmit.ReactJSX,
+      esModuleInterop: true
+    }
+  }).outputText;
+  const module = { exports: {} };
+  const noop = () => undefined;
+  vm.runInNewContext(compiled, {
+    module,
+    exports: module.exports,
+    require(specifier) {
+      if (specifier === "react") return { default: {}, useEffect: noop, useMemo: noop, useRef: noop, useState: noop };
+      if (specifier === "react/jsx-runtime") return { Fragment: Symbol("Fragment"), jsx: noop, jsxs: noop };
+      if (specifier === "../store") return { assetUrl: noop };
+      if (specifier === "../contextual-agency") return { openAssetAction: noop, useAssetActionStore: noop };
+      throw new Error(`Unexpected picker dependency: ${specifier}`);
+    }
+  });
+  return module.exports;
+}
 
 test("director does not default MiniMax H3 into first_frame as a stills painter", () => {
   assert.match(h3Default, /h3Mode:\s*"t2v"/);
@@ -67,4 +94,39 @@ test("LTX and H3 video render actions remain wired", () => {
   assert.match(workspace, /queueH3Selection/);
   assert.match(store, /renderH3Selection:/);
   assert.match(store, /\/render-h3/);
+});
+
+test("reference picker exposes only the exact approved active visual version", () => {
+  const { exactCurrentApprovedVisualVersion } = loadPickerExports();
+  const project = { category: "feature", settings: {} };
+  const asset = {
+    activeVersion: 2,
+    approvalCurrent: true,
+    approval: { status: "approved", activeVersion: 2 },
+    versions: [
+      { v: 1, file: "historical.png" },
+      { v: 2, file: "approved.png" },
+      { v: 3, file: "newer-but-inactive.png" }
+    ]
+  };
+  assert.equal(exactCurrentApprovedVisualVersion(project, asset).file, "approved.png");
+  assert.equal(exactCurrentApprovedVisualVersion(project, { ...asset, approvalCurrent: false }), null);
+  assert.equal(exactCurrentApprovedVisualVersion(project, {
+    ...asset,
+    approval: { status: "approved", activeVersion: 1 }
+  }), null);
+  assert.equal(exactCurrentApprovedVisualVersion(project, {
+    ...asset,
+    versions: [{ v: 2, file: "voice.wav" }]
+  }), null);
+});
+
+test("reference picker has no historical-version or client-provenance escape hatch", () => {
+  assert.doesNotMatch(picker, /versions\.at\s*\(/);
+  assert.doesNotMatch(picker, /pinnedActiveAtImport/);
+  assert.doesNotMatch(picker, /asset\.activeVersion\s*\|\|/);
+  assert.doesNotMatch(picker, /lastResult\.version\s*\|\|/);
+  assert.doesNotMatch(picker, /<select\s+value=\{reference\.assetVersion\}/);
+  assert.doesNotMatch(picker, /· historical/);
+  assert.match(picker, /Approved current · v\{version\}/);
 });

@@ -29,3 +29,8 @@ config/premiere316.local.json
 
 # Accidental Windows NUL device artifact at repo root.
 /nul
+
+# Local review, prompt-run, and reverse-engineering scratch artifacts.
+/_tmp_*
+/tmp-*-prompt-id.txt
+/tmp-wf-*.json

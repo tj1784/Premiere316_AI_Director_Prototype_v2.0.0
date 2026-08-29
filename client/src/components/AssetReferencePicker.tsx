@@ -59,7 +59,6 @@ type DraftReference = {
   required: boolean;
   cropRegion: string;
   notes: string;
-  pinnedActiveAtImport: boolean;
 };
 
 function versionFile(version: any) {
@@ -70,8 +69,18 @@ function visualVersions(asset: any) {
   return (asset?.versions || []).filter((version: any) => IMAGE_FILE_RE.test(String(versionFile(version) || "")));
 }
 
-function exactVersionApproved(asset: any, version: number) {
-  return Boolean(asset?.approvalCurrent === true && asset?.approval?.status === "approved" && Number(asset.approval.activeVersion) === Number(version));
+function projectSkipsApproval(project: any) {
+  const category = String(project?.category ?? project?.settings?.category ?? "feature").trim().toLowerCase();
+  return category === "shorts" || project?.settings?.skipApproval === true;
+}
+
+export function exactCurrentApprovedVisualVersion(project: any, asset: any) {
+  const activeVersion = Number(asset?.activeVersion);
+  if (!Number.isSafeInteger(activeVersion) || activeVersion < 1 || asset?.approvalCurrent !== true) return null;
+  if (!projectSkipsApproval(project)) {
+    if (asset?.approval?.status !== "approved" || Number(asset.approval.activeVersion) !== activeVersion) return null;
+  }
+  return visualVersions(asset).find((version: any) => Number(version?.v) === activeVersion) || null;
 }
 
 function AssetThumbnail({ projectSlug, asset, version }: { projectSlug: string; asset: any; version: number }) {
@@ -121,35 +130,36 @@ export default function AssetReferencePicker({
   const consumedResult = React.useRef<string | null>(null);
 
   const assets = useMemo(() => (project.assets?.items || [])
-    .filter((asset: any) => visualVersions(asset).length)
+    .filter((asset: any) => exactCurrentApprovedVisualVersion(project, asset))
     .slice()
     .sort((a: any, b: any) => {
       const categoryDifference = CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
       return categoryDifference || String(a.name).localeCompare(String(b.name));
-    }), [project.assets?.items]);
+    }), [project.assets?.items, project.category, project.settings?.category, project.settings?.skipApproval]);
   const assetMap = useMemo(() => new Map((project.assets?.items || []).map((asset: any) => [asset.id, asset])), [project.assets?.items]);
   const [category, setCategory] = useState("all");
   const [query, setQuery] = useState("");
   const [applying, setApplying] = useState(false);
   const [draft, setDraft] = useState<DraftReference[]>(() => initialReferences
-    .filter((reference) => reference?.assetId && assetMap.has(reference.assetId))
+    .filter((reference) => {
+      if (!reference?.assetId || !Number.isSafeInteger(reference.assetVersion)) return false;
+      const asset = assetMap.get(reference.assetId) as any;
+      const approved = exactCurrentApprovedVisualVersion(project, asset);
+      return Number(approved?.v) === reference.assetVersion;
+    })
     .slice()
     .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
     .map((reference) => {
       const asset = assetMap.get(reference.assetId) as any;
-      const assetVersion = Number(reference.assetVersion ?? String(reference.assetVersionId || "").match(/v(\d+)$/)?.[1] ?? 0);
       return {
         id: reference.id ? String(reference.id) : undefined,
         assetId: reference.assetId,
-        assetVersion,
+        assetVersion: reference.assetVersion,
         role: canonicalReferenceRole(reference.role) || DEFAULT_ROLE[asset?.category] || "atmosphere",
         useMode: String(reference.useMode || "direct_conditioning"),
         required: reference.required !== false,
         cropRegion: String(reference.cropRegion || "Use relevant subject/design region only"),
-        notes: String(reference.notes || "Pinned to an exact Asset Library version for reproducible generation."),
-        pinnedActiveAtImport: typeof reference.pinnedActiveAtImport === "boolean"
-          ? reference.pinnedActiveAtImport
-          : Number(asset?.activeVersion) === assetVersion
+        notes: String(reference.notes || "Pinned to an exact Asset Library version for reproducible generation.")
       };
     }));
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -205,22 +215,26 @@ export default function AssetReferencePicker({
   });
   const selectedIds = useMemo(() => new Set(draft.map((reference) => reference.assetId)), [draft]);
   const referenceLimitReached = draft.length >= maxReferences;
+  const draftIsCurrent = draft.every((reference) => {
+    const asset = assetMap.get(reference.assetId) as any;
+    const approved = exactCurrentApprovedVisualVersion(project, asset);
+    return Number(approved?.v) === reference.assetVersion;
+  });
 
   const toggleAsset = (asset: any) => {
     setDraft((current) => {
       if (current.some((reference) => reference.assetId === asset.id)) return current.filter((reference) => reference.assetId !== asset.id);
       if (current.length >= maxReferences) return current;
-      const versions = visualVersions(asset);
-      const active = versions.find((version: any) => Number(version.v) === Number(asset.activeVersion)) || versions.at(-1);
+      const approved = exactCurrentApprovedVisualVersion(project, asset);
+      if (!approved) return current;
       return [...current, {
         assetId: asset.id,
-        assetVersion: Number(active?.v || 1),
+        assetVersion: Number(approved.v),
         role: DEFAULT_ROLE[asset.category] || "atmosphere",
         useMode: "direct_conditioning",
         required: true,
         cropRegion: "Use relevant subject/design region only",
-        notes: targetKind === "h3" ? "Selected to condition MiniMax H3 video from existing stills and pinned for reproducible video renders." : "Selected in the Storyboard reference picker and pinned for reproducible generation.",
-        pinnedActiveAtImport: Number(asset.activeVersion) === Number(active?.v || 1)
+        notes: targetKind === "h3" ? "Selected to condition MiniMax H3 video from existing stills and pinned for reproducible video renders." : "Selected in the Storyboard reference picker and pinned for reproducible generation."
       }];
     });
   };
@@ -230,21 +244,23 @@ export default function AssetReferencePicker({
     const asset = (project.assets?.items || []).find((item: any) => item.id === lastResult.assetId);
     if (!asset) return;
     consumedResult.current = lastResult.assetId;
+    const approved = exactCurrentApprovedVisualVersion(project, asset);
+    const resultVersion = Number(lastResult.version);
+    if (!Number.isSafeInteger(resultVersion) || Number(approved?.v) !== resultVersion) return;
     setDraft((current) => {
       if (current.some((reference) => reference.assetId === asset.id)) return current;
       if (current.length >= maxReferences) return current;
       return [...current, {
         assetId: asset.id,
-        assetVersion: Number(lastResult.version || asset.activeVersion || 1),
+        assetVersion: resultVersion,
         role: DEFAULT_ROLE[asset.category] || "identity",
         useMode: "direct_conditioning",
         required: true,
         cropRegion: "Use relevant subject/design region only",
-        notes: "Returned from the contextual asset drawer with a role pinned.",
-        pinnedActiveAtImport: Number(asset.activeVersion) === Number(lastResult.version || asset.activeVersion || 1)
+        notes: "Returned from the contextual asset drawer with a role pinned."
       }];
     });
-  }, [lastResult?.assetId, lastResult?.version, project.assets?.items]);
+  }, [lastResult?.assetId, lastResult?.version, project.assets?.items, project.category, project.settings?.category, project.settings?.skipApproval]);
 
   const openMissing = (action: "create" | "generate" | "upload") => {
     const categoryKey = category === "all" ? emptyCategory : category;
@@ -261,12 +277,12 @@ export default function AssetReferencePicker({
     });
   };
 
-    const updateDraft = (assetId: string, patch: Partial<DraftReference>) => {
+  const updateDraft = (assetId: string, patch: Partial<DraftReference>) => {
     setDraft((current) => current.map((reference) => reference.assetId === assetId ? { ...reference, ...patch } : reference));
   };
 
   const apply = async () => {
-    if (applying || saving) return;
+    if (applying || saving || !draftIsCurrent) return;
     setApplying(true);
     try {
       await onApply(draft);
@@ -306,13 +322,14 @@ export default function AssetReferencePicker({
               {visible.map((asset: any) => {
                 const selected = selectedIds.has(asset.id);
                 const selectedDraft = draft.find((reference) => reference.assetId === asset.id);
-                const versions = visualVersions(asset);
-                const version = selectedDraft?.assetVersion || Number(asset.activeVersion || versions.at(-1)?.v || 1);
+                const approved = exactCurrentApprovedVisualVersion(project, asset);
+                if (!approved) return null;
+                const version = Number(approved.v);
                 return (
                   <button type="button" role="option" aria-selected={selected} key={asset.id} className={`reference-asset-card ${selected ? "selected" : ""}`} onClick={() => toggleAsset(asset)} disabled={!selected && referenceLimitReached} aria-disabled={!selected && referenceLimitReached} title={!selected && referenceLimitReached ? `Remove a reference before adding another (maximum ${maxReferences}).` : undefined}>
                     <span className="reference-asset-preview"><AssetThumbnail projectSlug={project.slug} asset={asset} version={version} /><i aria-hidden="true">{selected ? "✓" : ""}</i></span>
                     <span className="reference-asset-copy"><b>{asset.name}</b><small>{asset.variant}</small><code>{asset.id}</code></span>
-                    <span className={`reference-approval ${exactVersionApproved(asset, version) ? "approved" : "review"}`}>{exactVersionApproved(asset, version) ? `Approved v${version}` : `Needs approval · v${version}`}</span>
+                    <span className="reference-approval approved">Approved current · v{version}</span>
                   </button>
                 );
               })}
@@ -335,11 +352,12 @@ export default function AssetReferencePicker({
               {draft.map((reference, index) => {
                 const asset = assetMap.get(reference.assetId) as any;
                 if (!asset) return null;
+                const current = Number(exactCurrentApprovedVisualVersion(project, asset)?.v) === reference.assetVersion;
                 return (
                   <article key={reference.assetId} className="reference-tray-item">
                     <div className="reference-tray-heading"><span>{index + 1}</span><div><b>{asset.name}</b><small>{asset.variant}</small></div><button type="button" aria-label={`Remove ${asset.name}`} onClick={() => setDraft((current) => current.filter((item) => item.assetId !== reference.assetId))}>×</button></div>
                     <div className="reference-tray-fields">
-                      <label>Version<select value={reference.assetVersion} onChange={(event) => { const assetVersion = Number(event.target.value); updateDraft(reference.assetId, { assetVersion, pinnedActiveAtImport: Number(asset.activeVersion) === assetVersion }); }}>{visualVersions(asset).map((version: any) => <option key={version.v} value={version.v}>v{version.v}{Number(asset.activeVersion) === Number(version.v) ? " · active" : " · historical"}</option>)}</select></label>
+                      <label>Version<span>{current ? `v${reference.assetVersion} · approved current` : `v${reference.assetVersion} · approval changed`}</span></label>
                       <label>Role<select value={reference.role} onChange={(event) => updateDraft(reference.assetId, { role: event.target.value })}>{ROLE_OPTIONS.map((role) => <option key={role} value={role}>{role}</option>)}</select></label>
                     </div>
                   </article>
@@ -351,9 +369,9 @@ export default function AssetReferencePicker({
         </div>
 
         <footer className="reference-picker-footer">
-          <p>{referenceLimitReached ? `Maximum ${maxReferences} references selected. Remove one to choose another.` : `Choose up to ${maxReferences} planning references. Video generation remains locked until required images and exact asset versions are approved.`}</p>
+          <p>{!draftIsCurrent ? "A selected reference is no longer the exact current approved version. Remove it before applying." : referenceLimitReached ? `Maximum ${maxReferences} references selected. Remove one to choose another.` : `Choose up to ${maxReferences} exact current approved references.`}</p>
           <button type="button" className="secondary-action" onClick={onCancel} disabled={saving || applying}>Cancel</button>
-          <button type="button" className="primary-action" onClick={() => void apply()} disabled={saving || applying}>{saving || applying ? "Applying…" : `Apply ${draft.length} Reference${draft.length === 1 ? "" : "s"}`}</button>
+          <button type="button" className="primary-action" onClick={() => void apply()} disabled={saving || applying || !draftIsCurrent}>{saving || applying ? "Applying…" : `Apply ${draft.length} Reference${draft.length === 1 ? "" : "s"}`}</button>
         </footer>
       </div>
     </div>

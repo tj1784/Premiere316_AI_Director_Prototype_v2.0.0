@@ -1,5 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 import {
   GENERATION_OUTPUT_KINDS,
@@ -14,38 +18,72 @@ import {
 import { validateStoryboard } from "../server/storyboard.js";
 import { buildStoryboardFrameWorkflowGraph } from "../server/storyboard-generation.js";
 
+const TEST_FILE_BYTES = Symbol("testFileBytes");
+const fixtureProjectsRoot = fs.mkdtempSync(path.join(os.tmpdir(), "premiere316-composer-"));
+let fixtureProjectNumber = 0;
+
+test.after(() => {
+  fs.rmSync(fixtureProjectsRoot, { recursive: true, force: true });
+});
+
 function manifestAsset(id, {
   activeVersion = 1,
   versions,
   file = `${id}.v${activeVersion}.png`,
   mediaType = "image",
-  sha256 = "a".repeat(64),
-  bytes = 1000
+  sha256 = null,
+  bytes = null,
+  contents = `fixture:${id}:v${activeVersion}:${file}`
 } = {}) {
-  const builtVersions = versions || [{
+  const buffer = Buffer.from(contents);
+  const builtVersion = {
     v: activeVersion,
     file,
     files: [file],
     mediaType,
-    fileHashes: [{ file, sha256, bytes }]
-  }];
+    fileHashes: [{
+      file,
+      sha256: sha256 || crypto.createHash("sha256").update(buffer).digest("hex"),
+      bytes: bytes ?? buffer.byteLength
+    }]
+  };
+  Object.defineProperty(builtVersion, TEST_FILE_BYTES, { value: buffer });
+  const builtVersions = versions || [builtVersion];
   return {
     id,
     name: id.replaceAll("-", " "),
     status: "generated",
     mediaType,
     activeVersion,
-    versions: builtVersions
+    versions: builtVersions,
+    approvalCurrent: true,
+    approval: { status: "approved", activeVersion }
   };
 }
 
 function fixtureProject(items = [
-  manifestAsset("character-adam", { sha256: "1".repeat(64) }),
-  manifestAsset("character-eve", { sha256: "2".repeat(64) }),
-  manifestAsset("location-dungeon", { sha256: "3".repeat(64) })
+  manifestAsset("character-adam"),
+  manifestAsset("character-eve"),
+  manifestAsset("location-dungeon")
 ]) {
+  const slug = `composer_test_${++fixtureProjectNumber}`;
+  const assetRoot = path.join(fixtureProjectsRoot, slug, "media", "assets");
+  fs.mkdirSync(assetRoot, { recursive: true });
+  for (const asset of items) {
+    for (const version of asset.versions || []) {
+      const files = [...new Set([...(version.files || []), version.file].filter(Boolean))];
+      for (const file of files) {
+        const destination = path.join(assetRoot, ...String(file).replace(/\\/g, "/").split("/"));
+        fs.mkdirSync(path.dirname(destination), { recursive: true });
+        const contents = version[TEST_FILE_BYTES] || Buffer.from(`fixture:${asset.id}:v${version.v}:${file}`);
+        fs.writeFileSync(destination, contents);
+      }
+    }
+  }
   return {
-    slug: "composer_test",
+    slug,
+    projectsRoot: fixtureProjectsRoot,
+    category: "feature",
     settings: { width: 1920, height: 800, fps: 24, aspectRatio: "2.39:1" },
     assets: { schemaVersion: 1, items }
   };
@@ -138,10 +176,47 @@ test("exact pins resolve immutable server manifest data and ignore client file/h
   assert.equal(result.resolvedReferences[0].role, "identity");
   assert.equal(result.resolvedReferences[0].file, "character-adam.v1.png");
   assert.equal(result.resolvedReferences[0].projectMediaPath, "media/assets/character-adam.v1.png");
-  assert.equal(result.resolvedReferences[0].sha256, "1".repeat(64));
-  assert.equal(result.resolvedReferences[0].bytes, 1000);
+  const expectedHash = project.assets.items[0].versions[0].fileHashes[0];
+  assert.equal(result.resolvedReferences[0].sha256, expectedHash.sha256);
+  assert.equal(result.resolvedReferences[0].bytes, expectedHash.bytes);
+  assert.match(result.resolvedReferences[0].generationFingerprint, /^[a-f0-9]{64}$/);
+  assert.match(result.resolvedReferences[0].versionFingerprint, /^[a-f0-9]{64}$/);
+  assert.match(result.resolvedReferences[0].approvalFingerprint, /^[a-f0-9]{64}$/);
   assert.equal(Object.isFrozen(result.resolvedReferences[0]), true);
   assert.throws(() => { result.resolvedReferences[0].file = "changed.png"; }, TypeError);
+});
+
+test("stored queue requests keep canonical pins but rederive server provenance", () => {
+  const project = fixtureProject();
+  const initial = preflightGenerationRequest(project, request({
+    references: [pin("character-adam", 1)]
+  }));
+  assert.equal(initial.ok, true);
+  assert.deepEqual(Object.keys(initial.request.references[0]).sort(), [
+    "assetId",
+    "assetVersion",
+    "display",
+    "mentionId",
+    "notes",
+    "order",
+    "required",
+    "role"
+  ]);
+  assert.equal(Object.hasOwn(initial.request.references[0], "generationFingerprint"), false);
+  assert.equal(Object.hasOwn(initial.request.references[0], "sha256"), false);
+
+  const queueTime = preflightGenerationRequest(project, initial.request);
+  assert.equal(queueTime.ok, true);
+  assert.equal(queueTime.fingerprint, initial.fingerprint);
+  assert.equal(queueTime.resolvedReferences[0].generationFingerprint, initial.resolvedReferences[0].generationFingerprint);
+
+  const forgedRequest = preflightGenerationRequest(project, request({
+    references: [pin("character-adam", 1, "identity", 1, {
+      generationFingerprint: initial.resolvedReferences[0].generationFingerprint
+    })]
+  }));
+  assert.equal(forgedRequest.ok, false);
+  assert.ok(forgedRequest.errors.some((error) => error.code === "client_owned_file_rejected"));
 });
 
 test("identical pins dedupe while distinct pins preserve explicit order", () => {
@@ -184,9 +259,31 @@ test("stale, missing, unverifiable and wrong-media versions fail closed", () => 
   assert.ok(wrongMedia.errors.some((error) => error.code === "unsupported_reference_media"));
 });
 
+test("preflight requires current approval and rehashes the exact file from disk", () => {
+  const unapprovedAsset = manifestAsset("character-adam");
+  unapprovedAsset.approvalCurrent = false;
+  const unapproved = preflightGenerationRequest(
+    fixtureProject([unapprovedAsset]),
+    request({ references: [pin("character-adam", 1)] })
+  );
+  assert.ok(unapproved.errors.some((error) => error.code === "unapproved_asset_version"));
+
+  const tamperedAsset = manifestAsset("character-adam");
+  const tamperedProject = fixtureProject([tamperedAsset]);
+  fs.writeFileSync(
+    path.join(tamperedProject.projectsRoot, tamperedProject.slug, "media", "assets", tamperedAsset.versions[0].file),
+    "tampered-after-manifest"
+  );
+  const tampered = preflightGenerationRequest(
+    tamperedProject,
+    request({ references: [pin("character-adam", 1)] })
+  );
+  assert.ok(tampered.errors.some((error) => error.code === "file_hash_mismatch"));
+});
+
 test("reference limits and unique explicit order are enforced", () => {
   const manyAssets = Array.from({ length: 21 }, (_, index) => manifestAsset(`character-${index + 1}`, {
-    sha256: (index + 1).toString(16).padStart(64, "0")
+    contents: `fixture-many-${index + 1}`
   }));
   const project = fixtureProject(manyAssets);
   const tooMany = preflightGenerationRequest(project, request({
@@ -276,7 +373,7 @@ test("fingerprint is stable and drifts with prompt, options and active version b
   const v2 = manifestAsset("character-adam", {
     activeVersion: 2,
     file: "character-adam.v2.png",
-    sha256: "9".repeat(64)
+    contents: "different-active-version-bytes"
   });
   const changedBytes = preflightGenerationRequest(fixtureProject([v2]), request({ references: [pin("character-adam", 1, "identity", 2)] }));
   assert.equal(changedBytes.ok, true);
@@ -302,7 +399,12 @@ test("synthetic image input validates and is accepted by the current reference-c
     synthetic.project,
     synthetic.storyboard,
     synthetic.frameId,
-    { uploadedReferences: new Map([[referenceId, "Premiere316/composer_test/assets/character-adam.v1.png"]]) }
+    {
+      uploadedReferences: new Map([[
+        referenceId,
+        `premiere316_storyboard_refs/${project.slug}/assets/character-adam/v1/${preflight.resolvedReferences[0].sha256}.png`
+      ]])
+    }
   );
   assert.equal(built.references.length, 1);
   assert.equal(built.resolution.ratio, "16:9");

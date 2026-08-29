@@ -190,6 +190,13 @@ function positiveInt(value) {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
+function nonNegativeInt(value) {
+  const text = String(value == null ? "" : value).trim();
+  if (!text) return null;
+  const n = typeof value === "number" ? value : Number(text);
+  return Number.isInteger(n) && n >= 0 ? n : null;
+}
+
 function fileName(value) {
   return nonEmpty(value).split(/[/\\]/).pop().toLowerCase();
 }
@@ -225,8 +232,8 @@ export function normalizeTakeVersion(value) {
   }
   if (typeof value === "string") {
     const text = value.trim().toLowerCase();
-    const range = text.match(/^range[:\s-]*v?(\d+)$/i);
-    if (range) return { kind: "range", v: Number(range[1]) };
+    // A range label without frame bounds is not an exact source identity.
+    if (/^range[:\s-]*v?\d+$/i.test(text)) return null;
     const full = text.match(/^v?(\d+)$/i);
     if (full) return { kind: "full", v: Number(full[1]) };
     return null;
@@ -239,8 +246,11 @@ export function normalizeTakeVersion(value) {
   const kind = kindRaw === "range" || (kindRaw !== "full" && hasRangeFrames) ? "range" : "full";
   const takeVersion = { kind, v };
   if (kind === "range") {
-    if (Number.isFinite(Number(value.startFrame))) takeVersion.startFrame = Number(value.startFrame);
-    if (Number.isFinite(Number(value.endFrame))) takeVersion.endFrame = Number(value.endFrame);
+    const startFrame = nonNegativeInt(value.startFrame);
+    const endFrame = nonNegativeInt(value.endFrame);
+    if (startFrame == null || endFrame == null || endFrame <= startFrame) return null;
+    takeVersion.startFrame = startFrame;
+    takeVersion.endFrame = endFrame;
   }
   return takeVersion;
 }
@@ -262,12 +272,59 @@ export function normalizeSourceTake(sourceTake) {
   };
 }
 
+function takeIsApproved(clip, take, kind) {
+  if (!clip || !take) return false;
+  if (take.approved === true) return true;
+  if (nonEmpty(take.approvalStatus)?.toLowerCase() === "approved") return true;
+  if (nonEmpty(take.approval?.status)?.toLowerCase() === "approved") return true;
+  const version = positiveInt(take.v);
+  if (version && positiveInt(clip.approvedTakeVersion) === version) return true;
+  if (kind === "full") {
+    return Boolean(
+      version
+      && positiveInt(clip.activeVersion) === version
+      && (clip.status === "done" || clip.approved === true)
+    );
+  }
+  return Boolean(
+    kind === "range"
+    && take.active !== false
+    && (clip.status === "done" || clip.status === "ranges-ready" || clip.approved === true)
+  );
+}
+
+function sourceTakeFromRecord(projectSlug, clip, take, kind) {
+  if (!clip || !take || !takeIsApproved(clip, take, kind)) return null;
+  if (kind === "range" && take.active === false) return null;
+  const takeVersion = normalizeTakeVersion(kind === "range"
+    ? { kind, v: take.v, startFrame: take.startFrame, endFrame: take.endFrame }
+    : { kind, v: take.v });
+  if (!takeVersion) return null;
+  return normalizeSourceTake({
+    projectSlug,
+    clipId: clip.id,
+    takeVersion,
+    file: take.file,
+    fingerprints: fingerprintsOf(take)
+  });
+}
+
+function takeVersionsMatch(left, right) {
+  if (!left || !right || left.kind !== right.kind || left.v !== right.v) return false;
+  return left.kind !== "range"
+    || (left.startFrame === right.startFrame && left.endFrame === right.endFrame);
+}
+
 function takeFromClip(clip) {
   if (!clip || typeof clip !== "object") return null;
   const versions = Array.isArray(clip.versions) ? clip.versions : [];
   const activeV = positiveInt(clip.activeVersion);
   const activeFull = activeV
-    ? versions.find((version) => positiveInt(version?.v) === activeV && nonEmpty(version?.file))
+    ? versions.find((version) => (
+      positiveInt(version?.v) === activeV
+      && nonEmpty(version?.file)
+      && takeIsApproved(clip, version, "full")
+    ))
     : null;
   if (activeFull) {
     return {
@@ -278,15 +335,31 @@ function takeFromClip(clip) {
   }
   const ranges = Array.isArray(clip.rangeVersions) ? clip.rangeVersions : [];
   const activeRange = ranges
-    .filter((range) => range && range.active !== false && nonEmpty(range.file) && positiveInt(range.v))
+    .filter((range) => (
+      range
+      && range.active !== false
+      && nonEmpty(range.file)
+      && positiveInt(range.v)
+      && takeIsApproved(clip, range, "range")
+      && normalizeTakeVersion({
+        kind: "range",
+        v: range.v,
+        startFrame: range.startFrame,
+        endFrame: range.endFrame
+      })
+    ))
     .sort((left, right) => (
       (positiveInt(right.v) || 0) - (positiveInt(left.v) || 0)
       || String(right.createdAt || "").localeCompare(String(left.createdAt || ""))
     ))[0];
   if (!activeRange) return null;
-  const takeVersion = { kind: "range", v: positiveInt(activeRange.v) };
-  if (Number.isFinite(Number(activeRange.startFrame))) takeVersion.startFrame = Number(activeRange.startFrame);
-  if (Number.isFinite(Number(activeRange.endFrame))) takeVersion.endFrame = Number(activeRange.endFrame);
+  const takeVersion = normalizeTakeVersion({
+    kind: "range",
+    v: activeRange.v,
+    startFrame: activeRange.startFrame,
+    endFrame: activeRange.endFrame
+  });
+  if (!takeVersion) return null;
   return {
     takeVersion,
     file: nonEmpty(activeRange.file),
@@ -294,16 +367,42 @@ function takeFromClip(clip) {
   };
 }
 
-export function resolveApprovedSourceTake(project, preferredClipId) {
+export function listApprovedSourceTakes(project) {
+  const projectSlug = nonEmpty(project?.slug);
+  if (!projectSlug) return [];
+  const clips = Array.isArray(project?.sequence?.clips) ? project.sequence.clips : [];
+  const sourceTakes = [];
+  for (const clip of clips) {
+    for (const version of Array.isArray(clip?.versions) ? clip.versions : []) {
+      const sourceTake = sourceTakeFromRecord(projectSlug, clip, version, "full");
+      if (sourceTake) sourceTakes.push(sourceTake);
+    }
+    for (const range of Array.isArray(clip?.rangeVersions) ? clip.rangeVersions : []) {
+      const sourceTake = sourceTakeFromRecord(projectSlug, clip, range, "range");
+      if (sourceTake) sourceTakes.push(sourceTake);
+    }
+  }
+  return sourceTakes;
+}
+
+export function resolveApprovedSourceTake(project, preferredClipId, preferredTakeVersion) {
   const projectSlug = nonEmpty(project?.slug);
   if (!projectSlug) return null;
   const clips = Array.isArray(project?.sequence?.clips) ? project.sequence.clips : [];
   const wantedId = nonEmpty(preferredClipId);
-  const clip = wantedId
-    ? clips.find((item) => nonEmpty(item?.id) === wantedId) || null
-    : clips.find((item) => takeFromClip(item)) || null;
+  if (!wantedId) return null;
+  const clip = clips.find((item) => nonEmpty(item?.id) === wantedId) || null;
+  if (!clip) return null;
+  if (preferredTakeVersion != null) {
+    const wantedVersion = normalizeTakeVersion(preferredTakeVersion);
+    if (!wantedVersion) return null;
+    return listApprovedSourceTakes(project).find((sourceTake) => (
+      sourceTake.clipId === wantedId
+      && takeVersionsMatch(sourceTake.takeVersion, wantedVersion)
+    )) || null;
+  }
   const take = takeFromClip(clip);
-  if (!clip || !take) return null;
+  if (!take) return null;
   return normalizeSourceTake({
     projectSlug,
     clipId: nonEmpty(clip.id),

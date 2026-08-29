@@ -15,6 +15,8 @@ import {
   resolveStillsReferences,
   revalidateStillsSnapshot
 } from "../server/asset-reference-resolver.js";
+import { replaceStoryboardTargetReferences } from "../server/storyboard.js";
+import { buildStoryboardFrameWorkflowGraph } from "../server/storyboard-generation.js";
 
 function writeAssetFile(assetDir, fileName, contents) {
   const relative = String(fileName).replace(/\\/g, "/");
@@ -64,7 +66,7 @@ function assertCode(fn, code) {
   });
 }
 
-test("client file, comfyFile, and sourceAssetFile pins are rejected", () => {
+test("client-owned paths and provenance fields are rejected", () => {
   const harness = makeHarness();
   try {
     const file = "character-adam.v1.png";
@@ -77,8 +79,11 @@ test("client file, comfyFile, and sourceAssetFile pins are rejected", () => {
     const required = pin("character-adam", 1);
 
     assertCode(() => resolveStillsReferences(project, [{ ...required, file: "forged.png" }]), "client_owned_file_rejected");
+    assertCode(() => resolveStillsReferences(project, [{ ...required, sourceFile: "forged.png" }]), "client_owned_file_rejected");
     assertCode(() => resolveStillsReferences(project, [{ ...required, comfyFile: "forged.png" }]), "client_owned_file_rejected");
     assertCode(() => resolveStillsReferences(project, [{ ...required, sourceAssetFile: "forged.png" }]), "client_owned_file_rejected");
+    assertCode(() => resolveStillsReferences(project, [{ ...required, canonicalFile: "forged.png" }]), "client_owned_file_rejected");
+    assertCode(() => resolveStillsReferences(project, [{ ...required, sourceAssetSha256: "a".repeat(64) }]), "client_owned_file_rejected");
     assertCode(() => resolveStillsReferences(project, [{ ...required, disk: "C:/forged.png" }]), "client_owned_file_rejected");
     assertCode(() => resolveStillsReferences(project, [{ ...required, path: "../escape.png" }]), "client_owned_file_rejected");
     assertCode(() => resolveStillsReferences(project, [{ ...required, absolutePath: "C:/forged.png" }]), "client_owned_file_rejected");
@@ -120,6 +125,7 @@ test("missing version is a hard failure with no newest or activeVersion fallback
     assert.equal(exact[0].assetVersion, 1);
     assert.equal(exact[0].sourceFile, "adam.v1.png");
     assert.notEqual(exact[0].sourceFile, "adam.v3.png");
+    assert.equal(exact[0].activeAtResolve, false);
   } finally {
     harness.close();
   }
@@ -220,6 +226,7 @@ test("resolved stills snapshots are immutable, hashed from disk, and revalidate 
     assert.equal(snapshots[0].type, "image");
     assert.equal(snapshots[0].sourceFile, "adam.v1.png");
     assert.equal(snapshots[0].fileSha256, sha);
+    assert.equal(snapshots[0].fileBytes, Buffer.byteLength("adam-bytes"));
     assert.equal(snapshots[0].generationFingerprint, "g".repeat(64));
     assert.equal(snapshots[0].versionFingerprint, "v".repeat(64));
     assert.equal(Object.isFrozen(snapshots), true);
@@ -276,6 +283,40 @@ test("manifest SHA-256 that does not match disk fails closed", () => {
   }
 });
 
+test("malformed or incorrect manifest byte counts fail closed when declared", () => {
+  const harness = makeHarness();
+  try {
+    const file = "adam.v1.png";
+    const contents = "adam-bytes";
+    const sha256 = writeAssetFile(harness.assetDir, file, contents);
+    for (const bytes of ["not-a-number", -1, 1.5, Buffer.byteLength(contents) + 1]) {
+      const project = projectWithAssets(harness, [{
+        id: "character-adam",
+        activeVersion: 1,
+        versions: [versionRecord(1, file, { fileHashes: [{ file, sha256, bytes }] })]
+      }]);
+      assertCode(() => resolveStillsReferences(project, [pin("character-adam", 1)]), "file_hash_mismatch");
+    }
+  } finally {
+    harness.close();
+  }
+});
+
+test("non-image files cannot be smuggled into stills references", () => {
+  const harness = makeHarness();
+  try {
+    writeAssetFile(harness.assetDir, "adam.v1.mp4", "not-an-image");
+    const project = projectWithAssets(harness, [{
+      id: "character-adam",
+      activeVersion: 1,
+      versions: [versionRecord(1, "adam.v1.mp4", { mediaType: "image" })]
+    }]);
+    assertCode(() => resolveStillsReferences(project, [pin("character-adam", 1)]), "unsupported_reference_type");
+  } finally {
+    harness.close();
+  }
+});
+
 test("path-escape source files and missing disks fail closed", () => {
   const harness = makeHarness();
   try {
@@ -297,27 +338,122 @@ test("path-escape source files and missing disks fail closed", () => {
   }
 });
 
-test("generation-composer rejects client-owned path fields without using versions.at(-1)", () => {
-  const project = {
-    slug: "composer_test",
-    settings: { fps: 24, width: 768, height: 320 },
-    assets: {
-      items: [{
-        id: "character-adam",
-        name: "Adam",
-        status: "generated",
-        mediaType: "image",
-        activeVersion: 1,
-        versions: [{
-          v: 1,
-          file: "character-adam.v1.png",
-          files: ["character-adam.v1.png"],
-          mediaType: "image",
-          fileHashes: [{ file: "character-adam.v1.png", sha256: "a".repeat(64), bytes: 1000 }]
-        }]
+test("storyboard reference saves use the strict resolver and persist exact disk provenance", () => {
+  const harness = makeHarness();
+  try {
+    const file = "nested/adam.v1.png";
+    const sha256 = writeAssetFile(harness.assetDir, file, "approved-adam");
+    const project = projectWithAssets(harness, [{
+      id: "character-adam",
+      name: "Adam",
+      activeVersion: 1,
+      versions: [versionRecord(1, file, {
+        fileHashes: [{ file, sha256, bytes: Buffer.byteLength("approved-adam") }]
+      })]
+    }]);
+    const storyboard = {
+      schemaVersion: "premiere316.storyboard.v1",
+      projectId: harness.slug,
+      chapterOrder: [],
+      chapters: {},
+      scenes: {},
+      clips: {},
+      frames: { "frame-test-first": { id: "frame-test-first", references: [] } },
+      videoPlans: {},
+      segments: {},
+      referenceBindings: {}
+    };
+    const saved = replaceStoryboardTargetReferences(storyboard, project, {
+      targetKind: "frame",
+      targetId: "frame-test-first",
+      references: [{ assetId: "character-adam", assetVersion: 1, role: "identity" }]
+    });
+    const reference = saved.references[0];
+    assert.equal(reference.sourceAssetFile, file);
+    assert.equal(reference.sourceAssetSha256, sha256);
+    assert.equal(reference.sourceAssetBytes, Buffer.byteLength("approved-adam"));
+    assert.equal(reference.assetVersionId, "character-adam:v1");
+    assert.equal(reference.pinnedActiveAtImport, true);
+    const comfyImage = `premiere316_storyboard_refs/${harness.slug}/assets/character-adam/v1/${sha256}.png`;
+    const graph = buildStoryboardFrameWorkflowGraph(project, {
+      ...saved.storyboard,
+      frames: {
+        ...saved.storyboard.frames,
+        "frame-test-first": {
+          ...saved.storyboard.frames["frame-test-first"],
+          purpose: "first_frame",
+          prompt: "Adam stands in warm window light.",
+          negativePrompt: "text, watermark",
+          seed: 42
+        }
+      }
+    }, "frame-test-first", {
+      uploadedReferences: new Map([[reference.id, comfyImage]])
+    });
+    assert.equal(graph.references[0].sourceAssetFile, file);
+    assert.equal(graph.references[0].sourceAssetSha256, sha256);
+    assert.equal(graph.references[0].comfyImage, comfyImage);
+    assert.throws(() => buildStoryboardFrameWorkflowGraph(project, saved.storyboard, "frame-test-first", {
+      uploadedReferences: new Map([[reference.id, "premiere316_storyboard_refs/forged.png"]])
+    }), /content-addressed ComfyUI destination/);
+
+    assertCode(() => replaceStoryboardTargetReferences(storyboard, project, {
+      targetKind: "frame",
+      targetId: "frame-test-first",
+      references: [{
+        assetId: "character-adam",
+        assetVersion: 1,
+        role: "identity",
+        sourceAssetFile: "forged.png"
       }]
-    }
-  };
+    }), "client_owned_file_rejected");
+    assertCode(() => replaceStoryboardTargetReferences(storyboard, project, {
+      targetKind: "frame",
+      targetId: "frame-test-first",
+      references: [{
+        assetId: "character-adam",
+        assetVersion: 1,
+        role: "identity",
+        sourceAssetSha256: "f".repeat(64)
+      }]
+    }), "client_owned_file_rejected");
+    assert.throws(() => replaceStoryboardTargetReferences(storyboard, project, {
+      targetKind: "frame",
+      targetId: "frame-test-first",
+      references: [{}]
+    }), /requires assetId/);
+
+    fs.writeFileSync(path.join(harness.assetDir, ...file.split("/")), "drifted");
+    assertCode(() => replaceStoryboardTargetReferences(storyboard, project, {
+      targetKind: "frame",
+      targetId: "frame-test-first",
+      references: [{ assetId: "character-adam", assetVersion: 1, role: "identity" }]
+    }), "file_hash_mismatch");
+  } finally {
+    harness.close();
+  }
+});
+
+test("generation-composer rejects client-owned path fields without using versions.at(-1)", () => {
+  const harness = makeHarness();
+  try {
+  const file = "character-adam.v1.png";
+  const contents = "adam-v1";
+  const sha256 = writeAssetFile(harness.assetDir, file, contents);
+  const project = projectWithAssets(harness, [{
+    id: "character-adam",
+    name: "Adam",
+    status: "generated",
+    mediaType: "image",
+    activeVersion: 1,
+    versions: [{
+      v: 1,
+      file,
+      files: [file],
+      mediaType: "image",
+      fileHashes: [{ file, sha256, bytes: Buffer.byteLength(contents) }]
+    }]
+  }], { fps: 24, width: 768, height: 320 });
   const request = (extra) => ({
     schemaVersion: 1,
     outputKind: "video",
@@ -367,4 +503,7 @@ test("generation-composer rejects client-owned path fields without using version
   });
   assert.equal(stillsFile.ok, true);
   assert.equal(stillsFile.resolvedReferences[0].file, "character-adam.v1.png");
+  } finally {
+    harness.close();
+  }
 });

@@ -45,6 +45,7 @@ import {
   renderMasterBookend
 } from "./ffmpeg.js";
 import { assetApprovalCurrent, generateAssetJob, restoreCancelledAsset } from "./assets.js";
+import { continuityEvidenceIsVerified } from "./continuity.js";
 import {
   generateStoryboardFrameJob,
   generateStoryboardVideoPlanJob,
@@ -829,9 +830,13 @@ function currentGuideBindings(project, clip) {
   ].filter(Boolean))].sort();
   return files.map((file) => {
     const frame = (project.frames || []).find((item) => item.file === file);
-    const asset = project.assets?.items?.find((item) => item.id === frame?.assetId);
     if (!frame) throw new Error(`Render cancelled because guide media is missing: ${file}`);
-    if (!skipApproval(project) && (
+    const asset = project.assets?.items?.find((item) => item.id === frame.assetId);
+    if (frame.source === "take-continuity") {
+      if (!continuityEvidenceIsVerified(project, frame)) {
+        throw new Error(`Render cancelled because continuity guide evidence failed SHA-256 validation: ${frame.name || file}`);
+      }
+    } else if (!skipApproval(project) && (
       frame.source !== "asset-foundry-approved" ||
       !asset ||
       !assetApprovalCurrent(project, asset) ||
@@ -839,7 +844,14 @@ function currentGuideBindings(project, clip) {
       frame.assetApprovalFingerprint !== asset.approval?.versionFingerprint ||
       frame.screenplayRevision !== asset.approval?.screenplayRevision
     )) throw new Error(`Render cancelled because guide media is missing, stale, or no longer approved: ${frame?.name || file}`);
-    return {
+    return frame.source === "take-continuity" ? {
+      file,
+      frameId: frame.id,
+      assetId: null,
+      assetVersion: null,
+      approvalFingerprint: frame.sha256,
+      screenplayRevision: null
+    } : {
       file,
       frameId: frame.id,
       assetId: frame.assetId,

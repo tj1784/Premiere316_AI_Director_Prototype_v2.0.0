@@ -245,17 +245,54 @@ export function loadWorkflowTemplate(name) {
 // ---------------------------------------------------------------------------
 // Upload an image file into ComfyUI's input folder
 // ---------------------------------------------------------------------------
-export async function uploadImage(filePath, subfolder = "cineforge") {
+function comfyUploadRelative(value, { allowEmpty = false, label = "ComfyUI upload path" } = {}) {
+  const raw = String(value || "").trim().replace(/\\/g, "/");
+  if (!raw) {
+    if (allowEmpty) return "";
+    throw new Error(`${label} is required`);
+  }
+  if (raw.includes("\0") || path.posix.isAbsolute(raw) || /^[a-z]:/i.test(raw)) {
+    throw new Error(`${label} must be a relative path`);
+  }
+  const parts = raw.split("/");
+  if (parts.some((part) => !part || part === "." || part === "..")) {
+    throw new Error(`${label} contains an unsafe path segment`);
+  }
+  return parts.join("/");
+}
+
+export async function uploadImage(filePath, subfolder = "cineforge", {
+  fileName = path.basename(filePath),
+  overwrite = true,
+  expectedSha256 = null,
+  fetchImpl = fetch,
+  baseUrl = COMFY_URL
+} = {}) {
   const data = fs.readFileSync(filePath);
+  const normalizedSubfolder = comfyUploadRelative(subfolder, { allowEmpty: true, label: "ComfyUI upload subfolder" });
+  const normalizedFileName = comfyUploadRelative(fileName, { label: "ComfyUI upload filename" });
+  if (normalizedFileName.includes("/")) throw new Error("ComfyUI upload filename must be a basename");
+  if (expectedSha256) {
+    const actualSha256 = crypto.createHash("sha256").update(data).digest("hex");
+    if (actualSha256 !== String(expectedSha256).trim().toLowerCase()) {
+      throw new Error("ComfyUI upload source SHA-256 changed before upload");
+    }
+  }
   const form = new FormData();
-  form.append("image", new Blob([data]), path.basename(filePath));
-  form.append("subfolder", subfolder);
+  form.append("image", new Blob([data]), normalizedFileName);
+  form.append("subfolder", normalizedSubfolder);
   form.append("type", "input");
-  form.append("overwrite", "true");
-  const r = await fetch(`${COMFY_URL}/upload/image`, { method: "POST", body: form });
+  form.append("overwrite", overwrite ? "true" : "false");
+  const r = await fetchImpl(`${baseUrl}/upload/image`, { method: "POST", body: form });
   if (!r.ok) throw new Error(`upload failed ${r.status}: ${await r.text()}`);
   const j = await r.json();
-  return j.subfolder ? `${j.subfolder}/${j.name}` : j.name;
+  const returnedName = comfyUploadRelative(j.name, { label: "ComfyUI returned upload filename" });
+  if (returnedName.includes("/")) throw new Error("ComfyUI returned an invalid upload filename");
+  const returnedSubfolder = comfyUploadRelative(j.subfolder, { allowEmpty: true, label: "ComfyUI returned upload subfolder" });
+  if (returnedName !== normalizedFileName || returnedSubfolder !== normalizedSubfolder) {
+    throw new Error("ComfyUI changed the deterministic upload destination");
+  }
+  return returnedSubfolder ? `${returnedSubfolder}/${returnedName}` : returnedName;
 }
 
 // ---------------------------------------------------------------------------

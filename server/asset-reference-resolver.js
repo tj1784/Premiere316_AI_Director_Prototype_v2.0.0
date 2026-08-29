@@ -7,15 +7,35 @@ import { PROJECTS_DIR } from "./paths.js";
 
 export const CLIENT_OWNED_REFERENCE_FIELDS = Object.freeze([
   "file",
+  "sourceFile",
   "sourceAssetFile",
+  "canonicalFile",
   "comfyFile",
+  "comfyImage",
+  "comfySubfolder",
+  "comfyFileName",
   "disk",
   "path",
-  "absolutePath"
+  "absolutePath",
+  "fileSha256",
+  "fileBytes",
+  "sourceAssetSha256",
+  "sourceAssetBytes",
+  "generationFingerprint",
+  "versionFingerprint",
+  "approvalFingerprint",
+  "sourceGenerationFingerprint",
+  "sourceVersionFingerprint",
+  "sourceApprovalFingerprint",
+  "assetVersionId",
+  "sourceAssetKey",
+  "resolutionStatus",
+  "persistenceOrigin"
 ]);
 
 const SHA256_RE = /^[a-f0-9]{64}$/i;
 const DEAD_ASSET_STATUSES = new Set(["deprecated", "deleted", "cancelled", "refused"]);
+const STILLS_IMAGE_FILE_RE = /\.(png|jpe?g|webp|gif|bmp|tiff?)$/i;
 
 const ROLE_ALIASES = Object.freeze({
   identity: "identity",
@@ -319,6 +339,14 @@ function resolveOneStillsReference(project, pin, index, assetById, seenOrders) {
       assetVersion: pin.assetVersion
     });
   }
+  if (!STILLS_IMAGE_FILE_RE.test(relative)) {
+    fail("unsupported_reference_type", `${assetId}:v${pin.assetVersion} is not a supported still image`, {
+      path: basePath,
+      assetId,
+      assetVersion: pin.assetVersion,
+      sourceFile: relative
+    });
+  }
 
   const slug = typeof project?.slug === "string" ? project.slug.trim() : "";
   if (!slug) fail("invalid_project", "A server-loaded project with a slug is required", { path: "project" });
@@ -354,7 +382,13 @@ function resolveOneStillsReference(project, pin, index, assetById, seenOrders) {
     : null;
   if (manifestHash) {
     const expected = String(manifestHash.sha256 || "").toLowerCase();
-    if (!SHA256_RE.test(expected) || expected !== fileSha256) {
+    const hasExpectedBytes = Object.hasOwn(manifestHash, "bytes");
+    const expectedBytes = Number(manifestHash.bytes);
+    if (
+      !SHA256_RE.test(expected)
+      || expected !== fileSha256
+      || (hasExpectedBytes && (!Number.isSafeInteger(expectedBytes) || expectedBytes < 0 || expectedBytes !== buffer.byteLength))
+    ) {
       fail("file_hash_mismatch", `${assetId}:v${pin.assetVersion} disk SHA-256 does not match the manifest`, {
         path: basePath,
         assetId,
@@ -380,6 +414,8 @@ function resolveOneStillsReference(project, pin, index, assetById, seenOrders) {
     role,
     sourceFile: relative,
     fileSha256,
+    fileBytes: buffer.byteLength,
+    activeAtResolve: Number(asset.activeVersion) === pin.assetVersion,
     generationFingerprint,
     versionFingerprint,
     approvalFingerprint
@@ -419,7 +455,6 @@ export function revalidateStillsSnapshot(project, snapshot) {
     if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
       fail("invalid_snapshot", "Each snapshot entry must be an object", { path: `snapshot[${index}]` });
     }
-    rejectClientOwnedFields(entry, `snapshot[${index}]`);
   }
 
   const pins = entries.map((entry) => ({
@@ -462,6 +497,9 @@ export function revalidateStillsSnapshot(project, snapshot) {
     }
     if (stored.fileSha256 !== match.fileSha256) {
       snapshotDrift("fileSha256", `Snapshot file hash changed for ${key}`, { key });
+    }
+    if (stored.fileBytes != null && Number(stored.fileBytes) !== Number(match.fileBytes)) {
+      snapshotDrift("fileBytes", `Snapshot file byte count changed for ${key}`, { key });
     }
     if (stored.generationFingerprint && stored.generationFingerprint !== match.generationFingerprint) {
       snapshotDrift("generationFingerprint", `Snapshot generation fingerprint changed for ${key}`, { key });

@@ -3,7 +3,7 @@ import { useStore } from "../store";
 import {
   SOURCE_TAKE_REQUIRED,
   buildUpscaleManifest,
-  resolveApprovedSourceTake,
+  listApprovedSourceTakes,
   routeUpscaleDirective
 } from "../upscale-manifest.js";
 import "./UpscaleWorkspace.css";
@@ -63,31 +63,47 @@ function sourceTakeLabel(sourceTake: any) {
   if (!sourceTake) return "No source take";
   const version = sourceTake.takeVersion || {};
   const kind = version.kind === "range" ? "range" : "full";
-  return `${sourceTake.clipId} · ${kind} v${version.v}`;
+  const frames = kind === "range" ? ` · frames ${version.startFrame}-${version.endFrame}` : "";
+  return `${sourceTake.clipId} · ${kind} v${version.v}${frames}`;
+}
+
+function sourceTakeKey(sourceTake: any) {
+  if (!sourceTake) return "";
+  const version = sourceTake.takeVersion || {};
+  return JSON.stringify([
+    sourceTake.projectSlug,
+    sourceTake.clipId,
+    version.kind,
+    version.v,
+    version.startFrame ?? null,
+    version.endFrame ?? null,
+    sourceTake.file,
+    sourceTake.fingerprints?.sha256 || sourceTake.fingerprints?.assetFingerprint || ""
+  ]);
 }
 
 export default function UpscaleWorkspace() {
   const project = useStore((state) => state.project);
-  const selClipId = useStore((state) => state.selClipId);
-  const productionClipId = useStore((state) => state.productionClipId);
   const slug = String(project?.slug || "project");
   const jobs = useStore((state) => state.jobs);
   const health = useStore((state) => state.health);
   const [directive, setDirective] = useState(() => readStoredDirective(slug));
+  const [selectedTakeKey, setSelectedTakeKey] = useState("");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     try { localStorage.setItem(storageKey(slug), directive); } catch {}
   }, [slug, directive]);
 
-  const sourceTake = useMemo(() => {
-    const clips = Array.isArray(project?.sequence?.clips) ? project.sequence.clips : [];
-    const productionId = String(productionClipId || "").trim();
-    const productionInSequence = Boolean(
-      productionId && clips.some((clip: any) => String(clip?.id || "").trim() === productionId)
-    );
-    return resolveApprovedSourceTake(project, productionInSequence ? productionId : selClipId);
-  }, [project, selClipId, productionClipId]);
+  const approvedSourceTakes = useMemo(() => listApprovedSourceTakes(project), [project]);
+  const sourceTake = useMemo(() => (
+    approvedSourceTakes.find((take: any) => sourceTakeKey(take) === selectedTakeKey) || null
+  ), [approvedSourceTakes, selectedTakeKey]);
+
+  useEffect(() => {
+    if (selectedTakeKey && !sourceTake) setSelectedTakeKey("");
+  }, [selectedTakeKey, sourceTake]);
+
   const routing = useMemo(() => routeUpscaleDirective(directive), [directive]);
   const manifest = useMemo(() => {
     if (!sourceTake) return null;
@@ -130,10 +146,6 @@ export default function UpscaleWorkspace() {
         </div>
       </header>
 
-      <div className="error-banner" role="status">
-        <span>!</span>
-        Execution handoff not connected.
-      </div>
       {canExport ? null : (
         <div className="error-banner" role="status">
           <span>!</span>
@@ -145,15 +157,26 @@ export default function UpscaleWorkspace() {
         <section className="upscale-panel upscale-source-panel">
           <header><b>Directive</b><small>{sourceTakeLabel(sourceTake)}</small></header>
           <div className="upscale-panel-scroll">
-            <div className="upscale-intent-card">
-              <span>Handoff</span>
-              <p>Execution handoff not connected.</p>
-            </div>
+            <label>Approved source take
+              <select
+                aria-label="Approved source take"
+                value={selectedTakeKey}
+                onChange={(event) => setSelectedTakeKey(event.target.value)}
+              >
+                <option value="">Choose an exact approved clip / take</option>
+                {approvedSourceTakes.map((take: any) => {
+                  const key = sourceTakeKey(take);
+                  return <option key={key} value={key}>{sourceTakeLabel(take)} · {take.file}</option>;
+                })}
+              </select>
+            </label>
             <div className="upscale-intent-card">
               <span>Source take</span>
               <p>{sourceTake
                 ? `${sourceTake.projectSlug} / ${sourceTake.clipId} / ${sourceTake.takeVersion.kind} v${sourceTake.takeVersion.v} / ${sourceTake.file}`
-                : "None. Copy and Download stay disabled until an approved active clip take is available."}</p>
+                : approvedSourceTakes.length
+                  ? "None selected. Choose one exact approved clip/take above; Copy and Download remain disabled until then."
+                  : "No approved source takes are available. Copy and Download remain disabled."}</p>
             </div>
             <label>Plan directive
               <textarea

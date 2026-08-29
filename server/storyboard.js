@@ -2,13 +2,13 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { projectDir } from "./paths.js";
+import { resolveStillsReferences } from "./asset-reference-resolver.js";
 
 const STORYBOARD_SCHEMA = "premiere316.storyboard.v1";
 const STORYBOARD_FILE = "storyboard.json";
 const PROJECT_FILE = "project.json";
 export const EXPLICIT_USER_REFERENCES_ONLY = "explicit_user_only";
 export const MAX_STORYBOARD_SEMANTIC_REFERENCES = 9;
-const IMAGE_FILE_RE = /\.(png|jpe?g|webp|gif|svg)$/i;
 const FRAME_ID_RE = /^frame-[a-z0-9][a-z0-9-]{1,127}$/;
 const SEGMENT_ID_RE = /^segment-[a-z0-9][a-z0-9-]{1,127}$/;
 const VIDEO_PLAN_ID_RE = /^video-[a-z0-9][a-z0-9-]{1,127}$/;
@@ -442,33 +442,28 @@ function targetExists(storyboard, targetKind, targetId) {
   return false;
 }
 
-function versionFile(version) {
-  return version?.file || version?.files?.find((file) => IMAGE_FILE_RE.test(String(file || ""))) || version?.files?.[0] || null;
-}
-
-function resolveReference(project, reference, targetKind, targetId, order, preservedId = null) {
-  const asset = project.assets?.items?.find((item) => item.id === reference.assetId);
-  if (!asset) throw new Error(`Reference asset not found: ${reference.assetId || "missing"}`);
-  const requestedVersion = reference.assetVersion == null ? Number(asset.activeVersion) : Number(reference.assetVersion);
-  const version = (asset.versions || []).find((item) => Number(item.v) === requestedVersion);
-  if (!version) throw new Error(`Asset ${asset.id} does not contain version ${requestedVersion}`);
-  const file = versionFile(version);
-  if (!file || !IMAGE_FILE_RE.test(file)) throw new Error(`Asset ${asset.id} v${requestedVersion} is not a visual reference`);
-  const declaredRole = String(reference.role || "").trim();
-  const role = canonicalStoryboardReferenceRole(declaredRole);
-  if (!role) {
-    throw new Error(`Reference asset ${asset.id} has unsupported role ${declaredRole || "missing"}`);
-  }
+function resolveReference(snapshot, reference, existing, targetKind, targetId, order) {
+  const existingMatchesExactSource = Number(existing?.assetVersion) === snapshot.assetVersion
+    && String(existing?.sourceAssetFile || "").replace(/\\/g, "/") === snapshot.sourceFile
+    && (!existing?.sourceAssetSha256 || String(existing.sourceAssetSha256).toLowerCase() === snapshot.fileSha256);
+  const canonicalFile = targetKind === "video_plan" && existingMatchesExactSource && existing?.canonicalFile
+    ? String(existing.canonicalFile).replace(/\\/g, "/")
+    : snapshot.sourceFile;
   return {
-    id: preservedId || `ref-${cleanId(targetId)}-${cleanId(asset.id)}-${order}`,
-    assetId: asset.id,
-    assetVersionId: `${asset.id}:v${requestedVersion}`,
-    assetVersion: requestedVersion,
-    sourceAssetFile: file,
-    canonicalFile: String(reference.canonicalFile || file).replace(/\\/g, "/"),
-    sourceAssetKey: String(file).replace(/\.[^.]+$/, ""),
+    id: existing?.id || `ref-${cleanId(targetId)}-${cleanId(snapshot.assetId)}-${order}`,
+    assetId: snapshot.assetId,
+    assetVersionId: `${snapshot.assetId}:v${snapshot.assetVersion}`,
+    assetVersion: snapshot.assetVersion,
+    sourceAssetFile: snapshot.sourceFile,
+    sourceAssetSha256: snapshot.fileSha256,
+    sourceAssetBytes: snapshot.fileBytes,
+    sourceGenerationFingerprint: snapshot.generationFingerprint,
+    sourceVersionFingerprint: snapshot.versionFingerprint,
+    sourceApprovalFingerprint: snapshot.approvalFingerprint,
+    canonicalFile,
+    sourceAssetKey: String(snapshot.sourceFile).replace(/\.[^.]+$/, ""),
     resolutionStatus: "resolved_exact_version",
-    role,
+    role: snapshot.role,
     targetKind,
     targetId,
     useMode: String(reference.useMode || (targetKind === "video_plan" ? "semantic_reference" : "direct_conditioning")),
@@ -476,9 +471,7 @@ function resolveReference(project, reference, targetKind, targetId, order, prese
     order,
     cropRegion: String(reference.cropRegion || "Use relevant subject/design region only"),
     notes: String(reference.notes || "Pinned to an exact Asset Foundry version for reproducible generation."),
-    pinnedActiveAtImport: typeof reference.pinnedActiveAtImport === "boolean"
-      ? reference.pinnedActiveAtImport
-      : Number(asset.activeVersion) === requestedVersion,
+    pinnedActiveAtImport: snapshot.activeAtResolve,
     persistenceOrigin: "user"
   };
 }
@@ -496,18 +489,45 @@ export function replaceStoryboardTargetReferences(storyboard, project, { targetK
     );
   }
   const seenAssets = new Set();
-  const resolved = [];
+  const accepted = [];
   for (const reference of references) {
-    if (!reference?.assetId || seenAssets.has(reference.assetId)) continue;
-    seenAssets.add(reference.assetId);
-    const requestedId = String(reference.id || "");
+    if (!reference || typeof reference !== "object" || Array.isArray(reference)) {
+      throw new Error("Each storyboard reference must be an object");
+    }
+    const assetId = typeof reference.assetId === "string" ? reference.assetId.trim() : "";
+    if (!assetId) throw new Error("Each storyboard reference requires assetId");
+    if (seenAssets.has(assetId)) continue;
+    seenAssets.add(assetId);
+    const declaredRole = String(reference.role || "").trim();
+    const role = canonicalStoryboardReferenceRole(declaredRole);
+    if (!role) throw new Error(`Reference asset ${assetId} has unsupported role ${declaredRole || "missing"}`);
+    const requestedId = String(reference.id || "").trim();
     const existing = requestedId ? governed.referenceBindings?.[requestedId] : null;
-    const preservedId = existing?.targetKind === targetKind && existing?.targetId === targetId && existing?.assetId === reference.assetId
-      ? requestedId
+    const preserved = existing?.targetKind === targetKind && existing?.targetId === targetId && existing?.assetId === assetId
+      ? existing
       : null;
-    const bindingOrder = preservedId && Number.isFinite(Number(existing.order)) ? Number(existing.order) : resolved.length + 1;
-    resolved.push(resolveReference(project, reference, targetKind, targetId, bindingOrder, preservedId));
+    accepted.push({
+      reference: { ...reference, assetId, role },
+      existing: preserved,
+      pin: {
+        ...reference,
+        assetId,
+        assetVersion: reference.assetVersion,
+        role,
+        order: accepted.length + 1,
+        type: "image"
+      }
+    });
   }
+  const snapshots = resolveStillsReferences(project, accepted.map((entry) => entry.pin));
+  const resolved = snapshots.map((snapshot, index) => resolveReference(
+    snapshot,
+    accepted[index].reference,
+    accepted[index].existing,
+    targetKind,
+    targetId,
+    index + 1
+  ));
   const next = structuredClone(governed);
   for (const [id, binding] of Object.entries(next.referenceBindings)) {
     if (binding?.targetKind === targetKind && binding?.targetId === targetId) delete next.referenceBindings[id];

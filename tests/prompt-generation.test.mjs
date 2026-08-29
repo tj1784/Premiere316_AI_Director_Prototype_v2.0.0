@@ -29,6 +29,8 @@ import {
 } from "../server/prompt-generation.js";
 
 const HASH = "a".repeat(64);
+const FIXTURE_PROJECTS_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), "premiere316-prompt-generation-projects-"));
+test.after(() => fs.rmSync(FIXTURE_PROJECTS_ROOT, { recursive: true, force: true }));
 
 function visualAsset({
   id,
@@ -83,9 +85,30 @@ const adamVoice = visualAsset({
 });
 
 function baseProject(assets = []) {
+  const items = structuredClone(assets);
+  const assetRoot = path.join(FIXTURE_PROJECTS_ROOT, "prompt-generation-test", "media", "assets");
+  for (const asset of items) {
+    for (const version of asset.versions || []) {
+      const files = version.files || (version.file ? [version.file] : []);
+      version.fileHashes = files.map((file) => {
+        const relative = String(file).replace(/\\/g, "/");
+        const contents = Buffer.from(`${asset.id}:v${version.v}:${relative}`, "utf8");
+        const diskPath = path.join(assetRoot, ...relative.split("/"));
+        fs.mkdirSync(path.dirname(diskPath), { recursive: true });
+        fs.writeFileSync(diskPath, contents);
+        return {
+          file: relative,
+          sha256: crypto.createHash("sha256").update(contents).digest("hex"),
+          bytes: contents.byteLength,
+          extension: path.extname(relative)
+        };
+      });
+    }
+  }
   return {
     slug: "prompt-generation-test",
     name: "Prompt Generation Test",
+    projectsRoot: FIXTURE_PROJECTS_ROOT,
     settings: {
       fps: 24,
       width: 1280,
@@ -97,7 +120,7 @@ function baseProject(assets = []) {
     assets: {
       schemaVersion: 1,
       screenplayHash: null,
-      items: structuredClone(assets),
+      items,
       deletedItems: [],
       counts: {},
       total: assets.length

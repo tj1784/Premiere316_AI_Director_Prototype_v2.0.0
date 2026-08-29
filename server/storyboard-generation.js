@@ -11,7 +11,9 @@ import {
 } from "./comfy.js";
 import { loadProject, mediaDir } from "./projects.js";
 import { trimVideoToFrames } from "./ffmpeg.js";
-import { PACKAGE_ROOT, projectDir } from "./paths.js";
+import { PACKAGE_ROOT, PROJECTS_DIR, projectDir } from "./paths.js";
+import { resolveStillsReferences } from "./asset-reference-resolver.js";
+import { resolveProjectMediaFile } from "./media-path.js";
 import {
   loadStoryboard,
   saveStoryboard
@@ -942,67 +944,96 @@ function generatedFileHashes(project, files) {
     .sort((left, right) => left.file.localeCompare(right.file));
 }
 
-function assetVersionForReference(project, reference) {
-  const asset = project.assets?.items?.find((item) => item.id === reference.assetId);
-  const version = asset?.versions?.find((item) => Number(item.v) === Number(reference.assetVersion));
-  return { asset, version };
+function resolvedFrameReferences(project, frame) {
+  if (!Array.isArray(frame.references)) throw new Error(`Storyboard frame ${frame.id} references must be an array`);
+  const seenIds = new Set();
+  const authored = frame.references.map((reference, index) => {
+    const id = typeof reference?.id === "string" ? reference.id.trim() : "";
+    if (!id) throw new Error(`Storyboard frame ${frame.id} reference ${index + 1} has no stable ID`);
+    if (seenIds.has(id)) throw new Error(`Storyboard frame ${frame.id} repeats reference ID ${id}`);
+    seenIds.add(id);
+    return {
+      reference,
+      order: Number(reference?.order) || index + 1
+    };
+  }).sort((left, right) => left.order - right.order || String(left.reference?.assetId).localeCompare(String(right.reference?.assetId)));
+  const snapshots = resolveStillsReferences(project, authored.map(({ reference, order }) => ({
+    assetId: reference?.assetId,
+    assetVersion: reference?.assetVersion,
+    role: reference?.role,
+    order,
+    type: "image"
+  })));
+  return snapshots.map((snapshot, index) => {
+    const reference = authored[index].reference;
+    const checks = [
+      ["sourceAssetFile", snapshot.sourceFile],
+      ["sourceAssetSha256", snapshot.fileSha256],
+      ["sourceAssetBytes", snapshot.fileBytes],
+      ["sourceGenerationFingerprint", snapshot.generationFingerprint],
+      ["sourceVersionFingerprint", snapshot.versionFingerprint],
+      ["sourceApprovalFingerprint", snapshot.approvalFingerprint]
+    ];
+    for (const [field, actual] of checks) {
+      const expected = reference?.[field];
+      if (expected != null && String(expected) !== String(actual)) {
+        throw new Error(`Storyboard reference ${reference?.id || snapshot.assetId} ${field} drifted from its exact approved asset version`);
+      }
+    }
+    return { reference, snapshot };
+  });
 }
 
-function safeAssetRelative(value) {
-  const normalized = String(value || "")
-    .replace(/\\/g, "/")
-    .replace(/^media\/assets\//i, "")
-    .split("/")
-    .filter(Boolean);
-  if (!normalized.length || normalized.some((part) => part === "." || part === "..")) return "";
-  return normalized.join("/");
-}
-
-function storyboardReferenceSourcePath(project, reference) {
-  const file = safeAssetRelative(reference?.sourceAssetFile);
-  if (!file) return null;
-  const direct = path.join(mediaDir(project, "assets"), ...file.split("/"));
-  if (fs.existsSync(direct) && fs.statSync(direct).isFile()) return direct;
-  return null;
-}
-
-function storyboardReferenceSubfolder(project) {
-  return `${COMFY_STORYBOARD_REFERENCE_SUBFOLDER}/${safePart(project.slug)}/assets`;
+function storyboardReferenceUpload(project, snapshot) {
+  const extension = path.posix.extname(snapshot.sourceFile).toLowerCase() || ".png";
+  const subfolder = `${COMFY_STORYBOARD_REFERENCE_SUBFOLDER}/${safePart(project.slug)}/assets/${safePart(snapshot.assetId)}/v${snapshot.assetVersion}`;
+  const fileName = `${snapshot.fileSha256}${extension}`;
+  return { subfolder, fileName, comfyImage: `${subfolder}/${fileName}` };
 }
 
 function storyboardReferenceEntries(project, frame, uploaded = new Map()) {
-  return (frame.references || [])
-    .map((reference, index) => {
-      const { asset, version } = assetVersionForReference(project, reference);
-      const sourceFile = safeAssetRelative(reference.sourceAssetFile || version?.file || "");
-      const sourcePath = storyboardReferenceSourcePath(project, { ...reference, sourceAssetFile: sourceFile });
-      const subfolder = storyboardReferenceSubfolder(project);
-      const fallbackComfyImage = sourceFile ? `${subfolder}/${sourceFile}` : null;
+  return resolvedFrameReferences(project, frame)
+    .map(({ reference, snapshot }, index) => {
+      const asset = project.assets?.items?.find((item) => item.id === snapshot.assetId);
+      const sourcePath = resolveProjectMediaFile(
+        typeof project?.projectsRoot === "string" && project.projectsRoot.trim() ? project.projectsRoot : PROJECTS_DIR,
+        project.slug,
+        "assets",
+        snapshot.sourceFile
+      );
+      const upload = storyboardReferenceUpload(project, snapshot);
+      const uploadedImage = uploaded.get(reference.id);
+      if (uploadedImage != null && uploadedImage !== upload.comfyImage) {
+        throw new Error(`Storyboard reference ${reference.id} does not match its content-addressed ComfyUI destination`);
+      }
       return {
         id: reference.id,
-        order: Number(reference.order) || index + 1,
-        assetId: reference.assetId,
-        assetName: asset?.name || reference.sourceAssetKey || reference.assetId,
-        assetVersion: Number(reference.assetVersion) || 1,
-        assetVersionId: reference.assetVersionId || `${reference.assetId}:v${reference.assetVersion || 1}`,
-        role: reference.role || "reference",
+        order: snapshot.order || index + 1,
+        assetId: snapshot.assetId,
+        assetName: asset?.name || reference.sourceAssetKey || snapshot.assetId,
+        assetVersion: snapshot.assetVersion,
+        assetVersionId: `${snapshot.assetId}:v${snapshot.assetVersion}`,
+        role: snapshot.role,
         required: reference.required !== false,
         useMode: reference.useMode || "direct_conditioning",
-        sourceAssetFile: sourceFile,
+        sourceAssetFile: snapshot.sourceFile,
+        sourceAssetSha256: snapshot.fileSha256,
+        sourceAssetBytes: snapshot.fileBytes,
         sourcePath,
-        comfyImage: uploaded.get(reference.id) || fallbackComfyImage,
+        comfySubfolder: upload.subfolder,
+        comfyFileName: upload.fileName,
+        comfyImage: uploadedImage || upload.comfyImage,
         cropRegion: reference.cropRegion || null,
         notes: reference.notes || null
       };
     })
-    .filter((entry) => entry.sourceAssetFile && entry.comfyImage)
     .sort((left, right) => left.order - right.order || left.assetId.localeCompare(right.assetId));
 }
 
 async function uploadStoryboardReferenceImages(project, frame, uploadCache = new Map()) {
   const uploaded = new Map();
   const entries = storyboardReferenceEntries(project, frame);
-  const missing = entries.filter((entry) => !entry.sourcePath);
+  const missing = entries.filter((entry) => !entry.sourcePath || !fs.existsSync(entry.sourcePath) || !fs.statSync(entry.sourcePath).isFile());
   if (missing.length) {
     throw new Error(
       `Storyboard reference files are missing for ${frame.id}: ${missing
@@ -1010,13 +1041,19 @@ async function uploadStoryboardReferenceImages(project, frame, uploadCache = new
         .join(", ")}`
     );
   }
-  const subfolder = storyboardReferenceSubfolder(project);
   for (const entry of entries) {
-    const cacheKey = path.resolve(entry.sourcePath).toLowerCase();
+    const cacheKey = entry.comfyImage;
     let comfyImage = uploadCache.get(cacheKey);
     if (!comfyImage) {
-      comfyImage = await uploadImage(entry.sourcePath, subfolder);
+      comfyImage = await uploadImage(entry.sourcePath, entry.comfySubfolder, {
+        fileName: entry.comfyFileName,
+        expectedSha256: entry.sourceAssetSha256,
+        overwrite: true
+      });
       uploadCache.set(cacheKey, comfyImage);
+    }
+    if (comfyImage !== entry.comfyImage) {
+      throw new Error(`ComfyUI changed the content-addressed reference name for ${entry.assetVersionId}`);
     }
     uploaded.set(entry.id, comfyImage);
   }
@@ -1546,6 +1583,11 @@ export function storyboardFrameGenerationFingerprint(frame, workflowHash) {
       assetId: reference.assetId,
       assetVersion: reference.assetVersion,
       sourceAssetFile: reference.sourceAssetFile,
+      sourceAssetSha256: reference.sourceAssetSha256,
+      sourceAssetBytes: reference.sourceAssetBytes,
+      sourceGenerationFingerprint: reference.sourceGenerationFingerprint,
+      sourceVersionFingerprint: reference.sourceVersionFingerprint,
+      sourceApprovalFingerprint: reference.sourceApprovalFingerprint,
       role: reference.role,
       cropRegion: reference.cropRegion,
       notes: reference.notes,

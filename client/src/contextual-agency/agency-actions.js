@@ -117,25 +117,49 @@ export function resolveStoryboardAttachTarget(storyboard, entity) {
 
 export function currentStoryboardReferences(storyboard, target) {
   if (!storyboard || !target) return [];
-  if (target.kind === "frame") return [...(storyboard.frames?.[target.id]?.references || [])];
-  if (target.kind === "video_plan") {
-    return Object.values(storyboard.referenceBindings || {})
-      .filter((binding) => binding?.targetKind === "video_plan" && binding?.targetId === target.id);
-  }
-  return [];
+  const references = target.kind === "frame"
+    ? [...(storyboard.frames?.[target.id]?.references || [])]
+    : target.kind === "video_plan"
+      ? Object.values(storyboard.referenceBindings || {})
+        .filter((binding) => binding?.targetKind === "video_plan" && binding?.targetId === target.id)
+      : [];
+  // Reference file paths and hashes are server-owned. Submit only the user's
+  // exact asset/version/role choices when re-saving or merging a binding.
+  return references
+    .sort((left, right) => (
+      (Number(left?.order) || 0) - (Number(right?.order) || 0)
+      || String(left?.id || "").localeCompare(String(right?.id || ""))
+    ))
+    .map((reference) => ({
+      id: reference.id,
+      assetId: reference.assetId,
+      assetVersion: reference.assetVersion,
+      role: reference.role,
+      useMode: reference.useMode,
+      required: reference.required !== false,
+      cropRegion: reference.cropRegion,
+      notes: reference.notes
+    }));
 }
 
 export function mergeStoryboardReference(existing, asset, category) {
-  const next = (existing || []).filter((item) => item?.assetId !== asset.id);
+  const assetId = typeof asset?.id === "string" ? asset.id.trim() : "";
+  const assetVersion = Number(asset?.activeVersion);
+  if (!assetId) throw new Error("A project asset ID is required before attaching a Storyboard reference.");
+  if (!Number.isSafeInteger(assetVersion) || assetVersion < 1) {
+    throw new Error(`Asset ${assetId} has no exact active version to attach.`);
+  }
+  const prior = (existing || []).find((item) => item?.assetId === assetId) || null;
+  const next = (existing || []).filter((item) => item?.assetId !== assetId);
   next.push({
-    assetId: asset.id,
-    assetVersion: Number(asset.activeVersion || 1),
+    ...(prior?.id ? { id: prior.id } : {}),
+    assetId,
+    assetVersion,
     role: roleForCategory(category),
     useMode: "semantic",
     required: true,
     cropRegion: "",
-    notes: "Attached from the contextual asset drawer",
-    pinnedActiveAtImport: true
+    notes: "Attached from the contextual asset drawer"
   });
   return next;
 }

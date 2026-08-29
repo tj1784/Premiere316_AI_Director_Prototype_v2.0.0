@@ -20,6 +20,7 @@ import {
   cueLinesForCharacter,
   locksFromBundle,
   withContinuityLocks,
+  currentStoryboardReferences,
   mergeStoryboardReference,
   resolveStoryboardAttachTarget,
   saveAuditionToLibrary,
@@ -147,6 +148,48 @@ test("storyboard attach pins a frame reference", async () => {
   assert.equal(call[3][0].assetId, "location-hell-gate");
   assert.equal(call[3][0].assetVersion, 2);
   assert.equal(call[3][0].role, "location");
+});
+
+test("storyboard reference merge preserves exact IDs, strips server provenance, and never guesses v1", () => {
+  const storyboard = {
+    frames: {},
+    referenceBindings: {
+      later: {
+        id: "later",
+        targetKind: "video_plan",
+        targetId: "video-1",
+        assetId: "location-b",
+        assetVersion: 2,
+        role: "location",
+        order: 2,
+        sourceAssetFile: "server-b.png",
+        sourceAssetSha256: "b".repeat(64)
+      },
+      earlier: {
+        id: "earlier",
+        targetKind: "video_plan",
+        targetId: "video-1",
+        assetId: "location-a",
+        assetVersion: 1,
+        role: "location",
+        order: 1,
+        canonicalFile: "locations/server-a.png",
+        pinnedActiveAtImport: true
+      }
+    }
+  };
+  const current = currentStoryboardReferences(storyboard, { kind: "video_plan", id: "video-1" });
+  assert.deepEqual(current.map((reference) => reference.id), ["earlier", "later"]);
+  assert.equal(Object.hasOwn(current[0], "canonicalFile"), false);
+  assert.equal(Object.hasOwn(current[1], "sourceAssetFile"), false);
+  assert.equal(Object.hasOwn(current[1], "sourceAssetSha256"), false);
+  assert.equal(Object.hasOwn(current[0], "pinnedActiveAtImport"), false);
+
+  const merged = mergeStoryboardReference(current, { id: "location-a", activeVersion: 3 }, "location");
+  assert.equal(merged.at(-1).id, "earlier");
+  assert.equal(merged.at(-1).assetVersion, 3);
+  assert.throws(() => mergeStoryboardReference([], { id: "location-a", activeVersion: 0 }, "location"), /no exact active version/);
+  assert.throws(() => mergeStoryboardReference([], { id: "location-a" }, "location"), /no exact active version/);
 });
 
 test("clip attach resolves to the first frame", () => {

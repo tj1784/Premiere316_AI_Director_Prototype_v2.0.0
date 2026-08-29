@@ -9,8 +9,11 @@ import {
   runPrompt,
   uploadImage
 } from "./comfy.js";
+import { resolveStillsReferences } from "./asset-reference-resolver.js";
+import { probeMedia } from "./ffmpeg.js";
+import { resolveProjectMediaFile } from "./media-path.js";
 import { loadProject, mediaDir, registerFrame, saveProject, skipApproval } from "./projects.js";
-import { projectDir } from "./paths.js";
+import { PROJECTS_DIR, projectDir } from "./paths.js";
 import {
   STYLE_FLUX_CLIP,
   STYLE_FLUX_MODEL,
@@ -32,6 +35,9 @@ const KREA_CLIP = "qwen3vl_4b_bf16.safetensors";
 const KREA_VAE = "qwen_image_vae.safetensors";
 const KREA_IDENTITY_EDIT_LORA = "krea2\\krea2_identity_edit_v1_2.safetensors";
 export const KREA2_IDENTITY_EDIT_WORKFLOW_ID = "krea2-identity-edit-v1-2";
+const KREA2_IDENTITY_EDIT_MAX_PIXELS = 1024 * 1024;
+// The live EmptySD3LatentImage schema uses min=16 and step=16.
+const KREA2_IDENTITY_EDIT_DIMENSION_STEP = 16;
 const FLUX_MODEL = "flux2\\flux-2-klein-9b-fp8mixed.safetensors";
 const FLUX_CLIP = "qwen_3_8b_fp8mixed.safetensors";
 const FLUX_VAE = "flux2-vae.safetensors";
@@ -302,7 +308,6 @@ export function assetMediaType(category) {
 
 export function defaultAssetWorkflow(category, variant, name, id) {
   if (CATEGORY_MEDIA_TYPES[category] === "image") {
-    if (isApprovedAssetEditRequest(variant, name, id)) return visualEditWorkflow();
     return visualWorkflow(category, variant, name, id);
   }
   if (category === "voice") return "qwen3-tts-voice-design-1.7b";
@@ -376,10 +381,6 @@ function isIdentityEditWorkflow(workflowId) {
   return workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID;
 }
 
-function isApprovedAssetEditRequest(variant = "", name = "", id = "") {
-  return /\b(touch-?ups?|identity[ -]?edit|img2img)\b/i.test(`${variant} ${name} ${id}`);
-}
-
 export function visualEditWorkflow() {
   return KREA2_IDENTITY_EDIT_WORKFLOW_ID;
 }
@@ -390,6 +391,326 @@ export function visualWorkflow(category, variant, name = "", id = "") {
     return "krea2-character-ingredients-fp8";
   }
   return "krea2-cinematic-still-fp8";
+}
+
+function identityEditError(message, code = "IDENTITY_EDIT_SOURCE_INVALID") {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}
+
+function identityEditSourcePayload(source) {
+  const fileBytes = Number(source?.fileBytes);
+  return {
+    order: Number(source?.order),
+    assetId: String(source?.assetId || ""),
+    assetVersion: Number(source?.assetVersion),
+    type: String(source?.type || ""),
+    role: String(source?.role || ""),
+    sourceFile: String(source?.sourceFile || "").replace(/\\/g, "/"),
+    fileSha256: String(source?.fileSha256 || "").toLowerCase(),
+    fileBytes: Number.isSafeInteger(fileBytes) && fileBytes >= 0 ? fileBytes : null,
+    generationFingerprint: source?.generationFingerprint || null,
+    versionFingerprint: source?.versionFingerprint || null,
+    approvalFingerprint: source?.approvalFingerprint || null
+  };
+}
+
+export function identityEditSourceFingerprint(source) {
+  return crypto.createHash("sha256").update(JSON.stringify(identityEditSourcePayload(source))).digest("hex");
+}
+
+function identityEditRemoteSegment(value, fallback) {
+  const raw = String(value || fallback || "item").trim();
+  const readable = raw
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 56) || String(fallback || "item");
+  const suffix = crypto.createHash("sha256").update(raw).digest("hex").slice(0, 12);
+  return `${readable}-${suffix}`;
+}
+
+function identityEditUploadLocation(project, targetAsset, source) {
+  const extension = path.posix.extname(String(source.sourceFile || "")).toLowerCase();
+  if (![".png", ".jpg", ".jpeg", ".webp"].includes(extension)) {
+    throw identityEditError("Krea 2 Identity Edit source must be PNG, JPEG, or WebP", "IDENTITY_EDIT_SOURCE_TYPE_UNSUPPORTED");
+  }
+  const projectSlug = identityEditRemoteSegment(project?.slug, "project");
+  const targetAssetId = identityEditRemoteSegment(targetAsset?.id, "asset");
+  const sourceAssetId = identityEditRemoteSegment(source.assetId, "source");
+  const sourceVersion = Number(source.assetVersion);
+  const subfolder = `premiere316_identity_edit/${projectSlug}/${targetAssetId}/${sourceAssetId}-v${sourceVersion}`;
+  const fileName = `${String(source.fileSha256).toLowerCase()}${extension}`;
+  return { subfolder, fileName, comfyFile: `${subfolder}/${fileName}` };
+}
+
+export function identityEditTargetDimensions(sourceWidth, sourceHeight, {
+  maxPixels = KREA2_IDENTITY_EDIT_MAX_PIXELS,
+  step = KREA2_IDENTITY_EDIT_DIMENSION_STEP
+} = {}) {
+  const width = Math.floor(Number(sourceWidth));
+  const height = Math.floor(Number(sourceHeight));
+  if (![width, height].every((value) => Number.isSafeInteger(value) && value > 0)) {
+    throw identityEditError("Krea 2 Identity Edit could not determine the source image dimensions", "IDENTITY_EDIT_SOURCE_DIMENSIONS_MISSING");
+  }
+  const quantum = Math.max(1, Math.floor(Number(step) || KREA2_IDENTITY_EDIT_DIMENSION_STEP));
+  if (width < quantum || height < quantum) {
+    throw identityEditError("Krea 2 Identity Edit source is smaller than the runtime's minimum latent dimension", "IDENTITY_EDIT_SOURCE_DIMENSIONS_INVALID");
+  }
+  const pixelLimit = Math.max(quantum * quantum, Math.floor(Number(maxPixels) || KREA2_IDENTITY_EDIT_MAX_PIXELS));
+  let scale = Math.min(1, Math.sqrt(pixelLimit / (width * height)));
+  let targetWidth = 0;
+  let targetHeight = 0;
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    targetWidth = Math.max(quantum, Math.floor((width * scale) / quantum) * quantum);
+    targetHeight = Math.max(quantum, Math.floor((height * scale) / quantum) * quantum);
+    if (targetWidth * targetHeight <= pixelLimit) break;
+    scale *= 0.995;
+  }
+  if (targetWidth * targetHeight > pixelLimit) {
+    throw identityEditError("Krea 2 Identity Edit could not fit the source aspect into its pixel budget", "IDENTITY_EDIT_TARGET_DIMENSIONS_INVALID");
+  }
+  return { sourceWidth: width, sourceHeight: height, width: targetWidth, height: targetHeight };
+}
+
+function identityEditProjectsRoot(project) {
+  const override = typeof project?.projectsRoot === "string" ? project.projectsRoot.trim() : "";
+  return override || PROJECTS_DIR;
+}
+
+function identityEditSourceDiskPath(project, source) {
+  const projectsRoot = identityEditProjectsRoot(project);
+  const relative = String(source?.sourceFile || "").replace(/\\/g, "/");
+  const diskPath = resolveProjectMediaFile(projectsRoot, String(project?.slug || ""), "assets", relative);
+  if (!diskPath || !fs.existsSync(diskPath) || !fs.statSync(diskPath).isFile()) {
+    throw identityEditError("Krea 2 Identity Edit source image is missing", "IDENTITY_EDIT_SOURCE_MISSING");
+  }
+  const assetRoot = path.resolve(projectsRoot, String(project.slug), "media", "assets");
+  let realRoot;
+  let realFile;
+  try {
+    realRoot = fs.realpathSync(assetRoot);
+    realFile = fs.realpathSync(diskPath);
+  } catch {
+    throw identityEditError("Krea 2 Identity Edit source image could not be resolved", "IDENTITY_EDIT_SOURCE_PATH_INVALID");
+  }
+  const inside = path.relative(realRoot, realFile);
+  if (!inside || path.isAbsolute(inside) || inside === ".." || inside.startsWith(`..${path.sep}`)) {
+    throw identityEditError("Krea 2 Identity Edit source image escapes the project asset directory", "IDENTITY_EDIT_SOURCE_PATH_INVALID");
+  }
+  const actualSha256 = crypto.createHash("sha256").update(fs.readFileSync(realFile)).digest("hex");
+  if (actualSha256 !== String(source.fileSha256 || "").toLowerCase()) {
+    throw identityEditError("Krea 2 Identity Edit source SHA-256 changed", "IDENTITY_EDIT_SOURCE_HASH_MISMATCH");
+  }
+  return realFile;
+}
+
+function identityEditManifestRelative(value) {
+  const raw = String(value || "").trim().replace(/\\/g, "/").replace(/^media\/assets\//i, "");
+  if (!raw || raw.includes("\0") || path.posix.isAbsolute(raw) || /^[a-z]:/i.test(raw)) return "";
+  const normalized = path.posix.normalize(raw).replace(/^\.\//, "");
+  if (!normalized || normalized === ".." || normalized.startsWith("../")) return "";
+  if (normalized.split("/").some((part) => !part || part === "." || part === "..")) return "";
+  return normalized;
+}
+
+function identityEditVersionSourceFile(version) {
+  const declared = version?.file || (Array.isArray(version?.files) ? version.files[0] : "") || "";
+  return identityEditManifestRelative(declared);
+}
+
+function requireIdentityEditSourceProvenance(source) {
+  if (
+    source.order !== 1
+    || !source.assetId
+    || !Number.isSafeInteger(source.assetVersion)
+    || source.assetVersion < 1
+    || source.type !== "image"
+    || source.role !== "identity"
+    || !identityEditManifestRelative(source.sourceFile)
+    || !/^[a-f0-9]{64}$/.test(source.fileSha256)
+  ) {
+    throw identityEditError("Krea 2 Identity Edit source snapshot is malformed", "IDENTITY_EDIT_SOURCE_INVALID");
+  }
+  for (const [field, value] of [
+    ["generation", source.generationFingerprint],
+    ["version", source.versionFingerprint],
+    ["approval", source.approvalFingerprint]
+  ]) {
+    if (!/^[a-f0-9]{64}$/i.test(String(value || ""))) {
+      throw identityEditError(`Krea 2 Identity Edit source is missing its approved ${field} fingerprint`, "IDENTITY_EDIT_SOURCE_PROVENANCE_MISSING");
+    }
+  }
+}
+
+function identityEditActiveVersion(value) {
+  const number = Number(value);
+  return Number.isSafeInteger(number) && number >= 1 ? number : null;
+}
+
+function identityEditSourceAsset(project, source) {
+  const sourceAsset = (project?.assets?.items || []).find((item) => String(item?.id || "") === source.assetId);
+  if (!sourceAsset) throw identityEditError("Krea 2 Identity Edit source asset is missing", "IDENTITY_EDIT_SOURCE_MISSING");
+  if (["deprecated", "deleted", "cancelled", "refused"].includes(String(sourceAsset.status || "").trim().toLowerCase())) {
+    throw identityEditError("Krea 2 Identity Edit source asset is no longer available", "IDENTITY_EDIT_SOURCE_MISSING");
+  }
+  if (identityEditActiveVersion(sourceAsset.activeVersion) !== source.assetVersion) {
+    throw identityEditError("Krea 2 Identity Edit source active version changed", "IDENTITY_EDIT_SOURCE_VERSION_CHANGED");
+  }
+  return sourceAsset;
+}
+
+function revalidatePinnedIdentityEditSource(project, recipe) {
+  const source = recipe.source;
+  const sourceAsset = identityEditSourceAsset(project, source);
+  const version = (sourceAsset.versions || []).find((candidate) => Number(candidate?.v) === source.assetVersion);
+  if (!version) throw identityEditError("Krea 2 Identity Edit source version is missing", "IDENTITY_EDIT_SOURCE_VERSION_CHANGED");
+  const sourceFile = identityEditVersionSourceFile(version);
+  if (!sourceFile || sourceFile !== source.sourceFile) {
+    throw identityEditError("Krea 2 Identity Edit source version file changed", "IDENTITY_EDIT_SOURCE_VERSION_CHANGED");
+  }
+  if (String(version.assetFingerprint || "") !== String(source.generationFingerprint || "")) {
+    throw identityEditError("Krea 2 Identity Edit source generation fingerprint changed", "IDENTITY_EDIT_SOURCE_FINGERPRINT_MISMATCH");
+  }
+  if (assetVersionRecordFingerprint(sourceAsset, version) !== source.versionFingerprint) {
+    throw identityEditError("Krea 2 Identity Edit source version fingerprint changed", "IDENTITY_EDIT_SOURCE_FINGERPRINT_MISMATCH");
+  }
+  const manifestHash = normalizedFileHashes(version).find((entry) => identityEditManifestRelative(entry.file) === sourceFile);
+  if (manifestHash && (
+    manifestHash.sha256 !== source.fileSha256
+    || (source.fileBytes != null && Number(manifestHash.bytes) !== source.fileBytes)
+  )) {
+    throw identityEditError("Krea 2 Identity Edit source manifest hash changed", "IDENTITY_EDIT_SOURCE_HASH_MISMATCH");
+  }
+  return { sourceAsset, diskPath: identityEditSourceDiskPath(project, source) };
+}
+
+function normalizedIdentityEditRecipe(project, targetAsset, value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw identityEditError("Krea 2 Identity Edit requires an exact approved source pin");
+  }
+  if (value.schema !== "premiere316.identity-edit-source.v1") {
+    throw identityEditError("Krea 2 Identity Edit source recipe schema changed", "IDENTITY_EDIT_SOURCE_INVALID");
+  }
+  const source = identityEditSourcePayload(value.source);
+  requireIdentityEditSourceProvenance(source);
+  const sourceFingerprint = identityEditSourceFingerprint(source);
+  if (sourceFingerprint !== value.sourceFingerprint) {
+    throw identityEditError("Krea 2 Identity Edit source fingerprint changed", "IDENTITY_EDIT_SOURCE_FINGERPRINT_MISMATCH");
+  }
+  if (String(value.targetAssetId || "") !== String(targetAsset?.id || "")) {
+    throw identityEditError("Krea 2 Identity Edit source pin belongs to another target asset", "IDENTITY_EDIT_TARGET_MISMATCH");
+  }
+  const dimensions = identityEditTargetDimensions(value.sourceWidth, value.sourceHeight);
+  if (
+    dimensions.sourceWidth !== Number(value.sourceWidth)
+    || dimensions.sourceHeight !== Number(value.sourceHeight)
+    || dimensions.width !== Number(value.width)
+    || dimensions.height !== Number(value.height)
+  ) {
+    throw identityEditError("Krea 2 Identity Edit target dimensions changed", "IDENTITY_EDIT_TARGET_DIMENSIONS_INVALID");
+  }
+  if (Number(value.refBoost) !== 4 || Number(value.refBoostA) !== 1 || value.fitMode !== "fit") {
+    throw identityEditError("Krea 2 Identity Edit model patch settings changed", "IDENTITY_EDIT_MODEL_SETTINGS_INVALID");
+  }
+  const upload = identityEditUploadLocation(project, targetAsset, source);
+  if (
+    upload.subfolder !== value.comfySubfolder
+    || upload.fileName !== value.comfyFileName
+    || upload.comfyFile !== value.comfyFile
+  ) {
+    throw identityEditError("Krea 2 Identity Edit upload destination changed", "IDENTITY_EDIT_UPLOAD_DESTINATION_INVALID");
+  }
+  return {
+    schema: "premiere316.identity-edit-source.v1",
+    targetAssetId: String(targetAsset.id),
+    source,
+    sourceFingerprint,
+    ...dimensions,
+    comfySubfolder: upload.subfolder,
+    comfyFileName: upload.fileName,
+    comfyFile: upload.comfyFile,
+    refBoost: 4,
+    refBoostA: 1,
+    fitMode: "fit"
+  };
+}
+
+export async function prepareIdentityEditSource(project, targetAsset, pin, { probeMediaFn = probeMedia } = {}) {
+  if (!targetAsset?.id) throw identityEditError("Krea 2 Identity Edit target asset is required", "IDENTITY_EDIT_TARGET_MISSING");
+  const [resolved] = resolveStillsReferences(project, [{
+    ...(pin && typeof pin === "object" && !Array.isArray(pin) ? pin : {}),
+    role: "identity",
+    order: 1,
+    type: "image"
+  }]);
+  const source = identityEditSourcePayload(resolved);
+  requireIdentityEditSourceProvenance(source);
+  const diskPath = identityEditSourceDiskPath(project, source);
+  let media;
+  try {
+    media = await probeMediaFn(diskPath);
+  } catch (error) {
+    throw identityEditError(`Krea 2 Identity Edit could not inspect the source image: ${String(error?.message || error)}`, "IDENTITY_EDIT_SOURCE_DIMENSIONS_MISSING");
+  }
+  const dimensions = identityEditTargetDimensions(media?.video?.width, media?.video?.height);
+  const upload = identityEditUploadLocation(project, targetAsset, source);
+  const recipe = {
+    schema: "premiere316.identity-edit-source.v1",
+    targetAssetId: String(targetAsset.id),
+    source,
+    sourceFingerprint: identityEditSourceFingerprint(source),
+    ...dimensions,
+    comfySubfolder: upload.subfolder,
+    comfyFileName: upload.fileName,
+    comfyFile: upload.comfyFile,
+    refBoost: 4,
+    refBoostA: 1,
+    fitMode: "fit"
+  };
+  return { recipe, diskPath };
+}
+
+export function revalidateIdentityEditSource(project, targetAsset, value = targetAsset?.identityEdit) {
+  const recipe = normalizedIdentityEditRecipe(project, targetAsset, value);
+  const { diskPath } = revalidatePinnedIdentityEditSource(project, recipe);
+  return { recipe, diskPath };
+}
+
+export function identityEditJobRefs(project, targetAsset, value = targetAsset?.identityEdit) {
+  const recipe = normalizedIdentityEditRecipe(project, targetAsset, value);
+  const { sourceAsset } = revalidatePinnedIdentityEditSource(project, recipe);
+  return {
+    identityEditSource: recipe.source,
+    identityEditSourceFingerprint: recipe.sourceFingerprint,
+    identityEditTargetActiveVersion: identityEditActiveVersion(targetAsset.activeVersion),
+    identityEditSourceActiveVersion: identityEditActiveVersion(sourceAsset.activeVersion)
+  };
+}
+
+export function revalidateIdentityEditJobRefs(project, targetAsset, refs) {
+  const expected = identityEditJobRefs(project, targetAsset);
+  if (!refs || typeof refs !== "object") {
+    throw identityEditError("Identity-edit job is missing its approved source snapshot", "IDENTITY_EDIT_JOB_SOURCE_MISSING");
+  }
+  for (const field of [
+    "identityEditSourceFingerprint",
+    "identityEditTargetActiveVersion",
+    "identityEditSourceActiveVersion"
+  ]) {
+    if (refs[field] !== expected[field]) {
+      throw identityEditError(`Identity-edit job ${field} changed after queue`, "IDENTITY_EDIT_JOB_SOURCE_CHANGED");
+    }
+  }
+  const queuedSource = identityEditSourcePayload(refs.identityEditSource);
+  if (
+    identityEditSourceFingerprint(queuedSource) !== expected.identityEditSourceFingerprint
+    || JSON.stringify(queuedSource) !== JSON.stringify(expected.identityEditSource)
+  ) {
+    throw identityEditError("Identity-edit job source snapshot changed after queue", "IDENTITY_EDIT_JOB_SOURCE_CHANGED");
+  }
+  return expected;
 }
 
 function productionGuardrails(category, variant) {
@@ -1178,7 +1499,21 @@ export function assetGenerationFingerprint(asset) {
     workflowHash: asset?.workflowHash || null,
     seed: asset?.seed ?? null,
     durationSec: asset?.durationSec ?? null,
-    bpm: asset?.bpm ?? null
+    bpm: asset?.bpm ?? null,
+    ...(isIdentityEditWorkflow(asset?.workflowId) ? { identityEdit: {
+      schema: asset?.identityEdit?.schema || null,
+      targetAssetId: asset?.identityEdit?.targetAssetId || null,
+      source: identityEditSourcePayload(asset?.identityEdit?.source),
+      sourceFingerprint: asset?.identityEdit?.sourceFingerprint || null,
+      sourceWidth: Number(asset?.identityEdit?.sourceWidth) || null,
+      sourceHeight: Number(asset?.identityEdit?.sourceHeight) || null,
+      width: Number(asset?.identityEdit?.width) || null,
+      height: Number(asset?.identityEdit?.height) || null,
+      comfyFile: asset?.identityEdit?.comfyFile || null,
+      refBoost: Number(asset?.identityEdit?.refBoost) || null,
+      refBoostA: Number(asset?.identityEdit?.refBoostA) || null,
+      fitMode: asset?.identityEdit?.fitMode || null
+    } } : {})
   })).digest("hex");
 }
 
@@ -1243,9 +1578,7 @@ function assetFileSlug(asset) {
     .slice(0, 64) || "asset";
 }
 
-export function assetVersionFingerprint(asset) {
-  const active = activeAssetVersion(asset);
-  if (!active) return null;
+function assetVersionRecordFingerprint(asset, active) {
   return crypto.createHash("sha256").update(JSON.stringify({
     assetId: asset.id,
     version: Number(active.v),
@@ -1257,8 +1590,21 @@ export function assetVersionFingerprint(asset) {
     seed: active.seed ?? null,
     createdAt: active.createdAt || null,
     generationFingerprint: active.assetFingerprint || null,
-    fileHashes: normalizedFileHashes(active)
+    fileHashes: normalizedFileHashes(active),
+    ...(active.sourceReference ? {
+      sourceReference: identityEditSourcePayload(active.sourceReference),
+      sourceReferenceFingerprint: active.sourceReferenceFingerprint || null,
+      sourceWidth: Number(active.sourceWidth) || null,
+      sourceHeight: Number(active.sourceHeight) || null,
+      width: Number(active.width) || null,
+      height: Number(active.height) || null
+    } : {})
   })).digest("hex");
+}
+
+export function assetVersionFingerprint(asset) {
+  const active = activeAssetVersion(asset);
+  return active ? assetVersionRecordFingerprint(asset, active) : null;
 }
 
 export function assetVersionFilesCurrent(project, asset) {
@@ -1352,14 +1698,6 @@ function kreaPrompt(project, asset) {
   return prompt;
 }
 
-function identityEditSourceName(asset) {
-  const uploaded = String(asset?.sourceImage || "").replace(/\\/g, "/").trim();
-  if (uploaded) return uploaded;
-  const active = activeAssetVersion(asset);
-  const named = String(active?.file || active?.files?.[0] || "").replace(/\\/g, "/");
-  return path.posix.basename(named) || "example.png";
-}
-
 function identityEditInstruction(asset) {
   let text = String(asset?.prompt || "").replace(/\r\n/g, "\n").trim();
   const header = String(asset?.promptHeader || "").trim();
@@ -1370,12 +1708,16 @@ function identityEditInstruction(asset) {
   if (lock && text.includes(lock)) {
     text = text.split(lock).join("").replace(/\n{3,}/g, "\n\n").trim();
   }
+  if (!text) {
+    throw identityEditError("Krea 2 Identity Edit requires a non-empty edit instruction", "IDENTITY_EDIT_INSTRUCTION_REQUIRED");
+  }
   return text;
 }
 
 function kreaIdentityEditPrompt(project, asset) {
   const seed = seededInt(asset);
-  const sourceImage = identityEditSourceName(asset);
+  const recipe = normalizedIdentityEditRecipe(project, asset, asset.identityEdit);
+  const sourceImage = recipe.comfyFile;
   const instruction = identityEditInstruction(asset);
   return {
     "55": { class_type: "UNETLoader", inputs: { unet_name: KREA_MODEL, weight_dtype: "default" } },
@@ -1384,7 +1726,7 @@ function kreaIdentityEditPrompt(project, asset) {
     "71": { class_type: "LoraLoaderModelOnly", inputs: { model: ["55", 0], lora_name: KREA_IDENTITY_EDIT_LORA, strength_model: 1 } },
     "72": { class_type: "LoadImage", inputs: { image: sourceImage } },
     "73": { class_type: "VAEEncode", inputs: { pixels: ["72", 0], vae: ["57", 0] } },
-    "82": { class_type: "EmptySD3LatentImage", inputs: { width: 1024, height: 1024, batch_size: 1 } },
+    "82": { class_type: "EmptySD3LatentImage", inputs: { width: recipe.width, height: recipe.height, batch_size: 1 } },
     "84": {
       class_type: "Krea2EditGroundedEncode",
       inputs: { clip: ["56", 0], prompt: instruction, image: ["72", 0], grounding_px: 768, system_prompt: "" }
@@ -1398,9 +1740,9 @@ function kreaIdentityEditPrompt(project, asset) {
       inputs: {
         model: ["71", 0],
         source_latent: ["73", 0],
-        ref_boost: 4,
-        ref_boost_a: 1,
-        fit_mode: "fit",
+        ref_boost: recipe.refBoost,
+        ref_boost_a: recipe.refBoostA,
+        fit_mode: recipe.fitMode,
         vae: ["57", 0],
         source_image: ["72", 0],
         target_latent: ["82", 0]
@@ -1512,8 +1854,11 @@ export async function validateAssetWorkflow(project, asset) {
     for (const [inputName, definition] of Object.entries(schema?.input?.required || {})) {
       const value = node?.inputs?.[inputName];
       const widgetType = definition?.[0];
-      const stringWidget = widgetType === "STRING";
-      if (value == null || (value === "" && !stringWidget)) {
+      const allowedIdentityEditBlank = isIdentityEditWorkflow(asset.workflowId) && (
+        (["84", "85"].includes(String(nodeId)) && node.class_type === "Krea2EditGroundedEncode" && inputName === "system_prompt")
+        || (String(nodeId) === "85" && node.class_type === "Krea2EditGroundedEncode" && inputName === "prompt")
+      );
+      if (value == null || (value === "" && !allowedIdentityEditBlank)) {
         errors.push(`${nodeId} ${node.class_type}: missing required input ${inputName}`);
         continue;
       }
@@ -1669,6 +2014,7 @@ async function generateAssetJobInner(job) {
   if (job.refs?.assetFingerprint && job.refs.assetFingerprint !== assetGenerationFingerprint(asset)) {
     throw new Error("Asset job cancelled because the asset prompt or workflow changed after it was queued");
   }
+  if (isIdentityEditWorkflow(asset.workflowId)) revalidateIdentityEditJobRefs(project, asset, job.refs);
   const runAsset = structuredClone(asset);
   const runFingerprint = assetGenerationFingerprint(runAsset);
   const runRevision = currentRevision;
@@ -1679,14 +2025,18 @@ async function generateAssetJobInner(job) {
   const state = catalog.find((entry) => entry.id === workflow.id);
   if (!state?.ready) throw new Error(state?.reason || `${workflow.label} is not ready`);
   if (state.availableNow === false) throw new Error(state.runtimeWarning || `${workflow.label} is waiting for GPU memory`);
+  let identityEditRun = null;
   if (isIdentityEditWorkflow(runAsset.workflowId)) {
-    const sourceName = activeAssetVersion(runAsset)?.file || activeAssetVersion(runAsset)?.files?.[0];
-    if (!sourceName) {
-      throw new Error("Krea 2 Identity Edit is for approved-asset touch-ups and needs an existing source image");
+    identityEditRun = revalidateIdentityEditSource(project, runAsset, runAsset.identityEdit);
+    runAsset.identityEdit = identityEditRun.recipe;
+    const uploaded = await uploadImage(identityEditRun.diskPath, identityEditRun.recipe.comfySubfolder, {
+      fileName: identityEditRun.recipe.comfyFileName,
+      overwrite: true,
+      expectedSha256: identityEditRun.recipe.source.fileSha256
+    });
+    if (uploaded !== identityEditRun.recipe.comfyFile) {
+      throw identityEditError("ComfyUI changed the Krea 2 Identity Edit upload destination", "IDENTITY_EDIT_UPLOAD_DESTINATION_CHANGED");
     }
-    const sourcePath = path.join(mediaDir(project, "assets"), path.basename(String(sourceName)));
-    if (!fs.existsSync(sourcePath)) throw new Error("Krea 2 Identity Edit source image is missing");
-    runAsset.sourceImage = await uploadImage(sourcePath, "premiere316_identity_edit");
   }
   job.label = `Generate asset · ${asset.name}`;
   job.stage = `Preparing ${workflow.label}`;
@@ -1736,14 +2086,19 @@ async function generateAssetJobInner(job) {
   if (nextVersion(target) !== plannedVersion) {
     throw new Error("Asset output was retained but not registered because another version completed during generation");
   }
+  if (identityEditRun) {
+    revalidateIdentityEditJobRefs(fresh, target, job.refs);
+    const freshSource = revalidateIdentityEditSource(fresh, target, identityEditRun.recipe);
+    if (freshSource.recipe.sourceFingerprint !== identityEditRun.recipe.sourceFingerprint) {
+      throw identityEditError(
+        "Asset output was retained but not registered because its approved identity-edit source changed during generation",
+        "IDENTITY_EDIT_SOURCE_CHANGED"
+      );
+    }
+  }
   const version = plannedVersion;
   const fileHashes = generatedFileHashes(fresh, files);
-  const workflowSnapshot = archiveWorkflowSnapshot(
-    fresh,
-    runAsset,
-    version,
-    isIdentityEditWorkflow(runAsset.workflowId) ? prompt : null
-  );
+  const workflowSnapshot = archiveWorkflowSnapshot(fresh, runAsset, version);
   target.versions = target.versions || [];
   target.versions.push({
     v: version,
@@ -1764,17 +2119,20 @@ async function generateAssetJobInner(job) {
     screenplayRevision: runRevision,
     manifestScreenplayHash: runManifestHash,
     fileHashes,
+    ...(identityEditRun ? {
+      sourceReference: identityEditRun.recipe.source,
+      sourceReferenceFingerprint: identityEditRun.recipe.sourceFingerprint,
+      sourceWidth: identityEditRun.recipe.sourceWidth,
+      sourceHeight: identityEditRun.recipe.sourceHeight,
+      width: identityEditRun.recipe.width,
+      height: identityEditRun.recipe.height
+    } : {}),
     createdAt: new Date().toISOString()
   });
   target.activeVersion = version;
   target.status = target.workflowId === "ltx-2.3-native-audio" ? "ready-for-shot" : "generated";
   target.approval = null;
   saveAssetPackageFiles(fresh);
-  const written = target.versions.find((entry) => Number(entry.v) === Number(version));
-  if (written) {
-    written.workflowHash = target.workflowHash || written.workflowHash;
-    written.assetFingerprint = assetGenerationFingerprint(target);
-  }
   saveProject(fresh);
   job.result = { assetId: target.id, files, version };
   job.progress = 0.98;

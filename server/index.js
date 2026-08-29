@@ -139,10 +139,14 @@ import {
 import {
   ASSET_WORKFLOWS,
   ASSET_CATEGORY_LABELS,
+  KREA2_IDENTITY_EDIT_WORKFLOW_ID,
   assetMediaType,
   defaultAssetWorkflow,
   assetApprovalCurrent,
   assetGenerationFingerprint,
+  identityEditJobRefs,
+  prepareIdentityEditSource,
+  revalidateIdentityEditSource,
   assetVersionFingerprint,
   assetVersionFilesCurrent,
   buildAssetPackage,
@@ -189,7 +193,12 @@ import {
   applyStoryboardDirection,
   applyStoryboardStructure
 } from "./storyboard.js";
-import { ContinuityError, promoteLastFrame } from "./continuity.js";
+import {
+  ContinuityError,
+  continuityEvidenceIsVerified,
+  preflightContinuityPromotion,
+  promoteLastFrame
+} from "./continuity.js";
 import {
   compileStoryboardFramePrompt,
   compileStoryboardVideoPlanPrompt,
@@ -1439,11 +1448,60 @@ function assetManifestCurrent(project) {
   return screenplayApprovalCurrent(project);
 }
 
+function requestedIdentityEditSource(body = {}) {
+  const hasNested = Object.prototype.hasOwnProperty.call(body, "identityEditSource");
+  const hasDirect = Object.prototype.hasOwnProperty.call(body, "sourceAssetId")
+    || Object.prototype.hasOwnProperty.call(body, "sourceAssetVersion");
+  if (!hasNested && !hasDirect) return null;
+  const nested = hasNested ? body.identityEditSource : null;
+  if (hasNested && (!nested || typeof nested !== "object" || Array.isArray(nested))) {
+    throw new Error("identityEditSource must contain only assetId and assetVersion");
+  }
+  if (nested) {
+    const extra = Object.keys(nested).filter((key) => !["assetId", "assetVersion"].includes(key));
+    if (extra.length) throw new Error(`identityEditSource rejects client-authored provenance fields: ${extra.join(", ")}`);
+    if (
+      hasDirect
+      && (
+        String(nested.assetId ?? "").trim() !== String(body.sourceAssetId ?? "").trim()
+        || Number(nested.assetVersion) !== Number(body.sourceAssetVersion)
+      )
+    ) throw new Error("Identity Edit received conflicting source asset pins");
+  }
+  const assetId = String(nested?.assetId ?? body.sourceAssetId ?? "").trim();
+  const assetVersion = Number(nested?.assetVersion ?? body.sourceAssetVersion);
+  if (!assetId || !Number.isSafeInteger(assetVersion) || assetVersion < 1) {
+    throw new Error("Identity Edit requires an exact source assetId and positive integer assetVersion");
+  }
+  return { assetId, assetVersion };
+}
+
+async function identityEditRecipeForMutation(project, asset, body = {}) {
+  const explicitPin = requestedIdentityEditSource(body);
+  if (!explicitPin && asset.workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID && asset.identityEdit) {
+    try {
+      return revalidateIdentityEditSource(project, asset, asset.identityEdit).recipe;
+    } catch (error) {
+      const stored = asset.identityEdit?.source;
+      const sourceAsset = project.assets?.items?.find((item) => item.id === stored?.assetId);
+      const canRefreshSelf = stored?.assetId === asset.id && assetApprovalCurrent(project, asset);
+      if (!canRefreshSelf || !sourceAsset) throw error;
+      return (await prepareIdentityEditSource(project, asset, {
+        assetId: asset.id,
+        assetVersion: Number(asset.activeVersion)
+      })).recipe;
+    }
+  }
+  const pin = explicitPin || { assetId: asset.id, assetVersion: Number(asset.activeVersion) };
+  return (await prepareIdentityEditSource(project, asset, pin)).recipe;
+}
+
 function canonicalFrameCurrent(project, frameOrFile) {
   const frame = typeof frameOrFile === "string"
     ? (project.frames || []).find((item) => item.file === frameOrFile)
     : frameOrFile;
   if (!frame) return false;
+  if (frame.source === "take-continuity") return continuityEvidenceIsVerified(project, frame);
   if (skipApproval(project)) return Boolean(frame.file);
   if (frame.source !== "asset-foundry-approved" || !frame.assetId) return false;
   const asset = project.assets?.items?.find((item) => item.id === frame.assetId);
@@ -1469,7 +1527,14 @@ function canonicalGuideBindings(project, clip) {
     const frame = (project.frames || []).find((item) => item.file === file);
     if (!frame) return { ok: false, error: `${clip.name} references missing Project Bin media: ${file}` };
     if (!canonicalFrameCurrent(project, frame)) return { ok: false, error: `${clip.name} uses a legacy, stale, or unapproved guide: ${frame.name || file}` };
-    bindings.push({
+    bindings.push(frame.source === "take-continuity" ? {
+      file,
+      frameId: frame.id,
+      assetId: null,
+      assetVersion: null,
+      approvalFingerprint: frame.sha256,
+      screenplayRevision: null
+    } : {
       file,
       frameId: frame.id,
       assetId: frame.assetId,
@@ -2145,6 +2210,29 @@ app.patch("/api/projects/:slug/assets/:assetId", async (req, res) => {
     const beforeFingerprint = assetGenerationFingerprint(asset);
     const allowed = ["name", "variant", "prompt", "sampleText", "workflowId", "seed", "durationSec", "bpm", "status", "dependencies", "continuity", "activeVersion"];
     const workflowProvided = Object.prototype.hasOwnProperty.call(req.body || {}, "workflowId");
+    const requestedCategory = Object.prototype.hasOwnProperty.call(req.body || {}, "category")
+      ? String(req.body.category || "").trim()
+      : asset.category;
+    const intendedWorkflowId = workflowProvided
+      ? (String(req.body?.workflowId || "").trim() || defaultAssetWorkflow(
+        requestedCategory,
+        req.body?.variant ?? asset.variant,
+        req.body?.name ?? asset.name,
+        asset.id
+      ))
+      : requestedCategory !== asset.category
+        ? defaultAssetWorkflow(requestedCategory, req.body?.variant ?? asset.variant, req.body?.name ?? asset.name, asset.id)
+        : asset.workflowId;
+    const identityEditRecipe = intendedWorkflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID
+      ? await identityEditRecipeForMutation(project, asset, req.body || {})
+      : null;
+    if (
+      identityEditRecipe?.source?.assetId === asset.id
+      && Object.prototype.hasOwnProperty.call(req.body || {}, "activeVersion")
+      && Number(req.body.activeVersion) !== Number(asset.activeVersion)
+    ) {
+      return res.status(409).json({ error: "Restore and approve the desired source version before selecting Identity Edit." });
+    }
     for (const key of allowed) if (Object.prototype.hasOwnProperty.call(req.body || {}, key)) asset[key] = req.body[key];
     if (Object.prototype.hasOwnProperty.call(req.body || {}, "category")) {
       const category = String(req.body.category || "").trim();
@@ -2186,6 +2274,8 @@ app.patch("/api/projects/:slug/assets/:assetId", async (req, res) => {
     if (asset.workflowId && !ASSET_WORKFLOWS.some((workflow) => workflow.id === asset.workflowId) && !unchangedPromptComposerWorkflow) {
       return res.status(400).json({ error: `Unknown asset workflow: ${asset.workflowId}` });
     }
+    if (asset.workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID) asset.identityEdit = identityEditRecipe;
+    else delete asset.identityEdit;
     const catalog = await getAssetWorkflowCatalog();
     const state = catalog.find((workflow) => workflow.id === asset.workflowId);
     asset.workflow = state ? { id: state.id, label: state.label, model: state.model, ready: state.ready, availableNow: state.availableNow, reason: state.runtimeWarning || state.reason, gpu: state.gpu, minimumFreeVramGb: state.minimumFreeVramGb } : asset.workflow;
@@ -2215,6 +2305,13 @@ app.post("/api/projects/:slug/assets", async (req, res) => {
     }
     project.assets.items ||= [];
     const asset = createDirectorAsset(req.body || {}, project.assets.items);
+    if (asset.workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID) {
+      const sourcePin = requestedIdentityEditSource(req.body || {});
+      if (!sourcePin) {
+        return res.status(409).json({ error: "A new Identity Edit asset requires an explicit approved source assetId and assetVersion." });
+      }
+      asset.identityEdit = (await prepareIdentityEditSource(project, asset, sourcePin)).recipe;
+    }
     project.assets.items.push(asset);
     const catalog = await getAssetWorkflowCatalog();
     const state = catalog.find((workflow) => workflow.id === asset.workflowId);
@@ -2388,6 +2485,10 @@ app.post("/api/projects/:slug/assets/:assetId/generate", async (req, res) => {
       }
       return res.json({ project, job: existingJob, alreadyQueued: true });
     }
+    const intendedWorkflowId = requestedWorkflowId || asset.workflowId;
+    const identityEditRecipe = intendedWorkflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID
+      ? await identityEditRecipeForMutation(project, asset, req.body || {})
+      : null;
     const catalog = await getAssetWorkflowCatalog();
     if (requestedWorkflowId && requestedWorkflowId !== String(asset.workflowId || "")) {
       asset.workflowId = requestedWorkflowId;
@@ -2396,6 +2497,8 @@ app.post("/api/projects/:slug/assets/:assetId/generate", async (req, res) => {
       asset.approvalCurrent = false;
       asset.updatedAt = new Date().toISOString();
     }
+    if (asset.workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID) asset.identityEdit = identityEditRecipe;
+    else delete asset.identityEdit;
     const state = catalog.find((workflow) => workflow.id === asset.workflowId);
     if (state) {
       asset.workflow = {
@@ -2429,7 +2532,8 @@ app.post("/api/projects/:slug/assets/:assetId/generate", async (req, res) => {
         assetId: asset.id,
         screenplayRevision: currentScreenplayRevision(project),
         manifestScreenplayHash: project.assets.screenplayHash,
-        assetFingerprint: assetGenerationFingerprint(asset)
+        assetFingerprint: assetGenerationFingerprint(asset),
+        ...(asset.workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID ? identityEditJobRefs(project, asset) : {})
       }
     });
     res.json({ project, job });
@@ -2472,6 +2576,9 @@ app.post("/api/projects/:slug/assets/generate-all", async (req, res) => {
       (req.body?.regenerate || !["generated", "ready-for-shot"].includes(asset.status))
     );
     for (const asset of targets) {
+      if (asset.workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID) {
+        asset.identityEdit = await identityEditRecipeForMutation(project, asset, req.body || {});
+      }
       const validation = await validateAssetWorkflow(project, asset);
       if (!validation.ready) return res.status(409).json({ error: `${asset.name}: ${validation.errors.slice(0, 8).join("; ")}` });
     }
@@ -2490,7 +2597,8 @@ app.post("/api/projects/:slug/assets/generate-all", async (req, res) => {
           assetId: asset.id,
           screenplayRevision: currentScreenplayRevision(project),
           manifestScreenplayHash: project.assets.screenplayHash,
-          assetFingerprint: assetGenerationFingerprint(asset)
+          assetFingerprint: assetGenerationFingerprint(asset),
+          ...(asset.workflowId === KREA2_IDENTITY_EDIT_WORKFLOW_ID ? identityEditJobRefs(project, asset) : {})
         }
       }));
     if (!jobs.length) {
@@ -3894,7 +4002,25 @@ app.delete("/api/projects/:slug/clips/:clipId/guides/:guideId", (req, res) => {
 
 // ---------- continuity (extracted take last-frame → next first guide) ----------
 // BEGIN CONTINUITY ROUTES
-app.post("/api/projects/:slug/continuity/promote-last-frame", async (req, res) => {
+app.get("/api/projects/:slug/continuity/preflight", async (req, res) => {
+  try {
+    const project = loadProject(req.params.slug);
+    let storyboard = null;
+    try { storyboard = loadStoryboard(req.params.slug); } catch { storyboard = null; }
+    const result = await preflightContinuityPromotion(project, {
+      clipId: req.query?.clipId,
+      takeVersion: req.query?.takeVersion,
+      nextClipId: req.query?.nextClipId,
+      storyboard
+    });
+    res.json(result);
+  } catch (e) {
+    const status = e instanceof ContinuityError ? e.status : 400;
+    res.status(status || 400).json({ error: String(e.message), code: e.code || undefined });
+  }
+});
+
+app.post("/api/projects/:slug/continuity/promote-last-frame", requireLocalSameOriginMutation, async (req, res) => {
   try {
     const project = loadProject(req.params.slug);
     let storyboard = null;

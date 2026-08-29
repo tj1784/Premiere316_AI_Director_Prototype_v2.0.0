@@ -3,7 +3,8 @@ import path from "path";
 
 import {
   CLIENT_OWNED_REFERENCE_FIELDS,
-  findExactAssetVersion
+  findExactAssetVersion,
+  resolveStillsReferences
 } from "./asset-reference-resolver.js";
 
 export const GENERATION_COMPOSER_SCHEMA_VERSION = 1;
@@ -436,6 +437,33 @@ function mediaTypeFromFile(file) {
   return null;
 }
 
+function projectSkipsApproval(project) {
+  const category = String(project?.category ?? project?.settings?.category ?? "feature").trim().toLowerCase();
+  return category === "shorts" || project?.settings?.skipApproval === true;
+}
+
+function strictReferenceSnapshot(project, pin, role, basePath, errors) {
+  try {
+    return resolveStillsReferences(project, [{
+      assetId: pin.assetId,
+      assetVersion: pin.assetVersion,
+      role,
+      order: pin.order,
+      type: "image"
+    }])[0];
+  } catch (error) {
+    const sourcePath = typeof error?.details?.path === "string" ? error.details.path : "";
+    const suffix = sourcePath.replace(/^references\[\d+\]/, "");
+    errors.push(issue(
+      typeof error?.code === "string" ? error.code : "invalid_reference",
+      `${basePath}${suffix}`,
+      error instanceof Error ? error.message : "Reference failed strict server resolution",
+      error?.details && typeof error.details === "object" ? error.details : {}
+    ));
+    return null;
+  }
+}
+
 function rejectClientOwnedReferenceFields(pin, basePath, errors, rejectFile = false) {
   for (const field of CLIENT_OWNED_REFERENCE_FIELDS) {
     // Ignore `file`: stored stills pins include the server-resolved basename.
@@ -524,6 +552,14 @@ function resolveProjectReferences(project, rawReferences, item, errors, warnings
       errors.push(issue("missing_asset_version", `${basePath}.assetVersion`, `Project manifest has no ${assetId}:v${pin.assetVersion}`));
       return;
     }
+    if (!projectSkipsApproval(project) && asset.approvalCurrent !== true) {
+      errors.push(issue(
+        "unapproved_asset_version",
+        `${basePath}.assetVersion`,
+        `${assetId}:v${pin.assetVersion} is not the currently approved version`
+      ));
+      return;
+    }
     const files = [...new Set([...(Array.isArray(version.files) ? version.files : []), version.file].map(normalizedManifestFile).filter(Boolean))];
     const file = normalizedManifestFile(version.file) || files[0] || null;
     if (!file || !files.includes(file)) {
@@ -550,6 +586,20 @@ function resolveProjectReferences(project, rawReferences, item, errors, warnings
       errors.push(issue("unverifiable_asset_file", basePath, `${assetId}:v${pin.assetVersion} lacks an exact SHA-256/byte manifest for ${file}`));
       return;
     }
+    const snapshot = strictReferenceSnapshot(project, { ...pin, assetId }, role, basePath, errors);
+    if (!snapshot) return;
+    if (!projectSkipsApproval(project) && (
+      !snapshot.generationFingerprint
+      || !snapshot.versionFingerprint
+      || !snapshot.approvalFingerprint
+    )) {
+      errors.push(issue(
+        "unverifiable_approval_provenance",
+        `${basePath}.assetVersion`,
+        `${assetId}:v${pin.assetVersion} lacks exact approval/version provenance`
+      ));
+      return;
+    }
     resolved.push({
       mentionId: typeof pin.mentionId === "string" && pin.mentionId.trim() ? pin.mentionId.trim().slice(0, 160) : `mention-${index + 1}`,
       display: typeof pin.display === "string" ? pin.display.trim().slice(0, 300) : "",
@@ -561,11 +611,20 @@ function resolveProjectReferences(project, rawReferences, item, errors, warnings
       required: pin.required !== false,
       notes: typeof pin.notes === "string" ? pin.notes.trim().slice(0, MAX_NOTE_LENGTH) : "",
       mediaType,
-      file,
-      projectMediaPath: `media/assets/${file}`,
-      sha256,
-      bytes,
-      provenance: { scope: "project_asset_manifest", projectSlug: String(project.slug) }
+      file: snapshot.sourceFile,
+      projectMediaPath: `media/assets/${snapshot.sourceFile}`,
+      sha256: snapshot.fileSha256,
+      bytes: snapshot.fileBytes,
+      generationFingerprint: snapshot.generationFingerprint,
+      versionFingerprint: snapshot.versionFingerprint,
+      approvalFingerprint: snapshot.approvalFingerprint,
+      provenance: {
+        scope: "project_asset_manifest_and_disk",
+        projectSlug: String(project.slug),
+        sourceFile: snapshot.sourceFile,
+        fileSha256: snapshot.fileSha256,
+        fileBytes: snapshot.fileBytes
+      }
     });
   });
 
@@ -585,6 +644,19 @@ function unresolvedDisplay(value, index) {
   if (typeof value === "string") return value.trim() || `mention ${index + 1}`;
   if (value && typeof value === "object") return String(value.display || value.text || value.mention || `mention ${index + 1}`).trim();
   return `mention ${index + 1}`;
+}
+
+function storedRequestReference(reference) {
+  return {
+    mentionId: reference.mentionId,
+    display: reference.display,
+    assetId: reference.assetId,
+    assetVersion: reference.assetVersion,
+    role: reference.role,
+    order: reference.order,
+    required: reference.required,
+    notes: reference.notes
+  };
 }
 
 export function preflightGenerationRequest(project, request, { readinessByWorkflow } = {}) {
@@ -645,7 +717,10 @@ export function preflightGenerationRequest(project, request, { readinessByWorkfl
     outputKind,
     workflowId,
     promptText,
-    references: resolvedReferences,
+    // Persist only the canonical user-pin shape. Server-owned file, hash and
+    // approval provenance lives in resolvedReferences and is freshly derived
+    // again whenever a queued job re-preflights this stored request.
+    references: resolvedReferences.map(storedRequestReference),
     unresolvedMentions: unresolvedDisplays,
     options
   };

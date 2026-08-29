@@ -8,6 +8,7 @@ import {
 } from "../store";
 import { openAssetAction } from "../contextual-agency";
 import AssetReferencePicker from "./AssetReferencePicker";
+import ContinuityAction, { continuityFrameHasVerifiedEvidence } from "./ContinuityAction";
 
 function currentCreativeRoute() {
   const path = String(window.location.pathname || "").toLowerCase();
@@ -221,6 +222,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
       ? (project.frames || []).find((item: any) => item.file === frameOrFile)
       : frameOrFile;
     if (!frame) return false;
+    if (frame.source === "take-continuity") return continuityFrameHasVerifiedEvidence(frame);
     if (isShorts) return Boolean(frame.file);
     if (frame.source !== "asset-foundry-approved" || !frame.assetId) return false;
     const asset = project.assets?.items?.find((item: any) => item.id === frame.assetId);
@@ -527,6 +529,7 @@ export default function CreativeWorkspace({ onOpenAssets }: { onOpenAssets: () =
                 <div className="facts-status"><span className="good-dot" /> Status <b>{selectedClip.status || "ready"}</b></div>
                 <div className="facts-status"><span className="quality-dot" /> Quality <b>{selectedClip.activeVersion ? "Accepted" : "Pending"}</b></div>
                 <button className="button secondary full" onClick={() => store.setWorkbench("prompt")}>Clip settings</button>
+                <ContinuityAction clipId={selectedClip.id} />
               </>
             ) : <p className="muted centered">Select a clip from the project bin.</p>}
           </aside>
