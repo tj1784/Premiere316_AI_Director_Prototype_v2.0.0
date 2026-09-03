@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-03T14:30:50.388Z",
+  "updatedAt": "2026-09-03T14:39:06.308Z",
   "rules": {
     "singleWriterPerCwd": true,
     "maxConcurrentMutatingAgents": 12,
@@ -103,6 +103,36 @@
       "status": "protected",
       "integrationOwner": "A03",
       "sharedInterfaceException": "No Wave 1 migration"
+    },
+    {
+      "pattern": "src/lib/research/**; src/components/research/**",
+      "owner": "A18",
+      "pod": "Research & Screenplay",
+      "task": "R-001/R-002/R-003/R-004",
+      "startedAt": "2026-09-03T14:39:06.308Z",
+      "status": "active",
+      "integrationOwner": "A17",
+      "sharedInterfaceException": "A18 is the sole Wave 2 cwd writer and integrates read-only specialist contracts sequentially"
+    },
+    {
+      "pattern": "src/lib/studio/types.ts; src/lib/studio/store.ts; src/lib/studio/picture-preparation.ts; src/lib/studio/stage-layout.ts; src/components/studio/stage-views.tsx; src/lib/studio/screenplay*.ts; src/components/studio/screenplay-workspace.tsx",
+      "owner": "A18",
+      "pod": "Research & Screenplay",
+      "task": "WAVE-2-INTEGRATION",
+      "startedAt": "2026-09-03T14:39:06.308Z",
+      "status": "active",
+      "integrationOwner": "A03",
+      "sharedInterfaceException": "Temporary additive Wave 2 lease authorized by A03/A06/A10; preserve persist key and legacy records"
+    },
+    {
+      "pattern": "desktop/**; package.json; scripts/*wave2*; scripts/desktop-stage-visual.mjs; docs/release/wave2-gate.md",
+      "owner": "A04",
+      "pod": "Governance & Integration",
+      "task": "WAVE-2-PACKAGE",
+      "startedAt": null,
+      "status": "reserved",
+      "integrationOwner": "A03",
+      "sharedInterfaceException": "Activates only after A18 handoff; packaging and isolated UAT"
     }
   ]
 }

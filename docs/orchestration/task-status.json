@@ -566,7 +566,7 @@
       "deps": [
         "UX-005"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "READY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -580,7 +580,7 @@
       "deps": [
         "R-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "WAITING_DEPENDENCY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -594,7 +594,7 @@
       "deps": [
         "R-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "WAITING_DEPENDENCY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -608,7 +608,7 @@
       "deps": [
         "R-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "WAITING_DEPENDENCY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -622,7 +622,7 @@
       "deps": [
         "UX-005"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "READY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -637,7 +637,7 @@
         "S-001",
         "R-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "WAITING_DEPENDENCY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -652,7 +652,7 @@
         "S-001",
         "S-002"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "WAITING_DEPENDENCY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -667,7 +667,7 @@
         "S-002",
         "S-003"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "WAITING_DEPENDENCY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1238,5 +1238,5 @@
       "evidence": []
     }
   ],
-  "updatedAt": "2026-09-03T14:30:50.388Z"
+  "updatedAt": "2026-09-03T14:39:06.308Z"
 }
