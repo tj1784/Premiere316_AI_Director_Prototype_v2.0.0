@@ -566,12 +566,20 @@
       "deps": [
         "UX-005"
       ],
-      "status": "SOURCE_IMPLEMENTED",
-      "branch": null,
-      "worktree": null,
+      "status": "DONE",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
         "src/lib/research/bible.ts",
-        "src/components/research/research-workspace.tsx"
+        "src/components/research/research-workspace.tsx",
+        "docs/release/wave2-gate.md",
+        "screenshots/stage-visual/report.json",
+        "screenshots/premiere316-desktop-smoke.json",
+        "screenshots/llama-runtime/report.json",
+        "packaged build p316-20260903183552-c37b85ae52c1",
+        "runtime evidence commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8",
+        "A07 pass 4a98c969-df0c-4620-ac8f-73e4bb7170d3; A64 pass 276dd530-a024-427b-951e-139666fc520f; A08 re-audit pass after ab9d07b ledger reconciliation",
+        "A01 final tag wave2-p316-20260903183552-c37b85ae52c1"
       ]
     },
     {
@@ -583,11 +591,19 @@
       "deps": [
         "R-001"
       ],
-      "status": "SOURCE_IMPLEMENTED",
-      "branch": null,
-      "worktree": null,
+      "status": "DONE",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
-        "src/lib/research/source-ledger.ts"
+        "src/lib/research/source-ledger.ts",
+        "docs/release/wave2-gate.md",
+        "screenshots/stage-visual/report.json",
+        "screenshots/premiere316-desktop-smoke.json",
+        "screenshots/llama-runtime/report.json",
+        "packaged build p316-20260903183552-c37b85ae52c1",
+        "runtime evidence commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8",
+        "A07 pass 4a98c969-df0c-4620-ac8f-73e4bb7170d3; A64 pass 276dd530-a024-427b-951e-139666fc520f; A08 re-audit pass after ab9d07b ledger reconciliation",
+        "A01 final tag wave2-p316-20260903183552-c37b85ae52c1"
       ]
     },
     {
@@ -599,11 +615,19 @@
       "deps": [
         "R-001"
       ],
-      "status": "SOURCE_IMPLEMENTED",
-      "branch": null,
-      "worktree": null,
+      "status": "DONE",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
-        "src/lib/research/social-world.ts"
+        "src/lib/research/social-world.ts",
+        "docs/release/wave2-gate.md",
+        "screenshots/stage-visual/report.json",
+        "screenshots/premiere316-desktop-smoke.json",
+        "screenshots/llama-runtime/report.json",
+        "packaged build p316-20260903183552-c37b85ae52c1",
+        "runtime evidence commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8",
+        "A07 pass 4a98c969-df0c-4620-ac8f-73e4bb7170d3; A64 pass 276dd530-a024-427b-951e-139666fc520f; A08 re-audit pass after ab9d07b ledger reconciliation",
+        "A01 final tag wave2-p316-20260903183552-c37b85ae52c1"
       ]
     },
     {
@@ -615,11 +639,19 @@
       "deps": [
         "R-001"
       ],
-      "status": "SOURCE_IMPLEMENTED",
-      "branch": null,
-      "worktree": null,
+      "status": "DONE",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
-        "src/lib/research/cinematography-manifesto.ts"
+        "src/lib/research/cinematography-manifesto.ts",
+        "docs/release/wave2-gate.md",
+        "screenshots/stage-visual/report.json",
+        "screenshots/premiere316-desktop-smoke.json",
+        "screenshots/llama-runtime/report.json",
+        "packaged build p316-20260903183552-c37b85ae52c1",
+        "runtime evidence commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8",
+        "A07 pass 4a98c969-df0c-4620-ac8f-73e4bb7170d3; A64 pass 276dd530-a024-427b-951e-139666fc520f; A08 re-audit pass after ab9d07b ledger reconciliation",
+        "A01 final tag wave2-p316-20260903183552-c37b85ae52c1"
       ]
     },
     {
@@ -631,7 +663,7 @@
       "deps": [
         "UX-005"
       ],
-      "status": "RUNTIME_PASS_AWAITING_A08_REAUDIT",
+      "status": "DONE",
       "branch": "main",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
@@ -641,7 +673,14 @@
         "screenshots/llama-runtime/00-ready-pinned.png",
         "screenshots/llama-runtime/05-final-state.png",
         "commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8: LM Studio server running on 1234 and exact llama-3.3-70b-instruct loaded before launch/writer/QA/revision; no start/load lifecycle action by app/harness; one visible final release unloaded it",
-        "A07 pass run 4a98c969-df0c-4620-ac8f-73e4bb7170d3; A64 pass run 276dd530-a024-427b-951e-139666fc520f; A08 ledger-only re-audit pending"
+        "A07 pass run 4a98c969-df0c-4620-ac8f-73e4bb7170d3; A64 pass run 276dd530-a024-427b-951e-139666fc520f; A08 re-audit passed; A01 final tag wave2-p316-20260903183552-c37b85ae52c1",
+        "docs/release/wave2-gate.md",
+        "screenshots/stage-visual/report.json",
+        "screenshots/premiere316-desktop-smoke.json",
+        "packaged build p316-20260903183552-c37b85ae52c1",
+        "runtime evidence commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8",
+        "A07 pass 4a98c969-df0c-4620-ac8f-73e4bb7170d3; A64 pass 276dd530-a024-427b-951e-139666fc520f; A08 re-audit pass after ab9d07b ledger reconciliation",
+        "A01 final tag wave2-p316-20260903183552-c37b85ae52c1"
       ]
     },
     {
@@ -654,7 +693,7 @@
         "S-001",
         "R-001"
       ],
-      "status": "RUNTIME_PASS_AWAITING_A08_REAUDIT",
+      "status": "DONE",
       "branch": "main",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
@@ -662,7 +701,13 @@
         "src/lib/studio/screenplay-jobs.test.ts",
         "screenshots/premiere316-desktop-smoke.json",
         "screenshots/llama-runtime/report.json",
-        "commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8: exact llama-3.3-70b-instruct writer produced scene-scoped draft/revision; Qwen optional/unrun; 3 total Llama completion requests across writer/QA/revision"
+        "commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8: exact llama-3.3-70b-instruct writer produced scene-scoped draft/revision; Qwen optional/unrun; 3 total Llama completion requests across writer/QA/revision",
+        "docs/release/wave2-gate.md",
+        "screenshots/stage-visual/report.json",
+        "packaged build p316-20260903183552-c37b85ae52c1",
+        "runtime evidence commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8",
+        "A07 pass 4a98c969-df0c-4620-ac8f-73e4bb7170d3; A64 pass 276dd530-a024-427b-951e-139666fc520f; A08 re-audit pass after ab9d07b ledger reconciliation",
+        "A01 final tag wave2-p316-20260903183552-c37b85ae52c1"
       ]
     },
     {
@@ -675,7 +720,7 @@
         "S-001",
         "S-002"
       ],
-      "status": "RUNTIME_PASS_AWAITING_A08_REAUDIT",
+      "status": "DONE",
       "branch": "main",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
@@ -684,7 +729,13 @@
         "screenshots/premiere316-desktop-smoke.json",
         "screenshots/llama-runtime/report.json",
         "screenshots/llama-runtime/02-qa-critique.png",
-        "commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8: separate critique-first QA used exact llama-3.3-70b-instruct, persisted fountainUnchanged=true, before/after QA hash 16a2fcbdbbc0ac3ede313695b79ff461135d50708275d182e37cb9e137db4eff unchanged; optional Qwen second opinion unrun"
+        "commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8: separate critique-first QA used exact llama-3.3-70b-instruct, persisted fountainUnchanged=true, before/after QA hash 16a2fcbdbbc0ac3ede313695b79ff461135d50708275d182e37cb9e137db4eff unchanged; optional Qwen second opinion unrun",
+        "docs/release/wave2-gate.md",
+        "screenshots/stage-visual/report.json",
+        "packaged build p316-20260903183552-c37b85ae52c1",
+        "runtime evidence commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8",
+        "A07 pass 4a98c969-df0c-4620-ac8f-73e4bb7170d3; A64 pass 276dd530-a024-427b-951e-139666fc520f; A08 re-audit pass after ab9d07b ledger reconciliation",
+        "A01 final tag wave2-p316-20260903183552-c37b85ae52c1"
       ]
     },
     {
@@ -697,7 +748,7 @@
         "S-002",
         "S-003"
       ],
-      "status": "RUNTIME_PASS_AWAITING_A08_REAUDIT",
+      "status": "DONE",
       "branch": "main",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
@@ -706,7 +757,14 @@
         "screenshots/llama-runtime/report.json",
         "screenshots/llama-runtime/03-scoped-revision.png",
         "screenshots/llama-runtime/04-approval.png",
-        "commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8: explicit scene-scoped revision appended, approval appended, prior versions retrievable, unrelated second-scene span byte-identical through rewrite/revision/approval"
+        "commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8: explicit scene-scoped revision appended, approval appended, prior versions retrievable, unrelated second-scene span byte-identical through rewrite/revision/approval",
+        "docs/release/wave2-gate.md",
+        "screenshots/stage-visual/report.json",
+        "screenshots/premiere316-desktop-smoke.json",
+        "packaged build p316-20260903183552-c37b85ae52c1",
+        "runtime evidence commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8",
+        "A07 pass 4a98c969-df0c-4620-ac8f-73e4bb7170d3; A64 pass 276dd530-a024-427b-951e-139666fc520f; A08 re-audit pass after ab9d07b ledger reconciliation",
+        "A01 final tag wave2-p316-20260903183552-c37b85ae52c1"
       ]
     },
     {
@@ -718,10 +776,13 @@
       "deps": [
         "S-004"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "READY",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "Wave 2 GREEN in docs/orchestration/wave-status.json",
+        "tag wave2-p316-20260903183552-c37b85ae52c1"
+      ]
     },
     {
       "id": "B-001",
@@ -733,7 +794,7 @@
         "S-004",
         "D-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -747,7 +808,7 @@
       "deps": [
         "B-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -761,7 +822,7 @@
       "deps": [
         "B-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -775,7 +836,7 @@
       "deps": [
         "V-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -789,7 +850,7 @@
       "deps": [
         "V-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -804,7 +865,7 @@
         "R-004",
         "B-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -818,7 +879,7 @@
       "deps": [
         "C-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1275,5 +1336,5 @@
       "evidence": []
     }
   ],
-  "updatedAt": "2026-09-03T19:20:00.000Z"
+  "updatedAt": "2026-09-03T19:24:00.000Z"
 }

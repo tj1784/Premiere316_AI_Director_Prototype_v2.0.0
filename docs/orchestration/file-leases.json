@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-03T19:20:00.000Z",
+  "updatedAt": "2026-09-03T19:24:00.000Z",
   "rules": {
     "singleWriterPerCwd": true,
     "maxConcurrentMutatingAgents": 5,
@@ -156,7 +156,7 @@
       "startedAt": "2026-09-03T17:03:09.022Z",
       "status": "released",
       "integrationOwner": "A03",
-      "sharedInterfaceException": "A04 sole writer after A18 repair + source pass; isolated packaged UAT and pending-runtime checkpoint update",
+      "sharedInterfaceException": "A04 sole writer after A18 repair + source pass; isolated packaged UAT and package checkpoint update",
       "releasedAt": "2026-09-03T17:08:09.946Z"
     },
     {
@@ -182,7 +182,7 @@
       "sharedInterfaceException": "Activates after architecture source review; package new Llama-default/Qwen-optional checkpoint and run genuine LMS gate only if operator server is already reachable",
       "activationEvidence": "A04 activated after A03 source approval/release; isolated packaging/UAT only.",
       "releasedAt": "2026-09-03T18:37:47.728Z",
-      "releaseEvidence": "A04 source/package/offline UAT/data gates passed and committed pending-runtime checkpoint b8d5be7; subsequent operator-enabled runtime evidence commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8 proved exact Llama writer→QA→explicit scene revision→approval and final release. Wave 2 now RUNTIME_PASS_AWAITING_A08_REAUDIT; A07/A64 passed; A08 ledger-only re-audit pending."
+      "releaseEvidence": "A04 source/package/offline UAT/data gates passed and committed package checkpoint b8d5be7; subsequent operator-enabled runtime evidence commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8 proved exact Llama writer→QA→explicit scene revision→approval and final release. A07/A64 passed, A08 re-audit passed after ledger-only reconciliation, and A01 promoted Wave 2 GREEN/opened Wave 3 on final governance commit."
     },
     {
       "pattern": "scripts/desktop-llama-runtime-gate.mjs; screenshots/llama-runtime/**; docs/release/wave2-gate.md; docs/orchestration/wave-status.json; docs/orchestration/task-status.json; docs/orchestration/file-leases.json",
@@ -195,7 +195,20 @@
       "sharedInterfaceException": "A04 owned the packaged runtime gate evidence at b057ca5; A01 performed ledger-only reconciliation after A07/A64 passes and A08 stale-ledger finding. No product source, package, screenshots, runtime report, protected data/tags/backups, model lifecycle, inference, ComfyUI, or cloud touched during this reconciliation.",
       "releasedAt": "2026-09-03T19:20:00.000Z",
       "activationEvidence": "Operator enabled LM Studio Local Server; A04 ran genuine packaged Llama gate and committed b057ca5. A08 initial audit ce481324-11fd-4bf9-ab8d-cc75b2503137 blocked only stale orchestration ledgers and requested ledger-only correction.",
-      "releaseEvidence": "A04 runtime gate at b057ca5 proved exact Llama writer→separate critique-first QA→explicit scene revision→approval, QA hash unchanged, no intermediate unload, one visible final release, Qwen optional/unrun, and live data identical. A07 pass 4a98c969-df0c-4620-ac8f-73e4bb7170d3 and A64 pass 276dd530-a024-427b-951e-139666fc520f recorded; A08 ledger-only re-audit pending; Wave 3 remains closed; no green tag."
+      "releaseEvidence": "A04 runtime gate at b057ca5 proved exact Llama writer→separate critique-first QA→explicit scene revision→approval, QA hash unchanged, no intermediate unload, one visible final release, Qwen optional/unrun, and live data identical. A07 pass 4a98c969-df0c-4620-ac8f-73e4bb7170d3 and A64 pass 276dd530-a024-427b-951e-139666fc520f recorded; A08 re-audit passed; A01 promoted Wave 2 GREEN and opened Wave 3 with final tag wave2-p316-20260903183552-c37b85ae52c1."
+    },
+    {
+      "pattern": "docs/release/wave2-gate.md; docs/orchestration/wave-status.json; docs/orchestration/task-status.json; docs/orchestration/file-leases.json",
+      "owner": "A01",
+      "pod": "Governance & Integration",
+      "task": "WAVE-2-A01-GREEN-FINALIZATION",
+      "startedAt": "2026-09-03T19:24:00.000Z",
+      "status": "released",
+      "integrationOwner": "A01",
+      "sharedInterfaceException": "Governance/evidence-only finalization after A07/A64 pass and A08 re-audit pass; no product source, package, executable, runtime report/screenshots, protected data/tags/backups, model lifecycle, inference, ComfyUI, or cloud touched.",
+      "releasedAt": "2026-09-03T19:24:00.000Z",
+      "activationEvidence": "HEAD ab9d07b ledger-only descendant of runtime evidence b057ca5dd689b63ea93e6d907ae0be54c49abcc8; A08 re-audit passed with no blockers; target tag absent before finalization.",
+      "releaseEvidence": "Wave 2 promoted GREEN for byte-identical packaged build p316-20260903183552-c37b85ae52c1; docs/release/wave2-gate.md updated with independent audit table; wave-status currentWave set to 3 and Wave 3 OPEN; R/S Wave 2 tasks marked DONE; dependency-root Wave 3 task D-001 marked READY and other Wave 3 tasks blocked by dependency; A01 finalization authorizes tag wave2-p316-20260903183552-c37b85ae52c1 on this final governance commit."
     }
   ]
 }

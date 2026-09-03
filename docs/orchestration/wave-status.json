@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "currentWave": 2,
+  "currentWave": 3,
   "gates": [
     {
       "wave": 0,
@@ -20,8 +20,8 @@
     },
     {
       "wave": 2,
-      "status": "RUNTIME_PASS_AWAITING_A08_REAUDIT",
-      "note": "Genuine packaged Llama runtime gate passed at evidence commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8 for build p316-20260903183552-c37b85ae52c1: exact llama-3.3-70b-instruct completed writer → separate critique-first QA → explicit scene revision → approval with QA hash unchanged, no intermediate unload, and one visible final release. Qwen remained optional/unrun. A07 and A64 passed; A08 ledger-only re-audit remains pending. Wave 3 closed; no green tag.",
+      "status": "GREEN",
+      "note": "Wave 2 GREEN for packaged build p316-20260903183552-c37b85ae52c1: source/package/offline UAT and genuine packaged exact Llama runtime gate passed. Runtime evidence commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8 proves writer → separate critique-first QA → explicit scene revision → approval, QA hash unchanged, no intermediate unload, one visible final release, and optional Qwen unrun. A07/A64/A08 independent audits passed. Green tag wave2-p316-20260903183552-c37b85ae52c1 created by A01 finalization.",
       "tasks": [
         "R-001",
         "R-002",
@@ -44,13 +44,15 @@
         "live %APPDATA%/Premiere316 manifest preserved: 312 files, SHA-256 40f353068a343e7e2e761bbda589758c200ad43af57fa818dd0cc3824fbf0018 pre/post",
         "A07 runtime audit pass run 4a98c969-df0c-4620-ac8f-73e4bb7170d3",
         "A64 runtime audit pass run 276dd530-a024-427b-951e-139666fc520f",
-        "A08 initial audit ce481324-11fd-4bf9-ab8d-cc75b2503137 blocked only stale orchestration ledgers; ledger-only re-audit pending"
+        "A08 initial audit ce481324-11fd-4bf9-ab8d-cc75b2503137 blocked only stale orchestration ledgers",
+        "A08 release/change re-audit pass after ledger-only commit ab9d07b51d120de0aaee03c7539f6ddc06621580",
+        "A01 finalization tag wave2-p316-20260903183552-c37b85ae52c1"
       ]
     },
     {
       "wave": 3,
-      "status": "BLOCKED_BY_PREVIOUS_GATE",
-      "note": "Closed until A08 re-audit passes and A01 records Wave 2 green/tagged acceptance."
+      "status": "OPEN",
+      "note": "Wave 3 is open for planning/implementation only after Wave 2 GREEN; no Wave 3 tasks are implemented yet."
     },
     {
       "wave": 4,
@@ -73,5 +75,5 @@
       "status": "BLOCKED_BY_PREVIOUS_GATE"
     }
   ],
-  "updatedAt": "2026-09-03T19:20:00.000Z"
+  "updatedAt": "2026-09-03T19:24:00.000Z"
 }

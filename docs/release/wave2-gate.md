@@ -1,6 +1,6 @@
 # Wave 2 Gate — Research Room and Llama-default Screenplay 2.0
 
-Status: **RUNTIME_PASS_AWAITING_INDEPENDENT_AUDIT** (genuine packaged Llama runtime gate passed; Wave 3 still closed)
+Status: **GREEN** (genuine packaged Llama runtime gate passed and independent A07/A08/A64 audit accepted)
 
 Canonical product: **Premiere316.exe**
 
@@ -9,7 +9,7 @@ Renderer source hash: `c37b85ae52c15c8da68ba77aafc7a34abcdfba5a652b0eab1ca90986b
 
 Checkpoint base: `729c4d5` plus reviewed Llama-default architecture migration and A04 package harness repair. A03 source approval/release was recorded before A04 activated `WAVE-2-LLAMA-DEFAULT-PACKAGE`.
 
-Wave 3 is **not** opened. No green tag was created. Independent A07/A08/A64 runtime audit is still required before green release.
+Wave 3 is **OPEN** for planning/implementation. Green tag: `wave2-p316-20260903183552-c37b85ae52c1`.
 
 ## Scope delivered (source + packaged offline)
 
@@ -96,10 +96,21 @@ Live-data and process proof:
 - Packaged runtime launched only with a fresh isolated temp profile, then deleted it.
 - Final Premiere316/electron process check: **0**.
 
-Optional Qwen A/B benchmark remains pending until explicitly selected and served by the operator; it was not run or fabricated.
+Optional Qwen A/B benchmark remains pending until explicitly selected and served by the operator; it was not run or fabricated and is non-gating for the Llama-default Wave 2 acceptance.
+
+## Independent audit
+
+| Auditor | Run | Verdict | Finding |
+|---|---:|---|---|
+| A07 · Test Strategy Lead | `4a98c969-df0c-4620-ac8f-73e4bb7170d3` | **PASS** | Accepted source/package/runtime evidence. |
+| A64 · Final Independent UAT / Red Team | `276dd530-a024-427b-951e-139666fc520f` | **PASS** | Accepted genuine packaged Llama runtime evidence, data protection, exact identity, and final release. |
+| A08 · Release & Change Manager initial audit | `ce481324-11fd-4bf9-ab8d-cc75b2503137` | **VETO RESOLVED** | Blocked only stale orchestration ledgers; no product/package/runtime defect. Nonblocking note: Qwen POST detection could be strengthened by body model-ID logging in a future harness. |
+| A08 · Release & Change Manager re-audit | current re-audit after `ab9d07b` | **PASS** | Confirmed ledger-only reconciliation, 64 logical roles, five-agent concurrency cap, clean ancestry from runtime evidence, and Wave 3 closed until A01 finalization. |
 
 ## Gate decision
 
-Wave 2 source, package, isolated offline UAT, shortcut, rollback evidence, live user-data identity, and genuine packaged Llama runtime flow **PASS**.
+Wave 2 source, package, isolated offline UAT, shortcut, rollback evidence, live user-data identity, genuine packaged Llama runtime flow, and independent A07/A08/A64 audit **PASS**.
 
-Wave 2 status is **RUNTIME_PASS_AWAITING_INDEPENDENT_AUDIT**. Do **not** open Wave 3 and do **not** green-tag until independent A07/A08/A64 review accepts this runtime evidence.
+The packaged build remains byte-identical to the runtime-tested package: `p316-20260903183552-c37b85ae52c1` with `Premiere316.exe` hash `06b87db5bb7864e2eff5ecd37905b94ececa41a4ee0f0b09b4bbbbcb42428052`, `resources/app.asar` hash `70682644bd66ed9b8a868671fb0f914cafe414018ab09f35fda3712f2b97001d`, and installer hash `3ca9a4cf103483a6e0f276c86cd988f731493d7277f6002152371262b36283e0`.
+
+Wave 2 is **GREEN** and Wave 3 is **OPEN** for its dependency-root work. Later waves remain blocked by their previous packaged gates.
