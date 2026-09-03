@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-03T09:58:09.356Z",
+  "updatedAt": "2026-09-03T14:30:50.388Z",
   "rules": {
     "singleWriterPerCwd": true,
     "maxConcurrentMutatingAgents": 12,
@@ -13,9 +13,10 @@
       "pod": "UI/UX & Desktop",
       "task": "UX-001",
       "startedAt": null,
-      "status": "reserved",
+      "status": "released",
       "integrationOwner": "A09",
-      "sharedInterfaceException": null
+      "sharedInterfaceException": null,
+      "releasedAt": "2026-09-03T14:30:50.388Z"
     },
     {
       "pattern": "src/lib/studio/stage-layout.ts",
@@ -23,9 +24,10 @@
       "pod": "UI/UX & Desktop",
       "task": "UX-001",
       "startedAt": null,
-      "status": "reserved",
+      "status": "released",
       "integrationOwner": "A09",
-      "sharedInterfaceException": "new central declarative contract"
+      "sharedInterfaceException": "new central declarative contract",
+      "releasedAt": "2026-09-03T14:30:50.388Z"
     },
     {
       "pattern": "src/lib/studio/stage-layout.test.ts",
@@ -33,9 +35,10 @@
       "pod": "UI/UX & Desktop",
       "task": "UX-001",
       "startedAt": null,
-      "status": "reserved",
+      "status": "released",
       "integrationOwner": "A09",
-      "sharedInterfaceException": "new policy tests"
+      "sharedInterfaceException": "new policy tests",
+      "releasedAt": "2026-09-03T14:30:50.388Z"
     },
     {
       "pattern": "src/lib/studio/responsive-layout.ts",
@@ -43,9 +46,10 @@
       "pod": "UI/UX & Desktop",
       "task": "UX-003",
       "startedAt": null,
-      "status": "reserved",
+      "status": "released",
       "integrationOwner": "A09",
-      "sharedInterfaceException": "A12 supplies read-only findings; A10 is sole Wave 1 writer"
+      "sharedInterfaceException": "A12 supplies read-only findings; A10 is sole Wave 1 writer",
+      "releasedAt": "2026-09-03T14:30:50.388Z"
     },
     {
       "pattern": "src/lib/studio/responsive-layout.test.ts",
@@ -53,9 +57,10 @@
       "pod": "UI/UX & Desktop",
       "task": "UX-003",
       "startedAt": null,
-      "status": "reserved",
+      "status": "released",
       "integrationOwner": "A09",
-      "sharedInterfaceException": "A12 supplies read-only findings; A10 is sole Wave 1 writer"
+      "sharedInterfaceException": "A12 supplies read-only findings; A10 is sole Wave 1 writer",
+      "releasedAt": "2026-09-03T14:30:50.388Z"
     },
     {
       "pattern": "scripts/desktop-stage-visual.mjs",
@@ -63,9 +68,10 @@
       "pod": "UI/UX & Desktop",
       "task": "UX-005",
       "startedAt": null,
-      "status": "reserved",
+      "status": "released",
       "integrationOwner": "A09",
-      "sharedInterfaceException": "new packaged screenshot harness"
+      "sharedInterfaceException": "new packaged screenshot harness",
+      "releasedAt": "2026-09-03T14:30:50.388Z"
     },
     {
       "pattern": "desktop/**; electron-builder.yml; package.json",
@@ -73,9 +79,10 @@
       "pod": "Governance & Integration",
       "task": "BASE-001",
       "startedAt": null,
-      "status": "reserved",
+      "status": "released",
       "integrationOwner": "A03",
-      "sharedInterfaceException": "No Wave 1 writer edits without explicit A04/A03 handoff"
+      "sharedInterfaceException": "No Wave 1 writer edits without explicit A04/A03 handoff",
+      "releasedAt": "2026-09-03T14:30:50.388Z"
     },
     {
       "pattern": "src/lib/studio/store.ts; src/lib/studio/types.ts",

@@ -10,7 +10,7 @@ export function Timeline() {
   const total = Math.max(totalDuration(picture), 1);
   const starts = shotStarts(picture);
   return (
-    <div className="flex h-full min-h-0 flex-col bg-surface">
+    <div data-panel-kind="timeline" className="flex h-full min-h-0 min-w-0 flex-col bg-surface">
       <div className="flex items-center justify-between px-3 py-2">
         <p className="text-[11px] tracking-wide text-subtle uppercase">Timeline</p>
         <p className="text-[11px] text-muted tabular-nums">

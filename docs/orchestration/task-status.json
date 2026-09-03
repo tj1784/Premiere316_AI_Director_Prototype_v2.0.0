@@ -473,10 +473,14 @@
       "owner": "A10",
       "title": "Declarative stage layout policy and global shell cleanup",
       "deps": [],
-      "status": "READY",
-      "branch": null,
-      "worktree": null,
-      "evidence": []
+      "status": "DONE",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
+      "evidence": [
+        "docs/release/wave1-gate.md",
+        "screenshots/stage-visual/report.json",
+        "screenshots/premiere316-desktop-smoke.json"
+      ]
     },
     {
       "id": "UX-002",
@@ -487,10 +491,14 @@
       "deps": [
         "UX-001"
       ],
-      "status": "READY",
-      "branch": null,
-      "worktree": null,
-      "evidence": []
+      "status": "DONE",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
+      "evidence": [
+        "docs/release/wave1-gate.md",
+        "screenshots/stage-visual/report.json",
+        "screenshots/premiere316-desktop-smoke.json"
+      ]
     },
     {
       "id": "UX-003",
@@ -501,10 +509,14 @@
       "deps": [
         "UX-001"
       ],
-      "status": "READY",
-      "branch": null,
-      "worktree": null,
-      "evidence": []
+      "status": "DONE",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
+      "evidence": [
+        "docs/release/wave1-gate.md",
+        "screenshots/stage-visual/report.json",
+        "screenshots/premiere316-desktop-smoke.json"
+      ]
     },
     {
       "id": "UX-004",
@@ -516,10 +528,14 @@
         "UX-001",
         "UX-002"
       ],
-      "status": "READY",
-      "branch": null,
-      "worktree": null,
-      "evidence": []
+      "status": "DONE",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
+      "evidence": [
+        "docs/release/wave1-gate.md",
+        "screenshots/stage-visual/report.json",
+        "screenshots/premiere316-desktop-smoke.json"
+      ]
     },
     {
       "id": "UX-005",
@@ -532,10 +548,14 @@
         "UX-002",
         "UX-003"
       ],
-      "status": "READY",
-      "branch": null,
-      "worktree": null,
-      "evidence": []
+      "status": "DONE",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
+      "evidence": [
+        "docs/release/wave1-gate.md",
+        "screenshots/stage-visual/report.json",
+        "screenshots/premiere316-desktop-smoke.json"
+      ]
     },
     {
       "id": "R-001",
@@ -1217,5 +1237,6 @@
       "worktree": null,
       "evidence": []
     }
-  ]
+  ],
+  "updatedAt": "2026-09-03T14:30:50.388Z"
 }

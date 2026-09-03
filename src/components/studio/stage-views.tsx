@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/field";
@@ -73,12 +74,12 @@ export function StageView() {
 
 function Pane({ title, kicker, children }: { title: string; kicker: string; children: ReactNode }) {
   return (
-    <div className="stage-pane flex h-full min-h-0 min-w-0 flex-col">
+    <div className="stage-pane flex h-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden">
       <header className="shrink-0 px-4 pb-2 pt-3 sm:px-6 sm:pb-3 sm:pt-4">
         <p className="text-[11px] tracking-[0.2em] text-subtle uppercase">{kicker}</p>
         <h2 className="mt-1 truncate font-display text-[clamp(1.5rem,3vw,1.875rem)] tracking-tight" title={title}>{title}</h2>
       </header>
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 pb-8 sm:px-6">{children}</div>
+      <div className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto px-4 pb-8 sm:px-6">{children}</div>
     </div>
   );
 }
@@ -367,38 +368,26 @@ function PromptStage({ picture }: { picture: Picture }) {
 }
 
 function GenerateStage({ picture }: { picture: Picture }) {
-  const { busy, animate } = useDirector();
-  const selectShot = useStudio((s) => s.selectShot);
-  const openStillBay = useStudio((s) => s.openStillBay);
+  const { busy } = useDirector();
+  const selectShot = useStudio((state) => state.selectShot);
+  const openStillBay = useStudio((state) => state.openStillBay);
   return (
     <Pane title="Generate" kicker="07 · Plates & performance">
-      <p className="mb-4 max-w-xl text-sm text-muted">Stills first, then 10–15s I2V. Caps keep the director honest.</p>
-      <div className="generation-grid grid gap-3">
-        {picture.shots.map((s) => (
-          <article key={s.id} className="overflow-hidden rounded-lg bg-elevated shadow-[var(--shadow-border)]">
-            <button type="button" className="block w-full" onClick={() => selectShot(s.id)}>
+      <p className="mb-4 max-w-xl text-sm text-muted">Generate verified local stills. Motion remains unavailable until a native adapter passes validation.</p>
+      <div className="generation-grid grid min-w-0 gap-3">
+        {picture.shots.map((shot) => (
+          <article key={shot.id} className="min-w-0 overflow-hidden rounded-lg bg-elevated shadow-[var(--shadow-border)]">
+            <button type="button" className="block w-full" onClick={() => selectShot(shot.id)}>
               <div className="aspect-video bg-inset">
-                {s.videoUrl ? (
-                  <video src={s.videoUrl} className="size-full object-cover" controls playsInline />
-                ) : s.stillUrl ? (
-                  <img src={s.stillUrl} alt="" className="size-full object-cover" />
-                ) : (
-                  <div className="grid size-full place-items-center text-xs text-subtle">No plate</div>
-                )}
+                {shot.videoUrl ? <video src={shot.videoUrl} className="size-full object-cover" controls playsInline /> : shot.stillUrl ? <img src={shot.stillUrl} alt="" className="size-full object-cover" /> : <div className="grid size-full place-items-center text-xs text-subtle">No plate</div>}
               </div>
             </button>
             <div className="p-3">
-              <p className="text-[11px] text-subtle">
-                {String(s.index).padStart(2, "0")} · {s.durationSec}s · {s.type}
-              </p>
-              <p className="mt-1 line-clamp-2 text-sm">{s.description}</p>
+              <p className="text-[11px] text-subtle">{String(shot.index).padStart(2, "0")} · {shot.durationSec}s · {shot.type}</p>
+              <p className="mt-1 line-clamp-2 text-sm">{shot.description}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button size="sm" variant="secondary" disabled={busy?.startsWith("still")} onClick={() => openStillBay(s.id)}>
-                  Still
-                </Button>
-                <Button size="sm" variant="secondary" disabled={busy?.startsWith("clip")} onClick={() => animate(s.id)}>
-                  I2V
-                </Button>
+                <Button size="sm" variant="secondary" disabled={busy?.startsWith("still")} onClick={() => openStillBay(shot.id)}>Local still</Button>
+                <Button size="sm" variant="outline" disabled title="No verified native motion adapter is connected">I2V unavailable</Button>
               </div>
             </div>
           </article>
@@ -414,7 +403,7 @@ function StitchStage({ picture }: { picture: Picture }) {
   return (
     <Pane title="Stitch" kicker="08 · Assembly">
       <div className="overflow-hidden rounded-lg bg-inset shadow-[var(--shadow-border)]">
-        <div className="aspect-video">
+        <div className="grid h-[clamp(12rem,48dvh,32rem)] place-items-center">
           {shot?.videoUrl ? (
             <video src={shot.videoUrl} className="size-full object-contain" controls playsInline />
           ) : shot?.stillUrl ? (
@@ -439,13 +428,10 @@ function StitchStage({ picture }: { picture: Picture }) {
 }
 
 function ScoreStage({ picture }: { picture: Picture }) {
-  const { busy, score } = useDirector();
   return (
-    <Pane title="Score" kicker="09 · Music3 + SFX">
-      <p className="mb-4 max-w-xl text-sm text-muted">MiniMax Music3 writes original beds. SFX sit on a sister track.</p>
-      <Button disabled={busy === "score"} onClick={score}>
-        {busy === "score" ? "Spotting…" : picture.cues.length ? "Rewrite cue sheet" : "Spot the picture"}
-      </Button>
+    <Pane title="Score" kicker="09 · Music + SFX">
+      <p className="mb-4 max-w-xl text-sm text-muted">Review the saved cue sheet locally. Music generation remains unavailable until a native adapter passes validation.</p>
+      <div role="status" className="max-w-xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]">Local score adapter unavailable · no cloud fallback</div>
       <div className="mt-5 grid gap-3">
         {picture.cues.map((c) => (
           <article key={c.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
@@ -486,7 +472,7 @@ function ExportStage({ picture }: { picture: Picture }) {
         <Stat k="Plates" v={String(picture.shots.filter((s) => s.stillUrl).length)} />
         <Stat k="Clips" v={String(picture.shots.filter((s) => s.videoUrl).length)} />
       </dl>
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="mt-6 grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
         <Button variant="secondary" onClick={() => void pull(buildFountain(picture))}>
           Fountain
         </Button>
@@ -634,36 +620,59 @@ function Stat({ k, v }: { k: string; v: string }) {
 
 export function StageRail() {
   const stage = useStage();
-  const setStage = useStudio((s) => s.setStage);
+  const setStage = useStudio((state) => state.setStage);
   const picture = useActivePicture();
+  const currentIndex = Math.max(0, STAGES.findIndex((item) => item.id === stage));
+  const current = STAGES[currentIndex];
+  const stageDone = (id: StageId) =>
+    (id === "intake" && Boolean(picture?.intake.title)) ||
+    (id === "screenplay" && (picture?.screenplay.status === "READY_FOR_REVIEW" || picture?.screenplay.status === "APPROVED")) ||
+    (id === "inventory" && (picture?.production?.assets.length ?? 0) > 0) ||
+    (id === "performance" && Object.values(picture?.performance?.performance ?? {}).some((directions) => Object.values(directions).some((direction) => Boolean(direction.approvedAt)))) ||
+    (id === "shots" && Boolean(picture?.performance?.shots.length) && Object.values(picture?.performance?.queue ?? {}).every((entry) => entry.readiness === "READY_TO_GENERATE")) ||
+    (id === "prompts" && Boolean(picture?.shots[0]?.t2iPrompt)) ||
+    (id === "generate" && Boolean(picture?.shots.some((shot) => shot.stillUrl))) ||
+    (id === "score" && (picture?.cues.length ?? 0) > 0);
+
   return (
-    <nav className="flex gap-1 overflow-x-auto px-2 py-2" aria-label="Pipeline">
-      {STAGES.map((s) => {
-        const done =
-          (s.id === "intake" && Boolean(picture?.intake.title)) ||
-          (s.id === "screenplay" && (picture?.screenplay.status === "READY_FOR_REVIEW" || picture?.screenplay.status === "APPROVED")) ||
-          (s.id === "inventory" && (picture?.production?.assets.length ?? 0) > 0) ||
-          (s.id === "performance" && Object.values(picture?.performance?.performance ?? {}).some((directions) => Object.values(directions).some((direction) => Boolean(direction.approvedAt)))) ||
-          (s.id === "shots" && Boolean(picture?.performance?.shots.length) && Object.values(picture?.performance?.queue ?? {}).every((entry) => entry.readiness === "READY_TO_GENERATE")) ||
-          (s.id === "prompts" && Boolean(picture?.shots[0]?.t2iPrompt)) ||
-          (s.id === "generate" && Boolean(picture?.shots.some((sh) => sh.stillUrl))) ||
-          (s.id === "score" && (picture?.cues.length ?? 0) > 0);
-        return (
+    <nav className="min-w-0 max-w-full overflow-hidden" aria-label="Pipeline" data-active-stage={stage}>
+      <div className="hidden grid-cols-10 gap-1 px-2 py-2 xl:grid">
+        {STAGES.map((item) => (
           <button
-            key={s.id}
+            key={item.id}
             type="button"
-            onClick={() => setStage(s.id as StageId)}
+            data-stage-id={item.id}
+            aria-label={`${item.number} ${item.label}`}
+            aria-current={stage === item.id ? "step" : undefined}
+            onClick={() => setStage(item.id as StageId)}
             className={cn(
-              "flex h-11 shrink-0 items-center gap-2 rounded-sm px-3 text-xs",
-              stage === s.id ? "bg-elevated text-fg" : "text-muted hover:text-fg",
+              "flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-sm px-2 text-xs",
+              stage === item.id ? "bg-elevated text-fg" : "text-muted hover:text-fg",
             )}
           >
-            <span className="text-[10px] text-subtle">{s.number}</span>
-            {s.label}
-            {done ? <span className="size-1.5 rounded-full bg-good" /> : null}
+            <span className="shrink-0 text-[10px] text-subtle">{item.number}</span>
+            <span className="min-w-0 truncate" title={item.label}>{item.label}</span>
+            {stageDone(item.id as StageId) ? <span className="size-1.5 shrink-0 rounded-full bg-good" /> : null}
           </button>
-        );
-      })}
+        ))}
+      </div>
+
+      <div className="flex min-w-0 items-center gap-2 px-2 py-2 xl:hidden">
+        <Button size="icon-sm" variant="ghost" aria-label="Previous stage" disabled={currentIndex === 0} onClick={() => setStage(STAGES[currentIndex - 1].id as StageId)}><ChevronLeft /></Button>
+        <label className="relative min-w-0 flex-1">
+          <span className="pointer-events-none absolute left-3 top-1 text-[9px] tracking-wide text-subtle uppercase">Stage {currentIndex + 1} of {STAGES.length}</span>
+          <select
+            aria-label="Pipeline stage"
+            value={stage}
+            onChange={(event) => setStage(event.target.value as StageId)}
+            className="h-11 w-full min-w-0 appearance-none rounded-sm bg-elevated px-3 pb-1 pt-4 text-xs text-fg shadow-[var(--shadow-border)] outline-none focus:shadow-[var(--shadow-border-hover)]"
+          >
+            {STAGES.map((item) => <option key={item.id} value={item.id}>{item.number} · {item.label}</option>)}
+          </select>
+        </label>
+        <span className="hidden shrink-0 items-center gap-2 text-xs text-muted sm:flex" aria-hidden="true"><span className="text-subtle">{current.number}</span>{current.label}{stageDone(current.id as StageId) ? <span className="size-1.5 rounded-full bg-good" /> : null}</span>
+        <Button size="icon-sm" variant="ghost" aria-label="Next stage" disabled={currentIndex === STAGES.length - 1} onClick={() => setStage(STAGES[currentIndex + 1].id as StageId)}><ChevronRight /></Button>
+      </div>
     </nav>
   );
 }

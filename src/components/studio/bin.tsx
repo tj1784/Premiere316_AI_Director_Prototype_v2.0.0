@@ -15,7 +15,7 @@ export function Bin() {
   const picture = useActivePicture();
 
   return (
-    <aside className="flex h-full min-h-0 flex-col bg-surface">
+    <aside data-panel-kind="generation" className="flex h-full min-h-0 min-w-0 flex-col bg-surface">
       <div className="flex gap-1 px-2 py-2">
         {(["assets", "engines", "models"] as const).map((t) => (
           <button

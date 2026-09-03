@@ -161,9 +161,9 @@ export function ShotPreparationWorkspace({
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col bg-bg">
       <header className="shrink-0 border-b border-border px-4 pb-3 pt-4 sm:px-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div><p className="text-[11px] tracking-wide text-subtle uppercase">05 · Shot preparation</p><h2 className="mt-1 font-display text-3xl tracking-tight">Shots</h2><p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted">Lock coverage, continuity, approved references, and readiness before generation. No media is generated here.</p></div>
-          <div className="flex flex-wrap gap-2"><Button variant="ghost" onClick={onBack}><ArrowLeft />Performance</Button><Button variant="secondary" onClick={addShot}><Plus />Add shot</Button><Button onClick={onOpenPromptLab}>Prompt Lab <ArrowRight /></Button></div>
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1"><p className="text-[11px] tracking-wide text-subtle uppercase">05 · Shot preparation</p><h2 className="mt-1 font-display text-3xl tracking-tight">Shots</h2><p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted">Lock coverage, continuity, approved references, and readiness before generation. No media is generated here.</p></div>
+          <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 xl:w-auto"><Button className="w-full" variant="ghost" onClick={onBack}><ArrowLeft />Performance</Button><Button className="w-full" variant="secondary" onClick={addShot}><Plus />Add shot</Button><Button className="w-full" onClick={onOpenPromptLab}>Prompt Lab <ArrowRight /></Button></div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2"><StatusMetric label="Shots" value={sortedShots.length} /><StatusMetric label="Warnings" value={warnings.length} tone={warnings.length ? "warning" : "normal"} /><StatusMetric label="Ready" value={`${readyCount}/${sortedShots.length}`} /></div>
       </header>

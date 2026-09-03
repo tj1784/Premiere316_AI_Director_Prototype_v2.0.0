@@ -80,7 +80,13 @@ try {
 
   await page.getByRole("button", { name: "07 Generate" }).click();
   await page.getByRole("heading", { name: "Generate" }).waitFor();
-  await page.getByRole("button", { name: "Still", exact: true }).first().click();
+  const generateStill = page.getByRole("button", { name: "Generate local still", exact: true }).first();
+  if (!(await generateStill.isVisible().catch(() => false))) {
+    const openInspector = page.getByRole("button", { name: "Open Inspector", exact: true });
+    assert.equal(await openInspector.isVisible(), true, "Generate inspector is neither docked nor reachable");
+    await openInspector.click();
+  }
+  await generateStill.click();
   const stillDialog = page.getByRole("dialog", { name: /Shot 01/ });
   await stillDialog.waitFor();
   await page.waitForFunction(() => {

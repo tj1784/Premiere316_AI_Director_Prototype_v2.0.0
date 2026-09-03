@@ -1,3 +1,6 @@
+import type { StageId } from "./types.ts";
+import { resolveStageLayout, shellLeftKind, shellRightKind } from "./stage-layout.ts";
+
 export const RESPONSIVE_BREAKPOINTS = {
   compact: 1024,
   wide: 1280,
@@ -6,7 +9,7 @@ export const RESPONSIVE_BREAKPOINTS = {
 export type StudioLayoutMode = "narrow" | "compact" | "wide";
 
 export function showTimelineForStage(stage: string): boolean {
-  return stage === "timeline";
+  return resolveStageLayout(stage).bottomPanel === "timeline";
 }
 
 export function studioLayoutMode(width: number): StudioLayoutMode {
@@ -18,11 +21,15 @@ export function studioLayoutMode(width: number): StudioLayoutMode {
 export function dockedPanels(
   width: number,
   preferences: { leftCollapsed: boolean; rightCollapsed: boolean },
+  stage: StageId | string,
 ) {
   const mode = studioLayoutMode(width);
+  const policy = resolveStageLayout(stage);
+  const ownsLeft = shellLeftKind(policy) !== null;
+  const ownsRight = shellRightKind(policy) !== null;
   return {
     mode,
-    left: mode !== "narrow" && !preferences.leftCollapsed,
-    right: mode === "wide" && !preferences.rightCollapsed,
+    left: mode !== "narrow" && !preferences.leftCollapsed && ownsLeft,
+    right: mode === "wide" && !preferences.rightCollapsed && ownsRight,
   };
 }

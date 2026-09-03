@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "currentWave": 1,
+  "currentWave": 2,
   "gates": [
     {
       "wave": 0,
@@ -11,18 +11,26 @@
     },
     {
       "wave": 1,
-      "status": "IN_PROGRESS",
-      "tasks": [
-        "UX-001",
-        "UX-002",
-        "UX-003",
-        "UX-004",
-        "UX-005"
+      "status": "GREEN",
+      "evidence": [
+        "docs/release/wave1-gate.md",
+        "screenshots/stage-visual/report.json",
+        "screenshots/premiere316-desktop-smoke.json"
       ]
     },
     {
       "wave": 2,
-      "status": "BLOCKED_BY_PREVIOUS_GATE"
+      "status": "READY",
+      "tasks": [
+        "R-001",
+        "R-002",
+        "R-003",
+        "R-004",
+        "S-001",
+        "S-002",
+        "S-003",
+        "S-004"
+      ]
     },
     {
       "wave": 3,
@@ -48,5 +56,6 @@
       "wave": 8,
       "status": "BLOCKED_BY_PREVIOUS_GATE"
     }
-  ]
+  ],
+  "updatedAt": "2026-09-03T14:30:50.388Z"
 }

@@ -86,15 +86,15 @@ export function PerformanceWorkspaceView({
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col bg-bg">
       <header className="shrink-0 border-b border-border px-4 pb-3 pt-4 sm:px-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <p className="text-[11px] tracking-wide text-subtle uppercase">04 · Performance direction</p>
             <h2 className="mt-1 font-display text-3xl tracking-tight">Performance</h2>
             <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted">Direct playable behavior beat by beat. Manual controls remain available with LM Studio offline.</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" disabled={!activeCharacterId} onClick={approvePerformance}><Check />Approve performance</Button>
-            <Button onClick={onOpenShots}>Prepare shots <ArrowRight /></Button>
+          <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-2">
+            <Button className="w-full" variant="secondary" disabled={!activeCharacterId} onClick={approvePerformance}><Check />Approve performance</Button>
+            <Button className="w-full" onClick={onOpenShots}>Prepare shots <ArrowRight /></Button>
           </div>
         </div>
         <dl className="mt-3 flex flex-wrap gap-2">

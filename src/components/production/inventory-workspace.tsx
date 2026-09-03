@@ -66,15 +66,15 @@ export function InventoryWorkspace({ boundary, record, busy = false, onRunBreakd
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col bg-bg">
       <header className="shrink-0 border-b border-border px-4 pb-3 pt-4 sm:px-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <p className="text-[11px] tracking-wide text-subtle uppercase">03 · Production breakdown</p>
             <h2 className="mt-1 font-display text-3xl tracking-tight">Inventory</h2>
             <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted">
               Canonical, engine-independent production assets linked to approved screenplay {record.screenplayVersionId}.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-2">
             <Button variant="secondary" onClick={() => setAdding(true)}><Plus /> Add asset</Button>
             {versionChanged ? <Button disabled={busy} onClick={() => void onRunBreakdown(boundary)}>{busy ? "Reconciling…" : "Reconcile breakdown"}</Button> : <Button disabled={busy} onClick={() => onChange(prepareAssetQueue(record))}>{record.queue.length ? "Refresh preparation" : "Prepare queue"}</Button>}
           </div>
@@ -159,8 +159,8 @@ function ApprovalGate() {
 
 function EmptyBreakdown({ boundary, busy, onRunBreakdown }: { boundary: ApprovedScreenplayBoundary; busy: boolean; onRunBreakdown: InventoryWorkspaceProps["onRunBreakdown"] }) {
   return (
-    <div className="grid h-full min-h-64 place-items-center bg-bg p-6 text-center">
-      <div className="max-w-lg rounded-lg bg-elevated p-6 shadow-[var(--shadow-border)]">
+    <div className="grid h-full min-h-64 min-w-0 place-items-center overflow-hidden bg-bg p-4 text-center sm:p-6">
+      <div className="w-full max-w-lg min-w-0 overflow-hidden rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)] sm:p-6">
         <Boxes className="mx-auto size-5 text-accent" />
         <p className="mt-3 text-[11px] tracking-wide text-subtle uppercase">Approved screenplay ready</p>
         <h2 className="mt-1 font-display text-2xl tracking-tight">Build the production inventory</h2>

@@ -33,7 +33,7 @@ export function InterfaceScale() {
   const update = (next: number) => void desktopZoomSet(next).then(setZoom);
 
   return (
-    <div className="relative" ref={root}>
+    <div className="relative shrink-0" ref={root}>
       <Button size="sm" variant="ghost" className="px-2 tabular-nums" aria-expanded={open} aria-haspopup="dialog" title="Interface scale (Ctrl + / - / 0)" onClick={() => setOpen((value) => !value)}>
         {Math.round(zoom * 100)}%
       </Button>
