@@ -636,7 +636,7 @@
       "worktree": null,
       "evidence": [
         "docs/release/wave2-gate.md",
-        "lms ps idle qwen2.5-72b-instruct only; no Llama; http://127.0.0.1:1234 timed out; app servedModels 0; LMS not started"
+        "lms ps idle qwen2.5-72b-instruct only; no Llama; http://127.0.0.1:1234 timed out; app servedModels 0; LMS not started; A64 repair packaged p316-20260903170432-d400d191ba52"
       ]
     },
     {
@@ -1257,5 +1257,5 @@
       "evidence": []
     }
   ],
-  "updatedAt": "2026-09-03T16:36:26.595Z"
+  "updatedAt": "2026-09-03T17:08:09.946Z"
 }

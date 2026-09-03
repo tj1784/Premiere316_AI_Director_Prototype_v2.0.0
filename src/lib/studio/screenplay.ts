@@ -70,6 +70,8 @@ export type PictureScreenplay = {
   schemaVersion: 1;
   workflow: ScreenplayWorkflow;
   selectedModelId: string | null;
+  pinnedWriterServedId?: string | null;
+  pinnedQaServedId?: string | null;
   status: ScreenplayStatus;
   versions: ScreenplayVersion[];
   currentVersionId: string | null;
@@ -77,6 +79,15 @@ export type PictureScreenplay = {
   workingFountain: string;
   generation: ScreenplayGenerationState | null;
   lastTelemetry: ScreenplayTelemetry | null;
+  lastQaReport?: {
+    id: string;
+    createdAt: number;
+    modelId: string;
+    servedModelId: string;
+    displayName: string;
+    findings: { category: string; severity: string; summary: string; rewriteSuggested: string | null }[];
+    fountainUnchanged: true;
+  } | null;
   updatedAt: number;
 };
 
@@ -131,6 +142,8 @@ export function makePictureScreenplay(workflow: ScreenplayWorkflow, modelId: str
     schemaVersion: 1,
     workflow,
     selectedModelId: modelId,
+    pinnedWriterServedId: null,
+    pinnedQaServedId: null,
     status: "DRAFT",
     versions: [],
     currentVersionId: null,
@@ -138,6 +151,7 @@ export function makePictureScreenplay(workflow: ScreenplayWorkflow, modelId: str
     workingFountain: "",
     generation: null,
     lastTelemetry: null,
+    lastQaReport: null,
     updatedAt: now,
   };
 }

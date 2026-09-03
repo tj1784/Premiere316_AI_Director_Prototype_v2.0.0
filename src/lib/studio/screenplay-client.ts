@@ -22,6 +22,6 @@ export async function stopScreenplayJob(jobId: string) {
   return cancelScreenplayJob({ data: { jobId, endpoint: endpointCache.get() } });
 }
 
-export async function beginScreenplayQa(input: { fountain: string; modelId: string; writerId: string | null }) {
+export async function beginScreenplayQa(input: { fountain: string; modelId: string; writerId: string | null; pinnedQaServedId?: string | null }) {
   return runScreenplayQa({ data: { ...input, endpoint: endpointCache.get() } });
 }

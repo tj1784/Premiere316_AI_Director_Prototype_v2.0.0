@@ -9,7 +9,7 @@ import type {
   LocalLLMServedModel,
 } from "./local-llm-provider.ts";
 import { LM_STUDIO_ENDPOINT_CANDIDATES } from "./local-llm-provider.ts";
-import { discoverCachedLoopbackEndpoint, MemoryEndpointCache, normalizeLoopbackEndpoint, type LocalLLMEndpointCache } from "./local-llm-endpoint.ts";
+import { discoverCachedLoopbackEndpoint, isApprovedLmStudioEndpoint, MemoryEndpointCache, normalizeLoopbackEndpoint, type LocalLLMEndpointCache } from "./local-llm-endpoint.ts";
 import type { ScreenplayTelemetry } from "./screenplay.ts";
 
 type FetchLike = typeof fetch;
@@ -34,7 +34,7 @@ function normalizeModel(raw: unknown, native: boolean): LocalLLMServedModel | nu
     id,
     displayName: String(model.display_name ?? model.displayName ?? model.name ?? id),
     type: type === "llm" ? "llm" : type === "embedding" ? "embedding" : "unknown",
-    loaded: native ? instances.length > 0 : true,
+    loaded: native ? instances.length > 0 : false,
     instanceId: first.id ? String(first.id) : null,
     path: model.path ? String(model.path) : null,
     precision: model.precision ? String(model.precision) : null,
@@ -76,6 +76,7 @@ export class LMStudioProvider implements LocalLLMProvider {
   #activeModel: LocalLLMServedModel | null = null;
   #abort: AbortController | null = null;
   #telemetry: ScreenplayTelemetry | null = null;
+  #listingAuthority: "native" | "openai-fallback" | null = null;
   #loadStartedAt = 0;
   #peakVramBytes: number | null = null;
   #peakSystemRamBytes: number | null = null;
@@ -186,21 +187,34 @@ export class LMStudioProvider implements LocalLLMProvider {
       const nativeResponse = await this.#fetch("/api/v1/models");
       const nativeData = await responseJson(nativeResponse);
       const rows = Array.isArray(nativeData.models) ? nativeData.models : Array.isArray(nativeData.data) ? nativeData.data : [];
+      this.#listingAuthority = "native";
       return rows.map((item) => normalizeModel(item, true)).filter((item): item is LocalLLMServedModel => Boolean(item));
     } catch {
       if (!this.#endpoint) return [];
       const response = await this.#fetch("/v1/models");
       const data = await responseJson(response);
       const rows = Array.isArray(data.data) ? data.data : [];
+      this.#listingAuthority = "openai-fallback";
       return rows.map((item) => normalizeModel(item, false)).filter((item): item is LocalLLMServedModel => Boolean(item));
     }
   }
 
+  async #assertExactServedLoaded(servedModelId: string): Promise<LocalLLMServedModel> {
+    const models = await this.listModels();
+    if (this.#listingAuthority !== "native") {
+      throw new Error("LM Studio native model status is unavailable. OpenAI /v1/models rows are not treated as loaded, and Premiere316 will not auto-load a model.");
+    }
+    const model = models.find((item) => item.id === servedModelId && item.loaded && item.type === "llm");
+    if (!model) {
+      throw new Error(`The exact served model ${servedModelId} is not currently loaded. Premiere316 will not auto-load it.`);
+    }
+    return model;
+  }
+
   async load(config: LocalLLMLoadConfig): Promise<void> {
     this.#loadStartedAt = this.now();
-    const discovery = await this.discover();
-    const model = discovery.models.find((item) => item.id === config.servedModelId && item.loaded && item.type === "llm");
-    if (!model) throw new Error("The selected model is not currently loaded and served by LM Studio.");
+    await this.discover();
+    const model = await this.#assertExactServedLoaded(config.servedModelId);
     this.#activeModel = model;
     const resources = this.sampleResources();
     this.#peakVramBytes = resources.peakVramBytes;
@@ -230,7 +244,7 @@ export class LMStudioProvider implements LocalLLMProvider {
   }
 
   async generate(request: LocalLLMGenerateRequest, config: LocalLLMLoadConfig): Promise<LocalLLMGenerateResult> {
-    if (!this.#activeModel || this.#activeModel.id !== config.servedModelId) throw new Error("Selected LM Studio model is not loaded for this workflow.");
+    this.#activeModel = await this.#assertExactServedLoaded(config.servedModelId);
     const started = this.now();
     const controller = new AbortController();
     this.#abort = controller;
@@ -346,11 +360,12 @@ const defaultEndpointCache = new MemoryEndpointCache();
 export function createLMStudioProvider(preferredEndpoint?: string | null): LMStudioProvider {
   const normalized = preferredEndpoint ? normalizeLoopbackEndpoint(preferredEndpoint) : null;
   if (preferredEndpoint && !normalized) throw new Error("Only a loopback HTTP endpoint is allowed for local screenplay inference.");
-  if (normalized && defaultEndpointCache.get() !== normalized) defaultEndpointCache.set(normalized);
+  const approved = normalized && isApprovedLmStudioEndpoint(normalized) ? normalized : null;
+  if (approved && defaultEndpointCache.get() !== approved) defaultEndpointCache.set(approved);
   return new LMStudioProvider({
     endpointCache: defaultEndpointCache,
-    candidates: normalized
-      ? [normalized, ...LM_STUDIO_ENDPOINT_CANDIDATES.filter((endpoint) => endpoint !== normalized)]
+    candidates: approved
+      ? [approved, ...LM_STUDIO_ENDPOINT_CANDIDATES.filter((endpoint) => endpoint !== approved)]
       : [...LM_STUDIO_ENDPOINT_CANDIDATES],
   });
 }

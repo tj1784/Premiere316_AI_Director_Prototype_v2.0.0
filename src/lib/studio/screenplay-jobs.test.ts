@@ -96,7 +96,7 @@ function input() {
   const intake = { ...makePictureIntake(1), title: "Picture", premise: "A choice.", screenplayModelId: "lmstudio:qwen2.5-72b-instruct" };
   return {
     intake,
-    screenplay: makePictureScreenplay("single", "lmstudio:qwen2.5-72b-instruct", 1),
+    screenplay: { ...makePictureScreenplay("single", "lmstudio:qwen2.5-72b-instruct", 1), pinnedWriterServedId: "qwen2.5-72b-instruct" },
     research: approvedResearch(intake),
     modelId: "lmstudio:qwen2.5-72b-instruct",
   };
@@ -110,6 +110,7 @@ test("served LM Studio model remains runnable even when the API does not expose 
   assert.equal(status.models[0]?.localCatalogModelId, null);
   const started = await manager.start(input());
   const finished = await settle(manager, started.id);
+  assert.equal(finished.error, null, finished.error ?? undefined);
   assert.equal(finished.status, "completed");
   assert.equal(finished.screenplay.status, "READY_FOR_REVIEW");
   assert.equal(finished.screenplay.versions.length, 1);
@@ -121,12 +122,22 @@ test("unapproved research blocks screenplay generation", async () => {
   await assert.rejects(manager.start({ ...base, research: seedResearchBibleFromIntake(base.intake, 1) }), /Approve Picture Research/);
 });
 
+test("family-only or substring pins cannot start generation", async () => {
+  const manager = new ScreenplayJobManager(new FakeProvider(), () => emptyCatalog);
+  const base = input();
+  await assert.rejects(manager.start({ ...base, screenplay: { ...base.screenplay, pinnedWriterServedId: "qwen" } }), /not the pinned served ID|Family names are not accepted/);
+});
+
 test("non-Qwen served models are not used as a writer substitute", async () => {
   const provider = new FakeProvider();
   provider.discover = async () => ({ providerId: "lm-studio", providerName: "LM Studio", endpoint: "http://127.0.0.1:1234", local: true, cloudFallback: false, available: true, reason: "ready", models: [{ ...served, id: "llama-3.3-70b-instruct", displayName: "Llama 3.3 70B Instruct" }], discoveredAt: 1 });
   const manager = new ScreenplayJobManager(provider, () => emptyCatalog);
   const base = input();
-  await assert.rejects(manager.start({ ...base, modelId: "lmstudio:llama-3.3-70b-instruct" }), /Qwen/);
+  await assert.rejects(manager.start({
+    ...base,
+    modelId: "lmstudio:llama-3.3-70b-instruct",
+    screenplay: { ...base.screenplay, pinnedWriterServedId: "llama-3.3-70b-instruct" },
+  }), /Qwen/);
 });
 
 test("story doctor critique does not append screenplay versions", async () => {
@@ -134,7 +145,7 @@ test("story doctor critique does not append screenplay versions", async () => {
   provider.discover = async () => ({ providerId: "lm-studio", providerName: "LM Studio", endpoint: "http://127.0.0.1:1234", local: true, cloudFallback: false, available: true, reason: "ready", models: [{ ...served, id: "llama-3.3-70b-instruct", displayName: "Llama 3.3 70B Instruct" }], discoveredAt: 1 });
   provider.generate = async () => ({ text: JSON.stringify({ findings: [{ category: "Dialogue", severity: "note", summary: "Hold the silence.", rewriteSuggested: null }] }), durationMs: 1, promptTokens: 1, generatedTokens: 2 });
   const manager = new ScreenplayJobManager(provider, () => emptyCatalog);
-  const report = await manager.critique({ fountain: "INT. ROOM — DAY", modelId: "lmstudio:llama-3.3-70b-instruct", writerId: "lmstudio:qwen2.5-72b-instruct" });
+  const report = await manager.critique({ fountain: "INT. ROOM — DAY", modelId: "lmstudio:llama-3.3-70b-instruct", writerId: "qwen2.5-72b-instruct", pinnedQaServedId: "llama-3.3-70b-instruct" });
   assert.equal(report.fountainUnchanged, true);
   assert.equal(report.findings[0]?.summary, "Hold the silence.");
 });

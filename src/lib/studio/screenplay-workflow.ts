@@ -1,4 +1,5 @@
 import type { PictureIntake } from "./picture-intake.ts";
+import type { ResearchContent } from "../research/bible.ts";
 import { extractScopedFountain, spliceScopedFountain, type ScreenplayScope } from "./screenplay-scope.ts";
 import { buildScreenplayPrompt, normalizeFountainOutput, screenplaySteps, type ScreenplayStep } from "./screenplay-prompts.ts";
 import {
@@ -57,6 +58,7 @@ export type WorkflowRunInput = {
   resume?: boolean;
   rewriteScope?: ScreenplayScope;
   selectedNodeId?: string | null;
+  approvedResearch?: ResearchContent | null;
   signal?: AbortSignal;
   onUpdate?: (update: WorkflowUpdate) => void | Promise<void>;
 };
@@ -125,6 +127,7 @@ export async function runScreenplayWorkflow(runtime: ScreenplayRuntimePort, inpu
         workflow: state.workflow,
         step,
         previousFountain: scopedPrevious,
+        approvedResearch: input.approvedResearch ?? null,
       });
       const result = await runtime.generate({
         runId: input.runId,

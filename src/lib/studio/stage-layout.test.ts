@@ -27,6 +27,8 @@ const EXPECTED: Record<StageId, StageLayoutPolicy> = {
 
 describe("stage layout policy", () => {
   it("matches the implemented StageId table", () => {
+    assert.equal(STAGES.length, 11);
+    assert.equal(STAGES[1]?.id, "research");
     assert.deepEqual(STAGES.map((stage) => stage.id), Object.keys(EXPECTED));
     for (const id of Object.keys(EXPECTED) as StageId[]) {
       assert.deepEqual(resolveStageLayout(id), EXPECTED[id], id);

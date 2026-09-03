@@ -56,11 +56,12 @@ export const getScreenplayJob = createServerFn({ method: "POST" })
   .handler(async ({ data }) => (await manager(data.endpoint)).get(data.jobId));
 
 export const runScreenplayQa = createServerFn({ method: "POST" })
-  .validator((input: { fountain: string; modelId: string; writerId?: string | null; endpoint?: string | null }) => ({
+  .validator((input: { fountain: string; modelId: string; writerId?: string | null; pinnedQaServedId?: string | null; endpoint?: string | null }) => ({
     endpoint: input.endpoint ?? null,
     fountain: String(input.fountain ?? ""),
     modelId: String(input.modelId),
     writerId: input.writerId ?? null,
+    pinnedQaServedId: input.pinnedQaServedId ?? null,
   }))
   .handler(async ({ data }) => (await manager(data.endpoint)).critique(data));
 

@@ -1,4 +1,6 @@
 import { SOURCE_TYPE_LABELS, sourceTextForIntake, type PictureIntake, type ScreenplayWorkflow } from "./picture-intake.ts";
+import type { ResearchContent } from "../research/bible.ts";
+import { RESEARCH_CONFIDENCE_LEGEND } from "../research/confidence.ts";
 
 export type ScreenplayStep = {
   id: "draft" | `pass-${1 | 2 | 3 | 4 | 5 | 6 | 7}`;
@@ -91,11 +93,45 @@ function systemDirection(intake: PictureIntake): string {
   ].join("\n");
 }
 
+function packApprovedResearch(research: ResearchContent | null | undefined): string {
+  if (!research) return "";
+  const sources = research.sources.map((source, index) => [
+    `${index + 1}. ${source.title}`,
+    `Locator: ${source.locator || "(none)"}`,
+    `Confidence: ${source.confidence} · ${RESEARCH_CONFIDENCE_LEGEND[source.confidence]}`,
+    source.quote ? `Quote: ${source.quote}` : "",
+  ].filter(Boolean).join("\n")).join("\n\n");
+  const social = research.socialWorldNotes.map((note, index) => [
+    `${index + 1}. Expected behavior: ${note.expectedBehavior}`,
+    `Cinematic expression — blocking: ${note.cinematicExpression.blocking}`,
+    `Costume / status sign: ${note.cinematicExpression.costumeOrStatusSign}`,
+    `Silence / withholding: ${note.cinematicExpression.silenceOrWithholding}`,
+    `Gaze / spatial honor: ${note.cinematicExpression.gazeOrSpatialHonor}`,
+    `Prohibited exposition: ${note.cinematicExpression.prohibitedExposition}`,
+    `Confidence: ${note.confidence}`,
+  ].join("\n")).join("\n\n");
+  const camera = research.cinematographyManifesto;
+  return [
+    labeled("APPROVED RESEARCH BIBLE (immutable snapshot)", "Do not use later working research notes."),
+    labeled("Approved sources / locators / confidence", sources),
+    labeled("Approved social-world cinematic expression", social),
+    labeled("Approved cinematography research thesis", camera.thesis),
+    labeled("Lens language", camera.lensLanguage),
+    labeled("Lighting", camera.lighting),
+    labeled("Geography", camera.geography),
+    labeled("Movement", camera.movement),
+    labeled("Texture", camera.texture),
+    labeled("Sound world", camera.soundWorld),
+    labeled("Music research", camera.musicResearch),
+  ].filter(Boolean).join("\n\n");
+}
+
 export function buildScreenplayPrompt(input: {
   intake: PictureIntake;
   workflow: ScreenplayWorkflow;
   step: ScreenplayStep;
   previousFountain?: string;
+  approvedResearch?: ResearchContent | null;
 }): { system: string; user: string } {
   const { intake, step, previousFountain } = input;
   const source = sourceTextForIntake(intake);
@@ -111,6 +147,7 @@ export function buildScreenplayPrompt(input: {
     labeled("Dialogue style", intake.dialogueStyle),
     labeled("Supplied story/source", source),
     sourceConstraints(intake),
+    packApprovedResearch(input.approvedResearch),
   ].filter(Boolean).join("\n\n");
   if (step.id === "draft") {
     return {

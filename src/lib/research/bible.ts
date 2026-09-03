@@ -297,7 +297,8 @@ export function approveResearchBible(
   });
 }
 
-export function approvedResearchSnapshot(bible: PictureResearchBible): ResearchContent | null {
+export function approvedResearchSnapshot(bible: PictureResearchBible | null | undefined): ResearchContent | null {
+  if (!bible) return null;
   if (!bible.approvedVersionId) return null;
   const version = bible.versions.find((item) => item.id === bible.approvedVersionId);
   return version ? cloneResearchContent(version.content) : null;

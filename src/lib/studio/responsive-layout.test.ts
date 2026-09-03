@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { dockedPanels, showTimelineForStage, studioLayoutMode } from "./responsive-layout.ts";
+import { STAGES } from "./types.ts";
 
 const uncollapsed = { leftCollapsed: false, rightCollapsed: false };
 
@@ -28,6 +29,17 @@ describe("responsive studio layout", () => {
     assert.deepEqual(dockedPanels(1600, { leftCollapsed: true, rightCollapsed: true }, "generate"), {
       mode: "wide", left: false, right: false,
     });
+  });
+
+  it("keeps an 11-stage pipeline including research at every zoom width", () => {
+    assert.equal(STAGES.length, 11);
+    assert.equal(STAGES[1]?.id, "research");
+    for (const width of [1440, 1152, 960, 720]) {
+      assert.equal(showTimelineForStage("research"), false);
+      const layout = dockedPanels(width, uncollapsed, "research");
+      assert.equal(layout.left, false);
+      assert.equal(layout.right, false);
+    }
   });
 
   it("shows the timeline only in the Stitch stage", () => {

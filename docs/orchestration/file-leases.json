@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-03T16:36:26.595Z",
+  "updatedAt": "2026-09-03T17:08:09.946Z",
   "rules": {
     "singleWriterPerCwd": true,
     "maxConcurrentMutatingAgents": 12,
@@ -136,6 +136,28 @@
       "integrationOwner": "A03",
       "sharedInterfaceException": "A04 is sole Wave 2 packaging/UAT writer after A18 handoff; isolated profile only",
       "releasedAt": "2026-09-03T16:36:26.595Z"
+    },
+    {
+      "pattern": "src/lib/studio/local-llm*.ts; src/lib/studio/lmstudio-provider.server.ts; src/lib/studio/qwen-writer-identity*.ts; src/lib/studio/screenplay*.ts; src/components/studio/screenplay-workspace.tsx; src/components/studio/stage-views.tsx; src/lib/research/**; src/components/research/**; src/components/studio/shell.tsx; src/styles.css; companion Wave 2 tests",
+      "owner": "A18",
+      "pod": "Research & Screenplay",
+      "task": "WAVE-2-A64-REPAIR",
+      "startedAt": "2026-09-03T16:43:58.260Z",
+      "status": "released",
+      "integrationOwner": "A03",
+      "sharedInterfaceException": "Sole cwd writer for A64 findings; exact served identity, no-auto-load, research handoff, scoped Story Doctor, and 11-stage rail only",
+      "releasedAt": "2026-09-03T17:03:09.022Z"
+    },
+    {
+      "pattern": "desktop/**; desktop/build-info.json; package.json; scripts/desktop-*.mjs; docs/release/wave2-gate.md; screenshots/stage-visual/**; screenshots/premiere316-desktop-smoke.json; orchestration ledgers",
+      "owner": "A04",
+      "pod": "Governance & Integration",
+      "task": "WAVE-2-A64-REPACKAGE",
+      "startedAt": "2026-09-03T17:03:09.022Z",
+      "status": "released",
+      "integrationOwner": "A03",
+      "sharedInterfaceException": "A04 sole writer after A18 repair + source pass; isolated packaged UAT and pending-runtime checkpoint update",
+      "releasedAt": "2026-09-03T17:08:09.946Z"
     }
   ]
 }

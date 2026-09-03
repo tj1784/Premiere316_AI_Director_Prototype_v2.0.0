@@ -19,6 +19,25 @@ test("only loopback HTTP endpoints are accepted", () => {
   assert.equal(normalizeLoopbackEndpoint("http://example.com:1234"), null);
 });
 
+test("dev UI port 8080 is never an approved LM Studio candidate", async () => {
+  const { isApprovedLmStudioEndpoint } = await import("./local-llm-endpoint.ts");
+  const { LM_STUDIO_ENDPOINT_CANDIDATES } = await import("./local-llm-provider.ts");
+  assert.equal(isApprovedLmStudioEndpoint("http://127.0.0.1:8080"), false);
+  assert.equal((LM_STUDIO_ENDPOINT_CANDIDATES as readonly string[]).includes("http://127.0.0.1:8080"), false);
+  const cache = new MemoryEndpointCache("http://127.0.0.1:8080");
+  const seen: string[] = [];
+  const found = await discoverCachedLoopbackEndpoint({
+    cache,
+    candidates: ["http://127.0.0.1:8080", "http://127.0.0.1:1234"],
+    probe: async (endpoint) => {
+      seen.push(endpoint);
+      return endpoint.endsWith(":1234");
+    },
+  });
+  assert.equal(found, "http://127.0.0.1:1234");
+  assert.equal(seen.includes("http://127.0.0.1:8080"), false);
+});
+
 test("successful endpoint is cached, reused, and invalidated after a failed startup probe", async () => {
   const cache = new MemoryEndpointCache();
   const seen: string[] = [];
@@ -33,8 +52,9 @@ test("successful endpoint is cached, reused, and invalidated after a failed star
   assert.equal(cache.get(), null);
 });
 
-test("OpenAI-only LM Studio falls back when native model metadata endpoint is unsupported", async () => {
+test("OpenAI-only LM Studio listing never marks rows loaded or ready", async () => {
   let standardGets = 0;
+  let completions = 0;
   const fetcher: typeof fetch = async (input) => {
     const url = String(input);
     if (url.endsWith("/api/v1/models")) return json({ error: { message: "not found" } }, 404);
@@ -42,14 +62,21 @@ test("OpenAI-only LM Studio falls back when native model metadata endpoint is un
       standardGets++;
       return json({ data: [{ id: "local-writer", object: "model" }] });
     }
+    if (url.endsWith("/v1/chat/completions")) {
+      completions++;
+      return json({ choices: [] });
+    }
     throw new Error(`Unexpected request: ${url}`);
   };
   const provider = new LMStudioProvider({ fetch: fetcher, endpointCache: new MemoryEndpointCache(), sampleResources: resources });
   const discovery = await provider.discover();
   assert.equal(discovery.available, true);
   assert.equal(discovery.models[0]?.id, "local-writer");
-  assert.equal(discovery.models[0]?.loaded, true);
-  assert.equal(standardGets, 2, "one startup probe plus one OpenAI model listing");
+  assert.equal(discovery.models[0]?.loaded, false);
+  await assert.rejects(provider.load({ servedModelId: "local-writer", settings }), /native model status is unavailable|will not auto-load/);
+  await assert.rejects(provider.generate({ runId: "r", stepId: "draft", system: "s", prompt: "p" }, { servedModelId: "local-writer", settings }), /will not auto-load|native model status/);
+  assert.equal(completions, 0);
+  assert.ok(standardGets >= 1);
 });
 
 test("offline LM Studio returns an unavailable discovery without throwing or affecting startup", async () => {
@@ -58,6 +85,28 @@ test("offline LM Studio returns an unavailable discovery without throwing or aff
   assert.equal(discovery.available, false);
   assert.equal(discovery.cloudFallback, false);
   assert.match(discovery.reason, /Start its local API/);
+});
+
+test("completion POST is refused unless native listing still shows the exact served ID loaded", async () => {
+  let completions = 0;
+  let loaded = true;
+  const fetcher: typeof fetch = async (input) => {
+    const url = String(input);
+    if (url.endsWith("/api/v1/models")) {
+      return json({ models: [{ key: "qwen2.5-72b-instruct", type: "llm", loaded_instances: loaded ? [{ id: "instance-1", context_length: 4096 }] : [] }] });
+    }
+    if (url.endsWith("/v1/models")) return json({ data: [{ id: "qwen2.5-72b-instruct" }] });
+    if (url.endsWith("/v1/chat/completions")) {
+      completions++;
+      return json({ choices: [] });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  const provider = new LMStudioProvider({ fetch: fetcher, endpointCache: new MemoryEndpointCache(), sampleResources: resources });
+  await provider.load({ servedModelId: "qwen2.5-72b-instruct", settings });
+  loaded = false;
+  await assert.rejects(provider.generate({ runId: "r", stepId: "draft", system: "s", prompt: "p" }, { servedModelId: "qwen2.5-72b-instruct", settings }), /not currently loaded/);
+  assert.equal(completions, 0);
 });
 
 test("optional unload 404 does not invalidate an otherwise healthy endpoint", async () => {

@@ -12,6 +12,7 @@ const reportPath = resolve(artifacts, "premiere316-desktop-smoke.json");
 const screenshotPath = resolve(artifacts, "premiere316-windows-final.png");
 const REAL_PROFILE = join(process.env.APPDATA ?? "", "Premiere316");
 const failures = [];
+const networkLog = [];
 let lmStudioState = null;
 let engineState = null;
 let originalZoom = 1;
@@ -36,6 +37,9 @@ async function launch(dir) {
   page.on("pageerror", (error) => failures.push(`pageerror: ${error.message}`));
   page.on("console", (message) => {
     if (message.type() === "error") failures.push(`console: ${message.text()}`);
+  });
+  page.on("request", (request) => {
+    networkLog.push({ method: request.method(), url: request.url() });
   });
   await page.waitForLoadState("domcontentloaded");
   await page.waitForFunction(() => (document.body?.innerText.length ?? 0) > 40);
@@ -96,15 +100,43 @@ try {
   await openLastReel(page);
   await selectStage(page, "research", "02 Research");
   await page.getByText("Picture Research", { exact: false }).first().waitFor();
+  await page.getByText("Draft", { exact: true }).first().waitFor();
+  await page.getByText("Local only", { exact: true }).first().waitFor();
   await selectStage(page, "screenplay", "03 Screenplay");
   await page.getByText("Local writer", { exact: true }).waitFor();
   await page.waitForFunction(() => !document.body.innerText.includes("Checking LM Studio local API"));
   assert.equal(await page.getByText("Timeline", { exact: true }).count(), 0, "timeline must be hidden outside Stitch");
+  await page.getByText("Approve Picture Research before generating a screenplay.").waitFor();
+  assert.equal(await page.getByRole("button", { name: "Generate Screenplay" }).isDisabled(), true, "unapproved research must block screenplay generation");
+  await selectStage(page, "research", "02 Research");
+  await page.getByRole("button", { name: "Approve research" }).click();
+  await page.getByText("Research approved", { exact: true }).first().waitFor();
+  await selectStage(page, "screenplay", "03 Screenplay");
+  await page.getByText("Local writer", { exact: true }).waitFor();
+  await page.waitForFunction(() => !document.body.innerText.includes("Checking LM Studio local API"));
+  const generate = page.getByRole("button", { name: "Generate Screenplay" });
+  assert.equal(await generate.isDisabled(), true, "generation must stay disabled after research approval without a reachable pinned Qwen ID");
+  assert.match(await generate.getAttribute("title") ?? "", /LM Studio local API is offline|Pin the full currently served Qwen model ID/);
+  await page.getByText("No writer ID pinned.").waitFor();
+  await page.getByText("No Story Doctor ID pinned.").waitFor();
+  assert.equal(await page.getByLabel("Screenplay model").locator("option").first().textContent(), "Pin exact served Qwen ID");
+  assert.equal(await page.getByLabel("Story Doctor model").locator("option").first().textContent(), "Pin exact served Llama ID");
+  await page.getByText("LM Studio local API is offline. Story Doctor stays disabled.").waitFor();
+  assert.equal(await page.getByRole("button", { name: "Run story doctor" }).isDisabled(), true, "Story Doctor must fail closed while LM Studio is offline");
+  assert.equal(await page.getByRole("button", { name: "Apply scoped revision" }).isDisabled(), true, "scoped apply must stay disabled without a critique");
   const modelOptions = await page.getByLabel("Screenplay model").locator("option").evaluateAll((options) => options.map((option) => ({ label: option.textContent, value: option.value, disabled: option.disabled })));
   assert.equal(modelOptions.slice(1).every((option) => option.disabled), true, "LM Studio unexpectedly exposed a served model");
-  assert.equal(await page.getByRole("button", { name: "Generate Screenplay" }).isDisabled(), true, "screenplay generation must fail closed while LM Studio is offline");
-  assert.equal(await page.getByRole("button", { name: "Run story doctor" }).isDisabled(), true, "Story Doctor must fail closed while LM Studio is offline");
-  lmStudioState = { localCatalogCandidates: modelOptions.length - 1, servedModels: modelOptions.slice(1).filter((option) => !option.disabled).length, generationEnabled: false, loopbackOnly: true };
+  lmStudioState = {
+    localCatalogCandidates: modelOptions.length - 1,
+    servedModels: modelOptions.slice(1).filter((option) => !option.disabled).length,
+    generationEnabled: false,
+    loopbackOnly: true,
+    researchGate: "approve-then-pin",
+    writerPinUi: "Pin exact served Qwen ID",
+    doctorPinUi: "Pin exact served Llama ID",
+    critiqueFirst: true,
+    scopedApplyEnabled: false,
+  };
   await selectStage(page, "performance", "05 Performance");
   await page.getByRole("heading", { name: "Performance" }).waitFor();
   await selectStage(page, "shots", "06 Shots");
@@ -176,6 +208,11 @@ try {
   assert.equal(await zoomFactor(second.application), originalZoom);
   await second.page.screenshot({ path: screenshotPath });
 
+  const forbidden8080 = networkLog.filter((entry) => /:(8080)(\/|$)/.test(entry.url) || entry.url.includes(":8080/"));
+  const completionPosts = networkLog.filter((entry) => entry.method === "POST" && /\/v1\/(chat\/)?completions/.test(entry.url));
+  assert.equal(forbidden8080.length, 0, `renderer probed forbidden :8080 endpoints: ${JSON.stringify(forbidden8080)}`);
+  assert.equal(completionPosts.length, 0, `completion POST issued while native loaded state is unknown: ${JSON.stringify(completionPosts)}`);
+
   const report = {
     ok: true,
     executablePath,
@@ -188,6 +225,7 @@ try {
     engines: engineState,
     timeline: { hiddenOutsideStitch: true, visibleInStitch: true },
     persistedStage: "shots",
+    network: { probed8080: forbidden8080.length, completionPosts: completionPosts.length, observed: networkLog.length },
     consoleErrors: failures,
     screenshotPath,
   };

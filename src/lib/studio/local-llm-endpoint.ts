@@ -29,6 +29,8 @@ export class BrowserEndpointCache implements LocalLLMEndpointCache {
   }
 }
 
+export const APPROVED_LM_STUDIO_PORTS = new Set(["1234", "1235"]);
+
 export function normalizeLoopbackEndpoint(value: string): string | null {
   try {
     const url = new URL(value);
@@ -42,6 +44,13 @@ export function normalizeLoopbackEndpoint(value: string): string | null {
   }
 }
 
+export function isApprovedLmStudioEndpoint(value: string): boolean {
+  const normalized = normalizeLoopbackEndpoint(value);
+  if (!normalized) return false;
+  const port = new URL(normalized).port || "80";
+  return APPROVED_LM_STUDIO_PORTS.has(port);
+}
+
 export async function discoverCachedLoopbackEndpoint(input: {
   cache: LocalLLMEndpointCache;
   candidates?: string[];
@@ -51,7 +60,7 @@ export async function discoverCachedLoopbackEndpoint(input: {
   const candidates = [cached, ...(input.candidates ?? [LM_STUDIO_ENDPOINT])]
     .filter((value): value is string => Boolean(value))
     .map(normalizeLoopbackEndpoint)
-    .filter((value): value is string => Boolean(value));
+    .filter((value): value is string => typeof value === "string" && isApprovedLmStudioEndpoint(value));
   for (const endpoint of [...new Set(candidates)]) {
     if (await input.probe(endpoint)) {
       input.cache.set(endpoint);

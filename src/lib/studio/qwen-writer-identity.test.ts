@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isExactServedLlamaQa, isExactServedQwenWriter, llamaQaBlockReason, qwenWriterBlockReason } from "./qwen-writer-identity.ts";
+import {
+  classifyLocalWriterFamily,
+  isLlamaQaCandidate,
+  isPinnedExactServedReady,
+  isQwenWriterCandidate,
+  llamaQaBlockReason,
+  qwenWriterBlockReason,
+} from "./qwen-writer-identity.ts";
 import type { ScreenplayModelRef } from "./screenplay.ts";
 
 function model(partial: Partial<ScreenplayModelRef> & Pick<ScreenplayModelRef, "servedModelId" | "displayName">): ScreenplayModelRef {
@@ -19,18 +26,39 @@ function model(partial: Partial<ScreenplayModelRef> & Pick<ScreenplayModelRef, "
   };
 }
 
-test("only served Qwen ids count as the writer", () => {
-  assert.equal(isExactServedQwenWriter(model({ servedModelId: "qwen2.5-72b-instruct", displayName: "Qwen2.5 72B Instruct" })), true);
-  assert.equal(isExactServedQwenWriter(model({ servedModelId: "llama-3.3-70b-instruct", displayName: "Llama 3.3 70B Instruct" })), false);
-  assert.equal(isExactServedQwenWriter(model({ servedModelId: "qwen3-tts", displayName: "Qwen3 TTS" })), false);
-  assert.equal(qwenWriterBlockReason(null, false), "LM Studio local API is offline. Screenplay generation stays disabled.");
+test("discovery may classify Qwen/Llama families without treating family as readiness", () => {
+  const qwen = model({ servedModelId: "qwen2.5-72b-instruct", displayName: "Qwen2.5 72B Instruct" });
+  const tiny = model({ servedModelId: "qwen2.5-0.5b", displayName: "Qwen2.5 0.5B" });
+  const llama = model({ servedModelId: "llama-3.3-70b-instruct", displayName: "Llama 3.3 70B Instruct" });
+  assert.equal(classifyLocalWriterFamily(qwen), "qwen");
+  assert.equal(isQwenWriterCandidate(tiny), true);
+  assert.equal(isLlamaQaCandidate(llama), true);
+  assert.equal(isPinnedExactServedReady(tiny, "qwen2.5-72b-instruct"), false);
 });
 
-test("story doctor requires a separate served Llama id", () => {
+test("readiness requires equality to the full pinned currently served ID", () => {
+  const qwen = model({ servedModelId: "qwen2.5-72b-instruct", displayName: "Qwen2.5 72B Instruct" });
+  assert.equal(isPinnedExactServedReady(qwen, "qwen2.5-72b-instruct"), true);
+  assert.equal(isPinnedExactServedReady(qwen, "qwen"), false);
+  assert.equal(isPinnedExactServedReady(qwen, "qwen2.5"), false);
+  assert.equal(isPinnedExactServedReady(qwen, "qwen2.5-72b-instruct-lora"), false);
+  assert.equal(qwenWriterBlockReason(qwen, true, "qwen"), "The selected model is not the pinned served ID. Family or substring matches are rejected.");
+  assert.equal(qwenWriterBlockReason(qwen, true, "qwen2.5-72b-instruct"), null);
+  assert.equal(qwenWriterBlockReason(null, false, "qwen2.5-72b-instruct"), "LM Studio local API is offline. Screenplay generation stays disabled.");
+});
+
+test("stale or unloaded pins cannot generate or doctor", () => {
+  const unloaded = model({ servedModelId: "qwen2.5-72b-instruct", displayName: "Qwen2.5 72B Instruct", status: "unavailable", statusReason: "not loaded" });
+  assert.equal(isPinnedExactServedReady(unloaded, "qwen2.5-72b-instruct"), false);
+  assert.match(qwenWriterBlockReason(unloaded, true, "qwen2.5-72b-instruct") ?? "", /not currently loaded/);
+  const llama = model({ servedModelId: "llama-3.3-70b-instruct", displayName: "Llama 3.3 70B Instruct", status: "unavailable", statusReason: "not loaded" });
+  assert.match(llamaQaBlockReason(llama, "qwen2.5-72b-instruct", true, "llama-3.3-70b-instruct") ?? "", /not currently loaded/);
+});
+
+test("story doctor requires a separate pinned Llama served ID", () => {
   const writer = model({ servedModelId: "qwen2.5-72b-instruct", displayName: "Qwen2.5 72B Instruct" });
   const llama = model({ servedModelId: "llama-3.3-70b-instruct", displayName: "Llama 3.3 70B Instruct" });
-  assert.equal(isExactServedLlamaQa(llama), true);
-  assert.equal(isExactServedLlamaQa(writer), false);
-  assert.match(llamaQaBlockReason(writer, writer.id, true) ?? "", /Llama/);
-  assert.equal(llamaQaBlockReason(llama, writer.id, true), null);
+  assert.equal(llamaQaBlockReason(llama, "qwen2.5-72b-instruct", true, "llama-3.3-70b-instruct"), null);
+  assert.match(llamaQaBlockReason(llama, "llama-3.3-70b-instruct", true, "llama-3.3-70b-instruct") ?? "", /separate served Llama/);
+  assert.match(llamaQaBlockReason(llama, "qwen2.5-72b-instruct", true, "llama") ?? "", /not the pinned served ID/);
 });

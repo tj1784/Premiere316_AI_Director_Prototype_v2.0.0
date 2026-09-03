@@ -1,10 +1,10 @@
 import type { ScreenplayGenerationSettings, ScreenplayTelemetry } from "./screenplay.ts";
 
 export const LM_STUDIO_ENDPOINT = "http://127.0.0.1:1234";
+/** Explicitly approved LM Studio loopback ports only. Never include the Vite/dev UI port. */
 export const LM_STUDIO_ENDPOINT_CANDIDATES = [
   LM_STUDIO_ENDPOINT,
   "http://127.0.0.1:1235",
-  "http://127.0.0.1:8080",
 ] as const;
 
 export type LocalLLMServedModel = {

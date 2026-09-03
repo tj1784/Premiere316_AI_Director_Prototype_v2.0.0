@@ -31,8 +31,9 @@ import type { ScreenplayJobSnapshot } from "@/lib/studio/screenplay-jobs.server"
 import { beginScreenplayJob, beginScreenplayQa, localLLMStatus, readScreenplayJob, stopScreenplayJob } from "@/lib/studio/screenplay-client";
 import { ScreenplayWorkspace } from "./screenplay-workspace";
 import { ResearchWorkspace } from "@/components/research/research-workspace";
-import { hydratePictureResearch, researchBlocksScreenplay } from "@/lib/research/bible.ts";
-import { isExactServedQwenWriter, qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
+import { hydratePictureResearch, isResearchApproved, researchBlocksScreenplay } from "@/lib/research/bible.ts";
+import { qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
+import type { ScreenplayScope } from "@/lib/studio/screenplay-scope.ts";
 import { InventoryWorkspace } from "@/components/production/inventory-workspace";
 import {
   approvedScreenplayInputFromBoundary,
@@ -208,7 +209,7 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
     };
   }, [jobId, persistScreenplay]);
 
-  const start = async (options: { resume?: boolean; stepId?: ScreenplayStep["id"] } = {}) => {
+  const start = async (options: { resume?: boolean; stepId?: ScreenplayStep["id"]; rewriteScope?: ScreenplayScope; selectedNodeId?: string | null } = {}) => {
     const research = hydratePictureResearch(picture.research, picture.intake);
     const blockedResearch = researchBlocksScreenplay(research);
     if (blockedResearch) {
@@ -217,13 +218,13 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
     }
     const modelId = picture.screenplay.selectedModelId ?? picture.intake.screenplayModelId;
     const selected = models.find((model) => model.id === modelId) ?? null;
-    const blockedWriter = qwenWriterBlockReason(selected, Boolean(provider?.available));
+    const blockedWriter = qwenWriterBlockReason(selected, Boolean(provider?.available), picture.screenplay.pinnedWriterServedId ?? null);
     if (blockedWriter) {
       toast.error(blockedWriter);
       return;
     }
     if (!modelId) {
-      toast.error("Select an exact currently served Qwen model. No substitute is used.");
+      toast.error("Pin the full currently served Qwen model ID. Family names are not accepted.");
       return;
     }
     try {
@@ -234,6 +235,8 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
         modelId,
         resume: options.resume,
         stepId: options.stepId,
+        rewriteScope: options.rewriteScope,
+        selectedNodeId: options.selectedNodeId ?? null,
       });
       setJob(initial);
       setJobId(initial.id);
@@ -258,24 +261,50 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
       job={job}
       onTextChange={(workingFountain) => persistScreenplay({ ...picture.screenplay, workingFountain, status: picture.screenplay.approvedVersionId ? picture.screenplay.status : "READY_FOR_REVIEW", updatedAt: Date.now() })}
       onSaveRevision={() => persistScreenplay(addManualScreenplayVersion(picture.screenplay, picture.screenplay.workingFountain, uid("spv")))}
-      onGenerate={() => void start()}
-      onContinue={() => void start({ resume: true })}
-      onRegeneratePass={(stepId) => void start({ stepId })}
+      onGenerate={(rewriteScope, selectedNodeId) => void start({ rewriteScope, selectedNodeId })}
+      onContinue={(rewriteScope, selectedNodeId) => void start({ resume: true, rewriteScope, selectedNodeId })}
+      onRegeneratePass={(stepId, rewriteScope, selectedNodeId) => void start({ stepId, rewriteScope, selectedNodeId })}
+      researchApproved={isResearchApproved(hydratePictureResearch(picture.research, picture.intake))}
       onStop={() => { if (jobId) void stopScreenplayJob(jobId).then((snapshot) => { if (snapshot) { setJob(snapshot); persistScreenplay(snapshot.screenplay); } }); }}
       onRestore={(versionId) => persistScreenplay(restoreScreenplayVersion(picture.screenplay, versionId, uid("spv")))}
       onApprove={() => persistScreenplay(approveCurrentScreenplay(picture.screenplay, uid("spv")))}
       onRescan={() => void scan()}
       onModelChange={(selectedModelId) => {
+        const chosen = models.find((model) => model.id === selectedModelId) ?? null;
         const intake = { ...picture.intake, screenplayModelId: selectedModelId, updatedAt: Date.now() };
-        persistScreenplay({ ...picture.screenplay, selectedModelId, updatedAt: Date.now() });
+        persistScreenplay({
+          ...picture.screenplay,
+          selectedModelId,
+          pinnedWriterServedId: chosen?.servedModelId ?? null,
+          updatedAt: Date.now(),
+        });
         patchActive({ intake });
       }}
-      onStoryDoctor={(modelId) => {
+      onQaPin={(servedModelId) => persistScreenplay({ ...picture.screenplay, pinnedQaServedId: servedModelId, updatedAt: Date.now() })}
+      onApplyQaRevision={(next) => {
+        persistScreenplay(next);
+        toast.success("Scoped revision appended. Prior approved Fountain is preserved.");
+      }}
+      onStoryDoctor={(modelId, _scope, _nodeId) => {
         void beginScreenplayQa({
           fountain: picture.screenplay.workingFountain,
           modelId,
-          writerId: picture.screenplay.selectedModelId,
+          writerId: picture.screenplay.pinnedWriterServedId ?? picture.screenplay.selectedModelId,
+          pinnedQaServedId: picture.screenplay.pinnedQaServedId ?? null,
         }).then((report) => {
+          persistScreenplay({
+            ...picture.screenplay,
+            lastQaReport: {
+              id: report.id,
+              createdAt: report.createdAt,
+              modelId: report.model.id,
+              servedModelId: report.model.servedModelId,
+              displayName: report.model.displayName,
+              findings: report.findings,
+              fountainUnchanged: true,
+            },
+            updatedAt: Date.now(),
+          });
           toast.message(report.findings[0]?.summary || "Story Doctor critique ready. Fountain was not changed.");
         }).catch((error) => {
           toast.error(error instanceof Error ? error.message : "Story Doctor failed closed.");
@@ -667,6 +696,7 @@ export function StageRail() {
   const current = STAGES[currentIndex];
   const stageDone = (id: StageId) =>
     (id === "intake" && Boolean(picture?.intake.title)) ||
+    (id === "research" && Boolean(picture?.research?.approvedVersionId)) ||
     (id === "screenplay" && (picture?.screenplay.status === "READY_FOR_REVIEW" || picture?.screenplay.status === "APPROVED")) ||
     (id === "inventory" && (picture?.production?.assets.length ?? 0) > 0) ||
     (id === "performance" && Object.values(picture?.performance?.performance ?? {}).some((directions) => Object.values(directions).some((direction) => Boolean(direction.approvedAt)))) ||
@@ -677,7 +707,7 @@ export function StageRail() {
 
   return (
     <nav className="min-w-0 max-w-full overflow-hidden" aria-label="Pipeline" data-active-stage={stage}>
-      <div className="hidden grid-cols-10 gap-1 px-2 py-2 xl:grid">
+      <div className="hidden grid-cols-11 gap-1 px-2 py-2 xl:grid">
         {STAGES.map((item) => (
           <button
             key={item.id}

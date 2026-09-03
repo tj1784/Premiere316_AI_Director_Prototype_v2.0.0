@@ -13,6 +13,7 @@ import {
 } from "./screenplay.ts";
 import { screenplaySteps } from "./screenplay-prompts.ts";
 import { runScreenplayWorkflow, type ScreenplayRuntimePort } from "./screenplay-workflow.ts";
+import { approveResearchBible, approvedResearchSnapshot, seedResearchBibleFromIntake } from "../research/bible.ts";
 
 const model: ScreenplayModelRef = {
   id: "lmstudio:writer",
@@ -125,6 +126,28 @@ test("biblical workflow preserves confidence categories and cinematic social-wor
   assert.match(port.prompts[0]!, /A = explicit source\/Scripture/);
   assert.match(port.prompts[0]!, /Never force characters to explain historical symbolism/);
   assert.match(port.prompts[4]!, /Historical confidence: B/);
+});
+
+test("writer prompt uses immutable approved research snapshot, not later working notes", async () => {
+  const intake = { ...makePictureIntake(1), title: "Still Water", premise: "A bell." };
+  let bible = seedResearchBibleFromIntake(intake, 1);
+  bible = { ...bible, content: { ...bible.content, notes: "Approved note about the pier.", cinematographyManifesto: { ...bible.content.cinematographyManifesto, thesis: "Sodium lamps only." } } };
+  const approved = approveResearchBible(bible, "v-approved", 2);
+  if ("error" in approved) throw new Error(approved.error);
+  const drifted = { ...approved, content: { ...approved.content, notes: "Drifted working note", cinematographyManifesto: { ...approved.content.cinematographyManifesto, thesis: "Do not use this thesis" } } };
+  const port = runtime(["INT. BOAT — NIGHT\n\nMARA listens."]);
+  await runScreenplayWorkflow(port, {
+    intake,
+    screenplay: makePictureScreenplay("single", model.id, 1),
+    model,
+    runId: "r",
+    makeVersionId: () => "v1",
+    now: () => 3,
+    approvedResearch: approvedResearchSnapshot(drifted),
+  });
+  assert.match(port.prompts[0]!, /Sodium lamps only/);
+  assert.doesNotMatch(port.prompts[0]!, /Drifted working note/);
+  assert.doesNotMatch(port.prompts[0]!, /Do not use this thesis/);
 });
 
 test("manual edits, restore, and approval append versions without destructive overwrite", () => {

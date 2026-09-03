@@ -3,7 +3,7 @@ import type { LocalLLMProvider, LocalLLMProviderDiscovery } from "./local-llm-pr
 import type { ModelCatalog } from "./model-catalog.ts";
 import type { PictureIntake } from "./picture-intake.ts";
 import type { PictureResearchBible } from "../research/bible.ts";
-import { researchBlocksScreenplay } from "../research/bible.ts";
+import { approvedResearchSnapshot, researchBlocksScreenplay } from "../research/bible.ts";
 import { llamaQaBlockReason, qwenWriterBlockReason } from "./qwen-writer-identity.ts";
 import { parseScreenplayQaReport, STORY_DOCTOR_SYSTEM, type ScreenplayQaReport } from "./screenplay-qa.ts";
 import type { ScreenplayScope } from "./screenplay-scope.ts";
@@ -79,9 +79,11 @@ export class ScreenplayJobManager {
     const status = await this.status();
     const blockedResearch = researchBlocksScreenplay(input.research ?? null);
     if (blockedResearch) throw new Error(blockedResearch);
+    const approvedResearch = approvedResearchSnapshot(input.research ?? null);
+    if (!approvedResearch) throw new Error("Approve Picture Research before generating a screenplay.");
     const model = status.models.find((item) => item.id === input.modelId && item.status === "ready");
     if (!model) throw new Error("The selected screenplay model is not loaded and served by LM Studio.");
-    const blockedWriter = qwenWriterBlockReason(model, status.provider.available);
+    const blockedWriter = qwenWriterBlockReason(model, status.provider.available, input.screenplay.pinnedWriterServedId);
     if (blockedWriter) throw new Error(blockedWriter);
     const jobId = this.id();
     const snapshot: ScreenplayJobSnapshot = {
@@ -100,10 +102,10 @@ export class ScreenplayJobManager {
     return { ...snapshot };
   }
 
-  async critique(input: { fountain: string; modelId: string; writerId: string | null }): Promise<ScreenplayQaReport> {
+  async critique(input: { fountain: string; modelId: string; writerId: string | null; pinnedQaServedId?: string | null }): Promise<ScreenplayQaReport> {
     const status = await this.status();
     const model = status.models.find((item) => item.id === input.modelId && item.status === "ready");
-    const blocked = llamaQaBlockReason(model ?? null, input.writerId, status.provider.available);
+    const blocked = llamaQaBlockReason(model ?? null, input.writerId, status.provider.available, input.pinnedQaServedId ?? null);
     if (blocked || !model) throw new Error(blocked ?? "Story Doctor model is not served.");
     const settings = DEFAULT_SCREENPLAY_SETTINGS;
     await this.provider.load({ servedModelId: model.servedModelId, settings });
@@ -175,6 +177,7 @@ export class ScreenplayJobManager {
         resume: input.resume,
         rewriteScope: input.rewriteScope,
         selectedNodeId: input.selectedNodeId,
+        approvedResearch: approvedResearchSnapshot(input.research ?? null),
         makeVersionId: this.id,
         now: this.now,
         onUpdate: ({ state, step, phase }) => {
