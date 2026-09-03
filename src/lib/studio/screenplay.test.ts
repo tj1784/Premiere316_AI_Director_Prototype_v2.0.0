@@ -69,7 +69,7 @@ function runtime(outputs: string[]): ScreenplayRuntimePort & { prompts: string[]
   return result;
 }
 
-test("single draft loads and unloads once and creates one immutable generated version", async () => {
+test("single draft claims the resident model once and does not unload between steps", async () => {
   const intake = { ...makePictureIntake(1), title: "Still Water", premise: "A diver hears a bell.", screenplayModelId: model.id };
   const port = runtime(["INT. BOAT — NIGHT\n\nMARA listens."]);
   const result = await runScreenplayWorkflow(port, {
@@ -81,7 +81,7 @@ test("single draft loads and unloads once and creates one immutable generated ve
     now: () => 2,
   });
   assert.equal(port.loads, 1);
-  assert.equal(port.unloads, 1);
+  assert.equal(port.unloads, 0);
   assert.equal(result.versions.length, 1);
   assert.equal(result.versions[0]?.label, "Draft 1");
   assert.equal(result.status, "READY_FOR_REVIEW");
@@ -103,10 +103,10 @@ test("general seven-pass runs draft plus seven sequential passes against the pre
   });
   assert.equal(screenplaySteps("general-7-pass").length, 8);
   assert.equal(result.versions.length, 8);
-  assert.match(port.prompts[1]!, /CURRENT SCREENPLAY[\s\S]*Version 1/);
+  assert.match(port.prompts[1]!, /CURRENT TARGET[\s\S]*Version 1/);
   assert.equal(result.versions[7]?.sourceVersionId, "v7");
   assert.equal(port.loads, 1);
-  assert.equal(port.unloads, 1);
+  assert.equal(port.unloads, 0);
 });
 
 test("biblical workflow preserves confidence categories and cinematic social-world direction", async () => {
@@ -168,13 +168,15 @@ test("approved boundary exposes only canonical Fountain, stable scene links, and
   state = approveCurrentScreenplay(state, "approved", 3);
   const boundary = approvedScreenplayBoundary("picture", intake, state)!;
   assert.equal(boundary.screenplayVersionId, "approved");
-  assert.deepEqual(boundary.scenes.map((scene) => scene.id), ["approved:scene:001", "approved:scene:002"]);
+  assert.deepEqual(boundary.scenes.map((scene) => scene.id), ["SCENE-001", "SCENE-002"]);
+  assert.equal(state.hierarchy?.nodes.some((node) => node.id === "SCENE-001"), true);
+  assert.equal(state.versions.at(-1)?.hierarchy?.nodes.some((node) => node.id === "SCENE-002"), true);
   assert.equal(boundary.historicalContext?.confidenceLegend.C, "Reasonable historical reconstruction");
   const edited = { ...state, status: "READY_FOR_REVIEW" as const, workingFountain: "INT. HOUSE — DAY\n\nA later note." };
   assert.equal(approvedScreenplayBoundary("picture", intake, edited)?.screenplayVersionId, "approved");
 });
 
-test("canceled generation never creates a partial version and still unloads", async () => {
+test("canceled generation never creates a partial version and does not physically unload", async () => {
   const intake = { ...makePictureIntake(1), title: "Stop", premise: "A halted draft.", screenplayModelId: model.id };
   const port = runtime(["INT. PARTIAL — DAY"]);
   const controller = new AbortController();
@@ -187,7 +189,7 @@ test("canceled generation never creates a partial version and still unloads", as
     makeVersionId: () => "never",
     signal: controller.signal,
   }), /stopped/);
-  assert.equal(port.unloads, 1);
+  assert.equal(port.unloads, 0);
   assert.equal(port.prompts.length, 0);
 });
 

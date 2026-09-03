@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Circle, GitCompareArrows, LoaderCircle, RotateCcw, Save, Square } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,10 @@ import type { PictureIntake } from "@/lib/studio/picture-intake";
 import { screenplaySteps, type ScreenplayStep } from "@/lib/studio/screenplay-prompts";
 import { screenplayModelDetail } from "@/lib/studio/screenplay-models";
 import { screenplayScenes, type PictureScreenplay, type ScreenplayModelRef } from "@/lib/studio/screenplay";
-import { isLlamaQaCandidate, isPinnedExactServedReady, isQwenWriterCandidate, llamaQaBlockReason, qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
+import { isLlamaQaCandidate as isLlamaFamily, isPinnedExactServedReady, isQwenWriterCandidate as isQwenFamily, llamaQaBlockReason, qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
+import { DEFAULT_CREW_WRITER_DISPLAY, OPTIONAL_CREW_WRITER_DISPLAY } from "@/lib/studio/model-routing.ts";
 import { applyExplicitQaRewrite } from "@/lib/studio/screenplay-qa.ts";
-import { defaultScreenplayScope, SCREENPLAY_SCOPES, type ScreenplayScope } from "@/lib/studio/screenplay-scope.ts";
+import { defaultScreenplayScope, SCREENPLAY_SCOPES, type ScreenplayRewriteTarget, type ScreenplayScope, type ScreenplaySelection } from "@/lib/studio/screenplay-scope.ts";
 import { parseScreenplayHierarchy } from "@/lib/studio/screenplay-hierarchy.ts";
 import type { ScreenplayJobSnapshot } from "@/lib/studio/screenplay-jobs.server";
 
@@ -39,6 +40,7 @@ export function ScreenplayWorkspace({
   onStoryDoctor,
   onApplyQaRevision,
   onQaPin,
+  onReleaseResident,
   researchApproved,
 }: {
   intake: PictureIntake;
@@ -48,24 +50,28 @@ export function ScreenplayWorkspace({
   job: ScreenplayJobSnapshot | null;
   onTextChange: (fountain: string) => void;
   onSaveRevision: () => void;
-  onGenerate: (scope: ScreenplayScope, nodeId: string | null) => void;
-  onContinue: (scope: ScreenplayScope, nodeId: string | null) => void;
-  onRegeneratePass: (stepId: ScreenplayStep["id"], scope: ScreenplayScope, nodeId: string | null) => void;
+  onGenerate: (target: ScreenplayRewriteTarget) => void;
+  onContinue: (target: ScreenplayRewriteTarget) => void;
+  onRegeneratePass: (stepId: ScreenplayStep["id"], target: ScreenplayRewriteTarget) => void;
   onStop: () => void;
   onRestore: (versionId: string) => void;
   onApprove: () => void;
   onRescan: () => void;
   onModelChange: (modelId: string | null) => void;
-  onStoryDoctor?: (modelId: string, scope: ScreenplayScope, nodeId: string | null) => void;
+  onStoryDoctor?: (modelId: string, target: ScreenplayRewriteTarget, secondOpinion: boolean) => void;
   onApplyQaRevision?: (next: PictureScreenplay) => void;
   onQaPin?: (servedModelId: string | null) => void;
+  onReleaseResident?: () => void;
   researchApproved: boolean;
 }) {
   const [compareId, setCompareId] = useState<string>("");
   const [passId, setPassId] = useState<ScreenplayStep["id"]>("pass-1");
   const [qaModelId, setQaModelId] = useState("");
   const [rewriteScope, setRewriteScope] = useState<ScreenplayScope>("scene");
+  const [secondOpinion, setSecondOpinion] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
+  const [selection, setSelection] = useState<ScreenplaySelection>(null);
   const generation = job?.screenplay.generation ?? screenplay.generation;
   const running = job?.status === "queued" || job?.status === "running" || screenplay.status === "GENERATING";
   const stopped = job?.status === "canceled";
@@ -77,13 +83,27 @@ export function ScreenplayWorkspace({
   const passSteps = steps.filter((step) => step.pass !== null);
   const writerPin = screenplay.pinnedWriterServedId ?? null;
   const qaPin = screenplay.pinnedQaServedId ?? null;
-  const selectedReady = Boolean(selected && isPinnedExactServedReady(selected, writerPin) && isQwenWriterCandidate(selected) && provider?.available);
+  const selectedReady = Boolean(selected && isPinnedExactServedReady(selected, writerPin) && (isLlamaFamily(selected) || isQwenFamily(selected)) && provider?.available);
   const writerBlock = qwenWriterBlockReason(selected, Boolean(provider?.available), writerPin);
   const generateEnabled = researchApproved && selectedReady && !writerBlock;
   const generateBlock = !researchApproved ? "Approve Picture Research before generating a screenplay." : writerBlock;
-  const hierarchy = useMemo(() => parseScreenplayHierarchy(shownText), [shownText]);
-  const qaModel = models.find((model) => model.id === qaModelId) ?? null;
-  const qaBlock = llamaQaBlockReason(qaModel, writerPin, Boolean(provider?.available), qaPin);
+  const hierarchy = useMemo(() => parseScreenplayHierarchy(shownText, screenplay.hierarchy), [shownText, screenplay.hierarchy]);
+  const defaultQaModel = models.find((model) => model.servedModelId === (qaPin || (selected && isLlamaFamily(selected) && writerPin === selected.servedModelId ? writerPin : null))) ?? null;
+  const effectiveQaModelId = qaModelId || defaultQaModel?.id || "";
+  const qaModel = models.find((model) => model.id === effectiveQaModelId) ?? null;
+  const effectiveQaPin = qaPin || (selected && isLlamaFamily(selected) ? writerPin : null);
+  const qaBlock = llamaQaBlockReason(qaModel, writerPin, Boolean(provider?.available), effectiveQaPin, secondOpinion);
+  const rewriteTarget: ScreenplayRewriteTarget = {
+    scope: rewriteScope,
+    nodeId: selectedNodeId,
+    nodeIds: selectedNodeIds.length ? selectedNodeIds : (selectedNodeId ? [selectedNodeId] : null),
+    selection,
+  };
+  useEffect(() => {
+    if (qaPin || !selected || !writerPin || !isLlamaFamily(selected) || selected.servedModelId !== writerPin) return;
+    setQaModelId((current) => current || selected.id);
+    onQaPin?.(writerPin);
+  }, [qaPin, selected, writerPin, onQaPin]);
   const qaReport = screenplay.lastQaReport ?? null;
   const applyableIndex = qaReport?.findings.findIndex((finding) => Boolean(finding.rewriteSuggested?.trim())) ?? -1;
   const completed = new Set(generation?.completedLabels ?? screenplay.versions.map((version) => version.label === "Draft 1" ? "Draft" : version.label));
@@ -93,7 +113,19 @@ export function ScreenplayWorkspace({
       <aside className="hidden min-h-0 overflow-y-auto border-r border-border p-3 lg:block">
         <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Scenes</p>
         <ol className="mt-3 grid gap-1">
-          {hierarchy.nodes.filter((node) => node.kind === "scene").map((scene, index) => <li key={scene.id}><button type="button" aria-pressed={selectedNodeId === scene.id} className={`w-full rounded-sm px-2 py-2 text-left text-xs hover:bg-elevated hover:text-fg ${selectedNodeId === scene.id ? "bg-elevated text-fg" : "text-muted"}`} onClick={() => setSelectedNodeId(scene.id)}><span className="mr-2 text-[10px] tabular-nums text-subtle">{String(index + 1).padStart(2, "0")}</span>{scene.slugline ?? scene.title}</button></li>)}
+          {hierarchy.nodes.filter((node) => node.kind === "scene").map((scene, index) => <li key={scene.id}><button type="button" aria-pressed={selectedNodeIds.includes(scene.id) || selectedNodeId === scene.id} className={`w-full rounded-sm px-2 py-2 text-left text-xs hover:bg-elevated hover:text-fg ${selectedNodeIds.includes(scene.id) || selectedNodeId === scene.id ? "bg-elevated text-fg" : "text-muted"}`} onClick={(event) => {
+            if (event.ctrlKey || event.metaKey) {
+              const next = selectedNodeIds.includes(scene.id) ? selectedNodeIds.filter((id) => id !== scene.id) : [...selectedNodeIds, scene.id];
+              setSelectedNodeIds(next);
+              setSelectedNodeId(next[next.length - 1] ?? scene.id);
+              if (next.length > 1) setRewriteScope("selected-scenes");
+              else setRewriteScope(defaultScreenplayScope(scene));
+              return;
+            }
+            setSelectedNodeId(scene.id);
+            setSelectedNodeIds([scene.id]);
+            setRewriteScope(defaultScreenplayScope(scene, selection));
+          }}><span className="mr-2 text-[10px] tabular-nums text-subtle">{String(index + 1).padStart(2, "0")}</span>{scene.slugline ?? scene.title}</button></li>)}
         </ol>
         {!scenes.length ? <p className="mt-3 text-xs leading-relaxed text-muted">Scene headings appear here as the Fountain draft develops.</p> : null}
       </aside>
@@ -110,15 +142,24 @@ export function ScreenplayWorkspace({
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
           {compared ? <div className="mb-4 grid gap-3 xl:grid-cols-2"><section className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]"><p className="mb-2 text-[10px] tracking-wide text-subtle uppercase">Current</p><pre className="max-h-80 overflow-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-muted">{screenplay.workingFountain}</pre></section><section className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]"><p className="mb-2 text-[10px] tracking-wide text-subtle uppercase">{compared.label}</p><pre className="max-h-80 overflow-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-muted">{compared.fountain}</pre></section></div> : null}
-          <Textarea aria-label="Fountain screenplay" className="screenplay min-h-[36rem] resize-y bg-inset font-mono leading-relaxed" value={shownText} readOnly={running} onChange={(event) => onTextChange(event.target.value)} placeholder="Your Fountain screenplay will appear here." />
+          <Textarea aria-label="Fountain screenplay" className="screenplay min-h-[36rem] resize-y bg-inset font-mono leading-relaxed" value={shownText} readOnly={running} onChange={(event) => onTextChange(event.target.value)} onSelect={(event) => {
+            const start = event.currentTarget.selectionStart ?? 0;
+            const end = event.currentTarget.selectionEnd ?? 0;
+            if (end > start) {
+              setSelection({ start, end });
+              setRewriteScope("selected-text");
+            } else {
+              setSelection(null);
+            }
+          }} placeholder="Your Fountain screenplay will appear here." />
         </div>
 
         <footer className="shrink-0 border-t border-border px-4 py-3 sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
-            {running ? <Button variant="rec" onClick={onStop}><Square />Stop</Button> : <Button onClick={() => onGenerate(rewriteScope, selectedNodeId)} disabled={!generateEnabled} title={generateBlock ?? undefined}>Generate Screenplay</Button>}
-            {stopped ? <Button variant="secondary" onClick={() => onContinue(rewriteScope, selectedNodeId)} disabled={!generateEnabled}>Continue</Button> : null}
+            {running ? <Button variant="rec" onClick={onStop}><Square />Stop</Button> : <Button onClick={() => onGenerate(rewriteTarget)} disabled={!generateEnabled} title={generateBlock ?? undefined}>Generate Screenplay</Button>}
+            {stopped ? <Button variant="secondary" onClick={() => onContinue(rewriteTarget)} disabled={!generateEnabled}>Continue</Button> : null}
             <Button variant="secondary" disabled={running || !screenplay.workingFountain.trim()} onClick={onSaveRevision}><Save />Save Revision</Button>
-            <Button variant="secondary" disabled={running || !passSteps.length || !generateEnabled} onClick={() => onRegeneratePass(passId, rewriteScope, selectedNodeId)}><RotateCcw />Regenerate Pass</Button>
+            <Button variant="secondary" disabled={running || !passSteps.length || !generateEnabled} onClick={() => onRegeneratePass(passId, rewriteTarget)}><RotateCcw />Regenerate Pass</Button>
             {passSteps.length ? <select aria-label="Pass to regenerate" className="h-9 rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={passId} onChange={(event) => setPassId(event.target.value as ScreenplayStep["id"])}>{passSteps.map((step) => <option key={step.id} value={step.id}>{step.label}</option>)}</select> : null}
             <Button className="ml-auto" disabled={running || !screenplay.workingFountain.trim() || screenplay.status === "APPROVED"} onClick={onApprove}><Check />Approve Screenplay</Button>
           </div>
@@ -126,24 +167,26 @@ export function ScreenplayWorkspace({
       </section>
 
       <aside className="hidden min-h-0 overflow-y-auto border-l border-border p-4 lg:block">
-        <div className="flex items-center justify-between gap-2"><p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Local writer</p><button type="button" onClick={onRescan} className="text-[11px] text-muted hover:text-fg">Rescan</button></div>
-        <select aria-label="Screenplay model" className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={screenplay.selectedModelId ?? ""} onChange={(event) => onModelChange(event.target.value || null)}><option value="">Pin exact served Qwen ID</option>{models.map((model) => <option key={model.id} value={model.id} disabled={!isQwenWriterCandidate(model) || model.status !== "ready"}>{model.displayName}{isQwenWriterCandidate(model) ? " · Qwen candidate" : " · Not Qwen"}</option>)}</select>
-        {writerPin ? <p className="mt-2 truncate text-[11px] text-subtle" title={writerPin}>Pinned writer ID: {writerPin}</p> : <p className="mt-2 text-[11px] text-subtle">No writer ID pinned.</p>}
+        <div className="flex items-center justify-between gap-2"><p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Writer</p><button type="button" onClick={onRescan} className="text-[11px] text-muted hover:text-fg">Rescan</button></div>
+        <select aria-label="Writer" className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={screenplay.selectedModelId ?? ""} onChange={(event) => onModelChange(event.target.value || null)}><option value="">Default writer · {DEFAULT_CREW_WRITER_DISPLAY}</option>{models.map((model) => <option key={model.id} value={model.id} disabled={model.status !== "ready" || !(isLlamaFamily(model) || isQwenFamily(model))}>{isLlamaFamily(model) ? `${model.displayName} · Llama default` : isQwenFamily(model) ? `${model.displayName} · Optional Qwen` : model.displayName}</option>)}</select>
+        {writerPin ? <p className="mt-2 truncate text-[11px] text-subtle" title={writerPin}>Pinned writer ID: {writerPin}</p> : <p className="mt-2 text-[11px] text-subtle">No writer ID pinned. Premiere316 will not load a model.</p>}
         {selected ? <><p className="mt-3 text-sm">{selected.displayName}</p><p className="mt-1 text-xs leading-relaxed text-muted">{screenplayModelDetail(selected)}</p><p className="mt-2 text-[11px] text-subtle">{generateBlock ?? selected.statusReason}</p></> : <p className="mt-3 text-xs leading-relaxed text-muted">{generateBlock ?? provider?.reason ?? "Checking LM Studio local API…"}</p>}
+        <p className="mt-2 text-[11px] leading-relaxed text-muted">Workflow: Write → QA → Revise. Same resident Llama may serve both roles sequentially.</p>
         <div className="my-5 border-t border-border" />
-        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Rewrite scope</p>
+        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Scope</p>
         <select aria-label="Rewrite scope" className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={rewriteScope} onChange={(event) => setRewriteScope(event.target.value as ScreenplayScope)}>{SCREENPLAY_SCOPES.map((scope) => <option key={scope} value={scope}>{scope}</option>)}</select>
-        <p className="mt-2 text-[11px] leading-relaxed text-muted">Default is the smallest selected node ({defaultScreenplayScope(hierarchy.nodes.find((node) => node.kind === "scene") ?? null)}). Other scenes stay byte-identical.</p>
+        <p className="mt-2 text-[11px] leading-relaxed text-muted">Default is the smallest selection ({defaultScreenplayScope(hierarchy.nodes.find((node) => node.kind === "scene") ?? null)}). Unrelated IDs stay byte-identical.</p>
         <div className="my-5 border-t border-border" />
-        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Story Doctor</p>
-        <select aria-label="Story Doctor model" className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={qaModelId} onChange={(event) => {
+        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">QA</p>
+        <select aria-label="Story Doctor model" className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={effectiveQaModelId} onChange={(event) => {
           const id = event.target.value;
           setQaModelId(id);
           onQaPin?.(models.find((model) => model.id === id)?.servedModelId ?? null);
-        }}><option value="">Pin exact served Llama ID</option>{models.map((model) => <option key={model.id} value={model.id} disabled={!isLlamaQaCandidate(model) || model.status !== "ready"}>{model.displayName}{isLlamaQaCandidate(model) ? " · Llama candidate" : " · Not Llama"}</option>)}</select>
+        }}><option value="">Default QA · {DEFAULT_CREW_WRITER_DISPLAY}</option>{models.map((model) => <option key={model.id} value={model.id} disabled={model.status !== "ready" || !(isLlamaFamily(model) || isQwenFamily(model))}>{isLlamaFamily(model) ? `${model.displayName} · Llama default` : isQwenFamily(model) ? `${model.displayName} · Optional ${OPTIONAL_CREW_WRITER_DISPLAY}` : model.displayName}</option>)}</select>
         {qaPin ? <p className="mt-2 truncate text-[11px] text-subtle" title={qaPin}>Pinned Story Doctor ID: {qaPin}</p> : <p className="mt-2 text-[11px] text-subtle">No Story Doctor ID pinned.</p>}
+        <label className="mt-3 flex items-center gap-2 text-[11px] text-muted"><input type="checkbox" checked={secondOpinion} onChange={(event) => setSecondOpinion(event.target.checked)} />Second opinion · Qwen (explicit, never automatic)</label>
         <p className="mt-2 text-[11px] leading-relaxed text-muted">{qaBlock ?? "Critique first. Fountain does not change until you apply a scoped revision."}</p>
-        <Button className="mt-3 w-full" size="sm" variant="secondary" disabled={Boolean(qaBlock) || running || !qaModelId} onClick={() => onStoryDoctor?.(qaModelId, rewriteScope, selectedNodeId)}>Run story doctor</Button>
+        <Button className="mt-3 w-full" size="sm" variant="secondary" disabled={Boolean(qaBlock) || running || !effectiveQaModelId} onClick={() => onStoryDoctor?.(effectiveQaModelId, rewriteTarget, secondOpinion)}>Run story doctor</Button>
         {qaReport ? <div className="mt-3 grid gap-2" aria-label="Story Doctor critique">{qaReport.findings.map((finding, index) => <article key={`${qaReport.id}-${index}`} className="rounded-md bg-elevated p-3 shadow-[var(--shadow-border)]"><p className="text-[10px] tracking-wide text-subtle uppercase">{finding.category} · {finding.severity}</p><p className="mt-1 text-xs leading-relaxed">{finding.summary}</p></article>)}</div> : null}
         <Button className="mt-3 w-full" size="sm" disabled={running || applyableIndex < 0 || !qaReport || !qaModel} onClick={() => {
           if (!qaReport || !qaModel || applyableIndex < 0) return;
@@ -152,16 +195,22 @@ export function ScreenplayWorkspace({
             createdAt: qaReport.createdAt,
             model: qaModel,
             fountainUnchanged: true,
+            role: "qa-critic",
             findings: qaReport.findings.map((finding) => ({
               category: finding.category as import("@/lib/studio/screenplay-qa.ts").ScreenplayQaCategory,
               severity: finding.severity === "blocker" || finding.severity === "warning" ? finding.severity : "note" as const,
               summary: finding.summary,
+              exactScope: finding.exactScope ?? null,
+              recommendation: finding.recommendation ?? null,
+              revisionRequired: Boolean(finding.revisionRequired),
               rewriteSuggested: finding.rewriteSuggested,
             })),
-          }, applyableIndex, rewriteScope, selectedNodeId, `spv-qa-${Date.now()}`);
+          }, applyableIndex, rewriteScope, selectedNodeId, `spv-qa-${Date.now()}`, Date.now(), { nodeIds: rewriteTarget.nodeIds, selection, previous: hierarchy });
           if ("error" in applied) return;
           onApplyQaRevision?.(applied);
         }}>Apply scoped revision</Button>
+        <Button className="mt-3 w-full" size="sm" variant="ghost" disabled={running} onClick={() => onReleaseResident?.()}>Release local model</Button>
+        <p className="mt-2 text-[11px] leading-relaxed text-muted">Prompt compiler default: {DEFAULT_CREW_WRITER_DISPLAY} (inactive until Prompt Lab / Wave 5).</p>
         <div className="my-5 border-t border-border" />
         <div className="flex items-center justify-between gap-2"><p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Versions</p><span className="text-[10px] tabular-nums text-subtle">{screenplay.versions.length}</span></div>
         <ol className="mt-3 grid gap-2">{[...screenplay.versions].reverse().map((version) => <li key={version.id} className="rounded-md bg-elevated p-3 shadow-[var(--shadow-border)]"><div className="flex items-center justify-between gap-2"><p className="truncate text-xs" title={version.label}>{version.label}</p>{version.id === screenplay.currentVersionId ? <span className="text-[9px] tracking-wide text-accent uppercase">Current</span> : null}</div><p className="mt-1 text-[10px] text-subtle">{new Date(version.createdAt).toLocaleString()}</p><div className="mt-2 flex gap-1"><Button size="sm" variant="ghost" onClick={() => setCompareId(compareId === version.id ? "" : version.id)}><GitCompareArrows />Compare</Button><Button size="sm" variant="ghost" disabled={running || version.id === screenplay.currentVersionId} onClick={() => onRestore(version.id)}>Restore</Button></div></li>)}</ol>

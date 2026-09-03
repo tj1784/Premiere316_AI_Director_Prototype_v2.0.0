@@ -103,7 +103,8 @@ try {
   await page.getByText("Draft", { exact: true }).first().waitFor();
   await page.getByText("Local only", { exact: true }).first().waitFor();
   await selectStage(page, "screenplay", "03 Screenplay");
-  await page.getByText("Local writer", { exact: true }).waitFor();
+  await page.waitForFunction(() => document.querySelector('[data-studio-shell="true"]')?.getAttribute('data-stage') === 'screenplay');
+  await page.getByRole("button", { name: "Generate Screenplay" }).waitFor();
   await page.waitForFunction(() => !document.body.innerText.includes("Checking LM Studio local API"));
   assert.equal(await page.getByText("Timeline", { exact: true }).count(), 0, "timeline must be hidden outside Stitch");
   await page.getByText("Approve Picture Research before generating a screenplay.").waitFor();
@@ -112,28 +113,34 @@ try {
   await page.getByRole("button", { name: "Approve research" }).click();
   await page.getByText("Research approved", { exact: true }).first().waitFor();
   await selectStage(page, "screenplay", "03 Screenplay");
-  await page.getByText("Local writer", { exact: true }).waitFor();
+  await page.waitForFunction(() => document.querySelector('[data-studio-shell="true"]')?.getAttribute('data-stage') === 'screenplay');
+  await page.getByRole("button", { name: "Generate Screenplay" }).waitFor();
   await page.waitForFunction(() => !document.body.innerText.includes("Checking LM Studio local API"));
   const generate = page.getByRole("button", { name: "Generate Screenplay" });
-  assert.equal(await generate.isDisabled(), true, "generation must stay disabled after research approval without a reachable pinned Qwen ID");
-  assert.match(await generate.getAttribute("title") ?? "", /LM Studio local API is offline|Pin the full currently served Qwen model ID/);
-  await page.getByText("No writer ID pinned.").waitFor();
+  assert.equal(await generate.isDisabled(), true, "generation must stay disabled after research approval without a reachable pinned Llama ID");
+  assert.match(await generate.getAttribute("title") ?? "", /LM Studio local API is offline|Pin the full currently served Llama model ID/);
+  await page.getByText("No writer ID pinned. Premiere316 will not load a model.").waitFor();
   await page.getByText("No Story Doctor ID pinned.").waitFor();
-  assert.equal(await page.getByLabel("Screenplay model").locator("option").first().textContent(), "Pin exact served Qwen ID");
-  assert.equal(await page.getByLabel("Story Doctor model").locator("option").first().textContent(), "Pin exact served Llama ID");
-  await page.getByText("LM Studio local API is offline. Story Doctor stays disabled.").waitFor();
+  assert.equal(await page.getByLabel("Writer").locator("option").first().textContent(), "Default writer · Llama 3.3 70B Instruct");
+  assert.equal(await page.getByLabel("Story Doctor model").locator("option").first().textContent(), "Default QA · Llama 3.3 70B Instruct");
+  await page.getByText(/LM Studio local API is offline\. Story Doctor stays disabled\./).waitFor();
   assert.equal(await page.getByRole("button", { name: "Run story doctor" }).isDisabled(), true, "Story Doctor must fail closed while LM Studio is offline");
   assert.equal(await page.getByRole("button", { name: "Apply scoped revision" }).isDisabled(), true, "scoped apply must stay disabled without a critique");
-  const modelOptions = await page.getByLabel("Screenplay model").locator("option").evaluateAll((options) => options.map((option) => ({ label: option.textContent, value: option.value, disabled: option.disabled })));
-  assert.equal(modelOptions.slice(1).every((option) => option.disabled), true, "LM Studio unexpectedly exposed a served model");
+  const modelOptions = await page.getByLabel("Writer").locator("option").evaluateAll((options) => options.map((option) => ({ label: option.textContent, value: option.value, disabled: option.disabled })));
+  const qaOptions = await page.getByLabel("Story Doctor model").locator("option").evaluateAll((options) => options.map((option) => ({ label: option.textContent, value: option.value, disabled: option.disabled })));
+  assert.equal(modelOptions.slice(1).every((option) => option.disabled), true, "LM Studio unexpectedly exposed a served writer model");
+  assert.equal(qaOptions.slice(1).every((option) => option.disabled), true, "LM Studio unexpectedly exposed a served QA model");
+  const qwenSecondOpinionVisible = await page.getByLabel(/Second opinion · Qwen/).isVisible();
+  assert.equal(qwenSecondOpinionVisible, true, "explicit Qwen second-opinion gate must be visible but never automatic");
   lmStudioState = {
     localCatalogCandidates: modelOptions.length - 1,
     servedModels: modelOptions.slice(1).filter((option) => !option.disabled).length,
     generationEnabled: false,
     loopbackOnly: true,
     researchGate: "approve-then-pin",
-    writerPinUi: "Pin exact served Qwen ID",
-    doctorPinUi: "Pin exact served Llama ID",
+    writerPinUi: "Default writer · Llama 3.3 70B Instruct",
+    doctorPinUi: "Default QA · Llama 3.3 70B Instruct",
+    qwenSecondOpinionExplicit: qwenSecondOpinionVisible,
     critiqueFirst: true,
     scopedApplyEnabled: false,
   };

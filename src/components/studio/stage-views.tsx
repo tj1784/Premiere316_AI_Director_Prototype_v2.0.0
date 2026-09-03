@@ -28,12 +28,15 @@ import type { ScreenplayModelRef } from "@/lib/studio/screenplay";
 import { addManualScreenplayVersion, approveCurrentScreenplay, restoreScreenplayVersion } from "@/lib/studio/screenplay";
 import type { ScreenplayStep } from "@/lib/studio/screenplay-prompts";
 import type { ScreenplayJobSnapshot } from "@/lib/studio/screenplay-jobs.server";
-import { beginScreenplayJob, beginScreenplayQa, localLLMStatus, readScreenplayJob, stopScreenplayJob } from "@/lib/studio/screenplay-client";
+import { beginScreenplayJob, beginScreenplayQa, localLLMStatus, readScreenplayJob, releaseLocalScreenplayModel, stopScreenplayJob } from "@/lib/studio/screenplay-client";
 import { ScreenplayWorkspace } from "./screenplay-workspace";
 import { ResearchWorkspace } from "@/components/research/research-workspace";
 import { hydratePictureResearch, isResearchApproved, researchBlocksScreenplay } from "@/lib/research/bible.ts";
 import { qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
-import type { ScreenplayScope } from "@/lib/studio/screenplay-scope.ts";
+import { hydratePromptLabState, promptLabRuntimeBlock } from "@/lib/studio/prompt-lab.ts";
+import { DEFAULT_CREW_WRITER_DISPLAY, OPTIONAL_CREW_WRITER_DISPLAY } from "@/lib/studio/model-routing.ts";
+import type { ScreenplayRewriteTarget, ScreenplayScope } from "@/lib/studio/screenplay-scope.ts";
+import { isLlamaQaCandidate as isLlamaFamily } from "@/lib/studio/qwen-writer-identity.ts";
 import { InventoryWorkspace } from "@/components/production/inventory-workspace";
 import {
   approvedScreenplayInputFromBoundary,
@@ -209,7 +212,7 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
     };
   }, [jobId, persistScreenplay]);
 
-  const start = async (options: { resume?: boolean; stepId?: ScreenplayStep["id"]; rewriteScope?: ScreenplayScope; selectedNodeId?: string | null } = {}) => {
+  const start = async (options: { resume?: boolean; stepId?: ScreenplayStep["id"]; target?: ScreenplayRewriteTarget } = {}) => {
     const research = hydratePictureResearch(picture.research, picture.intake);
     const blockedResearch = researchBlocksScreenplay(research);
     if (blockedResearch) {
@@ -224,7 +227,7 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
       return;
     }
     if (!modelId) {
-      toast.error("Pin the full currently served Qwen model ID. Family names are not accepted.");
+      toast.error("Pin the full currently served Llama model ID. Family names are not accepted. Qwen is an optional explicit alternate.");
       return;
     }
     try {
@@ -235,8 +238,10 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
         modelId,
         resume: options.resume,
         stepId: options.stepId,
-        rewriteScope: options.rewriteScope,
-        selectedNodeId: options.selectedNodeId ?? null,
+        rewriteScope: options.target?.scope,
+        selectedNodeId: options.target?.nodeId ?? null,
+        selectedNodeIds: options.target?.nodeIds ?? null,
+        selection: options.target?.selection ?? null,
       });
       setJob(initial);
       setJobId(initial.id);
@@ -261,9 +266,9 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
       job={job}
       onTextChange={(workingFountain) => persistScreenplay({ ...picture.screenplay, workingFountain, status: picture.screenplay.approvedVersionId ? picture.screenplay.status : "READY_FOR_REVIEW", updatedAt: Date.now() })}
       onSaveRevision={() => persistScreenplay(addManualScreenplayVersion(picture.screenplay, picture.screenplay.workingFountain, uid("spv")))}
-      onGenerate={(rewriteScope, selectedNodeId) => void start({ rewriteScope, selectedNodeId })}
-      onContinue={(rewriteScope, selectedNodeId) => void start({ resume: true, rewriteScope, selectedNodeId })}
-      onRegeneratePass={(stepId, rewriteScope, selectedNodeId) => void start({ stepId, rewriteScope, selectedNodeId })}
+      onGenerate={(target) => void start({ target })}
+      onContinue={(target) => void start({ resume: true, target })}
+      onRegeneratePass={(stepId, target) => void start({ stepId, target })}
       researchApproved={isResearchApproved(hydratePictureResearch(picture.research, picture.intake))}
       onStop={() => { if (jobId) void stopScreenplayJob(jobId).then((snapshot) => { if (snapshot) { setJob(snapshot); persistScreenplay(snapshot.screenplay); } }); }}
       onRestore={(versionId) => persistScreenplay(restoreScreenplayVersion(picture.screenplay, versionId, uid("spv")))}
@@ -276,21 +281,36 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
           ...picture.screenplay,
           selectedModelId,
           pinnedWriterServedId: chosen?.servedModelId ?? null,
+          pinnedQaServedId: chosen && isLlamaFamily(chosen) ? (picture.screenplay.pinnedQaServedId ?? chosen.servedModelId) : picture.screenplay.pinnedQaServedId,
           updatedAt: Date.now(),
         });
         patchActive({ intake });
       }}
       onQaPin={(servedModelId) => persistScreenplay({ ...picture.screenplay, pinnedQaServedId: servedModelId, updatedAt: Date.now() })}
+      onReleaseResident={() => {
+        void releaseLocalScreenplayModel().then(() => toast.message("Local model claim released. Premiere316 did not auto-load a replacement.")).catch((error) => toast.error(error instanceof Error ? error.message : "Unable to release local model."));
+      }}
       onApplyQaRevision={(next) => {
         persistScreenplay(next);
         toast.success("Scoped revision appended. Prior approved Fountain is preserved.");
       }}
-      onStoryDoctor={(modelId, _scope, _nodeId) => {
+      onStoryDoctor={(modelId, target, secondOpinion) => {
+        const writerPin = picture.screenplay.pinnedWriterServedId ?? null;
+        const writer = models.find((model) => model.id === picture.screenplay.selectedModelId) ?? null;
         void beginScreenplayQa({
           fountain: picture.screenplay.workingFountain,
           modelId,
-          writerId: picture.screenplay.pinnedWriterServedId ?? picture.screenplay.selectedModelId,
-          pinnedQaServedId: picture.screenplay.pinnedQaServedId ?? null,
+          writerId: writerPin ?? picture.screenplay.selectedModelId,
+          pinnedQaServedId: picture.screenplay.pinnedQaServedId ?? (writer && isLlamaFamily(writer) ? writerPin : null),
+          secondOpinion,
+          goal: picture.intake.logline || picture.intake.premise || picture.title,
+          revisionTarget: target.scope,
+          rewriteScope: target.scope,
+          selectedNodeId: target.nodeId,
+          selectedNodeIds: target.nodeIds,
+          selection: target.selection,
+          characterState: picture.characters.map((item) => item.name).join(", "),
+          research: hydratePictureResearch(picture.research, picture.intake),
         }).then((report) => {
           persistScreenplay({
             ...picture.screenplay,
@@ -406,12 +426,27 @@ function ShotsStage({ picture }: { picture: Picture }) {
 
 function PromptStage({ picture }: { picture: Picture }) {
   const setStage = useStudio((s) => s.setStage);
+  const patchActive = useStudio((s) => s.patchActive);
+  const lab = hydratePromptLabState(picture.promptLab);
   return (
     <Pane title="Prompt Lab" kicker="07 · Dialects">
       <p className="mb-4 max-w-xl text-sm text-muted">
         Still dialect {engineById(picture.selectedEngine.image)?.name}. Motion dialect{" "}
         {engineById(picture.selectedEngine.video)?.name}. Each shot is a 10–15s performance.
       </p>
+      <div className="mb-4 max-w-xl rounded-md bg-elevated p-3 shadow-[var(--shadow-border)]">
+        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Prompt compiler</p>
+        <select aria-label="Prompt compiler" className="mt-3 h-9 w-full rounded-sm bg-inset px-2 text-xs text-fg shadow-[var(--shadow-border)]" value="llama" onChange={() => patchActive({ promptLab: lab })}>
+          <option value="llama">{DEFAULT_CREW_WRITER_DISPLAY} · default</option>
+        </select>
+        <select aria-label="Alternate compiler" className="mt-2 h-9 w-full rounded-sm bg-inset px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={lab.alternate} onChange={(event) => patchActive({ promptLab: { ...lab, alternate: event.target.value === "qwen" ? "qwen" : "none" } })}>
+          <option value="none">Alternate · None</option>
+          <option value="qwen">Alternate · Qwen (explicit A/B only)</option>
+        </select>
+        <p className="mt-2 text-xs leading-relaxed text-muted">{promptLabRuntimeBlock()}</p>
+        <Button className="mt-3" size="sm" variant="secondary" disabled title={promptLabRuntimeBlock()}>Compile drafts</Button>
+        <Button className="mt-3 ml-2" size="sm" variant="ghost" disabled title={promptLabRuntimeBlock()}>A/B benchmark</Button>
+      </div>
       <div className="grid gap-3">
         {picture.shots.map((s) => (
           <article key={s.id} className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]">

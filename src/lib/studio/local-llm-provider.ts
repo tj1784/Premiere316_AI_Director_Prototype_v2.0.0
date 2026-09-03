@@ -62,6 +62,7 @@ export interface LocalLLMProvider {
   cancel(): Promise<void>;
   telemetry(): ScreenplayTelemetry | null;
   unload(): Promise<void>;
+  releaseResident?(boundary: "held-resident" | "user-explicit"): Promise<void>;
 }
 
 /** Explicitly present for future native work, but deliberately inert and startup-safe. */

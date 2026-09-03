@@ -4,9 +4,11 @@ import type { ModelCatalog } from "./model-catalog.ts";
 import type { PictureIntake } from "./picture-intake.ts";
 import type { PictureResearchBible } from "../research/bible.ts";
 import { approvedResearchSnapshot, researchBlocksScreenplay } from "../research/bible.ts";
-import { llamaQaBlockReason, qwenWriterBlockReason } from "./qwen-writer-identity.ts";
-import { parseScreenplayQaReport, STORY_DOCTOR_SYSTEM, type ScreenplayQaReport } from "./screenplay-qa.ts";
-import type { ScreenplayScope } from "./screenplay-scope.ts";
+import { classifyLocalWriterFamily, llamaQaBlockReason, qwenWriterBlockReason } from "./qwen-writer-identity.ts";
+import { refuseAutomaticDualFamily } from "./model-routing.ts";
+import { parseScreenplayQaReport, SECOND_OPINION_SYSTEM, STORY_DOCTOR_SYSTEM, type ScreenplayQaReport } from "./screenplay-qa.ts";
+import { extractScopedFountain, type ScreenplayScope } from "./screenplay-scope.ts";
+import { buildStoryDoctorUser } from "./screenplay-prompts.ts";
 import type { ScreenplayStep } from "./screenplay-prompts.ts";
 import { DEFAULT_SCREENPLAY_SETTINGS, type PictureScreenplay, type ScreenplayGenerationSettings, type ScreenplayModelRef, type ScreenplayTelemetry } from "./screenplay.ts";
 import { screenplayModelsFromProvider } from "./screenplay-models.ts";
@@ -43,12 +45,17 @@ export type StartScreenplayJobInput = {
   resume?: boolean;
   rewriteScope?: ScreenplayScope;
   selectedNodeId?: string | null;
+  selectedNodeIds?: string[] | null;
+  selection?: import("./screenplay-scope.ts").ScreenplaySelection;
+  logicalRole?: import("./model-routing.ts").CrewLogicalRole;
+  releaseAtEnd?: boolean;
 };
 
 export class ScreenplayJobManager {
   readonly #jobs = new Map<string, ScreenplayJobSnapshot>();
   readonly #canceledJobs = new Set<string>();
   #activeJobId: string | null = null;
+  #residentFamily: "llama" | "qwen" | null = null;
   private readonly provider: LocalLLMProvider;
   private readonly loadCatalog: () => Promise<ModelCatalog> | ModelCatalog;
   private readonly now: () => number;
@@ -85,6 +92,11 @@ export class ScreenplayJobManager {
     if (!model) throw new Error("The selected screenplay model is not loaded and served by LM Studio.");
     const blockedWriter = qwenWriterBlockReason(model, status.provider.available, input.screenplay.pinnedWriterServedId);
     if (blockedWriter) throw new Error(blockedWriter);
+    const family = classifyLocalWriterFamily(model);
+    if (family !== "llama" && family !== "qwen") throw new Error(blockedWriter ?? "Unsupported writer family.");
+    if (this.#residentFamily && this.#residentFamily !== family) {
+      throw new Error("A different model family is still claimed as resident. Release the local model before switching families. Premiere316 will not dual-load.");
+    }
     const jobId = this.id();
     const snapshot: ScreenplayJobSnapshot = {
       id: jobId,
@@ -98,30 +110,67 @@ export class ScreenplayJobManager {
     };
     this.#jobs.set(jobId, snapshot);
     this.#activeJobId = jobId;
+    this.#residentFamily = family;
     void this.#execute(jobId, input, model);
     return { ...snapshot };
   }
 
-  async critique(input: { fountain: string; modelId: string; writerId: string | null; pinnedQaServedId?: string | null }): Promise<ScreenplayQaReport> {
+  async critique(input: {
+    fountain: string;
+    modelId: string;
+    writerId: string | null;
+    pinnedQaServedId?: string | null;
+    secondOpinion?: boolean;
+    goal?: string;
+    revisionTarget?: string;
+    rewriteScope?: ScreenplayScope;
+    selectedNodeId?: string | null;
+    selectedNodeIds?: string[] | null;
+    selection?: import("./screenplay-scope.ts").ScreenplaySelection;
+    approvedResearch?: import("../research/bible.ts").ResearchContent | null;
+    characterState?: string;
+    continuityState?: string;
+  }): Promise<ScreenplayQaReport> {
     const status = await this.status();
     const model = status.models.find((item) => item.id === input.modelId && item.status === "ready");
-    const blocked = llamaQaBlockReason(model ?? null, input.writerId, status.provider.available, input.pinnedQaServedId ?? null);
+    const blocked = llamaQaBlockReason(model ?? null, input.writerId, status.provider.available, input.pinnedQaServedId ?? null, Boolean(input.secondOpinion));
     if (blocked || !model) throw new Error(blocked ?? "Story Doctor model is not served.");
+    const qaFamily = classifyLocalWriterFamily(model);
+    const writerFamily = input.writerId && input.pinnedQaServedId === input.writerId ? qaFamily : classifyLocalWriterFamily({ id: input.writerId ?? "", servedModelId: input.writerId ?? "", displayName: input.writerId ?? "" });
+    const dual = refuseAutomaticDualFamily(writerFamily === "other" ? "llama" : writerFamily, qaFamily === "other" ? "llama" : qaFamily, Boolean(input.secondOpinion));
+    if (dual) throw new Error(dual);
+    if (this.#residentFamily && qaFamily !== "other" && this.#residentFamily !== qaFamily) {
+      throw new Error("A different model family is still claimed as resident. Release the local model before switching families.");
+    }
     const settings = DEFAULT_SCREENPLAY_SETTINGS;
     await this.provider.load({ servedModelId: model.servedModelId, settings });
-    try {
-      const result = await this.provider.generate({
-        runId: this.id(),
-        stepId: "qa",
-        system: STORY_DOCTOR_SYSTEM,
-        prompt: input.fountain,
-      }, { servedModelId: model.servedModelId, settings });
-      const parsed = parseScreenplayQaReport(result.text, this.id(), this.now(), model);
-      if ("error" in parsed) throw new Error(parsed.error);
-      return parsed;
-    } finally {
-      await this.provider.unload();
-    }
+    this.#residentFamily = qaFamily === "qwen" || qaFamily === "llama" ? qaFamily : this.#residentFamily;
+    const scopedFountain = extractScopedFountain(input.fountain, input.rewriteScope ?? "full", input.selectedNodeId ?? null, {
+      nodeIds: input.selectedNodeIds,
+      selection: input.selection,
+    });
+    const result = await this.provider.generate({
+      runId: this.id(),
+      stepId: input.secondOpinion ? "qa-second-opinion" : "qa",
+      system: input.secondOpinion ? SECOND_OPINION_SYSTEM : STORY_DOCTOR_SYSTEM,
+      prompt: buildStoryDoctorUser({
+        goal: input.goal ?? "",
+        approvedResearch: input.approvedResearch ?? null,
+        characterState: input.characterState,
+        continuityState: input.continuityState,
+        fountain: scopedFountain,
+        revisionTarget: input.revisionTarget ?? input.rewriteScope ?? "full",
+      }),
+    }, { servedModelId: model.servedModelId, settings });
+    const parsed = parseScreenplayQaReport(result.text, this.id(), this.now(), model, input.secondOpinion ? "second-opinion" : "qa-critic");
+    if ("error" in parsed) throw new Error(parsed.error);
+    return parsed;
+  }
+
+  async releaseResident(): Promise<void> {
+    if (this.provider.releaseResident) await this.provider.releaseResident("user-explicit");
+    else await this.provider.unload();
+    this.#residentFamily = null;
   }
 
   get(jobId: string): ScreenplayJobSnapshot | null {
@@ -163,6 +212,11 @@ export class ScreenplayJobManager {
       cancel: () => this.provider.cancel(),
       telemetry: () => this.provider.telemetry(),
       unload: () => this.provider.unload(),
+      release: async (boundary) => {
+        if (this.provider.releaseResident) await this.provider.releaseResident(boundary);
+        else if (boundary === "user-explicit") await this.provider.unload();
+        if (boundary === "user-explicit") this.#residentFamily = null;
+      },
     };
     job.status = "running";
     job.updatedAt = this.now();
@@ -177,6 +231,10 @@ export class ScreenplayJobManager {
         resume: input.resume,
         rewriteScope: input.rewriteScope,
         selectedNodeId: input.selectedNodeId,
+        selectedNodeIds: input.selectedNodeIds,
+        selection: input.selection ?? null,
+        logicalRole: input.logicalRole ?? "writer",
+        releaseAtEnd: Boolean(input.releaseAtEnd),
         approvedResearch: approvedResearchSnapshot(input.research ?? null),
         makeVersionId: this.id,
         now: this.now,

@@ -1,6 +1,7 @@
 import { makePictureIntake, sourceTextForIntake, type PictureIntake } from "./picture-intake.ts";
 import {
   createOriginalIntakeVersion,
+  hydrateScreenplayCrew,
   makePictureScreenplay,
   type PictureScreenplay,
   type ScreenplayVersion,
@@ -71,7 +72,7 @@ export function migratePicturePreparation(
   now = Date.now(),
 ): PreparedPicture {
   const intake = picture.intake?.schemaVersion === 1 ? picture.intake : legacyIntake(picture, now);
-  const screenplay = picture.screenplay?.schemaVersion === 1 ? picture.screenplay : legacyScreenplay(picture, intake, now);
+  const screenplay = hydrateScreenplayCrew(picture.screenplay?.schemaVersion === 1 ? picture.screenplay : legacyScreenplay(picture, intake, now));
   const stage = migratedStage(picture.stage, "intake");
   const lastOpenedStage = migratedStage(picture.lastOpenedStage, stage);
   return {

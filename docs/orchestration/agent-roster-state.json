@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "profile": "64-is-the-new-black",
   "logicalAgentCount": 64,
-  "physicalConcurrencyLimit": 12,
+  "physicalConcurrencyLimit": 5,
   "root": "A01",
   "captains": [
     "A03",
@@ -289,8 +289,8 @@
     {
       "id": "A21",
       "pod": "Research & Screenplay",
-      "role": "Qwen Screenwriter Integration",
-      "scope": "Primary local writer, scene/chapter/full scope, structured outputs.",
+      "role": "Local Screenwriter Integration",
+      "scope": "Llama-default primary writer; Qwen optional alternate; scoped outputs.",
       "mutates": "screenplay writer workflow/provider client.",
       "tier": "specialist-medium",
       "reportsTo": "A17",
@@ -299,8 +299,8 @@
     {
       "id": "A22",
       "pod": "Research & Screenplay",
-      "role": "Llama QA / Story Doctor Integration",
-      "scope": "Independent QA categories, critique-first, optional rewrite.",
+      "role": "Screenplay QA / Story Doctor Integration",
+      "scope": "Llama-default independent QA; same resident allowed; Qwen optional second opinion.",
       "mutates": "screenplay QA workflow.",
       "tier": "specialist-medium",
       "reportsTo": "A17",
@@ -519,8 +519,8 @@
     {
       "id": "A44",
       "pod": "Performance, Prompt & Video",
-      "role": "Qwen Prompt Compiler Engineer",
-      "scope": "Engine-specific prompt compilers from canonical specs; scoped recompilation.",
+      "role": "Prompt Compiler Engineer",
+      "scope": "Llama-default compiler routing; Qwen optional A/B; execution remains Wave 5.",
       "mutates": "prompt compiler package.",
       "tier": "specialist-medium",
       "reportsTo": "A41",
@@ -710,7 +710,7 @@
       "id": "A63",
       "pod": "Timeline, Master & Reliability",
       "role": "Pi Movie Crew Orchestration Engineer",
-      "scope": "Profiles, councils, exact local IDs, stage-gated prepare/queue/unload.",
+      "scope": "Repository-local Movie Crew profiles/guard; Wave 8 still owns council execution.",
       "mutates": ".pi/** and app integration after foundation gate.",
       "tier": "specialist-medium",
       "reportsTo": "A03",
@@ -726,5 +726,12 @@
       "reportsTo": "A01",
       "state": "scheduled"
     }
-  ]
+  ],
+  "updatedAt": "2026-09-03T18:30:12.139Z",
+  "providerPolicy": {
+    "defaultSubagentProvider": "openai-codex/gpt-5.5",
+    "thinking": "medium",
+    "maxConcurrentPhysicalAgents": 5,
+    "note": "64 logical roles preserved; future physical agents capped at five GPT-5.5 medium agents."
+  }
 }

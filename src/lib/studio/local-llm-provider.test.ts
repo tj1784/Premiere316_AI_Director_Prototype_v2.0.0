@@ -122,6 +122,8 @@ test("optional unload 404 does not invalidate an otherwise healthy endpoint", as
   const provider = new LMStudioProvider({ fetch: fetcher, endpointCache: new MemoryEndpointCache(), sampleResources: resources });
   await provider.load({ servedModelId: "writer", settings });
   await provider.unload();
+  assert.equal(provider.telemetry()?.unloadVerification, "held-resident");
+  await provider.releaseResident("user-explicit");
   const after = await provider.discover();
   assert.equal(after.available, true);
   assert.equal(provider.telemetry()?.unloadVerification, "failed");

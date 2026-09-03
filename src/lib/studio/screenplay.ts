@@ -5,6 +5,16 @@ import type {
   ScreenplayWorkflow,
   SocialWorldEntry,
 } from "./picture-intake.ts";
+import {
+  DEFAULT_CREW_WRITER_MODEL_KEY,
+  SAFE_PLANNING_CONTEXT_CAP,
+  defaultMovieCrewProfile,
+  hydrateMovieCrewProfile,
+  type CrewLogicalRole,
+  type MovieCrewRoutingProfile,
+} from "./model-routing.ts";
+import { parseScreenplayHierarchy, sceneNodes, type ScreenplayHierarchy } from "./screenplay-hierarchy.ts";
+import type { ScreenplayScope, ScreenplaySelection } from "./screenplay-scope.ts";
 
 export type ScreenplayStatus = "DRAFT" | "GENERATING" | "READY_FOR_REVIEW" | "APPROVED";
 export type ScreenplayVersionKind = "original-intake" | "draft" | "pass" | "manual" | "restored" | "approved";
@@ -22,7 +32,7 @@ export const DEFAULT_SCREENPLAY_SETTINGS: ScreenplayGenerationSettings = {
   temperature: 0.72,
   topP: 0.9,
   maxTokens: 4096,
-  contextSize: 32768,
+  contextSize: SAFE_PLANNING_CONTEXT_CAP,
   gpuLayers: 999,
   seed: -1,
 };
@@ -54,6 +64,11 @@ export type ScreenplayVersion = {
   pass: number | null;
   sourceVersionId: string | null;
   settings: ScreenplayGenerationSettings | null;
+  scope?: ScreenplayScope | null;
+  nodeIds?: string[] | null;
+  selection?: ScreenplaySelection;
+  logicalRole?: CrewLogicalRole | "manual" | "restore" | "approve" | "second-opinion";
+  hierarchy?: ScreenplayHierarchy | null;
 };
 
 export type ScreenplayGenerationState = {
@@ -85,9 +100,22 @@ export type PictureScreenplay = {
     modelId: string;
     servedModelId: string;
     displayName: string;
-    findings: { category: string; severity: string; summary: string; rewriteSuggested: string | null }[];
+    findings: { category: string; severity: string; summary: string; rewriteSuggested: string | null; exactScope?: string | null; recommendation?: string | null; revisionRequired?: boolean }[];
     fountainUnchanged: true;
   } | null;
+  crewProfile?: MovieCrewRoutingProfile;
+  pinnedCompilerServedId?: string | null;
+  activeLogicalRole?: CrewLogicalRole | null;
+  residentSession?: {
+    servedModelId: string;
+    family: "llama" | "qwen";
+    lastRole: CrewLogicalRole;
+    claimedAt: number;
+    releaseRequested: boolean;
+  } | null;
+  hierarchy?: ScreenplayHierarchy | null;
+  lastRoleTelemetry?: Array<{ role: CrewLogicalRole; telemetry: ScreenplayTelemetry }>;
+  preferredWriterKey?: string;
   updatedAt: number;
 };
 
@@ -110,7 +138,10 @@ export type ScreenplayTelemetry = {
   peakSystemRamBytes: number | null;
   resourceMeasurement: "system-total" | "unavailable";
   unloaded: boolean;
-  unloadVerification: "verified" | "not-supported" | "failed";
+  unloadVerification: "held-resident" | "user-released" | "not-requested" | "verified" | "not-supported" | "failed";
+  requestedContextLength?: number | null;
+  effectiveContextLength?: number | null;
+  catalogMaxContextLength?: number | null;
   measuredAt: number;
 };
 
@@ -138,7 +169,7 @@ export type ApprovedScreenplayBoundary = {
 };
 
 export function makePictureScreenplay(workflow: ScreenplayWorkflow, modelId: string | null, now = Date.now()): PictureScreenplay {
-  return {
+  return hydrateScreenplayCrew({
     schemaVersion: 1,
     workflow,
     selectedModelId: modelId,
@@ -153,6 +184,29 @@ export function makePictureScreenplay(workflow: ScreenplayWorkflow, modelId: str
     lastTelemetry: null,
     lastQaReport: null,
     updatedAt: now,
+  });
+}
+
+export function hydrateScreenplayCrew(screenplay: PictureScreenplay): PictureScreenplay {
+  const crewProfile = hydrateMovieCrewProfile(screenplay.crewProfile);
+  return {
+    ...screenplay,
+    crewProfile,
+    preferredWriterKey: screenplay.preferredWriterKey ?? DEFAULT_CREW_WRITER_MODEL_KEY,
+    pinnedCompilerServedId: screenplay.pinnedCompilerServedId ?? null,
+    activeLogicalRole: screenplay.activeLogicalRole ?? null,
+    residentSession: screenplay.residentSession ?? null,
+    hierarchy: screenplay.hierarchy ?? (screenplay.workingFountain.trim() ? parseScreenplayHierarchy(screenplay.workingFountain) : null),
+    lastRoleTelemetry: screenplay.lastRoleTelemetry ?? [],
+    versions: screenplay.versions.map((version, index, versions) => ({
+      ...version,
+      fountain: version.fountain,
+      scope: version.scope ?? null,
+      nodeIds: version.nodeIds ?? null,
+      selection: version.selection ?? null,
+      logicalRole: version.logicalRole ?? (version.kind === "approved" ? "approve" : version.kind === "restored" ? "restore" : version.kind === "manual" ? "manual" : "writer"),
+      hierarchy: version.hierarchy ?? parseScreenplayHierarchy(version.fountain, versions[index - 1]?.hierarchy ?? screenplay.hierarchy),
+    })),
   };
 }
 
@@ -178,13 +232,16 @@ export function createOriginalIntakeVersion(
 
 export function appendScreenplayVersion(state: PictureScreenplay, version: ScreenplayVersion): PictureScreenplay {
   if (state.versions.some((item) => item.id === version.id)) return state;
+  const hierarchy = version.hierarchy ?? parseScreenplayHierarchy(version.fountain, state.hierarchy);
+  const stored = { ...version, hierarchy };
   return {
     ...state,
     status: version.kind === "approved" ? "APPROVED" : "READY_FOR_REVIEW",
-    versions: [...state.versions, version],
+    versions: [...state.versions, stored],
     currentVersionId: version.id,
     approvedVersionId: version.kind === "approved" ? version.id : state.approvedVersionId,
     workingFountain: version.fountain,
+    hierarchy,
     updatedAt: version.createdAt,
   };
 }
@@ -263,10 +320,10 @@ export function approvedScreenplayBoundary(
     screenplayVersionId: version.id,
     approvedAt: version.createdAt,
     fountain: version.fountain,
-    scenes: screenplayScenes(version.fountain).map((scene, index) => ({
-      id: `${version.id}:scene:${String(index + 1).padStart(3, "0")}`,
-      slugline: scene.slugline,
-      sourceLine: scene.line,
+    scenes: sceneNodes(version.hierarchy ?? parseScreenplayHierarchy(version.fountain, screenplay.hierarchy)).map((scene) => ({
+      id: scene.id,
+      slugline: scene.slugline ?? scene.title,
+      sourceLine: Math.max(1, version.fountain.replace(/\r\n/g, "\n").split("\n").findIndex((line) => line.trim() === (scene.slugline ?? scene.title).trim()) + 1),
       screenplayVersionId: version.id,
     })),
     provenance: {

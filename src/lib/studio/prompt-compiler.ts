@@ -1,5 +1,6 @@
 import { engineById } from "./engines";
 import type { Picture, Shot } from "./types";
+export { defaultPromptCompilerRouting } from "./model-routing.ts";
 
 export function totalDuration(picture: Picture) {
   return picture.shots.reduce((n, s) => n + s.durationSec, 0);

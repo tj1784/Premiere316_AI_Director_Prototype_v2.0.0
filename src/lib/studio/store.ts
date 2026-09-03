@@ -9,6 +9,7 @@ import { uid } from "../utils";
 import { sanitizeProductionBreakdown } from "../production/persistence";
 import { migratePicturePerformance } from "../performance/persistence";
 import { hydratePictureResearch } from "../research/bible.ts";
+import { hydratePromptLabState } from "./prompt-lab.ts";
 
 interface StudioState {
   pictures: Picture[];
@@ -228,7 +229,7 @@ function migratePicture(picture: LegacyPicture): Picture {
   const prepared = migratePicturePreparation(picture);
   const productionReady = { ...prepared, production: sanitizeProductionBreakdown(prepared.production) };
   const withPerformance = { ...productionReady, performance: migratePicturePerformance(productionReady) };
-  return { ...withPerformance, research: hydratePictureResearch(withPerformance.research, withPerformance.intake) };
+  return { ...withPerformance, research: hydratePictureResearch(withPerformance.research, withPerformance.intake), promptLab: hydratePromptLabState(withPerformance.promptLab) };
 }
 
 export function useActivePicture(): Picture | null {

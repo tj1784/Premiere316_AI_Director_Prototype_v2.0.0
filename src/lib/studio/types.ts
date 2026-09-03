@@ -4,6 +4,7 @@ import type { PictureScreenplay } from "./screenplay.ts";
 import type { ProductionBreakdown } from "../production/types.ts";
 import type { PerformanceWorkspace } from "../performance/types.ts";
 import type { PictureResearchBible } from "../research/bible.ts";
+import type { PromptLabState } from "./prompt-lab.ts";
 
 export const USAGE_CAPS = {
   llm: 24,
@@ -136,6 +137,7 @@ export type Picture = {
   intake: PictureIntake;
   screenplay: PictureScreenplay;
   research?: PictureResearchBible | null;
+  promptLab?: PromptLabState | null;
   production?: ProductionBreakdown | null;
   performance?: PerformanceWorkspace | null;
   selectedEngine: SelectedEngines;

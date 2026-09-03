@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "neverAutoLoad": true,
+  "neverAutoStartServer": true,
+  "neverDualLoad": true,
+  "physicalUnload": "explicit-stage-or-workflow-boundary",
+  "defaultFamily": "llama",
+  "optionalFamily": "qwen",
+  "catalogSelections": {
+    "llama": {
+      "modelKey": "llama-3.3-70b-instruct",
+      "displayName": "Llama 3.3 70B Instruct",
+      "quantization": "Q6_K",
+      "catalogMaxContext": 131072
+    },
+    "qwen": {
+      "modelKey": "qwen2.5-72b-instruct",
+      "displayName": "Qwen2.5 72B Instruct",
+      "quantization": "Q6_K",
+      "optional": true
+    }
+  },
+  "agents": {
+    "movie-screenwriter": { "family": "llama", "role": "writer", "modelKey": "llama-3.3-70b-instruct", "default": true },
+    "movie-screenplay-qa": { "family": "llama", "role": "qa-critic", "modelKey": "llama-3.3-70b-instruct", "default": true },
+    "movie-prompt-engineer": { "family": "llama", "role": "prompt-engineer", "modelKey": "llama-3.3-70b-instruct", "default": true, "executionWave": 5 },
+    "movie-screenwriter-qwen": { "family": "qwen", "role": "writer", "modelKey": "qwen2.5-72b-instruct", "default": false },
+    "movie-screenplay-qa-qwen": { "family": "qwen", "role": "qa-critic", "modelKey": "qwen2.5-72b-instruct", "default": false },
+    "movie-prompt-engineer-qwen": { "family": "qwen", "role": "prompt-engineer", "modelKey": "qwen2.5-72b-instruct", "default": false, "executionWave": 5 }
+  },
+  "guard": "scripts/movie-crew-guard.mjs",
+  "release": "scripts/movie-crew-release.mjs"
+}

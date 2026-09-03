@@ -1,8 +1,8 @@
 ---
 name: p316-captain
-description: Premiere316 portfolio captain for the 64-is-the-new-black orchestration profile; coordinates exactly nine assigned medium-thinking logical agents and enforces wave gates.
-model: xai/grok-4.6
-thinking: xhigh
+description: Premiere316 portfolio captain for the 64-is-the-new-black orchestration profile; coordinates exactly nine assigned logical agents and enforces wave gates.
+model: openai-codex/gpt-5.5
+thinking: medium
 fallbackModels: false
 tools: read, grep, find, ls, bash, subagent, bg_wait, contact_supervisor
 subagentOnlyExtensions:

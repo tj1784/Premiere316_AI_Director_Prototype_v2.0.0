@@ -631,12 +631,12 @@
       "deps": [
         "UX-005"
       ],
-      "status": "EXTERNAL_RUNTIME_BLOCKED",
+      "status": "BLOCKED_EXTERNAL_RUNTIME",
       "branch": null,
       "worktree": null,
       "evidence": [
         "docs/release/wave2-gate.md",
-        "lms ps idle qwen2.5-72b-instruct only; no Llama; http://127.0.0.1:1234 timed out; app servedModels 0; LMS not started; A64 repair packaged p316-20260903170432-d400d191ba52"
+        "packaged p316-20260903183552-c37b85ae52c1 fail-closed: lms server status running=false on 1234; lms ps exact llama-3.3-70b-instruct idle only; /api/v1/models and /v1/models unreachable; app servedModels 0; no completion POSTs; no LMS start/load/unload"
       ]
     },
     {
@@ -644,16 +644,19 @@
       "wave": 2,
       "priority": "P0",
       "owner": "A21",
-      "title": "Qwen primary local writer integration",
+      "title": "Llama-default local writer integration; Qwen optional",
       "deps": [
         "S-001",
         "R-001"
       ],
-      "status": "SOURCE_IMPLEMENTED_FAIL_CLOSED",
+      "status": "SOURCE_AND_PACKAGE_OFFLINE_PASS_PENDING_RUNTIME",
       "branch": null,
       "worktree": null,
       "evidence": [
-        "src/lib/studio/qwen-writer-identity.ts"
+        "src/lib/studio/model-routing.ts",
+        "src/lib/studio/screenplay-jobs.test.ts",
+        "screenshots/premiere316-desktop-smoke.json",
+        "Llama default writer UI guarded; Qwen optional explicit only"
       ]
     },
     {
@@ -661,16 +664,19 @@
       "wave": 2,
       "priority": "P0",
       "owner": "A22",
-      "title": "Llama independent QA/story doctor",
+      "title": "Llama-default independent QA/story doctor; Qwen optional second opinion",
       "deps": [
         "S-001",
         "S-002"
       ],
-      "status": "SOURCE_IMPLEMENTED_FAIL_CLOSED",
+      "status": "SOURCE_AND_PACKAGE_OFFLINE_PASS_PENDING_RUNTIME",
       "branch": null,
       "worktree": null,
       "evidence": [
-        "src/lib/studio/screenplay-qa.ts"
+        "src/lib/studio/screenplay-qa.ts",
+        "src/lib/studio/screenplay-workflow.ts",
+        "screenshots/premiere316-desktop-smoke.json",
+        "Llama default QA critique-first; Qwen second opinion explicit gate visible; apply disabled without critique"
       ]
     },
     {
@@ -683,12 +689,13 @@
         "S-002",
         "S-003"
       ],
-      "status": "SOURCE_IMPLEMENTED",
+      "status": "SOURCE_AND_PACKAGE_OFFLINE_PASS_PENDING_RUNTIME",
       "branch": null,
       "worktree": null,
       "evidence": [
-        "src/lib/studio/screenplay-hierarchy.ts",
-        "src/lib/studio/screenplay-scope.ts"
+        "src/lib/studio/screenplay-hierarchy.test.ts",
+        "src/lib/studio/screenplay-scope.ts",
+        "all rewrite scope options visible in packaged Screenplay UI"
       ]
     },
     {
@@ -1257,5 +1264,5 @@
       "evidence": []
     }
   ],
-  "updatedAt": "2026-09-03T17:08:09.946Z"
+  "updatedAt": "2026-09-03T18:37:47.728Z"
 }

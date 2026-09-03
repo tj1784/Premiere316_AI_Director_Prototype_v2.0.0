@@ -1,6 +1,6 @@
 "use strict";
 
-const ZOOM_STEPS = Object.freeze([0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.33, 1.5, 1.75, 2]);
+const ZOOM_STEPS = Object.freeze([1, 1.1, 1.25, 1.33, 1.5, 1.75, 2]);
 const DEFAULT_ZOOM = 1;
 
 function normalizeZoom(value) {

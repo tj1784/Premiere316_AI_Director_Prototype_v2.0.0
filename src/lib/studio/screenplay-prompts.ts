@@ -80,7 +80,7 @@ function sourceConstraints(intake: PictureIntake): string {
 function systemDirection(intake: PictureIntake): string {
   const historical = intake.sourceType === "biblical-historical" || intake.workflow === "biblical-7-pass";
   return [
-    "You are the screenplay engine inside Premiere316, a professional local movie-production application.",
+    "You are movie-screenwriter, the principal screenwriter inside Premiere316, a professional local movie-production application.",
     "Return only Fountain-compatible screenplay text. Do not add markdown fences, commentary, a change log, or analysis.",
     "Write a filmable screenplay: visible behavior, playable action, disciplined scene headings, lean description, and character-specific dialogue.",
     `Aim for the requested ${intake.targetRuntimeMinutes}-minute runtime while prioritizing a coherent complete draft within the output limit.`,
@@ -132,6 +132,16 @@ export function buildScreenplayPrompt(input: {
   step: ScreenplayStep;
   previousFountain?: string;
   approvedResearch?: ResearchContent | null;
+  scopedPack?: {
+    scope: string;
+    nodeId: string | null;
+    previousSceneSummary?: string;
+    nextSceneSummary?: string;
+    storyIn?: string;
+    storyOut?: string;
+    instruction?: string;
+    polishOnly?: boolean;
+  } | null;
 }): { system: string; user: string } {
   const { intake, step, previousFountain } = input;
   const source = sourceTextForIntake(intake);
@@ -148,17 +158,45 @@ export function buildScreenplayPrompt(input: {
     labeled("Supplied story/source", source),
     sourceConstraints(intake),
     packApprovedResearch(input.approvedResearch),
+    input.scopedPack ? labeled("Rewrite scope", input.scopedPack.scope) : "",
+    input.scopedPack?.nodeId ? labeled("Target node", input.scopedPack.nodeId) : "",
+    labeled("Previous scene summary", input.scopedPack?.previousSceneSummary ?? ""),
+    labeled("Next scene summary", input.scopedPack?.nextSceneSummary ?? ""),
+    labeled("Story state IN", input.scopedPack?.storyIn ?? ""),
+    labeled("Story state OUT", input.scopedPack?.storyOut ?? ""),
+    labeled("Revision instruction", input.scopedPack?.instruction ?? ""),
   ].filter(Boolean).join("\n\n");
-  if (step.id === "draft") {
+  if (step.id === "draft" && (!input.scopedPack || input.scopedPack.scope === "full")) {
     return {
       system: systemDirection(intake),
       user: `${common}\n\nTASK:\nCreate the first complete screenplay draft. Begin with a Fountain title page, then the screenplay.`,
     };
   }
+  const polish = input.scopedPack?.polishOnly ? "Polish language, rhythm, and subtext only. Do not change plot, characters, or scene order." : "";
+  const scoped = input.scopedPack && input.scopedPack.scope !== "full";
   return {
     system: systemDirection(intake),
-    user: `${common}\n\nCURRENT SCREENPLAY (the sole source version for this pass):\n${previousFountain ?? ""}\n\nPASS ${step.pass} FOCUS:\n${step.focus}\n\nRevise the complete current screenplay in place. Preserve what works, improve only through this pass focus, and return the full updated Fountain screenplay.`,
+    user: `${common}\n\nCURRENT TARGET (do not regenerate unrelated scenes):\n${previousFountain ?? ""}\n\n${step.pass ? `PASS ${step.pass} FOCUS:\n${step.focus}` : "TASK:\nRevise only the supplied scope. Preserve unrelated IDs and content byte-for-byte."}\n${polish}\n\n${scoped ? "Return ONLY the rewritten scoped Fountain." : "Return the full updated Fountain screenplay."}`,
   };
+}
+
+export function buildStoryDoctorUser(input: {
+  goal: string;
+  approvedResearch?: ResearchContent | null;
+  characterState?: string;
+  continuityState?: string;
+  fountain: string;
+  revisionTarget: string;
+}): string {
+  return [
+    labeled("Project goal", input.goal),
+    packApprovedResearch(input.approvedResearch),
+    labeled("Character state", input.characterState ?? ""),
+    labeled("Continuity state", input.continuityState ?? ""),
+    labeled("Revision target", input.revisionTarget),
+    labeled("Screenplay output to critique", input.fountain),
+    "Do not receive or continue writer hidden reasoning. Critique only.",
+  ].filter(Boolean).join("\n\n");
 }
 
 export function normalizeFountainOutput(text: string): string {

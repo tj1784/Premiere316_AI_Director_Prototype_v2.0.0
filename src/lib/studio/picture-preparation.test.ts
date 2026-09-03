@@ -42,6 +42,8 @@ test("The Last Reel migrates without changing legacy production assets or last s
   assert.equal(prepared.shots.length, legacy.shots.length);
   assert.equal(prepared.screenplay.status, "APPROVED");
   assert.equal(prepared.screenplay.workingFountain, legacy.screenplayFountain);
+  assert.deepEqual(prepared.screenplay.versions.map((item) => item.id), [`${legacy.id}:intake:v1`, `${legacy.id}:legacy-screenplay:v1`]);
+  assert.equal(prepared.screenplay.crewProfile?.defaultFamily, "llama");
 });
 
 test("migration is idempotent and preserves new preparation records", () => {

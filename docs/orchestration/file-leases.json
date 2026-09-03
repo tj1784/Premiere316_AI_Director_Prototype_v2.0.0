@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-03T17:08:09.946Z",
+  "updatedAt": "2026-09-03T18:37:47.728Z",
   "rules": {
     "singleWriterPerCwd": true,
     "maxConcurrentMutatingAgents": 12,
@@ -158,6 +158,31 @@
       "integrationOwner": "A03",
       "sharedInterfaceException": "A04 sole writer after A18 repair + source pass; isolated packaged UAT and pending-runtime checkpoint update",
       "releasedAt": "2026-09-03T17:08:09.946Z"
+    },
+    {
+      "pattern": "src/lib/studio/screenplay*.ts; src/lib/studio/*writer-identity*.ts; src/lib/studio/*model-routing*.ts; src/lib/studio/*prompt-compiler*.ts; src/components/studio/screenplay-workspace.tsx; src/components/studio/stage-views.tsx; src/lib/studio/types.ts; src/lib/studio/store.ts; .pi/agents/movie-*.md; .pi/settings.json; .pi/movie-crew*.json; scripts/movie-crew-*.mjs; docs/orchestration/movie-crew*; docs/orchestration/agent-roster-state.json; docs/orchestration/task-status.json; docs/orchestration/wave-status.json; docs/orchestration/workflows/waves2-8-controlled.js; companion tests/package.json",
+      "owner": "A03",
+      "pod": "Governance & Integration",
+      "task": "WAVE-2-LLAMA-DEFAULT-ARCHITECTURE",
+      "startedAt": "2026-09-03T17:19:19.720Z",
+      "status": "released",
+      "integrationOwner": "A01",
+      "sharedInterfaceException": "Sole cwd writer integrating user-approved A21/A22/A44/A63 routing override; architecture/default/profile changes only, never approved screenplay content",
+      "releasedAt": "2026-09-03T18:30:12.074Z",
+      "releaseEvidence": "A03 source approval/release recorded for A04 packaging handoff; final conditional repair report gpt55-final-conditional-repair.md passed source gates."
+    },
+    {
+      "pattern": "desktop/**; desktop/build-info.json; package.json; scripts/desktop-*.mjs; docs/release/wave2-gate.md; screenshots/stage-visual/**; screenshots/premiere316-desktop-smoke.json; orchestration ledgers",
+      "owner": "A04",
+      "pod": "Governance & Integration",
+      "task": "WAVE-2-LLAMA-DEFAULT-PACKAGE",
+      "startedAt": "2026-09-03T18:30:12.074Z",
+      "status": "released",
+      "integrationOwner": "A03",
+      "sharedInterfaceException": "Activates after architecture source review; package new Llama-default/Qwen-optional checkpoint and run genuine LMS gate only if operator server is already reachable",
+      "activationEvidence": "A04 activated after A03 source approval/release; isolated packaging/UAT only.",
+      "releasedAt": "2026-09-03T18:37:47.728Z",
+      "releaseEvidence": "A04 source/package/offline UAT/data gates passed; committed pending-runtime checkpoint; genuine runtime remains BLOCKED_EXTERNAL_RUNTIME."
     }
   ]
 }

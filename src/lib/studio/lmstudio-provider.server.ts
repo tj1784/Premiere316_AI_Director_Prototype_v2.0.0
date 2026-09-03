@@ -326,7 +326,23 @@ export class LMStudioProvider implements LocalLLMProvider {
   }
 
   async unload(): Promise<void> {
+    await this.releaseResident("held-resident");
+  }
+
+  async releaseResident(boundary: "held-resident" | "user-explicit" = "held-resident"): Promise<void> {
     const started = this.now();
+    if (boundary !== "user-explicit") {
+      if (this.#telemetry) {
+        this.#telemetry = {
+          ...this.#telemetry,
+          unloadMs: this.now() - started,
+          unloaded: false,
+          unloadVerification: "held-resident",
+          measuredAt: this.now(),
+        };
+      }
+      return;
+    }
     const active = this.#activeModel;
     let verification: ScreenplayTelemetry["unloadVerification"] = "not-supported";
     if (active?.instanceId && this.#endpoint) {
@@ -337,7 +353,7 @@ export class LMStudioProvider implements LocalLLMProvider {
           body: JSON.stringify({ instance_id: active.instanceId }),
         });
         const models = await this.listModels();
-        verification = models.some((model) => model.instanceId === active.instanceId) ? "failed" : "verified";
+        verification = models.some((model) => model.instanceId === active.instanceId) ? "failed" : "user-released";
       } catch {
         verification = "failed";
       }
@@ -346,7 +362,7 @@ export class LMStudioProvider implements LocalLLMProvider {
       this.#telemetry = {
         ...this.#telemetry,
         unloadMs: this.now() - started,
-        unloaded: verification === "verified",
+        unloaded: verification === "user-released",
         unloadVerification: verification,
         measuredAt: this.now(),
       };

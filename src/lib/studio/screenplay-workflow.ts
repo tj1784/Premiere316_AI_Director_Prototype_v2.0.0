@@ -1,6 +1,7 @@
 import type { PictureIntake } from "./picture-intake.ts";
 import type { ResearchContent } from "../research/bible.ts";
-import { extractScopedFountain, spliceScopedFountain, type ScreenplayScope } from "./screenplay-scope.ts";
+import { extractScopedFountain, spliceScopedFountain, type ScreenplayScope, type ScreenplaySelection } from "./screenplay-scope.ts";
+import { parseScreenplayHierarchy, previousAndNextSceneSummaries } from "./screenplay-hierarchy.ts";
 import { buildScreenplayPrompt, normalizeFountainOutput, screenplaySteps, type ScreenplayStep } from "./screenplay-prompts.ts";
 import {
   DEFAULT_SCREENPLAY_SETTINGS,
@@ -36,6 +37,7 @@ export type ScreenplayRuntimePort = {
   load(config: ScreenplayRuntimeConfig): Promise<void>;
   generate(request: ScreenplayGenerateRequest, config: ScreenplayRuntimeConfig): Promise<ScreenplayGenerateResult>;
   unload(): Promise<void>;
+  release?(boundary: "held-resident" | "user-explicit"): Promise<void>;
   telemetry(): ScreenplayTelemetry | null;
   cancel?(): Promise<void> | void;
 };
@@ -58,7 +60,11 @@ export type WorkflowRunInput = {
   resume?: boolean;
   rewriteScope?: ScreenplayScope;
   selectedNodeId?: string | null;
+  selectedNodeIds?: string[] | null;
+  selection?: ScreenplaySelection;
   approvedResearch?: ResearchContent | null;
+  logicalRole?: import("./model-routing.ts").CrewLogicalRole;
+  releaseAtEnd?: boolean;
   signal?: AbortSignal;
   onUpdate?: (update: WorkflowUpdate) => void | Promise<void>;
 };
@@ -119,15 +125,28 @@ export async function runScreenplayWorkflow(runtime: ScreenplayRuntimePort, inpu
         },
       };
       await input.onUpdate?.({ state, step, phase: "starting" });
+      const hierarchy = parseScreenplayHierarchy(previous || input.screenplay.workingFountain, state.hierarchy ?? input.screenplay.hierarchy);
       const scopedPrevious = input.rewriteScope && input.rewriteScope !== "full"
-        ? extractScopedFountain(previous || input.screenplay.workingFountain, input.rewriteScope, input.selectedNodeId ?? null)
+        ? extractScopedFountain(previous || input.screenplay.workingFountain, input.rewriteScope, input.selectedNodeId ?? null, {
+          nodeIds: input.selectedNodeIds,
+          selection: input.selection,
+          previous: state.hierarchy ?? input.screenplay.hierarchy,
+        })
         : previous;
+      const neighbors = input.selectedNodeId ? previousAndNextSceneSummaries(hierarchy, input.selectedNodeId) : { previous: "", next: "" };
       const prompt = buildScreenplayPrompt({
         intake: input.intake,
         workflow: state.workflow,
         step,
         previousFountain: scopedPrevious,
         approvedResearch: input.approvedResearch ?? null,
+        scopedPack: {
+          scope: input.rewriteScope ?? "full",
+          nodeId: input.selectedNodeId ?? null,
+          previousSceneSummary: neighbors.previous,
+          nextSceneSummary: neighbors.next,
+          polishOnly: input.rewriteScope === "polish-only",
+        },
       });
       const result = await runtime.generate({
         runId: input.runId,
@@ -138,20 +157,30 @@ export async function runScreenplayWorkflow(runtime: ScreenplayRuntimePort, inpu
       if (input.signal?.aborted) throw new ScreenplayGenerationCanceled();
       const generated = normalizeFountainOutput(result.text);
       if (!generated) throw new Error(`${step.label} returned no screenplay text.`);
-      const fountain = input.rewriteScope && input.rewriteScope !== "full"
-        ? spliceScopedFountain(previous || input.screenplay.workingFountain, input.rewriteScope, input.selectedNodeId ?? null, generated).fountain
-        : generated;
+      const previousHierarchy = state.hierarchy ?? input.screenplay.hierarchy;
+      const spliced = input.rewriteScope && input.rewriteScope !== "full"
+        ? spliceScopedFountain(previous || input.screenplay.workingFountain, input.rewriteScope, input.selectedNodeId ?? null, generated, {
+          nodeIds: input.selectedNodeIds,
+          selection: input.selection,
+          previous: previousHierarchy,
+        })
+        : { fountain: generated, hierarchy: parseScreenplayHierarchy(generated, previousHierarchy) };
       const version: ScreenplayVersion = {
         id: input.makeVersionId(),
         label: step.id === "draft" ? "Draft 1" : step.label,
         kind: step.id === "draft" ? "draft" : "pass",
-        fountain,
+        fountain: spliced.fountain,
         createdAt: now(),
         model: input.model,
         workflow: state.workflow,
         pass: step.pass,
         sourceVersionId: state.currentVersionId,
         settings,
+        scope: input.rewriteScope ?? "full",
+        nodeIds: input.selectedNodeIds ?? (input.selectedNodeId ? [input.selectedNodeId] : null),
+        selection: input.selection ?? null,
+        logicalRole: input.logicalRole ?? "writer",
+        hierarchy: spliced.hierarchy,
       };
       state = appendScreenplayVersion(state, version);
       state = {
@@ -162,7 +191,7 @@ export async function runScreenplayWorkflow(runtime: ScreenplayRuntimePort, inpu
           completedLabels: [...state.generation!.completedLabels, step.label],
         },
       };
-      previous = fountain;
+      previous = spliced.fountain;
       await input.onUpdate?.({ state, step, phase: "completed" });
     }
     completed = { ...state, status: "READY_FOR_REVIEW", generation: null, updatedAt: now() };
@@ -173,7 +202,12 @@ export async function runScreenplayWorkflow(runtime: ScreenplayRuntimePort, inpu
     throw primaryError;
   } finally {
     try {
-      await runtime.unload();
+      if (input.releaseAtEnd) {
+        if (runtime.release) await runtime.release("user-explicit");
+        else await runtime.unload();
+      } else if (runtime.release) {
+        await runtime.release("held-resident");
+      }
     } catch (unloadError) {
       if (!primaryError) throw unloadError;
     }
