@@ -51,8 +51,21 @@
     },
     {
       "wave": 3,
-      "status": "OPEN",
-      "note": "Wave 3 is open for planning/implementation only after Wave 2 GREEN; no Wave 3 tasks are implemented yet."
+      "status": "SOURCE_PASS_PACKAGING_PAUSED",
+      "note": "Wave 3 source and targeted UI/data repairs passed source gates; A04 package checkpoint built as p316-20260903203247-955eb4a6feaa, 13-stage visual matrix and Wave 3 packaged UAT passed, but operator requested pause before completing the full native package gate/audits. One packaged smoke rerun failed during concurrent harness startup and was not rerun per pause order. Wave 4 remains closed; no green tag.",
+      "evidence": [
+        "docs/release/wave3-gate.md",
+        "desktop/build-info.json buildId p316-20260903203247-955eb4a6feaa",
+        "npm test passed after final AssetInspector Inventory 2.0 merge/split repair",
+        "npm run typecheck passed",
+        "npm run build passed",
+        "npm run electron:pack completed",
+        "node scripts/desktop-stage-visual.mjs passed for 13 stages at 100% and 150% (26 screenshots)",
+        "node scripts/desktop-wave3-uat.mjs passed packaged visible-control UAT",
+        "node scripts/desktop-smoke.mjs prior pass before final repair; post-repair concurrent rerun timed out and remains pending",
+        "live %APPDATA%/Premiere316 compared byte-identically to D:/Data/Backups/Premiere316/wave3-a04-20260903T202400Z via robocopy /MIR /L",
+        "operator-requested pause; packaging/native UAT/audits remain pending"
+      ]
     },
     {
       "wave": 4,
@@ -75,5 +88,5 @@
       "status": "BLOCKED_BY_PREVIOUS_GATE"
     }
   ],
-  "updatedAt": "2026-09-03T19:24:00.000Z"
+  "updatedAt": "2026-09-03T20:36:00.000Z"
 }

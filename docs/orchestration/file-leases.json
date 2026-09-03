@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-03T19:24:00.000Z",
+  "updatedAt": "2026-09-03T20:36:00.000Z",
   "rules": {
     "singleWriterPerCwd": true,
     "maxConcurrentMutatingAgents": 5,
@@ -209,6 +209,42 @@
       "releasedAt": "2026-09-03T19:24:00.000Z",
       "activationEvidence": "HEAD ab9d07b ledger-only descendant of runtime evidence b057ca5dd689b63ea93e6d907ae0be54c49abcc8; A08 re-audit passed with no blockers; target tag absent before finalization.",
       "releaseEvidence": "Wave 2 promoted GREEN for byte-identical packaged build p316-20260903183552-c37b85ae52c1; docs/release/wave2-gate.md updated with independent audit table; wave-status currentWave set to 3 and Wave 3 OPEN; R/S Wave 2 tasks marked DONE; dependency-root Wave 3 task D-001 marked READY and other Wave 3 tasks blocked by dependency; A01 finalization authorizes tag wave2-p316-20260903183552-c37b85ae52c1 on this final governance commit."
+    },
+    {
+      "pattern": "src/lib/production/**; src/lib/studio/types.ts; src/lib/studio/store.ts; src/lib/studio/stage-layout.ts; src/components/studio/stage-views.tsx; src/components/production/**; src/lib/visual-development.ts; src/lib/cinematography.ts; src/components/visual-development/**; src/components/cinematography/**; companion Wave 3 tests; docs/orchestration/task-status.json; docs/orchestration/wave-status.json",
+      "owner": "A25",
+      "pod": "Production Design & Cinematography",
+      "task": "WAVE-3-SOURCE",
+      "startedAt": "2026-09-03T19:38:52.446Z",
+      "status": "released",
+      "integrationOwner": "A03",
+      "sharedInterfaceException": "Sole Wave 3 source writer after protected Wave 2 GREEN tag; additive schema/stage/domain/UI/test changes only; no package, model lifecycle, auth/db, ComfyUI, or cloud.",
+      "releasedAt": "2026-09-03T19:52:24.633Z",
+      "releaseEvidence": "Wave 3 source implemented; npm test, npm run typecheck, npm run build, and git diff --check passed. Awaiting source review/package gate; no package/commit/model lifecycle/auth/db/cloud/ComfyUI."
+    },
+    {
+      "pattern": "src/lib/production/**; src/lib/visual-development.ts; src/lib/cinematography.ts; src/lib/studio/**; src/components/production/**; src/components/visual-development/**; src/components/cinematography/**; src/components/performance/**; docs/orchestration/{task-status,wave-status,file-leases}.json; package.json",
+      "owner": "A25",
+      "pod": "Production Design & Inventory",
+      "task": "WAVE-3-SOURCE-REPAIR-GPT55",
+      "startedAt": "2026-09-03T20:05:40.213Z",
+      "status": "released",
+      "integrationOwner": "A03",
+      "sharedInterfaceException": "Sole Wave 3 repair writer for A03/A09/A64 source blockers only; no package/commit/model/media action",
+      "releasedAt": "2026-09-03T20:15:24.909Z",
+      "releaseEvidence": "Repaired final UI data blocker: AssetInspector now routes Save/Approve through append-only Inventory 2.0 functions; legacy editAsset/approveCanonicalSpec hardened; focused/full tests, typecheck, build, diff checks passed. Package and independent review still required; no package/commit/model/media action."
+    },
+    {
+      "pattern": "desktop/**; desktop/build-info.json; package.json; scripts/desktop-*.mjs; docs/release/wave3-gate.md; screenshots/stage-visual/**; screenshots/wave3-uat/**; docs/orchestration/{task-status,wave-status,file-leases}.json",
+      "owner": "A04",
+      "pod": "Governance & Integration",
+      "task": "WAVE-3-PACKAGE",
+      "startedAt": "2026-09-03T20:24:00.000Z",
+      "status": "PAUSED_CHECKPOINT",
+      "integrationOwner": "A03",
+      "sharedInterfaceException": "A04 package/integration checkpoint only; operator paused before full native gate/audits; Wave 4 closed.",
+      "releasedAt": "2026-09-03T20:36:00.000Z",
+      "releaseEvidence": "Package checkpoint built as p316-20260903203247-955eb4a6feaa. Source tests/typecheck/build passed. 13-stage 100/150 visual matrix and packaged Wave 3 UAT passed. Post-repair smoke rerun timed out during concurrent harness launch and remains pending by operator pause. Electron processes stopped, isolated temp profiles deleted, live app data compared unchanged."
     }
   ]
 }

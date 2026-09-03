@@ -24,6 +24,8 @@ const STAGE_LAYOUT: Record<StageId, StageLayoutPolicy> = {
   research: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "research" },
   screenplay: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "screenplay" },
   inventory: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "inventory" },
+  "visual-development": { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "visual-development" },
+  cinematography: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "cinematography" },
   performance: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "performance" },
   shots: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "shots" },
   prompts: { leftPanel: "none", rightPanel: "none", bottomPanel: "none", headerActions: [], workspaceMode: "prompts" },

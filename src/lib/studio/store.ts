@@ -1,15 +1,17 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { SAMPLE_ID, makeSamplePicture } from "./sample";
-import type { IdleUnloadOption } from "./residency";
-import { DEFAULT_ENGINES, type Picture, type SelectedEngines, type StageId, USAGE_CAPS } from "./types";
-import { makePreparationForIntake, migratePicturePreparation, type LegacyPicture } from "./picture-preparation";
-import type { PictureIntake } from "./picture-intake";
-import { uid } from "../utils";
-import { sanitizeProductionBreakdown } from "../production/persistence";
-import { migratePicturePerformance } from "../performance/persistence";
+import { SAMPLE_ID, makeSamplePicture } from "./sample.ts";
+import type { IdleUnloadOption } from "./residency.ts";
+import { DEFAULT_ENGINES, type Picture, type SelectedEngines, type StageId, USAGE_CAPS } from "./types.ts";
+import { makePreparationForIntake, migratePicturePreparation, type LegacyPicture } from "./picture-preparation.ts";
+import type { PictureIntake } from "./picture-intake.ts";
+import { uid } from "../utils.ts";
+import { sanitizeProductionBreakdown } from "../production/persistence.ts";
+import { migratePicturePerformance } from "../performance/persistence.ts";
 import { hydratePictureResearch } from "../research/bible.ts";
 import { hydratePromptLabState } from "./prompt-lab.ts";
+import { hydrateVisualDevelopmentState } from "../visual-development.ts";
+import { hydrateCinematographyState } from "../cinematography.ts";
 
 interface StudioState {
   pictures: Picture[];
@@ -45,7 +47,7 @@ interface StudioState {
 function blankPicture(intake: PictureIntake): Picture {
   const id = uid("pic");
   const now = Date.now();
-  return {
+  const picture: Picture = {
     id,
     title: intake.title.trim() || "Untitled Picture",
     logline: intake.logline.trim() || intake.premise.trim() || intake.concept.trim(),
@@ -59,6 +61,8 @@ function blankPicture(intake: PictureIntake): Picture {
     stage: "research",
     ...makePreparationForIntake(intake, id, now),
     research: hydratePictureResearch(null, intake, now),
+    visualDevelopment: null,
+    cinematography: null,
     selectedEngine: { ...DEFAULT_ENGINES },
     screenplayFountain: "",
     production: null,
@@ -76,6 +80,8 @@ function blankPicture(intake: PictureIntake): Picture {
     directorNotes: "",
     usage: { llm: 0, stills: 0, clips: 0, tts: 0 },
   };
+  const visualDevelopment = hydrateVisualDevelopmentState(null, picture, now);
+  return { ...picture, visualDevelopment, cinematography: hydrateCinematographyState(null, picture, now) };
 }
 
 export const useStudio = create<StudioState>()(
@@ -229,7 +235,9 @@ function migratePicture(picture: LegacyPicture): Picture {
   const prepared = migratePicturePreparation(picture);
   const productionReady = { ...prepared, production: sanitizeProductionBreakdown(prepared.production) };
   const withPerformance = { ...productionReady, performance: migratePicturePerformance(productionReady) };
-  return { ...withPerformance, research: hydratePictureResearch(withPerformance.research, withPerformance.intake), promptLab: hydratePromptLabState(withPerformance.promptLab) };
+  const withResearch = { ...withPerformance, research: hydratePictureResearch(withPerformance.research, withPerformance.intake), promptLab: hydratePromptLabState(withPerformance.promptLab) };
+  const withVisual = { ...withResearch, visualDevelopment: hydrateVisualDevelopmentState(withResearch.visualDevelopment, withResearch) };
+  return { ...withVisual, cinematography: hydrateCinematographyState(withVisual.cinematography, withVisual) };
 }
 
 export function useActivePicture(): Picture | null {
@@ -244,7 +252,7 @@ export function useStage(): StageId {
 
 function normalizeStage(stage: unknown): StageId | null {
   if (stage === "brief") return "intake";
-  return typeof stage === "string" && ["intake", "research", "screenplay", "inventory", "performance", "shots", "prompts", "generate", "timeline", "score", "export"].includes(stage)
+  return typeof stage === "string" && ["intake", "research", "screenplay", "inventory", "visual-development", "cinematography", "performance", "shots", "prompts", "generate", "timeline", "score", "export"].includes(stage)
     ? stage as StageId
     : null;
 }

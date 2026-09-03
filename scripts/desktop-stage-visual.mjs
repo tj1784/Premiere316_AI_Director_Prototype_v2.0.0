@@ -15,13 +15,15 @@ const IMPLEMENTED_STAGES = [
   { id: "research", button: "02 Research", left: "none", right: "none", timeline: false },
   { id: "screenplay", button: "03 Screenplay", left: "none", right: "none", timeline: false },
   { id: "inventory", button: "04 Inventory", left: "none", right: "none", timeline: false },
-  { id: "performance", button: "05 Performance", left: "none", right: "none", timeline: false },
-  { id: "shots", button: "06 Shots", left: "none", right: "none", timeline: false },
-  { id: "prompts", button: "07 Prompt Lab", left: "none", right: "none", timeline: false },
-  { id: "generate", button: "08 Generate", left: "generation", right: "generation", timeline: false },
-  { id: "timeline", button: "09 Stitch", left: "media", right: "clip", timeline: true },
-  { id: "score", button: "10 Score", left: "none", right: "none", timeline: false },
-  { id: "export", button: "11 Export", left: "none", right: "none", timeline: false },
+  { id: "visual-development", button: "05 Visual Dev", left: "none", right: "none", timeline: false },
+  { id: "cinematography", button: "06 Cinematography", left: "none", right: "none", timeline: false },
+  { id: "performance", button: "07 Performance", left: "none", right: "none", timeline: false },
+  { id: "shots", button: "08 Shots", left: "none", right: "none", timeline: false },
+  { id: "prompts", button: "09 Prompt Lab", left: "none", right: "none", timeline: false },
+  { id: "generate", button: "10 Generate", left: "generation", right: "generation", timeline: false },
+  { id: "timeline", button: "11 Stitch", left: "media", right: "clip", timeline: true },
+  { id: "score", button: "12 Score", left: "none", right: "none", timeline: false },
+  { id: "export", button: "13 Export", left: "none", right: "none", timeline: false },
 ];
 
 function assertIsolatedUserData(userDataDir) {

@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/field";
@@ -23,11 +23,24 @@ export function AddAssetDialog({ record, onChange, onClose }: {
   const [sceneIds, setSceneIds] = useState<string[]>([]);
   const [hero, setHero] = useState(false);
   const [referenceRequired, setReferenceRequired] = useState(false);
+  const dialogRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    const close = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
-    window.addEventListener("keydown", close);
-    return () => window.removeEventListener("keydown", close);
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const first = dialogRef.current?.querySelector<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    first?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>('button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])')].filter((item) => item.offsetParent !== null);
+      if (!focusable.length) return;
+      const firstItem = focusable[0]!;
+      const lastItem = focusable[focusable.length - 1]!;
+      if (event.shiftKey && document.activeElement === firstItem) { event.preventDefault(); lastItem.focus(); }
+      else if (!event.shiftKey && document.activeElement === lastItem) { event.preventDefault(); firstItem.focus(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => { window.removeEventListener("keydown", onKeyDown); previous?.focus(); };
   }, [onClose]);
 
   const add = () => {
@@ -47,7 +60,7 @@ export function AddAssetDialog({ record, onChange, onClose }: {
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-bg/75 p-3 sm:p-6" role="presentation">
       <button type="button" className="absolute inset-0 cursor-default" aria-label="Close add asset dialog" onClick={onClose} />
-      <section role="dialog" aria-modal="true" aria-labelledby={titleId} className="relative flex max-h-full w-full max-w-2xl min-w-0 flex-col overflow-hidden rounded-lg bg-surface shadow-2xl">
+      <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="relative flex max-h-full w-full max-w-2xl min-w-0 flex-col overflow-hidden rounded-lg bg-surface shadow-2xl">
         <header className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
           <div>
             <p className="text-[11px] tracking-wide text-subtle uppercase">Manual breakdown correction</p>

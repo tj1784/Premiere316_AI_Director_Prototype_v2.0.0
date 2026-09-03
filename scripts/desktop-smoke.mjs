@@ -144,13 +144,13 @@ try {
     critiqueFirst: true,
     scopedApplyEnabled: false,
   };
-  await selectStage(page, "performance", "05 Performance");
+  await selectStage(page, "performance", "07 Performance");
   await page.getByRole("heading", { name: "Performance" }).waitFor();
-  await selectStage(page, "shots", "06 Shots");
+  await selectStage(page, "shots", "08 Shots");
   await page.getByRole("heading", { name: "Shots" }).waitFor();
   assert.equal(await page.getByText("Timeline", { exact: true }).count(), 0, "timeline must be hidden from Shots");
 
-  await selectStage(page, "generate", "08 Generate");
+  await selectStage(page, "generate", "10 Generate");
   await page.getByRole("heading", { name: "Generate" }).waitFor();
   const generateStill = page.getByRole("button", { name: "Generate local still", exact: true }).first();
   if (!(await generateStill.isVisible().catch(() => false))) {
@@ -187,10 +187,10 @@ try {
     generationEnabled: false,
   };
   await stillDialog.getByRole("button", { name: "Cancel" }).click();
-  await selectStage(page, "timeline", "09 Stitch");
+  await selectStage(page, "timeline", "11 Stitch");
   await page.getByRole("heading", { name: "Stitch" }).waitFor();
   await page.getByText("Timeline", { exact: true }).waitFor();
-  await selectStage(page, "shots", "06 Shots");
+  await selectStage(page, "shots", "08 Shots");
   await page.getByRole("heading", { name: "Shots" }).waitFor();
 
   await sendShortcut(application, "0");

@@ -165,7 +165,7 @@ describe("canonical assets and user corrections", () => {
     const recategorized = editAsset(initial, prop.id, { category: "set_dressing" });
     assert.equal(recategorized.assets.find((asset) => asset.id === prop.id)?.category, "set_dressing");
     const approved = approveCanonicalSpec(recategorized, prop.id);
-    assert.equal(approved.assets.find((asset) => asset.id === prop.id)?.readiness, "READY_TO_GENERATE");
+    assert.equal(approved.assets.find((asset) => asset.id === prop.id)?.readiness, "READY_TO_PREPARE");
   });
 
   it("distinguishes generated work from work awaiting review", () => {
@@ -317,6 +317,9 @@ describe("dependency staleness and evidence", () => {
     assert.equal(reconciled.screenplayVersionId, "screenplay-v2");
     assert.equal(preserved.canonicalSpec.visualDescription, "User-approved hero jar specification.");
     assert.equal(preserved.canonicalApproved, true);
+    assert.ok(preserved.specVersions?.length);
+    assert.equal(preserved.approvedSpecVersionId?.startsWith(`spec:${prop.id}:`), true);
+    assert.equal(reconciled.graph?.nodes.some((node) => node.id === `asset:${prop.id}`), true);
     assert.equal(preserved.stale, false);
     assert.equal(removed.stale, true);
     assert.match(removed.staleReasons.join(" "), /no longer detected/i);
@@ -335,7 +338,7 @@ describe("preparation queue, preflight, and persistence", () => {
     assert.equal(next.assets.every((asset) => asset.iterations.length === 0), true);
     assert.equal(next.queue.find((item) => item.assetId === next.assets.find((asset) => asset.name === "Moses")?.id)?.status, "WAITING_FOR_REFERENCE");
     assert.equal(next.queue.some((item) => item.status === "READY"), true);
-    const readyAsset = next.assets.find((asset) => asset.readiness === "READY_TO_GENERATE")!;
+    const readyAsset = next.assets.find((asset) => asset.readiness === "READY_TO_PREPARE")!;
     const edited = editAsset(next, readyAsset.id, { canonicalSpec: { ...readyAsset.canonicalSpec, visualDescription: "Revised canonical description" } }, 310);
     assert.ok(edited.queue.find((item) => item.assetId === readyAsset.id)?.promptIngredients.includes("Revised canonical description"));
   });
@@ -362,9 +365,11 @@ describe("preparation queue, preflight, and persistence", () => {
   });
 
   it("round-trips the complete breakdown for close/reopen persistence", () => {
-    const prepared = prepareAssetQueue(approveCanonicalSpec(record(), record().assets[0].id));
+    const approved = approveCanonicalSpec(record(), record().assets[0].id, 301);
+    const prepared = prepareAssetQueue({ ...approved, assets: approved.assets.map((asset, index) => index === 0 ? { ...asset, preparedApproved: true, readiness: "APPROVED_PREPARED" as const } : asset) });
     const restored = parseProductionBreakdowns(serializeProductionBreakdowns([prepared]));
     assert.deepEqual(restored, JSON.parse(JSON.stringify([prepared])));
+    assert.equal(restored[0]!.queue.some((item) => item.status === "APPROVED_PREPARED"), true);
     assert.deepEqual(parseProductionBreakdowns("broken"), []);
     const unsafe = JSON.parse(serializeProductionBreakdowns([prepared]));
     unsafe.records[0].queue.push({ id: "bad", assetId: "asset-1", variantId: null, status: "RUNNING" });

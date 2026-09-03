@@ -38,8 +38,13 @@ import { DEFAULT_CREW_WRITER_DISPLAY, OPTIONAL_CREW_WRITER_DISPLAY } from "@/lib
 import type { ScreenplayRewriteTarget, ScreenplayScope } from "@/lib/studio/screenplay-scope.ts";
 import { isLlamaQaCandidate as isLlamaFamily } from "@/lib/studio/qwen-writer-identity.ts";
 import { InventoryWorkspace } from "@/components/production/inventory-workspace";
+import { VisualDevelopmentWorkspace } from "@/components/visual-development/visual-development-workspace";
+import { hydrateVisualDevelopmentState } from "@/lib/visual-development";
+import { CinematographyWorkspace } from "@/components/cinematography/cinematography-workspace";
+import { hydrateCinematographyState } from "@/lib/cinematography";
 import {
   approvedScreenplayInputFromBoundary,
+  createResearchAwareProductionBreakdown,
   deterministicFountainExtractor,
   reconcileProductionBreakdown,
   runProductionBreakdown,
@@ -62,6 +67,10 @@ export function StageView() {
       return <ScreenplayStage picture={picture} />;
     case "inventory":
       return <InventoryStage picture={picture} />;
+    case "visual-development":
+      return <VisualDevelopmentStage picture={picture} />;
+    case "cinematography":
+      return <CinematographyStage picture={picture} />;
     case "performance":
       return <PerformanceStage picture={picture} />;
     case "shots":
@@ -350,9 +359,15 @@ function InventoryStage({ picture }: { picture: Picture }) {
             approvedScreenplayInputFromBoundary(approved),
             deterministicFountainExtractor,
           );
+          const withResearch = createResearchAwareProductionBreakdown({
+            screenplay: approved,
+            research: hydratePictureResearch(picture.research, picture.intake),
+            drafts: extracted.requirements,
+          });
+          if ("error" in withResearch) throw new Error(withResearch.error);
           const production = picture.production
-            ? reconcileProductionBreakdown(picture.production, extracted)
-            : extracted;
+            ? reconcileProductionBreakdown(picture.production, withResearch)
+            : withResearch;
           patchActive({ production });
           toast.success(`Production breakdown ready · ${production.assets.length} assets`);
         } catch (error) {
@@ -361,9 +376,30 @@ function InventoryStage({ picture }: { picture: Picture }) {
           setBusy(false);
         }
       }}
+      visualApprovals={picture.visualDevelopment?.approvals.map((approval) => approval.id) ?? []}
+      cinematographyApprovals={picture.cinematography?.approvals.map((approval) => approval.id) ?? []}
       onChange={(production) => patchActive({ production })}
     />
   );
+}
+
+function VisualDevelopmentStage({ picture }: { picture: Picture }) {
+  const patchActive = useStudio((state) => state.patchActive);
+  const visualDevelopment = picture.visualDevelopment ?? hydrateVisualDevelopmentState(null, picture);
+  useEffect(() => {
+    if (!picture.visualDevelopment) patchActive({ visualDevelopment });
+  }, [patchActive, picture.visualDevelopment, visualDevelopment]);
+  return <VisualDevelopmentWorkspace state={visualDevelopment} onChange={(visualDevelopment) => patchActive({ visualDevelopment })} />;
+}
+
+function CinematographyStage({ picture }: { picture: Picture }) {
+  const patchActive = useStudio((state) => state.patchActive);
+  const visualDevelopment = picture.visualDevelopment ?? hydrateVisualDevelopmentState(null, picture);
+  const cinematography = picture.cinematography ?? hydrateCinematographyState(null, picture);
+  useEffect(() => {
+    if (!picture.visualDevelopment || !picture.cinematography) patchActive({ visualDevelopment, cinematography });
+  }, [patchActive, picture.visualDevelopment, picture.cinematography, visualDevelopment, cinematography]);
+  return <CinematographyWorkspace state={cinematography} visual={visualDevelopment} onChange={(cinematography) => patchActive({ cinematography })} />;
 }
 
 function PerformanceStage({ picture }: { picture: Picture }) {
@@ -378,7 +414,7 @@ function PerformanceStage({ picture }: { picture: Picture }) {
   if (!workspace) {
     return (
       <div className="grid h-full min-h-64 place-items-center bg-bg p-6 text-center">
-        <div className="max-w-md"><p className="text-[11px] tracking-wide text-subtle uppercase">05 · Performance direction</p><h2 className="mt-1 font-display text-2xl tracking-tight">Approve the screenplay first</h2><p className="mt-2 text-sm leading-relaxed text-muted">Performance work begins from the immutable approved screenplay, never a working draft.</p></div>
+        <div className="max-w-md"><p className="text-[11px] tracking-wide text-subtle uppercase">07 · Performance direction</p><h2 className="mt-1 font-display text-2xl tracking-tight">Approve the screenplay first</h2><p className="mt-2 text-sm leading-relaxed text-muted">Performance work begins from the immutable approved screenplay, never a working draft.</p></div>
       </div>
     );
   }
@@ -408,7 +444,7 @@ function ShotsStage({ picture }: { picture: Picture }) {
   if (!workspace) {
     return (
       <div className="grid h-full min-h-64 place-items-center bg-bg p-6 text-center">
-        <div className="max-w-md"><p className="text-[11px] tracking-wide text-subtle uppercase">06 · Shot preparation</p><h2 className="mt-1 font-display text-2xl tracking-tight">Performance workspace required</h2><p className="mt-2 text-sm leading-relaxed text-muted">Approve the screenplay, then direct its beats before preparing coverage.</p></div>
+        <div className="max-w-md"><p className="text-[11px] tracking-wide text-subtle uppercase">08 · Shot preparation</p><h2 className="mt-1 font-display text-2xl tracking-tight">Performance workspace required</h2><p className="mt-2 text-sm leading-relaxed text-muted">Approve the screenplay, then direct its beats before preparing coverage.</p></div>
       </div>
     );
   }
@@ -429,7 +465,7 @@ function PromptStage({ picture }: { picture: Picture }) {
   const patchActive = useStudio((s) => s.patchActive);
   const lab = hydratePromptLabState(picture.promptLab);
   return (
-    <Pane title="Prompt Lab" kicker="07 · Dialects">
+    <Pane title="Prompt Lab" kicker="09 · Dialects">
       <p className="mb-4 max-w-xl text-sm text-muted">
         Still dialect {engineById(picture.selectedEngine.image)?.name}. Motion dialect{" "}
         {engineById(picture.selectedEngine.video)?.name}. Each shot is a 10–15s performance.
@@ -477,7 +513,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
   const selectShot = useStudio((state) => state.selectShot);
   const openStillBay = useStudio((state) => state.openStillBay);
   return (
-    <Pane title="Generate" kicker="08 · Plates & performance">
+    <Pane title="Generate" kicker="10 · Plates & performance">
       <p className="mb-4 max-w-xl text-sm text-muted">Generate verified local stills. Motion remains unavailable until a native adapter passes validation.</p>
       <div className="generation-grid grid min-w-0 gap-3">
         {picture.shots.map((shot) => (
@@ -506,7 +542,7 @@ function StitchStage({ picture }: { picture: Picture }) {
   const selectedShotId = useStudio((s) => s.selectedShotId);
   const shot = picture.shots.find((s) => s.id === selectedShotId) ?? picture.shots[0];
   return (
-    <Pane title="Stitch" kicker="09 · Assembly">
+    <Pane title="Stitch" kicker="11 · Assembly">
       <div className="overflow-hidden rounded-lg bg-inset shadow-[var(--shadow-border)]">
         <div className="grid h-[clamp(12rem,48dvh,32rem)] place-items-center">
           {shot?.videoUrl ? (
@@ -534,7 +570,7 @@ function StitchStage({ picture }: { picture: Picture }) {
 
 function ScoreStage({ picture }: { picture: Picture }) {
   return (
-    <Pane title="Score" kicker="10 · Music + SFX">
+    <Pane title="Score" kicker="12 · Music + SFX">
       <p className="mb-4 max-w-xl text-sm text-muted">Review the saved cue sheet locally. Music generation remains unavailable until a native adapter passes validation.</p>
       <div role="status" className="max-w-xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]">Local score adapter unavailable · no cloud fallback</div>
       <div className="mt-5 grid gap-3">
@@ -570,7 +606,7 @@ function ExportStage({ picture }: { picture: Picture }) {
   }
 
   return (
-    <Pane title="Export" kicker="11 · Delivery">
+    <Pane title="Export" kicker="13 · Delivery">
       <dl className="grid max-w-md grid-cols-2 gap-3 text-sm">
         <Stat k="Runtime" v={formatTimecode(dur, picture.fps)} />
         <Stat k="Shots" v={String(picture.shots.length)} />
@@ -734,6 +770,8 @@ export function StageRail() {
     (id === "research" && Boolean(picture?.research?.approvedVersionId)) ||
     (id === "screenplay" && (picture?.screenplay.status === "READY_FOR_REVIEW" || picture?.screenplay.status === "APPROVED")) ||
     (id === "inventory" && (picture?.production?.assets.length ?? 0) > 0) ||
+    (id === "visual-development" && Boolean(picture?.visualDevelopment?.approvals.length)) ||
+    (id === "cinematography" && Boolean(picture?.cinematography?.approvals.length)) ||
     (id === "performance" && Object.values(picture?.performance?.performance ?? {}).some((directions) => Object.values(directions).some((direction) => Boolean(direction.approvedAt)))) ||
     (id === "shots" && Boolean(picture?.performance?.shots.length) && Object.values(picture?.performance?.queue ?? {}).every((entry) => entry.readiness === "READY_TO_GENERATE")) ||
     (id === "prompts" && Boolean(picture?.shots[0]?.t2iPrompt)) ||
@@ -742,7 +780,7 @@ export function StageRail() {
 
   return (
     <nav className="min-w-0 max-w-full overflow-hidden" aria-label="Pipeline" data-active-stage={stage}>
-      <div className="hidden grid-cols-11 gap-1 px-2 py-2 xl:grid">
+      <div className="hidden grid-cols-[repeat(13,minmax(0,1fr))] gap-1 px-2 py-2 xl:grid">
         {STAGES.map((item) => (
           <button
             key={item.id}

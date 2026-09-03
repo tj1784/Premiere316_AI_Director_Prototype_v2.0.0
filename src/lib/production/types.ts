@@ -22,6 +22,10 @@ export type SourceConfidence = "A" | "B" | "C" | "D";
 export type AssetReadiness =
   | "NOT_PREPARED"
   | "PREPARING"
+  | "READY_FOR_REVIEW"
+  | "APPROVED_SPEC"
+  | "READY_TO_PREPARE"
+  | "APPROVED_PREPARED"
   | "READY_TO_GENERATE"
   | "GENERATED"
   | "NEEDS_REVIEW"
@@ -29,7 +33,7 @@ export type AssetReadiness =
   | "REJECTED"
   | "STALE"
   | "BLOCKED";
-export type PreparationQueueStatus = "PLANNED" | "PREFLIGHTED" | "READY" | "BLOCKED" | "WAITING_FOR_REFERENCE";
+export type PreparationQueueStatus = "PLANNED" | "PREFLIGHTED" | "READY" | "BLOCKED" | "WAITING_FOR_REFERENCE" | "APPROVED_PREPARED";
 
 export type ApprovedSceneInput = {
   id: string;
@@ -155,6 +159,33 @@ export type GeneratedIteration = {
   provenance: Provenance;
 };
 
+export type AssetLineageEvent = {
+  id: string;
+  type: "created" | "edited" | "merged" | "split" | "reference-linked" | "approved-spec" | "prepared" | "approved-prepared";
+  at: number;
+  sourceAssetIds: string[];
+  targetAssetIds: string[];
+  reason: string;
+};
+
+export type AssetConflict = {
+  id: string;
+  severity: "note" | "warning" | "blocker";
+  message: string;
+  sourceIds: string[];
+  resolved: boolean;
+};
+
+export type AssetSpecVersion = {
+  id: string;
+  assetId: string;
+  createdAt: number;
+  sourceVersionId: string | null;
+  spec: CanonicalAssetSpec;
+  approved: boolean;
+  provenance: Provenance[];
+};
+
 export type ProductionAsset = {
   id: string;
   normalizedKey: string;
@@ -173,6 +204,12 @@ export type ProductionAsset = {
   iterations: GeneratedIteration[];
   approvedIterationId: string | null;
   rejectedIterationIds: string[];
+  specVersions?: AssetSpecVersion[];
+  approvedSpecVersionId?: string | null;
+  aliasesOf?: string[];
+  tombstone?: boolean;
+  lineage?: AssetLineageEvent[];
+  conflicts?: AssetConflict[];
   stale: boolean;
   staleReasons: string[];
   blockedReasons: string[];
@@ -182,10 +219,29 @@ export type ProductionAsset = {
 };
 
 export type DependencyEdge = {
-  fromType: "screenplay-version" | "scene" | "requirement" | "asset" | "variant" | "generation-spec" | "iteration";
+  fromType: "screenplay-version" | "research-version" | "scene" | "requirement" | "asset" | "variant" | "reference" | "generation-spec" | "prepared-asset" | "iteration";
   fromId: string;
-  toType: "scene" | "requirement" | "asset" | "variant" | "generation-spec" | "iteration" | "approved-asset";
+  toType: "scene" | "requirement" | "asset" | "variant" | "reference" | "generation-spec" | "prepared-asset" | "iteration" | "approved-asset";
   toId: string;
+  reason?: string;
+};
+
+export type PreparedAssetRecord = {
+  id: string;
+  assetId: string;
+  variantId: string | null;
+  specVersionId: string | null;
+  visualBibleVersionIds: string[];
+  cinematographyPlanIds: string[];
+  status: "BLOCKED" | "READY_TO_PREPARE" | "APPROVED_PREPARED";
+  blockers: string[];
+  promptIngredients: string[];
+  negativeRequirements: string[];
+  referenceIds: string[];
+  dependencyFingerprints: import("./dependency-graph.ts").SourceFingerprint[];
+  noGeneration: true;
+  createdAt: number;
+  approvedAt: number | null;
 };
 
 export type PreparationQueueRecord = {
@@ -211,6 +267,12 @@ export type ProductionBreakdown = {
   requirements: BreakdownRequirement[];
   assets: ProductionAsset[];
   dependencies: DependencyEdge[];
+  graph?: import("./dependency-graph.ts").DependencyGraphV2 | null;
+  sourceBoundary?: import("./dependency-graph.ts").BreakdownSourceBoundary | null;
+  inventoryVersion?: number;
+  approvals?: AssetLineageEvent[];
+  auditLog?: AssetLineageEvent[];
+  preparedAssets?: PreparedAssetRecord[];
   queue: PreparationQueueRecord[];
   createdAt: number;
   updatedAt: number;

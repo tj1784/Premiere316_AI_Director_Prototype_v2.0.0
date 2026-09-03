@@ -5,6 +5,8 @@ import type { ProductionBreakdown } from "../production/types.ts";
 import type { PerformanceWorkspace } from "../performance/types.ts";
 import type { PictureResearchBible } from "../research/bible.ts";
 import type { PromptLabState } from "./prompt-lab.ts";
+import type { VisualDevelopmentState } from "../visual-development.ts";
+import type { CinematographyState } from "../cinematography.ts";
 
 export const USAGE_CAPS = {
   llm: 24,
@@ -18,6 +20,8 @@ export type StageId =
   | "research"
   | "screenplay"
   | "inventory"
+  | "visual-development"
+  | "cinematography"
   | "performance"
   | "shots"
   | "prompts"
@@ -31,13 +35,15 @@ export const STAGES: { id: StageId; number: string; label: string }[] = [
   { id: "research", number: "02", label: "Research" },
   { id: "screenplay", number: "03", label: "Screenplay" },
   { id: "inventory", number: "04", label: "Inventory" },
-  { id: "performance", number: "05", label: "Performance" },
-  { id: "shots", number: "06", label: "Shots" },
-  { id: "prompts", number: "07", label: "Prompt Lab" },
-  { id: "generate", number: "08", label: "Generate" },
-  { id: "timeline", number: "09", label: "Stitch" },
-  { id: "score", number: "10", label: "Score" },
-  { id: "export", number: "11", label: "Export" },
+  { id: "visual-development", number: "05", label: "Visual Dev" },
+  { id: "cinematography", number: "06", label: "Cinematography" },
+  { id: "performance", number: "07", label: "Performance" },
+  { id: "shots", number: "08", label: "Shots" },
+  { id: "prompts", number: "09", label: "Prompt Lab" },
+  { id: "generate", number: "10", label: "Generate" },
+  { id: "timeline", number: "11", label: "Stitch" },
+  { id: "score", number: "12", label: "Score" },
+  { id: "export", number: "13", label: "Export" },
 ];
 
 export type EngineKind =
@@ -139,6 +145,8 @@ export type Picture = {
   research?: PictureResearchBible | null;
   promptLab?: PromptLabState | null;
   production?: ProductionBreakdown | null;
+  visualDevelopment?: VisualDevelopmentState | null;
+  cinematography?: CinematographyState | null;
   performance?: PerformanceWorkspace | null;
   selectedEngine: SelectedEngines;
   screenplayFountain: string;

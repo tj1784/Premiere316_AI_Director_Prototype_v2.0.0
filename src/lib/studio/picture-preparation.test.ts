@@ -53,11 +53,13 @@ test("migration is idempotent and preserves new preparation records", () => {
   assert.deepEqual(second.screenplay, first.screenplay);
 });
 
-test("research stage survives preparation migration and is not dropped to intake", () => {
-  const prepared = migratePicturePreparation({ ...lastReel(), stage: "research" as never, lastOpenedStage: "research" as never }, 10);
-  assert.equal(prepared.stage, "research");
-  assert.equal(prepared.lastOpenedStage, "research");
-  assert.equal(prepared.screenplay.workingFountain, lastReel().screenplayFountain);
+test("research and Wave 3 stages survive preparation migration and are not dropped to intake", () => {
+  for (const stage of ["research", "visual-development", "cinematography"] as const) {
+    const prepared = migratePicturePreparation({ ...lastReel(), stage: stage as never, lastOpenedStage: stage as never }, 10);
+    assert.equal(prepared.stage, stage);
+    assert.equal(prepared.lastOpenedStage, stage);
+    assert.equal(prepared.screenplay.workingFountain, lastReel().screenplayFountain);
+  }
 });
 
 test("migration maps Brief and rejects malformed persisted stages", () => {

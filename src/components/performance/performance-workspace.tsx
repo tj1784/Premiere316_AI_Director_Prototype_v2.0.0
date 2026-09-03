@@ -88,7 +88,7 @@ export function PerformanceWorkspaceView({
       <header className="shrink-0 border-b border-border px-4 pb-3 pt-4 sm:px-6">
         <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] tracking-wide text-subtle uppercase">04 · Performance direction</p>
+            <p className="text-[11px] tracking-wide text-subtle uppercase">07 · Performance direction</p>
             <h2 className="mt-1 font-display text-3xl tracking-tight">Performance</h2>
             <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted">Direct playable behavior beat by beat. Manual controls remain available with LM Studio offline.</p>
           </div>

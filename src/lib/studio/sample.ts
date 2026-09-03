@@ -1,6 +1,6 @@
-import { DEFAULT_ENGINES, type Picture } from "./types";
-import { compilePicture, fountainFrom } from "./prompt-compiler";
-import { migratePicturePreparation, type LegacyPicture } from "./picture-preparation";
+import { DEFAULT_ENGINES, type Picture } from "./types.ts";
+import { compilePicture, fountainFrom } from "./prompt-compiler.ts";
+import { migratePicturePreparation, type LegacyPicture } from "./picture-preparation.ts";
 
 export const SAMPLE_ID = "pic_last_reel";
 

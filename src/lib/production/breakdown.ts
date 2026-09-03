@@ -9,11 +9,14 @@ import {
   type BreakdownRequirementDraft,
   type CanonicalAssetSpec,
   type DependencyEdge,
+  type PreparedAssetRecord,
   type PreparationQueueRecord,
   type ProductionAsset,
   type ProductionBreakdown,
   type ProductionCategory,
 } from "./types.ts";
+import { buildBreakdownSourceBoundary, buildDependencyGraphV2, sourceFingerprint, type BreakdownSourceBoundary } from "./dependency-graph.ts";
+import type { PictureResearchBible } from "../research/bible.ts";
 
 export class ScreenplayApprovalRequiredError extends Error {
   constructor() {
@@ -132,7 +135,7 @@ export function assetsFromRequirements(
         staleReasons: [],
       }));
     const asset: ProductionAsset = {
-      id: `asset:${key.replace(/[^a-z0-9]+/g, ":").replace(/^:|:$/g, "")}`,
+      id: `asset:${assetIdFromKey(key)}`,
       normalizedKey: key,
       name: base.name,
       aliases: unique(items.map((item) => item.name).filter((name) => name !== base.name)),
@@ -149,6 +152,12 @@ export function assetsFromRequirements(
       iterations: [],
       approvedIterationId: null,
       rejectedIterationIds: [],
+      specVersions: [],
+      approvedSpecVersionId: null,
+      aliasesOf: [],
+      tombstone: false,
+      lineage: [{ id: `lineage:${assetIdFromKey(key)}:created:${now}`, type: "created", at: now, sourceAssetIds: [], targetAssetIds: [`asset:${assetIdFromKey(key)}`], reason: "Requirement extraction" }],
+      conflicts: [],
       stale: false,
       staleReasons: [],
       blockedReasons: [],
@@ -160,18 +169,27 @@ export function assetsFromRequirements(
   });
 }
 
+function assetIdFromKey(key: string): string {
+  return key.replace(/[^a-z0-9]+/g, ":").replace(/^:|:$/g, "");
+}
+
 export function calculateReadiness(asset: ProductionAsset): AssetReadiness {
+  if (asset.tombstone) return "STALE";
   if (asset.stale || asset.variants.some((variant) => variant.stale)) return "STALE";
+  if ((asset.conflicts ?? []).some((conflict) => !conflict.resolved && conflict.severity === "blocker")) return "BLOCKED";
   if (asset.blockedReasons.length) return "BLOCKED";
-  if (asset.approvedIterationId) return "APPROVED";
+  if ((asset as { preparedApproved?: boolean }).preparedApproved) return "APPROVED_PREPARED";
+  if (asset.approvedSpecVersionId || asset.canonicalApproved) {
+    if (asset.referenceRequired && !asset.references.length) return "BLOCKED";
+    return "READY_TO_PREPARE";
+  }
+  if ((asset.specVersions ?? []).some((version) => !version.approved)) return "READY_FOR_REVIEW";
   if (asset.iterations.some((iteration) => iteration.status === "NEEDS_REVIEW")) return "NEEDS_REVIEW";
   if (asset.iterations.some((iteration) => iteration.status === "GENERATED")) return "GENERATED";
   if (asset.iterations.length && asset.iterations.every((iteration) => iteration.status === "REJECTED")) return "REJECTED";
   if (asset.referenceRequired && !asset.references.length) return "BLOCKED";
-  if (!asset.canonicalApproved) {
-    return asset.canonicalSpec.visualDescription.trim() ? "PREPARING" : "NOT_PREPARED";
-  }
-  return "READY_TO_GENERATE";
+  if (!asset.canonicalApproved) return asset.canonicalSpec.visualDescription.trim() ? "PREPARING" : "NOT_PREPARED";
+  return "READY_TO_PREPARE";
 }
 
 export function buildDependencyGraph(record: Pick<ProductionBreakdown, "screenplayVersionId" | "requirements" | "assets">): DependencyEdge[] {
@@ -203,6 +221,7 @@ export function createProductionBreakdown(
   screenplay: ApprovedScreenplayInput,
   drafts: BreakdownRequirementDraft[],
   now = Date.now(),
+  sourceBoundary: BreakdownSourceBoundary | null = null,
 ): ProductionBreakdown {
   assertApprovedScreenplay(screenplay);
   const requirements = normalizeRequirements(drafts, screenplay);
@@ -217,11 +236,52 @@ export function createProductionBreakdown(
     requirements,
     assets,
     dependencies: [],
+    graph: null,
+    sourceBoundary,
+    inventoryVersion: 1,
+    approvals: [],
+    auditLog: [],
+    preparedAssets: [],
     queue: [],
     createdAt: now,
     updatedAt: now,
   };
-  return { ...record, dependencies: buildDependencyGraph(record) };
+  return { ...record, dependencies: buildDependencyGraph(record), graph: buildDependencyGraphV2(record, now) };
+}
+
+export function createResearchAwareProductionBreakdown(input: { screenplay: import("../studio/screenplay.ts").ApprovedScreenplayBoundary; research: PictureResearchBible; drafts: BreakdownRequirementDraft[]; now?: number }): ProductionBreakdown | { error: string } {
+  const now = input.now ?? Date.now();
+  const boundary = buildBreakdownSourceBoundary(input.screenplay, input.research, now);
+  if ("error" in boundary) return boundary;
+  const approvedInput: ApprovedScreenplayInput = {
+    pictureId: input.screenplay.pictureId,
+    versionId: input.screenplay.screenplayVersionId,
+    status: "APPROVED",
+    fountain: input.screenplay.fountain,
+    scenes: input.screenplay.scenes.map((scene) => ({ id: scene.id, slugline: scene.slugline })),
+    socialWorld: input.screenplay.historicalContext?.socialWorld.map((entry) => ({
+      id: entry.id,
+      expectedBehavior: entry.expectedBehavior,
+      violationOrReversal: entry.violationOrReversal,
+      whoWouldNotice: entry.whoWouldNotice,
+      visibleReaction: entry.visibleReaction,
+      statusHonorImplication: entry.socialConsequence,
+      confidence: entry.historicalConfidence,
+      evidenceNote: entry.evidenceNote,
+      sceneIds: [],
+    })) ?? [],
+    sourceContext: {
+      workflow: input.screenplay.provenance.workflow,
+      sourceType: input.screenplay.provenance.sourceType,
+      sourceVersionId: input.screenplay.provenance.sourceVersionId,
+      screenplayModelId: input.screenplay.provenance.model?.servedModelId ?? null,
+      confidenceLegend: input.screenplay.historicalContext?.confidenceLegend ?? {},
+      sourceReferences: input.screenplay.historicalContext?.sourceReferences ?? "",
+      fidelityRequirements: input.screenplay.historicalContext?.fidelityRequirements ?? "",
+      adaptationBoundaries: input.screenplay.historicalContext?.adaptationBoundaries ?? "",
+    },
+  };
+  return createProductionBreakdown(approvedInput, input.drafts, now, boundary);
 }
 
 export function reconcileProductionBreakdown(
@@ -267,6 +327,12 @@ export function reconcileProductionBreakdown(
       iterations: old.iterations,
       approvedIterationId: old.approvedIterationId,
       rejectedIterationIds: old.rejectedIterationIds,
+      specVersions: old.specVersions ?? [],
+      approvedSpecVersionId: old.approvedSpecVersionId ?? null,
+      aliasesOf: old.aliasesOf ?? [],
+      tombstone: old.tombstone ?? false,
+      lineage: old.lineage ?? [],
+      conflicts: old.conflicts ?? [],
       stale: old.stale || dependencyChanged,
       staleReasons: dependencyChanged ? unique([...old.staleReasons, "Dependent screenplay scenes changed."]) : old.staleReasons,
       blockedReasons: old.blockedReasons,
@@ -297,17 +363,18 @@ export function reconcileProductionBreakdown(
     ...extracted,
     requirements: [...extracted.requirements, ...removedRequirements],
     assets: [...assets, ...removedAssets],
+    preparedAssets: (previous.preparedAssets ?? []).map((prepared) => ({ ...prepared, status: "BLOCKED" as const, blockers: unique([...prepared.blockers, "Approved screenplay or breakdown changed; refresh prepared asset record before generation."]), approvedAt: null })),
     createdAt: previous.createdAt,
     updatedAt: now,
   };
-  const withDependencies = { ...next, dependencies: buildDependencyGraph(next) };
+  const withDependencies = { ...next, dependencies: buildDependencyGraph(next), graph: buildDependencyGraphV2(next, now) };
   return previous.queue.length ? prepareAssetQueue(withDependencies, now) : withDependencies;
 }
 
 function refresh(record: ProductionBreakdown, assets: ProductionAsset[], now: number): ProductionBreakdown {
   const refreshed = assets.map((asset) => ({ ...asset, readiness: calculateReadiness(asset), updatedAt: now }));
   const next = { ...record, assets: refreshed, updatedAt: now };
-  const withDependencies = { ...next, dependencies: buildDependencyGraph(next) };
+  const withDependencies = { ...next, dependencies: buildDependencyGraph(next), graph: buildDependencyGraphV2(next, now) };
   return record.queue.length ? prepareAssetQueue(withDependencies, now) : withDependencies;
 }
 
@@ -321,7 +388,25 @@ export function editAsset(
     if (asset.id !== assetId) return asset;
     const category = patch.category ?? asset.category;
     const name = patch.name?.trim() || asset.name;
-    return { ...asset, ...patch, name, category, normalizedKey: `${category}:${normalizeAssetName(name, category)}` };
+    const currentVersions = asset.specVersions ?? [];
+    const approvedVersionId = asset.approvedSpecVersionId ?? (asset.canonicalApproved ? `spec:${asset.id}:approved:legacy` : null);
+    const frozenApproved = approvedVersionId && !currentVersions.some((version) => version.id === approvedVersionId)
+      ? [{ id: approvedVersionId, assetId: asset.id, createdAt: asset.updatedAt, sourceVersionId: null, spec: structuredClone(asset.canonicalSpec), approved: true, provenance: asset.provenance }]
+      : [];
+    const canonicalSpec = { ...asset.canonicalSpec, ...patch.canonicalSpec };
+    const draftVersion = { id: `spec:${asset.id}:${now}`, assetId: asset.id, createdAt: now, sourceVersionId: approvedVersionId, spec: structuredClone(canonicalSpec), approved: false, provenance: asset.provenance };
+    return {
+      ...asset,
+      ...patch,
+      name,
+      category,
+      normalizedKey: `${category}:${normalizeAssetName(name, category)}`,
+      canonicalSpec,
+      canonicalApproved: false,
+      approvedSpecVersionId: null,
+      specVersions: [...frozenApproved, ...currentVersions, draftVersion],
+      lineage: [...(asset.lineage ?? []), { id: `lineage:edited:${asset.id}:${now}`, type: "edited", at: now, sourceAssetIds: [asset.id], targetAssetIds: [asset.id], reason: "Asset spec edited" }],
+    };
   }), now);
 }
 
@@ -375,7 +460,23 @@ export function addMissingAsset(
 }
 
 export function approveCanonicalSpec(record: ProductionBreakdown, assetId: string, now = Date.now()): ProductionBreakdown {
-  return refresh(record, record.assets.map((asset) => asset.id === assetId ? { ...asset, canonicalApproved: true, stale: false, staleReasons: [] } : asset), now);
+  return refresh(record, record.assets.map((asset) => {
+    if (asset.id !== assetId) return asset;
+    const draft = [...(asset.specVersions ?? [])].reverse().find((version) => !version.approved)
+      ?? { id: `spec:${asset.id}:${now}`, assetId: asset.id, createdAt: now, sourceVersionId: asset.approvedSpecVersionId ?? null, spec: structuredClone(asset.canonicalSpec), approved: false, provenance: asset.provenance };
+    const approved = { ...draft, spec: structuredClone(draft.spec), approved: true };
+    const specVersions = [...(asset.specVersions ?? []).filter((version) => version.id !== draft.id), approved];
+    return {
+      ...asset,
+      canonicalSpec: structuredClone(approved.spec),
+      specVersions,
+      canonicalApproved: true,
+      approvedSpecVersionId: approved.id,
+      stale: false,
+      staleReasons: [],
+      lineage: [...(asset.lineage ?? []), { id: `lineage:approved-spec:${asset.id}:${now}`, type: "approved-spec", at: now, sourceAssetIds: [asset.id], targetAssetIds: [asset.id], reason: "Canonical asset spec approved" }],
+    };
+  }), now);
 }
 
 export function addAssetVariant(record: ProductionBreakdown, assetId: string, variant: AssetVariant, now = Date.now()): ProductionBreakdown {
@@ -498,7 +599,8 @@ export function invalidateSceneDependents(
 function queueStatus(asset: ProductionAsset): PreparationQueueRecord["status"] {
   if (asset.referenceRequired && !asset.references.length) return "WAITING_FOR_REFERENCE";
   if (asset.readiness === "BLOCKED" || asset.readiness === "STALE") return "BLOCKED";
-  if (asset.readiness === "READY_TO_GENERATE") return "READY";
+  if (asset.readiness === "READY_TO_GENERATE" || asset.readiness === "READY_TO_PREPARE" || asset.readiness === "APPROVED_SPEC") return "READY";
+  if (asset.readiness === "APPROVED_PREPARED") return "APPROVED_PREPARED";
   if (asset.canonicalApproved) return "PREFLIGHTED";
   return "PLANNED";
 }
@@ -525,12 +627,13 @@ export function prepareAssetQueue(record: ProductionBreakdown, now = Date.now())
       updatedAt: now,
     }));
   });
-  return { ...record, queue, updatedAt: now };
+  const next = { ...record, queue, updatedAt: now };
+  return { ...next, graph: buildDependencyGraphV2(next, now) };
 }
 
 export function breakdownPreflight(record: ProductionBreakdown): BreakdownPreflight {
   const byCategory = Object.fromEntries(PRODUCTION_CATEGORIES.map((category) => [category, 0])) as BreakdownPreflight["byCategory"];
-  const states: AssetReadiness[] = ["NOT_PREPARED", "PREPARING", "READY_TO_GENERATE", "GENERATED", "NEEDS_REVIEW", "APPROVED", "REJECTED", "STALE", "BLOCKED"];
+  const states: AssetReadiness[] = ["NOT_PREPARED", "PREPARING", "READY_FOR_REVIEW", "APPROVED_SPEC", "READY_TO_PREPARE", "APPROVED_PREPARED", "READY_TO_GENERATE", "GENERATED", "NEEDS_REVIEW", "APPROVED", "REJECTED", "STALE", "BLOCKED"];
   const byReadiness = Object.fromEntries(states.map((state) => [state, 0])) as BreakdownPreflight["byReadiness"];
   for (const asset of record.assets) {
     byCategory[asset.category] += 1;
@@ -540,8 +643,8 @@ export function breakdownPreflight(record: ProductionBreakdown): BreakdownPrefli
     total: record.assets.length,
     byCategory,
     byReadiness,
-    ready: byReadiness.READY_TO_GENERATE + byReadiness.GENERATED + byReadiness.APPROVED,
-    needReview: byReadiness.PREPARING + byReadiness.NEEDS_REVIEW + byReadiness.STALE,
+    ready: byReadiness.READY_TO_GENERATE + byReadiness.READY_TO_PREPARE + byReadiness.APPROVED_SPEC + byReadiness.APPROVED_PREPARED + byReadiness.GENERATED + byReadiness.APPROVED,
+    needReview: byReadiness.PREPARING + byReadiness.READY_FOR_REVIEW + byReadiness.NEEDS_REVIEW + byReadiness.STALE,
     blocked: byReadiness.BLOCKED,
   };
 }

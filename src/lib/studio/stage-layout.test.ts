@@ -16,6 +16,8 @@ const EXPECTED: Record<StageId, StageLayoutPolicy> = {
   research: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "research" },
   screenplay: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "screenplay" },
   inventory: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "inventory" },
+  "visual-development": { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "visual-development" },
+  cinematography: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "cinematography" },
   performance: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "performance" },
   shots: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "shots" },
   prompts: { leftPanel: "none", rightPanel: "none", bottomPanel: "none", headerActions: [], workspaceMode: "prompts" },
@@ -27,7 +29,7 @@ const EXPECTED: Record<StageId, StageLayoutPolicy> = {
 
 describe("stage layout policy", () => {
   it("matches the implemented StageId table", () => {
-    assert.equal(STAGES.length, 11);
+    assert.equal(STAGES.length, 13);
     assert.equal(STAGES[1]?.id, "research");
     assert.deepEqual(STAGES.map((stage) => stage.id), Object.keys(EXPECTED));
     for (const id of Object.keys(EXPECTED) as StageId[]) {
@@ -64,8 +66,8 @@ describe("stage layout policy", () => {
     }
   });
 
-  it("keeps screenplay, inventory, performance, and shots as stage-owned workspaces", () => {
-    for (const id of ["research", "screenplay", "inventory", "performance", "shots"] as const) {
+  it("keeps screenplay, inventory, visual development, cinematography, performance, and shots as stage-owned workspaces", () => {
+    for (const id of ["research", "screenplay", "inventory", "visual-development", "cinematography", "performance", "shots"] as const) {
       const policy = resolveStageLayout(id);
       assert.equal(policy.leftPanel, "stage");
       assert.equal(policy.rightPanel, "stage");
@@ -76,7 +78,7 @@ describe("stage layout policy", () => {
   });
 
   it("fails closed for unknown stages", () => {
-    const policy = resolveStageLayout("cinematography");
+    const policy = resolveStageLayout("unknown-stage");
     assert.deepEqual(policy, {
       leftPanel: "none",
       rightPanel: "none",

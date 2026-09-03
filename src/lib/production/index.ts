@@ -6,3 +6,4 @@ export * from "./inventory.ts";
 export * from "./persistence.ts";
 export * from "./screenplay-adapter.ts";
 export * from "./deterministic-extractor.ts";
+export * from "./dependency-graph.ts";

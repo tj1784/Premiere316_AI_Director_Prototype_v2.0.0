@@ -20,11 +20,12 @@ import { AssetInspector } from "./asset-inspector";
 import { AddAssetDialog } from "./inventory-dialogs";
 import { PRODUCTION_CATEGORY_LABELS } from "./inventory-constants";
 import { ReadinessBadge } from "./inventory-primitives";
+import { PreparedAssetsPanel } from "./prepared-assets-panel";
 
 type PreflightFilter = "all" | "ready" | "review" | "blocked";
 
 const PREFLIGHT_STATES: Record<Exclude<PreflightFilter, "all">, AssetReadiness[]> = {
-  ready: ["READY_TO_GENERATE", "GENERATED", "APPROVED"],
+  ready: ["READY_TO_GENERATE", "READY_TO_PREPARE", "READY_FOR_REVIEW", "APPROVED_SPEC", "APPROVED_PREPARED", "GENERATED", "APPROVED"],
   review: ["PREPARING", "NEEDS_REVIEW", "STALE"],
   blocked: ["BLOCKED"],
 };
@@ -35,9 +36,11 @@ export type InventoryWorkspaceProps = {
   busy?: boolean;
   onRunBreakdown: (boundary: ApprovedScreenplayBoundary) => void | Promise<void>;
   onChange: (record: ProductionBreakdown) => void;
+  visualApprovals?: string[];
+  cinematographyApprovals?: string[];
 };
 
-export function InventoryWorkspace({ boundary, record, busy = false, onRunBreakdown, onChange }: InventoryWorkspaceProps) {
+export function InventoryWorkspace({ boundary, record, busy = false, onRunBreakdown, onChange, visualApprovals = [], cinematographyApprovals = [] }: InventoryWorkspaceProps) {
   const [category, setCategory] = useState<"all" | ProductionCategory>("all");
   const [preflightFilter, setPreflightFilter] = useState<PreflightFilter>("all");
   const [query, setQuery] = useState("");
@@ -68,7 +71,7 @@ export function InventoryWorkspace({ boundary, record, busy = false, onRunBreakd
       <header className="shrink-0 border-b border-border px-4 pb-3 pt-4 sm:px-6">
         <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] tracking-wide text-subtle uppercase">03 · Production breakdown</p>
+            <p className="text-[11px] tracking-wide text-subtle uppercase">04 · Inventory</p>
             <h2 className="mt-1 font-display text-3xl tracking-tight">Inventory</h2>
             <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted">
               Canonical, engine-independent production assets linked to approved screenplay {record.screenplayVersionId}.
@@ -136,6 +139,7 @@ export function InventoryWorkspace({ boundary, record, busy = false, onRunBreakd
         )}
 
         {record.queue.length ? <QueueSummary counts={queueCounts} total={record.queue.length} /> : null}
+        <PreparedAssetsPanel record={record} visualApprovals={visualApprovals} cinematographyApprovals={cinematographyApprovals} onChange={onChange} />
       </div>
 
       {selected ? <AssetInspector record={record} asset={selected} onChange={onChange} onClose={() => setSelectedId(null)} /> : null}
@@ -173,7 +177,7 @@ function EmptyBreakdown({ boundary, busy, onRunBreakdown }: { boundary: Approved
 }
 
 function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
-  return <button type="button" className={cn("h-9 shrink-0 rounded-sm px-3 text-xs transition-colors", active ? "bg-elevated text-fg shadow-[var(--shadow-border)]" : "text-muted hover:text-fg")} onClick={onClick}>{children}</button>;
+  return <button type="button" className={cn("min-h-11 shrink-0 rounded-sm px-3 text-xs transition-colors", active ? "bg-elevated text-fg shadow-[var(--shadow-border)]" : "text-muted hover:text-fg")} onClick={onClick}>{children}</button>;
 }
 
 function AssetCard({ asset, sceneLabels, previewUri, selected, onClick }: { asset: ProductionAsset; sceneLabels: string[]; previewUri: string | null; selected: boolean; onClick: () => void }) {
@@ -197,13 +201,13 @@ function PreflightSummary({ record, total, ready, review, blocked, onCategory, o
   return (
     <section className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]" aria-label="Breakdown preflight">
       <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="text-[11px] tracking-wide text-subtle uppercase">Breakdown preflight</p><p className="mt-0.5 text-sm"><span className="font-display text-xl tabular-nums">{total}</span> production elements</p></div><div className="flex flex-wrap gap-1.5"><SummaryButton label="Ready" count={ready} onClick={() => onReadiness("ready")} /><SummaryButton label="Need review" count={review} onClick={() => onReadiness("review")} /><SummaryButton label="Blocked" count={blocked} onClick={() => onReadiness("blocked")} /></div></div>
-      <div className="mt-3 flex gap-1 overflow-x-auto border-t border-border pt-2">{major.map((item) => <button key={item} type="button" className="shrink-0 rounded-sm px-2 py-1.5 text-[11px] text-muted hover:bg-inset hover:text-fg" onClick={() => onCategory(item)}><span className="text-fg tabular-nums">{record.assets.filter((asset) => asset.category === item).length}</span> {PRODUCTION_CATEGORY_LABELS[item]}</button>)}</div>
+      <div className="mt-3 flex gap-1 overflow-x-auto border-t border-border pt-2">{major.map((item) => <button key={item} type="button" className="min-h-11 shrink-0 rounded-sm px-3 py-2 text-[11px] text-muted hover:bg-inset hover:text-fg" onClick={() => onCategory(item)}><span className="text-fg tabular-nums">{record.assets.filter((asset) => asset.category === item).length}</span> {PRODUCTION_CATEGORY_LABELS[item]}</button>)}</div>
     </section>
   );
 }
 
 function SummaryButton({ label, count, onClick }: { label: string; count: number; onClick: () => void }) {
-  return <button type="button" className="rounded-sm bg-inset px-2.5 py-1.5 text-[11px] text-muted shadow-[var(--shadow-border)] hover:text-fg" onClick={onClick}><span className="text-fg tabular-nums">{count}</span> {label}</button>;
+  return <button type="button" className="min-h-11 rounded-sm bg-inset px-3 py-2 text-[11px] text-muted shadow-[var(--shadow-border)] hover:text-fg" onClick={onClick}><span className="text-fg tabular-nums">{count}</span> {label}</button>;
 }
 
 function QueueSummary({ counts, total }: { counts: Record<string, number>; total: number }) {
