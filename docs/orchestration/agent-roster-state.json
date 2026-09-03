@@ -1,0 +1,730 @@
+{
+  "schemaVersion": 1,
+  "profile": "64-is-the-new-black",
+  "logicalAgentCount": 64,
+  "physicalConcurrencyLimit": 12,
+  "root": "A01",
+  "captains": [
+    "A03",
+    "A09",
+    "A17",
+    "A33",
+    "A41",
+    "A57"
+  ],
+  "directAuditors": [
+    "A07",
+    "A08",
+    "A64"
+  ],
+  "captainAssignments": {
+    "A03": [
+      "A02",
+      "A04",
+      "A05",
+      "A06",
+      "A15",
+      "A24",
+      "A61",
+      "A62",
+      "A63"
+    ],
+    "A09": [
+      "A10",
+      "A11",
+      "A12",
+      "A13",
+      "A14",
+      "A16",
+      "A27",
+      "A42",
+      "A55"
+    ],
+    "A17": [
+      "A18",
+      "A19",
+      "A20",
+      "A21",
+      "A22",
+      "A23",
+      "A25",
+      "A28",
+      "A30"
+    ],
+    "A33": [
+      "A26",
+      "A29",
+      "A31",
+      "A32",
+      "A34",
+      "A35",
+      "A36",
+      "A37",
+      "A38"
+    ],
+    "A41": [
+      "A39",
+      "A40",
+      "A43",
+      "A44",
+      "A45",
+      "A46",
+      "A47",
+      "A48",
+      "A49"
+    ],
+    "A57": [
+      "A50",
+      "A51",
+      "A52",
+      "A53",
+      "A54",
+      "A56",
+      "A58",
+      "A59",
+      "A60"
+    ]
+  },
+  "agents": [
+    {
+      "id": "A01",
+      "pod": "Governance & Integration",
+      "role": "Master Orchestrator",
+      "scope": "Own program DAG, priorities, agent deployment, gate decisions, final accountability.",
+      "mutates": "Orchestration docs only; no feature code except emergency integration approval.",
+      "tier": "root",
+      "reportsTo": null,
+      "state": "active"
+    },
+    {
+      "id": "A02",
+      "pod": "Governance & Integration",
+      "role": "Chief Architecture Lead",
+      "scope": "Protect engine-neutral architecture, Electron boundaries, project graph, ADRs.",
+      "mutates": "docs/architecture/**; schema proposals through reviewed patches.",
+      "tier": "specialist-medium",
+      "reportsTo": "A03",
+      "state": "scheduled"
+    },
+    {
+      "id": "A03",
+      "pod": "Governance & Integration",
+      "role": "Integration Lead",
+      "scope": "Review/merge pod outputs, semantic conflict resolution, shared branch ownership.",
+      "mutates": "Shared integration files under explicit leases.",
+      "tier": "captain-xhigh",
+      "reportsTo": "A01",
+      "state": "scheduled"
+    },
+    {
+      "id": "A04",
+      "pod": "Governance & Integration",
+      "role": "Build & Packaging Lead",
+      "scope": "Renderer/Electron build, app.asar, installer, shortcuts, build IDs, package smoke.",
+      "mutates": "desktop/**, build config, packaging scripts under lease.",
+      "tier": "specialist-medium",
+      "reportsTo": "A03",
+      "state": "scheduled"
+    },
+    {
+      "id": "A05",
+      "pod": "Governance & Integration",
+      "role": "Security & Offline Lead",
+      "scope": "No hidden network, secrets, path safety, process boundaries, model-code trust.",
+      "mutates": "security policies/tests; reviewed security fixes.",
+      "tier": "specialist-medium",
+      "reportsTo": "A03",
+      "state": "scheduled"
+    },
+    {
+      "id": "A06",
+      "pod": "Governance & Integration",
+      "role": "Migration Lead",
+      "scope": "Safe schema/data/project migrations, backups, legacy Last Reel compatibility.",
+      "mutates": "migrations/** and migration adapters.",
+      "tier": "specialist-medium",
+      "reportsTo": "A03",
+      "state": "scheduled"
+    },
+    {
+      "id": "A07",
+      "pod": "Governance & Integration",
+      "role": "Test Strategy Lead",
+      "scope": "Global test taxonomy, regression matrix, E2E harness, baseline comparison.",
+      "mutates": "tests/harness/**, test config under lease.",
+      "tier": "direct-auditor-medium",
+      "reportsTo": "A01",
+      "state": "scheduled"
+    },
+    {
+      "id": "A08",
+      "pod": "Governance & Integration",
+      "role": "Release & Change Manager",
+      "scope": "Versioning, changelog, checkpoint integrity, release evidence, rollback plans.",
+      "mutates": "docs/release/**, artifact manifests.",
+      "tier": "direct-auditor-medium",
+      "reportsTo": "A01",
+      "state": "scheduled"
+    },
+    {
+      "id": "A09",
+      "pod": "UI/UX & Desktop",
+      "role": "UI/UX Pod Lead",
+      "scope": "Stage-specific information architecture and visual coherence.",
+      "mutates": "UI pod integration branch only.",
+      "tier": "captain-xhigh",
+      "reportsTo": "A01",
+      "state": "scheduled"
+    },
+    {
+      "id": "A10",
+      "pod": "UI/UX & Desktop",
+      "role": "Stage Shell Engineer",
+      "scope": "Declarative stage layout policy; remove global UI leakage.",
+      "mutates": "studio shell/layout policy under exclusive lease.",
+      "tier": "specialist-medium",
+      "reportsTo": "A09",
+      "state": "scheduled"
+    },
+    {
+      "id": "A11",
+      "pod": "UI/UX & Desktop",
+      "role": "Contextual Panels Engineer",
+      "scope": "Contextual left/right panels and inspectors per stage.",
+      "mutates": "panel components, stage adapters.",
+      "tier": "specialist-medium",
+      "reportsTo": "A09",
+      "state": "scheduled"
+    },
+    {
+      "id": "A12",
+      "pod": "UI/UX & Desktop",
+      "role": "Navigation & Responsive Engineer",
+      "scope": "Stage navigation groups, overflow, 100–200% zoom behavior, no blank columns.",
+      "mutates": "navigation/responsive components, not Electron zoom core.",
+      "tier": "specialist-medium",
+      "reportsTo": "A09",
+      "state": "scheduled"
+    },
+    {
+      "id": "A13",
+      "pod": "UI/UX & Desktop",
+      "role": "Accessibility & Keyboard QA",
+      "scope": "Keyboard, focus, labels, zoom shortcuts, reachability, reduced motion.",
+      "mutates": "accessibility fixes/tests only.",
+      "tier": "specialist-medium",
+      "reportsTo": "A09",
+      "state": "scheduled"
+    },
+    {
+      "id": "A14",
+      "pod": "UI/UX & Desktop",
+      "role": "Visual Regression Agent",
+      "scope": "Packaged screenshots at 100/150%, layout comparison, stage contamination detection.",
+      "mutates": "visual tests/baselines only unless assigned narrow fix.",
+      "tier": "specialist-medium",
+      "reportsTo": "A09",
+      "state": "scheduled"
+    },
+    {
+      "id": "A15",
+      "pod": "UI/UX & Desktop",
+      "role": "Desktop Window & Preload UI Engineer",
+      "scope": "Native dialogs, window behavior, secure renderer bridge for UI needs.",
+      "mutates": "preload/UI bridge only with A04 lease.",
+      "tier": "specialist-medium",
+      "reportsTo": "A03",
+      "state": "scheduled"
+    },
+    {
+      "id": "A16",
+      "pod": "UI/UX & Desktop",
+      "role": "Packaged UI UAT Verifier",
+      "scope": "Electron-only stage walkthrough, no browser acceptance.",
+      "mutates": "UAT scripts/reports only.",
+      "tier": "specialist-medium",
+      "reportsTo": "A09",
+      "state": "scheduled"
+    },
+    {
+      "id": "A17",
+      "pod": "Research & Screenplay",
+      "role": "Research Room Lead",
+      "scope": "Picture Research Bible domain, workflow, approval, Delta Research.",
+      "mutates": "research domain/UI under pod lease.",
+      "tier": "captain-xhigh",
+      "reportsTo": "A01",
+      "state": "scheduled"
+    },
+    {
+      "id": "A18",
+      "pod": "Research & Screenplay",
+      "role": "Source & Canon Research Engineer",
+      "scope": "Source ledger, quote/provenance, confidence classes, harmonization.",
+      "mutates": "source-ledger domain/tests.",
+      "tier": "specialist-medium",
+      "reportsTo": "A17",
+      "state": "scheduled"
+    },
+    {
+      "id": "A19",
+      "pod": "Research & Screenplay",
+      "role": "Historical & Social-World Engineer",
+      "scope": "Expected behavior, taboo/reversal, visible reaction, confidence, cinematic expression.",
+      "mutates": "social-world domain/UI/tests.",
+      "tier": "specialist-medium",
+      "reportsTo": "A17",
+      "state": "scheduled"
+    },
+    {
+      "id": "A20",
+      "pod": "Research & Screenplay",
+      "role": "Cinematography Research Engineer",
+      "scope": "Picture-level cinematography manifesto research artifact.",
+      "mutates": "research/cinematography artifacts only.",
+      "tier": "specialist-medium",
+      "reportsTo": "A17",
+      "state": "scheduled"
+    },
+    {
+      "id": "A21",
+      "pod": "Research & Screenplay",
+      "role": "Qwen Screenwriter Integration",
+      "scope": "Primary local writer, scene/chapter/full scope, structured outputs.",
+      "mutates": "screenplay writer workflow/provider client.",
+      "tier": "specialist-medium",
+      "reportsTo": "A17",
+      "state": "scheduled"
+    },
+    {
+      "id": "A22",
+      "pod": "Research & Screenplay",
+      "role": "Llama QA / Story Doctor Integration",
+      "scope": "Independent QA categories, critique-first, optional rewrite.",
+      "mutates": "screenplay QA workflow.",
+      "tier": "specialist-medium",
+      "reportsTo": "A17",
+      "state": "scheduled"
+    },
+    {
+      "id": "A23",
+      "pod": "Research & Screenplay",
+      "role": "Scoped Rewrite & Versioning Engineer",
+      "scope": "Stable screenplay hierarchy, fine-grained versions, scoped seven-pass, invalidation.",
+      "mutates": "screenplay domain/store/migrations under lease.",
+      "tier": "specialist-medium",
+      "reportsTo": "A17",
+      "state": "scheduled"
+    },
+    {
+      "id": "A24",
+      "pod": "Research & Screenplay",
+      "role": "LM Studio Provider & UAT Engineer",
+      "scope": "Endpoint discovery, served models, streaming, cancel, telemetry, offline state.",
+      "mutates": "LocalLLMProvider/LMStudioProvider and tests.",
+      "tier": "specialist-medium",
+      "reportsTo": "A03",
+      "state": "scheduled"
+    },
+    {
+      "id": "A25",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Breakdown Pod Lead",
+      "scope": "Research-aware approved-screenplay breakdown and pod integration.",
+      "mutates": "breakdown pod branch.",
+      "tier": "specialist-medium",
+      "reportsTo": "A17",
+      "state": "scheduled"
+    },
+    {
+      "id": "A26",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Asset Schema & Dependency Engineer",
+      "scope": "Canonical asset specs, variants, references, fine-grained edges.",
+      "mutates": "asset domain/dependency adapters.",
+      "tier": "specialist-medium",
+      "reportsTo": "A33",
+      "state": "scheduled"
+    },
+    {
+      "id": "A27",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Inventory UI Engineer",
+      "scope": "Categories, readiness, asset inspector, edit/merge/split/reference UX.",
+      "mutates": "inventory components.",
+      "tier": "specialist-medium",
+      "reportsTo": "A09",
+      "state": "scheduled"
+    },
+    {
+      "id": "A28",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Visual Development Lead",
+      "scope": "Reference bibles, boards, palettes, motifs, approval workflow.",
+      "mutates": "visual-development domain/UI.",
+      "tier": "specialist-medium",
+      "reportsTo": "A17",
+      "state": "scheduled"
+    },
+    {
+      "id": "A29",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Character Identity & Reference Engineer",
+      "scope": "Identity specs, expression/wardrobe states, reference bundles, drift rules.",
+      "mutates": "character identity domain/UI/tests.",
+      "tier": "specialist-medium",
+      "reportsTo": "A33",
+      "state": "scheduled"
+    },
+    {
+      "id": "A30",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Production Design / Costume / Props Engineer",
+      "scope": "Locations, materials, costume, props, set dressing, continuity variants.",
+      "mutates": "production-design domain/UI.",
+      "tier": "specialist-medium",
+      "reportsTo": "A17",
+      "state": "scheduled"
+    },
+    {
+      "id": "A31",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Cinematography Director Engineer",
+      "scope": "Manifesto, sequence visual arcs, lens/framing/lighting stage and QA.",
+      "mutates": "cinematography domain/UI/tests.",
+      "tier": "specialist-medium",
+      "reportsTo": "A33",
+      "state": "scheduled"
+    },
+    {
+      "id": "A32",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Asset Versioning & Approval QA",
+      "scope": "Iterations, compare, canonical approval, stale/waived states, persistence.",
+      "mutates": "asset QA/tests; narrow fixes.",
+      "tier": "specialist-medium",
+      "reportsTo": "A33",
+      "state": "scheduled"
+    },
+    {
+      "id": "A33",
+      "pod": "Image Engines & Model Runtime",
+      "role": "Image Runtime Pod Lead",
+      "scope": "Native image engine architecture and pod integration.",
+      "mutates": "image engine integration branch.",
+      "tier": "captain-xhigh",
+      "reportsTo": "A01",
+      "state": "scheduled"
+    },
+    {
+      "id": "A34",
+      "pod": "Image Engines & Model Runtime",
+      "role": "FLUX.1 Specialist",
+      "scope": "Offline components, native runtime, settings, LoRA, telemetry, warm generation.",
+      "mutates": "engines/flux1/**.",
+      "tier": "specialist-medium",
+      "reportsTo": "A33",
+      "state": "scheduled"
+    },
+    {
+      "id": "A35",
+      "pod": "Image Engines & Model Runtime",
+      "role": "FLUX.2 Dev Specialist",
+      "scope": "Native Dev runtime, quantization/offload truth, multi-reference/edit capability.",
+      "mutates": "engines/flux2-dev/**.",
+      "tier": "specialist-medium",
+      "reportsTo": "A33",
+      "state": "scheduled"
+    },
+    {
+      "id": "A36",
+      "pod": "Image Engines & Model Runtime",
+      "role": "Klein 4B/9B Specialist",
+      "scope": "Distilled settings, encoder cache, fast preview/production configs.",
+      "mutates": "engines/flux2-klein/**.",
+      "tier": "specialist-medium",
+      "reportsTo": "A33",
+      "state": "scheduled"
+    },
+    {
+      "id": "A37",
+      "pod": "Image Engines & Model Runtime",
+      "role": "Krea 2 Specialist",
+      "scope": "Raw/Turbo native adapter, capabilities, license, prompt/control mapping.",
+      "mutates": "engines/krea2/**.",
+      "tier": "specialist-medium",
+      "reportsTo": "A33",
+      "state": "scheduled"
+    },
+    {
+      "id": "A38",
+      "pod": "Image Engines & Model Runtime",
+      "role": "Component Resolver & Cache Specialist",
+      "scope": "Exact local encoder/VAE/tokenizer mapping, no network, cache validation.",
+      "mutates": "model registry/component resolver.",
+      "tier": "specialist-medium",
+      "reportsTo": "A33",
+      "state": "scheduled"
+    },
+    {
+      "id": "A39",
+      "pod": "Image Engines & Model Runtime",
+      "role": "Memory, Residency & Telemetry Specialist",
+      "scope": "RAM/VRAM placement, sticky residency, fit estimates, measured telemetry.",
+      "mutates": "resource scheduler/residency image portions.",
+      "tier": "specialist-medium",
+      "reportsTo": "A41",
+      "state": "scheduled"
+    },
+    {
+      "id": "A40",
+      "pod": "Image Engines & Model Runtime",
+      "role": "Image QC & Benchmark Engineer",
+      "scope": "Identity/anatomy/reference adherence, warm/cold timings, peak memory, calibration.",
+      "mutates": "image QC/benchmarks/tests.",
+      "tier": "specialist-medium",
+      "reportsTo": "A41",
+      "state": "scheduled"
+    },
+    {
+      "id": "A41",
+      "pod": "Performance, Prompt & Video",
+      "role": "Performance/Video Pod Lead",
+      "scope": "Integrate Performance/Shots with compilers/video without flattening domains.",
+      "mutates": "pod integration branch.",
+      "tier": "captain-xhigh",
+      "reportsTo": "A01",
+      "state": "scheduled"
+    },
+    {
+      "id": "A42",
+      "pod": "Performance, Prompt & Video",
+      "role": "Performance UI & Continuity QA",
+      "scope": "IN/OUT states, warnings, locks, propagation, research/cinematography inputs.",
+      "mutates": "performance UI/tests; preserve domain.",
+      "tier": "specialist-medium",
+      "reportsTo": "A09",
+      "state": "scheduled"
+    },
+    {
+      "id": "A43",
+      "pod": "Performance, Prompt & Video",
+      "role": "Shot Planner & Canonical Spec QA",
+      "scope": "Scene→beat→shot, duration/dialogue allocation, references, readiness.",
+      "mutates": "shot domain/UI/tests; preserve canonical spec.",
+      "tier": "specialist-medium",
+      "reportsTo": "A41",
+      "state": "scheduled"
+    },
+    {
+      "id": "A44",
+      "pod": "Performance, Prompt & Video",
+      "role": "Qwen Prompt Compiler Engineer",
+      "scope": "Engine-specific prompt compilers from canonical specs; scoped recompilation.",
+      "mutates": "prompt compiler package.",
+      "tier": "specialist-medium",
+      "reportsTo": "A41",
+      "state": "scheduled"
+    },
+    {
+      "id": "A45",
+      "pod": "Performance, Prompt & Video",
+      "role": "MiniMax H3 Native Adapter Specialist",
+      "scope": "Verified local H3 capabilities, refs/audio/duration, honest labels.",
+      "mutates": "engines/minimax-h3/**.",
+      "tier": "specialist-medium",
+      "reportsTo": "A41",
+      "state": "scheduled"
+    },
+    {
+      "id": "A46",
+      "pod": "Performance, Prompt & Video",
+      "role": "LTX 2.5 Native Adapter Specialist",
+      "scope": "Native T2V/I2V/A2V/audio/quality paths, no ComfyUI.",
+      "mutates": "engines/ltx2/**.",
+      "tier": "specialist-medium",
+      "reportsTo": "A41",
+      "state": "scheduled"
+    },
+    {
+      "id": "A47",
+      "pod": "Performance, Prompt & Video",
+      "role": "Video Queue & Take Review Engineer",
+      "scope": "Jobs, take versions, review, retry/cancel/pause/resume, approvals.",
+      "mutates": "video queue/review components/domain.",
+      "tier": "specialist-medium",
+      "reportsTo": "A41",
+      "state": "scheduled"
+    },
+    {
+      "id": "A48",
+      "pod": "Performance, Prompt & Video",
+      "role": "Video QC & Continuity Engineer",
+      "scope": "Resolution/frame/identity/performance/audio/lip-sync/continuity checks.",
+      "mutates": "video QC/tests.",
+      "tier": "specialist-medium",
+      "reportsTo": "A41",
+      "state": "scheduled"
+    },
+    {
+      "id": "A49",
+      "pod": "Voice, Sound & Score",
+      "role": "Audio/Post Pod Lead",
+      "scope": "Integrate voice, sound, score and timeline-facing audio artifacts.",
+      "mutates": "audio pod integration branch.",
+      "tier": "specialist-medium",
+      "reportsTo": "A41",
+      "state": "scheduled"
+    },
+    {
+      "id": "A50",
+      "pod": "Voice, Sound & Score",
+      "role": "Qwen3-TTS Specialist",
+      "scope": "Local voice design/clone/TTS adapter, timing, telemetry, consent.",
+      "mutates": "engines/qwen3-tts/**.",
+      "tier": "specialist-medium",
+      "reportsTo": "A57",
+      "state": "scheduled"
+    },
+    {
+      "id": "A51",
+      "pod": "Voice, Sound & Score",
+      "role": "VoxCPM2 Specialist",
+      "scope": "Alternate voice adapter, capabilities, streaming/48k where verified.",
+      "mutates": "engines/voxcpm2/**.",
+      "tier": "specialist-medium",
+      "reportsTo": "A57",
+      "state": "scheduled"
+    },
+    {
+      "id": "A52",
+      "pod": "Voice, Sound & Score",
+      "role": "Voice/ADR UI & Consent Engineer",
+      "scope": "Profiles, auditions, line takes, pronunciation, ADR, authorization.",
+      "mutates": "voice domain/UI/tests.",
+      "tier": "specialist-medium",
+      "reportsTo": "A57",
+      "state": "scheduled"
+    },
+    {
+      "id": "A53",
+      "pod": "Voice, Sound & Score",
+      "role": "Sound/Foley/Ambience Engineer",
+      "scope": "Cue prep/import/generation contracts, sync, provenance, silence.",
+      "mutates": "sound domain/UI/tests.",
+      "tier": "specialist-medium",
+      "reportsTo": "A57",
+      "state": "scheduled"
+    },
+    {
+      "id": "A54",
+      "pod": "Voice, Sound & Score",
+      "role": "MiniMax Music3 Specialist",
+      "scope": "Local/remote capability truth, prompts, stems, hardware gates.",
+      "mutates": "engines/minimax-music3/**.",
+      "tier": "specialist-medium",
+      "reportsTo": "A57",
+      "state": "scheduled"
+    },
+    {
+      "id": "A55",
+      "pod": "Voice, Sound & Score",
+      "role": "Score UI & Cue-Sheet Engineer",
+      "scope": "Themes, cues, versions, unscored sections, placement, approval.",
+      "mutates": "score domain/UI/tests.",
+      "tier": "specialist-medium",
+      "reportsTo": "A09",
+      "state": "scheduled"
+    },
+    {
+      "id": "A56",
+      "pod": "Voice, Sound & Score",
+      "role": "Audio QA / Sync / Loudness Engineer",
+      "scope": "48k, clipping, channels, dialogue priority, sync, loudness, stems.",
+      "mutates": "audio QC/tests.",
+      "tier": "specialist-medium",
+      "reportsTo": "A57",
+      "state": "scheduled"
+    },
+    {
+      "id": "A57",
+      "pod": "Timeline, Master & Reliability",
+      "role": "Timeline/Editor Pod Lead",
+      "scope": "Controlled real editor scope and post integration.",
+      "mutates": "timeline pod branch.",
+      "tier": "captain-xhigh",
+      "reportsTo": "A01",
+      "state": "scheduled"
+    },
+    {
+      "id": "A58",
+      "pod": "Timeline, Master & Reliability",
+      "role": "FFmpeg & Conform Engineer",
+      "scope": "Typed FFmpeg/FFprobe jobs, proxies/originals, hardware encode, validation.",
+      "mutates": "render-service/**.",
+      "tier": "specialist-medium",
+      "reportsTo": "A57",
+      "state": "scheduled"
+    },
+    {
+      "id": "A59",
+      "pod": "Timeline, Master & Reliability",
+      "role": "Master & Export Engineer",
+      "scope": "Preflight, MP4/MOV/stems/captions/checksums/archive.",
+      "mutates": "master/export domain/UI/tests.",
+      "tier": "specialist-medium",
+      "reportsTo": "A57",
+      "state": "scheduled"
+    },
+    {
+      "id": "A60",
+      "pod": "Timeline, Master & Reliability",
+      "role": "Movie Readiness Engineer",
+      "scope": "Clickable completion/blocker dashboard across all stages.",
+      "mutates": "readiness domain/UI/tests.",
+      "tier": "specialist-medium",
+      "reportsTo": "A57",
+      "state": "scheduled"
+    },
+    {
+      "id": "A61",
+      "pod": "Timeline, Master & Reliability",
+      "role": "SQLite / Project Graph / Provenance Engineer",
+      "scope": "Migration-safe DB, immutable media, hashes, lineage, execution records.",
+      "mutates": "database/project-graph/provenance.",
+      "tier": "specialist-medium",
+      "reportsTo": "A03",
+      "state": "scheduled"
+    },
+    {
+      "id": "A62",
+      "pod": "Timeline, Master & Reliability",
+      "role": "Recovery / Queue / Diagnostics Engineer",
+      "scope": "Crash/OOM/restart/resume/logs/build state/model state.",
+      "mutates": "recovery/diagnostics/queue infrastructure.",
+      "tier": "specialist-medium",
+      "reportsTo": "A03",
+      "state": "scheduled"
+    },
+    {
+      "id": "A63",
+      "pod": "Timeline, Master & Reliability",
+      "role": "Pi Movie Crew Orchestration Engineer",
+      "scope": "Profiles, councils, exact local IDs, stage-gated prepare/queue/unload.",
+      "mutates": ".pi/** and app integration after foundation gate.",
+      "tier": "specialist-medium",
+      "reportsTo": "A03",
+      "state": "scheduled"
+    },
+    {
+      "id": "A64",
+      "pod": "Timeline, Master & Reliability",
+      "role": "Final Independent UAT / Red Team",
+      "scope": "End-to-end films, negative tests, no-Comfy/no-cloud proof, release veto.",
+      "mutates": "UAT tests/reports only; no feature ownership.",
+      "tier": "direct-auditor-medium",
+      "reportsTo": "A01",
+      "state": "scheduled"
+    }
+  ]
+}

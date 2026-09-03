@@ -8,4 +8,10 @@ desktop/dist
 *.local
 .DS_Store
 screenshots
+artifacts
+checkpoints
+.pi/subagents
+.grok/status
+.grok/app-startup.log
+*.log
 /tmp

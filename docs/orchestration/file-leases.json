@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-03T09:58:09.356Z",
+  "rules": {
+    "singleWriterPerCwd": true,
+    "maxConcurrentMutatingAgents": 12,
+    "sharedFileApprovalOwner": "A03"
+  },
+  "leases": [
+    {
+      "pattern": "src/components/studio/shell.tsx",
+      "owner": "A10",
+      "pod": "UI/UX & Desktop",
+      "task": "UX-001",
+      "startedAt": null,
+      "status": "reserved",
+      "integrationOwner": "A09",
+      "sharedInterfaceException": null
+    },
+    {
+      "pattern": "src/lib/studio/stage-layout.ts",
+      "owner": "A10",
+      "pod": "UI/UX & Desktop",
+      "task": "UX-001",
+      "startedAt": null,
+      "status": "reserved",
+      "integrationOwner": "A09",
+      "sharedInterfaceException": "new central declarative contract"
+    },
+    {
+      "pattern": "src/lib/studio/stage-layout.test.ts",
+      "owner": "A10",
+      "pod": "UI/UX & Desktop",
+      "task": "UX-001",
+      "startedAt": null,
+      "status": "reserved",
+      "integrationOwner": "A09",
+      "sharedInterfaceException": "new policy tests"
+    },
+    {
+      "pattern": "src/lib/studio/responsive-layout.ts",
+      "owner": "A10",
+      "pod": "UI/UX & Desktop",
+      "task": "UX-003",
+      "startedAt": null,
+      "status": "reserved",
+      "integrationOwner": "A09",
+      "sharedInterfaceException": "A12 supplies read-only findings; A10 is sole Wave 1 writer"
+    },
+    {
+      "pattern": "src/lib/studio/responsive-layout.test.ts",
+      "owner": "A10",
+      "pod": "UI/UX & Desktop",
+      "task": "UX-003",
+      "startedAt": null,
+      "status": "reserved",
+      "integrationOwner": "A09",
+      "sharedInterfaceException": "A12 supplies read-only findings; A10 is sole Wave 1 writer"
+    },
+    {
+      "pattern": "scripts/desktop-stage-visual.mjs",
+      "owner": "A10",
+      "pod": "UI/UX & Desktop",
+      "task": "UX-005",
+      "startedAt": null,
+      "status": "reserved",
+      "integrationOwner": "A09",
+      "sharedInterfaceException": "new packaged screenshot harness"
+    },
+    {
+      "pattern": "desktop/**; electron-builder.yml; package.json",
+      "owner": "A04",
+      "pod": "Governance & Integration",
+      "task": "BASE-001",
+      "startedAt": null,
+      "status": "reserved",
+      "integrationOwner": "A03",
+      "sharedInterfaceException": "No Wave 1 writer edits without explicit A04/A03 handoff"
+    },
+    {
+      "pattern": "src/lib/studio/store.ts; src/lib/studio/types.ts",
+      "owner": "A03",
+      "pod": "Governance & Integration",
+      "task": "SHARED",
+      "startedAt": null,
+      "status": "protected",
+      "integrationOwner": "A03",
+      "sharedInterfaceException": "Additive change only after schema review"
+    },
+    {
+      "pattern": "migrations/**; %APPDATA%/Premiere316",
+      "owner": "A06",
+      "pod": "Governance & Integration",
+      "task": "MIGRATION",
+      "startedAt": null,
+      "status": "protected",
+      "integrationOwner": "A03",
+      "sharedInterfaceException": "No Wave 1 migration"
+    }
+  ]
+}

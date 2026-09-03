@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "currentWave": 1,
+  "gates": [
+    {
+      "wave": 0,
+      "status": "GREEN",
+      "evidence": [
+        "docs/orchestration/baseline-audit.json"
+      ]
+    },
+    {
+      "wave": 1,
+      "status": "IN_PROGRESS",
+      "tasks": [
+        "UX-001",
+        "UX-002",
+        "UX-003",
+        "UX-004",
+        "UX-005"
+      ]
+    },
+    {
+      "wave": 2,
+      "status": "BLOCKED_BY_PREVIOUS_GATE"
+    },
+    {
+      "wave": 3,
+      "status": "BLOCKED_BY_PREVIOUS_GATE"
+    },
+    {
+      "wave": 4,
+      "status": "BLOCKED_BY_PREVIOUS_GATE"
+    },
+    {
+      "wave": 5,
+      "status": "BLOCKED_BY_PREVIOUS_GATE"
+    },
+    {
+      "wave": 6,
+      "status": "BLOCKED_BY_PREVIOUS_GATE"
+    },
+    {
+      "wave": 7,
+      "status": "BLOCKED_BY_PREVIOUS_GATE"
+    },
+    {
+      "wave": 8,
+      "status": "BLOCKED_BY_PREVIOUS_GATE"
+    }
+  ]
+}

@@ -1,0 +1,1013 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-03T08:32:16.530281",
+  "product": "Premiere316 V3",
+  "baseline": {
+    "reportedBuild": "p316-20260903074052-29796e7ee54a",
+    "reportedTestsAfterTimelinePatch": "173/173",
+    "mustReverify": true
+  },
+  "rules": {
+    "canonicalProduct": "Premiere316.exe",
+    "noComfyUI": true,
+    "localFirst": true,
+    "noSilentCloudFallback": true,
+    "userTriggersGeneration": true,
+    "maxConcurrentMutatingAgentsRecommended": 12
+  },
+  "agents": [
+    {
+      "id": "A01",
+      "pod": "Governance & Integration",
+      "role": "Master Orchestrator",
+      "scope": "Own program DAG, priorities, agent deployment, gate decisions, final accountability.",
+      "mutates": "Orchestration docs only; no feature code except emergency integration approval."
+    },
+    {
+      "id": "A02",
+      "pod": "Governance & Integration",
+      "role": "Chief Architecture Lead",
+      "scope": "Protect engine-neutral architecture, Electron boundaries, project graph, ADRs.",
+      "mutates": "docs/architecture/**; schema proposals through reviewed patches."
+    },
+    {
+      "id": "A03",
+      "pod": "Governance & Integration",
+      "role": "Integration Lead",
+      "scope": "Review/merge pod outputs, semantic conflict resolution, shared branch ownership.",
+      "mutates": "Shared integration files under explicit leases."
+    },
+    {
+      "id": "A04",
+      "pod": "Governance & Integration",
+      "role": "Build & Packaging Lead",
+      "scope": "Renderer/Electron build, app.asar, installer, shortcuts, build IDs, package smoke.",
+      "mutates": "desktop/**, build config, packaging scripts under lease."
+    },
+    {
+      "id": "A05",
+      "pod": "Governance & Integration",
+      "role": "Security & Offline Lead",
+      "scope": "No hidden network, secrets, path safety, process boundaries, model-code trust.",
+      "mutates": "security policies/tests; reviewed security fixes."
+    },
+    {
+      "id": "A06",
+      "pod": "Governance & Integration",
+      "role": "Migration Lead",
+      "scope": "Safe schema/data/project migrations, backups, legacy Last Reel compatibility.",
+      "mutates": "migrations/** and migration adapters."
+    },
+    {
+      "id": "A07",
+      "pod": "Governance & Integration",
+      "role": "Test Strategy Lead",
+      "scope": "Global test taxonomy, regression matrix, E2E harness, baseline comparison.",
+      "mutates": "tests/harness/**, test config under lease."
+    },
+    {
+      "id": "A08",
+      "pod": "Governance & Integration",
+      "role": "Release & Change Manager",
+      "scope": "Versioning, changelog, checkpoint integrity, release evidence, rollback plans.",
+      "mutates": "docs/release/**, artifact manifests."
+    },
+    {
+      "id": "A09",
+      "pod": "UI/UX & Desktop",
+      "role": "UI/UX Pod Lead",
+      "scope": "Stage-specific information architecture and visual coherence.",
+      "mutates": "UI pod integration branch only."
+    },
+    {
+      "id": "A10",
+      "pod": "UI/UX & Desktop",
+      "role": "Stage Shell Engineer",
+      "scope": "Declarative stage layout policy; remove global UI leakage.",
+      "mutates": "studio shell/layout policy under exclusive lease."
+    },
+    {
+      "id": "A11",
+      "pod": "UI/UX & Desktop",
+      "role": "Contextual Panels Engineer",
+      "scope": "Contextual left/right panels and inspectors per stage.",
+      "mutates": "panel components, stage adapters."
+    },
+    {
+      "id": "A12",
+      "pod": "UI/UX & Desktop",
+      "role": "Navigation & Responsive Engineer",
+      "scope": "Stage navigation groups, overflow, 100\u2013200% zoom behavior, no blank columns.",
+      "mutates": "navigation/responsive components, not Electron zoom core."
+    },
+    {
+      "id": "A13",
+      "pod": "UI/UX & Desktop",
+      "role": "Accessibility & Keyboard QA",
+      "scope": "Keyboard, focus, labels, zoom shortcuts, reachability, reduced motion.",
+      "mutates": "accessibility fixes/tests only."
+    },
+    {
+      "id": "A14",
+      "pod": "UI/UX & Desktop",
+      "role": "Visual Regression Agent",
+      "scope": "Packaged screenshots at 100/150%, layout comparison, stage contamination detection.",
+      "mutates": "visual tests/baselines only unless assigned narrow fix."
+    },
+    {
+      "id": "A15",
+      "pod": "UI/UX & Desktop",
+      "role": "Desktop Window & Preload UI Engineer",
+      "scope": "Native dialogs, window behavior, secure renderer bridge for UI needs.",
+      "mutates": "preload/UI bridge only with A04 lease."
+    },
+    {
+      "id": "A16",
+      "pod": "UI/UX & Desktop",
+      "role": "Packaged UI UAT Verifier",
+      "scope": "Electron-only stage walkthrough, no browser acceptance.",
+      "mutates": "UAT scripts/reports only."
+    },
+    {
+      "id": "A17",
+      "pod": "Research & Screenplay",
+      "role": "Research Room Lead",
+      "scope": "Picture Research Bible domain, workflow, approval, Delta Research.",
+      "mutates": "research domain/UI under pod lease."
+    },
+    {
+      "id": "A18",
+      "pod": "Research & Screenplay",
+      "role": "Source & Canon Research Engineer",
+      "scope": "Source ledger, quote/provenance, confidence classes, harmonization.",
+      "mutates": "source-ledger domain/tests."
+    },
+    {
+      "id": "A19",
+      "pod": "Research & Screenplay",
+      "role": "Historical & Social-World Engineer",
+      "scope": "Expected behavior, taboo/reversal, visible reaction, confidence, cinematic expression.",
+      "mutates": "social-world domain/UI/tests."
+    },
+    {
+      "id": "A20",
+      "pod": "Research & Screenplay",
+      "role": "Cinematography Research Engineer",
+      "scope": "Picture-level cinematography manifesto research artifact.",
+      "mutates": "research/cinematography artifacts only."
+    },
+    {
+      "id": "A21",
+      "pod": "Research & Screenplay",
+      "role": "Qwen Screenwriter Integration",
+      "scope": "Primary local writer, scene/chapter/full scope, structured outputs.",
+      "mutates": "screenplay writer workflow/provider client."
+    },
+    {
+      "id": "A22",
+      "pod": "Research & Screenplay",
+      "role": "Llama QA / Story Doctor Integration",
+      "scope": "Independent QA categories, critique-first, optional rewrite.",
+      "mutates": "screenplay QA workflow."
+    },
+    {
+      "id": "A23",
+      "pod": "Research & Screenplay",
+      "role": "Scoped Rewrite & Versioning Engineer",
+      "scope": "Stable screenplay hierarchy, fine-grained versions, scoped seven-pass, invalidation.",
+      "mutates": "screenplay domain/store/migrations under lease."
+    },
+    {
+      "id": "A24",
+      "pod": "Research & Screenplay",
+      "role": "LM Studio Provider & UAT Engineer",
+      "scope": "Endpoint discovery, served models, streaming, cancel, telemetry, offline state.",
+      "mutates": "LocalLLMProvider/LMStudioProvider and tests."
+    },
+    {
+      "id": "A25",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Breakdown Pod Lead",
+      "scope": "Research-aware approved-screenplay breakdown and pod integration.",
+      "mutates": "breakdown pod branch."
+    },
+    {
+      "id": "A26",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Asset Schema & Dependency Engineer",
+      "scope": "Canonical asset specs, variants, references, fine-grained edges.",
+      "mutates": "asset domain/dependency adapters."
+    },
+    {
+      "id": "A27",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Inventory UI Engineer",
+      "scope": "Categories, readiness, asset inspector, edit/merge/split/reference UX.",
+      "mutates": "inventory components."
+    },
+    {
+      "id": "A28",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Visual Development Lead",
+      "scope": "Reference bibles, boards, palettes, motifs, approval workflow.",
+      "mutates": "visual-development domain/UI."
+    },
+    {
+      "id": "A29",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Character Identity & Reference Engineer",
+      "scope": "Identity specs, expression/wardrobe states, reference bundles, drift rules.",
+      "mutates": "character identity domain/UI/tests."
+    },
+    {
+      "id": "A30",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Production Design / Costume / Props Engineer",
+      "scope": "Locations, materials, costume, props, set dressing, continuity variants.",
+      "mutates": "production-design domain/UI."
+    },
+    {
+      "id": "A31",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Cinematography Director Engineer",
+      "scope": "Manifesto, sequence visual arcs, lens/framing/lighting stage and QA.",
+      "mutates": "cinematography domain/UI/tests."
+    },
+    {
+      "id": "A32",
+      "pod": "Breakdown, Assets & Cinematography",
+      "role": "Asset Versioning & Approval QA",
+      "scope": "Iterations, compare, canonical approval, stale/waived states, persistence.",
+      "mutates": "asset QA/tests; narrow fixes."
+    },
+    {
+      "id": "A33",
+      "pod": "Image Engines & Model Runtime",
+      "role": "Image Runtime Pod Lead",
+      "scope": "Native image engine architecture and pod integration.",
+      "mutates": "image engine integration branch."
+    },
+    {
+      "id": "A34",
+      "pod": "Image Engines & Model Runtime",
+      "role": "FLUX.1 Specialist",
+      "scope": "Offline components, native runtime, settings, LoRA, telemetry, warm generation.",
+      "mutates": "engines/flux1/**."
+    },
+    {
+      "id": "A35",
+      "pod": "Image Engines & Model Runtime",
+      "role": "FLUX.2 Dev Specialist",
+      "scope": "Native Dev runtime, quantization/offload truth, multi-reference/edit capability.",
+      "mutates": "engines/flux2-dev/**."
+    },
+    {
+      "id": "A36",
+      "pod": "Image Engines & Model Runtime",
+      "role": "Klein 4B/9B Specialist",
+      "scope": "Distilled settings, encoder cache, fast preview/production configs.",
+      "mutates": "engines/flux2-klein/**."
+    },
+    {
+      "id": "A37",
+      "pod": "Image Engines & Model Runtime",
+      "role": "Krea 2 Specialist",
+      "scope": "Raw/Turbo native adapter, capabilities, license, prompt/control mapping.",
+      "mutates": "engines/krea2/**."
+    },
+    {
+      "id": "A38",
+      "pod": "Image Engines & Model Runtime",
+      "role": "Component Resolver & Cache Specialist",
+      "scope": "Exact local encoder/VAE/tokenizer mapping, no network, cache validation.",
+      "mutates": "model registry/component resolver."
+    },
+    {
+      "id": "A39",
+      "pod": "Image Engines & Model Runtime",
+      "role": "Memory, Residency & Telemetry Specialist",
+      "scope": "RAM/VRAM placement, sticky residency, fit estimates, measured telemetry.",
+      "mutates": "resource scheduler/residency image portions."
+    },
+    {
+      "id": "A40",
+      "pod": "Image Engines & Model Runtime",
+      "role": "Image QC & Benchmark Engineer",
+      "scope": "Identity/anatomy/reference adherence, warm/cold timings, peak memory, calibration.",
+      "mutates": "image QC/benchmarks/tests."
+    },
+    {
+      "id": "A41",
+      "pod": "Performance, Prompt & Video",
+      "role": "Performance/Video Pod Lead",
+      "scope": "Integrate Performance/Shots with compilers/video without flattening domains.",
+      "mutates": "pod integration branch."
+    },
+    {
+      "id": "A42",
+      "pod": "Performance, Prompt & Video",
+      "role": "Performance UI & Continuity QA",
+      "scope": "IN/OUT states, warnings, locks, propagation, research/cinematography inputs.",
+      "mutates": "performance UI/tests; preserve domain."
+    },
+    {
+      "id": "A43",
+      "pod": "Performance, Prompt & Video",
+      "role": "Shot Planner & Canonical Spec QA",
+      "scope": "Scene\u2192beat\u2192shot, duration/dialogue allocation, references, readiness.",
+      "mutates": "shot domain/UI/tests; preserve canonical spec."
+    },
+    {
+      "id": "A44",
+      "pod": "Performance, Prompt & Video",
+      "role": "Qwen Prompt Compiler Engineer",
+      "scope": "Engine-specific prompt compilers from canonical specs; scoped recompilation.",
+      "mutates": "prompt compiler package."
+    },
+    {
+      "id": "A45",
+      "pod": "Performance, Prompt & Video",
+      "role": "MiniMax H3 Native Adapter Specialist",
+      "scope": "Verified local H3 capabilities, refs/audio/duration, honest labels.",
+      "mutates": "engines/minimax-h3/**."
+    },
+    {
+      "id": "A46",
+      "pod": "Performance, Prompt & Video",
+      "role": "LTX 2.5 Native Adapter Specialist",
+      "scope": "Native T2V/I2V/A2V/audio/quality paths, no ComfyUI.",
+      "mutates": "engines/ltx2/**."
+    },
+    {
+      "id": "A47",
+      "pod": "Performance, Prompt & Video",
+      "role": "Video Queue & Take Review Engineer",
+      "scope": "Jobs, take versions, review, retry/cancel/pause/resume, approvals.",
+      "mutates": "video queue/review components/domain."
+    },
+    {
+      "id": "A48",
+      "pod": "Performance, Prompt & Video",
+      "role": "Video QC & Continuity Engineer",
+      "scope": "Resolution/frame/identity/performance/audio/lip-sync/continuity checks.",
+      "mutates": "video QC/tests."
+    },
+    {
+      "id": "A49",
+      "pod": "Voice, Sound & Score",
+      "role": "Audio/Post Pod Lead",
+      "scope": "Integrate voice, sound, score and timeline-facing audio artifacts.",
+      "mutates": "audio pod integration branch."
+    },
+    {
+      "id": "A50",
+      "pod": "Voice, Sound & Score",
+      "role": "Qwen3-TTS Specialist",
+      "scope": "Local voice design/clone/TTS adapter, timing, telemetry, consent.",
+      "mutates": "engines/qwen3-tts/**."
+    },
+    {
+      "id": "A51",
+      "pod": "Voice, Sound & Score",
+      "role": "VoxCPM2 Specialist",
+      "scope": "Alternate voice adapter, capabilities, streaming/48k where verified.",
+      "mutates": "engines/voxcpm2/**."
+    },
+    {
+      "id": "A52",
+      "pod": "Voice, Sound & Score",
+      "role": "Voice/ADR UI & Consent Engineer",
+      "scope": "Profiles, auditions, line takes, pronunciation, ADR, authorization.",
+      "mutates": "voice domain/UI/tests."
+    },
+    {
+      "id": "A53",
+      "pod": "Voice, Sound & Score",
+      "role": "Sound/Foley/Ambience Engineer",
+      "scope": "Cue prep/import/generation contracts, sync, provenance, silence.",
+      "mutates": "sound domain/UI/tests."
+    },
+    {
+      "id": "A54",
+      "pod": "Voice, Sound & Score",
+      "role": "MiniMax Music3 Specialist",
+      "scope": "Local/remote capability truth, prompts, stems, hardware gates.",
+      "mutates": "engines/minimax-music3/**."
+    },
+    {
+      "id": "A55",
+      "pod": "Voice, Sound & Score",
+      "role": "Score UI & Cue-Sheet Engineer",
+      "scope": "Themes, cues, versions, unscored sections, placement, approval.",
+      "mutates": "score domain/UI/tests."
+    },
+    {
+      "id": "A56",
+      "pod": "Voice, Sound & Score",
+      "role": "Audio QA / Sync / Loudness Engineer",
+      "scope": "48k, clipping, channels, dialogue priority, sync, loudness, stems.",
+      "mutates": "audio QC/tests."
+    },
+    {
+      "id": "A57",
+      "pod": "Timeline, Master & Reliability",
+      "role": "Timeline/Editor Pod Lead",
+      "scope": "Controlled real editor scope and post integration.",
+      "mutates": "timeline pod branch."
+    },
+    {
+      "id": "A58",
+      "pod": "Timeline, Master & Reliability",
+      "role": "FFmpeg & Conform Engineer",
+      "scope": "Typed FFmpeg/FFprobe jobs, proxies/originals, hardware encode, validation.",
+      "mutates": "render-service/**."
+    },
+    {
+      "id": "A59",
+      "pod": "Timeline, Master & Reliability",
+      "role": "Master & Export Engineer",
+      "scope": "Preflight, MP4/MOV/stems/captions/checksums/archive.",
+      "mutates": "master/export domain/UI/tests."
+    },
+    {
+      "id": "A60",
+      "pod": "Timeline, Master & Reliability",
+      "role": "Movie Readiness Engineer",
+      "scope": "Clickable completion/blocker dashboard across all stages.",
+      "mutates": "readiness domain/UI/tests."
+    },
+    {
+      "id": "A61",
+      "pod": "Timeline, Master & Reliability",
+      "role": "SQLite / Project Graph / Provenance Engineer",
+      "scope": "Migration-safe DB, immutable media, hashes, lineage, execution records.",
+      "mutates": "database/project-graph/provenance."
+    },
+    {
+      "id": "A62",
+      "pod": "Timeline, Master & Reliability",
+      "role": "Recovery / Queue / Diagnostics Engineer",
+      "scope": "Crash/OOM/restart/resume/logs/build state/model state.",
+      "mutates": "recovery/diagnostics/queue infrastructure."
+    },
+    {
+      "id": "A63",
+      "pod": "Timeline, Master & Reliability",
+      "role": "Pi Movie Crew Orchestration Engineer",
+      "scope": "Profiles, councils, exact local IDs, stage-gated prepare/queue/unload.",
+      "mutates": ".pi/** and app integration after foundation gate."
+    },
+    {
+      "id": "A64",
+      "pod": "Timeline, Master & Reliability",
+      "role": "Final Independent UAT / Red Team",
+      "scope": "End-to-end films, negative tests, no-Comfy/no-cloud proof, release veto.",
+      "mutates": "UAT tests/reports only; no feature ownership."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "UX-001",
+      "wave": 1,
+      "priority": "P0",
+      "owner": "A10",
+      "title": "Declarative stage layout policy and global shell cleanup",
+      "deps": []
+    },
+    {
+      "id": "UX-002",
+      "wave": 1,
+      "priority": "P0",
+      "owner": "A11",
+      "title": "Contextual panels and inspectors per stage",
+      "deps": [
+        "UX-001"
+      ]
+    },
+    {
+      "id": "UX-003",
+      "wave": 1,
+      "priority": "P0",
+      "owner": "A12",
+      "title": "Responsive stage navigation and released-space expansion",
+      "deps": [
+        "UX-001"
+      ]
+    },
+    {
+      "id": "UX-004",
+      "wave": 1,
+      "priority": "P0",
+      "owner": "A13",
+      "title": "Accessibility and keyboard regression pass",
+      "deps": [
+        "UX-001",
+        "UX-002"
+      ]
+    },
+    {
+      "id": "UX-005",
+      "wave": 1,
+      "priority": "P0",
+      "owner": "A14",
+      "title": "Packaged Electron visual regression at 100/150%",
+      "deps": [
+        "UX-001",
+        "UX-002",
+        "UX-003"
+      ]
+    },
+    {
+      "id": "R-001",
+      "wave": 2,
+      "priority": "P0",
+      "owner": "A17",
+      "title": "Research Room and Picture Research Bible",
+      "deps": [
+        "UX-005"
+      ]
+    },
+    {
+      "id": "R-002",
+      "wave": 2,
+      "priority": "P0",
+      "owner": "A18",
+      "title": "Source/Canon ledger and confidence taxonomy",
+      "deps": [
+        "R-001"
+      ]
+    },
+    {
+      "id": "R-003",
+      "wave": 2,
+      "priority": "P0",
+      "owner": "A19",
+      "title": "Historical/social-world model and cinematic-expression fields",
+      "deps": [
+        "R-001"
+      ]
+    },
+    {
+      "id": "R-004",
+      "wave": 2,
+      "priority": "P1",
+      "owner": "A20",
+      "title": "Picture-level cinematography research manifesto",
+      "deps": [
+        "R-001"
+      ]
+    },
+    {
+      "id": "S-001",
+      "wave": 2,
+      "priority": "P0",
+      "owner": "A24",
+      "title": "Real LM Studio served-model UAT",
+      "deps": [
+        "UX-005"
+      ]
+    },
+    {
+      "id": "S-002",
+      "wave": 2,
+      "priority": "P0",
+      "owner": "A21",
+      "title": "Qwen primary local writer integration",
+      "deps": [
+        "S-001",
+        "R-001"
+      ]
+    },
+    {
+      "id": "S-003",
+      "wave": 2,
+      "priority": "P0",
+      "owner": "A22",
+      "title": "Llama independent QA/story doctor",
+      "deps": [
+        "S-001",
+        "S-002"
+      ]
+    },
+    {
+      "id": "S-004",
+      "wave": 2,
+      "priority": "P0",
+      "owner": "A23",
+      "title": "Scoped hierarchy, rewrites, versions, and scoped seven-pass",
+      "deps": [
+        "S-002",
+        "S-003"
+      ]
+    },
+    {
+      "id": "D-001",
+      "wave": 3,
+      "priority": "P0",
+      "owner": "A26",
+      "title": "Fine-grained dependency graph for research\u2192master",
+      "deps": [
+        "S-004"
+      ]
+    },
+    {
+      "id": "B-001",
+      "wave": 3,
+      "priority": "P0",
+      "owner": "A25",
+      "title": "Research-aware breakdown integration",
+      "deps": [
+        "S-004",
+        "D-001"
+      ]
+    },
+    {
+      "id": "B-002",
+      "wave": 3,
+      "priority": "P0",
+      "owner": "A27",
+      "title": "Inventory UI 2.0 and asset editing/reference UX",
+      "deps": [
+        "B-001"
+      ]
+    },
+    {
+      "id": "V-001",
+      "wave": 3,
+      "priority": "P1",
+      "owner": "A28",
+      "title": "Visual Development workspace",
+      "deps": [
+        "B-001"
+      ]
+    },
+    {
+      "id": "V-002",
+      "wave": 3,
+      "priority": "P1",
+      "owner": "A29",
+      "title": "Character identity/reference bibles",
+      "deps": [
+        "V-001"
+      ]
+    },
+    {
+      "id": "V-003",
+      "wave": 3,
+      "priority": "P1",
+      "owner": "A30",
+      "title": "Production design/costume/props bibles",
+      "deps": [
+        "V-001"
+      ]
+    },
+    {
+      "id": "C-001",
+      "wave": 3,
+      "priority": "P0",
+      "owner": "A31",
+      "title": "Cinematography Director domain and UI",
+      "deps": [
+        "R-004",
+        "B-001"
+      ]
+    },
+    {
+      "id": "C-002",
+      "wave": 3,
+      "priority": "P1",
+      "owner": "A31",
+      "title": "Cinematography QA",
+      "deps": [
+        "C-001"
+      ]
+    },
+    {
+      "id": "I-001",
+      "wave": 4,
+      "priority": "P0",
+      "owner": "A38",
+      "title": "Resolve exact local image components and caches",
+      "deps": [
+        "B-002"
+      ]
+    },
+    {
+      "id": "I-002",
+      "wave": 4,
+      "priority": "P0",
+      "owner": "A34",
+      "title": "Verified offline FLUX.1 path",
+      "deps": [
+        "I-001"
+      ]
+    },
+    {
+      "id": "I-003",
+      "wave": 4,
+      "priority": "P1",
+      "owner": "A35",
+      "title": "Verified FLUX.2 Dev path / quantized alternatives",
+      "deps": [
+        "I-001"
+      ]
+    },
+    {
+      "id": "I-004",
+      "wave": 4,
+      "priority": "P1",
+      "owner": "A36",
+      "title": "Klein 4B/9B path",
+      "deps": [
+        "I-001"
+      ]
+    },
+    {
+      "id": "I-005",
+      "wave": 4,
+      "priority": "P1",
+      "owner": "A37",
+      "title": "Krea 2 path",
+      "deps": [
+        "I-001"
+      ]
+    },
+    {
+      "id": "I-006",
+      "wave": 4,
+      "priority": "P0",
+      "owner": "A39",
+      "title": "Image memory placement, sticky residency, telemetry",
+      "deps": [
+        "I-002"
+      ]
+    },
+    {
+      "id": "I-007",
+      "wave": 4,
+      "priority": "P0",
+      "owner": "A32",
+      "title": "Asset iterations, review, canonical approval",
+      "deps": [
+        "I-002",
+        "B-002"
+      ]
+    },
+    {
+      "id": "I-008",
+      "wave": 4,
+      "priority": "P1",
+      "owner": "A40",
+      "title": "Image QC and local benchmark calibration",
+      "deps": [
+        "I-002",
+        "I-007"
+      ]
+    },
+    {
+      "id": "P-001",
+      "wave": 5,
+      "priority": "P0",
+      "owner": "A44",
+      "title": "Qwen engine-specific prompt compiler framework",
+      "deps": [
+        "C-001",
+        "I-007"
+      ]
+    },
+    {
+      "id": "H-001",
+      "wave": 5,
+      "priority": "P0",
+      "owner": "A45",
+      "title": "MiniMax H3 native adapter",
+      "deps": [
+        "P-001"
+      ]
+    },
+    {
+      "id": "L-001",
+      "wave": 5,
+      "priority": "P0",
+      "owner": "A46",
+      "title": "LTX 2.5 native adapter",
+      "deps": [
+        "P-001"
+      ]
+    },
+    {
+      "id": "Q-001",
+      "wave": 5,
+      "priority": "P0",
+      "owner": "A39",
+      "title": "Cross-media scheduler and residency manager",
+      "deps": [
+        "I-006",
+        "H-001",
+        "L-001"
+      ]
+    },
+    {
+      "id": "T-001",
+      "wave": 5,
+      "priority": "P0",
+      "owner": "A47",
+      "title": "Video queues, takes, pause/resume/cancel/retry",
+      "deps": [
+        "H-001",
+        "L-001",
+        "Q-001"
+      ]
+    },
+    {
+      "id": "T-002",
+      "wave": 5,
+      "priority": "P0",
+      "owner": "A48",
+      "title": "Video technical/continuity QC",
+      "deps": [
+        "T-001"
+      ]
+    },
+    {
+      "id": "A-001",
+      "wave": 6,
+      "priority": "P1",
+      "owner": "A50",
+      "title": "Qwen3-TTS native adapter",
+      "deps": [
+        "Q-001"
+      ]
+    },
+    {
+      "id": "A-002",
+      "wave": 6,
+      "priority": "P1",
+      "owner": "A51",
+      "title": "VoxCPM2 alternate adapter",
+      "deps": [
+        "Q-001"
+      ]
+    },
+    {
+      "id": "A-003",
+      "wave": 6,
+      "priority": "P1",
+      "owner": "A52",
+      "title": "Voice/ADR profiles, takes, consent and timing",
+      "deps": [
+        "A-001"
+      ]
+    },
+    {
+      "id": "F-001",
+      "wave": 6,
+      "priority": "P1",
+      "owner": "A53",
+      "title": "Sound/Foley/Ambience workspace",
+      "deps": [
+        "T-001"
+      ]
+    },
+    {
+      "id": "M-001",
+      "wave": 6,
+      "priority": "P1",
+      "owner": "A54",
+      "title": "MiniMax Music3 adapter and hardware gates",
+      "deps": [
+        "Q-001"
+      ]
+    },
+    {
+      "id": "M-002",
+      "wave": 6,
+      "priority": "P1",
+      "owner": "A55",
+      "title": "Score/cue UI, versions and placement",
+      "deps": [
+        "M-001"
+      ]
+    },
+    {
+      "id": "A-004",
+      "wave": 6,
+      "priority": "P1",
+      "owner": "A56",
+      "title": "Audio sync/loudness/channel QA",
+      "deps": [
+        "A-003",
+        "F-001",
+        "M-002"
+      ]
+    },
+    {
+      "id": "E-001",
+      "wave": 7,
+      "priority": "P0",
+      "owner": "A57",
+      "title": "Real timeline/edit foundation",
+      "deps": [
+        "T-001",
+        "A-003",
+        "F-001",
+        "M-002"
+      ]
+    },
+    {
+      "id": "E-002",
+      "wave": 7,
+      "priority": "P0",
+      "owner": "A58",
+      "title": "Typed FFmpeg/FFprobe conform and proxy safeguards",
+      "deps": [
+        "E-001"
+      ]
+    },
+    {
+      "id": "X-001",
+      "wave": 7,
+      "priority": "P0",
+      "owner": "A59",
+      "title": "Mastering and real MP4/MOV export",
+      "deps": [
+        "E-002",
+        "A-004"
+      ]
+    },
+    {
+      "id": "D-002",
+      "wave": 7,
+      "priority": "P0",
+      "owner": "A60",
+      "title": "Movie Readiness dashboard",
+      "deps": [
+        "D-001",
+        "X-001"
+      ]
+    },
+    {
+      "id": "DB-001",
+      "wave": 7,
+      "priority": "P1",
+      "owner": "A61",
+      "title": "SQLite/project graph/provenance migration",
+      "deps": [
+        "D-001"
+      ]
+    },
+    {
+      "id": "RLY-001",
+      "wave": 7,
+      "priority": "P0",
+      "owner": "A62",
+      "title": "Crash/OOM/restart/resume diagnostics",
+      "deps": [
+        "Q-001",
+        "E-002"
+      ]
+    },
+    {
+      "id": "SEC-001",
+      "wave": 7,
+      "priority": "P0",
+      "owner": "A05",
+      "title": "Security/license/consent/commercial preflight",
+      "deps": [
+        "X-001"
+      ]
+    },
+    {
+      "id": "M1-001",
+      "wave": 7,
+      "priority": "P0",
+      "owner": "A64",
+      "title": "30-second complete-film acceptance and red team",
+      "deps": [
+        "D-002",
+        "RLY-001",
+        "SEC-001"
+      ]
+    },
+    {
+      "id": "MC-001",
+      "wave": 8,
+      "priority": "P1",
+      "owner": "A63",
+      "title": "Pi local Movie Crew profiles and councils",
+      "deps": [
+        "M1-001"
+      ]
+    },
+    {
+      "id": "MC-002",
+      "wave": 8,
+      "priority": "P1",
+      "owner": "A63",
+      "title": "Stage-gated prepare/queue/unload/wait integration",
+      "deps": [
+        "MC-001"
+      ]
+    }
+  ]
+}

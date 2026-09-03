@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "status": "GREEN",
+  "verifiedAt": "2026-09-03T09:58:09.354Z",
+  "source": {
+    "root": "D:/Projects/Premiere316_v3",
+    "gitCommit": "1cfd87d",
+    "tag": "protected-baseline-p316-20260903075925-1b93dd668ab3",
+    "rendererSourceHash": "1b93dd668ab367c9e46467c86b95ce2bf4bbc0c6816cffbc2eab0a97185039dd",
+    "sourceMatchesPackaged": true
+  },
+  "product": {
+    "version": "3.0.2",
+    "buildId": "p316-20260903075925-1b93dd668ab3",
+    "rendererMode": "PACKAGED DIST",
+    "executable": "dist-desktop/win-unpacked/Premiere316.exe",
+    "installer": "dist-desktop/Premiere316-Setup.exe",
+    "exeSha256": "6cce7b43b2a90b26dce57f89349726f290129618f6bef125b3facefe67d9f0ba",
+    "installerSha256": "4dba99994ac08667bd9d1167edf77d6f6c1036cb22c698c51a2cc515ea391177",
+    "desktopSmoke": "PASS",
+    "consoleErrors": []
+  },
+  "tests": {
+    "testCount": 173,
+    "passed": 173,
+    "failed": 0,
+    "typecheck": "PASS",
+    "authInvariant": "PASS"
+  },
+  "persistence": {
+    "profileRoot": "%APPDATA%/Premiere316",
+    "storageKey": "premiere316-v302-c",
+    "storageBytes": 58654,
+    "storageSha256": "2621ac10c50b925aa2081971fdc3858364d60caaa74ae866caf5da7ce4947b8c",
+    "pictureCount": 1,
+    "pictureTitles": [
+      "The Last Reel"
+    ],
+    "coldBackup": "D:/Data/Backups/Premiere316/protected-baseline-20260903T094905Z/userdata-Premiere316.tar.gz",
+    "restoredAfterUat": true
+  },
+  "backup": {
+    "root": "D:/Data/Backups/Premiere316/protected-baseline-20260903T094905Z",
+    "sourceArchiveSha256": "4e3d1bb654ab3bdf9c6491d9e52be489919c9fc5d0801012305d6b5959f1317e",
+    "userDataArchiveSha256": "8d5f88726af0ae65e2bb0690db4c40aa4cc66ae6a595b482e75c9e6967f9e85f"
+  },
+  "localRuntime": {
+    "modelRoot": "D:/AI/Models",
+    "nondestructive": true,
+    "deepScan": {
+      "foldersScanned": 171,
+      "filesInspected": 469,
+      "logicalModels": 31,
+      "standaloneModels": 31,
+      "componentModels": 124,
+      "loras": 147,
+      "unknownUnmapped": 127,
+      "totalBytes": 2121710386787,
+      "scanDurationMs": 19674,
+      "cacheHits": 0,
+      "cacheMisses": 361,
+      "root": "D:\\AI\\Models",
+      "scannedAt": 1788429340974,
+      "deepVerify": true
+    },
+    "lmStudioIndexedLlmCount": 16,
+    "lmStudioServedCount": 0,
+    "lmStudioStatus": "OFFLINE",
+    "ollamaModelCount": 0,
+    "gpu": {
+      "available": true,
+      "name": "NVIDIA RTX PRO 5000 72GB Blackwell",
+      "utilizationPercent": 5,
+      "memoryUsedBytes": 2289041408,
+      "memoryTotalBytes": 76981207040,
+      "temperatureC": 36,
+      "powerWatts": 62.94
+    },
+    "ramBytes": 68135153664
+  },
+  "locks": {
+    "noComfyUI": true,
+    "localFirst": true,
+    "noSilentCloudFallback": true,
+    "contextIsolation": true,
+    "nodeIntegration": false,
+    "responsiveZoomVerified": true,
+    "timelineOnlyOnStitchVerified": true
+  },
+  "findings": [
+    {
+      "id": "BASE-001",
+      "severity": "P0",
+      "status": "OPEN",
+      "owner": "A04",
+      "summary": "The existing Start Menu Premiere316 shortcut targets the retired V2 prototype PowerShell launcher, not the current V3 Premiere316.exe.",
+      "gate": "Repair only under packaging lease and verify target after Wave 1 package."
+    }
+  ]
+}
