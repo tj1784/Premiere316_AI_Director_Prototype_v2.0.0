@@ -13,7 +13,7 @@
     "localFirst": true,
     "noSilentCloudFallback": true,
     "userTriggersGeneration": true,
-    "maxConcurrentMutatingAgentsRecommended": 12
+    "maxConcurrentMutatingAgentsRecommended": 5
   },
   "agents": [
     {
@@ -631,12 +631,17 @@
       "deps": [
         "UX-005"
       ],
-      "status": "BLOCKED_EXTERNAL_RUNTIME",
-      "branch": null,
-      "worktree": null,
+      "status": "RUNTIME_PASS_AWAITING_A08_REAUDIT",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
-        "docs/release/wave2-gate.md",
-        "packaged p316-20260903183552-c37b85ae52c1 fail-closed: lms server status running=false on 1234; lms ps exact llama-3.3-70b-instruct idle only; /api/v1/models and /v1/models unreachable; app servedModels 0; no completion POSTs; no LMS start/load/unload"
+        "screenshots/llama-runtime/report.json",
+        "screenshots/llama-runtime/lms-native-pre.json",
+        "screenshots/llama-runtime/lms-native-post.json",
+        "screenshots/llama-runtime/00-ready-pinned.png",
+        "screenshots/llama-runtime/05-final-state.png",
+        "commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8: LM Studio server running on 1234 and exact llama-3.3-70b-instruct loaded before launch/writer/QA/revision; no start/load lifecycle action by app/harness; one visible final release unloaded it",
+        "A07 pass run 4a98c969-df0c-4620-ac8f-73e4bb7170d3; A64 pass run 276dd530-a024-427b-951e-139666fc520f; A08 ledger-only re-audit pending"
       ]
     },
     {
@@ -649,14 +654,15 @@
         "S-001",
         "R-001"
       ],
-      "status": "SOURCE_AND_PACKAGE_OFFLINE_PASS_PENDING_RUNTIME",
-      "branch": null,
-      "worktree": null,
+      "status": "RUNTIME_PASS_AWAITING_A08_REAUDIT",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
         "src/lib/studio/model-routing.ts",
         "src/lib/studio/screenplay-jobs.test.ts",
         "screenshots/premiere316-desktop-smoke.json",
-        "Llama default writer UI guarded; Qwen optional explicit only"
+        "screenshots/llama-runtime/report.json",
+        "commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8: exact llama-3.3-70b-instruct writer produced scene-scoped draft/revision; Qwen optional/unrun; 3 total Llama completion requests across writer/QA/revision"
       ]
     },
     {
@@ -669,14 +675,16 @@
         "S-001",
         "S-002"
       ],
-      "status": "SOURCE_AND_PACKAGE_OFFLINE_PASS_PENDING_RUNTIME",
-      "branch": null,
-      "worktree": null,
+      "status": "RUNTIME_PASS_AWAITING_A08_REAUDIT",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
         "src/lib/studio/screenplay-qa.ts",
         "src/lib/studio/screenplay-workflow.ts",
         "screenshots/premiere316-desktop-smoke.json",
-        "Llama default QA critique-first; Qwen second opinion explicit gate visible; apply disabled without critique"
+        "screenshots/llama-runtime/report.json",
+        "screenshots/llama-runtime/02-qa-critique.png",
+        "commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8: separate critique-first QA used exact llama-3.3-70b-instruct, persisted fountainUnchanged=true, before/after QA hash 16a2fcbdbbc0ac3ede313695b79ff461135d50708275d182e37cb9e137db4eff unchanged; optional Qwen second opinion unrun"
       ]
     },
     {
@@ -689,13 +697,16 @@
         "S-002",
         "S-003"
       ],
-      "status": "SOURCE_AND_PACKAGE_OFFLINE_PASS_PENDING_RUNTIME",
-      "branch": null,
-      "worktree": null,
+      "status": "RUNTIME_PASS_AWAITING_A08_REAUDIT",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
         "src/lib/studio/screenplay-hierarchy.test.ts",
         "src/lib/studio/screenplay-scope.ts",
-        "all rewrite scope options visible in packaged Screenplay UI"
+        "screenshots/llama-runtime/report.json",
+        "screenshots/llama-runtime/03-scoped-revision.png",
+        "screenshots/llama-runtime/04-approval.png",
+        "commit b057ca5dd689b63ea93e6d907ae0be54c49abcc8: explicit scene-scoped revision appended, approval appended, prior versions retrievable, unrelated second-scene span byte-identical through rewrite/revision/approval"
       ]
     },
     {
@@ -1264,5 +1275,5 @@
       "evidence": []
     }
   ],
-  "updatedAt": "2026-09-03T18:37:47.728Z"
+  "updatedAt": "2026-09-03T19:20:00.000Z"
 }
