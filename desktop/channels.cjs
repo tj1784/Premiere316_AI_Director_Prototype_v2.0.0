@@ -1,0 +1,25 @@
+"use strict";
+
+module.exports = {
+  catalogGet: "p316:catalog:get",
+  stillsExpose: "p316:stills:expose",
+  stillsWake: "p316:stills:wake",
+  enginesStop: "p316:engines:stop",
+  enginesBenchmark: "p316:engines:benchmark",
+  enginesInspect: "p316:engines:inspect",
+  dialogOpenImages: "p316:dialog:openImages",
+  dialogOpenFolder: "p316:dialog:openFolder",
+  dialogSaveText: "p316:dialog:saveText",
+  dialogSaveMany: "p316:dialog:saveMany",
+  filesReadImage: "p316:files:readImage",
+  credentialsGet: "p316:credentials:get",
+  credentialsSet: "p316:credentials:set",
+  credentialsDelete: "p316:credentials:delete",
+  appVersion: "p316:app:version",
+  appBuildInfo: "p316:app:buildInfo",
+  appModelRoot: "p316:app:modelRoot",
+  appSystemStatus: "p316:app:systemStatus",
+  zoomGet: "p316:zoom:get",
+  zoomSet: "p316:zoom:set",
+  zoomChanged: "p316:zoom:changed",
+};

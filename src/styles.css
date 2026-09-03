@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #09090b;
+  --color-surface: #121214;
+  --color-elevated: #1a1a1e;
+  --color-inset: #0c0c0e;
+  --color-fg: #efe8dc;
+  --color-muted: #9a9186;
+  --color-subtle: #6b655c;
+  --color-accent: #c4a574;
+  --color-accent-fg: #1a140c;
+  --color-border: rgba(239, 232, 220, 0.1);
+  --color-rec: #b33a3a;
+  --color-good: #7d9b6a;
+  --font-sans: "Segoe UI Variable Text", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --shadow-border: inset 0 0 0 1px rgba(239, 232, 220, 0.1);
+  --shadow-border-hover: inset 0 0 0 1px rgba(196, 165, 116, 0.45);
+}
+
+@layer base {
+  html,
+  body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    min-height: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 500;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 40%, transparent);
+  }
+}
+
+.picture-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+}
+
+.inventory-grid,
+.generation-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+}
+
+.stage-pane p,
+.stage-pane li,
+.stage-pane dd {
+  overflow-wrap: anywhere;
+}
+
+[aria-labelledby="still-bay-title"] {
+  max-height: calc(100dvh - 1.5rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-height: 700px) {
+  [aria-labelledby="still-bay-title"] {
+    padding: 1rem;
+  }
+
+  .screenplay {
+    min-height: 18rem;
+  }
+}
+
+.screenplay {
+  font-family: "Cascadia Mono", "Consolas", ui-monospace, monospace;
+  font-weight: 300;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+}
+
+.timeline-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}

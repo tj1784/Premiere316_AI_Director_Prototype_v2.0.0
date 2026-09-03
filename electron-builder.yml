@@ -1,0 +1,50 @@
+appId: com.premiere316.desktop
+productName: Premiere316
+copyright: Premiere316
+asar: true
+npmRebuild: false
+directories:
+  output: dist-desktop
+files:
+  - desktop/main.mjs
+  - desktop/preload.cjs
+  - desktop/channels.cjs
+  - desktop/zoom.cjs
+  - desktop/icon.ico
+  - package.json
+  - "!**/node_modules/**"
+extraResources:
+  - from: desktop/dist/backend.mjs
+    to: backend.mjs
+  - from: desktop/build-info.json
+    to: build-info.json
+  - from: desktop/icon.ico
+    to: icon.ico
+  - from: .output
+    to: ui
+win:
+  icon: desktop/icon.ico
+  target:
+    - target: dir
+      arch:
+        - x64
+    - target: nsis
+      arch:
+        - x64
+  artifactName: Premiere316-Setup.${ext}
+  executableName: Premiere316
+  signAndEditExecutable: false
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Premiere316
+  uninstallDisplayName: Premiere316
+  installerIcon: desktop/icon.ico
+  uninstallerIcon: desktop/icon.ico
+  installerHeaderIcon: desktop/icon.ico
+extraMetadata:
+  main: desktop/main.mjs
