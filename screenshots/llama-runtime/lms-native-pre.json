@@ -1,0 +1,398 @@
+{
+  "models": [
+    {
+      "type": "llm",
+      "publisher": "DavidAU",
+      "key": "qwen3.6-40b-fable-fusion-6-core-deckard-eleanor-heretic-uncensored-nm-dau-neo-max-mtp",
+      "display_name": "Qwen3.6 40B FF6core Deck Eleanor H Uncen NEO MAX MTP",
+      "architecture": "qwen35",
+      "quantization": {
+        "name": "Q8_0",
+        "bits_per_weight": 8
+      },
+      "size_bytes": 45023498816,
+      "params_string": "40B",
+      "loaded_instances": [],
+      "max_context_length": 262144,
+      "format": "gguf",
+      "capabilities": {
+        "vision": true,
+        "trained_for_tool_use": true,
+        "reasoning": {
+          "allowed_options": [
+            "off",
+            "on"
+          ],
+          "default": "on"
+        }
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "prometheusAIR",
+      "key": "deepseek-v4-flash-vision-exp",
+      "display_name": "DeepSeek v4 Flash Vision Exp Imatrix",
+      "architecture": null,
+      "quantization": null,
+      "size_bytes": 1403613728,
+      "params_string": null,
+      "loaded_instances": [],
+      "max_context_length": 4096,
+      "format": "gguf",
+      "capabilities": {
+        "vision": true,
+        "trained_for_tool_use": false
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "MorinoNushi",
+      "key": "deepseek-v4-flash-0731-heretic-abliterated-v2-lora",
+      "display_name": "Ds4 Flash Heretic F4 T265 Lora R2",
+      "architecture": "deepseek4",
+      "quantization": null,
+      "size_bytes": 197237888,
+      "params_string": null,
+      "loaded_instances": [],
+      "max_context_length": 4096,
+      "format": "gguf",
+      "capabilities": {
+        "vision": false,
+        "trained_for_tool_use": false
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "mradermacher",
+      "key": "muse-glimmer-30b-fable-distill-i1",
+      "display_name": "Muse Glimmer 30B Fable Distill I1",
+      "architecture": "muse-glimmer",
+      "quantization": {
+        "name": "Q6_K",
+        "bits_per_weight": 6
+      },
+      "size_bytes": 22867216768,
+      "params_string": "30B",
+      "loaded_instances": [],
+      "max_context_length": 131072,
+      "format": "gguf",
+      "capabilities": {
+        "vision": false,
+        "trained_for_tool_use": true
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "antirez",
+      "key": "deepseek-v4",
+      "display_name": "DeepSeek v4 Flash Vision Exp DSpark Support",
+      "architecture": "deepseek4-dspark",
+      "quantization": null,
+      "size_bytes": 5989114528,
+      "params_string": null,
+      "loaded_instances": [],
+      "max_context_length": 4096,
+      "format": "gguf",
+      "capabilities": {
+        "vision": false,
+        "trained_for_tool_use": false
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "lmstudio-community",
+      "key": "hermes-4-70b",
+      "display_name": "Hermes 4 70B",
+      "architecture": "llama",
+      "quantization": {
+        "name": "Q6_K",
+        "bits_per_weight": 6
+      },
+      "size_bytes": 57888147296,
+      "params_string": "70B",
+      "loaded_instances": [],
+      "max_context_length": 131072,
+      "format": "gguf",
+      "capabilities": {
+        "vision": false,
+        "trained_for_tool_use": true
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "DevQuasar",
+      "key": "qwen2.5-72b-instruct",
+      "display_name": "Qwen2.5 72B Instruct",
+      "architecture": "qwen2",
+      "quantization": {
+        "name": "Q6_K",
+        "bits_per_weight": 6
+      },
+      "size_bytes": 64347629472,
+      "params_string": "72B",
+      "loaded_instances": [],
+      "max_context_length": 32768,
+      "format": "gguf",
+      "capabilities": {
+        "vision": false,
+        "trained_for_tool_use": true
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "lmstudio-community",
+      "key": "llama-3.3-70b-instruct",
+      "display_name": "Llama 3.3 70B Instruct",
+      "architecture": "llama",
+      "quantization": {
+        "name": "Q6_K",
+        "bits_per_weight": 6
+      },
+      "size_bytes": 57888148384,
+      "params_string": "70B",
+      "loaded_instances": [
+        {
+          "id": "llama-3.3-70b-instruct",
+          "config": {
+            "context_length": 8192,
+            "eval_batch_size": 2048,
+            "physical_batch_size": 512,
+            "parallel": 4,
+            "flash_attention": true,
+            "context_checkpoints": 32,
+            "reasoning_budget_message": "",
+            "speculative_draft_mtp": false,
+            "speculative_draft_simple": false,
+            "speculative_draft_model": "",
+            "speculative_draft_max_tokens": 3,
+            "speculative_draft_min_tokens": 0,
+            "speculative_draft_min_continue_probability": 0,
+            "offload_kv_cache_to_gpu": true
+          }
+        }
+      ],
+      "max_context_length": 131072,
+      "format": "gguf",
+      "capabilities": {
+        "vision": false,
+        "trained_for_tool_use": true
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "DavidAU",
+      "key": "qwen3.6-40b-claude-4.6-opus-deckard-heretic-uncensored-thinking-neo-code-di-imatrix-max",
+      "display_name": "Qwen3.6 40B Deck Opus NEO CODE HERE 2T OT",
+      "architecture": "qwen35",
+      "quantization": {
+        "name": "Q4_K_S",
+        "bits_per_weight": 4
+      },
+      "size_bytes": 24644759136,
+      "params_string": "40B",
+      "loaded_instances": [],
+      "max_context_length": 262144,
+      "format": "gguf",
+      "capabilities": {
+        "vision": true,
+        "trained_for_tool_use": true,
+        "reasoning": {
+          "allowed_options": [
+            "off",
+            "on"
+          ],
+          "default": "on"
+        }
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "puwaer",
+      "key": "deepseek-v4-flash-0731-reap-150b@q2_k",
+      "display_name": "DeepSeek v4 Flash 0731 Reap 150B",
+      "architecture": "deepseek4",
+      "quantization": {
+        "name": "Q2_K",
+        "bits_per_weight": 2
+      },
+      "size_bytes": 62394674944,
+      "params_string": "150B",
+      "loaded_instances": [],
+      "max_context_length": 1048576,
+      "format": "gguf",
+      "capabilities": {
+        "vision": false,
+        "trained_for_tool_use": false,
+        "reasoning": {
+          "allowed_options": [
+            "off",
+            "on"
+          ],
+          "default": "on"
+        }
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "puwaer",
+      "key": "deepseek-v4-flash-0731-reap-150b@q3_k_m",
+      "display_name": "DeepSeek v4 Flash 0731 Reap 150B",
+      "architecture": "deepseek4",
+      "quantization": {
+        "name": "Q3_K_M",
+        "bits_per_weight": 3
+      },
+      "size_bytes": 70941617920,
+      "params_string": "150B",
+      "loaded_instances": [],
+      "max_context_length": 1048576,
+      "format": "gguf",
+      "capabilities": {
+        "vision": false,
+        "trained_for_tool_use": false,
+        "reasoning": {
+          "allowed_options": [
+            "off",
+            "on"
+          ],
+          "default": "on"
+        }
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "KeinNiemand",
+      "key": "deepseek-v4-flash-0731-ik_gguf",
+      "display_name": "DeepSeek v4 Flash 0731 XS IQ1 KT",
+      "architecture": "deepseek4",
+      "quantization": null,
+      "size_bytes": 65073008352,
+      "params_string": "256x8.4B",
+      "loaded_instances": [],
+      "max_context_length": 1048576,
+      "format": "gguf",
+      "capabilities": {
+        "vision": false,
+        "trained_for_tool_use": false,
+        "reasoning": {
+          "allowed_options": [
+            "off",
+            "on"
+          ],
+          "default": "on"
+        }
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "HauhauCS",
+      "key": "gptoss-120b-uncensored-hauhaucs-aggressive",
+      "display_name": "GPTOSS 120B Uncensored HauhauCS Aggressive",
+      "architecture": "gpt-oss",
+      "quantization": {
+        "name": "MXFP4",
+        "bits_per_weight": 4
+      },
+      "size_bytes": 65369016544,
+      "params_string": "128x3.0B",
+      "loaded_instances": [],
+      "max_context_length": 131072,
+      "format": "gguf",
+      "capabilities": {
+        "vision": false,
+        "trained_for_tool_use": true
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "mradermacher",
+      "key": "m51lab-minimax-m2.7-reap-139b-a10b-i1",
+      "display_name": "M51Lab MiniMax M2.7 REAP 139B A10B I1",
+      "architecture": "minimax-m2",
+      "quantization": {
+        "name": "Q3_K_S",
+        "bits_per_weight": 3
+      },
+      "size_bytes": 60146754688,
+      "params_string": "139B-A10B",
+      "loaded_instances": [],
+      "max_context_length": 196608,
+      "format": "gguf",
+      "capabilities": {
+        "vision": false,
+        "trained_for_tool_use": true
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "meta-models",
+      "key": "muse-glimmer-30b@bf16",
+      "display_name": "Muse Glimmer 30B",
+      "architecture": "muse_glimmer",
+      "quantization": {
+        "name": "bf16",
+        "bits_per_weight": 16
+      },
+      "size_bytes": 59581829216,
+      "params_string": "30B",
+      "loaded_instances": [],
+      "max_context_length": 131072,
+      "format": "torch_safetensors",
+      "capabilities": {
+        "vision": false,
+        "trained_for_tool_use": true
+      },
+      "description": null
+    },
+    {
+      "type": "llm",
+      "publisher": "meta-models",
+      "key": "muse-glimmer-30b@q4_k_xl",
+      "display_name": "Muse Glimmer 30B KQuant Dynamic",
+      "architecture": "muse-glimmer",
+      "quantization": {
+        "name": "Q4_K_XL",
+        "bits_per_weight": 4
+      },
+      "size_bytes": 21054289760,
+      "params_string": "28B",
+      "loaded_instances": [],
+      "max_context_length": 131072,
+      "format": "gguf",
+      "capabilities": {
+        "vision": true,
+        "trained_for_tool_use": true
+      },
+      "description": null
+    },
+    {
+      "type": "embedding",
+      "publisher": "nomic-ai",
+      "key": "text-embedding-nomic-embed-text-v1.5",
+      "display_name": "Nomic Embed Text v1.5",
+      "quantization": {
+        "name": "Q4_K_M",
+        "bits_per_weight": 4
+      },
+      "size_bytes": 84106624,
+      "params_string": null,
+      "loaded_instances": [],
+      "max_context_length": 2048,
+      "format": "gguf"
+    }
+  ]
+}

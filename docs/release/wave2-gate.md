@@ -1,6 +1,6 @@
 # Wave 2 Gate — Research Room and Llama-default Screenplay 2.0
 
-Status: **BLOCKED_EXTERNAL_RUNTIME** (Llama-default pending-runtime package checkpoint)
+Status: **RUNTIME_PASS_AWAITING_INDEPENDENT_AUDIT** (genuine packaged Llama runtime gate passed; Wave 3 still closed)
 
 Canonical product: **Premiere316.exe**
 
@@ -9,7 +9,7 @@ Renderer source hash: `c37b85ae52c15c8da68ba77aafc7a34abcdfba5a652b0eab1ca90986b
 
 Checkpoint base: `729c4d5` plus reviewed Llama-default architecture migration and A04 package harness repair. A03 source approval/release was recorded before A04 activated `WAVE-2-LLAMA-DEFAULT-PACKAGE`.
 
-Wave 3 is **not** opened. No green tag was created.
+Wave 3 is **not** opened. No green tag was created. Independent A07/A08/A64 runtime audit is still required before green release.
 
 ## Scope delivered (source + packaged offline)
 
@@ -68,22 +68,38 @@ Cold backup: `D:\Data\Backups\Premiere316\wave2-llama-default-a04-20260903T18305
 
 Visual and smoke launched only against temp copied/isolated profiles. Final process check showed no `Premiere316`/`electron` processes remaining. No model weight under `D:\AI\Models` was written, moved, renamed, converted, copied, deleted, or loaded automatically.
 
-## LM Studio read-only probe / fail-closed proof
+## LM Studio packaged runtime gate
 
-Read-only native state checks only; no server/model start, load, reload, unload, or ComfyUI/cloud invocation was performed.
+The operator explicitly started LM Studio Local Server and loaded exact `llama-3.3-70b-instruct` for this gate. A04 performed read-only native checks before each product inference phase. No lifecycle endpoint or CLI start/load command was issued. Qwen and Prompt Lab execution were not run.
 
-- `lms server status --json`: `{"running":false,"port":1234}`
-- `lms ps --json`: exact `llama-3.3-70b-instruct` catalog row present but `status":"idle"`; not served over HTTP.
-- `curl http://127.0.0.1:1234/api/v1/models`: connection failed.
-- `curl http://127.0.0.1:1234/v1/models`: connection failed.
-- Packaged smoke recorded `servedModels: 0`, `generationEnabled: false`, `network.completionPosts: 0`, `network.probed8080: 0`.
+Machine-readable runtime evidence: `screenshots/llama-runtime/report.json` plus native captures `00-ready-pinned.png`, `01-writer-output.png`, `02-qa-critique.png`, `03-scoped-revision.png`, `04-approval.png`, and `05-final-state.png`.
 
-S-001 / S-002 / S-003 genuine packaged draft → critique → explicit scoped revision → approval was **not run and is not waived** because the exact Llama runtime is not already served. Qwen A/B benchmark remains pending until explicitly selected and served by the operator.
+Runtime checks:
+
+- `lms server status --json`: `{"running":true,"port":1234}` before the run.
+- Native `/api/v1/models` checks before launch, writer rewrite, Story Doctor, and explicit scoped revision all found row key `llama-3.3-70b-instruct` with loaded instance id exactly `llama-3.3-70b-instruct`.
+- Effective loaded context: **8192**; catalog max context: **131072**.
+- Packaged UI pinned writer and Story Doctor to exact served ID `llama-3.3-70b-instruct`.
+- Completion requests: **3** total (scene-scoped writer rewrite, critique-first Story Doctor, explicit scene-scoped writer revision aligned to the critique because QA returned no surgical `rewriteSuggested`). Cap was 4.
+- QA persisted `fountainUnchanged: true`; Fountain hash before QA and after QA was identical: `16a2fcbdbbc0ac3ede313695b79ff461135d50708275d182e37cb9e137db4eff`.
+- Explicit approval appended `Approved Screenplay`; prior seed and candidate versions remained retrievable.
+- Unrelated second scene span stayed byte-identical across writer rewrite, scoped revision, and approval.
+- Telemetry persisted exact model/role evidence: actual loaded model `llama-3.3-70b-instruct`, endpoint `http://127.0.0.1:1234`, local true, cloudFallback false, generationMs 23282, promptTokens 879, generatedTokens 195, peakVramBytes 67917316096, peakSystemRamBytes 56780537856; resource samples are coarse host/process-adjacent readings.
+- Renderer observed zero forbidden `:8080` requests and zero Qwen POSTs.
+- No intermediate unload/reload occurred; exact Llama remained loaded before the true end-of-workflow release.
+- The visible `Release local model` action was clicked once at the user-authorized workflow boundary. Native unload succeeded (`loadedAfterRelease: []`), and no replacement model was started or loaded.
+
+Live-data and process proof:
+
+- `%APPDATA%\Premiere316` pre/post file count: **312 / 312**.
+- `%APPDATA%\Premiere316` pre/post manifest SHA-256: `40f353068a343e7e2e761bbda589758c200ad43af57fa818dd0cc3824fbf0018` / `40f353068a343e7e2e761bbda589758c200ad43af57fa818dd0cc3824fbf0018`.
+- Packaged runtime launched only with a fresh isolated temp profile, then deleted it.
+- Final Premiere316/electron process check: **0**.
+
+Optional Qwen A/B benchmark remains pending until explicitly selected and served by the operator; it was not run or fabricated.
 
 ## Gate decision
 
-Wave 2 source, package, isolated offline UAT, shortcut, rollback evidence, and live user-data identity **PASS**.
+Wave 2 source, package, isolated offline UAT, shortcut, rollback evidence, live user-data identity, and genuine packaged Llama runtime flow **PASS**.
 
-Wave 2 product acceptance remains **BLOCKED_EXTERNAL_RUNTIME** until the operator already serves exact `llama-3.3-70b-instruct` through LM Studio Local Server and packaged user-triggered Llama draft → isolated critique-first QA → explicit scoped revision/application → approval is proven. Optional Qwen A/B remains pending and must not be fabricated or auto-run.
-
-Do **not** open Wave 3. Do **not** green-tag this checkpoint.
+Wave 2 status is **RUNTIME_PASS_AWAITING_INDEPENDENT_AUDIT**. Do **not** open Wave 3 and do **not** green-tag until independent A07/A08/A64 review accepts this runtime evidence.

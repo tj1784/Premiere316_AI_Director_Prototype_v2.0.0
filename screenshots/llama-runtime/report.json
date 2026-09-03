@@ -1,0 +1,273 @@
+{
+  "ok": true,
+  "status": "RUNTIME_PASS_AWAITING_INDEPENDENT_AUDIT",
+  "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+  "buildInfo": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260903183552-c37b85ae52c1",
+    "buildTimestamp": "2026-09-03T18:35:52.344Z",
+    "rendererSourceHash": "c37b85ae52c15c8da68ba77aafc7a34abcdfba5a652b0eab1ca90986bef80b06",
+    "rendererMode": "PACKAGED DIST",
+    "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+    "appPath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\app.asar"
+  },
+  "commitUnderTest": "b8d5be70357cb6402ec44153ca8ad499d0293cd2",
+  "endpoint": "http://127.0.0.1:1234",
+  "modelId": "llama-3.3-70b-instruct",
+  "qwenRan": false,
+  "promptLabExecuted": false,
+  "completionRequests": 3,
+  "usedQaApply": false,
+  "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-llama-runtime-7nKAem",
+  "launchedUserData": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-llama-runtime-7nKAem",
+  "realProfileUntouched": "C:\\Users\\teeja\\AppData\\Roaming\\Premiere316",
+  "hashes": {
+    "beforeWriter": "8104572f4f2870118ff25a731676b92520899e57e9b3c743c3e6b44c0d1fc842",
+    "afterWriter": "16a2fcbdbbc0ac3ede313695b79ff461135d50708275d182e37cb9e137db4eff",
+    "beforeQa": "16a2fcbdbbc0ac3ede313695b79ff461135d50708275d182e37cb9e137db4eff",
+    "afterQa": "16a2fcbdbbc0ac3ede313695b79ff461135d50708275d182e37cb9e137db4eff",
+    "beforeRevision": "16a2fcbdbbc0ac3ede313695b79ff461135d50708275d182e37cb9e137db4eff",
+    "afterRevision": "2917f5e829b073bd6a25d6773ebb358e89b9cfb95b57999e91079399f6e34ee7",
+    "approved": "2917f5e829b073bd6a25d6773ebb358e89b9cfb95b57999e91079399f6e34ee7"
+  },
+  "versions": [
+    {
+      "id": "spv-seed",
+      "label": "Seed screenplay",
+      "kind": "manual",
+      "sourceVersionId": null,
+      "scope": "full",
+      "nodeIds": null,
+      "logicalRole": "manual",
+      "modelServedId": null,
+      "hash": "8104572f4f2870118ff25a731676b92520899e57e9b3c743c3e6b44c0d1fc842"
+    },
+    {
+      "id": "2d62e758-7282-4248-9255-f54999755740",
+      "label": "Draft 1",
+      "kind": "draft",
+      "sourceVersionId": "spv-seed",
+      "scope": "scene",
+      "nodeIds": [
+        "SCENE-001"
+      ],
+      "logicalRole": "writer",
+      "modelServedId": "llama-3.3-70b-instruct",
+      "hash": "16a2fcbdbbc0ac3ede313695b79ff461135d50708275d182e37cb9e137db4eff"
+    },
+    {
+      "id": "425a4e5f-bb58-49dd-9ca0-c6c6b6d25fc3",
+      "label": "Draft 1",
+      "kind": "draft",
+      "sourceVersionId": "2d62e758-7282-4248-9255-f54999755740",
+      "scope": "scene",
+      "nodeIds": [
+        "SCENE-001"
+      ],
+      "logicalRole": "writer",
+      "modelServedId": "llama-3.3-70b-instruct",
+      "hash": "2917f5e829b073bd6a25d6773ebb358e89b9cfb95b57999e91079399f6e34ee7"
+    },
+    {
+      "id": "spv_n196p9l9ub",
+      "label": "Approved Screenplay",
+      "kind": "approved",
+      "sourceVersionId": "425a4e5f-bb58-49dd-9ca0-c6c6b6d25fc3",
+      "scope": "scene",
+      "nodeIds": [
+        "SCENE-001"
+      ],
+      "logicalRole": "writer",
+      "modelServedId": "llama-3.3-70b-instruct",
+      "hash": "2917f5e829b073bd6a25d6773ebb358e89b9cfb95b57999e91079399f6e34ee7"
+    }
+  ],
+  "qa": {
+    "id": "c9fc6d8c-663b-43a9-a846-2313f46746d3",
+    "servedModelId": "llama-3.3-70b-instruct",
+    "displayName": "Llama 3.3 70B Instruct",
+    "fountainUnchanged": true,
+    "findingCount": 3,
+    "findings": [
+      {
+        "category": "PACING ISSUE",
+        "severity": "note",
+        "summary": "The scene's pacing is generally well-handled, but some sentences could be more concise to improve the overall flow.",
+        "exactScope": "SCENE-001",
+        "revisionRequired": false,
+        "hasRewriteSuggested": false
+      },
+      {
+        "category": "CINEMATOGRAPHY OPPORTUNITY",
+        "severity": "note",
+        "summary": "The static to slow push camera movement could be more explicitly described to take full advantage of the 35mm restrained coverage.",
+        "exactScope": "SCENE-001",
+        "revisionRequired": false,
+        "hasRewriteSuggested": false
+      },
+      {
+        "category": "DIALOGUE ISSUE",
+        "severity": "note",
+        "summary": "Mara's whispering to herself feels a bit forced and could be omitted or rephrased for more naturalness.",
+        "exactScope": "SCENE-001",
+        "revisionRequired": false,
+        "hasRewriteSuggested": false
+      }
+    ]
+  },
+  "telemetry": {
+    "providerId": "lm-studio",
+    "provider": "LM Studio",
+    "endpoint": "http://127.0.0.1:1234",
+    "actualLoadedModel": "llama-3.3-70b-instruct",
+    "local": true,
+    "cloudFallback": false,
+    "modelId": "llama-3.3-70b-instruct",
+    "checkpoint": "llama-3.3-70b-instruct",
+    "runtimeAdapter": "LM Studio OpenAI-compatible local API",
+    "loadMs": 76,
+    "generationMs": 23282,
+    "unloadMs": 0,
+    "promptTokens": 879,
+    "generatedTokens": 195,
+    "peakVramBytes": 67917316096,
+    "peakSystemRamBytes": 56780537856,
+    "resourceMeasurement": "system-total",
+    "unloaded": false,
+    "unloadVerification": "held-resident",
+    "measuredAt": 1788462825857
+  },
+  "context": {
+    "effectiveContext": 8192,
+    "catalogMaxContext": 131072
+  },
+  "nativePhaseChecks": [
+    {
+      "phase": "pre-launch",
+      "at": "2026-09-03T19:12:18.876Z",
+      "key": "llama-3.3-70b-instruct",
+      "id": null,
+      "loadedInstances": [
+        "llama-3.3-70b-instruct"
+      ],
+      "effectiveContext": 8192,
+      "catalogMaxContext": 131072,
+      "quantization": "Q6_K",
+      "sizeBytes": 57888148384
+    },
+    {
+      "phase": "before-writer-scene-rewrite",
+      "at": "2026-09-03T19:12:21.055Z",
+      "key": "llama-3.3-70b-instruct",
+      "id": null,
+      "loadedInstances": [
+        "llama-3.3-70b-instruct"
+      ],
+      "effectiveContext": 8192,
+      "catalogMaxContext": 131072,
+      "quantization": "Q6_K",
+      "sizeBytes": 57888148384
+    },
+    {
+      "phase": "before-story-doctor",
+      "at": "2026-09-03T19:12:49.636Z",
+      "key": "llama-3.3-70b-instruct",
+      "id": null,
+      "loadedInstances": [
+        "llama-3.3-70b-instruct"
+      ],
+      "effectiveContext": 8192,
+      "catalogMaxContext": 131072,
+      "quantization": "Q6_K",
+      "sizeBytes": 57888148384
+    },
+    {
+      "phase": "before-explicit-scoped-revision",
+      "at": "2026-09-03T19:13:21.056Z",
+      "key": "llama-3.3-70b-instruct",
+      "id": null,
+      "loadedInstances": [
+        "llama-3.3-70b-instruct"
+      ],
+      "effectiveContext": 8192,
+      "catalogMaxContext": 131072,
+      "quantization": "Q6_K",
+      "sizeBytes": 57888148384
+    }
+  ],
+  "release": {
+    "clickedVisibleReleaseButton": true,
+    "loadedBeforeRelease": [
+      "llama-3.3-70b-instruct"
+    ],
+    "loadedAfterRelease": [],
+    "nativeUnloadSucceeded": true,
+    "note": "No replacement model was started or loaded by this harness."
+  },
+  "resources": [
+    {
+      "label": "pre-launch",
+      "at": "2026-09-03T19:12:18.863Z",
+      "gpu": "2026/09/03 12:12:18.103, NVIDIA RTX PRO 5000 72GB Blackwell, 64557, 73415, 14",
+      "systemMemory": "{\"TotalVisibleMemorySize\":66538236,\"FreePhysicalMemory\":11811640}",
+      "caveat": "Resource samples are coarse host/process-adjacent readings, not exact per-token allocator telemetry."
+    },
+    {
+      "label": "before-writer-scene-rewrite",
+      "at": "2026-09-03T19:12:21.785Z",
+      "gpu": "2026/09/03 12:12:21.114, NVIDIA RTX PRO 5000 72GB Blackwell, 64588, 73415, 4",
+      "systemMemory": "{\"TotalVisibleMemorySize\":66538236,\"FreePhysicalMemory\":11446336}",
+      "caveat": "Resource samples are coarse host/process-adjacent readings, not exact per-token allocator telemetry."
+    },
+    {
+      "label": "before-story-doctor",
+      "at": "2026-09-03T19:12:50.400Z",
+      "gpu": "2026/09/03 12:12:49.681, NVIDIA RTX PRO 5000 72GB Blackwell, 64657, 73415, 4",
+      "systemMemory": "{\"TotalVisibleMemorySize\":66538236,\"FreePhysicalMemory\":11648008}",
+      "caveat": "Resource samples are coarse host/process-adjacent readings, not exact per-token allocator telemetry."
+    },
+    {
+      "label": "before-explicit-scoped-revision",
+      "at": "2026-09-03T19:13:21.965Z",
+      "gpu": "2026/09/03 12:13:21.109, NVIDIA RTX PRO 5000 72GB Blackwell, 64631, 73415, 6",
+      "systemMemory": "{\"TotalVisibleMemorySize\":66538236,\"FreePhysicalMemory\":11410432}",
+      "caveat": "Resource samples are coarse host/process-adjacent readings, not exact per-token allocator telemetry."
+    },
+    {
+      "label": "before-visible-release",
+      "at": "2026-09-03T19:13:49.824Z",
+      "gpu": "2026/09/03 12:13:49.191, NVIDIA RTX PRO 5000 72GB Blackwell, 64739, 73415, 4",
+      "systemMemory": "{\"TotalVisibleMemorySize\":66538236,\"FreePhysicalMemory\":10858060}",
+      "caveat": "Resource samples are coarse host/process-adjacent readings, not exact per-token allocator telemetry."
+    },
+    {
+      "label": "after-visible-release",
+      "at": "2026-09-03T19:13:55.876Z",
+      "gpu": "2026/09/03 12:13:55.222, NVIDIA RTX PRO 5000 72GB Blackwell, 10527, 73415, 5",
+      "systemMemory": "{\"TotalVisibleMemorySize\":66538236,\"FreePhysicalMemory\":44578352}",
+      "caveat": "Resource samples are coarse host/process-adjacent readings, not exact per-token allocator telemetry."
+    }
+  ],
+  "screenshots": [
+    "screenshots/llama-runtime/00-ready-pinned.png",
+    "screenshots/llama-runtime/01-writer-output.png",
+    "screenshots/llama-runtime/02-qa-critique.png",
+    "screenshots/llama-runtime/03-scoped-revision.png",
+    "screenshots/llama-runtime/04-approval.png",
+    "screenshots/llama-runtime/05-final-state.png"
+  ],
+  "network": {
+    "rendererObservedRequests": 177,
+    "forbidden8080": 0,
+    "qwenPosts": 0
+  },
+  "validation": {
+    "nonemptyFountain": true,
+    "validLookingFountain": true,
+    "qaDidNotMutateFountain": true,
+    "unrelatedSpanPreserved": true,
+    "priorVersionsRetrievable": true,
+    "noIntermediateUnloadReload": true
+  }
+}
