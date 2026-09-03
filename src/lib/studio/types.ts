@@ -3,6 +3,7 @@ import type { PictureIntake } from "./picture-intake.ts";
 import type { PictureScreenplay } from "./screenplay.ts";
 import type { ProductionBreakdown } from "../production/types.ts";
 import type { PerformanceWorkspace } from "../performance/types.ts";
+import type { PictureResearchBible } from "../research/bible.ts";
 
 export const USAGE_CAPS = {
   llm: 24,
@@ -13,6 +14,7 @@ export const USAGE_CAPS = {
 
 export type StageId =
   | "intake"
+  | "research"
   | "screenplay"
   | "inventory"
   | "performance"
@@ -25,15 +27,16 @@ export type StageId =
 
 export const STAGES: { id: StageId; number: string; label: string }[] = [
   { id: "intake", number: "01", label: "Intake" },
-  { id: "screenplay", number: "02", label: "Screenplay" },
-  { id: "inventory", number: "03", label: "Inventory" },
-  { id: "performance", number: "04", label: "Performance" },
-  { id: "shots", number: "05", label: "Shots" },
-  { id: "prompts", number: "06", label: "Prompt Lab" },
-  { id: "generate", number: "07", label: "Generate" },
-  { id: "timeline", number: "08", label: "Stitch" },
-  { id: "score", number: "09", label: "Score" },
-  { id: "export", number: "10", label: "Export" },
+  { id: "research", number: "02", label: "Research" },
+  { id: "screenplay", number: "03", label: "Screenplay" },
+  { id: "inventory", number: "04", label: "Inventory" },
+  { id: "performance", number: "05", label: "Performance" },
+  { id: "shots", number: "06", label: "Shots" },
+  { id: "prompts", number: "07", label: "Prompt Lab" },
+  { id: "generate", number: "08", label: "Generate" },
+  { id: "timeline", number: "09", label: "Stitch" },
+  { id: "score", number: "10", label: "Score" },
+  { id: "export", number: "11", label: "Export" },
 ];
 
 export type EngineKind =
@@ -132,6 +135,7 @@ export type Picture = {
   thumbnailUrl: string | null;
   intake: PictureIntake;
   screenplay: PictureScreenplay;
+  research?: PictureResearchBible | null;
   production?: ProductionBreakdown | null;
   performance?: PerformanceWorkspace | null;
   selectedEngine: SelectedEngines;

@@ -12,15 +12,16 @@ const REAL_PROFILE = join(process.env.APPDATA ?? "", "Premiere316");
 
 const IMPLEMENTED_STAGES = [
   { id: "intake", button: "01 Intake", left: "none", right: "none", timeline: false },
-  { id: "screenplay", button: "02 Screenplay", left: "none", right: "none", timeline: false },
-  { id: "inventory", button: "03 Inventory", left: "none", right: "none", timeline: false },
-  { id: "performance", button: "04 Performance", left: "none", right: "none", timeline: false },
-  { id: "shots", button: "05 Shots", left: "none", right: "none", timeline: false },
-  { id: "prompts", button: "06 Prompt Lab", left: "none", right: "none", timeline: false },
-  { id: "generate", button: "07 Generate", left: "generation", right: "generation", timeline: false },
-  { id: "timeline", button: "08 Stitch", left: "media", right: "clip", timeline: true },
-  { id: "score", button: "09 Score", left: "none", right: "none", timeline: false },
-  { id: "export", button: "10 Export", left: "none", right: "none", timeline: false },
+  { id: "research", button: "02 Research", left: "none", right: "none", timeline: false },
+  { id: "screenplay", button: "03 Screenplay", left: "none", right: "none", timeline: false },
+  { id: "inventory", button: "04 Inventory", left: "none", right: "none", timeline: false },
+  { id: "performance", button: "05 Performance", left: "none", right: "none", timeline: false },
+  { id: "shots", button: "06 Shots", left: "none", right: "none", timeline: false },
+  { id: "prompts", button: "07 Prompt Lab", left: "none", right: "none", timeline: false },
+  { id: "generate", button: "08 Generate", left: "generation", right: "generation", timeline: false },
+  { id: "timeline", button: "09 Stitch", left: "media", right: "clip", timeline: true },
+  { id: "score", button: "10 Score", left: "none", right: "none", timeline: false },
+  { id: "export", button: "11 Export", left: "none", right: "none", timeline: false },
 ];
 
 function assertIsolatedUserData(userDataDir) {

@@ -240,7 +240,7 @@ export function approvedScreenplayBoundary(
   intake: PictureIntake,
   screenplay: PictureScreenplay,
 ): ApprovedScreenplayBoundary | null {
-  if (screenplay.status !== "APPROVED" || !screenplay.approvedVersionId) return null;
+  if (!screenplay.approvedVersionId) return null;
   const version = screenplay.versions.find((item) => item.id === screenplay.approvedVersionId);
   if (!version) return null;
   return {

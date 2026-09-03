@@ -1,5 +1,5 @@
 import { BrowserEndpointCache } from "./local-llm-endpoint.ts";
-import { cancelScreenplayJob, getLocalLLMStatus, getScreenplayJob, startScreenplayJob } from "./screenplay-api.ts";
+import { cancelScreenplayJob, getLocalLLMStatus, getScreenplayJob, runScreenplayQa, startScreenplayJob } from "./screenplay-api.ts";
 import type { StartScreenplayJobInput } from "./screenplay-jobs.server.ts";
 
 const endpointCache = new BrowserEndpointCache();
@@ -20,4 +20,8 @@ export async function readScreenplayJob(jobId: string) {
 
 export async function stopScreenplayJob(jobId: string) {
   return cancelScreenplayJob({ data: { jobId, endpoint: endpointCache.get() } });
+}
+
+export async function beginScreenplayQa(input: { fountain: string; modelId: string; writerId: string | null }) {
+  return runScreenplayQa({ data: { ...input, endpoint: endpointCache.get() } });
 }

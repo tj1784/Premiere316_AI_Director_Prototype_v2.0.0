@@ -6,9 +6,11 @@ import { makePictureScreenplay, type ScreenplayTelemetry } from "./screenplay.ts
 import { ScreenplayJobManager } from "./screenplay-jobs.server.ts";
 import type { ModelCatalog } from "./model-catalog.ts";
 
+import { approveResearchBible, seedResearchBibleFromIntake } from "../research/bible.ts";
+
 const served: LocalLLMServedModel = {
-  id: "writer",
-  displayName: "Local Writer",
+  id: "qwen2.5-72b-instruct",
+  displayName: "Qwen2.5 72B Instruct",
   type: "llm",
   loaded: true,
   instanceId: "instance",
@@ -29,11 +31,11 @@ const telemetry: ScreenplayTelemetry = {
   providerId: "lm-studio",
   provider: "LM Studio",
   endpoint: "http://127.0.0.1:1234",
-  actualLoadedModel: "writer",
+  actualLoadedModel: "qwen2.5-72b-instruct",
   local: true,
   cloudFallback: false,
-  modelId: "writer",
-  checkpoint: "writer",
+  modelId: "qwen2.5-72b-instruct",
+  checkpoint: "qwen2.5-72b-instruct",
   runtimeAdapter: "LM Studio local API",
   loadMs: 1,
   generationMs: 2,
@@ -83,9 +85,21 @@ async function settle(manager: ScreenplayJobManager, jobId: string) {
   throw new Error("job did not settle");
 }
 
+function approvedResearch(intake: ReturnType<typeof makePictureIntake>) {
+  const seeded = seedResearchBibleFromIntake(intake, 1);
+  const approved = approveResearchBible(seeded, "research-approved", 2);
+  if ("error" in approved) throw new Error(approved.error);
+  return approved;
+}
+
 function input() {
-  const intake = { ...makePictureIntake(1), title: "Picture", premise: "A choice.", screenplayModelId: "lmstudio:writer" };
-  return { intake, screenplay: makePictureScreenplay("single", "lmstudio:writer", 1), modelId: "lmstudio:writer" };
+  const intake = { ...makePictureIntake(1), title: "Picture", premise: "A choice.", screenplayModelId: "lmstudio:qwen2.5-72b-instruct" };
+  return {
+    intake,
+    screenplay: makePictureScreenplay("single", "lmstudio:qwen2.5-72b-instruct", 1),
+    research: approvedResearch(intake),
+    modelId: "lmstudio:qwen2.5-72b-instruct",
+  };
 }
 
 test("served LM Studio model remains runnable even when the API does not expose a matchable catalog path", async () => {
@@ -99,6 +113,30 @@ test("served LM Studio model remains runnable even when the API does not expose 
   assert.equal(finished.status, "completed");
   assert.equal(finished.screenplay.status, "READY_FOR_REVIEW");
   assert.equal(finished.screenplay.versions.length, 1);
+});
+
+test("unapproved research blocks screenplay generation", async () => {
+  const manager = new ScreenplayJobManager(new FakeProvider(), () => emptyCatalog);
+  const base = input();
+  await assert.rejects(manager.start({ ...base, research: seedResearchBibleFromIntake(base.intake, 1) }), /Approve Picture Research/);
+});
+
+test("non-Qwen served models are not used as a writer substitute", async () => {
+  const provider = new FakeProvider();
+  provider.discover = async () => ({ providerId: "lm-studio", providerName: "LM Studio", endpoint: "http://127.0.0.1:1234", local: true, cloudFallback: false, available: true, reason: "ready", models: [{ ...served, id: "llama-3.3-70b-instruct", displayName: "Llama 3.3 70B Instruct" }], discoveredAt: 1 });
+  const manager = new ScreenplayJobManager(provider, () => emptyCatalog);
+  const base = input();
+  await assert.rejects(manager.start({ ...base, modelId: "lmstudio:llama-3.3-70b-instruct" }), /Qwen/);
+});
+
+test("story doctor critique does not append screenplay versions", async () => {
+  const provider = new FakeProvider();
+  provider.discover = async () => ({ providerId: "lm-studio", providerName: "LM Studio", endpoint: "http://127.0.0.1:1234", local: true, cloudFallback: false, available: true, reason: "ready", models: [{ ...served, id: "llama-3.3-70b-instruct", displayName: "Llama 3.3 70B Instruct" }], discoveredAt: 1 });
+  provider.generate = async () => ({ text: JSON.stringify({ findings: [{ category: "Dialogue", severity: "note", summary: "Hold the silence.", rewriteSuggested: null }] }), durationMs: 1, promptTokens: 1, generatedTokens: 2 });
+  const manager = new ScreenplayJobManager(provider, () => emptyCatalog);
+  const report = await manager.critique({ fountain: "INT. ROOM — DAY", modelId: "lmstudio:llama-3.3-70b-instruct", writerId: "lmstudio:qwen2.5-72b-instruct" });
+  assert.equal(report.fountainUnchanged, true);
+  assert.equal(report.findings[0]?.summary, "Hold the silence.");
 });
 
 test("unavailable provider cannot start generation and no substitute model is used", async () => {

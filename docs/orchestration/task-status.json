@@ -566,10 +566,13 @@
       "deps": [
         "UX-005"
       ],
-      "status": "READY",
+      "status": "SOURCE_IMPLEMENTED",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "src/lib/research/bible.ts",
+        "src/components/research/research-workspace.tsx"
+      ]
     },
     {
       "id": "R-002",
@@ -580,10 +583,12 @@
       "deps": [
         "R-001"
       ],
-      "status": "WAITING_DEPENDENCY",
+      "status": "SOURCE_IMPLEMENTED",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "src/lib/research/source-ledger.ts"
+      ]
     },
     {
       "id": "R-003",
@@ -594,10 +599,12 @@
       "deps": [
         "R-001"
       ],
-      "status": "WAITING_DEPENDENCY",
+      "status": "SOURCE_IMPLEMENTED",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "src/lib/research/social-world.ts"
+      ]
     },
     {
       "id": "R-004",
@@ -608,10 +615,12 @@
       "deps": [
         "R-001"
       ],
-      "status": "WAITING_DEPENDENCY",
+      "status": "SOURCE_IMPLEMENTED",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "src/lib/research/cinematography-manifesto.ts"
+      ]
     },
     {
       "id": "S-001",
@@ -622,10 +631,13 @@
       "deps": [
         "UX-005"
       ],
-      "status": "READY",
+      "status": "EXTERNAL_RUNTIME_BLOCKED",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "docs/release/wave2-gate.md",
+        "lms ps idle qwen2.5-72b-instruct only; no Llama; http://127.0.0.1:1234 timed out; app servedModels 0; LMS not started"
+      ]
     },
     {
       "id": "S-002",
@@ -637,10 +649,12 @@
         "S-001",
         "R-001"
       ],
-      "status": "WAITING_DEPENDENCY",
+      "status": "SOURCE_IMPLEMENTED_FAIL_CLOSED",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "src/lib/studio/qwen-writer-identity.ts"
+      ]
     },
     {
       "id": "S-003",
@@ -652,10 +666,12 @@
         "S-001",
         "S-002"
       ],
-      "status": "WAITING_DEPENDENCY",
+      "status": "SOURCE_IMPLEMENTED_FAIL_CLOSED",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "src/lib/studio/screenplay-qa.ts"
+      ]
     },
     {
       "id": "S-004",
@@ -667,10 +683,13 @@
         "S-002",
         "S-003"
       ],
-      "status": "WAITING_DEPENDENCY",
+      "status": "SOURCE_IMPLEMENTED",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "src/lib/studio/screenplay-hierarchy.ts",
+        "src/lib/studio/screenplay-scope.ts"
+      ]
     },
     {
       "id": "D-001",
@@ -1238,5 +1257,5 @@
       "evidence": []
     }
   ],
-  "updatedAt": "2026-09-03T14:39:06.308Z"
+  "updatedAt": "2026-09-03T16:36:26.595Z"
 }

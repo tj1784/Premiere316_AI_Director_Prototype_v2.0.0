@@ -21,6 +21,7 @@ const CLOSED: StageLayoutPolicy = {
 
 const STAGE_LAYOUT: Record<StageId, StageLayoutPolicy> = {
   intake: { leftPanel: "none", rightPanel: "none", bottomPanel: "none", headerActions: [], workspaceMode: "intake" },
+  research: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "research" },
   screenplay: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "screenplay" },
   inventory: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "inventory" },
   performance: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "performance" },

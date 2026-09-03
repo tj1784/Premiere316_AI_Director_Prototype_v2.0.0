@@ -20,7 +20,7 @@
     },
     {
       "wave": 2,
-      "status": "READY",
+      "status": "BLOCKED_EXTERNAL_RUNTIME",
       "tasks": [
         "R-001",
         "R-002",
@@ -30,6 +30,11 @@
         "S-002",
         "S-003",
         "S-004"
+      ],
+      "evidence": [
+        "docs/release/wave2-gate.md",
+        "screenshots/stage-visual/report.json",
+        "screenshots/premiere316-desktop-smoke.json"
       ]
     },
     {
@@ -57,5 +62,5 @@
       "status": "BLOCKED_BY_PREVIOUS_GATE"
     }
   ],
-  "updatedAt": "2026-09-03T14:30:50.388Z"
+  "updatedAt": "2026-09-03T16:36:26.595Z"
 }

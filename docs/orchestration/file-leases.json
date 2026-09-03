@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-03T14:39:06.308Z",
+  "updatedAt": "2026-09-03T16:36:26.595Z",
   "rules": {
     "singleWriterPerCwd": true,
     "maxConcurrentMutatingAgents": 12,
@@ -109,30 +109,33 @@
       "owner": "A18",
       "pod": "Research & Screenplay",
       "task": "R-001/R-002/R-003/R-004",
-      "startedAt": "2026-09-03T14:39:06.308Z",
-      "status": "active",
+      "startedAt": "2026-09-03T15:52:14.779Z",
+      "status": "released",
       "integrationOwner": "A17",
-      "sharedInterfaceException": "A18 is the sole Wave 2 cwd writer and integrates read-only specialist contracts sequentially"
+      "sharedInterfaceException": "A18 is the sole Wave 2 cwd writer and integrates read-only specialist contracts sequentially",
+      "releasedAt": "2026-09-03T16:29:31.892Z"
     },
     {
       "pattern": "src/lib/studio/types.ts; src/lib/studio/store.ts; src/lib/studio/picture-preparation.ts; src/lib/studio/stage-layout.ts; src/components/studio/stage-views.tsx; src/lib/studio/screenplay*.ts; src/components/studio/screenplay-workspace.tsx",
       "owner": "A18",
       "pod": "Research & Screenplay",
       "task": "WAVE-2-INTEGRATION",
-      "startedAt": "2026-09-03T14:39:06.308Z",
-      "status": "active",
+      "startedAt": "2026-09-03T15:52:14.779Z",
+      "status": "released",
       "integrationOwner": "A03",
-      "sharedInterfaceException": "Temporary additive Wave 2 lease authorized by A03/A06/A10; preserve persist key and legacy records"
+      "sharedInterfaceException": "Temporary additive Wave 2 lease authorized by A03/A06/A10; preserve persist key and legacy records",
+      "releasedAt": "2026-09-03T16:29:31.892Z"
     },
     {
       "pattern": "desktop/**; package.json; scripts/*wave2*; scripts/desktop-stage-visual.mjs; docs/release/wave2-gate.md",
       "owner": "A04",
       "pod": "Governance & Integration",
       "task": "WAVE-2-PACKAGE",
-      "startedAt": null,
-      "status": "reserved",
+      "startedAt": "2026-09-03T16:29:31.892Z",
+      "status": "released",
       "integrationOwner": "A03",
-      "sharedInterfaceException": "Activates only after A18 handoff; packaging and isolated UAT"
+      "sharedInterfaceException": "A04 is sole Wave 2 packaging/UAT writer after A18 handoff; isolated profile only",
+      "releasedAt": "2026-09-03T16:36:26.595Z"
     }
   ]
 }

@@ -1,4 +1,5 @@
 import type { PictureIntake } from "./picture-intake.ts";
+import { extractScopedFountain, spliceScopedFountain, type ScreenplayScope } from "./screenplay-scope.ts";
 import { buildScreenplayPrompt, normalizeFountainOutput, screenplaySteps, type ScreenplayStep } from "./screenplay-prompts.ts";
 import {
   DEFAULT_SCREENPLAY_SETTINGS,
@@ -54,6 +55,8 @@ export type WorkflowRunInput = {
   settings?: Partial<ScreenplayGenerationSettings>;
   stepId?: ScreenplayStep["id"];
   resume?: boolean;
+  rewriteScope?: ScreenplayScope;
+  selectedNodeId?: string | null;
   signal?: AbortSignal;
   onUpdate?: (update: WorkflowUpdate) => void | Promise<void>;
 };
@@ -114,11 +117,14 @@ export async function runScreenplayWorkflow(runtime: ScreenplayRuntimePort, inpu
         },
       };
       await input.onUpdate?.({ state, step, phase: "starting" });
+      const scopedPrevious = input.rewriteScope && input.rewriteScope !== "full"
+        ? extractScopedFountain(previous || input.screenplay.workingFountain, input.rewriteScope, input.selectedNodeId ?? null)
+        : previous;
       const prompt = buildScreenplayPrompt({
         intake: input.intake,
         workflow: state.workflow,
         step,
-        previousFountain: previous,
+        previousFountain: scopedPrevious,
       });
       const result = await runtime.generate({
         runId: input.runId,
@@ -127,8 +133,11 @@ export async function runScreenplayWorkflow(runtime: ScreenplayRuntimePort, inpu
         prompt: prompt.user,
       }, config);
       if (input.signal?.aborted) throw new ScreenplayGenerationCanceled();
-      const fountain = normalizeFountainOutput(result.text);
-      if (!fountain) throw new Error(`${step.label} returned no screenplay text.`);
+      const generated = normalizeFountainOutput(result.text);
+      if (!generated) throw new Error(`${step.label} returned no screenplay text.`);
+      const fountain = input.rewriteScope && input.rewriteScope !== "full"
+        ? spliceScopedFountain(previous || input.screenplay.workingFountain, input.rewriteScope, input.selectedNodeId ?? null, generated).fountain
+        : generated;
       const version: ScreenplayVersion = {
         id: input.makeVersionId(),
         label: step.id === "draft" ? "Draft 1" : step.label,

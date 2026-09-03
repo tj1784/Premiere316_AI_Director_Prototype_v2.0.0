@@ -28,8 +28,11 @@ import type { ScreenplayModelRef } from "@/lib/studio/screenplay";
 import { addManualScreenplayVersion, approveCurrentScreenplay, restoreScreenplayVersion } from "@/lib/studio/screenplay";
 import type { ScreenplayStep } from "@/lib/studio/screenplay-prompts";
 import type { ScreenplayJobSnapshot } from "@/lib/studio/screenplay-jobs.server";
-import { beginScreenplayJob, localLLMStatus, readScreenplayJob, stopScreenplayJob } from "@/lib/studio/screenplay-client";
+import { beginScreenplayJob, beginScreenplayQa, localLLMStatus, readScreenplayJob, stopScreenplayJob } from "@/lib/studio/screenplay-client";
 import { ScreenplayWorkspace } from "./screenplay-workspace";
+import { ResearchWorkspace } from "@/components/research/research-workspace";
+import { hydratePictureResearch, researchBlocksScreenplay } from "@/lib/research/bible.ts";
+import { isExactServedQwenWriter, qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
 import { InventoryWorkspace } from "@/components/production/inventory-workspace";
 import {
   approvedScreenplayInputFromBoundary,
@@ -49,6 +52,8 @@ export function StageView() {
   switch (stage) {
     case "intake":
       return <IntakeStage picture={picture} />;
+    case "research":
+      return <ResearchStage picture={picture} />;
     case "screenplay":
       return <ScreenplayStage picture={picture} />;
     case "inventory":
@@ -142,6 +147,18 @@ function offlineDiscovery(reason: string): LocalLLMProviderDiscovery {
   };
 }
 
+function ResearchStage({ picture }: { picture: Picture }) {
+  const patchActive = useStudio((state) => state.patchActive);
+  const bible = hydratePictureResearch(picture.research, picture.intake);
+  return (
+    <ResearchWorkspace
+      title={picture.title}
+      bible={bible}
+      onChange={(research) => patchActive({ research })}
+    />
+  );
+}
+
 function ScreenplayStage({ picture }: { picture: Picture }) {
   const patchActive = useStudio((state) => state.patchActive);
   const [models, setModels] = useState<ScreenplayModelRef[]>([]);
@@ -192,15 +209,28 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
   }, [jobId, persistScreenplay]);
 
   const start = async (options: { resume?: boolean; stepId?: ScreenplayStep["id"] } = {}) => {
+    const research = hydratePictureResearch(picture.research, picture.intake);
+    const blockedResearch = researchBlocksScreenplay(research);
+    if (blockedResearch) {
+      toast.error(blockedResearch);
+      return;
+    }
     const modelId = picture.screenplay.selectedModelId ?? picture.intake.screenplayModelId;
+    const selected = models.find((model) => model.id === modelId) ?? null;
+    const blockedWriter = qwenWriterBlockReason(selected, Boolean(provider?.available));
+    if (blockedWriter) {
+      toast.error(blockedWriter);
+      return;
+    }
     if (!modelId) {
-      toast.error("Select a loaded LM Studio text model in Picture Intake.");
+      toast.error("Select an exact currently served Qwen model. No substitute is used.");
       return;
     }
     try {
       const initial = await beginScreenplayJob({
         intake: picture.intake,
         screenplay: picture.screenplay,
+        research,
         modelId,
         resume: options.resume,
         stepId: options.stepId,
@@ -226,7 +256,7 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
       models={models}
       provider={provider}
       job={job}
-      onTextChange={(workingFountain) => persistScreenplay({ ...picture.screenplay, workingFountain, status: "READY_FOR_REVIEW", updatedAt: Date.now() })}
+      onTextChange={(workingFountain) => persistScreenplay({ ...picture.screenplay, workingFountain, status: picture.screenplay.approvedVersionId ? picture.screenplay.status : "READY_FOR_REVIEW", updatedAt: Date.now() })}
       onSaveRevision={() => persistScreenplay(addManualScreenplayVersion(picture.screenplay, picture.screenplay.workingFountain, uid("spv")))}
       onGenerate={() => void start()}
       onContinue={() => void start({ resume: true })}
@@ -239,6 +269,17 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
         const intake = { ...picture.intake, screenplayModelId: selectedModelId, updatedAt: Date.now() };
         persistScreenplay({ ...picture.screenplay, selectedModelId, updatedAt: Date.now() });
         patchActive({ intake });
+      }}
+      onStoryDoctor={(modelId) => {
+        void beginScreenplayQa({
+          fountain: picture.screenplay.workingFountain,
+          modelId,
+          writerId: picture.screenplay.selectedModelId,
+        }).then((report) => {
+          toast.message(report.findings[0]?.summary || "Story Doctor critique ready. Fountain was not changed.");
+        }).catch((error) => {
+          toast.error(error instanceof Error ? error.message : "Story Doctor failed closed.");
+        });
       }}
     />
   );
@@ -288,7 +329,7 @@ function PerformanceStage({ picture }: { picture: Picture }) {
   if (!workspace) {
     return (
       <div className="grid h-full min-h-64 place-items-center bg-bg p-6 text-center">
-        <div className="max-w-md"><p className="text-[11px] tracking-wide text-subtle uppercase">04 · Performance direction</p><h2 className="mt-1 font-display text-2xl tracking-tight">Approve the screenplay first</h2><p className="mt-2 text-sm leading-relaxed text-muted">Performance work begins from the immutable approved screenplay, never a working draft.</p></div>
+        <div className="max-w-md"><p className="text-[11px] tracking-wide text-subtle uppercase">05 · Performance direction</p><h2 className="mt-1 font-display text-2xl tracking-tight">Approve the screenplay first</h2><p className="mt-2 text-sm leading-relaxed text-muted">Performance work begins from the immutable approved screenplay, never a working draft.</p></div>
       </div>
     );
   }
@@ -318,7 +359,7 @@ function ShotsStage({ picture }: { picture: Picture }) {
   if (!workspace) {
     return (
       <div className="grid h-full min-h-64 place-items-center bg-bg p-6 text-center">
-        <div className="max-w-md"><p className="text-[11px] tracking-wide text-subtle uppercase">05 · Shot preparation</p><h2 className="mt-1 font-display text-2xl tracking-tight">Performance workspace required</h2><p className="mt-2 text-sm leading-relaxed text-muted">Approve the screenplay, then direct its beats before preparing coverage.</p></div>
+        <div className="max-w-md"><p className="text-[11px] tracking-wide text-subtle uppercase">06 · Shot preparation</p><h2 className="mt-1 font-display text-2xl tracking-tight">Performance workspace required</h2><p className="mt-2 text-sm leading-relaxed text-muted">Approve the screenplay, then direct its beats before preparing coverage.</p></div>
       </div>
     );
   }
@@ -337,7 +378,7 @@ function ShotsStage({ picture }: { picture: Picture }) {
 function PromptStage({ picture }: { picture: Picture }) {
   const setStage = useStudio((s) => s.setStage);
   return (
-    <Pane title="Prompt Lab" kicker="06 · Dialects">
+    <Pane title="Prompt Lab" kicker="07 · Dialects">
       <p className="mb-4 max-w-xl text-sm text-muted">
         Still dialect {engineById(picture.selectedEngine.image)?.name}. Motion dialect{" "}
         {engineById(picture.selectedEngine.video)?.name}. Each shot is a 10–15s performance.
@@ -372,7 +413,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
   const selectShot = useStudio((state) => state.selectShot);
   const openStillBay = useStudio((state) => state.openStillBay);
   return (
-    <Pane title="Generate" kicker="07 · Plates & performance">
+    <Pane title="Generate" kicker="08 · Plates & performance">
       <p className="mb-4 max-w-xl text-sm text-muted">Generate verified local stills. Motion remains unavailable until a native adapter passes validation.</p>
       <div className="generation-grid grid min-w-0 gap-3">
         {picture.shots.map((shot) => (
@@ -401,7 +442,7 @@ function StitchStage({ picture }: { picture: Picture }) {
   const selectedShotId = useStudio((s) => s.selectedShotId);
   const shot = picture.shots.find((s) => s.id === selectedShotId) ?? picture.shots[0];
   return (
-    <Pane title="Stitch" kicker="08 · Assembly">
+    <Pane title="Stitch" kicker="09 · Assembly">
       <div className="overflow-hidden rounded-lg bg-inset shadow-[var(--shadow-border)]">
         <div className="grid h-[clamp(12rem,48dvh,32rem)] place-items-center">
           {shot?.videoUrl ? (
@@ -429,7 +470,7 @@ function StitchStage({ picture }: { picture: Picture }) {
 
 function ScoreStage({ picture }: { picture: Picture }) {
   return (
-    <Pane title="Score" kicker="09 · Music + SFX">
+    <Pane title="Score" kicker="10 · Music + SFX">
       <p className="mb-4 max-w-xl text-sm text-muted">Review the saved cue sheet locally. Music generation remains unavailable until a native adapter passes validation.</p>
       <div role="status" className="max-w-xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]">Local score adapter unavailable · no cloud fallback</div>
       <div className="mt-5 grid gap-3">
@@ -465,7 +506,7 @@ function ExportStage({ picture }: { picture: Picture }) {
   }
 
   return (
-    <Pane title="Export" kicker="10 · Delivery">
+    <Pane title="Export" kicker="11 · Delivery">
       <dl className="grid max-w-md grid-cols-2 gap-3 text-sm">
         <Stat k="Runtime" v={formatTimecode(dur, picture.fps)} />
         <Stat k="Shots" v={String(picture.shots.length)} />

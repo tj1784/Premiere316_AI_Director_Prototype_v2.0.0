@@ -17,7 +17,7 @@ export type PicturePreparation = {
 export type PreparedPicture = Picture & PicturePreparation;
 export type LegacyPicture = Omit<Picture, keyof PicturePreparation> & Partial<PicturePreparation>;
 
-const VALID_STAGES = new Set<StageId>(["intake", "screenplay", "inventory", "performance", "shots", "prompts", "generate", "timeline", "score", "export"]);
+const VALID_STAGES = new Set<StageId>(["intake", "research", "screenplay", "inventory", "performance", "shots", "prompts", "generate", "timeline", "score", "export"]);
 
 function migratedStage(value: unknown, fallback: StageId): StageId {
   if (value === "brief") return "intake";
@@ -94,7 +94,7 @@ export function makePreparationForIntake(intake: PictureIntake, pictureId: strin
       versions: [original],
       currentVersionId: original.id,
     },
-    lastOpenedStage: "screenplay",
+    lastOpenedStage: "research",
     thumbnailUrl: null,
   };
 }

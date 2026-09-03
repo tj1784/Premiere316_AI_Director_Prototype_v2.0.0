@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron as electron } from "playwright";
 
@@ -9,13 +10,28 @@ const executablePath = resolve(process.argv[2] ?? `${root}/dist-desktop/win-unpa
 const artifacts = resolve(root, "screenshots");
 const reportPath = resolve(artifacts, "premiere316-desktop-smoke.json");
 const screenshotPath = resolve(artifacts, "premiere316-windows-final.png");
+const REAL_PROFILE = join(process.env.APPDATA ?? "", "Premiere316");
 const failures = [];
 let lmStudioState = null;
 let engineState = null;
 let originalZoom = 1;
+let userDataDir = "";
 
-async function launch() {
-  const application = await electron.launch({ executablePath });
+function assertIsolatedUserData(dir) {
+  const normalized = dir.replaceAll("/", "\\").toLowerCase();
+  const real = REAL_PROFILE.replaceAll("/", "\\").toLowerCase();
+  assert.ok(dir, "user-data directory is required");
+  assert.equal(normalized.includes("appdata\\roaming\\premiere316"), false, "refusing the real Premiere316 profile");
+  if (real) assert.notEqual(normalized, real, "refusing to launch against %APPDATA%/Premiere316");
+}
+
+async function launch(dir) {
+  assertIsolatedUserData(dir);
+  const application = await electron.launch({
+    executablePath,
+    args: [`--user-data-dir=${dir}`],
+    env: { ...process.env, ELECTRON_USER_DATA_DIR: dir },
+  });
   const page = await application.firstWindow();
   page.on("pageerror", (error) => failures.push(`pageerror: ${error.message}`));
   page.on("console", (message) => {
@@ -23,7 +39,19 @@ async function launch() {
   });
   await page.waitForLoadState("domcontentloaded");
   await page.waitForFunction(() => (document.body?.innerText.length ?? 0) > 40);
-  return { application, page };
+  const launchedUserData = await application.evaluate(async ({ app }) => app.getPath("userData"));
+  assertIsolatedUserData(launchedUserData);
+  return { application, page, launchedUserData };
+}
+
+async function selectStage(page, id, buttonName) {
+  const navigation = page.getByRole("navigation", { name: "Pipeline" });
+  const wideButton = navigation.getByRole("button", { name: buttonName, exact: true });
+  if (await wideButton.isVisible().catch(() => false)) {
+    await wideButton.click();
+  } else {
+    await navigation.getByRole("combobox", { name: "Pipeline stage" }).selectOption(id);
+  }
 }
 
 async function zoomFactor(application) {
@@ -47,12 +75,14 @@ async function openLastReel(page) {
   await page.getByText("The Last Reel", { exact: true }).first().waitFor();
 }
 
+userDataDir = await mkdtemp(join(tmpdir(), "premiere316-wave2-smoke-"));
+assertIsolatedUserData(userDataDir);
 await mkdir(artifacts, { recursive: true });
 
 let first;
 let second;
 try {
-  first = await launch();
+  first = await launch(userDataDir);
   const { application, page } = first;
   const body = await page.locator("body").innerText();
   assert.doesNotMatch(body, /PACKAGED_RENDERER_PROBE_316/, "temporary renderer marker is still packaged");
@@ -64,21 +94,24 @@ try {
   assert.equal(await zoomFactor(application), 1);
 
   await openLastReel(page);
-  await page.getByRole("button", { name: "02 Screenplay" }).click();
+  await selectStage(page, "research", "02 Research");
+  await page.getByText("Picture Research", { exact: false }).first().waitFor();
+  await selectStage(page, "screenplay", "03 Screenplay");
   await page.getByText("Local writer", { exact: true }).waitFor();
   await page.waitForFunction(() => !document.body.innerText.includes("Checking LM Studio local API"));
   assert.equal(await page.getByText("Timeline", { exact: true }).count(), 0, "timeline must be hidden outside Stitch");
   const modelOptions = await page.getByLabel("Screenplay model").locator("option").evaluateAll((options) => options.map((option) => ({ label: option.textContent, value: option.value, disabled: option.disabled })));
   assert.equal(modelOptions.slice(1).every((option) => option.disabled), true, "LM Studio unexpectedly exposed a served model");
   assert.equal(await page.getByRole("button", { name: "Generate Screenplay" }).isDisabled(), true, "screenplay generation must fail closed while LM Studio is offline");
-  lmStudioState = { localCatalogCandidates: modelOptions.length - 1, servedModels: modelOptions.slice(1).filter((option) => !option.disabled).length, generationEnabled: false };
-  await page.getByRole("button", { name: "04 Performance" }).click();
+  assert.equal(await page.getByRole("button", { name: "Run story doctor" }).isDisabled(), true, "Story Doctor must fail closed while LM Studio is offline");
+  lmStudioState = { localCatalogCandidates: modelOptions.length - 1, servedModels: modelOptions.slice(1).filter((option) => !option.disabled).length, generationEnabled: false, loopbackOnly: true };
+  await selectStage(page, "performance", "05 Performance");
   await page.getByRole("heading", { name: "Performance" }).waitFor();
-  await page.getByRole("button", { name: "05 Shots" }).click();
+  await selectStage(page, "shots", "06 Shots");
   await page.getByRole("heading", { name: "Shots" }).waitFor();
   assert.equal(await page.getByText("Timeline", { exact: true }).count(), 0, "timeline must be hidden from Shots");
 
-  await page.getByRole("button", { name: "07 Generate" }).click();
+  await selectStage(page, "generate", "08 Generate");
   await page.getByRole("heading", { name: "Generate" }).waitFor();
   const generateStill = page.getByRole("button", { name: "Generate local still", exact: true }).first();
   if (!(await generateStill.isVisible().catch(() => false))) {
@@ -115,10 +148,10 @@ try {
     generationEnabled: false,
   };
   await stillDialog.getByRole("button", { name: "Cancel" }).click();
-  await page.getByRole("button", { name: "08 Stitch" }).click();
+  await selectStage(page, "timeline", "09 Stitch");
   await page.getByRole("heading", { name: "Stitch" }).waitFor();
   await page.getByText("Timeline", { exact: true }).waitFor();
-  await page.getByRole("button", { name: "05 Shots" }).click();
+  await selectStage(page, "shots", "06 Shots");
   await page.getByRole("heading", { name: "Shots" }).waitFor();
 
   await sendShortcut(application, "0");
@@ -133,7 +166,7 @@ try {
   await application.close();
   first = null;
 
-  second = await launch();
+  second = await launch(userDataDir);
   const reopenedZoom = await zoomFactor(second.application);
   assert.equal(reopenedZoom, persistedZoom, "saved zoom did not survive restart");
   await second.page.getByRole("heading", { name: "Shots" }).waitFor();
@@ -146,6 +179,9 @@ try {
   const report = {
     ok: true,
     executablePath,
+    userDataDir,
+    launchedUserData: second.launchedUserData,
+    realProfileUntouched: REAL_PROFILE,
     buildInfo,
     zoom: { original: originalZoom, reset: 1, persisted: persistedZoom, reopened: reopenedZoom, restored: originalZoom },
     lmStudio: lmStudioState,
@@ -161,4 +197,5 @@ try {
 } finally {
   await first?.application.close().catch(() => {});
   await second?.application.close().catch(() => {});
+  if (userDataDir) await rm(userDataDir, { recursive: true, force: true }).catch(() => {});
 }

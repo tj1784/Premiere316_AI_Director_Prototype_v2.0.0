@@ -8,6 +8,9 @@ import type { PictureIntake } from "@/lib/studio/picture-intake";
 import { screenplaySteps, type ScreenplayStep } from "@/lib/studio/screenplay-prompts";
 import { screenplayModelDetail } from "@/lib/studio/screenplay-models";
 import { screenplayScenes, type PictureScreenplay, type ScreenplayModelRef } from "@/lib/studio/screenplay";
+import { isExactServedLlamaQa, isExactServedQwenWriter, llamaQaBlockReason, qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
+import { defaultScreenplayScope, SCREENPLAY_SCOPES, type ScreenplayScope } from "@/lib/studio/screenplay-scope.ts";
+import { parseScreenplayHierarchy } from "@/lib/studio/screenplay-hierarchy.ts";
 import type { ScreenplayJobSnapshot } from "@/lib/studio/screenplay-jobs.server";
 
 function statusLabel(status: PictureScreenplay["status"]): string {
@@ -32,6 +35,7 @@ export function ScreenplayWorkspace({
   onApprove,
   onRescan,
   onModelChange,
+  onStoryDoctor,
 }: {
   intake: PictureIntake;
   screenplay: PictureScreenplay;
@@ -48,6 +52,7 @@ export function ScreenplayWorkspace({
   onApprove: () => void;
   onRescan: () => void;
   onModelChange: (modelId: string | null) => void;
+  onStoryDoctor?: (modelId: string) => void;
 }) {
   const [compareId, setCompareId] = useState<string>("");
   const [passId, setPassId] = useState<ScreenplayStep["id"]>("pass-1");
@@ -60,7 +65,13 @@ export function ScreenplayWorkspace({
   const compared = screenplay.versions.find((version) => version.id === compareId) ?? null;
   const steps = screenplaySteps(screenplay.workflow);
   const passSteps = steps.filter((step) => step.pass !== null);
-  const selectedReady = Boolean(selected && selected.status === "ready" && provider?.available);
+  const selectedReady = Boolean(selected && isExactServedQwenWriter(selected) && provider?.available);
+  const writerBlock = qwenWriterBlockReason(selected, Boolean(provider?.available));
+  const hierarchy = useMemo(() => parseScreenplayHierarchy(shownText), [shownText]);
+  const [qaModelId, setQaModelId] = useState("");
+  const [rewriteScope, setRewriteScope] = useState<ScreenplayScope>("scene");
+  const qaModel = models.find((model) => model.id === qaModelId) ?? null;
+  const qaBlock = llamaQaBlockReason(qaModel, selected?.id ?? null, Boolean(provider?.available));
   const completed = new Set(generation?.completedLabels ?? screenplay.versions.map((version) => version.label === "Draft 1" ? "Draft" : version.label));
 
   return (
@@ -76,7 +87,7 @@ export function ScreenplayWorkspace({
       <section className="flex min-h-0 min-w-0 flex-col">
         <header className="shrink-0 border-b border-border px-4 py-3 sm:px-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div><p className="text-[10px] tracking-[0.2em] text-subtle uppercase">02 · Screenplay</p><h2 className="mt-1 font-display text-xl tracking-tight">{intake.title || "Untitled Picture"}</h2></div>
+            <div><p className="text-[10px] tracking-[0.2em] text-subtle uppercase">03 · Screenplay</p><h2 className="mt-1 font-display text-xl tracking-tight">{intake.title || "Untitled Picture"}</h2></div>
             <div className="flex flex-wrap items-center gap-2"><Badge>{statusLabel(running ? "GENERATING" : screenplay.status)}</Badge>{screenplay.status === "APPROVED" ? <Badge>Canonical</Badge> : null}</div>
           </div>
           {generation ? <div className="mt-3"><p className="text-xs text-muted">{job?.activeLabel ?? generation.activeLabel}</p><ol className="mt-2 flex flex-wrap gap-2">{steps.map((step) => { const active = generation.activeLabel === step.label; const done = completed.has(step.label); return <li key={step.id} className="flex items-center gap-1 text-[11px] text-muted">{done ? <Check className="size-3 text-good" /> : active ? <LoaderCircle className="size-3 animate-spin text-accent" /> : <Circle className="size-2.5 text-subtle" />}{step.label}</li>; })}</ol></div> : null}
@@ -90,7 +101,7 @@ export function ScreenplayWorkspace({
 
         <footer className="shrink-0 border-t border-border px-4 py-3 sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
-            {running ? <Button variant="rec" onClick={onStop}><Square />Stop</Button> : <Button onClick={onGenerate} disabled={!selectedReady} title={!selectedReady ? provider?.reason : undefined}>Generate Screenplay</Button>}
+            {running ? <Button variant="rec" onClick={onStop}><Square />Stop</Button> : <Button onClick={onGenerate} disabled={!selectedReady} title={writerBlock ?? undefined}>Generate Screenplay</Button>}
             {stopped ? <Button variant="secondary" onClick={onContinue} disabled={!selectedReady}>Continue</Button> : null}
             <Button variant="secondary" disabled={running || !screenplay.workingFountain.trim()} onClick={onSaveRevision}><Save />Save Revision</Button>
             <Button variant="secondary" disabled={running || !passSteps.length || !selectedReady} onClick={() => onRegeneratePass(passId)}><RotateCcw />Regenerate Pass</Button>
@@ -102,8 +113,17 @@ export function ScreenplayWorkspace({
 
       <aside className="hidden min-h-0 overflow-y-auto border-l border-border p-4 lg:block">
         <div className="flex items-center justify-between gap-2"><p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Local writer</p><button type="button" onClick={onRescan} className="text-[11px] text-muted hover:text-fg">Rescan</button></div>
-        <select aria-label="Screenplay model" className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={screenplay.selectedModelId ?? ""} onChange={(event) => onModelChange(event.target.value || null)}><option value="">Select loaded local model</option>{models.map((model) => <option key={model.id} value={model.id} disabled={model.status !== "ready"}>{model.displayName}{model.status !== "ready" ? " · Unavailable" : ""}</option>)}</select>
-        {selected ? <><p className="mt-3 text-sm">{selected.displayName}</p><p className="mt-1 text-xs leading-relaxed text-muted">{screenplayModelDetail(selected)}</p><p className="mt-2 text-[11px] text-subtle">{selected.statusReason}</p></> : <p className="mt-3 text-xs leading-relaxed text-muted">{provider?.reason ?? "Checking LM Studio local API…"}</p>}
+        <select aria-label="Screenplay model" className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={screenplay.selectedModelId ?? ""} onChange={(event) => onModelChange(event.target.value || null)}><option value="">Select served Qwen writer</option>{models.map((model) => <option key={model.id} value={model.id} disabled={!isExactServedQwenWriter(model)}>{model.displayName}{isExactServedQwenWriter(model) ? "" : " · Not Qwen"}</option>)}</select>
+        {selected ? <><p className="mt-3 text-sm">{selected.displayName}</p><p className="mt-1 text-xs leading-relaxed text-muted">{screenplayModelDetail(selected)}</p><p className="mt-2 text-[11px] text-subtle">{writerBlock ?? selected.statusReason}</p></> : <p className="mt-3 text-xs leading-relaxed text-muted">{writerBlock ?? provider?.reason ?? "Checking LM Studio local API…"}</p>}
+        <div className="my-5 border-t border-border" />
+        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Rewrite scope</p>
+        <select aria-label="Rewrite scope" className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={rewriteScope} onChange={(event) => setRewriteScope(event.target.value as ScreenplayScope)}>{SCREENPLAY_SCOPES.map((scope) => <option key={scope} value={scope}>{scope}</option>)}</select>
+        <p className="mt-2 text-[11px] leading-relaxed text-muted">Default is the smallest selected node ({defaultScreenplayScope(hierarchy.nodes.find((node) => node.kind === "scene") ?? null)}). Other scenes stay byte-identical.</p>
+        <div className="my-5 border-t border-border" />
+        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Story Doctor</p>
+        <select aria-label="Story Doctor model" className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={qaModelId} onChange={(event) => setQaModelId(event.target.value)}><option value="">Select served Llama</option>{models.map((model) => <option key={model.id} value={model.id} disabled={!isExactServedLlamaQa(model)}>{model.displayName}{isExactServedLlamaQa(model) ? "" : " · Not Llama"}</option>)}</select>
+        <p className="mt-2 text-[11px] leading-relaxed text-muted">{qaBlock ?? "Critique first. Fountain does not change until you apply a scoped revision."}</p>
+        <Button className="mt-3 w-full" size="sm" variant="secondary" disabled={Boolean(qaBlock) || running || !qaModelId} onClick={() => onStoryDoctor?.(qaModelId)}>Run story doctor</Button>
         <div className="my-5 border-t border-border" />
         <div className="flex items-center justify-between gap-2"><p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Versions</p><span className="text-[10px] tabular-nums text-subtle">{screenplay.versions.length}</span></div>
         <ol className="mt-3 grid gap-2">{[...screenplay.versions].reverse().map((version) => <li key={version.id} className="rounded-md bg-elevated p-3 shadow-[var(--shadow-border)]"><div className="flex items-center justify-between gap-2"><p className="truncate text-xs" title={version.label}>{version.label}</p>{version.id === screenplay.currentVersionId ? <span className="text-[9px] tracking-wide text-accent uppercase">Current</span> : null}</div><p className="mt-1 text-[10px] text-subtle">{new Date(version.createdAt).toLocaleString()}</p><div className="mt-2 flex gap-1"><Button size="sm" variant="ghost" onClick={() => setCompareId(compareId === version.id ? "" : version.id)}><GitCompareArrows />Compare</Button><Button size="sm" variant="ghost" disabled={running || version.id === screenplay.currentVersionId} onClick={() => onRestore(version.id)}>Restore</Button></div></li>)}</ol>

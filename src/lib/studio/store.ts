@@ -8,6 +8,7 @@ import type { PictureIntake } from "./picture-intake";
 import { uid } from "../utils";
 import { sanitizeProductionBreakdown } from "../production/persistence";
 import { migratePicturePerformance } from "../performance/persistence";
+import { hydratePictureResearch } from "../research/bible.ts";
 
 interface StudioState {
   pictures: Picture[];
@@ -54,8 +55,9 @@ function blankPicture(intake: PictureIntake): Picture {
     runtimeMinutes: intake.targetRuntimeMinutes,
     createdAt: now,
     updatedAt: now,
-    stage: "screenplay",
+    stage: "research",
     ...makePreparationForIntake(intake, id, now),
+    research: hydratePictureResearch(null, intake, now),
     selectedEngine: { ...DEFAULT_ENGINES },
     screenplayFountain: "",
     production: null,
@@ -113,7 +115,7 @@ export const useStudio = create<StudioState>()(
         set((s) => ({
           pictures: [picture, ...s.pictures],
           activeId: picture.id,
-          stageOverride: "screenplay",
+          stageOverride: "research",
           selectedShotId: null,
         }));
         return picture.id;
@@ -225,7 +227,8 @@ export const useStudio = create<StudioState>()(
 function migratePicture(picture: LegacyPicture): Picture {
   const prepared = migratePicturePreparation(picture);
   const productionReady = { ...prepared, production: sanitizeProductionBreakdown(prepared.production) };
-  return { ...productionReady, performance: migratePicturePerformance(productionReady) };
+  const withPerformance = { ...productionReady, performance: migratePicturePerformance(productionReady) };
+  return { ...withPerformance, research: hydratePictureResearch(withPerformance.research, withPerformance.intake) };
 }
 
 export function useActivePicture(): Picture | null {
@@ -240,7 +243,7 @@ export function useStage(): StageId {
 
 function normalizeStage(stage: unknown): StageId | null {
   if (stage === "brief") return "intake";
-  return typeof stage === "string" && ["intake", "screenplay", "inventory", "performance", "shots", "prompts", "generate", "timeline", "score", "export"].includes(stage)
+  return typeof stage === "string" && ["intake", "research", "screenplay", "inventory", "performance", "shots", "prompts", "generate", "timeline", "score", "export"].includes(stage)
     ? stage as StageId
     : null;
 }

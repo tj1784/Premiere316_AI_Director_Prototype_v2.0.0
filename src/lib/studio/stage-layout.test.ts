@@ -13,6 +13,7 @@ import {
 
 const EXPECTED: Record<StageId, StageLayoutPolicy> = {
   intake: { leftPanel: "none", rightPanel: "none", bottomPanel: "none", headerActions: [], workspaceMode: "intake" },
+  research: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "research" },
   screenplay: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "screenplay" },
   inventory: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "inventory" },
   performance: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "performance" },
@@ -62,7 +63,7 @@ describe("stage layout policy", () => {
   });
 
   it("keeps screenplay, inventory, performance, and shots as stage-owned workspaces", () => {
-    for (const id of ["screenplay", "inventory", "performance", "shots"] as const) {
+    for (const id of ["research", "screenplay", "inventory", "performance", "shots"] as const) {
       const policy = resolveStageLayout(id);
       assert.equal(policy.leftPanel, "stage");
       assert.equal(policy.rightPanel, "stage");
@@ -73,7 +74,7 @@ describe("stage layout policy", () => {
   });
 
   it("fails closed for unknown stages", () => {
-    const policy = resolveStageLayout("research");
+    const policy = resolveStageLayout("cinematography");
     assert.deepEqual(policy, {
       leftPanel: "none",
       rightPanel: "none",

@@ -147,6 +147,8 @@ test("approved boundary exposes only canonical Fountain, stable scene links, and
   assert.equal(boundary.screenplayVersionId, "approved");
   assert.deepEqual(boundary.scenes.map((scene) => scene.id), ["approved:scene:001", "approved:scene:002"]);
   assert.equal(boundary.historicalContext?.confidenceLegend.C, "Reasonable historical reconstruction");
+  const edited = { ...state, status: "READY_FOR_REVIEW" as const, workingFountain: "INT. HOUSE — DAY\n\nA later note." };
+  assert.equal(approvedScreenplayBoundary("picture", intake, edited)?.screenplayVersionId, "approved");
 });
 
 test("canceled generation never creates a partial version and still unloads", async () => {

@@ -41,7 +41,10 @@ export const startScreenplayJob = createServerFn({ method: "POST" })
     endpoint: input.endpoint ?? null,
     intake: input.intake as PictureIntake,
     screenplay: input.screenplay as PictureScreenplay,
+    research: input.research ?? null,
     modelId: String(input.modelId),
+    rewriteScope: input.rewriteScope,
+    selectedNodeId: input.selectedNodeId ?? null,
     settings: input.settings as Partial<ScreenplayGenerationSettings> | undefined,
     stepId: input.stepId,
     resume: Boolean(input.resume),
@@ -51,6 +54,15 @@ export const startScreenplayJob = createServerFn({ method: "POST" })
 export const getScreenplayJob = createServerFn({ method: "POST" })
   .validator((input: JobInput) => ({ jobId: String(input.jobId), endpoint: input.endpoint ?? null }))
   .handler(async ({ data }) => (await manager(data.endpoint)).get(data.jobId));
+
+export const runScreenplayQa = createServerFn({ method: "POST" })
+  .validator((input: { fountain: string; modelId: string; writerId?: string | null; endpoint?: string | null }) => ({
+    endpoint: input.endpoint ?? null,
+    fountain: String(input.fountain ?? ""),
+    modelId: String(input.modelId),
+    writerId: input.writerId ?? null,
+  }))
+  .handler(async ({ data }) => (await manager(data.endpoint)).critique(data));
 
 export const cancelScreenplayJob = createServerFn({ method: "POST" })
   .validator((input: JobInput) => ({ jobId: String(input.jobId), endpoint: input.endpoint ?? null }))

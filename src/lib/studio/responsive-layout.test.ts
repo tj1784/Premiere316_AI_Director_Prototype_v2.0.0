@@ -32,7 +32,7 @@ describe("responsive studio layout", () => {
 
   it("shows the timeline only in the Stitch stage", () => {
     assert.equal(showTimelineForStage("timeline"), true);
-    for (const stage of ["intake", "screenplay", "inventory", "performance", "shots", "prompts", "generate", "score", "export"]) {
+    for (const stage of ["intake", "research", "screenplay", "inventory", "performance", "shots", "prompts", "generate", "score", "export"]) {
       assert.equal(showTimelineForStage(stage), false, `${stage} must use the full workspace height`);
     }
   });
@@ -48,7 +48,7 @@ describe("responsive studio layout", () => {
   });
 
   it("does not reserve shell columns for stage-owned or empty workspaces", () => {
-    for (const stage of ["screenplay", "inventory", "performance", "shots", "prompts", "score"]) {
+    for (const stage of ["research", "screenplay", "inventory", "performance", "shots", "prompts", "score"]) {
       assert.deepEqual(dockedPanels(1440, uncollapsed, stage), { mode: "wide", left: false, right: false }, stage);
     }
   });
