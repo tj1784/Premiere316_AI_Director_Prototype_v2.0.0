@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-04T04:58:36.112Z",
+  "updatedAt": "2026-09-04T05:10:58.187Z",
   "rules": {
     "singleWriterPerCwd": true,
     "maxConcurrentMutatingAgents": 5,
@@ -245,6 +245,19 @@
       "sharedInterfaceException": "A04 resumed package gate after pause; serialized packaged smoke and evidence/shortcut/docs repair only; Wave 4 closed pending independent audits.",
       "releasedAt": "2026-09-04T04:58:36.112Z",
       "releaseEvidence": "Resumed from clean checkpoint 016826e. Package p316-20260903203247-955eb4a6feaa verified with matching build-info/source hash, stable exe/asar hashes, external resources/ui identity, serialized desktop-smoke pass, 26/26 stage matrix, Wave 3 UAT, Start Menu shortcut target, live data byte-identical to fresh backup, no app/model processes. PACKAGE_PASS_AWAITING_AUDIT; no tag/Wave4."
+    },
+    {
+      "pattern": "docs/release/wave3-gate.md; docs/orchestration/wave-status.json; docs/orchestration/task-status.json; docs/orchestration/file-leases.json",
+      "owner": "A01",
+      "pod": "Governance & Integration",
+      "task": "WAVE-3-A01-GREEN-FINALIZATION",
+      "startedAt": "2026-09-04T05:10:58.187Z",
+      "status": "released",
+      "integrationOwner": "A01",
+      "sharedInterfaceException": "Governance/evidence-only finalization after A07/A08/A64 pass; preserves 64 logical roles, concurrency five, one writer per cwd, protected Wave 2 baseline, live data, no model/media/cloud/ComfyUI lifecycle action.",
+      "releasedAt": "2026-09-04T05:10:58.187Z",
+      "activationEvidence": "HEAD 16c5b34 clean package checkpoint; build p316-20260903203247-955eb4a6feaa; target Wave 3 tag absent before finalization; all A07/A08/A64 audits passed.",
+      "releaseEvidence": "Wave 3 promoted GREEN for packaged build p316-20260903203247-955eb4a6feaa; Wave 4 opened but not started with only I-001 READY; final tag wave3-p316-20260903203247-955eb4a6feaa authorized on this governance commit."
     }
   ]
 }

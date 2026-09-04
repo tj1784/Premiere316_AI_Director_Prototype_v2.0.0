@@ -776,7 +776,7 @@
       "deps": [
         "S-004"
       ],
-      "status": "PACKAGE_PASS_AWAITING_AUDIT",
+      "status": "DONE",
       "branch": "main",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
@@ -808,7 +808,9 @@
         "screenshots/wave3-resume/live-data-backup-manifest.json and live-data-post.json: live profile byte-identical to fresh cold backup",
         "Start Menu shortcut target D:/Projects/Premiere316_v3/dist-desktop/win-unpacked/Premiere316.exe",
         "Package audit required ASAR modules and external resources present",
-        "Wave 4 remains closed pending A07/A08/A64 audits"
+        "Wave 3 GREEN finalized for packaged build p316-20260903203247-955eb4a6feaa",
+        "A07/A08/A64 independent audits passed with no blockers",
+        "A01 finalization tag wave3-p316-20260903203247-955eb4a6feaa"
       ]
     },
     {
@@ -821,7 +823,7 @@
         "S-004",
         "D-001"
       ],
-      "status": "PACKAGE_PASS_AWAITING_AUDIT",
+      "status": "DONE",
       "branch": "main",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
@@ -851,7 +853,9 @@
         "screenshots/wave3-resume/live-data-backup-manifest.json and live-data-post.json: live profile byte-identical to fresh cold backup",
         "Start Menu shortcut target D:/Projects/Premiere316_v3/dist-desktop/win-unpacked/Premiere316.exe",
         "Package audit required ASAR modules and external resources present",
-        "Wave 4 remains closed pending A07/A08/A64 audits"
+        "Wave 3 GREEN finalized for packaged build p316-20260903203247-955eb4a6feaa",
+        "A07/A08/A64 independent audits passed with no blockers",
+        "A01 finalization tag wave3-p316-20260903203247-955eb4a6feaa"
       ]
     },
     {
@@ -863,7 +867,7 @@
       "deps": [
         "B-001"
       ],
-      "status": "PACKAGE_PASS_AWAITING_AUDIT",
+      "status": "DONE",
       "branch": "main",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
@@ -893,7 +897,9 @@
         "screenshots/wave3-resume/live-data-backup-manifest.json and live-data-post.json: live profile byte-identical to fresh cold backup",
         "Start Menu shortcut target D:/Projects/Premiere316_v3/dist-desktop/win-unpacked/Premiere316.exe",
         "Package audit required ASAR modules and external resources present",
-        "Wave 4 remains closed pending A07/A08/A64 audits"
+        "Wave 3 GREEN finalized for packaged build p316-20260903203247-955eb4a6feaa",
+        "A07/A08/A64 independent audits passed with no blockers",
+        "A01 finalization tag wave3-p316-20260903203247-955eb4a6feaa"
       ]
     },
     {
@@ -905,7 +911,7 @@
       "deps": [
         "B-001"
       ],
-      "status": "PACKAGE_PASS_AWAITING_AUDIT",
+      "status": "DONE",
       "branch": "main",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
@@ -935,7 +941,9 @@
         "screenshots/wave3-resume/live-data-backup-manifest.json and live-data-post.json: live profile byte-identical to fresh cold backup",
         "Start Menu shortcut target D:/Projects/Premiere316_v3/dist-desktop/win-unpacked/Premiere316.exe",
         "Package audit required ASAR modules and external resources present",
-        "Wave 4 remains closed pending A07/A08/A64 audits"
+        "Wave 3 GREEN finalized for packaged build p316-20260903203247-955eb4a6feaa",
+        "A07/A08/A64 independent audits passed with no blockers",
+        "A01 finalization tag wave3-p316-20260903203247-955eb4a6feaa"
       ]
     },
     {
@@ -947,7 +955,7 @@
       "deps": [
         "V-001"
       ],
-      "status": "PACKAGE_PASS_AWAITING_AUDIT",
+      "status": "DONE",
       "branch": "main",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
@@ -977,7 +985,9 @@
         "screenshots/wave3-resume/live-data-backup-manifest.json and live-data-post.json: live profile byte-identical to fresh cold backup",
         "Start Menu shortcut target D:/Projects/Premiere316_v3/dist-desktop/win-unpacked/Premiere316.exe",
         "Package audit required ASAR modules and external resources present",
-        "Wave 4 remains closed pending A07/A08/A64 audits"
+        "Wave 3 GREEN finalized for packaged build p316-20260903203247-955eb4a6feaa",
+        "A07/A08/A64 independent audits passed with no blockers",
+        "A01 finalization tag wave3-p316-20260903203247-955eb4a6feaa"
       ]
     },
     {
@@ -989,7 +999,7 @@
       "deps": [
         "V-001"
       ],
-      "status": "PACKAGE_PASS_AWAITING_AUDIT",
+      "status": "DONE",
       "branch": "main",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
@@ -1019,7 +1029,9 @@
         "screenshots/wave3-resume/live-data-backup-manifest.json and live-data-post.json: live profile byte-identical to fresh cold backup",
         "Start Menu shortcut target D:/Projects/Premiere316_v3/dist-desktop/win-unpacked/Premiere316.exe",
         "Package audit required ASAR modules and external resources present",
-        "Wave 4 remains closed pending A07/A08/A64 audits"
+        "Wave 3 GREEN finalized for packaged build p316-20260903203247-955eb4a6feaa",
+        "A07/A08/A64 independent audits passed with no blockers",
+        "A01 finalization tag wave3-p316-20260903203247-955eb4a6feaa"
       ]
     },
     {
@@ -1032,7 +1044,7 @@
         "R-004",
         "B-001"
       ],
-      "status": "PACKAGE_PASS_AWAITING_AUDIT",
+      "status": "DONE",
       "branch": "main",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
@@ -1062,7 +1074,9 @@
         "screenshots/wave3-resume/live-data-backup-manifest.json and live-data-post.json: live profile byte-identical to fresh cold backup",
         "Start Menu shortcut target D:/Projects/Premiere316_v3/dist-desktop/win-unpacked/Premiere316.exe",
         "Package audit required ASAR modules and external resources present",
-        "Wave 4 remains closed pending A07/A08/A64 audits"
+        "Wave 3 GREEN finalized for packaged build p316-20260903203247-955eb4a6feaa",
+        "A07/A08/A64 independent audits passed with no blockers",
+        "A01 finalization tag wave3-p316-20260903203247-955eb4a6feaa"
       ]
     },
     {
@@ -1074,7 +1088,7 @@
       "deps": [
         "C-001"
       ],
-      "status": "PACKAGE_PASS_AWAITING_AUDIT",
+      "status": "DONE",
       "branch": "main",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
@@ -1104,7 +1118,9 @@
         "screenshots/wave3-resume/live-data-backup-manifest.json and live-data-post.json: live profile byte-identical to fresh cold backup",
         "Start Menu shortcut target D:/Projects/Premiere316_v3/dist-desktop/win-unpacked/Premiere316.exe",
         "Package audit required ASAR modules and external resources present",
-        "Wave 4 remains closed pending A07/A08/A64 audits"
+        "Wave 3 GREEN finalized for packaged build p316-20260903203247-955eb4a6feaa",
+        "A07/A08/A64 independent audits passed with no blockers",
+        "A01 finalization tag wave3-p316-20260903203247-955eb4a6feaa"
       ]
     },
     {
@@ -1116,10 +1132,14 @@
       "deps": [
         "B-002"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "READY",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "Wave 3 GREEN finalized for packaged build p316-20260903203247-955eb4a6feaa",
+        "Wave 3 final tag wave3-p316-20260903203247-955eb4a6feaa",
+        "Wave 4 opened by A01 governance finalization; task not started"
+      ]
     },
     {
       "id": "I-002",
@@ -1130,10 +1150,12 @@
       "deps": [
         "I-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+      ]
     },
     {
       "id": "I-003",
@@ -1144,10 +1166,12 @@
       "deps": [
         "I-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+      ]
     },
     {
       "id": "I-004",
@@ -1158,10 +1182,12 @@
       "deps": [
         "I-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+      ]
     },
     {
       "id": "I-005",
@@ -1172,10 +1198,12 @@
       "deps": [
         "I-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+      ]
     },
     {
       "id": "I-006",
@@ -1186,10 +1214,12 @@
       "deps": [
         "I-002"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+      ]
     },
     {
       "id": "I-007",
@@ -1201,10 +1231,12 @@
         "I-002",
         "B-002"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+      ]
     },
     {
       "id": "I-008",
@@ -1216,10 +1248,12 @@
         "I-002",
         "I-007"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "BLOCKED_BY_DEPENDENCY",
       "branch": null,
       "worktree": null,
-      "evidence": []
+      "evidence": [
+        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+      ]
     },
     {
       "id": "P-001",
@@ -1559,5 +1593,5 @@
       "evidence": []
     }
   ],
-  "updatedAt": "2026-09-04T04:58:36.112Z"
+  "updatedAt": "2026-09-04T05:10:58.187Z"
 }

@@ -1,8 +1,8 @@
-# Wave 3 Gate — package pass awaiting audit
+# Wave 3 Gate — green packaged checkpoint
 
-Status: `PACKAGE_PASS_AWAITING_AUDIT`
+Status: `GREEN`
 
-This is the resumed A04 package gate after the paused checkpoint `016826eaf74f0f77c4ea7f31a297078537dd66d3`. Wave 3 is **not green** until independent A07/A08/A64 audits pass. Wave 4 remains closed. No Wave 3 green tag was created.
+This is the A01 governance finalization for the resumed A04 package gate after paused checkpoint `016826eaf74f0f77c4ea7f31a297078537dd66d3`. Independent A07/A08/A64 audits passed with no blockers. Wave 3 is **GREEN** for packaged build `p316-20260903203247-955eb4a6feaa`; Wave 4 is open but not started with only dependency-root `I-001` ready. Final tag: `wave3-p316-20260903203247-955eb4a6feaa`.
 
 ## Package identity
 
@@ -62,6 +62,23 @@ Machine-readable evidence:
 
 Representative screenshots manually inspected: Inventory 100/150, Visual Development 100/150, Cinematography 100/150, Wave 3 prepared-assets UAT, and the final desktop-smoke capture. They show visible packaged UI with the 13-stage hierarchy and no blank stage.
 
+## Independent audits
+
+| Auditor | Verdict | Evidence summary |
+|---|---|---|
+| A07 test/evidence auditor re-audit | **PASS** | Source tests/typecheck pass; package hashes/build identity match; packaged smoke, 26-capture visual matrix, Wave 3 UAT, live-data manifests, secure Electron, and process/model cleanup accepted. |
+| A08 release/data auditor re-audit | **PASS** | Ledger reconciliation, ancestry, package identity, live-data byte identity, Start Menu shortcut, target tag absence, and Wave 4-closed pre-finalization state accepted. |
+| A64 independent packaged red-team re-audit | **PASS** | Hidden approved-spec mutation path, package reports, screenshots, data manifests, secure Electron, persist key, and no forbidden network/model/media/cloud markers accepted. |
+
+## Governance finalization
+
+- Wave 3 tasks marked **DONE**: `D-001`, `B-001`, `B-002`, `V-001`, `V-002`, `V-003`, `C-001`, `C-002`.
+- Wave 4 status set to **OPEN** but not started.
+- Wave 4 dependency root `I-001` set to **READY**; dependent Wave 4 tasks remain **BLOCKED_BY_DEPENDENCY**.
+- Waves 5–8 remain closed behind previous gates.
+- A01 finalization lease released; 64 logical roles and max concurrency five retained.
+- No auth/database/cloud/ComfyUI/model inference/media generation/server/model lifecycle/download/conversion/`D:\AI\Models` mutation was performed.
+
 ## Data/process proof
 
 Fresh cold backup: `D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z`
@@ -75,6 +92,6 @@ All isolated temp profiles matching `premiere316-wave2-smoke-*`, `premiere316-st
 
 ## Gate decision
 
-Wave 3 source, package identity, serialized packaged smoke, existing 26-capture native visual matrix, existing Wave 3 packaged visible-control UAT, Start Menu shortcut, live-data safety, process cleanup, secure Electron, and 100–200% zoom checks **PASS**.
+Wave 3 source, package identity, serialized packaged smoke, existing 26-capture native visual matrix, existing Wave 3 packaged visible-control UAT, Start Menu shortcut, live-data safety, process cleanup, secure Electron, 100–200% zoom checks, and independent A07/A08/A64 audits **PASS**.
 
-Wave 3 status is **PACKAGE_PASS_AWAITING_AUDIT**. Do **not** open Wave 4 and do **not** create a Wave 3 green tag until independent A07/A08/A64 audits accept this package evidence.
+Wave 3 status is **GREEN**. Wave 4 is **OPEN** but not started, with only `I-001` ready and dependent Wave 4 tasks blocked by dependency. Final tag `wave3-p316-20260903203247-955eb4a6feaa` records this governance checkpoint.

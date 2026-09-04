@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "currentWave": 3,
+  "currentWave": 4,
   "gates": [
     {
       "wave": 0,
@@ -51,24 +51,43 @@
     },
     {
       "wave": 3,
-      "status": "PACKAGE_PASS_AWAITING_AUDIT",
-      "note": "Wave 3 package gate resumed from 016826e and passed for packaged build p316-20260903203247-955eb4a6feaa: serialized desktop smoke, package identity/audit, 26 native stage captures, visible-control UAT, shortcut, and live-data identity passed. Wave 4 remains closed pending independent A07/A08/A64 audits; no green tag.",
+      "status": "GREEN",
+      "note": "Wave 3 GREEN for packaged build p316-20260903203247-955eb4a6feaa: source/package/offline packaged UAT, serialized desktop smoke, 26 native stage captures, live-data preservation, shortcut verification, and independent A07/A08/A64 audits passed. A01 finalization opened Wave 4 with I-001 READY only; no model/media/cloud/ComfyUI lifecycle action was performed.",
       "evidence": [
         "docs/release/wave3-gate.md",
         "desktop/build-info.json buildId p316-20260903203247-955eb4a6feaa",
-        "screenshots/premiere316-desktop-smoke.json serialized package smoke pass after pause",
-        "screenshots/premiere316-windows-final.png visually inspected final smoke capture",
+        "screenshots/premiere316-desktop-smoke.json serialized package smoke pass",
         "screenshots/stage-visual/report.json 26/26 native capturePage matrix for 13 stages at 100% and 150%",
         "screenshots/wave3-uat/report.json packaged visible-control UAT pass",
-        "screenshots/wave3-resume/live-data-backup-manifest.json and live-data-post.json: live profile byte-identical to fresh cold backup",
+        "screenshots/wave3-resume/package-verification.json package hashes and build identity",
+        "screenshots/wave3-resume/live-data-backup-manifest.json and live-data-post.json byte-identical live profile",
         "Start Menu shortcut target D:/Projects/Premiere316_v3/dist-desktop/win-unpacked/Premiere316.exe",
-        "Package audit required ASAR modules and external resources present",
-        "Wave 4 remains closed pending A07/A08/A64 audits"
+        "A07 read-only re-audit PASS at HEAD 16c5b34: tests/typecheck/package hashes/reports/live-data/process checks accepted",
+        "A08 release/data re-audit PASS at HEAD 16c5b34: ledger reconciliation/package identity/live data/shortcut/ancestry accepted",
+        "A64 independent packaged red-team re-audit PASS at HEAD 16c5b34: source repair/package reports/data/security/process checks accepted",
+        "A01 finalization tag wave3-p316-20260903203247-955eb4a6feaa"
+      ],
+      "tasks": [
+        "D-001",
+        "B-001",
+        "B-002",
+        "V-001",
+        "V-002",
+        "V-003",
+        "C-001",
+        "C-002"
       ]
     },
     {
       "wave": 4,
-      "status": "BLOCKED_BY_PREVIOUS_GATE"
+      "status": "OPEN",
+      "note": "Wave 4 is open but not started. Dependency-root I-001 is READY; all dependent Wave 4 tasks remain BLOCKED_BY_DEPENDENCY until I-001 completes. No model/media lifecycle action is authorized by this ledger update.",
+      "tasks": [
+        "I-001"
+      ],
+      "evidence": [
+        "Wave 3 GREEN tag wave3-p316-20260903203247-955eb4a6feaa"
+      ]
     },
     {
       "wave": 5,
@@ -87,5 +106,5 @@
       "status": "BLOCKED_BY_PREVIOUS_GATE"
     }
   ],
-  "updatedAt": "2026-09-04T04:58:36.112Z"
+  "updatedAt": "2026-09-04T05:10:58.187Z"
 }
