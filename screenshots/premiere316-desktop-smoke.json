@@ -1,0 +1,71 @@
+{
+  "ok": true,
+  "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+  "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave2-smoke-VSmclH",
+  "launchedUserData": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave2-smoke-VSmclH",
+  "realProfileUntouched": "C:\\Users\\teeja\\AppData\\Roaming\\Premiere316",
+  "buildInfo": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260903203247-955eb4a6feaa",
+    "buildTimestamp": "2026-09-03T20:32:47.183Z",
+    "rendererSourceHash": "955eb4a6feaab1ee48755c5558527a4292f080453c0cee1ae5172be0e42a556a",
+    "rendererMode": "PACKAGED DIST",
+    "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+    "appPath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\app.asar"
+  },
+  "zoom": {
+    "original": 1,
+    "reset": 1,
+    "persisted": 1.1,
+    "reopened": 1.1,
+    "restored": 1
+  },
+  "stageNavigation": [
+    "01 Intake",
+    "02 Research",
+    "03 Screenplay",
+    "04 Inventory",
+    "05 Visual Dev",
+    "06 Cinematography",
+    "07 Performance",
+    "08 Shots",
+    "09 Prompt Lab",
+    "10 Generate",
+    "11 Stitch",
+    "12 Score",
+    "13 Export"
+  ],
+  "lmStudio": {
+    "localCatalogCandidates": 0,
+    "servedModels": 0,
+    "generationEnabled": false,
+    "loopbackOnly": true,
+    "researchGate": "approve-then-pin",
+    "writerPinUi": "Default writer · Llama 3.3 70B Instruct",
+    "doctorPinUi": "Default QA · Llama 3.3 70B Instruct",
+    "qwenSecondOpinionExplicit": true,
+    "critiqueFirst": true,
+    "scopedApplyEnabled": false
+  },
+  "engines": {
+    "discoveredImageConfigurations": 15,
+    "adapterPlaceholders": 5,
+    "selectableAfterRuntimeInspection": 0,
+    "selectedConfiguration": "flux2_dev · 93.5 GB · Memory risk",
+    "selectedRuntimeBlocker": "MEMORY RISK\n\nMEMORY RISK: the native worker places at least 105.1 GiB of audited weight files on CUDA, before activation headroom; the installed GPU reports 71.7 GiB.\n",
+    "generationEnabled": false
+  },
+  "timeline": {
+    "hiddenOutsideStitch": true,
+    "visibleInStitch": true
+  },
+  "persistedStage": "shots",
+  "network": {
+    "probed8080": 0,
+    "completionPosts": 0,
+    "observed": 10
+  },
+  "consoleErrors": [],
+  "screenshotPath": "D:\\Projects\\Premiere316_v3\\screenshots\\premiere316-windows-final.png"
+}

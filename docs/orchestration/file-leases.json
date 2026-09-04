@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-03T20:36:00.000Z",
+  "updatedAt": "2026-09-04T04:58:36.112Z",
   "rules": {
     "singleWriterPerCwd": true,
     "maxConcurrentMutatingAgents": 5,
@@ -240,11 +240,11 @@
       "pod": "Governance & Integration",
       "task": "WAVE-3-PACKAGE",
       "startedAt": "2026-09-03T20:24:00.000Z",
-      "status": "PAUSED_CHECKPOINT",
+      "status": "released",
       "integrationOwner": "A03",
-      "sharedInterfaceException": "A04 package/integration checkpoint only; operator paused before full native gate/audits; Wave 4 closed.",
-      "releasedAt": "2026-09-03T20:36:00.000Z",
-      "releaseEvidence": "Package checkpoint built as p316-20260903203247-955eb4a6feaa. Source tests/typecheck/build passed. 13-stage 100/150 visual matrix and packaged Wave 3 UAT passed. Post-repair smoke rerun timed out during concurrent harness launch and remains pending by operator pause. Electron processes stopped, isolated temp profiles deleted, live app data compared unchanged."
+      "sharedInterfaceException": "A04 resumed package gate after pause; serialized packaged smoke and evidence/shortcut/docs repair only; Wave 4 closed pending independent audits.",
+      "releasedAt": "2026-09-04T04:58:36.112Z",
+      "releaseEvidence": "Resumed from clean checkpoint 016826e. Package p316-20260903203247-955eb4a6feaa verified with matching build-info/source hash, stable exe/asar hashes, external resources/ui identity, serialized desktop-smoke pass, 26/26 stage matrix, Wave 3 UAT, Start Menu shortcut target, live data byte-identical to fresh backup, no app/model processes. PACKAGE_PASS_AWAITING_AUDIT; no tag/Wave4."
     }
   ]
 }

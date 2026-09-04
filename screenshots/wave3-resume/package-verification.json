@@ -1,0 +1,72 @@
+{
+  "status": "PACKAGE_PASS_AWAITING_AUDIT",
+  "commitStartedAt": "016826eaf74f0f77c4ea7f31a297078537dd66d3",
+  "buildId": "p316-20260903203247-955eb4a6feaa",
+  "rendererSourceHash": "955eb4a6feaab1ee48755c5558527a4292f080453c0cee1ae5172be0e42a556a",
+  "hashes": {
+    "exe": "06b87db5bb7864e2eff5ecd37905b94ececa41a4ee0f0b09b4bbbbcb42428052",
+    "asar": "70682644bd66ed9b8a868671fb0f914cafe414018ab09f35fda3712f2b97001d",
+    "installer": "baca9115b6bc873c23f724427ac866ab2d688f4f5b12580a943908e2e839da41",
+    "buildInfo": "1317c8d583b460599487cc3246dfc6ef33465f7067ffee1a8c54f9b0ed68adff",
+    "uiEntry": "31281952b47d4d53157156a6f1279f64141a3e241de0304d76255618fc44a332",
+    "uiRoutes": "76a902f0800941cae6f1acb84b677872f25f188834c9640926bf1847bff7b294"
+  },
+  "smoke": {
+    "ok": true,
+    "buildId": "p316-20260903203247-955eb4a6feaa",
+    "stageNavigation": [
+      "01 Intake",
+      "02 Research",
+      "03 Screenplay",
+      "04 Inventory",
+      "05 Visual Dev",
+      "06 Cinematography",
+      "07 Performance",
+      "08 Shots",
+      "09 Prompt Lab",
+      "10 Generate",
+      "11 Stitch",
+      "12 Score",
+      "13 Export"
+    ],
+    "servedModels": 0,
+    "generationEnabled": false,
+    "qwenSecondOpinionExplicit": true,
+    "probed8080": 0,
+    "completionPosts": 0,
+    "consoleErrors": 0,
+    "screenshotPath": "D:\\Projects\\Premiere316_v3\\screenshots\\premiere316-windows-final.png"
+  },
+  "stageVisual": {
+    "ok": true,
+    "stages": 13,
+    "screenshots": 26,
+    "violations": 0,
+    "consoleErrors": 0,
+    "pageErrors": 0
+  },
+  "wave3Uat": {
+    "ok": true,
+    "buildId": "p316-20260903203247-955eb4a6feaa",
+    "assertions": {
+      "lastReelApprovedBefore": true,
+      "researchAwareBreakdown": true,
+      "mergeUsedVisibleControl": true,
+      "splitUsedVisibleControl": true,
+      "cinematographyApprovalsViaUi": 2,
+      "inventoryHistory": true,
+      "referenceAttached": true,
+      "visualApprovals": 3,
+      "cinematographyApprovedPlans": 2,
+      "preparedAssets": 10,
+      "approvedPrepared": 0,
+      "falseReadinessImpossible": true,
+      "priorApprovedVersionsRetrievable": true,
+      "lastReelIdsPreserved": true,
+      "noModelOrMediaNetwork": true
+    },
+    "consoleErrors": 0,
+    "pageErrors": 0
+  },
+  "note": "Electron exe/app.asar stable while external resources/ui carries Wave 3 packaged UI; source hash and UI-entry hashes prove package identity."
+}

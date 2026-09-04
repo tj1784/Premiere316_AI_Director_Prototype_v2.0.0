@@ -1,0 +1,21 @@
+﻿
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\blob_storage\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\blob_storage\42f79268-b131-4a7c-9332-d9c0d6877090\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Cache\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Cache\Cache_Data\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Code Cache\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Code Cache\js\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Code Cache\js\index-dir\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Code Cache\wasm\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Code Cache\wasm\index-dir\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\DawnGraphiteCache\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\DawnWebGPUCache\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\GPUCache\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Local Storage\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Local Storage\leveldb\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Network\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Session Storage\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Shared Dictionary\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Shared Dictionary\cache\
+		D:\Data\Backups\Premiere316\wave3-resume-a04-20260904T045316Z\Shared Dictionary\cache\index-dir\

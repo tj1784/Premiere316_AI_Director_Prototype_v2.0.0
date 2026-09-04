@@ -1,0 +1,212 @@
+{
+  "ok": true,
+  "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+  "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave3-uat-MnDQC9",
+  "launchedUserData": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave3-uat-MnDQC9",
+  "screenshots": [
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave3-uat\\01-research-approved.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave3-uat\\02-breakdown.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave3-uat\\03-inventory-edit-approve-reference.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave3-uat\\04-merge-split-history.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave3-uat\\05-visual-approvals.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave3-uat\\06-cinematography-qa-approval.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave3-uat\\07-prepared-assets.png"
+  ],
+  "assertions": {
+    "lastReelApprovedBefore": true,
+    "researchAwareBreakdown": true,
+    "mergeUsedVisibleControl": true,
+    "splitUsedVisibleControl": true,
+    "cinematographyApprovalsViaUi": 2,
+    "inventoryHistory": true,
+    "referenceAttached": true,
+    "visualApprovals": 3,
+    "cinematographyApprovedPlans": 2,
+    "preparedAssets": 10,
+    "approvedPrepared": 0,
+    "falseReadinessImpossible": true,
+    "priorApprovedVersionsRetrievable": true,
+    "lastReelIdsPreserved": true,
+    "noModelOrMediaNetwork": true
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "network": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:18731/assets/styles-BF2UEnTK.css"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:18731/assets/index-ClorA1Jd.js"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:18731/assets/routes-8FK5-yuX.js"
+    },
+    {
+      "method": "GET",
+      "url": "https://grok.com/grok-app-builder/extensions.js"
+    }
+  ],
+  "error": null,
+  "buildInfo": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260903203247-955eb4a6feaa",
+    "buildTimestamp": "2026-09-03T20:32:47.183Z",
+    "rendererSourceHash": "955eb4a6feaab1ee48755c5558527a4292f080453c0cee1ae5172be0e42a556a",
+    "rendererMode": "PACKAGED DIST",
+    "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+    "appPath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\app.asar"
+  },
+  "inventorySummary": [
+    {
+      "id": "asset:location:coastal:archive",
+      "name": "Coastal Archive",
+      "tombstone": false,
+      "canonicalApproved": false,
+      "approvedSpecVersionId": null,
+      "specVersions": [],
+      "references": 0,
+      "lineage": [
+        "created"
+      ]
+    },
+    {
+      "id": "asset:character:elias:voss",
+      "name": "Elias Voss",
+      "tombstone": false,
+      "canonicalApproved": false,
+      "approvedSpecVersionId": null,
+      "specVersions": [],
+      "references": 0,
+      "lineage": [
+        "created"
+      ]
+    },
+    {
+      "id": "asset:voice:elias:voss:voice",
+      "name": "Elias Voss Voice",
+      "tombstone": false,
+      "canonicalApproved": false,
+      "approvedSpecVersionId": null,
+      "specVersions": [],
+      "references": 0,
+      "lineage": [
+        "created"
+      ]
+    },
+    {
+      "id": "asset:vehicle:boat",
+      "name": "Boat",
+      "tombstone": false,
+      "canonicalApproved": false,
+      "approvedSpecVersionId": null,
+      "specVersions": [],
+      "references": 0,
+      "lineage": [
+        "created"
+      ]
+    },
+    {
+      "id": "asset:practical:effect:rain:effect",
+      "name": "Rain Effect",
+      "tombstone": false,
+      "canonicalApproved": false,
+      "approvedSpecVersionId": null,
+      "specVersions": [],
+      "references": 0,
+      "lineage": [
+        "created"
+      ]
+    },
+    {
+      "id": "asset:location:steenbeck:room",
+      "name": "Steenbeck Room",
+      "tombstone": false,
+      "canonicalApproved": false,
+      "approvedSpecVersionId": null,
+      "specVersions": [],
+      "references": 0,
+      "lineage": [
+        "created"
+      ]
+    },
+    {
+      "id": "asset:prop:film:reel",
+      "name": "Film Reel verified",
+      "tombstone": true,
+      "canonicalApproved": true,
+      "approvedSpecVersionId": "spec:asset:prop:film:reel:1788467597227",
+      "specVersions": [
+        {
+          "id": "spec:asset:prop:film:reel:1788467597138",
+          "approved": false
+        },
+        {
+          "id": "spec:asset:prop:film:reel:1788467597227",
+          "approved": true
+        }
+      ],
+      "references": 1,
+      "lineage": [
+        "created",
+        "edited",
+        "edited",
+        "approved-spec",
+        "merged"
+      ]
+    },
+    {
+      "id": "asset:location:cliff:1978",
+      "name": "Cliff — 1978",
+      "tombstone": false,
+      "canonicalApproved": false,
+      "approvedSpecVersionId": null,
+      "specVersions": [],
+      "references": 0,
+      "lineage": [
+        "created"
+      ]
+    },
+    {
+      "id": "asset:prop:camera",
+      "name": "Camera",
+      "tombstone": false,
+      "canonicalApproved": false,
+      "approvedSpecVersionId": null,
+      "specVersions": [],
+      "references": 0,
+      "lineage": [
+        "created"
+      ]
+    },
+    {
+      "id": "asset_cpzr6wfifd",
+      "name": "Wave 3 duplicate slate",
+      "tombstone": false,
+      "canonicalApproved": false,
+      "approvedSpecVersionId": null,
+      "specVersions": [],
+      "references": 1,
+      "lineage": [
+        "created",
+        "merged",
+        "split"
+      ]
+    },
+    {
+      "id": "asset_njzb5dfj5y",
+      "name": "Wave 3 split child",
+      "tombstone": false,
+      "canonicalApproved": false,
+      "approvedSpecVersionId": null,
+      "specVersions": [],
+      "references": 0,
+      "lineage": [
+        "split"
+      ]
+    }
+  ]
+}

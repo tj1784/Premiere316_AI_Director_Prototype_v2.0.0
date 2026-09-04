@@ -15,6 +15,7 @@ const failures = [];
 const networkLog = [];
 let lmStudioState = null;
 let engineState = null;
+let stageNavigation = [];
 let originalZoom = 1;
 let userDataDir = "";
 
@@ -98,6 +99,24 @@ try {
   assert.equal(await zoomFactor(application), 1);
 
   await openLastReel(page);
+  stageNavigation = await page.getByRole("navigation", { name: "Pipeline" }).locator("button").evaluateAll((buttons) => buttons.map((button) => button.textContent?.trim() ?? "").filter(Boolean));
+  assert.equal(stageNavigation.length, 13, `expected 13 pipeline stages, found ${stageNavigation.length}: ${stageNavigation.join(" | ")}`);
+  stageNavigation = stageNavigation.map((label) => label.replace(/\s+/g, " ").replace(/^(\d{2})(\S)/, "$1 $2"));
+  assert.deepEqual(stageNavigation, [
+    "01 Intake",
+    "02 Research",
+    "03 Screenplay",
+    "04 Inventory",
+    "05 Visual Dev",
+    "06 Cinematography",
+    "07 Performance",
+    "08 Shots",
+    "09 Prompt Lab",
+    "10 Generate",
+    "11 Stitch",
+    "12 Score",
+    "13 Export",
+  ]);
   await selectStage(page, "research", "02 Research");
   await page.getByText("Picture Research", { exact: false }).first().waitFor();
   await page.getByText("Draft", { exact: true }).first().waitFor();
@@ -228,6 +247,7 @@ try {
     realProfileUntouched: REAL_PROFILE,
     buildInfo,
     zoom: { original: originalZoom, reset: 1, persisted: persistedZoom, reopened: reopenedZoom, restored: originalZoom },
+    stageNavigation,
     lmStudio: lmStudioState,
     engines: engineState,
     timeline: { hiddenOutsideStitch: true, visibleInStitch: true },
