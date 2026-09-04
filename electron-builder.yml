@@ -8,6 +8,10 @@ directories:
 files:
   - desktop/main.mjs
   - desktop/preload.cjs
+  - desktop/authority-review-preload.cjs
+  - desktop/authority-review.html
+  - desktop/confirmation-preload.cjs
+  - desktop/confirmation.html
   - desktop/channels.cjs
   - desktop/zoom.cjs
   - desktop/icon.ico
@@ -18,6 +22,8 @@ extraResources:
     to: backend.mjs
   - from: desktop/build-info.json
     to: build-info.json
+  - from: desktop/workers/flux1_jsonl_worker.py
+    to: workers/flux1_jsonl_worker.py
   - from: desktop/icon.ico
     to: icon.ico
   - from: .output

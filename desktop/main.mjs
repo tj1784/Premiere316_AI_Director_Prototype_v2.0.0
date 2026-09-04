@@ -1,8 +1,9 @@
-import { app, BrowserWindow, Menu, dialog, ipcMain, safeStorage, session, shell } from "electron";
+import { app, BrowserWindow, Menu, dialog, ipcMain, protocol as electronProtocol, safeStorage, session, shell } from "electron";
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { randomBytes } from "node:crypto";
 import { cpus, freemem, totalmem } from "node:os";
-import { basename, dirname, extname, join } from "node:path";
+import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
@@ -20,9 +21,14 @@ const {
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const PRELOAD = join(ROOT, "desktop", "preload.cjs");
+const AUTHORITY_REVIEW_PRELOAD = join(ROOT, "desktop", "authority-review-preload.cjs");
+const AUTHORITY_REVIEW_HTML = join(ROOT, "desktop", "authority-review.html");
+const CONFIRMATION_PRELOAD = join(ROOT, "desktop", "confirmation-preload.cjs");
+const CONFIRMATION_HTML = join(ROOT, "desktop", "confirmation.html");
 const PACKAGED_UI_PORT = 18731;
 const DEV_UI_ORIGIN = "http://127.0.0.1:8080";
 const MODEL_ROOT = "D:\\AI\\Models";
+const EXTERNAL_RUNTIME_ROOTS = ["D:\\Projects\\flux", "D:\\Projects\\Flux2", "D:\\_Cache\\HuggingFace", "D:\\Dev\\Tools\\Python312"];
 const CREDENTIAL_NAME = /^[a-z][a-z0-9._-]{0,63}$/;
 
 let mainWindow = null;
@@ -34,6 +40,12 @@ let uiOrigin = DEV_UI_ORIGIN;
 let quitting = false;
 let interfaceZoom = DEFAULT_ZOOM;
 let previousCpuTimes = readCpuTimes();
+const authorityReviewModals = new Map();
+const confirmationModals = new Map();
+
+electronProtocol.registerSchemesAsPrivileged([
+  { scheme: "media", privileges: { standard: true, secure: true, supportFetchAPI: true } },
+]);
 
 function readCpuTimes() {
   return cpus().reduce(
@@ -131,6 +143,26 @@ function nodeAsElectronEnv(extra = {}) {
   return { ...process.env, ELECTRON_RUN_AS_NODE: "1", ...extra };
 }
 
+function ledgerKeyPath() {
+  return join(app.getPath("userData"), "ledger-key.bin");
+}
+
+function readLedgerHmacKey() {
+  if (!safeStorage.isEncryptionAvailable()) throw new Error("Secure storage is unavailable on this Windows profile.");
+  const file = ledgerKeyPath();
+  try {
+    const encrypted = readFileSync(file);
+    const hex = safeStorage.decryptString(encrypted).trim();
+    if (/^[a-f0-9]{64}$/i.test(hex)) return hex.toLowerCase();
+  } catch {
+    /* create below */
+  }
+  const hex = randomBytes(32).toString("hex");
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, safeStorage.encryptString(hex));
+  return hex;
+}
+
 function backendCwd() {
   if (!isPackaged()) return ROOT;
   const temp = "D:\\_Temp\\Premiere316";
@@ -202,12 +234,13 @@ function killTree(child) {
 
 function startBackend() {
   const entry = backendEntry();
+  const build = readBuildInfo();
   const args = entry.stripTypes ? ["--experimental-strip-types", entry.file] : [entry.file];
   const child = spawn(process.execPath, args, {
     cwd: backendCwd(),
     stdio: ["pipe", "pipe", "pipe"],
     windowsHide: true,
-    env: nodeAsElectronEnv({ PREMIERE316_DESKTOP: "1" }),
+    env: nodeAsElectronEnv({ PREMIERE316_DESKTOP: "1", P316_PACKAGED_APP: isPackaged() ? "1" : "0", P316_RESOURCES_PATH: process.resourcesPath ?? ROOT, P316_BUILD_ID: build.buildId, P316_LEDGER_HMAC_KEY: readLedgerHmacKey() }),
   });
   const rl = createInterface({ input: child.stdout, crlfDelay: Infinity });
   rl.on("line", (line) => {
@@ -229,6 +262,14 @@ function startBackend() {
     rpcWait.clear();
   });
   backend = child;
+}
+
+function imageMediaRoot() {
+  return join(app.getPath("userData"), "media");
+}
+
+function withMediaRoot(params = {}) {
+  return { ...(params && typeof params === "object" ? params : {}), mediaRoot: imageMediaRoot() };
 }
 
 function callBackend(method, params) {
@@ -262,10 +303,24 @@ function assertTrustedSender(event) {
   }
 }
 
+function isUnderRoot(filePath, rootPath) {
+  try {
+    const realFile = realpathSync(filePath).replace(/\//g, "\\").toLowerCase();
+    const realRoot = realpathSync(rootPath).replace(/\//g, "\\").toLowerCase();
+    return realFile === realRoot || realFile.startsWith(`${realRoot}\\`);
+  } catch {
+    const normalized = String(filePath || "").replace(/\//g, "\\").toLowerCase();
+    const root = String(rootPath || "").replace(/\//g, "\\").toLowerCase();
+    return normalized === root || normalized.startsWith(`${root}\\`);
+  }
+}
+
 function isUnderModelRoot(filePath) {
-  const normalized = String(filePath || "").replace(/\//g, "\\").toLowerCase();
-  const root = MODEL_ROOT.replace(/\//g, "\\").toLowerCase();
-  return normalized === root || normalized.startsWith(`${root}\\`);
+  return isUnderRoot(filePath, MODEL_ROOT);
+}
+
+function isUnderProtectedRuntimeRoot(filePath) {
+  return EXTERNAL_RUNTIME_ROOTS.some((root) => isUnderRoot(filePath, root));
 }
 
 function mimeFromPath(filePath) {
@@ -273,16 +328,27 @@ function mimeFromPath(filePath) {
   if (ext === ".png") return "image/png";
   if (ext === ".webp") return "image/webp";
   if (ext === ".gif") return "image/gif";
-  return "image/jpeg";
+  if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
+  throw new Error("Unsupported reference image extension.");
+}
+
+function looksLikeImage(buf, mime) {
+  if (mime === "image/png") return buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+  if (mime === "image/jpeg") return buf[0] === 0xff && buf[1] === 0xd8 && buf.length > 4;
+  if (mime === "image/gif") return buf.slice(0, 3).toString("ascii") === "GIF";
+  if (mime === "image/webp") return buf.slice(0, 4).toString("ascii") === "RIFF" && buf.slice(8, 12).toString("ascii") === "WEBP";
+  return false;
 }
 
 function readImageFile(filePath) {
   if (!filePath || !existsSync(filePath)) return null;
-  if (isUnderModelRoot(filePath)) {
-    throw new Error("Renderer cannot read D:\\AI\\Models directly.");
+  if (isUnderModelRoot(filePath) || isUnderProtectedRuntimeRoot(filePath)) {
+    throw new Error("Renderer cannot read local model, runtime, or cache roots directly.");
   }
   const buf = readFileSync(filePath);
+  if (buf.byteLength > 12 * 1024 * 1024) throw new Error("Reference image is too large.");
   const mime = mimeFromPath(filePath);
+  if (!looksLikeImage(buf, mime)) throw new Error("Reference file is not a supported image.");
   return {
     name: basename(filePath),
     mime,
@@ -356,6 +422,28 @@ function writeCredentialStore(store) {
   writeFileSync(credentialsPath(), `${JSON.stringify(store)}\n`);
 }
 
+function registerMediaProtocol() {
+  electronProtocol.registerFileProtocol("media", (request, callback) => {
+    try {
+      const url = new URL(request.url);
+      if (url.hostname !== "stills") throw new Error("Unsupported media host.");
+      const rawPath = url.pathname.replace(/^\/+/, "");
+      if (/%2e|%2f|%5c|:/i.test(rawPath)) throw new Error("Encoded traversal is not allowed.");
+      const name = decodeURIComponent(rawPath);
+      if (!/^[a-zA-Z0-9._-]+\.png$/.test(name) || name.startsWith(".")) throw new Error("Invalid media path.");
+      const root = resolve(imageMediaRoot(), "stills");
+      const rootReal = realpathSync(root);
+      const file = resolve(rootReal, name);
+      const real = realpathSync(file);
+      const rel = relative(rootReal, real);
+      if (rel.startsWith("..") || rel === "" || /[/\\]/.test(rel)) throw new Error("Media path escapes the durable media root.");
+      callback({ path: real });
+    } catch {
+      callback({ error: -6 });
+    }
+  });
+}
+
 function assertCredentialName(name) {
   if (!CREDENTIAL_NAME.test(String(name || ""))) throw new Error("Invalid credential name");
 }
@@ -374,17 +462,218 @@ function decryptSecret(payload) {
   return safeStorage.decryptString(Buffer.from(String(payload), "base64"));
 }
 
+function assertAuthorityReviewSender(event, nonce) {
+  const state = authorityReviewModals.get(String(nonce ?? ""));
+  if (!state || event.sender !== state.webContents) throw new Error("Rejected authority review IPC from an untrusted renderer.");
+  return state;
+}
+
+function assertConfirmationSender(event, nonce) {
+  const state = confirmationModals.get(String(nonce ?? ""));
+  if (!state || event.sender !== state.webContents) throw new Error("Rejected confirmation IPC from an untrusted renderer.");
+  return state;
+}
+
+async function showAuthorityReviewModal(reviewDocument) {
+  const nonce = randomBytes(24).toString("hex");
+  const modalPartition = `authority-review-${nonce}`;
+  return new Promise((resolveModal) => {
+    const parent = mainWindow ?? undefined;
+    const modal = new BrowserWindow({
+      width: 920,
+      height: 720,
+      minWidth: 390,
+      title: "Seal production authority",
+      parent,
+      modal: Boolean(parent),
+      show: false,
+      webPreferences: { preload: AUTHORITY_REVIEW_PRELOAD, nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, webviewTag: false, partition: modalPartition },
+    });
+    const cleanup = (confirmed) => {
+      if (!authorityReviewModals.has(nonce)) return;
+      authorityReviewModals.delete(nonce);
+      resolveModal(Boolean(confirmed));
+      if (!modal.isDestroyed()) modal.close();
+    };
+    authorityReviewModals.set(nonce, { webContents: modal.webContents, reviewDocument, resolve: cleanup, partition: modalPartition });
+    modal.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+    modal.webContents.on("will-navigate", (event, url) => { if (!url.startsWith("file://")) event.preventDefault(); });
+    const modalSession = session.fromPartition(modalPartition);
+    if (modal.webContents.session !== modalSession || modalSession === session.defaultSession) throw new Error("Authority review modal failed to isolate its Electron session.");
+    modalSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
+    modalSession.setPermissionCheckHandler(() => false);
+    modalSession.webRequest.onBeforeRequest({ urls: ["http://*/*", "https://*/*", "ws://*/*", "wss://*/*"] }, (_details, callback) => callback({ cancel: true }));
+    modal.once("closed", () => cleanup(false));
+    modal.once("ready-to-show", () => modal.show());
+    modal.loadFile(AUTHORITY_REVIEW_HTML, { query: { nonce } }).catch(() => cleanup(false));
+  });
+}
+
+async function showMainOwnedConfirmation({ title, message, summary, confirmLabel, intent = "confirm" }) {
+  const nonce = randomBytes(24).toString("hex");
+  const modalPartition = `confirmation-${nonce}`;
+  const frozenSummary = Object.freeze({
+    title: String(title ?? "Confirm action"),
+    message: String(message ?? "Confirm this action?"),
+    confirmLabel: String(confirmLabel ?? "Confirm"),
+    intent: String(intent ?? "confirm"),
+    lines: Object.freeze((Array.isArray(summary) ? summary : []).map((line) => Object.freeze({
+      label: String(line?.label ?? "Detail"),
+      value: String(line?.value ?? ""),
+    }))),
+  });
+  return new Promise((resolveModal) => {
+    const parent = mainWindow ?? undefined;
+    const modal = new BrowserWindow({
+      width: 640,
+      height: 560,
+      minWidth: 390,
+      minHeight: 420,
+      title: frozenSummary.title,
+      parent,
+      modal: Boolean(parent),
+      show: false,
+      webPreferences: { preload: CONFIRMATION_PRELOAD, nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, webviewTag: false, partition: modalPartition },
+    });
+    const cleanup = (confirmed) => {
+      if (!confirmationModals.has(nonce)) return;
+      confirmationModals.delete(nonce);
+      resolveModal(Boolean(confirmed));
+      if (!modal.isDestroyed()) modal.close();
+    };
+    confirmationModals.set(nonce, { webContents: modal.webContents, summary: frozenSummary, resolve: cleanup, partition: modalPartition });
+    modal.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+    modal.webContents.on("will-navigate", (event, url) => { if (!url.startsWith("file://")) event.preventDefault(); });
+    const modalSession = session.fromPartition(modalPartition);
+    if (modal.webContents.session !== modalSession || modalSession === session.defaultSession) throw new Error("Confirmation modal failed to isolate its Electron session.");
+    modalSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
+    modalSession.setPermissionCheckHandler(() => false);
+    modalSession.webRequest.onBeforeRequest({ urls: ["http://*/*", "https://*/*", "ws://*/*", "wss://*/*"] }, (_details, callback) => callback({ cancel: true }));
+    modal.once("closed", () => cleanup(false));
+    modal.once("ready-to-show", () => modal.show());
+    modal.loadFile(CONFIRMATION_HTML, { query: { nonce } }).catch(() => cleanup(false));
+  });
+}
+
 function registerIpc() {
   const wrap = (handler) => (event, ...args) => {
     assertTrustedSender(event);
     return handler(event, ...args);
   };
+  ipcMain.handle("p316:authorityReview:get", (event, input) => {
+    const state = assertAuthorityReviewSender(event, input?.nonce);
+    return { reviewDocument: state.reviewDocument };
+  });
+  ipcMain.handle("p316:authorityReview:resolve", (event, input) => {
+    const state = assertAuthorityReviewSender(event, input?.nonce);
+    state.resolve(input?.confirmed === true);
+    return { ok: true };
+  });
+  ipcMain.handle("p316:confirmation:get", (event, input) => {
+    const state = assertConfirmationSender(event, input?.nonce);
+    return { summary: state.summary };
+  });
+  ipcMain.handle("p316:confirmation:resolve", (event, input) => {
+    const state = assertConfirmationSender(event, input?.nonce);
+    state.resolve(input?.confirmed === true);
+    return { ok: true };
+  });
   ipcMain.handle(channels.catalogGet, wrap((_e, query) => callBackend("catalog.get", query ?? {})));
-  ipcMain.handle(channels.stillsWake, wrap(() => callBackend("stills.wake")));
-  ipcMain.handle(channels.stillsExpose, wrap((_e, input) => callBackend("stills.expose", input)));
+  ipcMain.handle(channels.imageAuthorityStatus, wrap((_e, input) => callBackend("image.authorityStatus", withMediaRoot(input))));
+  ipcMain.handle(channels.imageSealAuthority, wrap(async (_e, input) => {
+    const proposal = await callBackend("image.proposeProductionAuthority", withMediaRoot(input));
+    if (!proposal?.ok) return proposal;
+    const confirmed = await showAuthorityReviewModal(String(proposal.reviewDocument ?? ""));
+    return callBackend("image.confirmProductionAuthority", withMediaRoot({ proposalId: proposal.proposalId, confirmed }));
+  }));
+  ipcMain.handle(channels.imageApprovePrepared, wrap(async (_e, input) => {
+    const proposal = await callBackend("image.proposePreparedApproval", withMediaRoot(input));
+    if (!proposal?.ok) return proposal;
+    const summary = proposal.summary ?? {};
+    const confirmed = await showMainOwnedConfirmation({
+      title: "Confirm prepared asset approval",
+      message: "Approve this prepared asset root for generation?",
+      confirmLabel: "Confirm Prepared Approval",
+      intent: "prepared-approval",
+      summary: [
+        { label: "Authority", value: summary.authorityId ?? "missing" },
+        { label: "Authority digest", value: summary.authorityDigest ?? "missing" },
+        { label: "Asset", value: summary.assetId ?? "unknown" },
+        { label: "Prepared asset", value: summary.preparedAssetId ?? "unknown" },
+        { label: "Spec", value: summary.specVersionId ?? "unknown" },
+        { label: "Prompt", value: summary.prompt ?? "" },
+        { label: "Dependencies", value: summary.dependencyCount ?? 0 },
+        { label: "References", value: (summary.referenceIds ?? []).join(", ") || "none" },
+      ],
+    });
+    return callBackend("image.confirmPreparedApproval", withMediaRoot({ proposalId: proposal.proposalId, confirmed }));
+  }));
+  ipcMain.handle(channels.imageAuthorizePrepared, wrap(async (_e, input) => {
+    const proposal = await callBackend("image.proposePrepared", withMediaRoot(input));
+    if (!proposal?.ok) return proposal;
+    const summary = proposal.summary ?? {};
+    const confirmed = await showMainOwnedConfirmation({
+      title: "Confirm prepared image generation",
+      message: "Create one sealed FLUX.1 image generation token?",
+      confirmLabel: "Confirm Generate",
+      intent: "prepared-generation",
+      summary: [
+        { label: "Asset", value: summary.assetId ?? "unknown" },
+        { label: "Spec", value: summary.specVersionId ?? "unknown" },
+        { label: "Engine", value: summary.engine ?? "FLUX.1" },
+        { label: "Prompt", value: summary.prompt ?? "" },
+        { label: "Manifest", value: summary.manifestDigest ?? "" },
+        { label: "Dependencies", value: summary.dependencyCount ?? 0 },
+      ],
+    });
+    return callBackend("image.confirmPrepared", withMediaRoot({ proposalId: proposal.proposalId, confirmed }));
+  }));
+  ipcMain.handle(channels.imageGeneratePrepared, wrap((_e, input) => callBackend("image.generatePrepared", withMediaRoot(input))));
+  ipcMain.handle(channels.imageRejectCanonical, wrap(async (_e, input) => {
+    const proposal = await callBackend("image.proposeCanonicalRejection", withMediaRoot(input));
+    if (!proposal?.ok) return proposal;
+    const summary = proposal.summary ?? {};
+    const confirmed = await showMainOwnedConfirmation({
+      title: "Confirm canonical image rejection",
+      message: "Append a signed rejection decision for this generated image?",
+      confirmLabel: "Confirm Canonical Rejection",
+      intent: "canonical-rejection",
+      summary: [
+        { label: "Authority", value: summary.authorityId ?? "missing" },
+        { label: "Authority digest", value: summary.authorityDigest ?? "missing" },
+        { label: "Asset", value: summary.assetId ?? "unknown" },
+        { label: "Prepared asset", value: summary.preparedAssetId ?? "unknown" },
+        { label: "Iteration", value: summary.iterationId ?? "missing" },
+        { label: "Receipt", value: summary.receiptId ?? "missing" },
+        { label: "Reason", value: String(summary.reason ?? "").trim() },
+      ],
+    });
+    return callBackend("image.confirmCanonicalRejection", withMediaRoot({ proposalId: proposal.proposalId, confirmed }));
+  }));
+  ipcMain.handle(channels.imageApproveCanonical, wrap(async (_e, input) => {
+    const proposal = await callBackend("image.proposeCanonicalApproval", withMediaRoot(input));
+    if (!proposal?.ok) return proposal;
+    const summary = proposal.summary ?? {};
+    const confirmed = await showMainOwnedConfirmation({
+      title: "Confirm canonical image approval",
+      message: "Approve this generated PNG as the canonical asset image?",
+      confirmLabel: "Confirm Canonical Approval",
+      intent: "canonical-approval",
+      summary: [
+        { label: "Asset", value: summary.assetId ?? "unknown" },
+        { label: "Prepared asset", value: summary.preparedAssetId ?? "unknown" },
+        { label: "Iteration", value: summary.iterationId ?? "missing" },
+        { label: "Receipt", value: summary.receiptId ?? "missing" },
+        { label: "Media", value: summary.mediaUri ?? "missing" },
+        { label: "Reason", value: String(summary.reason ?? "").trim() },
+        { label: "Findings", value: (summary.findings ?? []).map((finding) => `${finding.severity}:${finding.id}`).join(", ") },
+      ],
+    });
+    return callBackend("image.confirmCanonicalApproval", withMediaRoot({ proposalId: proposal.proposalId, confirmed }));
+  }));
   ipcMain.handle(channels.enginesStop, wrap(() => callBackend("engines.stop")));
-  ipcMain.handle(channels.enginesBenchmark, wrap((_e, input) => callBackend("engines.benchmark", input)));
-  ipcMain.handle(channels.enginesInspect, wrap((_e, input) => callBackend("engines.inspect", input)));
+
+  ipcMain.handle(channels.imageManifests, wrap(() => callBackend("image.manifests", {})));
   ipcMain.handle(channels.appVersion, wrap(() => app.getVersion()));
   ipcMain.handle(channels.appBuildInfo, wrap(() => readBuildInfo()));
   ipcMain.handle(channels.appModelRoot, wrap(() => callBackend("app.modelRoot")));
@@ -411,8 +700,8 @@ function registerIpc() {
         properties: ["openDirectory"],
       });
       if (picked.canceled || !picked.filePaths[0]) return { canceled: true };
-      if (isUnderModelRoot(picked.filePaths[0])) {
-        throw new Error("D:\\AI\\Models is not a renderer-selectable folder.");
+      if (isUnderModelRoot(picked.filePaths[0]) || isUnderProtectedRuntimeRoot(picked.filePaths[0])) {
+        throw new Error("Local model, runtime, and cache roots are not renderer-selectable folders.");
       }
       return { canceled: false, label: basename(picked.filePaths[0]) };
     }),
@@ -427,7 +716,7 @@ function registerIpc() {
         filters: [{ name: "File", extensions: [extname(defaultName).replace(".", "") || "txt"] }],
       });
       if (picked.canceled || !picked.filePath) return { canceled: true };
-      if (isUnderModelRoot(picked.filePath)) throw new Error("Cannot write into D:\\AI\\Models.");
+      if (isUnderModelRoot(picked.filePath) || isUnderProtectedRuntimeRoot(picked.filePath)) throw new Error("Cannot write into model, runtime, or cache roots.");
       writeFileSync(picked.filePath, String(input?.contents ?? ""), "utf8");
       return { canceled: false, name: basename(picked.filePath) };
     }),
@@ -442,7 +731,7 @@ function registerIpc() {
       });
       if (picked.canceled || !picked.filePaths[0]) return { canceled: true };
       const folder = picked.filePaths[0];
-      if (isUnderModelRoot(folder)) throw new Error("Cannot write into D:\\AI\\Models.");
+      if (isUnderModelRoot(folder) || isUnderProtectedRuntimeRoot(folder)) throw new Error("Cannot write into model, runtime, or cache roots.");
       for (const file of files) {
         const name = String(file?.filename || "file.txt").replace(/[/\\]/g, "");
         writeFileSync(join(folder, name), String(file?.contents ?? ""), "utf8");
@@ -644,6 +933,7 @@ if (!gotLock) {
     uiOrigin = resolveUiOrigin();
     interfaceZoom = readInterfaceZoom();
     registerIpc();
+    registerMediaProtocol();
     startBackend();
     try {
       if (isPackaged()) {

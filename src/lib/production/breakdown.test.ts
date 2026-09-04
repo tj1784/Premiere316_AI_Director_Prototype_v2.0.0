@@ -368,7 +368,7 @@ describe("preparation queue, preflight, and persistence", () => {
     const approved = approveCanonicalSpec(record(), record().assets[0].id, 301);
     const prepared = prepareAssetQueue({ ...approved, assets: approved.assets.map((asset, index) => index === 0 ? { ...asset, preparedApproved: true, readiness: "APPROVED_PREPARED" as const } : asset) });
     const restored = parseProductionBreakdowns(serializeProductionBreakdowns([prepared]));
-    assert.deepEqual(restored, JSON.parse(JSON.stringify([prepared])));
+    assert.deepEqual(restored, JSON.parse(JSON.stringify([{ ...prepared, productionAuthority: null }])));
     assert.equal(restored[0]!.queue.some((item) => item.status === "APPROVED_PREPARED"), true);
     assert.deepEqual(parseProductionBreakdowns("broken"), []);
     const unsafe = JSON.parse(serializeProductionBreakdowns([prepared]));
@@ -376,7 +376,7 @@ describe("preparation queue, preflight, and persistence", () => {
     assert.equal(parseProductionBreakdowns(JSON.stringify(unsafe))[0].queue.some((item) => (item.status as string) === "RUNNING"), false);
     assert.equal(sanitizeProductionBreakdown(undefined), null);
     assert.equal(sanitizeProductionBreakdown({ schemaVersion: 1 }), null);
-    assert.deepEqual(sanitizeProductionBreakdown(prepared), prepared);
+    assert.deepEqual(sanitizeProductionBreakdown(prepared), { ...prepared, productionAuthority: null });
   });
 
   it("migrates The Last Reel into canonical production records", () => {

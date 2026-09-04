@@ -121,7 +121,9 @@ describe("Inventory 2.0 lineage and preparation", () => {
     assert.match(blocked.preparedAssets?.find((item) => item.assetId === asset.id)?.blockers.join("\n") ?? "", /visual-development bible/);
     const ready = prepareAssetRecords(current, ["visual:approved"], ["cine:approved"], 19);
     const prepared = ready.preparedAssets?.find((item) => item.assetId === asset.id);
-    assert.equal(prepared?.status, "APPROVED_PREPARED");
+    assert.equal(prepared?.status, "READY_TO_PREPARE");
+    assert.equal(prepared?.approvedAt, null);
+    assert.equal(prepared?.preparedApprovalRootId, null);
     assert.equal(ready.graph?.nodes.some((node) => node.id === `prepared-asset:${prepared?.id}`), true);
   });
 });

@@ -1,0 +1,9 @@
+﻿{
+    "path":  "C:\\Users\\teeja\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Premiere316.lnk",
+    "exists":  true,
+    "target":  "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+    "workingDirectory":  "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked",
+    "icon":  "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe,0",
+    "expectedTarget":  "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+    "targetMatches":  true
+}

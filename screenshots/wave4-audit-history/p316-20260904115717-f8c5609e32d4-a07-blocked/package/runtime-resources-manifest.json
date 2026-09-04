@@ -1,0 +1,293 @@
+{
+  "root": "dist-desktop/win-unpacked/resources",
+  "count": 57,
+  "bytes": 4850574,
+  "manifestSha256": "d8ec2443b48ac8b46eb5d798419dab53e67acf2774aa8a5262fa017fb8ea8a45",
+  "files": [
+    {
+      "relative": "app.asar",
+      "bytes": 121421,
+      "sha256": "12a8a6e23a2ab249abb1947c8e19f8de64bdd7568b7f5fc2ad3c401623c46c92"
+    },
+    {
+      "relative": "backend.mjs",
+      "bytes": 155417,
+      "sha256": "6f2ea7ded467b6f8a2e37df37a21b1623774c3ce2e0840b5e48f9331a3dcbb86"
+    },
+    {
+      "relative": "build-info.json",
+      "bytes": 274,
+      "sha256": "3ec2bcd5fc696aebe43ac418be5618f1625b2b1adee3bb7ed073aa043baacffb"
+    },
+    {
+      "relative": "elevate.exe",
+      "bytes": 107520,
+      "sha256": "9b1fbf0c11c520ae714af8aa9af12cfd48503eedecd7398d8992ee94d1b4dc37"
+    },
+    {
+      "relative": "icon.ico",
+      "bytes": 62606,
+      "sha256": "75012dea950b89edfc168dd881c464b7dd068f645483fa708ff216d37111b5ac"
+    },
+    {
+      "relative": "ui/artifacts/model-catalog-cache.json",
+      "bytes": 1215108,
+      "sha256": "2dc48147d09759ea625ecc4894db53aa80cb2b7d03d7761813c30cc132dfb16f"
+    },
+    {
+      "relative": "ui/nitro.json",
+      "bytes": 335,
+      "sha256": "9fc7adc2d1b03b0c606107c5da4a1e1047655b996664e8f31d970877335e738f"
+    },
+    {
+      "relative": "ui/public/__grok/icon-180.png",
+      "bytes": 2100,
+      "sha256": "3cf5d17d294b51c6cca6c86070309b88554b7ad702b0412e8e2709a01990bc8a"
+    },
+    {
+      "relative": "ui/public/__grok/install/assets/homescreen/glass-puzzle.svg",
+      "bytes": 1811,
+      "sha256": "a677c9356c23d1e699559ddbffac97cd135c2782cd893fb34f3738f6d11bee17"
+    },
+    {
+      "relative": "ui/public/__grok/install/assets/homescreen/glass-share.svg",
+      "bytes": 2388,
+      "sha256": "efad1b4b507a68c1f1af4aad2c93e8c24076224aa593da86677697f543d026d6"
+    },
+    {
+      "relative": "ui/public/__grok/install/assets/homescreen/logo-grok.svg",
+      "bytes": 1059,
+      "sha256": "0654e3e59cce69856f38525cbfe4ab3a9ef52d4b64c8532dd0bc1a3f34fcb5b1"
+    },
+    {
+      "relative": "ui/public/__grok/install/assets/homescreen/ob-ipad.png",
+      "bytes": 101843,
+      "sha256": "4c9b09a4660c662b394597d551a04124293b0e37a7a7c72271dd2948c4499a14"
+    },
+    {
+      "relative": "ui/public/__grok/install/assets/homescreen/ob-phone.png",
+      "bytes": 103612,
+      "sha256": "80e0a5ede614d9b920c67d7cb79c80a79134687b1fc9f560384e896a88e302db"
+    },
+    {
+      "relative": "ui/public/__grok/install/assets/homescreen/plus.svg",
+      "bytes": 2401,
+      "sha256": "c2c94be46aa2c3c2fda95d7c6f2fc6d0b656d1f5847828d5d95b5a81a6f4f20d"
+    },
+    {
+      "relative": "ui/public/__grok/install/styles.css",
+      "bytes": 6717,
+      "sha256": "7e8e881302f58e54a9c07e7be395692d3de20fdaa27ce358531cc8dcca472cb6"
+    },
+    {
+      "relative": "ui/public/assets/client-DgvorinX.js",
+      "bytes": 74,
+      "sha256": "6efec93b35bd14cc322387ea11a6403617599f5214b265c74bb0c340c9271402"
+    },
+    {
+      "relative": "ui/public/assets/index-CgbdNhYg.js",
+      "bytes": 434586,
+      "sha256": "7721507c260a2f69a80e84eac3b22d651fa95ee58f69db07c0bea9e92c34469c"
+    },
+    {
+      "relative": "ui/public/assets/model-registry-CThVblaA.js",
+      "bytes": 214,
+      "sha256": "2d0fc80e124c60ad0fcdd49d5c2368038bd764995e381e8d3fe4bcb86811000b"
+    },
+    {
+      "relative": "ui/public/assets/routes-6-hXIBz_.js",
+      "bytes": 384871,
+      "sha256": "48ae2e82e89234739951e5a221cb1526553ce8510236450ce48b6efcc86b040c"
+    },
+    {
+      "relative": "ui/public/assets/styles-7T3d-Kc5.css",
+      "bytes": 40739,
+      "sha256": "159153e30e6e4db50186b7655347d8865fe81cff406971733f1fbf17bc18ea92"
+    },
+    {
+      "relative": "ui/public/favicon.svg",
+      "bytes": 402,
+      "sha256": "ba8da813d5839b7db8b15953b0b6c07d453e319dab1c894d72f7afaab4abddce"
+    },
+    {
+      "relative": "ui/public/og.jpg",
+      "bytes": 82137,
+      "sha256": "76d6eb20d49ecc77efe82b92cbe91502a3220ed42d098bd92ba15cc8b4d6e5d5"
+    },
+    {
+      "relative": "ui/server/_chunks/ssr-renderer.mjs",
+      "bytes": 965,
+      "sha256": "267da040fd4e8db0561f01b4b72c3b782daa125b2bab94f598e0346395c21526"
+    },
+    {
+      "relative": "ui/server/_libs/@radix-ui/react-compose-refs+[...].mjs",
+      "bytes": 16793,
+      "sha256": "0f0bd7d5d1cb31d6d1d60f49128e809cbbbce394fb2b10a35dbb05eaf31d9d7e"
+    },
+    {
+      "relative": "ui/server/_libs/@tanstack/react-router+[...].mjs",
+      "bytes": 660863,
+      "sha256": "a0e39d45a30ebe07729dbef6e8cffbd436b3145f7d73642941bc7ca6c89de7a9"
+    },
+    {
+      "relative": "ui/server/_libs/@tanstack/router-core+[...].mjs",
+      "bytes": 122945,
+      "sha256": "a4c88451b581a6404a110e52176337c2f1f3329bafafb5085ec3d2d325a4eeda"
+    },
+    {
+      "relative": "ui/server/_libs/class-variance-authority+clsx.mjs",
+      "bytes": 3173,
+      "sha256": "b285c32099a1ef600310ee6006091d3c004a86f441753eac7b0bafe275bf25f4"
+    },
+    {
+      "relative": "ui/server/_libs/h3+rou3+srvx.mjs",
+      "bytes": 46008,
+      "sha256": "e7149a353ad6cf755b4f817fe7836f7b49d8b6d6bae7af5efc300fc1f7053824"
+    },
+    {
+      "relative": "ui/server/_libs/h3-v2+rou3.mjs",
+      "bytes": 9830,
+      "sha256": "af1362333c0c985fbc7beccf1f16eedce7f9067fac4e0e47318b81d36f8b59ce"
+    },
+    {
+      "relative": "ui/server/_libs/lucide-react.mjs",
+      "bytes": 24231,
+      "sha256": "8e27a74cacb87d31dd638d03ab38f36c85b1805f8f06029ac9d852663f58bcc1"
+    },
+    {
+      "relative": "ui/server/_libs/radix-ui__react-slot.mjs",
+      "bytes": 5617,
+      "sha256": "b43b65faf2ee349068df39806665ec42059d93b5c09b20adf0af676b09b54231"
+    },
+    {
+      "relative": "ui/server/_libs/sonner.mjs",
+      "bytes": 53690,
+      "sha256": "6c366cbf20ae2f6b7c23d4f84154f2062b052f530e9e42b7fd6a5ce9b268e953"
+    },
+    {
+      "relative": "ui/server/_libs/tailwind-merge.mjs",
+      "bytes": 88134,
+      "sha256": "c6ab0b0bbba3cd0d59f2eec716af79c1aca6749ab87846fced6705b1fb528cde"
+    },
+    {
+      "relative": "ui/server/_libs/tanstack__history.mjs",
+      "bytes": 12053,
+      "sha256": "a8955fd7540cf8741692fc48f3c6ea76c9dc1bb360a4c2144cea2bc4ac245594"
+    },
+    {
+      "relative": "ui/server/_libs/ufo.mjs",
+      "bytes": 2215,
+      "sha256": "e32d7c881afd564f29de9afb70d25af9ba6791b215ede863e867dcfc9df2fccc"
+    },
+    {
+      "relative": "ui/server/_libs/zod.mjs",
+      "bytes": 159585,
+      "sha256": "764fd939431d6a726df0a4fa11923be72529a7d5c830ed727e720d973e3c525f"
+    },
+    {
+      "relative": "ui/server/_libs/zustand.mjs",
+      "bytes": 6722,
+      "sha256": "590b5ef6568d51c61209f9edb77b8096b05ab53cac0470e4fef993be9afe9330"
+    },
+    {
+      "relative": "ui/server/_runtime.mjs",
+      "bytes": 1580,
+      "sha256": "aefa2acac0467f8b79c39ad8f80ac480456390bc0a607251f5e9b860675085d9"
+    },
+    {
+      "relative": "ui/server/_ssr/bible-DuZQAFhL.mjs",
+      "bytes": 12822,
+      "sha256": "c4bcacfc9b7cf0e0686e7c3dea03ccd4c15894d04b933a0ddb15c07632af41a5"
+    },
+    {
+      "relative": "ui/server/_ssr/client-Cv2GMbD6.mjs",
+      "bytes": 98,
+      "sha256": "dc672fd1406f4e55406d2ab35bbdd9afe5c8e2633b0672047ff71a70690ee3cb"
+    },
+    {
+      "relative": "ui/server/_ssr/createServerRpc-A6pJPYTF.mjs",
+      "bytes": 386,
+      "sha256": "d1cdbad4bf789f28a36dcb33e118dd64a3016a531e8fff5164466b20e3203764"
+    },
+    {
+      "relative": "ui/server/_ssr/empty-plugin-adapters-D9UWiqvJ.mjs",
+      "bytes": 230,
+      "sha256": "ee1957ac485b923838aecb47c3427e91eb7275698cefcda4a6c9018e6cdb1c9e"
+    },
+    {
+      "relative": "ui/server/_ssr/lmstudio-provider.server-Bs6B7Jet.mjs",
+      "bytes": 12358,
+      "sha256": "c5574531f1908821d4a63ce58c8383a52df2b4ee219324c664806e51c5e2df9f"
+    },
+    {
+      "relative": "ui/server/_ssr/model-catalog-B1grMz8f.mjs",
+      "bytes": 2171,
+      "sha256": "0965f341deb43861378ba72a90f0093705d6377c040a168364dcb6e79c110fdc"
+    },
+    {
+      "relative": "ui/server/_ssr/model-registry-BDbnLCh0.mjs",
+      "bytes": 982,
+      "sha256": "7af13b18ba47dcac7e6a3c809b3d6de96b90a51082cd76c460dfdac12d6954ed"
+    },
+    {
+      "relative": "ui/server/_ssr/model-registry-DCLYXJjH.mjs",
+      "bytes": 466,
+      "sha256": "a1aacc775cf4ea10267cd39d1225ae44df53dc8a4f0f60ac1d7ed91d32df7d21"
+    },
+    {
+      "relative": "ui/server/_ssr/model-scan.server-BKPrfw1i.mjs",
+      "bytes": 36357,
+      "sha256": "b250e33971bd58c44fc4bf09d90c5cd15b8866ff935c931c3d091b523fcace33"
+    },
+    {
+      "relative": "ui/server/_ssr/router-Cve99L11.mjs",
+      "bytes": 12871,
+      "sha256": "d2a47585f3bb230143c0c04be612cc735fa0eb162111e01dc91c56b8c9f73fb7"
+    },
+    {
+      "relative": "ui/server/_ssr/routes-DmZZ_WhX.mjs",
+      "bytes": 537913,
+      "sha256": "4823d18f1930b544b8ca34d8588a79984a4f191300b1b66dd1033f3b28871097"
+    },
+    {
+      "relative": "ui/server/_ssr/screenplay-api-cwKzhjUP.mjs",
+      "bytes": 5928,
+      "sha256": "54e009ff0e28f35090b06101b57ac6f690762651cc848ba0ff6db31a9bbc1c46"
+    },
+    {
+      "relative": "ui/server/_ssr/screenplay-jobs.server-RkIqqcGt.mjs",
+      "bytes": 14547,
+      "sha256": "f144da59030ca5184b68637eabacd41b9ed92ee7055486cc52495e76dd315f59"
+    },
+    {
+      "relative": "ui/server/_ssr/screenplay-models-D_HCauFo.mjs",
+      "bytes": 44507,
+      "sha256": "06bb1544d411dca5a3e238f2cded1dee77dfdc9f6922decdbab733427fd73f2e"
+    },
+    {
+      "relative": "ui/server/_ssr/ssr.mjs",
+      "bytes": 68459,
+      "sha256": "4c0a1b60f22de6578f0044bda2e9c484c8f19b9cb8731937a4b53bf989016735"
+    },
+    {
+      "relative": "ui/server/_ssr/start-5Z2QO8AU.mjs",
+      "bytes": 140,
+      "sha256": "2c644f9fa515073658d009ff4f694a224001732f104818e6c80212ff0afc37e8"
+    },
+    {
+      "relative": "ui/server/_tanstack-start-manifest_v-DtJ4Eqfp.mjs",
+      "bytes": 563,
+      "sha256": "8a78281486bb6b190b1f88af3076ac18177a2624ba7f9868caa5da1bb466a231"
+    },
+    {
+      "relative": "ui/server/index.mjs",
+      "bytes": 39228,
+      "sha256": "d708ab859d9a64c0d435761914af1fd89878f4941b234403effd867ac65b9286"
+    },
+    {
+      "relative": "workers/flux1_jsonl_worker.py",
+      "bytes": 18509,
+      "sha256": "8c37b861137eb7d7b7d35b3966a6599ac034052844caab5aa707167e46032678"
+    }
+  ]
+}

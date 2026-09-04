@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'none'; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Review production authority</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0e1116; --panel:#171b22; --text:#eef2f7; --muted:#aab4c0; --line:#2a313b; --accent:#d7b56d; --danger:#f87171; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-width:390px; background:var(--bg); color:var(--text); font:14px/1.5 system-ui, -apple-system, Segoe UI, sans-serif; }
+    header { padding:16px 18px; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:2; }
+    h1 { margin:0 0 6px; font-size:18px; line-height:1.25; }
+    .notice { margin:0; color:var(--muted); }
+    .notice strong { color:var(--accent); }
+    main { padding:14px 18px 86px; }
+    label { display:block; color:var(--muted); margin-bottom:8px; }
+    input { width:100%; min-height:44px; border:1px solid var(--line); border-radius:10px; padding:0 12px; background:#0b0d11; color:var(--text); }
+    pre { white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere; border:1px solid var(--line); border-radius:12px; background:#080a0e; padding:14px; min-height:55vh; max-height:calc(100vh - 230px); overflow:auto; }
+    footer { position:fixed; left:0; right:0; bottom:0; display:flex; gap:10px; justify-content:flex-end; padding:14px 18px; border-top:1px solid var(--line); background:var(--panel); }
+    button { min-height:44px; border:1px solid var(--line); border-radius:10px; padding:0 14px; background:#202632; color:var(--text); font-weight:700; cursor:pointer; }
+    button.primary { background:var(--accent); color:#211804; border-color:var(--accent); }
+    button.cancel { color:#fee2e2; border-color:#7f1d1d; }
+    mark { background:#6b4f16; color:var(--text); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Seal production authority</h1>
+    <p class="notice"><strong>Untrusted project proposal normalized by the backend.</strong> Review every field below. Sealing grants only the exact authority shown.</p>
+  </header>
+  <main>
+    <label for="search">Search full review document</label>
+    <input id="search" type="search" autocomplete="off" placeholder="Find asset ids, prompt bytes, digests, references…" />
+    <pre id="review" tabindex="0">Loading authority review…</pre>
+  </main>
+  <footer>
+    <button id="cancel" class="cancel" type="button">Cancel</button>
+    <button id="seal" class="primary" type="button">Seal exactly reviewed authority</button>
+  </footer>
+</body>
+</html>

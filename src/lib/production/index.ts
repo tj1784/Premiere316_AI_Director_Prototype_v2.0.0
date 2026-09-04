@@ -7,3 +7,4 @@ export * from "./persistence.ts";
 export * from "./screenplay-adapter.ts";
 export * from "./deterministic-extractor.ts";
 export * from "./dependency-graph.ts";
+export * from "./image-iterations.ts";

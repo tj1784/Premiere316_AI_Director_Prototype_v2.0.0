@@ -1,21 +1,29 @@
 import type { ModelCatalog } from "@/lib/studio/model-catalog.ts";
 import type {
   CatalogQuery,
-  EngineBenchmarkInput,
-  EngineRuntimeCheckInput,
-  EngineRuntimeCheckResult,
-  EngineWakeResult,
   OpenImage,
+  ProductionAuthoritySealInput,
+  ProductionAuthoritySealResult,
+  ProductionAuthorityStatusInput,
+  ProductionAuthorityStatusResult,
+  PreparedApprovalInput,
+  PreparedApprovalResult,
+  PreparedGenerationAuthorizationInput,
+  PreparedGenerationAuthorizationResult,
+  PreparedImageGenerateInput,
+  PreparedImageCanonicalApprovalInput,
+  PreparedImageCanonicalApprovalResult,
+  PreparedImageCanonicalRejectionInput,
+  PreparedImageCanonicalRejectionResult,
   SaveManyInput,
   SaveManyResult,
   SaveTextInput,
   SaveTextResult,
-  StillExposeInput,
   StillExposeResult,
   SystemStatus,
   DesktopBuildInfo,
 } from "./protocol.ts";
-import type { AdapterBenchmark } from "@/lib/studio/engine-adapter.ts";
+import type { ImageComponentManifest } from "@/lib/studio/image-component-resolver.server.ts";
 
 export function isDesktopApp(): boolean {
   return typeof window !== "undefined" && window.premiere316?.isDesktop === true;
@@ -27,33 +35,49 @@ export async function desktopCatalog(query: CatalogQuery = {}): Promise<ModelCat
   return getModelCatalog({ data: query });
 }
 
-export async function desktopWakeEngine(): Promise<EngineWakeResult> {
-  if (isDesktopApp()) return window.premiere316!.stills.wake();
-  const { wakeLocalEngine } = await import("@/lib/ai/director.ts");
-  return wakeLocalEngine();
-}
-
-export async function desktopExposeStill(input: StillExposeInput): Promise<StillExposeResult> {
-  if (isDesktopApp()) return window.premiere316!.stills.expose(input);
-  const { generateStill } = await import("@/lib/ai/director.ts");
-  return generateStill({ data: input });
-}
-
 export async function desktopUnloadEngine(): Promise<{ ok: true; stopped: boolean }> {
   if (!isDesktopApp()) return { ok: true, stopped: false };
   return window.premiere316!.stills.unload();
 }
 
-export async function desktopBenchmarkEngine(input: EngineBenchmarkInput): Promise<AdapterBenchmark> {
-  if (isDesktopApp()) return window.premiere316!.stills.benchmark(input);
-  throw new Error("Native engine calibration is available in the standalone desktop application.");
+export async function desktopImageManifests(): Promise<ImageComponentManifest[]> {
+  if (!isDesktopApp()) return [];
+  return window.premiere316!.image.manifests();
 }
 
-export async function desktopInspectEngine(input: EngineRuntimeCheckInput): Promise<EngineRuntimeCheckResult> {
-  if (!isDesktopApp()) {
-    return { ok: false, error: "Native engine inspection is available only in the standalone desktop application." };
-  }
-  return window.premiere316!.stills.inspect(input);
+export async function desktopSealProductionAuthority(input: ProductionAuthoritySealInput): Promise<ProductionAuthoritySealResult> {
+  if (!isDesktopApp()) return { ok: false, error: "Production authority sealing is available only in the packaged desktop application." };
+  return window.premiere316!.image.sealAuthority(input);
+}
+
+export async function desktopProductionAuthorityStatus(input: ProductionAuthorityStatusInput): Promise<ProductionAuthorityStatusResult> {
+  if (!isDesktopApp()) return { ok: false, error: "Production authority status is available only in the packaged desktop application." };
+  return window.premiere316!.image.authorityStatus(input);
+}
+
+export async function desktopApprovePreparedImage(input: PreparedApprovalInput): Promise<PreparedApprovalResult> {
+  if (!isDesktopApp()) return { ok: false, error: "Prepared approval is available only in the packaged desktop application." };
+  return window.premiere316!.image.approvePrepared(input);
+}
+
+export async function desktopAuthorizePreparedImage(input: PreparedGenerationAuthorizationInput): Promise<PreparedGenerationAuthorizationResult> {
+  if (!isDesktopApp()) return { ok: false, error: "Prepared image authorization is available only in the packaged desktop application." };
+  return window.premiere316!.image.authorizePrepared(input);
+}
+
+export async function desktopGeneratePreparedImage(input: PreparedImageGenerateInput): Promise<StillExposeResult> {
+  if (!isDesktopApp()) return { ok: false, error: "Prepared image generation is available only in the packaged desktop application." };
+  return window.premiere316!.image.generatePrepared(input);
+}
+
+export async function desktopApproveCanonicalImage(input: PreparedImageCanonicalApprovalInput): Promise<PreparedImageCanonicalApprovalResult> {
+  if (!isDesktopApp()) return { ok: false, error: "Prepared image canonical approval is available only in the packaged desktop application." };
+  return window.premiere316!.image.approveCanonical(input);
+}
+
+export async function desktopRejectCanonicalImage(input: PreparedImageCanonicalRejectionInput): Promise<PreparedImageCanonicalRejectionResult> {
+  if (!isDesktopApp()) return { ok: false, error: "Prepared image canonical rejection is available only in the packaged desktop application." };
+  return window.premiere316!.image.rejectCanonical(input);
 }
 
 export async function desktopOpenImages(): Promise<OpenImage[]> {

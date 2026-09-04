@@ -21,9 +21,10 @@ const IMPLEMENTED_STAGES = [
   { id: "shots", button: "08 Shots", left: "none", right: "none", timeline: false },
   { id: "prompts", button: "09 Prompt Lab", left: "none", right: "none", timeline: false },
   { id: "generate", button: "10 Generate", left: "generation", right: "generation", timeline: false },
-  { id: "timeline", button: "11 Stitch", left: "media", right: "clip", timeline: true },
-  { id: "score", button: "12 Score", left: "none", right: "none", timeline: false },
-  { id: "export", button: "13 Export", left: "none", right: "none", timeline: false },
+  { id: "review", button: "11 Review", left: "none", right: "none", timeline: false },
+  { id: "timeline", button: "12 Stitch", left: "media", right: "clip", timeline: true },
+  { id: "score", button: "13 Score", left: "none", right: "none", timeline: false },
+  { id: "export", button: "14 Export", left: "none", right: "none", timeline: false },
 ];
 
 function assertIsolatedUserData(userDataDir) {

@@ -1,0 +1,102 @@
+[
+  {
+    "root": "D:/AI/Models",
+    "baseline": {
+      "root": "D:/AI/Models",
+      "files": 818,
+      "dirs": 335,
+      "links": 0,
+      "bytes": 2310237986323,
+      "errors": []
+    },
+    "current": {
+      "root": "D:/AI/Models",
+      "files": 818,
+      "dirs": 335,
+      "links": 0,
+      "bytes": 2310237986323,
+      "errors": []
+    },
+    "metadataIdentical": true
+  },
+  {
+    "root": "D:/Projects/flux",
+    "baseline": {
+      "root": "D:/Projects/flux",
+      "files": 103,
+      "dirs": 32,
+      "links": 0,
+      "bytes": 77126456,
+      "errors": []
+    },
+    "current": {
+      "root": "D:/Projects/flux",
+      "files": 103,
+      "dirs": 32,
+      "links": 0,
+      "bytes": 77126456,
+      "errors": []
+    },
+    "metadataIdentical": true
+  },
+  {
+    "root": "D:/Projects/Flux2",
+    "baseline": {
+      "root": "D:/Projects/Flux2",
+      "files": 73,
+      "dirs": 32,
+      "links": 0,
+      "bytes": 95573984,
+      "errors": []
+    },
+    "current": {
+      "root": "D:/Projects/Flux2",
+      "files": 73,
+      "dirs": 32,
+      "links": 0,
+      "bytes": 95573984,
+      "errors": []
+    },
+    "metadataIdentical": true
+  },
+  {
+    "root": "D:/_Cache/HuggingFace",
+    "baseline": {
+      "root": "D:/_Cache/HuggingFace",
+      "files": 65,
+      "dirs": 51,
+      "links": 0,
+      "bytes": 53202038520,
+      "errors": []
+    },
+    "current": {
+      "root": "D:/_Cache/HuggingFace",
+      "files": 65,
+      "dirs": 51,
+      "links": 0,
+      "bytes": 53202038520,
+      "errors": []
+    },
+    "metadataIdentical": true
+  },
+  {
+    "root": "D:/Dev/Tools/Python312",
+    "baseline": {
+      "root": "D:/Dev/Tools/Python312",
+      "files": 72157,
+      "dirs": 7795,
+      "links": 0,
+      "bytes": 5656102517,
+      "errors": []
+    },
+    "current": {
+      "root": "D:/Dev/Tools/Python312",
+      "files": 72157,
+      "dirs": 7795,
+      "links": 0,
+      "bytes": 5656102517,
+      "errors": []
+    },
+    "metadataIdentical": true
+  }
+]

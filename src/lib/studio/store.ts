@@ -252,7 +252,7 @@ export function useStage(): StageId {
 
 function normalizeStage(stage: unknown): StageId | null {
   if (stage === "brief") return "intake";
-  return typeof stage === "string" && ["intake", "research", "screenplay", "inventory", "visual-development", "cinematography", "performance", "shots", "prompts", "generate", "timeline", "score", "export"].includes(stage)
+  return typeof stage === "string" && ["intake", "research", "screenplay", "inventory", "visual-development", "cinematography", "performance", "shots", "prompts", "generate", "review", "timeline", "score", "export"].includes(stage)
     ? stage as StageId
     : null;
 }

@@ -1,29 +1,78 @@
 import type { ModelCatalog } from "@/lib/studio/model-catalog.ts";
 import type { NativeGenerationValues } from "@/lib/studio/engine-controls.ts";
 import type { GenerationProvenance } from "@/lib/studio/generation-provenance.ts";
-import type { AdapterBenchmark } from "@/lib/studio/engine-adapter.ts";
+import type { ImageComponentManifest } from "@/lib/studio/image-component-resolver.server.ts";
+import type { ProductionBreakdown } from "@/lib/production/types.ts";
 
 export type CatalogQuery = {
   force?: boolean;
   deep?: boolean;
 };
 
-export type StillExposeInput = {
-  prompt: string;
+export type PreparedImageOutputProof = {
+  mediaUri: string;
+  mediaSha256: string;
+  sidecarSha256: string;
+  width: number;
+  height: number;
+  byteLength: number;
+  mediaBytes: number[];
+  sidecarBytes: number[];
+  receiptId?: string;
+};
+
+export type ProductionAuthoritySealInput = {
+  pictureId: string;
+  rawCanonical: ProductionBreakdown;
+};
+
+export type ProductionAuthoritySealResult = { ok: true; authorityId: string; digest: string; createdAt: number; summary?: unknown } | { ok: false; error: string };
+
+export type ProductionAuthorityStatusInput = { pictureId: string };
+
+export type ProductionAuthorityStatusResult = { ok: true; status: "CURRENT" | "NO_AUTHORITY" | "INVALID"; authorityId: string | null; digest: string | null; createdAt: number | null; summary?: unknown; preparedApprovals?: Array<{ rootId: string; digest: string; preparedAssetId: string; assetId: string; authorityId: string; authorityDigest: string; approvedAt: number }>; canonicalHistory?: unknown[] } | { ok: false; error: string };
+
+export type PreparedApprovalInput = {
+  authorityId: string;
+  preparedAssetId: string;
+};
+
+export type PreparedApprovalResult = { ok: true; rootId: string; approvedAt: number; digest: string } | { ok: false; error: string };
+
+export type PreparedGenerationAuthorizationInput = {
+  authorityId: string;
+  preparedAssetId: string;
+  preparedApprovalRootId: string;
   engineId: string;
   engineName: string;
-  references: string[];
-  selectedBasePath: string;
   values: NativeGenerationValues;
 };
 
-export type StillExposeResult = { ok: true; url: string; provenance: GenerationProvenance } | { ok: false; error: string };
+export type PreparedGenerationAuthorizationResult =
+  | { ok: true; token: string; expiresAt: number; manifest: ImageComponentManifest }
+  | { ok: false; error: string; manifest?: ImageComponentManifest };
 
-export type EngineBenchmarkInput = Pick<StillExposeInput, "engineId" | "engineName" | "selectedBasePath" | "values">;
-export type EngineRuntimeCheckInput = Pick<StillExposeInput, "engineId" | "engineName" | "selectedBasePath">;
-export type EngineRuntimeCheckResult = { ok: true; modelName: string } | { ok: false; error: string };
+export type PreparedImageGenerateInput = {
+  token: string;
+};
 
-export type EngineWakeResult = { ok: true } | { ok: false; error: string };
+export type PreparedImageCanonicalApprovalInput = {
+  authorityId: string;
+  preparedApprovalRootId: string;
+  receiptId: string;
+  reason: string;
+  iterationId: string;
+  findings: { id: string; confirmed: boolean }[];
+};
+
+export type PreparedImageCanonicalApprovalResult = { ok: true; decisionId: string; proof: import("@/lib/production/types.ts").BackendCanonicalProof; output: PreparedImageOutputProof } | { ok: false; error: string };
+
+export type PreparedImageCanonicalRejectionInput = Omit<PreparedImageCanonicalApprovalInput, "findings">;
+export type PreparedImageCanonicalRejectionResult = { ok: true; decisionId: string; decision: unknown } | { ok: false; error: string };
+
+export type StillExposeResult =
+  | { ok: true; url: string; provenance: GenerationProvenance; output: PreparedImageOutputProof; receiptId?: string; receiptDigest?: string; iterationId?: string; continuityFindings?: import("@/lib/production/types.ts").IterationContinuityFinding[] }
+  | { ok: false; error: string; manifest?: ImageComponentManifest };
 
 export type OpenImage = {
   name: string;
@@ -77,18 +126,24 @@ export type DesktopBuildInfo = {
   appPath: string;
 };
 
-/** Typed desktop bridge. No filesystem, spawn, or model-root mutation. */
+/** Typed desktop bridge. No filesystem, spawn, model-root, free wake, free expose, or benchmark primitive. */
 export type Premiere316Desktop = {
   isDesktop: true;
   catalog: {
     get: (query?: CatalogQuery) => Promise<ModelCatalog>;
   };
   stills: {
-    expose: (input: StillExposeInput) => Promise<StillExposeResult>;
-    wake: () => Promise<EngineWakeResult>;
     unload: () => Promise<{ ok: true; stopped: boolean }>;
-    benchmark: (input: EngineBenchmarkInput) => Promise<AdapterBenchmark>;
-    inspect: (input: EngineRuntimeCheckInput) => Promise<EngineRuntimeCheckResult>;
+  };
+  image: {
+    manifests: () => Promise<ImageComponentManifest[]>;
+    sealAuthority: (input: ProductionAuthoritySealInput) => Promise<ProductionAuthoritySealResult>;
+    authorityStatus: (input: ProductionAuthorityStatusInput) => Promise<ProductionAuthorityStatusResult>;
+    approvePrepared: (input: PreparedApprovalInput) => Promise<PreparedApprovalResult>;
+    authorizePrepared: (input: PreparedGenerationAuthorizationInput) => Promise<PreparedGenerationAuthorizationResult>;
+    generatePrepared: (input: PreparedImageGenerateInput) => Promise<StillExposeResult>;
+    approveCanonical: (input: PreparedImageCanonicalApprovalInput) => Promise<PreparedImageCanonicalApprovalResult>;
+    rejectCanonical: (input: PreparedImageCanonicalRejectionInput) => Promise<PreparedImageCanonicalRejectionResult>;
   };
   dialog: {
     openImages: () => Promise<OpenImage[]>;
@@ -126,11 +181,7 @@ declare global {
 
 export const DESKTOP_CHANNELS = {
   catalogGet: "p316:catalog:get",
-  stillsExpose: "p316:stills:expose",
-  stillsWake: "p316:stills:wake",
   enginesStop: "p316:engines:stop",
-  enginesBenchmark: "p316:engines:benchmark",
-  enginesInspect: "p316:engines:inspect",
   dialogOpenImages: "p316:dialog:openImages",
   dialogOpenFolder: "p316:dialog:openFolder",
   dialogSaveText: "p316:dialog:saveText",
@@ -141,6 +192,14 @@ export const DESKTOP_CHANNELS = {
   credentialsDelete: "p316:credentials:delete",
   appVersion: "p316:app:version",
   appBuildInfo: "p316:app:buildInfo",
+  imageManifests: "p316:image:manifests",
+  imageSealAuthority: "p316:image:sealAuthority",
+  imageAuthorityStatus: "p316:image:authorityStatus",
+  imageAuthorizePrepared: "p316:image:authorizePrepared",
+  imageApprovePrepared: "p316:image:approvePrepared",
+  imageGeneratePrepared: "p316:image:generatePrepared",
+  imageApproveCanonical: "p316:image:approveCanonical",
+  imageRejectCanonical: "p316:image:rejectCanonical",
   appModelRoot: "p316:app:modelRoot",
   appSystemStatus: "p316:app:systemStatus",
   zoomGet: "p316:zoom:get",

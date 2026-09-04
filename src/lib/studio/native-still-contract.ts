@@ -3,13 +3,10 @@ import type { NativeAdapterCapabilities, NativeGenerationValues } from "./engine
 export type NativeStillWorkerRequest = {
   method: "generate";
   prompt: string;
-  engineId: string;
-  engineName: string;
   out: string;
   width: number;
   height: number;
   seed: number;
-  refs: string[];
 };
 
 export type NativeStillWorkerResult = {
@@ -47,13 +44,10 @@ export function toNativeStillWorkerRequest(input: {
   return {
     method: "generate",
     prompt: input.prompt.trim(),
-    engineId: input.engineId,
-    engineName: input.engineName,
     out: input.out,
-    width: integer(values.width, capabilities.controls.width.runtimeDefault),
-    height: integer(values.height, capabilities.controls.height.runtimeDefault),
+    width: capabilities.adapterId === "flux" ? 512 : integer(values.width, capabilities.controls.width.runtimeDefault),
+    height: capabilities.adapterId === "flux" ? 512 : integer(values.height, capabilities.controls.height.runtimeDefault),
     seed: integer(values.seed, capabilities.controls.seed.runtimeDefault),
-    refs: capabilities.controls.references.supported ? [...input.referencePaths] : [],
   };
 }
 

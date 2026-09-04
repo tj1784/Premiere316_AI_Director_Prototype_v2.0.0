@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-04T05:10:58.187Z",
+  "updatedAt": "2026-09-04T13:30:28.283Z",
   "rules": {
     "singleWriterPerCwd": true,
     "maxConcurrentMutatingAgents": 5,
@@ -258,6 +258,70 @@
       "releasedAt": "2026-09-04T05:10:58.187Z",
       "activationEvidence": "HEAD 16c5b34 clean package checkpoint; build p316-20260903203247-955eb4a6feaa; target Wave 3 tag absent before finalization; all A07/A08/A64 audits passed.",
       "releaseEvidence": "Wave 3 promoted GREEN for packaged build p316-20260903203247-955eb4a6feaa; Wave 4 opened but not started with only I-001 READY; final tag wave3-p316-20260903203247-955eb4a6feaa authorized on this governance commit."
+    },
+    {
+      "pattern": "src/lib/studio/image-component-resolver.server.ts; src/lib/production/image-iterations.ts; src/lib/production/types.ts; src/lib/production/inventory.ts; src/lib/studio/types.ts; src/lib/studio/store.ts; src/lib/studio/stage-layout.ts; src/components/studio/stage-views.tsx; desktop/**; package.json; companion Wave 4 tests; docs/orchestration/{task-status,wave-status,file-leases}.json",
+      "owner": "A34/A32",
+      "pod": "Image Engines & Asset QA",
+      "task": "WAVE-4-SOURCE-GPT55",
+      "startedAt": "2026-09-04T05:39:30.925Z",
+      "status": "released",
+      "integrationOwner": "A33",
+      "sharedInterfaceException": "Sole Wave 4 source writer after Wave 3 GREEN; source-only fail-closed image runtime, asset iteration/review/canonical approval, Review stage, tests and ledgers. No package/model/media generation/external repo/cache/model mutation.",
+      "releasedAt": "2026-09-04T09:38:14.916Z",
+      "releaseEvidence": "Source-green Wave4 diff handed to A04 package/runtime/data gate; no package/model/media action by source writer."
+    },
+    {
+      "pattern": "desktop/**; desktop/build-info.json; electron-builder.yml; package.json; scripts/desktop-*.mjs; scripts/*wave4*; docs/release/wave4-gate.md; screenshots/wave4-native/**; docs/orchestration/{task-status,wave-status,file-leases}.json; dist-desktop/** package outputs",
+      "owner": "A04",
+      "pod": "Governance & Integration",
+      "task": "WAVE-4-PACKAGE-RUNTIME-DATA-GATE",
+      "startedAt": "2026-09-04T10:55:36.544Z",
+      "status": "released",
+      "integrationOwner": "A01",
+      "sharedInterfaceException": "A04 exclusive package/runtime/data lease and sole writer for Wave4 packaged native UAT evidence; preserve protected live data, ambient runtimes, model roots, source trust boundary, no ComfyUI/8188 contact, no auto-load.",
+      "releaseEvidence": "A04 native confirmation production repair implemented and repackaged; tests/typecheck/build/diff/package/smoke pass. Full two-image runtime UAT remains blocked/incomplete; Wave5 closed/no tag.",
+      "activationEvidence": "A04 recovery lease reacquired for native confirmation/runtime evidence repair; exclusive single writer.",
+      "releasedAt": "2026-09-04T10:59:07.878Z"
+    },
+    {
+      "pattern": "src/lib/production/image-iterations.ts; src/components/studio/stage-views.tsx; src/lib/studio/local-still.server.ts; desktop/workers/flux1_jsonl_worker.py; scripts/wave4-native-uat.mjs; docs/release/wave4-gate.md; screenshots/wave4-native/**; docs/orchestration/{task-status,wave-status,file-leases}.json; dist-desktop/** package outputs",
+      "owner": "A04",
+      "pod": "Governance & Integration",
+      "task": "WAVE-4-GENUINE-RUNTIME-RECOVERY-CLOSURE",
+      "startedAt": "2026-09-04T11:00:53.000Z",
+      "status": "released",
+      "integrationOwner": "A01",
+      "sharedInterfaceException": "Exclusive continuation after the prior recovery workflow released its lease; packaged visible-control runtime only, narrow defects, evidence and governance. No concurrent writer and no external model/runtime/cache mutation.",
+      "activationEvidence": "Prior workflow a910c311-4b00-4ddb-8d6f-3cbeed580c1f complete with no active fleet; runtime recovery resumed from its truthful BLOCKED_EVIDENCE handoff.",
+      "releasedAt": "2026-09-04T12:23:42.508Z",
+      "releaseEvidence": "Build p316-20260904115717-f8c5609e32d4; final UAT ok:true with exactly two genuine FLUX.1 outputs, same-worker cold/warm proof, signed rejection/canonical decisions, one visible release, restart verification, data/component/process preservation, and zero residual isolated profiles. Package pass handed to independent A07/A08/A64."
+    },
+    {
+      "pattern": "desktop/authority-review-preload.cjs; desktop/preload.test.mjs; scripts/wave4-native-uat.mjs; scripts/wave4-validate-evidence.mjs; docs/release/wave4-gate.md; docs/release/audits/**; docs/orchestration/{task-status,wave-status,file-leases}.json; screenshots/wave4-native/**; screenshots/wave4-audit-history/**; dist-desktop/** package outputs",
+      "owner": "A04",
+      "pod": "Governance & Integration",
+      "task": "WAVE-4-A07-VETO-VISUAL-CONTINUITY-RECOVERY",
+      "startedAt": "2026-09-04T12:31:00.000Z",
+      "status": "released",
+      "integrationOwner": "A01",
+      "sharedInterfaceException": "Exclusive parent-controlled narrow recovery after independent A07 veto; no concurrent writer. Product action remained visible packaged UI only; external roots and live data stayed read-only.",
+      "activationEvidence": "Workflow b84291bb-9015-47f7-a78d-1d55d87618f0 completed BLOCKED_WAVE4_FINAL_AUDIT with A07 veto, A08 pass, A64 pass, and no A01 finalizer launch.",
+      "releasedAt": "2026-09-04T13:10:49.516Z",
+      "releaseEvidence": "Fresh build p316-20260904124249-f8c5609e32d4; no reference fixture; authority Escape/focus/Cancel-default correction packaged; accepted report ok:true; exactly two dark exterior-night FLUX.1 PNGs; only canonical checklist confirmed; same-worker cold/warm; signed decisions; one release; restart; 35/35 evidence validator; full preservation. Handed to fresh independent A07/A08/A64 re-audits."
+    },
+    {
+      "pattern": "docs/release/wave4-gate.md; docs/release/audits/wave4-final-*.md; docs/orchestration/{task-status,wave-status,file-leases}.json; screenshots/wave4-native/{summary-report,final-validation}.json; curated screenshots/wave4-native/** and screenshots/wave4-audit-history/**; Wave 4 Git checkpoint/tag",
+      "owner": "A01",
+      "pod": "Governance & Integration",
+      "task": "WAVE-4-A01-GREEN-FINALIZATION-RECOVERY",
+      "startedAt": "2026-09-04T13:20:00.000Z",
+      "status": "released",
+      "integrationOwner": "A01",
+      "sharedInterfaceException": "A01 sole checkpoint writer after all mutation/runtime leases were released and independent A07/A08/A64 replacement-candidate audits passed. Governance/evidence/checkpoint changes only; no source/package/runtime/model/process/protected-root mutation and Wave 5 remains closed.",
+      "activationEvidence": "Workflow 544b1c84-b21f-4360-8a3b-f3719851037a produced unanimous PASS results from A07 run 4f86a2e6-1a45-48ae-a064-c96a928e3564, A08 run c0000148-adc3-4c1c-81d9-e33a9005f63d, and A64 run a137d777-8c68-44bc-b291-f97e621df39e. Its conditional A01 child exhausted the orchestration token budget without a persisted child session, so root A01 recovered the already-authorized finalization without reopening runtime gates.",
+      "releasedAt": "2026-09-04T13:30:28.283Z",
+      "releaseEvidence": "Wave 4 promoted GREEN for p316-20260904124249-f8c5609e32d4; full audit reports preserved; checkpoint-ready evidence validator passed; intended source/config/tests and curated current/historical evidence committed; annotated tag wave4-p316-20260904124249-f8c5609e32d4 created; Waves 5-8 retained closed."
     }
   ]
 }

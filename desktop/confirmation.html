@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'none'; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Main-owned confirmation</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0d1117; --panel:#151b23; --text:#edf2f7; --muted:#aab6c3; --line:#2b3440; --accent:#d7b56d; --danger:#fca5a5; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-width:390px; min-height:100vh; background:var(--bg); color:var(--text); font:14px/1.5 system-ui, -apple-system, Segoe UI, sans-serif; }
+    header { padding:18px 20px 14px; border-bottom:1px solid var(--line); background:var(--panel); }
+    .eyebrow { margin:0 0 8px; color:var(--accent); font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    h1 { margin:0 0 8px; font-size:20px; line-height:1.2; }
+    .message { margin:0; color:var(--muted); }
+    main { padding:16px 20px 92px; }
+    dl { margin:0; display:grid; gap:10px; }
+    .row { border:1px solid var(--line); border-radius:12px; background:#090c11; padding:10px 12px; }
+    dt { margin:0 0 4px; color:var(--muted); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+    dd { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word; }
+    footer { position:fixed; left:0; right:0; bottom:0; display:flex; gap:10px; justify-content:flex-end; padding:14px 20px; border-top:1px solid var(--line); background:var(--panel); }
+    button { min-height:44px; border:1px solid var(--line); border-radius:10px; padding:0 14px; background:#202938; color:var(--text); font-weight:800; cursor:pointer; }
+    button:focus-visible { outline:3px solid #fde68a; outline-offset:2px; }
+    button.primary { background:var(--accent); border-color:var(--accent); color:#241a05; }
+    button.cancel { color:#fee2e2; border-color:#7f1d1d; }
+    @media (max-width: 430px) { header, main, footer { padding-left:12px; padding-right:12px; } footer { flex-direction:column-reverse; } button { width:100%; } }
+  </style>
+</head>
+<body>
+  <header>
+    <p id="intent" class="eyebrow">confirm</p>
+    <h1 id="title">Confirm action</h1>
+    <p id="message" class="message">Loading confirmation details…</p>
+  </header>
+  <main tabindex="0" aria-label="Frozen backend summary">
+    <dl id="summary" aria-live="polite"></dl>
+  </main>
+  <footer>
+    <button id="cancel" class="cancel" type="button">Cancel</button>
+    <button id="confirm" class="primary" type="button">Confirm</button>
+  </footer>
+</body>
+</html>

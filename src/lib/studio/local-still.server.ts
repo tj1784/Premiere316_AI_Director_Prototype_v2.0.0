@@ -1,543 +1,194 @@
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
-import { closeSync, copyFileSync, existsSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, statSync, writeFileSync, writeSync } from "node:fs";
-import { join, relative } from "node:path";
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, realpathSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync, writeSync } from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { createInterface } from "node:readline";
 import { nativeAdapterCapabilities, runtimeDefaults, type NativeGenerationValues } from "./engine-controls.ts";
 import { createGenerationProvenance, provenanceSidecarName, serializeGenerationProvenance, telemetryFromWorker, type GenerationProvenance } from "./generation-provenance.ts";
 import { executedNativeStillSettings, toNativeStillWorkerRequest } from "./native-still-contract.ts";
-import { createCalibrationRequest } from "./engine-calibration.ts";
-import type { AdapterBenchmark } from "./engine-adapter.ts";
 
 const PYTHON = "D:\\Dev\\Tools\\Python312\\python.exe";
-const FLUX2_ROOT = "D:\\Projects\\Flux2";
-const WORKER = join(FLUX2_ROOT, "blokey-studio", "stills_worker.py");
-const OUT_DIR = "D:\\_Temp\\Premiere316\\stills-out";
-const REF_DIR = "D:\\_Temp\\Premiere316\\refs";
-const PUBLIC_STILLS = join(process.cwd(), "artifacts", "stills");
-const ENGINE_LOG = "D:\\_Temp\\Premiere316\\flux2-engine.log";
-const HF_HUB = "D:\\_Cache\\HuggingFace\\hub";
+const FLUX_ROOT = "D:\\Projects\\flux";
 const APP_VERSION = "3.0.2";
+const T5_SNAPSHOT_REVISION = "3db67ab1af984cf10548a73467f0e5bca2aaaeb2";
+const EXACT_COMPONENTS = {
+  flux: { role: "transformer", id: "flux1-dev.safetensors@4610115bb0c89560703c892c59ac2742fa821e60ef5871b33493ba544683abd7", path: "D:\\AI\\Models\\diffusion_models\\flux1-dev.safetensors" },
+  ae: { role: "vae", id: "ae.safetensors@afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38", path: "D:\\AI\\Models\\vae\\ae.safetensors" },
+  t5: { role: "text_encoder", id: "t5xxl_fp16.safetensors@6e480b09fae049a72d2a8c5fbccb8d3e92febeb233bbe9dfe7256958a9167635", path: "D:\\AI\\Models\\text_encoders\\t5xxl_fp16.safetensors" },
+  t5Config: { role: "tokenizer", id: `google/t5-v1_1-xxl-config-tokenizer@${T5_SNAPSHOT_REVISION}`, path: `D:\\_Cache\\HuggingFace\\hub\\models--google--t5-v1_1-xxl\\snapshots\\${T5_SNAPSHOT_REVISION}` },
+  clip: { role: "text_encoder", id: "clip_l.safetensors@660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd", path: "D:\\AI\\Models\\text_encoders\\clip_l.safetensors" },
+  bpe: { role: "tokenizer", id: "open_clip:bpe_simple_vocab_16e6@924691ac288e54409236115652ad4aa250f48203de50a9e4722a6ecd48d6804a", path: "D:\\Dev\\Tools\\Python312\\Lib\\site-packages\\open_clip\\bpe_simple_vocab_16e6.txt.gz" },
+  openclipTokenizer: { role: "tokenizer_source", id: "open_clip:tokenizer.py@90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734", path: "D:\\Dev\\Tools\\Python312\\Lib\\site-packages\\open_clip\\tokenizer.py" },
+  runtime: { role: "runtime", id: "black-forest-labs/flux@802fb4713906133fcbd0d8dc5351620ca4773036", path: FLUX_ROOT },
+} as const;
 
-export type LocalStillInput = {
-  prompt: string;
-  engineId: string;
-  engineName: string;
-  references: string[];
-  selectedBasePath?: string;
-  values?: NativeGenerationValues;
-};
-
-export type LocalStillResult = { ok: true; url: string; provenance: GenerationProvenance } | { ok: false; error: string };
-export type LocalEngineCheck = { ok: true; modelName: string } | { ok: false; error: string };
-
-type WorkerMsg = {
-  id?: string;
-  ok?: boolean;
-  ready?: boolean;
-  error?: string;
-  url?: string;
-  engine?: string;
-  model?: string;
-  seed?: number;
-  loaded?: string | null;
-};
-
+let durableMediaRoot = join(process.cwd(), "media", "stills");
 let worker: ChildProcess | null = null;
 let workerLogFd: number | undefined;
 let seq = 0;
 const pending = new Map<string, (msg: WorkerMsg) => void>();
 
-function closeEngineLog() {
-  if (workerLogFd === undefined) return;
+export type LocalStillInput = { prompt: string; engineId: string; engineName: string; references: string[]; selectedBasePath?: string; values?: NativeGenerationValues; assetId?: string; pictureId?: string; preparedAssetId?: string };
+export type LocalStillOutputProof = { mediaUri: string; mediaSha256: string; sidecarSha256: string; width: number; height: number; byteLength: number; mediaBytes: number[]; sidecarBytes: number[] };
+export type LocalStillResult = { ok: true; url: string; provenance: GenerationProvenance; output: LocalStillOutputProof; workerIdentityDigest?: string; componentDigest?: string } | { ok: false; error: string };
+export type LocalEngineCheck = { ok: true; modelName: string } | { ok: false; error: string };
+
+type WorkerMsg = { id?: string; ok?: boolean; error?: string; code?: string; loaded?: boolean; model?: string; engine?: string; seed?: number; workerIdentity?: unknown; componentDigest?: string; telemetry?: Record<string, unknown> };
+
+export function setLocalStillMediaRoot(root: string): void {
+  if (!root || /\0/.test(root)) throw new Error("Invalid durable media root.");
+  durableMediaRoot = resolve(root, "stills");
+}
+
+function sha256(bytes: Uint8Array | string): string { return createHash("sha256").update(bytes).digest("hex"); }
+
+function pngInfo(bytes: Uint8Array): { ok: true; width: number; height: number } | { ok: false; error: string } {
+  if (bytes.byteLength < 33) return { ok: false, error: "Generated PNG is too small." };
+  const sig = [137, 80, 78, 71, 13, 10, 26, 10];
+  if (!sig.every((value, index) => bytes[index] === value)) return { ok: false, error: "Generated media is not a PNG." };
+  if (String.fromCharCode(...bytes.slice(12, 16)) !== "IHDR") return { ok: false, error: "Generated PNG IHDR is missing." };
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const width = view.getUint32(16); const height = view.getUint32(20);
+  if (width !== 512 || height !== 512) return { ok: false, error: "Generated PNG must be exactly 512x512 for Wave 4." };
+  return { ok: true, width, height };
+}
+
+function assertSafeMediaBasename(name: string, kind: "png" | "sidecar" = "png"): void {
+  const pattern = kind === "png" ? /^[a-zA-Z0-9._-]+\.png$/ : /^[a-zA-Z0-9._-]+\.provenance\.json$/;
+  if (!pattern.test(name) || name.includes("%") || name.includes(":") || name.startsWith(".")) throw new Error("Generated media URI is invalid.");
+}
+
+function safeDurablePath(name: string, kind: "png" | "sidecar" = "png"): string {
+  assertSafeMediaBasename(name, kind);
+  mkdirSync(durableMediaRoot, { recursive: true });
+  const rootReal = realpathSync(durableMediaRoot);
+  const file = resolve(rootReal, name);
+  const rel = relative(rootReal, file);
+  if (rel.startsWith("..") || rel === "" || /[/\\]/.test(rel)) throw new Error("Media path escapes the durable media root.");
+  return file;
+}
+
+export function verifyLocalStillOutput(output: LocalStillOutputProof): { ok: true; output: LocalStillOutputProof } | { ok: false; error: string } {
   try {
-    closeSync(workerLogFd);
-  } catch {
-    /* already closed */
+    const fileName = output.mediaUri.replace(/^media:\/\/stills\//, "");
+    const mediaPath = safeDurablePath(fileName);
+    const sidecarPath = safeDurablePath(provenanceSidecarName(fileName), "sidecar");
+    const mediaReal = realpathSync(mediaPath); const sidecarReal = realpathSync(sidecarPath);
+    if (relative(realpathSync(durableMediaRoot), mediaReal).startsWith("..") || relative(realpathSync(durableMediaRoot), sidecarReal).startsWith("..")) throw new Error("Durable media symlink escape rejected.");
+    const mediaBytes = readFileSync(mediaReal); const sidecarBytes = readFileSync(sidecarReal);
+    const parsed = pngInfo(mediaBytes); if (!parsed.ok) return parsed;
+    const mediaSha256 = sha256(mediaBytes); const sidecarSha256 = sha256(sidecarBytes);
+    if (mediaSha256 !== output.mediaSha256 || sidecarSha256 !== output.sidecarSha256) return { ok: false, error: "Generated media or sidecar hash changed on disk." };
+    if (parsed.width !== output.width || parsed.height !== output.height || mediaBytes.byteLength !== output.byteLength) return { ok: false, error: "Generated media dimensions or size changed on disk." };
+    return { ok: true, output: { ...output, mediaBytes: [...mediaBytes], sidecarBytes: [...sidecarBytes] } };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Generated media verification failed." };
   }
-  workerLogFd = undefined;
 }
 
-function killWorker() {
-  const child = worker;
-  worker = null;
-  pending.forEach((resolve) => resolve({ ok: false, error: "Official flux2 worker stopped." }));
-  pending.clear();
-  if (!child?.pid) {
-    closeEngineLog();
-    return;
-  }
-  if (process.platform === "win32") {
-    spawn("taskkill", ["/pid", String(child.pid), "/t", "/f"], { windowsHide: true, stdio: "ignore" });
-  } else {
-    try {
-      child.kill();
-    } catch {
-      /* already gone */
-    }
-  }
-  closeEngineLog();
+function profileRoot(): string { return resolve(durableMediaRoot, "..", ".."); }
+function workerRoot(): string { return join(profileRoot(), "native", "flux1-worker"); }
+function cacheRoot(): string { return join(profileRoot(), "native", "flux1-cache"); }
+function logPath(): string { return join(profileRoot(), "native", "flux1-worker.log"); }
+
+function workerSourcePath(): string {
+  const packaged = process.env.P316_RESOURCES_PATH ? join(process.env.P316_RESOURCES_PATH, "workers", "flux1_jsonl_worker.py") : "";
+  if (packaged && existsSync(packaged)) return packaged;
+  return join(process.cwd(), "desktop", "workers", "flux1_jsonl_worker.py");
 }
 
+function closeEngineLog() { if (workerLogFd !== undefined) { try { closeSync(workerLogFd); } catch { /* closed */ } workerLogFd = undefined; } }
+function cleanupPendingOutput(path: string | null) { if (!path) return; for (const candidate of [path, path.replace(/\.png$/, ".tmp.png")]) { try { if (existsSync(candidate)) unlinkSync(candidate); } catch { /* bounded best-effort cleanup; generation remains failed */ } } }
+function killWorker() { const child = worker; worker = null; pending.forEach((resolve) => resolve({ ok: false, error: "App-owned FLUX.1 worker stopped." })); pending.clear(); if (child?.pid) child.kill(); closeEngineLog(); }
 function attachWorker(child: ChildProcess) {
   worker = child;
   const rl = createInterface({ input: child.stdout! });
-  rl.on("line", (line) => {
-    if (!line.trim()) return;
-    let msg: WorkerMsg;
-    try {
-      msg = JSON.parse(line) as WorkerMsg;
-    } catch {
-      return;
-    }
-    if (msg.id && pending.has(msg.id)) {
-      const resolve = pending.get(msg.id);
-      pending.delete(msg.id);
-      resolve?.(msg);
-      return;
-    }
-    if (msg.ready) {
-      const resolve = pending.get("ready");
-      if (resolve) {
-        pending.delete("ready");
-        resolve(msg);
-      }
-    }
-  });
-  child.stderr?.on("data", (chunk) => {
-    if (workerLogFd === undefined) return;
-    try {
-      writeSync(workerLogFd, chunk);
-    } catch {
-      /* log closed */
-    }
-  });
-  child.on("exit", () => {
-    if (worker === child) {
-      worker = null;
-      pending.forEach((resolve) => resolve({ ok: false, error: "Official flux2 worker exited." }));
-      pending.clear();
-      closeEngineLog();
-    }
-  });
+  rl.on("line", (line) => { if (!line.trim()) return; try { const msg = JSON.parse(line) as WorkerMsg; if (msg.id && pending.has(msg.id)) { const resolve = pending.get(msg.id); pending.delete(msg.id); resolve?.(msg); } } catch { /* stdout is JSONL-only; malformed records are ignored and timeout */ } });
+  child.stderr?.on("data", (chunk) => { if (workerLogFd !== undefined) try { writeSync(workerLogFd, chunk); } catch { /* log closed */ } });
+  child.on("exit", () => { if (worker === child) { worker = null; pending.forEach((resolve) => resolve({ ok: false, error: "App-owned FLUX.1 worker exited." })); pending.clear(); closeEngineLog(); } });
 }
-
 function callWorker(payload: Record<string, unknown>, timeoutMs: number): Promise<WorkerMsg> {
-  const child = worker;
-  if (!child?.stdin) return Promise.resolve({ ok: false, error: "Official flux2 worker is not running." });
+  const child = worker; if (!child?.stdin) return Promise.resolve({ ok: false, error: "App-owned FLUX.1 worker is not running." });
   const id = String(++seq);
-  return new Promise((resolve) => {
-    const timer = setTimeout(() => {
-      pending.delete(id);
-      resolve({ ok: false, error: "Official flux2 still timed out." });
-    }, timeoutMs);
-    pending.set(id, (msg) => {
-      clearTimeout(timer);
-      resolve(msg);
-    });
-    child.stdin!.write(`${JSON.stringify({ ...payload, id })}\n`);
-  });
+  return new Promise((resolve) => { const timer = setTimeout(() => { pending.delete(id); resolve({ ok: false, error: "App-owned FLUX.1 worker timed out." }); }, timeoutMs); pending.set(id, (msg) => { clearTimeout(timer); resolve(msg); }); child.stdin!.write(`${JSON.stringify({ ...payload, id })}\n`); });
 }
 
-export async function stopLocalEngine(): Promise<{ ok: true; stopped: boolean }> {
-  const running = Boolean(worker?.pid);
-  killWorker();
-  return { ok: true, stopped: running };
-}
+export async function stopLocalEngine(): Promise<{ ok: true; stopped: boolean }> { const running = Boolean(worker?.pid); killWorker(); return { ok: true, stopped: running }; }
 
-export async function ensureLocalEngine(): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (worker?.pid) {
-    const ping = await callWorker({ method: "ping" }, 8_000);
-    if (ping.ok) return { ok: true };
-    killWorker();
-  }
-  if (!existsSync(PYTHON)) return { ok: false, error: `Local Python not found: ${PYTHON}` };
-  if (!existsSync(WORKER)) return { ok: false, error: `Official flux2 worker not found: ${WORKER}` };
-  mkdirSync("D:\\_Temp\\Premiere316", { recursive: true });
-  mkdirSync(OUT_DIR, { recursive: true });
-  workerLogFd = openSync(ENGINE_LOG, "a");
-  const child = spawn(PYTHON, ["-u", WORKER], {
-    cwd: FLUX2_ROOT,
-    windowsHide: true,
-    stdio: ["pipe", "pipe", "pipe"],
-    env: {
-      ...process.env,
-      PYTHONUTF8: "1",
-      PYTHONIOENCODING: "utf-8",
-      PYTHONUNBUFFERED: "1",
-      PYTHONPATH: join(FLUX2_ROOT, "src"),
-      HF_HOME: "D:\\_Cache\\HuggingFace",
-      AE_MODEL_PATH: "D:\\AI\\Models\\vae\\flux2-vae.safetensors",
-      KLEIN_4B_MODEL_PATH: "D:\\AI\\Models\\diffusion_models\\flux2\\flux-2-klein-4b-fp8.safetensors",
-      KLEIN_9B_MODEL_PATH: "D:\\AI\\Models\\diffusion_models\\flux2\\flux-2-klein-9b-fp8mixed.safetensors",
-      FLUX2_MODEL_PATH: "D:\\AI\\Models\\diffusion_models\\flux2_dev.safetensors",
-      FLUX_MODEL: "D:\\AI\\Models\\diffusion_models\\flux1-dev.safetensors",
-      FLUX_AE: "D:\\AI\\Models\\vae\\ae.safetensors",
-      HF_HUB_OFFLINE: "1",
-      TRANSFORMERS_OFFLINE: "1",
-    },
-  });
+export async function ensureLocalEngine(): Promise<{ ok: true; hello: WorkerMsg } | { ok: false; error: string }> {
+  if (worker?.pid) { const ping = await callWorker({ method: "ping" }, 8_000); if (ping.ok) return { ok: true, hello: ping }; killWorker(); }
+  if (process.env.P316_PACKAGED_APP !== "1") return { ok: false, error: "Native FLUX.1 generation is packaged-app only and never auto-loads from the dev renderer." };
+  const workerFile = workerSourcePath();
+  if (!existsSync(PYTHON)) return { ok: false, error: "Local Python runtime is not installed." };
+  if (!existsSync(workerFile)) return { ok: false, error: "Packaged Premiere316 FLUX.1 worker is missing." };
+  mkdirSync(workerRoot(), { recursive: true }); mkdirSync(cacheRoot(), { recursive: true }); mkdirSync(durableMediaRoot, { recursive: true }); mkdirSync(dirname(logPath()), { recursive: true });
+  workerLogFd = openSync(logPath(), "a");
+  const env = workerEnv(workerFile);
+  const child = spawn(PYTHON, ["-u", workerFile], { cwd: workerRoot(), windowsHide: true, stdio: ["pipe", "pipe", "pipe"], env });
   attachWorker(child);
-  const ready = await new Promise<WorkerMsg>((resolve) => {
-    const timer = setTimeout(() => resolve({ ok: false, error: "Official flux2 worker did not start." }), 120_000);
-    pending.set("ready", (msg) => {
-      clearTimeout(timer);
-      resolve(msg);
-    });
-  });
-  if (!ready.ok && !ready.ready) {
-    killWorker();
-    return { ok: false, error: ready.error || "Official flux2 worker did not start. Check D:\\_Temp\\Premiere316\\flux2-engine.log." };
-  }
-  return { ok: true };
+  const hello = await callWorker({ method: "ping" }, 20_000);
+  if (!hello.ok) { killWorker(); return { ok: false, error: hello.error || "App-owned FLUX.1 worker did not start." }; }
+  return { ok: true, hello };
 }
 
-function writeRef(dataUrl: string, name: string): { path: string; id: string; fingerprint: string } {
-  mkdirSync(REF_DIR, { recursive: true });
-  const m = dataUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
-  if (!m) throw new Error("Bad reference image");
-  const ext = m[1].includes("png") ? "png" : "jpg";
-  const file = join(REF_DIR, `${name}.${ext}`);
-  const bytes = Buffer.from(m[2], "base64");
-  writeFileSync(file, bytes);
-  return { path: file, id: name, fingerprint: createHash("sha256").update(bytes).digest("hex") };
+function workerEnv(workerFile: string): NodeJS.ProcessEnv {
+  const keep = ["SystemRoot", "WINDIR", "PATH", "PATHEXT", "COMSPEC", "TEMP", "TMP", "PROCESSOR_ARCHITECTURE", "NUMBER_OF_PROCESSORS"];
+  const env: NodeJS.ProcessEnv = {};
+  for (const key of keep) if (process.env[key]) env[key] = process.env[key];
+  const cache = cacheRoot();
+  return { ...env, PYTHONUTF8: "1", PYTHONIOENCODING: "utf-8", PYTHONUNBUFFERED: "1", PYTHONDONTWRITEBYTECODE: "1", PYTHONPYCACHEPREFIX: join(cache, "pycache"), HF_HOME: join(cache, "hf"), TRANSFORMERS_CACHE: join(cache, "transformers"), TORCH_HOME: join(cache, "torch"), TMP: join(cache, "tmp"), TEMP: join(cache, "tmp"), HF_HUB_OFFLINE: "1", TRANSFORMERS_OFFLINE: "1", HF_DATASETS_OFFLINE: "1", NO_PROXY: "*", P316_WORKER_ROOT: workerRoot(), P316_OUTPUT_ROOT: durableMediaRoot, P316_CACHE_ROOT: cache, P316_PYCACHE_ROOT: join(cache, "pycache"), P316_BFL_FLUX_SOURCE_ROOT: join(FLUX_ROOT, "src"), P316_MODEL_FLUX: EXACT_COMPONENTS.flux.path, P316_MODEL_AE: EXACT_COMPONENTS.ae.path, FLUX_MODEL: EXACT_COMPONENTS.flux.path, FLUX_AE: EXACT_COMPONENTS.ae.path, P316_MODEL_T5: EXACT_COMPONENTS.t5.path, P316_T5_CONFIG_DIR: EXACT_COMPONENTS.t5Config.path, P316_MODEL_CLIP: EXACT_COMPONENTS.clip.path, P316_OPENCLIP_BPE: EXACT_COMPONENTS.bpe.path, P316_OPENCLIP_TOKENIZER: EXACT_COMPONENTS.openclipTokenizer.path, P316_WORKER_FILE: workerFile };
 }
 
 export async function exposeLocalStill(input: LocalStillInput): Promise<LocalStillResult> {
+  let pendingPath: string | null = null;
   try {
     const capabilities = nativeAdapterCapabilities(input.engineId, input.selectedBasePath || input.engineName);
-    if (!capabilities) return { ok: false, error: "Runtime adapter not yet implemented." };
-    const identity = runtimeIdentity(capabilities.modelVariant);
-    requireIdentityFiles(identity);
-    requirePlausibleGpuMemory(identity);
+    if (!capabilities || capabilities.adapterId !== "flux" || capabilities.modelVariant !== "flux1-dev") return { ok: false, error: "Only packaged FLUX.1 prepared-asset generation is enabled in Wave 4." };
+    if (input.references.length) return { ok: false, error: "FLUX.1 references are unsupported in the Wave 4 worker." };
+    const identity = runtimeIdentity(); requireIdentityFiles(identity); requirePlausibleGpuMemory(identity);
     const selectedBasePath = input.selectedBasePath || identity.relativeBasePath;
-    if (normalizeRelative(selectedBasePath) !== normalizeRelative(identity.relativeBasePath)) {
-      return { ok: false, error: "Selected checkpoint is mapped but is not the checkpoint bound to this native runtime adapter." };
-    }
-    const wake = await ensureLocalEngine();
-    if (!wake.ok) return wake;
-    mkdirSync(PUBLIC_STILLS, { recursive: true });
-    mkdirSync(OUT_DIR, { recursive: true });
+    if (normalizeRelative(selectedBasePath) !== normalizeRelative(identity.relativeBasePath)) return { ok: false, error: "Selected checkpoint is not bound to this native runtime adapter." };
+    const wake = await ensureLocalEngine(); if (!wake.ok) return wake;
     const id = randomUUID();
-    const outName = `${id}.png`;
-    const dest = join(PUBLIC_STILLS, outName);
-    const refs = input.references.map((ref, i) => writeRef(ref, `p316-ref-${id.slice(0, 8)}-${i}`));
-    const before = await callWorker({ method: "ping" }, 8_000);
+    const temporaryName = `${id}.pending.png`; pendingPath = safeDurablePath(temporaryName);
+    const workerRequest = toNativeStillWorkerRequest({ capabilities, values: { ...runtimeDefaults(capabilities), ...(input.values ?? {}), prompt: input.prompt, width: 512, height: 512 }, prompt: input.prompt, engineId: input.engineId, engineName: input.engineName, out: pendingPath, referencePaths: [] });
     const started = performance.now();
-    const workerRequest = toNativeStillWorkerRequest({
-      capabilities,
-      values: { ...runtimeDefaults(capabilities), ...(input.values ?? {}), prompt: input.prompt },
-      prompt: input.prompt,
-      engineId: input.engineId,
-      engineName: input.engineName,
-      out: dest,
-      referencePaths: refs.map((ref) => ref.path),
-    });
-    const result = await callWorker(
-      workerRequest,
-      10 * 60_000,
-    );
+    const before = await callWorker({ method: "ping" }, 8_000);
+    const result = await callWorker(workerRequest, 30 * 60_000);
     const totalMs = performance.now() - started;
-    if (!result.ok) return { ok: false, error: result.error || "Official flux2 still failed." };
-    if (!existsSync(dest)) return { ok: false, error: "Official flux2 finished without a plate." };
-    if (result.model !== identity.modelName || result.engine !== capabilities.runtimeImplementation) {
-      return { ok: false, error: "Native worker executed a different model identity than the selected configuration." };
-    }
+    if (!result.ok) { cleanupPendingOutput(pendingPath); pendingPath = null; return { ok: false, error: result.error || "App-owned FLUX.1 generation failed." }; }
+    if (!existsSync(pendingPath)) { pendingPath = null; return { ok: false, error: "App-owned FLUX.1 worker finished without a plate." }; }
+    const bytes = readFileSync(pendingPath); const parsed = pngInfo(bytes); if (!parsed.ok) { cleanupPendingOutput(pendingPath); pendingPath = null; return parsed; }
+    const mediaSha = sha256(bytes); const outName = `${id}.${mediaSha.slice(0, 24)}.png`; const finalPath = safeDurablePath(outName);
+    if (existsSync(finalPath)) throw new Error("Content-addressed generated media already exists.");
+    renameSync(pendingPath, finalPath);
+    pendingPath = null;
     const executed = executedNativeStillSettings(capabilities, workerRequest, { ...result, ok: true });
-    const residentBeforeJob = before.loaded === identity.modelName;
     const after = await callWorker({ method: "ping" }, 8_000);
-    const residentAfterJob = after.ok === true && after.loaded === identity.modelName;
-    const telemetry = telemetryFromWorker({ totalMs, residentBeforeJob, residentAfterJob }, totalMs);
-    const baseFingerprint = sampledFingerprint(identity.basePath);
-    const provenance = createGenerationProvenance({
-      assetId: id,
-      engineId: input.engineId,
-      engineName: input.engineName,
-      runtimeAdapter: capabilities.adapterId,
-      runtimeImplementation: capabilities.runtimeImplementation,
-      baseCheckpoint: {
-        id: identity.relativeBasePath,
-        path: rendererSafeRuntimePath(identity.basePath),
-        fingerprint: baseFingerprint,
-        fingerprintKind: baseFingerprint ? "sampled" : null,
-      },
-      components: identity.components.map((component) => ({
-        ...component,
-        path: rendererSafeRuntimePath(component.path),
-        fingerprint: sampledFingerprint(component.path),
-      })),
-      loras: [],
-      prompt: workerRequest.prompt,
-      enhancedPrompt: null,
-      references: refs.map((ref) => ({ id: ref.id, fingerprint: ref.fingerprint })),
-      ...executed,
-      timestepData: null,
-      placementPlan: null,
-      generatedAt: new Date().toISOString(),
-      applicationVersion: APP_VERSION,
-      telemetry,
-    });
-    writeFileSync(join(PUBLIC_STILLS, provenanceSidecarName(outName)), serializeGenerationProvenance(provenance), "utf8");
-    try {
-      copyFileSync(dest, join(OUT_DIR, outName));
-      copyFileSync(join(PUBLIC_STILLS, provenanceSidecarName(outName)), join(OUT_DIR, provenanceSidecarName(outName)));
-    } catch {
-      /* temp copy is optional */
-    }
-    return { ok: true, url: `/stills/${outName}`, provenance };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Local still failed." };
-  }
+    const telemetry = telemetryFromWorker({ ...(result.telemetry ?? {}), totalMs, residentBeforeJob: Boolean(before.loaded), residentAfterJob: Boolean(after.loaded) }, totalMs);
+    const provenance = createGenerationProvenance({ assetId: input.assetId ?? id, engineId: input.engineId, engineName: input.engineName, runtimeAdapter: capabilities.adapterId, runtimeImplementation: capabilities.runtimeImplementation, baseCheckpoint: { id: identity.relativeBasePath, path: rendererSafeRuntimePath(identity.basePath), fingerprint: fullOrSampleFingerprint(identity.basePath), fingerprintKind: "sampled" }, components: identity.components.map((component) => ({ ...component, path: rendererSafeRuntimePath(component.path), fingerprint: fullOrSampleFingerprint(component.path) })), loras: [], prompt: workerRequest.prompt, enhancedPrompt: null, references: [], ...executed, timestepData: null, placementPlan: null, generatedAt: new Date().toISOString(), applicationVersion: APP_VERSION, telemetry });
+    const sidecarPath = safeDurablePath(provenanceSidecarName(outName), "sidecar");
+    writeFileSync(sidecarPath, serializeGenerationProvenance(provenance), { encoding: "utf8", flag: "wx" });
+    const sidecarBytes = readFileSync(sidecarPath);
+    const output = { mediaUri: `media://stills/${outName}`, mediaSha256: mediaSha, sidecarSha256: sha256(sidecarBytes), width: 512, height: 512, byteLength: bytes.byteLength, mediaBytes: [...bytes], sidecarBytes: [...sidecarBytes] };
+    return { ok: true, url: output.mediaUri, provenance, output, workerIdentityDigest: sha256(JSON.stringify(result.workerIdentity ?? wake.hello.workerIdentity ?? null)), componentDigest: result.componentDigest ?? after.componentDigest };
+  } catch (e) { cleanupPendingOutput(pendingPath); return { ok: false, error: e instanceof Error ? e.message : "Local still failed." }; }
 }
 
-export function inspectLocalEngine(input: Pick<LocalStillInput, "engineId" | "engineName" | "selectedBasePath">): LocalEngineCheck {
-  try {
-    const capabilities = nativeAdapterCapabilities(input.engineId, input.selectedBasePath || input.engineName);
-    if (!capabilities) return { ok: false, error: "Runtime adapter not yet implemented." };
-    const identity = runtimeIdentity(capabilities.modelVariant);
-    requireIdentityFiles(identity);
-    requirePlausibleGpuMemory(identity);
-    if (input.selectedBasePath && normalizeRelative(input.selectedBasePath) !== normalizeRelative(identity.relativeBasePath)) {
-      return { ok: false, error: "Selected checkpoint is not bound to this native runtime adapter." };
-    }
-    return { ok: true, modelName: identity.modelName };
-  } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "Native runtime is unavailable." };
-  }
-}
-
-export async function benchmarkLocalEngine(input: Omit<LocalStillInput, "references" | "values" | "prompt"> & { values?: NativeGenerationValues }): Promise<AdapterBenchmark> {
-  const capabilities = nativeAdapterCapabilities(input.engineId, input.selectedBasePath || input.engineName);
-  if (!capabilities) throw new Error("Runtime adapter not yet implemented.");
-  const fingerprint = input.selectedBasePath ?? input.engineName;
-  const calibration = createCalibrationRequest(input.engineId, fingerprint, { ...runtimeDefaults(capabilities), ...(input.values ?? {}) });
-  await stopLocalEngine();
-  const first = await exposeLocalStill({ ...input, prompt: calibration.prompt, references: [], values: calibration.values });
-  const warm = first.ok
-    ? await exposeLocalStill({ ...input, prompt: calibration.prompt, references: [], values: calibration.values })
-    : first;
-  return {
-    adapterId: input.engineId,
-    configurationFingerprint: fingerprint,
-    modelLoadMs: null,
-    firstGenerationMs: first.ok ? first.provenance.telemetry.totalMs : null,
-    warmGenerationMs: warm.ok ? warm.provenance.telemetry.totalMs : null,
-    peakVramBytes: warm.ok ? warm.provenance.telemetry.peakVramBytes : null,
-    peakSystemRamBytes: warm.ok ? warm.provenance.telemetry.peakSystemRamBytes : null,
-    outputDescription: `${calibration.width} × ${calibration.height} · ${String(capabilities.controls.steps.runtimeDefault)} steps`,
-    errors: [first, warm].filter((result) => !result.ok).map((result) => result.ok ? "" : result.error),
-    warnings: ["Model-load and peak-memory breakdown are unavailable from the current native worker; total cold/warm timings are preserved."],
-    measuredAt: new Date().toISOString(),
-  };
+export function inspectLocalEngine(_input: Pick<LocalStillInput, "engineId" | "engineName" | "selectedBasePath">): LocalEngineCheck {
+  return { ok: false, error: "Free runtime inspect/wake is disabled; packaged Generate performs its own prepared authorization checks." };
 }
 
 const fingerprintCache = new Map<string, string | null>();
-
-function sampledFingerprint(path: string): string | null {
-  if (fingerprintCache.has(path)) return fingerprintCache.get(path) ?? null;
-  let fd: number | undefined;
-  try {
-    const stats = statSync(path);
-    if (stats.isDirectory()) {
-      const hash = createHash("sha256");
-      const files = walkFingerprintFiles(path);
-      if (files.length === 0) throw new Error("Empty runtime component directory.");
-      for (const file of files.slice(0, 256)) {
-        const fileStats = statSync(file);
-        hash.update(relative(path, file).replace(/\\/g, "/"));
-        hash.update(String(fileStats.size));
-        const fileFd = openSync(file, "r");
-        try {
-          const sample = Buffer.alloc(Math.min(256 * 1024, fileStats.size));
-          readSync(fileFd, sample, 0, sample.length, 0);
-          hash.update(sample);
-        } finally {
-          closeSync(fileFd);
-        }
-      }
-      const value = hash.digest("hex");
-      fingerprintCache.set(path, value);
-      return value;
-    }
-    const size = stats.size;
-    fd = openSync(path, "r");
-    const bytes = Buffer.alloc(Math.min(4 * 1024 * 1024, size));
-    readSync(fd, bytes, 0, bytes.length, 0);
-    const value = createHash("sha256").update(bytes).update(String(size)).digest("hex");
-    fingerprintCache.set(path, value);
-    return value;
-  } catch {
-    fingerprintCache.set(path, null);
-    return null;
-  } finally {
-    if (fd !== undefined) closeSync(fd);
-  }
-}
-
-function walkFingerprintFiles(root: string): string[] {
-  const files: string[] = [];
-  const visit = (dir: string) => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const path = join(dir, entry.name);
-      if (entry.isDirectory()) visit(path);
-      else {
-        try {
-          if (statSync(path).isFile()) files.push(path);
-        } catch {
-          /* Broken local cache links are not part of the executed component. */
-        }
-      }
-    }
-  };
-  visit(root);
-  return files.sort();
-}
-
-function normalizeRelative(path: string): string {
-  return path.replace(/\\/g, "/").replace(/^d:\/ai\/models\//i, "").toLowerCase();
-}
-
-/** Preserve the exact installed locator in provenance without disclosing a host absolute path. */
-function rendererSafeRuntimePath(path: string): string {
-  const normalized = path.replace(/\//g, "\\");
-  const modelRoot = "D:\\AI\\Models\\";
-  if (normalized.toLowerCase().startsWith(modelRoot.toLowerCase())) {
-    return normalized.slice(modelRoot.length);
-  }
-  const hubRoot = `${HF_HUB}\\`;
-  if (normalized.toLowerCase().startsWith(hubRoot.toLowerCase())) {
-    return `hf-cache\\${normalized.slice(hubRoot.length)}`;
-  }
-  return normalized.split(/[/\\]/).pop() || "local-component";
-}
-
-function requireIdentityFiles(identity: ReturnType<typeof runtimeIdentity>): void {
-  for (const path of [identity.basePath, ...identity.components.map((component) => component.path)]) {
-    if (!existsSync(path)) throw new Error(`Native runtime component is not installed: ${path.split(/[\\/]/).pop() || "component"}`);
-  }
-}
-
+function fullOrSampleFingerprint(path: string): string | null { if (fingerprintCache.has(path)) return fingerprintCache.get(path) ?? null; try { const stats = statSync(path); const v = stats.size < 64 * 1024 * 1024 ? sha256(readFileSync(path)) : sampledFingerprint(path); fingerprintCache.set(path, v); return v; } catch { fingerprintCache.set(path, null); return null; } }
+function sampledFingerprint(path: string): string | null { let fd: number | undefined; try { const stats = statSync(path); if (stats.isDirectory()) { const hash = createHash("sha256"); const files = walkFingerprintFiles(path); for (const file of files.slice(0, 256)) { const s = statSync(file); hash.update(relative(path, file).replace(/\\/g, "/")); hash.update(String(s.size)); const f = openSync(file, "r"); try { const sample = Buffer.alloc(Math.min(256 * 1024, s.size)); readSync(f, sample, 0, sample.length, 0); hash.update(sample); } finally { closeSync(f); } } return hash.digest("hex"); } fd = openSync(path, "r"); const bytes = Buffer.alloc(Math.min(4 * 1024 * 1024, stats.size)); readSync(fd, bytes, 0, bytes.length, 0); return sha256(Buffer.concat([bytes, Buffer.from(String(stats.size))])); } catch { return null; } finally { if (fd !== undefined) closeSync(fd); } }
+function walkFingerprintFiles(root: string): string[] { const files: string[] = []; const visit = (dir: string) => { for (const entry of readdirSync(dir, { withFileTypes: true })) { const path = join(dir, entry.name); if (entry.isDirectory()) visit(path); else if (entry.isFile()) files.push(path); } }; visit(root); return files.sort(); }
+function normalizeRelative(path: string): string { return path.replace(/\\/g, "/").replace(/^d:\/ai\/models\//i, "").replace(/^model-vault\//i, "").toLowerCase(); }
+function rendererSafeRuntimePath(path: string): string { const normalized = path.replace(/\//g, "\\"); const modelRoot = "D:\\AI\\Models\\"; if (normalized.toLowerCase().startsWith(modelRoot.toLowerCase())) return normalized.slice(modelRoot.length); return normalized.split(/[/\\]/).pop() || "local-component"; }
+function requireIdentityFiles(identity: ReturnType<typeof runtimeIdentity>): void { for (const path of [identity.basePath, ...identity.components.map((component) => component.path)]) if (!existsSync(path)) throw new Error(`Native runtime component is not installed: ${path.split(/[\\/]/).pop() || "component"}`); }
+function requirePlausibleGpuMemory(identity: ReturnType<typeof runtimeIdentity>): void { const memory = installedGpuMemory(); if (memory === null) return; const cudaPaths = [identity.basePath, ...identity.components.filter((component) => component.role === "text_encoder" || component.role === "vae").map((component) => component.path)]; const minimumCudaWeightBytes = [...new Set(cudaPaths)].reduce((total, path) => total + pathFootprintBytes(path), 0); const activationHeadroomBytes = 2 * 1024 ** 3; const budget = worker?.pid ? memory.totalBytes : memory.freeBytes; if (minimumCudaWeightBytes + activationHeadroomBytes > budget) throw new Error(`MEMORY RISK: audited FLUX.1 CUDA lower-bound ${formatGib(minimumCudaWeightBytes)} GiB plus activation headroom exceeds current free VRAM ${formatGib(budget)} GiB.`); }
+function installedGpuMemory(): { totalBytes: number; freeBytes: number } | null { try { const result = spawnSync("nvidia-smi", ["--query-gpu=memory.total,memory.free", "--format=csv,noheader,nounits"], { windowsHide: true, encoding: "utf8", timeout: 5_000 }); if (result.status !== 0) return null; const rows = String(result.stdout).trim().split(/\r?\n/).map((line) => line.split(",").map((value) => Number(value.trim()))).filter(([total, free]) => Number.isFinite(total) && Number.isFinite(free) && total > 0 && free > 0); if (!rows.length) return null; const [total, free] = rows.sort((a, b) => b[1] - a[1])[0]; return { totalBytes: total * 1024 ** 2, freeBytes: free * 1024 ** 2 }; } catch { return null; } }
 const footprintCache = new Map<string, number>();
-
-/**
- * The audited worker moves the base model, text encoder(s), and VAE to CUDA.
- * Their on-disk payload is only a conservative lower-bound—not a measured VRAM
- * peak—but it is enough to reject configurations whose weights alone exceed the
- * installed GPU before starting Python and risking a machine-wide OOM.
- */
-function requirePlausibleGpuMemory(identity: ReturnType<typeof runtimeIdentity>): void {
-  const gpuTotalBytes = installedGpuMemoryBytes();
-  if (gpuTotalBytes === null) return;
-  const cudaPaths = [
-    identity.basePath,
-    ...identity.components
-      .filter((component) => component.role === "text_encoder" || component.role === "vae")
-      .map((component) => component.path),
-  ];
-  const minimumCudaWeightBytes = [...new Set(cudaPaths)].reduce((total, path) => total + pathFootprintBytes(path), 0);
-  const activationHeadroomBytes = 2 * 1024 ** 3;
-  if (minimumCudaWeightBytes + activationHeadroomBytes > gpuTotalBytes) {
-    throw new Error(
-      `MEMORY RISK: the native worker places at least ${formatGib(minimumCudaWeightBytes)} GiB of audited weight files on CUDA, before activation headroom; the installed GPU reports ${formatGib(gpuTotalBytes)} GiB.`,
-    );
-  }
-}
-
-function installedGpuMemoryBytes(): number | null {
-  try {
-    const result = spawnSync(
-      "nvidia-smi",
-      ["--query-gpu=memory.total", "--format=csv,noheader,nounits"],
-      { windowsHide: true, encoding: "utf8", timeout: 5_000 },
-    );
-    if (result.status !== 0) return null;
-    const totals = String(result.stdout)
-      .trim()
-      .split(/\r?\n/)
-      .map((value) => Number(value.trim()))
-      .filter((value) => Number.isFinite(value) && value > 0);
-    if (totals.length === 0) return null;
-    return Math.max(...totals) * 1024 ** 2;
-  } catch {
-    return null;
-  }
-}
-
-function pathFootprintBytes(path: string): number {
-  if (footprintCache.has(path)) return footprintCache.get(path) ?? 0;
-  try {
-    const stats = statSync(path);
-    const value = stats.isDirectory()
-      ? walkFingerprintFiles(path).reduce((total, file) => total + statSync(file).size, 0)
-      : stats.size;
-    footprintCache.set(path, value);
-    return value;
-  } catch {
-    return 0;
-  }
-}
-
-function formatGib(bytes: number): string {
-  return (bytes / 1024 ** 3).toFixed(1);
-}
-
-function runtimeIdentity(variant: "flux1-dev" | "flux2-dev" | "flux2-klein-4b" | "flux2-klein-9b") {
-  if (variant === "flux1-dev") {
-    return {
-      modelName: "flux-dev",
-      relativeBasePath: "diffusion_models\\flux1-dev.safetensors",
-      basePath: "D:\\AI\\Models\\diffusion_models\\flux1-dev.safetensors",
-      components: [
-        localCacheComponent("text_encoder", "google/t5-v1_1-xxl"),
-        localCacheComponent("text_encoder", "openai/clip-vit-large-patch14"),
-        { role: "vae", id: "ae.safetensors", path: "D:\\AI\\Models\\vae\\ae.safetensors" },
-      ],
-    };
-  }
-  if (variant === "flux2-dev") {
-    return {
-      modelName: "flux.2-dev",
-      relativeBasePath: "diffusion_models\\flux2_dev.safetensors",
-      basePath: "D:\\AI\\Models\\diffusion_models\\flux2_dev.safetensors",
-      components: [
-        localCacheComponent("text_encoder", "mistralai/Mistral-Small-3.2-24B-Instruct-2506"),
-        localCacheComponent("processor", "mistralai/Mistral-Small-3.1-24B-Instruct-2503"),
-        localCacheComponent("support", "Falconsai/nsfw_image_detection"),
-        { role: "vae", id: "flux2-vae.safetensors", path: "D:\\AI\\Models\\vae\\flux2-vae.safetensors" },
-      ],
-    };
-  }
-  const four = variant === "flux2-klein-4b";
-  const file = four ? "flux-2-klein-4b-fp8.safetensors" : "flux-2-klein-9b-fp8mixed.safetensors";
-  const encoder = four ? "Qwen/Qwen3-4B-FP8" : "Qwen/Qwen3-8B-FP8";
-  return {
-    modelName: four ? "flux.2-klein-4b" : "flux.2-klein-9b",
-    relativeBasePath: `diffusion_models\\flux2\\${file}`,
-    basePath: `D:\\AI\\Models\\diffusion_models\\flux2\\${file}`,
-    components: [
-      localCacheComponent("text_encoder", encoder),
-      { role: "vae", id: "flux2-vae.safetensors", path: "D:\\AI\\Models\\vae\\flux2-vae.safetensors" },
-    ],
-  };
-}
-
-function localCacheComponent(role: string, stableId: string): { role: string; id: string; path: string } {
-  const repoDir = join(HF_HUB, `models--${stableId.replace("/", "--")}`);
-  const refPath = join(repoDir, "refs", "main");
-  let revision = "";
-  try {
-    revision = readFileSync(refPath, "utf8").trim();
-  } catch {
-    try {
-      revision = readdirSync(join(repoDir, "snapshots"), { withFileTypes: true })
-        .find((entry) => entry.isDirectory())?.name ?? "";
-    } catch {
-      revision = "";
-    }
-  }
-  const path = revision ? join(repoDir, "snapshots", revision) : "";
-  if (!path || !existsSync(path)) {
-    throw new Error(`Native ${stableId} runtime component is not installed in the offline model cache.`);
-  }
-  return { role, id: `${stableId}@${revision}`, path };
-}
+function pathFootprintBytes(path: string): number { if (footprintCache.has(path)) return footprintCache.get(path) ?? 0; try { const stats = statSync(path); const value = stats.isDirectory() ? walkFingerprintFiles(path).reduce((total, file) => total + statSync(file).size, 0) : stats.size; footprintCache.set(path, value); return value; } catch { return 0; } }
+function formatGib(bytes: number): string { return (bytes / 1024 ** 3).toFixed(1); }
+function runtimeIdentity() { return { modelName: "flux-dev", relativeBasePath: "diffusion_models\\flux1-dev.safetensors", basePath: EXACT_COMPONENTS.flux.path, components: [EXACT_COMPONENTS.runtime, EXACT_COMPONENTS.t5, EXACT_COMPONENTS.t5Config, EXACT_COMPONENTS.clip, EXACT_COMPONENTS.bpe, EXACT_COMPONENTS.openclipTokenizer, EXACT_COMPONENTS.ae] }; }

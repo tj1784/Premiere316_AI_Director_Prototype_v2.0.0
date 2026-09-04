@@ -100,7 +100,7 @@ try {
 
   await openLastReel(page);
   stageNavigation = await page.getByRole("navigation", { name: "Pipeline" }).locator("button").evaluateAll((buttons) => buttons.map((button) => button.textContent?.trim() ?? "").filter(Boolean));
-  assert.equal(stageNavigation.length, 13, `expected 13 pipeline stages, found ${stageNavigation.length}: ${stageNavigation.join(" | ")}`);
+  assert.equal(stageNavigation.length, 14, `expected 14 pipeline stages, found ${stageNavigation.length}: ${stageNavigation.join(" | ")}`);
   stageNavigation = stageNavigation.map((label) => label.replace(/\s+/g, " ").replace(/^(\d{2})(\S)/, "$1 $2"));
   assert.deepEqual(stageNavigation, [
     "01 Intake",
@@ -113,9 +113,10 @@ try {
     "08 Shots",
     "09 Prompt Lab",
     "10 Generate",
-    "11 Stitch",
-    "12 Score",
-    "13 Export",
+    "11 Review",
+    "12 Stitch",
+    "13 Score",
+    "14 Export",
   ]);
   await selectStage(page, "research", "02 Research");
   await page.getByText("Picture Research", { exact: false }).first().waitFor();
@@ -171,42 +172,26 @@ try {
 
   await selectStage(page, "generate", "10 Generate");
   await page.getByRole("heading", { name: "Generate" }).waitFor();
-  const generateStill = page.getByRole("button", { name: "Generate local still", exact: true }).first();
-  if (!(await generateStill.isVisible().catch(() => false))) {
-    const openInspector = page.getByRole("button", { name: "Open Inspector", exact: true });
-    assert.equal(await openInspector.isVisible(), true, "Generate inspector is neither docked nor reachable");
-    await openInspector.click();
-  }
-  await generateStill.click();
-  const stillDialog = page.getByRole("dialog", { name: /Shot 01/ });
-  await stillDialog.waitFor();
-  await page.waitForFunction(() => {
-    const options = [...document.querySelectorAll("#still-engine option")];
-    return options.length > 8 || options.some((option) => !option.textContent?.includes("runtime adapter not yet implemented"));
-  }, undefined, { timeout: 120_000 });
-  const engineOptions = await page.locator("#still-engine option").evaluateAll((options) => options.map((option) => ({ label: option.textContent, disabled: option.disabled })));
-  assert.match(engineOptions.map((option) => option.label).join("\n"), /flux1-dev/i);
-  assert.match(engineOptions.map((option) => option.label).join("\n"), /flux2_dev/i);
-  assert.match(engineOptions.map((option) => option.label).join("\n"), /klein-4b/i);
-  assert.match(engineOptions.map((option) => option.label).join("\n"), /klein-9b/i);
-  assert.match(await stillDialog.innerText(), /Selected configuration footprint/);
-  await page.waitForFunction(() => {
-    const button = [...document.querySelectorAll("button")].find((item) => item.textContent?.trim() === "Expose plate");
-    return button?.disabled === true;
-  });
-  const inspectedEngineOptions = await page.locator("#still-engine option").evaluateAll((options) => options.map((option) => ({ label: option.textContent, disabled: option.disabled })));
-  const selectedEngineLabel = await page.locator("#still-engine option:checked").textContent();
-  const stillDialogText = await stillDialog.innerText();
+  await page.getByText(/Wave 4 generation is asset-first/i).waitFor();
+  assert.equal(await page.getByRole("button", { name: "Generate local still", exact: true }).count(), 0, "legacy shot StillBay generation must not be reachable");
+  assert.equal(await page.getByRole("button", { name: "Benchmark configuration", exact: true }).count(), 0, "benchmark generation must not be reachable from product UI");
+  const manifestPanel = page.getByLabel("Native adapter manifest");
+  await manifestPanel.waitFor();
+  await page.waitForFunction(() => /flux1-dev|Unavailable|Missing exact|offline native image adapter/i.test(document.querySelector('[aria-label="Native adapter manifest"]')?.textContent ?? ""));
+  const manifestText = await manifestPanel.innerText();
+  assert.match(manifestText, /flux1-dev|Unavailable|Missing exact|offline native image adapter/i);
   engineState = {
-    discoveredImageConfigurations: engineOptions.filter((option) => !option.label?.includes("runtime adapter not yet implemented")).length,
-    adapterPlaceholders: engineOptions.filter((option) => option.label?.includes("runtime adapter not yet implemented")).length,
-    selectableAfterRuntimeInspection: inspectedEngineOptions.filter((option) => !option.disabled).length,
-    selectedConfiguration: selectedEngineLabel,
-    selectedRuntimeBlocker: stillDialogText.match(/(?:MEMORY RISK|UNSUPPORTED OFFLINE)[\s\S]*?(?=\n(?:Expose plate|Cancel)|$)/)?.[0] ?? "generation disabled",
+    discoveredImageConfigurations: Number((manifestText.match(/present/g) ?? []).length + (manifestText.match(/missing/g) ?? []).length),
+    adapterPlaceholders: Number((manifestText.match(/adapter/i) ?? []).length),
+    selectableAfterRuntimeInspection: /READY/i.test(manifestText) ? 1 : 0,
+    selectedConfiguration: manifestText.split("\n")[1] ?? "unavailable",
+    selectedRuntimeBlocker: manifestText,
     generationEnabled: false,
   };
-  await stillDialog.getByRole("button", { name: "Cancel" }).click();
-  await selectStage(page, "timeline", "11 Stitch");
+  await selectStage(page, "review", "11 Review");
+  await page.getByRole("heading", { name: "Review" }).waitFor();
+  await page.getByText(/A\/B review is append-only/).waitFor();
+  await selectStage(page, "timeline", "12 Stitch");
   await page.getByRole("heading", { name: "Stitch" }).waitFor();
   await page.getByText("Timeline", { exact: true }).waitFor();
   await selectStage(page, "shots", "08 Shots");

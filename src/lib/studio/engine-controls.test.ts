@@ -23,7 +23,6 @@ import { validateGenerationConfig } from "./generation-validation.ts";
 import { executedNativeStillSettings, toNativeStillWorkerRequest } from "./native-still-contract.ts";
 import type { EngineConfig } from "./engine-config.ts";
 import { configureEngine } from "./configured-engine.ts";
-import { desktopInspectEngine } from "../desktop/client.ts";
 
 const flux1 = nativeAdapterCapabilities("flux", "flux1-dev.safetensors")!;
 const flux2 = nativeAdapterCapabilities("flux2", "flux2-dev.safetensors")!;
@@ -90,8 +89,8 @@ describe("native still worker boundary", () => {
       prompt: " frame ", engineId: "flux", engineName: "FLUX.1 Dev", out: "plate.png", referencePaths: ["ref.png"],
     });
     assert.deepEqual(request, {
-      method: "generate", prompt: "frame", engineId: "flux", engineName: "FLUX.1 Dev", out: "plate.png",
-      width: 1024, height: 576, seed: 42, refs: [],
+      method: "generate", prompt: "frame", out: "plate.png",
+      width: 512, height: 512, seed: 42,
     });
     assert.ok(!("negativePrompt" in request));
     assert.ok(!("loras" in request));
@@ -256,13 +255,8 @@ describe("memory terminology", () => {
 });
 
 describe("runtime inspection boundary", () => {
-  it("never fabricates native readiness outside the trusted desktop host", async () => {
-    const result = await desktopInspectEngine({
-      engineId: "flux2",
-      engineName: "FLUX.2 Dev",
-      selectedBasePath: "diffusion_models\\flux2_dev.safetensors",
-    });
-    assert.equal(result.ok, false);
-    if (!result.ok) assert.match(result.error, /standalone desktop application/);
+  it("does not expose free inspect/wake through the typed desktop client", async () => {
+    const client = await import("../desktop/client.ts");
+    assert.equal("desktopInspectEngine" in client, false);
   });
 });

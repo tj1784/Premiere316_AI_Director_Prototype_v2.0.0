@@ -26,6 +26,7 @@ export type StageId =
   | "shots"
   | "prompts"
   | "generate"
+  | "review"
   | "timeline"
   | "score"
   | "export";
@@ -41,9 +42,10 @@ export const STAGES: { id: StageId; number: string; label: string }[] = [
   { id: "shots", number: "08", label: "Shots" },
   { id: "prompts", number: "09", label: "Prompt Lab" },
   { id: "generate", number: "10", label: "Generate" },
-  { id: "timeline", number: "11", label: "Stitch" },
-  { id: "score", number: "12", label: "Score" },
-  { id: "export", number: "13", label: "Export" },
+  { id: "review", number: "11", label: "Review" },
+  { id: "timeline", number: "12", label: "Stitch" },
+  { id: "score", number: "13", label: "Score" },
+  { id: "export", number: "14", label: "Export" },
 ];
 
 export type EngineKind =

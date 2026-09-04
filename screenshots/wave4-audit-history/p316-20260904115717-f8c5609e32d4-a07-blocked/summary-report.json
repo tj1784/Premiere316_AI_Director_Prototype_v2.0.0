@@ -1,0 +1,416 @@
+{
+  "verdict": "package_pass_awaiting_independent_audits",
+  "wave": 4,
+  "wave5Open": false,
+  "build": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260904115717-f8c5609e32d4",
+    "buildTimestamp": "2026-09-04T11:57:17.362Z",
+    "rendererSourceHash": "f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999",
+    "rendererMode": "PACKAGED DIST"
+  },
+  "package": {
+    "dist-desktop/win-unpacked/Premiere316.exe": {
+      "path": "dist-desktop/win-unpacked/Premiere316.exe",
+      "bytes": 205438464,
+      "sha256": "f4523887fd45ff05d3c3d59dfe7c28ec2408f9fb201acc96fbf3254577f8d38b"
+    },
+    "dist-desktop/win-unpacked/resources/app.asar": {
+      "path": "dist-desktop/win-unpacked/resources/app.asar",
+      "bytes": 121421,
+      "sha256": "12a8a6e23a2ab249abb1947c8e19f8de64bdd7568b7f5fc2ad3c401623c46c92"
+    },
+    "dist-desktop/Premiere316-Setup.exe": {
+      "path": "dist-desktop/Premiere316-Setup.exe",
+      "bytes": 88893644,
+      "sha256": "3292597e7ad942adf989c289ac9db9e79662fcf282ee4fceaa5d63d6e812377b"
+    },
+    "dist-desktop/win-unpacked/resources/backend.mjs": {
+      "path": "dist-desktop/win-unpacked/resources/backend.mjs",
+      "bytes": 155417,
+      "sha256": "6f2ea7ded467b6f8a2e37df37a21b1623774c3ce2e0840b5e48f9331a3dcbb86"
+    },
+    "dist-desktop/win-unpacked/resources/workers/flux1_jsonl_worker.py": {
+      "path": "dist-desktop/win-unpacked/resources/workers/flux1_jsonl_worker.py",
+      "bytes": 18509,
+      "sha256": "8c37b861137eb7d7b7d35b3966a6599ac034052844caab5aa707167e46032678"
+    },
+    "dist-desktop/win-unpacked/resources/ui/server/index.mjs": {
+      "path": "dist-desktop/win-unpacked/resources/ui/server/index.mjs",
+      "bytes": 39228,
+      "sha256": "d708ab859d9a64c0d435761914af1fd89878f4941b234403effd867ac65b9286"
+    }
+  },
+  "sourceGates": {
+    "npmTest": "pass 255/255",
+    "typecheck": "pass",
+    "build": "pass",
+    "electronPack": "pass",
+    "staticChecks": "pass",
+    "packagedSmoke": true,
+    "stageVisual": "pass 28/28"
+  },
+  "packagedUat": {
+    "ok": true,
+    "acceptedRunArtifacts": "screenshots\\wave4-native\\report.json",
+    "visibleMainOwnedConfirmations": [
+      "authority review and seal",
+      "prepared cancel",
+      "prepared approval",
+      "generation authorization 1",
+      "generation authorization 2",
+      "canonical rejection",
+      "canonical approval"
+    ],
+    "authorityReviewChars": 67911,
+    "exactlyTwoImages": true,
+    "pendingFiles": [],
+    "images": [
+      {
+        "artifact": "screenshots\\wave4-native\\generated\\adf9810b-bf60-4db0-b61c-50d22c380b5c.d3221e53b0655ed6605e6e17.png",
+        "sha256": "d3221e53b0655ed6605e6e171c2d5d46abbf90657353555c0e9550aab461ed07",
+        "bytes": 402502,
+        "width": 512,
+        "height": 512,
+        "seed": 1817128981,
+        "generatedAt": "2026-09-04T12:08:44.647Z",
+        "telemetry": {
+          "modelLoadMs": 125949.24240000546,
+          "inferenceMs": 21073.988000003737,
+          "totalMs": 149417.6344,
+          "peakVramBytes": 57721827328,
+          "peakSystemRamBytes": null,
+          "residentBeforeJob": false,
+          "residentAfterJob": true
+        },
+        "sidecarSha256": "53c12b5dadc03a8a5ccf1d983cb25c1277750ab664290807ea10fe6315b97ae0"
+      },
+      {
+        "artifact": "screenshots\\wave4-native\\generated\\d0686154-6735-420c-9005-f205cd02c20b.daf7b221e515efcc08ccbae0.png",
+        "sha256": "daf7b221e515efcc08ccbae022ab456c92b28d868ddb303cf7203031a7c8ced3",
+        "bytes": 480587,
+        "width": 512,
+        "height": 512,
+        "seed": 1817351164,
+        "generatedAt": "2026-09-04T12:10:05.700Z",
+        "telemetry": {
+          "modelLoadMs": 0,
+          "inferenceMs": 5757.789600000251,
+          "totalMs": 6164.682900000014,
+          "peakVramBytes": 57721827328,
+          "peakSystemRamBytes": null,
+          "residentBeforeJob": true,
+          "residentAfterJob": true
+        },
+        "sidecarSha256": "401b032ba8f2b5c2132289016d36f255d0f962fc32a9ef11c36de27b3de6b7b4"
+      }
+    ],
+    "consoleErrors": [],
+    "pageErrors": []
+  },
+  "residency": {
+    "sameWorkerPid": true,
+    "workerPid": 41040,
+    "firstWorkerCount": 1,
+    "secondWorkerCount": 1,
+    "firstWorkerTcpConnections": [],
+    "secondWorkerTcpConnections": [],
+    "workerCountAfterVisibleRelease": 0,
+    "workerCountAfterRestart": 0,
+    "restartLedgerVerified": true
+  },
+  "signedLedger": {
+    "entryCount": 8,
+    "kinds": {
+      "productionAuthority": 1,
+      "preparedApproval": 1,
+      "preparedSeal": 2,
+      "generationReceipt": 2,
+      "rejectionDecision": 1,
+      "canonicalDecision": 1
+    },
+    "sequenceValid": true,
+    "uniqueIds": true,
+    "tail": {
+      "schemaVersion": 1,
+      "count": 8,
+      "headMac": "84d9a0e72cf0298af756b907eb0a57f3187ac2b29b8daca7cb4d75773c2b7d68",
+      "ledgerPath": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-07yWhB\\media\\stills\\security-ledger.v1.jsonl",
+      "mac": "a3bafc95c834756fb7a3784d76bcfd198fbf5aec66ccb807e9f4e3d2771f68a0"
+    },
+    "authorityId": "authority:4a007ec930ace03c742626708b7c190d",
+    "preparedApprovalId": "preparedApproval:14c9391430e60929191f0a584fcd7689",
+    "seals": [
+      "seal:822a103c7cfbb549d866ed37815252cb",
+      "seal:99a323e50dcf2f5c1340672072334a12"
+    ],
+    "receipts": [
+      {
+        "receiptId": "receipt:ee0e0f300806e8eb8df2d764b11162b5",
+        "iterationId": "iteration:asset:location:coastal:archive:2b70c1bf000b7b7c",
+        "tokenDigest": "7e322ee13f9b50a05af7761bf95e00ff1c6b387c1594a997edda32d6fe003f3e",
+        "sealId": "seal:822a103c7cfbb549d866ed37815252cb",
+        "workerIdentityDigest": "c53015efde0599d7f341c5f0ead3e6d4ebe2003ec2036e153168e30f19b75066",
+        "componentDigest": "5eee224a62f7f5cb9e32051d76f0ba4664c92d1845f34c9e09c93ed6902f6e03",
+        "output": {
+          "mediaUri": "media://stills/adf9810b-bf60-4db0-b61c-50d22c380b5c.d3221e53b0655ed6605e6e17.png",
+          "mediaSha256": "d3221e53b0655ed6605e6e171c2d5d46abbf90657353555c0e9550aab461ed07",
+          "sidecarSha256": "53c12b5dadc03a8a5ccf1d983cb25c1277750ab664290807ea10fe6315b97ae0",
+          "width": 512,
+          "height": 512,
+          "byteLength": 402502
+        }
+      },
+      {
+        "receiptId": "receipt:44468f934e6a5d53f2b21b9e8553f003",
+        "iterationId": "iteration:asset:location:coastal:archive:79609f398f4bee19",
+        "tokenDigest": "ca3391e7f0ee9206128ad3b8428566827408a7df24d2bcdaece9c60ba35e80ba",
+        "sealId": "seal:99a323e50dcf2f5c1340672072334a12",
+        "workerIdentityDigest": "c53015efde0599d7f341c5f0ead3e6d4ebe2003ec2036e153168e30f19b75066",
+        "componentDigest": "5eee224a62f7f5cb9e32051d76f0ba4664c92d1845f34c9e09c93ed6902f6e03",
+        "output": {
+          "mediaUri": "media://stills/d0686154-6735-420c-9005-f205cd02c20b.daf7b221e515efcc08ccbae0.png",
+          "mediaSha256": "daf7b221e515efcc08ccbae022ab456c92b28d868ddb303cf7203031a7c8ced3",
+          "sidecarSha256": "401b032ba8f2b5c2132289016d36f255d0f962fc32a9ef11c36de27b3de6b7b4",
+          "width": 512,
+          "height": 512,
+          "byteLength": 480587
+        }
+      }
+    ],
+    "rejection": {
+      "id": "rejection:39ef51c978a470b6590f543c87865cdb",
+      "receiptId": "receipt:44468f934e6a5d53f2b21b9e8553f003",
+      "iterationId": "iteration:asset:location:coastal:archive:79609f398f4bee19",
+      "output": {
+        "mediaUri": "media://stills/d0686154-6735-420c-9005-f205cd02c20b.daf7b221e515efcc08ccbae0.png",
+        "mediaSha256": "daf7b221e515efcc08ccbae022ab456c92b28d868ddb303cf7203031a7c8ced3",
+        "sidecarSha256": "401b032ba8f2b5c2132289016d36f255d0f962fc32a9ef11c36de27b3de6b7b4",
+        "width": 512,
+        "height": 512,
+        "byteLength": 480587
+      }
+    },
+    "canonical": {
+      "id": "canonical:b91c63ccfdbfd387e99eb0ccd438d8c7",
+      "receiptId": "receipt:ee0e0f300806e8eb8df2d764b11162b5",
+      "iterationId": "iteration:asset:location:coastal:archive:2b70c1bf000b7b7c",
+      "output": {
+        "mediaUri": "media://stills/adf9810b-bf60-4db0-b61c-50d22c380b5c.d3221e53b0655ed6605e6e17.png",
+        "mediaSha256": "d3221e53b0655ed6605e6e171c2d5d46abbf90657353555c0e9550aab461ed07",
+        "sidecarSha256": "53c12b5dadc03a8a5ccf1d983cb25c1277750ab664290807ea10fe6315b97ae0",
+        "width": 512,
+        "height": 512,
+        "byteLength": 402502
+      }
+    }
+  },
+  "offline": {
+    "workerExternalConnectionsAbsent": true,
+    "port8188Requests": 0,
+    "completionPosts": 0,
+    "rendererObservedNetwork": [
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/styles-7T3d-Kc5.css"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/index-CgbdNhYg.js"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/routes-6-hXIBz_.js"
+      },
+      {
+        "method": "GET",
+        "url": "https://grok.com/grok-app-builder/extensions.js"
+      },
+      {
+        "method": "GET",
+        "url": "media://stills/adf9810b-bf60-4db0-b61c-50d22c380b5c.d3221e53b0655ed6605e6e17.png"
+      },
+      {
+        "method": "GET",
+        "url": "media://stills/adf9810b-bf60-4db0-b61c-50d22c380b5c.d3221e53b0655ed6605e6e17.png"
+      },
+      {
+        "method": "GET",
+        "url": "media://stills/d0686154-6735-420c-9005-f205cd02c20b.daf7b221e515efcc08ccbae0.png"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/client-DgvorinX.js"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/styles-7T3d-Kc5.css"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/index-CgbdNhYg.js"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/routes-6-hXIBz_.js"
+      },
+      {
+        "method": "GET",
+        "url": "https://grok.com/grok-app-builder/extensions.js"
+      },
+      {
+        "method": "GET",
+        "url": "media://stills/adf9810b-bf60-4db0-b61c-50d22c380b5c.d3221e53b0655ed6605e6e17.png"
+      },
+      {
+        "method": "GET",
+        "url": "media://stills/d0686154-6735-420c-9005-f205cd02c20b.daf7b221e515efcc08ccbae0.png"
+      }
+    ]
+  },
+  "preservation": {
+    "liveProfile": {
+      "appData": "C:\\Users\\teeja\\AppData\\Roaming\\Premiere316",
+      "beforeCount": 312,
+      "afterCount": 312,
+      "beforeContentManifestSha256": "11d23f2e881f8d69f2e2ca69487a127f293652dfc7a8ba811c2d3618768baad0",
+      "afterContentManifestSha256": "11d23f2e881f8d69f2e2ca69487a127f293652dfc7a8ba811c2d3618768baad0",
+      "differences": [],
+      "byteIdentical": true,
+      "same": true
+    },
+    "exactComponents": true,
+    "externalRootsMetadataIdentical": true,
+    "externalRoots": [
+      {
+        "root": "D:/AI/Models",
+        "baseline": {
+          "root": "D:\\AI\\Models",
+          "count": 1152,
+          "bytes": 2310237986323,
+          "newestUtc": "2026-09-03T16:37:49.9817728Z"
+        },
+        "current": {
+          "root": "D:/AI/Models",
+          "count": 1152,
+          "fileCount": 818,
+          "directoryCount": 334,
+          "bytes": 2310237986323,
+          "newestUtc": "2026-09-03T16:37:49.981Z"
+        },
+        "metadataIdentical": true
+      },
+      {
+        "root": "D:/Projects/flux",
+        "baseline": {
+          "root": "D:\\Projects\\flux",
+          "count": 134,
+          "bytes": 77126456,
+          "newestUtc": "2026-09-04T06:42:55.8339567Z"
+        },
+        "current": {
+          "root": "D:/Projects/flux",
+          "count": 134,
+          "fileCount": 103,
+          "directoryCount": 31,
+          "bytes": 77126456,
+          "newestUtc": "2026-09-04T06:42:55.833Z"
+        },
+        "metadataIdentical": true
+      },
+      {
+        "root": "D:/Projects/Flux2",
+        "baseline": {
+          "root": "D:\\Projects\\Flux2",
+          "count": 104,
+          "bytes": 95573984,
+          "newestUtc": "2026-09-04T05:21:30.2101507Z"
+        },
+        "current": {
+          "root": "D:/Projects/Flux2",
+          "count": 104,
+          "fileCount": 73,
+          "directoryCount": 31,
+          "bytes": 95573984,
+          "newestUtc": "2026-09-04T05:21:30.210Z"
+        },
+        "metadataIdentical": true
+      },
+      {
+        "root": "D:/_Cache/HuggingFace",
+        "baseline": {
+          "root": "D:\\_Cache\\HuggingFace",
+          "count": 115,
+          "bytes": 53202038520,
+          "newestUtc": "2026-09-03T06:01:57.7187609Z"
+        },
+        "current": {
+          "root": "D:/_Cache/HuggingFace",
+          "count": 115,
+          "fileCount": 65,
+          "directoryCount": 50,
+          "bytes": 53202038520,
+          "newestUtc": "2026-09-03T06:01:57.718Z"
+        },
+        "metadataIdentical": true
+      },
+      {
+        "root": "D:/Dev/Tools/Python312",
+        "baseline": {
+          "root": "D:\\Dev\\Tools\\Python312",
+          "count": 79951,
+          "bytes": 5656102517,
+          "newestUtc": "2026-09-03T12:06:03.9618245Z"
+        },
+        "current": {
+          "root": "D:/Dev/Tools/Python312",
+          "count": 79951,
+          "fileCount": 72157,
+          "directoryCount": 7794,
+          "bytes": 5656102517,
+          "newestUtc": "2026-09-03T12:06:03.961Z"
+        },
+        "metadataIdentical": true
+      }
+    ],
+    "ambientProcesses": {
+      "premiere316ResidualProcesses": [],
+      "baselineAmbientPids": [
+        23356,
+        23756,
+        19552,
+        20712,
+        20972,
+        53312,
+        37076
+      ],
+      "finalAmbientPids": [
+        23356,
+        23756,
+        19552,
+        20712,
+        20972,
+        53312,
+        37076
+      ],
+      "preservedAmbientPids": [
+        23356,
+        23756,
+        19552,
+        20712,
+        20972,
+        53312,
+        37076
+      ],
+      "comfyPid37076Preserved": true,
+      "allBaselineAmbientPidsPreserved": true
+    },
+    "isolatedProfilesRemaining": 0
+  },
+  "evidenceHashes": {
+    "uatReport": "e4e21808c4092cc94ec007c134fca9672efbda8520608d5f17b4025853f38d7b",
+    "ledger": "3800e2216ba17099ef7b3827a73b075e7c81cffde1643076791c90e08d8829f6",
+    "ledgerTail": "27e0a268267ad80346fba1a10e993acdae0994e35fce58e9af200abcde2c3dce"
+  }
+}

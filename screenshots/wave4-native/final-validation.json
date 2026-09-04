@@ -1,0 +1,493 @@
+{
+  "generatedAt": "2026-09-04T13:34:13.905Z",
+  "mode": "checkpoint-ready",
+  "buildId": "p316-20260904124249-f8c5609e32d4",
+  "passed": 36,
+  "failed": 0,
+  "allPassed": true,
+  "checks": [
+    {
+      "name": "UAT report is successful",
+      "ok": true,
+      "detail": {
+        "error": null
+      }
+    },
+    {
+      "name": "current package build ID",
+      "ok": true,
+      "detail": {
+        "schemaVersion": 1,
+        "appVersion": "3.0.2",
+        "buildId": "p316-20260904124249-f8c5609e32d4",
+        "buildTimestamp": "2026-09-04T12:42:49.151Z",
+        "rendererSourceHash": "f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999",
+        "rendererMode": "PACKAGED DIST"
+      }
+    },
+    {
+      "name": "package hash: dist-desktop/win-unpacked/Premiere316.exe",
+      "ok": true,
+      "detail": {
+        "actualBytes": 205438464,
+        "actualSha256": "e0a37bbfb72b6c744fe5062a047d68c8dabd4d89ad5d846d2b8f7f14c8a0501c",
+        "expected": {
+          "path": "dist-desktop/win-unpacked/Premiere316.exe",
+          "bytes": 205438464,
+          "sha256": "e0a37bbfb72b6c744fe5062a047d68c8dabd4d89ad5d846d2b8f7f14c8a0501c"
+        }
+      }
+    },
+    {
+      "name": "package hash: dist-desktop/win-unpacked/resources/app.asar",
+      "ok": true,
+      "detail": {
+        "actualBytes": 122339,
+        "actualSha256": "ded6af1c2716bc7762b5f6b3ebd730c5564781bf90afa0746dfe72799f453c7c",
+        "expected": {
+          "path": "dist-desktop/win-unpacked/resources/app.asar",
+          "bytes": 122339,
+          "sha256": "ded6af1c2716bc7762b5f6b3ebd730c5564781bf90afa0746dfe72799f453c7c"
+        }
+      }
+    },
+    {
+      "name": "package hash: dist-desktop/Premiere316-Setup.exe",
+      "ok": true,
+      "detail": {
+        "actualBytes": 88893642,
+        "actualSha256": "e0b1206cfb3672dc7e5e86fba039b482e68510164a4ad4621d90bd80424ccdbd",
+        "expected": {
+          "path": "dist-desktop/Premiere316-Setup.exe",
+          "bytes": 88893642,
+          "sha256": "e0b1206cfb3672dc7e5e86fba039b482e68510164a4ad4621d90bd80424ccdbd"
+        }
+      }
+    },
+    {
+      "name": "package hash: dist-desktop/win-unpacked/resources/backend.mjs",
+      "ok": true,
+      "detail": {
+        "actualBytes": 155417,
+        "actualSha256": "6f2ea7ded467b6f8a2e37df37a21b1623774c3ce2e0840b5e48f9331a3dcbb86",
+        "expected": {
+          "path": "dist-desktop/win-unpacked/resources/backend.mjs",
+          "bytes": 155417,
+          "sha256": "6f2ea7ded467b6f8a2e37df37a21b1623774c3ce2e0840b5e48f9331a3dcbb86"
+        }
+      }
+    },
+    {
+      "name": "package hash: dist-desktop/win-unpacked/resources/workers/flux1_jsonl_worker.py",
+      "ok": true,
+      "detail": {
+        "actualBytes": 18509,
+        "actualSha256": "8c37b861137eb7d7b7d35b3966a6599ac034052844caab5aa707167e46032678",
+        "expected": {
+          "path": "dist-desktop/win-unpacked/resources/workers/flux1_jsonl_worker.py",
+          "bytes": 18509,
+          "sha256": "8c37b861137eb7d7b7d35b3966a6599ac034052844caab5aa707167e46032678"
+        }
+      }
+    },
+    {
+      "name": "package hash: dist-desktop/win-unpacked/resources/ui/server/index.mjs",
+      "ok": true,
+      "detail": {
+        "actualBytes": 39228,
+        "actualSha256": "692a28a68665fad4762c12ba0334c4e9dd619af1e15719f4e7f2180772e5c430",
+        "expected": {
+          "path": "dist-desktop/win-unpacked/resources/ui/server/index.mjs",
+          "bytes": 39228,
+          "sha256": "692a28a68665fad4762c12ba0334c4e9dd619af1e15719f4e7f2180772e5c430"
+        }
+      }
+    },
+    {
+      "name": "source/build identities agree",
+      "ok": true,
+      "detail": {
+        "sourceHash": "f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999",
+        "desktop": {
+          "schemaVersion": 1,
+          "appVersion": "3.0.2",
+          "buildId": "p316-20260904124249-f8c5609e32d4",
+          "buildTimestamp": "2026-09-04T12:42:49.151Z",
+          "rendererSourceHash": "f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999",
+          "rendererMode": "PACKAGED DIST"
+        },
+        "packaged": {
+          "schemaVersion": 1,
+          "appVersion": "3.0.2",
+          "buildId": "p316-20260904124249-f8c5609e32d4",
+          "buildTimestamp": "2026-09-04T12:42:49.151Z",
+          "rendererSourceHash": "f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999",
+          "rendererMode": "PACKAGED DIST"
+        },
+        "sourceMatchesDesktop": true,
+        "sourceMatchesPackaged": true,
+        "buildInfoIdentical": true
+      }
+    },
+    {
+      "name": "packaged resources manifest",
+      "ok": true,
+      "detail": {
+        "count": 57,
+        "bytes": 4851492,
+        "manifestSha256": "e2c0430d0379990a5634e992ed040e5fc8ff531227d7e471cf56077b6afb6be6"
+      }
+    },
+    {
+      "name": "packaged authority-review preload is exact",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "authority review has Escape, focus trap, and Cancel default",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "UAT has no generated reference fixture",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "UAT binds visible exterior-night lock before acknowledgement",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "exactly two final PNGs and no pending/temp media",
+      "ok": true,
+      "detail": {
+        "pngNames": [
+          "14718638-7d11-46db-b102-a4c949b74635.4fe0d08abe0cee3ae24a1457.png",
+          "ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png"
+        ],
+        "pendingNames": []
+      }
+    },
+    {
+      "name": "both generated images are genuine 512x512 and reference-free",
+      "ok": true,
+      "detail": [
+        {
+          "name": "14718638-7d11-46db-b102-a4c949b74635.4fe0d08abe0cee3ae24a1457.png",
+          "sha256": "4fe0d08abe0cee3ae24a14575f73e9d7bda38d7d1e58b28c738594f0e3bc29b1",
+          "bytes": 348225,
+          "width": 512,
+          "height": 512,
+          "seed": 1820335395,
+          "references": []
+        },
+        {
+          "name": "ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png",
+          "sha256": "a13308b4a38d4c6dc2d876698beb35124767ab0626fc50efe00c3cdaaad80f85",
+          "bytes": 404712,
+          "width": 512,
+          "height": 512,
+          "seed": 1820113421,
+          "references": []
+        }
+      ]
+    },
+    {
+      "name": "generated hashes match UAT report",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "ledger shape, sequence, links, uniqueness, and tail",
+      "ok": true,
+      "detail": {
+        "actualKinds": {
+          "productionAuthority": 1,
+          "preparedApproval": 1,
+          "preparedSeal": 2,
+          "generationReceipt": 2,
+          "rejectionDecision": 1,
+          "canonicalDecision": 1
+        },
+        "tail": {
+          "schemaVersion": 1,
+          "count": 8,
+          "headMac": "d9d74c6cd3fe67a8acaaf7484cb0447d8c5038b62bfc6c4311a9d3e9d49a3450",
+          "ledgerPath": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\\media\\stills\\security-ledger.v1.jsonl",
+          "mac": "314ebc8af9205f329f4a853060ba76cf3d321d8ec4ea7fddfba8ff6d3ae23f18"
+        }
+      }
+    },
+    {
+      "name": "receipt outputs bind both preserved images",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "separate one-use seals/tokens with one worker/component identity",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "canonical and rejection bind distinct receipts",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "canonical confirmation is visually scoped and true",
+      "ok": true,
+      "detail": {
+        "decisionId": "canonical:d34f1e3156f1267199b56a6529d371e9",
+        "authorityId": "authority:51513fe53ed0c1f4eeaae4cbbb0a2da8",
+        "receiptId": "receipt:a6f18aca963de6ebcb2af24e9b0d780e",
+        "generationReceiptDigest": "bfaa2b38535454ff379af5bc1d9c21ff412c9c865997d544441af04e7bcbefca",
+        "assetId": "asset:location:coastal:archive",
+        "preparedAssetId": "prepared:asset:location:coastal:archive",
+        "iterationId": "iteration:asset:location:coastal:archive:9836d16ba4a3e3ef",
+        "reviewer": "user",
+        "reason": "Approving second Wave4 candidate: it visibly presents an exterior dark night sky, rain-wet architecture, and practical lighting, making it the more defensible of the two visible interpretations of the required exterior-night continuity.",
+        "reasonDigest": "07ef206421537fae01d2d63133c495b15e5b86ccb281b6d580674c3d207896ba",
+        "continuityFindings": [
+          {
+            "id": "continuity:receipt:a6f18aca963de6ebcb2af24e9b0d780e:approved-locks",
+            "severity": "blocker",
+            "message": "Confirm visible approved identity/continuity locks: visible exterior night sky",
+            "confirmed": true
+          }
+        ],
+        "continuityDigest": "f9e9a88220c1fb35872b7e79007ba3562f58680123303461c25181eaa291cf98",
+        "outputDigest": "37239b5160ab54402b136fe831883f1c70a6c05e38d6228d5fb218990e5465de",
+        "preparedApprovalRootId": "preparedApproval:27cc0c3de37e1fb47b2522729c18d60a",
+        "preparedApprovalDigest": "ca27921ab4eb6673018ab55dcce6a25e87eeef118c35bbe686d83bd3b2b7cd5e",
+        "preparedSealDigest": "805761eb1fd80833420d61b8e2d6549157d442372f073919c4c3e33d03e382f2",
+        "manifestDigest": "45f3f1276be0e2ec95928a8d1d44df99316e2ab9a051fa823b7a49a732877186",
+        "productionDigest": "619f5f3241b6db5cb963fa97badcc9156aa854ed46b66777db6edb82bd28b280"
+      }
+    },
+    {
+      "name": "cold/warm same-process telemetry",
+      "ok": true,
+      "detail": {
+        "sameWorkerPid": true,
+        "workerPid": 71148,
+        "firstWorkerCount": 1,
+        "secondWorkerCount": 1,
+        "firstWorkerTcpConnections": [],
+        "secondWorkerTcpConnections": [],
+        "workerCountAfterVisibleRelease": 0,
+        "workerCountAfterRestart": 0,
+        "restartLedgerVerified": true
+      }
+    },
+    {
+      "name": "conservative night metrics passed",
+      "ok": true,
+      "detail": [
+        {
+          "path": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\\media\\stills\\14718638-7d11-46db-b102-a4c949b74635.4fe0d08abe0cee3ae24a1457.png",
+          "empty": false,
+          "meanIntensity": 41.89,
+          "darkPixelRatio": 0.9431
+        },
+        {
+          "path": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\\media\\stills\\ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png",
+          "empty": false,
+          "meanIntensity": 44.1,
+          "darkPixelRatio": 0.8967
+        }
+      ]
+    },
+    {
+      "name": "packaged smoke passed",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+        "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave2-smoke-U5Fq4h",
+        "launchedUserData": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave2-smoke-U5Fq4h",
+        "realProfileUntouched": "C:\\Users\\teeja\\AppData\\Roaming\\Premiere316",
+        "buildInfo": {
+          "schemaVersion": 1,
+          "appVersion": "3.0.2",
+          "buildId": "p316-20260904124249-f8c5609e32d4",
+          "buildTimestamp": "2026-09-04T12:42:49.151Z",
+          "rendererSourceHash": "f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999",
+          "rendererMode": "PACKAGED DIST",
+          "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "appPath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\app.asar"
+        },
+        "zoom": {
+          "original": 1,
+          "reset": 1,
+          "persisted": 1.1,
+          "reopened": 1.1,
+          "restored": 1
+        },
+        "stageNavigation": [
+          "01 Intake",
+          "02 Research",
+          "03 Screenplay",
+          "04 Inventory",
+          "05 Visual Dev",
+          "06 Cinematography",
+          "07 Performance",
+          "08 Shots",
+          "09 Prompt Lab",
+          "10 Generate",
+          "11 Review",
+          "12 Stitch",
+          "13 Score",
+          "14 Export"
+        ],
+        "lmStudio": {
+          "localCatalogCandidates": 0,
+          "servedModels": 0,
+          "generationEnabled": false,
+          "loopbackOnly": true,
+          "researchGate": "approve-then-pin",
+          "writerPinUi": "Default writer · Llama 3.3 70B Instruct",
+          "doctorPinUi": "Default QA · Llama 3.3 70B Instruct",
+          "qwenSecondOpinionExplicit": true,
+          "critiqueFirst": true,
+          "scopedApplyEnabled": false
+        },
+        "engines": {
+          "discoveredImageConfigurations": 0,
+          "adapterPlaceholders": 1,
+          "selectableAfterRuntimeInspection": 0,
+          "selectedConfiguration": "",
+          "selectedRuntimeBlocker": "EXACT LOCAL ADAPTER\n\nUnavailable\n\nNo complete offline native image adapter is verified on this workstation.\n\nRelease local image model",
+          "generationEnabled": false
+        },
+        "timeline": {
+          "hiddenOutsideStitch": true,
+          "visibleInStitch": true
+        },
+        "persistedStage": "shots",
+        "network": {
+          "probed8080": 0,
+          "completionPosts": 0,
+          "observed": 10
+        },
+        "consoleErrors": [],
+        "screenshotPath": "D:\\Projects\\Premiere316_v3\\screenshots\\premiere316-windows-final.png"
+      }
+    },
+    {
+      "name": "28/28 native stage captures passed",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "stages": 14,
+        "captures": 28,
+        "violations": []
+      }
+    },
+    {
+      "name": "protected live profile byte-identical",
+      "ok": true,
+      "detail": {
+        "appData": "C:\\Users\\teeja\\AppData\\Roaming\\Premiere316",
+        "beforeCount": 312,
+        "afterCount": 312,
+        "beforeContentManifestSha256": "118052f7a5695e7a9339c07be6b17c7df56eb5d7e20680121c6bbf26ffb875ca",
+        "afterContentManifestSha256": "118052f7a5695e7a9339c07be6b17c7df56eb5d7e20680121c6bbf26ffb875ca",
+        "differences": [],
+        "byteIdentical": true,
+        "same": true
+      }
+    },
+    {
+      "name": "exact selected external component hashes identical",
+      "ok": true,
+      "detail": {
+        "count": 10
+      }
+    },
+    {
+      "name": "external roots counts and bytes identical",
+      "ok": true,
+      "detail": [
+        {
+          "root": "D:/AI/Models",
+          "identical": true
+        },
+        {
+          "root": "D:/Projects/flux",
+          "identical": true
+        },
+        {
+          "root": "D:/Projects/Flux2",
+          "identical": true
+        },
+        {
+          "root": "D:/_Cache/HuggingFace",
+          "identical": true
+        },
+        {
+          "root": "D:/Dev/Tools/Python312",
+          "identical": true
+        }
+      ]
+    },
+    {
+      "name": "ambient processes preserved and no residual app worker",
+      "ok": true,
+      "detail": {
+        "pids": [
+          23356,
+          23756,
+          19552,
+          20712,
+          20972,
+          53312,
+          37076
+        ],
+        "residual": []
+      }
+    },
+    {
+      "name": "isolated profiles cleaned",
+      "ok": true,
+      "detail": {
+        "capturedAt": "2026-09-04T13:04:17.082Z",
+        "matchedBefore": 0,
+        "removed": [],
+        "remaining": [],
+        "remainingCount": 0
+      }
+    },
+    {
+      "name": "Wave 4 checkpoint-ready and Wave 5 closed",
+      "ok": true,
+      "detail": {
+        "wave4": "GREEN",
+        "wave5": "BLOCKED_BY_PREVIOUS_GATE"
+      }
+    },
+    {
+      "name": "Wave 4 tasks GREEN",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "summary verdict matches validation mode",
+      "ok": true,
+      "detail": {
+        "expectedSummaryVerdict": "green_audited_checkpoint",
+        "actual": "green_audited_checkpoint"
+      }
+    },
+    {
+      "name": "64 logical roles preserved",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "Wave 4 tag absent before checkpoint creation",
+      "ok": true,
+      "detail": null
+    }
+  ]
+}

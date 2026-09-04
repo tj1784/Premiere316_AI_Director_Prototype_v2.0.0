@@ -1,15 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { engineById } from "@/lib/studio/engines";
 import { useActivePicture, useStudio } from "@/lib/studio/store";
-import { useDirector } from "@/lib/studio/use-director";
 import { SystemContext } from "@/components/studio/system-context";
 import { USAGE_CAPS } from "@/lib/studio/types";
 
 export function Inspector() {
   const picture = useActivePicture();
   const selectedShotId = useStudio((state) => state.selectedShotId);
-  const { busy } = useDirector();
-  const openStillBay = useStudio((state) => state.openStillBay);
   if (!picture) return null;
   const shot = picture.shots.find((item) => item.id === selectedShotId) ?? picture.shots[0];
 
@@ -19,7 +16,7 @@ export function Inspector() {
         <p className="text-[11px] tracking-wide text-subtle uppercase">Generation inspector</p>
         <h2 className="mt-1 truncate font-display text-xl tracking-tight" title={picture.title}>{picture.title}</h2>
         <p className="mt-1 truncate text-xs text-muted" title={engineById(picture.selectedEngine.image)?.name}>
-          Local stills · {engineById(picture.selectedEngine.image)?.name}
+          Prepared assets · {engineById(picture.selectedEngine.image)?.name}
         </p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
@@ -32,12 +29,12 @@ export function Inspector() {
             <p className="mt-2 text-xs text-muted">{shot.camera} · {shot.lens}</p>
             <p className="mt-1 text-xs text-muted">Move: {shot.cameraMove}</p>
             <p className="mt-2 text-xs"><span className="text-subtle">Face · </span>{shot.expression}</p>
-            <Button className="mt-3 w-full" size="sm" variant="secondary" disabled={busy?.startsWith("still")} onClick={() => openStillBay(shot.id)}>
-              {busy === `still:${shot.id}` ? "Exposing…" : "Generate local still"}
+            <Button className="mt-3 w-full" size="sm" variant="secondary" disabled title="Wave 4 generation is prepared-asset-only from the Generate stage.">
+              Shot still generation disabled
             </Button>
-            <p className="mt-2 text-[10px] leading-relaxed text-subtle">Motion generation is unavailable until a native local adapter passes validation.</p>
+            <p className="mt-2 text-[10px] leading-relaxed text-subtle">Use Generate for approved prepared assets only. Raw shot stills cannot bypass Inventory 2.0 iteration review.</p>
           </div>
-        ) : <p className="text-sm text-muted">Prepare a shot to generate a plate.</p>}
+        ) : <p className="text-sm text-muted">Prepare a shot to review generation context.</p>}
 
         <Usage picture={picture} />
         <SystemContext />

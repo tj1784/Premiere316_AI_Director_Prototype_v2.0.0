@@ -1,0 +1,934 @@
+[wave4-uat] waiting for main-owned confirmation: Cancel
+[wave4-uat] confirmed and closed: Cancel
+[wave4-uat] waiting for main-owned confirmation: Confirm Prepared Approval
+[wave4-uat] confirmed and closed: Confirm Prepared Approval
+[wave4-uat] waiting for main-owned confirmation: Confirm Generate
+[wave4-uat] confirmed and closed: Confirm Generate
+[wave4-uat] waiting for main-owned confirmation: Confirm Generate
+[wave4-uat] confirmed and closed: Confirm Generate
+[wave4-uat] waiting for main-owned confirmation: Confirm Canonical Rejection
+[wave4-uat] confirmed and closed: Confirm Canonical Rejection
+[wave4-uat] waiting for main-owned confirmation: Confirm Canonical Approval
+[wave4-uat] confirmed and closed: Confirm Canonical Approval
+{
+  "ok": true,
+  "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+  "screenshots": [
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\01-open-last-reel.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\02-breakdown.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\03-visual-approved.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\04-cine-approved.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\05-evaluated.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\06-authority-review-main-owned.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\07-authority-sealed.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\08a-prepared-cancel.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\08b-prepared-confirm.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\08-prepared-approved.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\09-generate-ready-before.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\10a-generate-confirm-1.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\10-generated-1.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\10a-generate-confirm-2.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\10-generated-2.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\12-review-two-iterations.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\13a-rejection-confirm.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\13-rejected-one.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\14a-canonical-confirm.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\14-approved-one.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\15-released-model.png",
+    "D:\\Projects\\Premiere316_v3\\screenshots\\wave4-native\\captures\\16-restart-ledger-verified.png"
+  ],
+  "generated": [
+    {
+      "file": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\\media\\stills\\14718638-7d11-46db-b102-a4c949b74635.4fe0d08abe0cee3ae24a1457.png",
+      "bytes": 348225,
+      "sha256": "4fe0d08abe0cee3ae24a14575f73e9d7bda38d7d1e58b28c738594f0e3bc29b1",
+      "sidecar": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\\media\\stills\\14718638-7d11-46db-b102-a4c949b74635.4fe0d08abe0cee3ae24a1457.provenance.json",
+      "sidecarSha256": "4201bcb3ec44156e2525ecb5a9fa6784c532b6de63b3485a781c31b5b61fce56",
+      "pngHeader": "89504e470d0a1a0a0000000d494844520000020000000200",
+      "provenance": {
+        "schemaVersion": 1,
+        "assetId": "asset:location:coastal:archive",
+        "engineId": "flux",
+        "engineName": "flux1-dev",
+        "runtimeAdapter": "flux",
+        "runtimeImplementation": "black-forest-labs/flux",
+        "baseCheckpoint": {
+          "id": "diffusion_models\\flux1-dev.safetensors",
+          "path": "diffusion_models\\flux1-dev.safetensors",
+          "fingerprint": "9e0074ce914321951f9e6eda25752e10cc88d407df91418879ff6d7b0b44b596",
+          "fingerprintKind": "sampled"
+        },
+        "components": [
+          {
+            "role": "runtime",
+            "id": "black-forest-labs/flux@802fb4713906133fcbd0d8dc5351620ca4773036",
+            "path": "flux",
+            "fingerprint": null
+          },
+          {
+            "role": "text_encoder",
+            "id": "t5xxl_fp16.safetensors@6e480b09fae049a72d2a8c5fbccb8d3e92febeb233bbe9dfe7256958a9167635",
+            "path": "text_encoders\\t5xxl_fp16.safetensors",
+            "fingerprint": "63a7773e9e9d031ae6a506342899b6015cc774aa0a9d456c48f21fea8291d04d"
+          },
+          {
+            "role": "tokenizer",
+            "id": "google/t5-v1_1-xxl-config-tokenizer@3db67ab1af984cf10548a73467f0e5bca2aaaeb2",
+            "path": "3db67ab1af984cf10548a73467f0e5bca2aaaeb2",
+            "fingerprint": null
+          },
+          {
+            "role": "text_encoder",
+            "id": "clip_l.safetensors@660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd",
+            "path": "text_encoders\\clip_l.safetensors",
+            "fingerprint": "9170e7e86a00bea20ed1bec8d0fadfd242bb115777488e1a2ce926a7b423f7ac"
+          },
+          {
+            "role": "tokenizer",
+            "id": "open_clip:bpe_simple_vocab_16e6@924691ac288e54409236115652ad4aa250f48203de50a9e4722a6ecd48d6804a",
+            "path": "bpe_simple_vocab_16e6.txt.gz",
+            "fingerprint": "924691ac288e54409236115652ad4aa250f48203de50a9e4722a6ecd48d6804a"
+          },
+          {
+            "role": "tokenizer_source",
+            "id": "open_clip:tokenizer.py@90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734",
+            "path": "tokenizer.py",
+            "fingerprint": "90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734"
+          },
+          {
+            "role": "vae",
+            "id": "ae.safetensors@afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+            "path": "vae\\ae.safetensors",
+            "fingerprint": "5a45aa6aadaa8e056860dda2ecbb932a9e1ca3244210235142e60c054c685b38"
+          }
+        ],
+        "loras": [],
+        "prompt": "Coastal Archive Wave4. Exterior night photograph after midnight: a weathered brutalist concrete film archive beside a black ocean, visible dark night sky, rain-wet pier, deep shadows, dim amber entrance lamps, and a clearly marked 35mm film-canister return hatch. Cinematic low-key exposure.. visible exterior night sky",
+        "enhancedPrompt": null,
+        "references": [],
+        "width": 512,
+        "height": 512,
+        "steps": 20,
+        "guidance": 3.5,
+        "seed": 1820335395,
+        "scheduler": "flux1-official-20-guidance-3.5",
+        "precision": "BF16",
+        "outputFormat": "PNG",
+        "outputBitDepth": 8,
+        "timestepData": null,
+        "placementPlan": null,
+        "generatedAt": "2026-09-04T12:59:48.164Z",
+        "applicationVersion": "3.0.2",
+        "telemetry": {
+          "modelLoadMs": 0,
+          "inferenceMs": 9511.465000003227,
+          "totalMs": 9874.456400000025,
+          "peakVramBytes": 57721827328,
+          "peakSystemRamBytes": null,
+          "residentBeforeJob": true,
+          "residentAfterJob": true
+        }
+      }
+    },
+    {
+      "file": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\\media\\stills\\ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png",
+      "bytes": 404712,
+      "sha256": "a13308b4a38d4c6dc2d876698beb35124767ab0626fc50efe00c3cdaaad80f85",
+      "sidecar": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\\media\\stills\\ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.provenance.json",
+      "sidecarSha256": "4661a63a437e8d8d8020159326be1588ed80d9b5a0944b19117a52cf0b3c50d3",
+      "pngHeader": "89504e470d0a1a0a0000000d494844520000020000000200",
+      "provenance": {
+        "schemaVersion": 1,
+        "assetId": "asset:location:coastal:archive",
+        "engineId": "flux",
+        "engineName": "flux1-dev",
+        "runtimeAdapter": "flux",
+        "runtimeImplementation": "black-forest-labs/flux",
+        "baseCheckpoint": {
+          "id": "diffusion_models\\flux1-dev.safetensors",
+          "path": "diffusion_models\\flux1-dev.safetensors",
+          "fingerprint": "9e0074ce914321951f9e6eda25752e10cc88d407df91418879ff6d7b0b44b596",
+          "fingerprintKind": "sampled"
+        },
+        "components": [
+          {
+            "role": "runtime",
+            "id": "black-forest-labs/flux@802fb4713906133fcbd0d8dc5351620ca4773036",
+            "path": "flux",
+            "fingerprint": null
+          },
+          {
+            "role": "text_encoder",
+            "id": "t5xxl_fp16.safetensors@6e480b09fae049a72d2a8c5fbccb8d3e92febeb233bbe9dfe7256958a9167635",
+            "path": "text_encoders\\t5xxl_fp16.safetensors",
+            "fingerprint": "63a7773e9e9d031ae6a506342899b6015cc774aa0a9d456c48f21fea8291d04d"
+          },
+          {
+            "role": "tokenizer",
+            "id": "google/t5-v1_1-xxl-config-tokenizer@3db67ab1af984cf10548a73467f0e5bca2aaaeb2",
+            "path": "3db67ab1af984cf10548a73467f0e5bca2aaaeb2",
+            "fingerprint": null
+          },
+          {
+            "role": "text_encoder",
+            "id": "clip_l.safetensors@660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd",
+            "path": "text_encoders\\clip_l.safetensors",
+            "fingerprint": "9170e7e86a00bea20ed1bec8d0fadfd242bb115777488e1a2ce926a7b423f7ac"
+          },
+          {
+            "role": "tokenizer",
+            "id": "open_clip:bpe_simple_vocab_16e6@924691ac288e54409236115652ad4aa250f48203de50a9e4722a6ecd48d6804a",
+            "path": "bpe_simple_vocab_16e6.txt.gz",
+            "fingerprint": "924691ac288e54409236115652ad4aa250f48203de50a9e4722a6ecd48d6804a"
+          },
+          {
+            "role": "tokenizer_source",
+            "id": "open_clip:tokenizer.py@90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734",
+            "path": "tokenizer.py",
+            "fingerprint": "90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734"
+          },
+          {
+            "role": "vae",
+            "id": "ae.safetensors@afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+            "path": "vae\\ae.safetensors",
+            "fingerprint": "5a45aa6aadaa8e056860dda2ecbb932a9e1ca3244210235142e60c054c685b38"
+          }
+        ],
+        "loras": [],
+        "prompt": "Coastal Archive Wave4. Exterior night photograph after midnight: a weathered brutalist concrete film archive beside a black ocean, visible dark night sky, rain-wet pier, deep shadows, dim amber entrance lamps, and a clearly marked 35mm film-canister return hatch. Cinematic low-key exposure.. visible exterior night sky",
+        "enhancedPrompt": null,
+        "references": [],
+        "width": 512,
+        "height": 512,
+        "steps": 20,
+        "guidance": 3.5,
+        "seed": 1820113421,
+        "scheduler": "flux1-official-20-guidance-3.5",
+        "precision": "BF16",
+        "outputFormat": "PNG",
+        "outputBitDepth": 8,
+        "timestepData": null,
+        "placementPlan": null,
+        "generatedAt": "2026-09-04T12:58:29.219Z",
+        "applicationVersion": "3.0.2",
+        "telemetry": {
+          "modelLoadMs": 126630.12210000306,
+          "inferenceMs": 21245.17689998902,
+          "totalMs": 150483.5814,
+          "peakVramBytes": 57721827328,
+          "peakSystemRamBytes": null,
+          "residentBeforeJob": false,
+          "residentAfterJob": true
+        }
+      }
+    }
+  ],
+  "ledger": {
+    "entryCount": 8,
+    "kinds": {
+      "productionAuthority": 1,
+      "preparedApproval": 1,
+      "preparedSeal": 2,
+      "generationReceipt": 2,
+      "rejectionDecision": 1,
+      "canonicalDecision": 1
+    },
+    "ids": [
+      "authority:51513fe53ed0c1f4eeaae4cbbb0a2da8",
+      "preparedApproval:27cc0c3de37e1fb47b2522729c18d60a",
+      "seal:acad4fc0a2c6e6f423a4a44adc12f3f7",
+      "receipt:625a88b38f6ac3b536cf47182d0aab95",
+      "seal:0d41dabfa4b4a83048e676bd23213f51",
+      "receipt:a6f18aca963de6ebcb2af24e9b0d780e",
+      "rejection:cfae5694d76eb91452360ce2de6fd797",
+      "canonical:d34f1e3156f1267199b56a6529d371e9"
+    ],
+    "sequenceValid": true,
+    "uniqueIds": true,
+    "tail": {
+      "schemaVersion": 1,
+      "count": 8,
+      "headMac": "d9d74c6cd3fe67a8acaaf7484cb0447d8c5038b62bfc6c4311a9d3e9d49a3450",
+      "ledgerPath": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\\media\\stills\\security-ledger.v1.jsonl",
+      "mac": "314ebc8af9205f329f4a853060ba76cf3d321d8ec4ea7fddfba8ff6d3ae23f18"
+    }
+  },
+  "runtimeSnapshots": [
+    {
+      "label": "after-first-generation-worker-resident",
+      "at": "2026-09-04T12:58:32.386Z",
+      "mainPid": 51168,
+      "processes": [
+        {
+          "ProcessId": 51168,
+          "ParentProcessId": 75552,
+          "Name": "cmd.exe",
+          "ExecutablePath": "C:\\windows\\system32\\cmd.exe",
+          "CommandLine": "C:\\windows\\system32\\cmd.exe /d /s /c \"\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" \"--inspect=0\" \"--remote-debugging-port=0\" \"--user-data-dir=C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\"\""
+        },
+        {
+          "ProcessId": 71980,
+          "ParentProcessId": 51168,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\"  \"--inspect=0\" \"--remote-debugging-port=0\" \"--user-data-dir=C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\""
+        },
+        {
+          "ProcessId": 77092,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" --type=gpu-process --user-data-dir=\"C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\" --gpu-preferences=UAAAAAAAAADgAAAEAAAAAAAAAAAAAAAAAABgAAEAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --field-trial-handle=1856,i,5348619507067876336,5694383863764148006,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=1852 /prefetch:2"
+        },
+        {
+          "ProcessId": 77760,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --user-data-dir=\"C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\" --standard-schemes=media --secure-schemes=media --fetch-schemes=media --field-trial-handle=1856,i,5348619507067876336,5694383863764148006,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=2056 /prefetch:11"
+        },
+        {
+          "ProcessId": 87320,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\backend.mjs"
+        },
+        {
+          "ProcessId": 49820,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\ui\\server\\index.mjs"
+        },
+        {
+          "ProcessId": 91716,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" --type=renderer --user-data-dir=\"C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\" --standard-schemes=media --secure-schemes=media --fetch-schemes=media --app-user-model-id=com.premiere316.desktop --app-path=\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\app.asar\" --enable-sandbox --remote-debugging-port=0 --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=4 --time-ticks-at-unix-epoch=-1788405321223114 --launch-time-ticks=121166133535 --field-trial-handle=1856,i,5348619507067876336,5694383863764148006,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=3212 /prefetch:1"
+        },
+        {
+          "ProcessId": 71148,
+          "ParentProcessId": 87320,
+          "Name": "python.exe",
+          "ExecutablePath": "D:\\Dev\\Tools\\Python312\\python.exe",
+          "CommandLine": "D:\\Dev\\Tools\\Python312\\python.exe -u D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\workers\\flux1_jsonl_worker.py"
+        },
+        {
+          "ProcessId": 21232,
+          "ParentProcessId": 71148,
+          "Name": "conhost.exe",
+          "ExecutablePath": "C:\\windows\\system32\\conhost.exe",
+          "CommandLine": "\\??\\C:\\windows\\system32\\conhost.exe 0x4"
+        }
+      ],
+      "connections": [
+        {
+          "OwningProcess": 77760,
+          "State": 100,
+          "LocalAddress": "0.0.0.0",
+          "LocalPort": 56007,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 77760,
+          "State": 100,
+          "LocalAddress": "0.0.0.0",
+          "LocalPort": 56006,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 77760,
+          "State": 100,
+          "LocalAddress": "0.0.0.0",
+          "LocalPort": 56005,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 77760,
+          "State": 100,
+          "LocalAddress": "0.0.0.0",
+          "LocalPort": 56004,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 77760,
+          "State": 5,
+          "LocalAddress": "10.2.0.2",
+          "LocalPort": 56007,
+          "RemoteAddress": "104.18.28.234",
+          "RemotePort": 443
+        },
+        {
+          "OwningProcess": 71980,
+          "State": 5,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 56000,
+          "RemoteAddress": "127.0.0.1",
+          "RemotePort": 56001
+        },
+        {
+          "OwningProcess": 71980,
+          "State": 2,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 56000,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 71980,
+          "State": 5,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 55998,
+          "RemoteAddress": "127.0.0.1",
+          "RemotePort": 55999
+        },
+        {
+          "OwningProcess": 71980,
+          "State": 2,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 55998,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 49820,
+          "State": 2,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 18731,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        }
+      ],
+      "gpu": "NVIDIA RTX PRO 5000 72GB Blackwell, 73415, 70667, 2385, 85"
+    },
+    {
+      "label": "after-second-generation-same-worker-resident",
+      "at": "2026-09-04T12:59:50.819Z",
+      "mainPid": 51168,
+      "processes": [
+        {
+          "ProcessId": 51168,
+          "ParentProcessId": 75552,
+          "Name": "cmd.exe",
+          "ExecutablePath": "C:\\windows\\system32\\cmd.exe",
+          "CommandLine": "C:\\windows\\system32\\cmd.exe /d /s /c \"\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" \"--inspect=0\" \"--remote-debugging-port=0\" \"--user-data-dir=C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\"\""
+        },
+        {
+          "ProcessId": 71980,
+          "ParentProcessId": 51168,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\"  \"--inspect=0\" \"--remote-debugging-port=0\" \"--user-data-dir=C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\""
+        },
+        {
+          "ProcessId": 77092,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" --type=gpu-process --user-data-dir=\"C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\" --gpu-preferences=UAAAAAAAAADgAAAEAAAAAAAAAAAAAAAAAABgAAEAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --field-trial-handle=1856,i,5348619507067876336,5694383863764148006,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=1852 /prefetch:2"
+        },
+        {
+          "ProcessId": 77760,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --user-data-dir=\"C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\" --standard-schemes=media --secure-schemes=media --fetch-schemes=media --field-trial-handle=1856,i,5348619507067876336,5694383863764148006,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=2056 /prefetch:11"
+        },
+        {
+          "ProcessId": 87320,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\backend.mjs"
+        },
+        {
+          "ProcessId": 49820,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\ui\\server\\index.mjs"
+        },
+        {
+          "ProcessId": 91716,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" --type=renderer --user-data-dir=\"C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\" --standard-schemes=media --secure-schemes=media --fetch-schemes=media --app-user-model-id=com.premiere316.desktop --app-path=\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\app.asar\" --enable-sandbox --remote-debugging-port=0 --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=4 --time-ticks-at-unix-epoch=-1788405321223114 --launch-time-ticks=121166133535 --field-trial-handle=1856,i,5348619507067876336,5694383863764148006,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=3212 /prefetch:1"
+        },
+        {
+          "ProcessId": 71148,
+          "ParentProcessId": 87320,
+          "Name": "python.exe",
+          "ExecutablePath": "D:\\Dev\\Tools\\Python312\\python.exe",
+          "CommandLine": "D:\\Dev\\Tools\\Python312\\python.exe -u D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\workers\\flux1_jsonl_worker.py"
+        },
+        {
+          "ProcessId": 21232,
+          "ParentProcessId": 71148,
+          "Name": "conhost.exe",
+          "ExecutablePath": "C:\\windows\\system32\\conhost.exe",
+          "CommandLine": "\\??\\C:\\windows\\system32\\conhost.exe 0x4"
+        }
+      ],
+      "connections": [
+        {
+          "OwningProcess": 77760,
+          "State": 100,
+          "LocalAddress": "0.0.0.0",
+          "LocalPort": 56007,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 77760,
+          "State": 100,
+          "LocalAddress": "0.0.0.0",
+          "LocalPort": 56006,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 77760,
+          "State": 100,
+          "LocalAddress": "0.0.0.0",
+          "LocalPort": 56005,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 77760,
+          "State": 100,
+          "LocalAddress": "0.0.0.0",
+          "LocalPort": 56004,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 77760,
+          "State": 5,
+          "LocalAddress": "10.2.0.2",
+          "LocalPort": 56007,
+          "RemoteAddress": "104.18.28.234",
+          "RemotePort": 443
+        },
+        {
+          "OwningProcess": 71980,
+          "State": 5,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 56000,
+          "RemoteAddress": "127.0.0.1",
+          "RemotePort": 56001
+        },
+        {
+          "OwningProcess": 71980,
+          "State": 2,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 56000,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 71980,
+          "State": 5,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 55998,
+          "RemoteAddress": "127.0.0.1",
+          "RemotePort": 55999
+        },
+        {
+          "OwningProcess": 71980,
+          "State": 2,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 55998,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 49820,
+          "State": 2,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 18731,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        }
+      ],
+      "gpu": "NVIDIA RTX PRO 5000 72GB Blackwell, 73415, 70858, 2194, 60"
+    },
+    {
+      "label": "after-one-visible-final-release",
+      "at": "2026-09-04T13:00:14.875Z",
+      "mainPid": 51168,
+      "processes": [
+        {
+          "ProcessId": 51168,
+          "ParentProcessId": 75552,
+          "Name": "cmd.exe",
+          "ExecutablePath": "C:\\windows\\system32\\cmd.exe",
+          "CommandLine": "C:\\windows\\system32\\cmd.exe /d /s /c \"\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" \"--inspect=0\" \"--remote-debugging-port=0\" \"--user-data-dir=C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\"\""
+        },
+        {
+          "ProcessId": 71980,
+          "ParentProcessId": 51168,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\"  \"--inspect=0\" \"--remote-debugging-port=0\" \"--user-data-dir=C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\""
+        },
+        {
+          "ProcessId": 77092,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" --type=gpu-process --user-data-dir=\"C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\" --gpu-preferences=UAAAAAAAAADgAAAEAAAAAAAAAAAAAAAAAABgAAEAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --field-trial-handle=1856,i,5348619507067876336,5694383863764148006,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=1852 /prefetch:2"
+        },
+        {
+          "ProcessId": 77760,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --user-data-dir=\"C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\" --standard-schemes=media --secure-schemes=media --fetch-schemes=media --field-trial-handle=1856,i,5348619507067876336,5694383863764148006,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=2056 /prefetch:11"
+        },
+        {
+          "ProcessId": 87320,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\backend.mjs"
+        },
+        {
+          "ProcessId": 49820,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\ui\\server\\index.mjs"
+        },
+        {
+          "ProcessId": 91716,
+          "ParentProcessId": 71980,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" --type=renderer --user-data-dir=\"C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\" --standard-schemes=media --secure-schemes=media --fetch-schemes=media --app-user-model-id=com.premiere316.desktop --app-path=\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\app.asar\" --enable-sandbox --remote-debugging-port=0 --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=4 --time-ticks-at-unix-epoch=-1788405321223114 --launch-time-ticks=121166133535 --field-trial-handle=1856,i,5348619507067876336,5694383863764148006,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=3212 /prefetch:1"
+        }
+      ],
+      "connections": [
+        {
+          "OwningProcess": 77760,
+          "State": 100,
+          "LocalAddress": "0.0.0.0",
+          "LocalPort": 65140,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 77760,
+          "State": 100,
+          "LocalAddress": "0.0.0.0",
+          "LocalPort": 56007,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 77760,
+          "State": 5,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 65140,
+          "RemoteAddress": "127.0.0.1",
+          "RemotePort": 18731
+        },
+        {
+          "OwningProcess": 77760,
+          "State": 5,
+          "LocalAddress": "10.2.0.2",
+          "LocalPort": 56007,
+          "RemoteAddress": "104.18.28.234",
+          "RemotePort": 443
+        },
+        {
+          "OwningProcess": 71980,
+          "State": 5,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 56000,
+          "RemoteAddress": "127.0.0.1",
+          "RemotePort": 56001
+        },
+        {
+          "OwningProcess": 71980,
+          "State": 2,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 56000,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 71980,
+          "State": 5,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 55998,
+          "RemoteAddress": "127.0.0.1",
+          "RemotePort": 55999
+        },
+        {
+          "OwningProcess": 71980,
+          "State": 2,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 55998,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 49820,
+          "State": 2,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 18731,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 49820,
+          "State": 5,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 18731,
+          "RemoteAddress": "127.0.0.1",
+          "RemotePort": 65140
+        }
+      ],
+      "gpu": "NVIDIA RTX PRO 5000 72GB Blackwell, 73415, 13570, 59482, 92"
+    },
+    {
+      "label": "after-restart-ledger-verified-no-auto-load",
+      "at": "2026-09-04T13:00:56.101Z",
+      "mainPid": 69680,
+      "processes": [
+        {
+          "ProcessId": 69680,
+          "ParentProcessId": 75552,
+          "Name": "cmd.exe",
+          "ExecutablePath": "C:\\windows\\system32\\cmd.exe",
+          "CommandLine": "C:\\windows\\system32\\cmd.exe /d /s /c \"\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" \"--inspect=0\" \"--remote-debugging-port=0\" \"--user-data-dir=C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\"\""
+        },
+        {
+          "ProcessId": 73568,
+          "ParentProcessId": 69680,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\"  \"--inspect=0\" \"--remote-debugging-port=0\" \"--user-data-dir=C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\""
+        },
+        {
+          "ProcessId": 51140,
+          "ParentProcessId": 73568,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" --type=gpu-process --user-data-dir=\"C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\" --gpu-preferences=UAAAAAAAAADgAAAEAAAAAAAAAAAAAAAAAABgAAEAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --field-trial-handle=1864,i,18197539800601679211,6691336062517381687,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=1860 /prefetch:2"
+        },
+        {
+          "ProcessId": 87868,
+          "ParentProcessId": 73568,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --user-data-dir=\"C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\" --standard-schemes=media --secure-schemes=media --fetch-schemes=media --field-trial-handle=1864,i,18197539800601679211,6691336062517381687,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=2064 /prefetch:11"
+        },
+        {
+          "ProcessId": 31352,
+          "ParentProcessId": 73568,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\backend.mjs"
+        },
+        {
+          "ProcessId": 2332,
+          "ParentProcessId": 73568,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\ui\\server\\index.mjs"
+        },
+        {
+          "ProcessId": 14104,
+          "ParentProcessId": 73568,
+          "Name": "Premiere316.exe",
+          "ExecutablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+          "CommandLine": "\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe\" --type=renderer --user-data-dir=\"C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\" --standard-schemes=media --secure-schemes=media --fetch-schemes=media --app-user-model-id=com.premiere316.desktop --app-path=\"D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\app.asar\" --enable-sandbox --remote-debugging-port=0 --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=4 --time-ticks-at-unix-epoch=-1788405321223115 --launch-time-ticks=121496666300 --field-trial-handle=1864,i,18197539800601679211,6691336062517381687,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=3232 /prefetch:1"
+        }
+      ],
+      "connections": [
+        {
+          "OwningProcess": 87868,
+          "State": 100,
+          "LocalAddress": "0.0.0.0",
+          "LocalPort": 65148,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 87868,
+          "State": 8,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 65148,
+          "RemoteAddress": "127.0.0.1",
+          "RemotePort": 18731
+        },
+        {
+          "OwningProcess": 73568,
+          "State": 5,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 65144,
+          "RemoteAddress": "127.0.0.1",
+          "RemotePort": 65145
+        },
+        {
+          "OwningProcess": 73568,
+          "State": 2,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 65144,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 73568,
+          "State": 5,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 65142,
+          "RemoteAddress": "127.0.0.1",
+          "RemotePort": 65143
+        },
+        {
+          "OwningProcess": 73568,
+          "State": 2,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 65142,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        },
+        {
+          "OwningProcess": 2332,
+          "State": 7,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 18731,
+          "RemoteAddress": "127.0.0.1",
+          "RemotePort": 65148
+        },
+        {
+          "OwningProcess": 2332,
+          "State": 2,
+          "LocalAddress": "127.0.0.1",
+          "LocalPort": 18731,
+          "RemoteAddress": "0.0.0.0",
+          "RemotePort": 0
+        }
+      ],
+      "gpu": "NVIDIA RTX PRO 5000 72GB Blackwell, 73415, 13560, 59492, 97"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "network": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:18731/assets/styles-7T3d-Kc5.css"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:18731/assets/index-CgbdNhYg.js"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:18731/assets/routes-6-hXIBz_.js"
+    },
+    {
+      "method": "GET",
+      "url": "https://grok.com/grok-app-builder/extensions.js"
+    },
+    {
+      "method": "GET",
+      "url": "media://stills/ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png"
+    },
+    {
+      "method": "GET",
+      "url": "media://stills/ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png"
+    },
+    {
+      "method": "GET",
+      "url": "media://stills/14718638-7d11-46db-b102-a4c949b74635.4fe0d08abe0cee3ae24a1457.png"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:18731/assets/client-DgvorinX.js"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:18731/assets/styles-7T3d-Kc5.css"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:18731/assets/index-CgbdNhYg.js"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:18731/assets/routes-6-hXIBz_.js"
+    },
+    {
+      "method": "GET",
+      "url": "https://grok.com/grok-app-builder/extensions.js"
+    },
+    {
+      "method": "GET",
+      "url": "media://stills/ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png"
+    },
+    {
+      "method": "GET",
+      "url": "media://stills/14718638-7d11-46db-b102-a4c949b74635.4fe0d08abe0cee3ae24a1457.png"
+    }
+  ],
+  "runtimeStdout": "➜ Listening on: http://127.0.0.1:18731/\n[premiere316] renderer ready {\"title\":\"Premiere316\",\"href\":\"http://127.0.0.1:18731/\",\"desktop\":true}\n➜ Listening on: http://127.0.0.1:18731/\n[premiere316] renderer ready {\"title\":\"Premiere316\",\"href\":\"http://127.0.0.1:18731/\",\"desktop\":true}\n",
+  "runtimeStderr": "Debugger ending on ws://127.0.0.1:55998/f94ae1db-475b-4cbf-a31e-b1911aa0b283\r\nFor help, see: https://nodejs.org/en/docs/inspector\r\nDebugger ending on ws://127.0.0.1:65142/082a8ec6-cb43-4db9-96e4-dc1b0d059ec2\r\nFor help, see: https://nodejs.org/en/docs/inspector\r\n",
+  "assertions": {
+    "authorityReviewChars": 69445,
+    "authorityHasNoReferenceFixture": true,
+    "workerPid1": 71148,
+    "workerPid2": 71148,
+    "visibleNightMetrics": [
+      {
+        "path": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\\media\\stills\\14718638-7d11-46db-b102-a4c949b74635.4fe0d08abe0cee3ae24a1457.png",
+        "empty": false,
+        "meanIntensity": 41.89,
+        "darkPixelRatio": 0.9431
+      },
+      {
+        "path": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\\media\\stills\\ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png",
+        "empty": false,
+        "meanIntensity": 44.1,
+        "darkPixelRatio": 0.8967
+      }
+    ],
+    "pendingFiles": [],
+    "generatedCount": 2,
+    "coldWarmTelemetry": [
+      {
+        "modelLoadMs": 0,
+        "inferenceMs": 9511.465000003227,
+        "totalMs": 9874.456400000025,
+        "peakVramBytes": 57721827328,
+        "peakSystemRamBytes": null,
+        "residentBeforeJob": true,
+        "residentAfterJob": true
+      },
+      {
+        "modelLoadMs": 126630.12210000306,
+        "inferenceMs": 21245.17689998902,
+        "totalMs": 150483.5814,
+        "peakVramBytes": 57721827328,
+        "peakSystemRamBytes": null,
+        "residentBeforeJob": false,
+        "residentAfterJob": true
+      }
+    ],
+    "restartLedgerVerified": true
+  },
+  "error": null,
+  "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n",
+  "launchedUserData": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n"
+}

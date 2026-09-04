@@ -31,8 +31,8 @@ describe("responsive studio layout", () => {
     });
   });
 
-  it("keeps a 13-stage pipeline including research and Wave 3 stages at every zoom width", () => {
-    assert.equal(STAGES.length, 13);
+  it("keeps a 14-stage pipeline including research, Wave 3, and Review at every zoom width", () => {
+    assert.equal(STAGES.length, 14);
     assert.equal(STAGES[1]?.id, "research");
     for (const width of [1440, 1152, 960, 720]) {
       assert.equal(showTimelineForStage("research"), false);
@@ -44,7 +44,7 @@ describe("responsive studio layout", () => {
 
   it("shows the timeline only in the Stitch stage", () => {
     assert.equal(showTimelineForStage("timeline"), true);
-    for (const stage of ["intake", "research", "screenplay", "inventory", "visual-development", "cinematography", "performance", "shots", "prompts", "generate", "score", "export"]) {
+    for (const stage of ["intake", "research", "screenplay", "inventory", "visual-development", "cinematography", "performance", "shots", "prompts", "generate", "review", "score", "export"]) {
       assert.equal(showTimelineForStage(stage), false, `${stage} must use the full workspace height`);
     }
   });
@@ -60,7 +60,7 @@ describe("responsive studio layout", () => {
   });
 
   it("does not reserve shell columns for stage-owned or empty workspaces", () => {
-    for (const stage of ["research", "screenplay", "inventory", "performance", "shots", "prompts", "score"]) {
+    for (const stage of ["research", "screenplay", "inventory", "visual-development", "cinematography", "performance", "shots", "prompts", "review", "score"]) {
       assert.deepEqual(dockedPanels(1440, uncollapsed, stage), { mode: "wide", left: false, right: false }, stage);
     }
   });

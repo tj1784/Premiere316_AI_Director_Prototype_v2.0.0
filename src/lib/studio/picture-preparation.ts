@@ -18,7 +18,7 @@ export type PicturePreparation = {
 export type PreparedPicture = Picture & PicturePreparation;
 export type LegacyPicture = Omit<Picture, keyof PicturePreparation> & Partial<PicturePreparation>;
 
-const VALID_STAGES = new Set<StageId>(["intake", "research", "screenplay", "inventory", "visual-development", "cinematography", "performance", "shots", "prompts", "generate", "timeline", "score", "export"]);
+const VALID_STAGES = new Set<StageId>(["intake", "research", "screenplay", "inventory", "visual-development", "cinematography", "performance", "shots", "prompts", "generate", "review", "timeline", "score", "export"]);
 
 function migratedStage(value: unknown, fallback: StageId): StageId {
   if (value === "brief") return "intake";

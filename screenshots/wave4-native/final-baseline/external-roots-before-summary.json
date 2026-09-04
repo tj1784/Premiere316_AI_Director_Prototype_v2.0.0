@@ -1,0 +1,45 @@
+{
+  "capturedAt": "2026-09-04T12:44:54.019Z",
+  "roots": [
+    {
+      "root": "D:/AI/Models",
+      "files": 818,
+      "dirs": 335,
+      "links": 0,
+      "bytes": 2310237986323,
+      "errors": []
+    },
+    {
+      "root": "D:/Projects/flux",
+      "files": 103,
+      "dirs": 32,
+      "links": 0,
+      "bytes": 77126456,
+      "errors": []
+    },
+    {
+      "root": "D:/Projects/Flux2",
+      "files": 73,
+      "dirs": 32,
+      "links": 0,
+      "bytes": 95573984,
+      "errors": []
+    },
+    {
+      "root": "D:/_Cache/HuggingFace",
+      "files": 65,
+      "dirs": 51,
+      "links": 0,
+      "bytes": 53202038520,
+      "errors": []
+    },
+    {
+      "root": "D:/Dev/Tools/Python312",
+      "files": 72157,
+      "dirs": 7795,
+      "links": 0,
+      "bytes": 5656102517,
+      "errors": []
+    }
+  ]
+}

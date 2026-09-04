@@ -1,0 +1,11 @@
+\desktop
+\desktop\authority-review-preload.cjs
+\desktop\authority-review.html
+\desktop\channels.cjs
+\desktop\confirmation-preload.cjs
+\desktop\confirmation.html
+\desktop\icon.ico
+\desktop\main.mjs
+\desktop\preload.cjs
+\desktop\zoom.cjs
+\package.json

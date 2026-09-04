@@ -95,6 +95,9 @@ async function bundleBackend() {
     "comfy-engine.log",
     "COMFY_URL",
     "custom_nodes",
+    "D:\\Projects\\Flux2",
+    "blokey-studio",
+    "stills_worker.py",
   ];
   const found = forbiddenLegacyRuntimeMarkers.filter((marker) => source.includes(marker));
   if (found.length) {
@@ -135,6 +138,10 @@ const asarEntries = new Set(listPackage(asarPath, { isPack: false }).map((entry)
 const requiredAsarEntries = [
   "/desktop/main.mjs",
   "/desktop/preload.cjs",
+  "/desktop/authority-review-preload.cjs",
+  "/desktop/authority-review.html",
+  "/desktop/confirmation-preload.cjs",
+  "/desktop/confirmation.html",
   "/desktop/channels.cjs",
   "/desktop/zoom.cjs",
   "/package.json",
@@ -143,6 +150,7 @@ const missingAsarEntries = requiredAsarEntries.filter((entry) => !asarEntries.ha
 const requiredResources = [
   join(packagedResources, "backend.mjs"),
   join(packagedResources, "build-info.json"),
+  join(packagedResources, "workers", "flux1_jsonl_worker.py"),
   join(packagedResources, "ui", "server", "index.mjs"),
 ];
 const missingResources = requiredResources.filter((entry) => !existsSync(entry));

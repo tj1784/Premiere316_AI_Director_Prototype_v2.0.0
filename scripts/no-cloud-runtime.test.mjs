@@ -6,10 +6,11 @@ function source(path) {
   return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("director runtime exposes local still entry points without hosted inference", () => {
+test("director runtime fails closed outside packaged prepared-asset inference", () => {
   const director = source("src/lib/ai/director.ts");
-  assert.match(director, /exposeLocalStill/);
-  assert.match(director, /ensureLocalEngine/);
+  assert.match(director, /prepared-asset workflow/);
+  assert.match(director, /ok: false/);
+  assert.doesNotMatch(director, /exposeLocalStill|ensureLocalEngine|desktopGeneratePreparedImage/);
   assert.doesNotMatch(director, /api\.x\.ai|XAI_API_KEY|grok-imagine-video|videos\/generations|\/tts\b/);
   assert.doesNotMatch(director, /writePicture|polishPrompts|startClip|pollClip|speakLine|writeScore|askDirector/);
 });

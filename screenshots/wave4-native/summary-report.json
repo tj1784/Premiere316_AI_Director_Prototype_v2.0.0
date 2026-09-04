@@ -1,0 +1,405 @@
+{
+  "verdict": "green_audited_checkpoint",
+  "wave": 4,
+  "wave5Open": false,
+  "build": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260904124249-f8c5609e32d4",
+    "buildTimestamp": "2026-09-04T12:42:49.151Z",
+    "rendererSourceHash": "f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999",
+    "rendererMode": "PACKAGED DIST"
+  },
+  "package": {
+    "dist-desktop/win-unpacked/Premiere316.exe": {
+      "path": "dist-desktop/win-unpacked/Premiere316.exe",
+      "bytes": 205438464,
+      "sha256": "e0a37bbfb72b6c744fe5062a047d68c8dabd4d89ad5d846d2b8f7f14c8a0501c"
+    },
+    "dist-desktop/win-unpacked/resources/app.asar": {
+      "path": "dist-desktop/win-unpacked/resources/app.asar",
+      "bytes": 122339,
+      "sha256": "ded6af1c2716bc7762b5f6b3ebd730c5564781bf90afa0746dfe72799f453c7c"
+    },
+    "dist-desktop/Premiere316-Setup.exe": {
+      "path": "dist-desktop/Premiere316-Setup.exe",
+      "bytes": 88893642,
+      "sha256": "e0b1206cfb3672dc7e5e86fba039b482e68510164a4ad4621d90bd80424ccdbd"
+    },
+    "dist-desktop/win-unpacked/resources/backend.mjs": {
+      "path": "dist-desktop/win-unpacked/resources/backend.mjs",
+      "bytes": 155417,
+      "sha256": "6f2ea7ded467b6f8a2e37df37a21b1623774c3ce2e0840b5e48f9331a3dcbb86"
+    },
+    "dist-desktop/win-unpacked/resources/workers/flux1_jsonl_worker.py": {
+      "path": "dist-desktop/win-unpacked/resources/workers/flux1_jsonl_worker.py",
+      "bytes": 18509,
+      "sha256": "8c37b861137eb7d7b7d35b3966a6599ac034052844caab5aa707167e46032678"
+    },
+    "dist-desktop/win-unpacked/resources/ui/server/index.mjs": {
+      "path": "dist-desktop/win-unpacked/resources/ui/server/index.mjs",
+      "bytes": 39228,
+      "sha256": "692a28a68665fad4762c12ba0334c4e9dd619af1e15719f4e7f2180772e5c430"
+    }
+  },
+  "sourceIdentity": {
+    "sourceHash": "f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999",
+    "sourceMatchesDesktop": true,
+    "sourceMatchesPackaged": true,
+    "buildInfoIdentical": true
+  },
+  "runtimeResources": {
+    "count": 57,
+    "bytes": 4851492,
+    "manifestSha256": "e2c0430d0379990a5634e992ed040e5fc8ff531227d7e471cf56077b6afb6be6"
+  },
+  "sourceGates": {
+    "npmTest": "pass 255/255",
+    "typecheck": "pass",
+    "build": "pass",
+    "electronPack": "pass",
+    "staticChecks": "pass",
+    "packagedSmoke": true,
+    "stageVisual": "pass 28/28 across 14 stages"
+  },
+  "packagedUat": {
+    "ok": true,
+    "acceptedRunArtifacts": "screenshots/wave4-native/report.json",
+    "visibleMainOwnedConfirmations": [
+      "authority review and seal with Cancel default",
+      "prepared cancel",
+      "prepared approval",
+      "generation authorization 1",
+      "generation authorization 2",
+      "canonical rejection",
+      "canonical approval"
+    ],
+    "authorityReviewChars": 69445,
+    "authorityHasNoReferenceFixture": true,
+    "exactlyTwoImages": true,
+    "pendingFiles": [],
+    "visibleNightMetrics": [
+      {
+        "path": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\\media\\stills\\14718638-7d11-46db-b102-a4c949b74635.4fe0d08abe0cee3ae24a1457.png",
+        "empty": false,
+        "meanIntensity": 41.89,
+        "darkPixelRatio": 0.9431
+      },
+      {
+        "path": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\\media\\stills\\ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png",
+        "empty": false,
+        "meanIntensity": 44.1,
+        "darkPixelRatio": 0.8967
+      }
+    ],
+    "images": [
+      {
+        "artifact": "screenshots/wave4-native/generated/ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png",
+        "sha256": "a13308b4a38d4c6dc2d876698beb35124767ab0626fc50efe00c3cdaaad80f85",
+        "bytes": 404712,
+        "width": 512,
+        "height": 512,
+        "seed": 1820113421,
+        "generatedAt": "2026-09-04T12:58:29.219Z",
+        "prompt": "Coastal Archive Wave4. Exterior night photograph after midnight: a weathered brutalist concrete film archive beside a black ocean, visible dark night sky, rain-wet pier, deep shadows, dim amber entrance lamps, and a clearly marked 35mm film-canister return hatch. Cinematic low-key exposure.. visible exterior night sky",
+        "references": [],
+        "telemetry": {
+          "modelLoadMs": 126630.12210000306,
+          "inferenceMs": 21245.17689998902,
+          "totalMs": 150483.5814,
+          "peakVramBytes": 57721827328,
+          "peakSystemRamBytes": null,
+          "residentBeforeJob": false,
+          "residentAfterJob": true
+        },
+        "sidecarSha256": "4661a63a437e8d8d8020159326be1588ed80d9b5a0944b19117a52cf0b3c50d3"
+      },
+      {
+        "artifact": "screenshots/wave4-native/generated/14718638-7d11-46db-b102-a4c949b74635.4fe0d08abe0cee3ae24a1457.png",
+        "sha256": "4fe0d08abe0cee3ae24a14575f73e9d7bda38d7d1e58b28c738594f0e3bc29b1",
+        "bytes": 348225,
+        "width": 512,
+        "height": 512,
+        "seed": 1820335395,
+        "generatedAt": "2026-09-04T12:59:48.164Z",
+        "prompt": "Coastal Archive Wave4. Exterior night photograph after midnight: a weathered brutalist concrete film archive beside a black ocean, visible dark night sky, rain-wet pier, deep shadows, dim amber entrance lamps, and a clearly marked 35mm film-canister return hatch. Cinematic low-key exposure.. visible exterior night sky",
+        "references": [],
+        "telemetry": {
+          "modelLoadMs": 0,
+          "inferenceMs": 9511.465000003227,
+          "totalMs": 9874.456400000025,
+          "peakVramBytes": 57721827328,
+          "peakSystemRamBytes": null,
+          "residentBeforeJob": true,
+          "residentAfterJob": true
+        },
+        "sidecarSha256": "4201bcb3ec44156e2525ecb5a9fa6784c532b6de63b3485a781c31b5b61fce56"
+      }
+    ],
+    "consoleErrors": [],
+    "pageErrors": []
+  },
+  "residency": {
+    "sameWorkerPid": true,
+    "workerPid": 71148,
+    "firstWorkerCount": 1,
+    "secondWorkerCount": 1,
+    "firstWorkerTcpConnections": [],
+    "secondWorkerTcpConnections": [],
+    "workerCountAfterVisibleRelease": 0,
+    "workerCountAfterRestart": 0,
+    "restartLedgerVerified": true
+  },
+  "signedLedger": {
+    "entryCount": 8,
+    "kinds": {
+      "productionAuthority": 1,
+      "preparedApproval": 1,
+      "preparedSeal": 2,
+      "generationReceipt": 2,
+      "rejectionDecision": 1,
+      "canonicalDecision": 1
+    },
+    "sequenceValid": true,
+    "uniqueIds": true,
+    "tail": {
+      "schemaVersion": 1,
+      "count": 8,
+      "headMac": "d9d74c6cd3fe67a8acaaf7484cb0447d8c5038b62bfc6c4311a9d3e9d49a3450",
+      "ledgerPath": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave4-native-OVLf7n\\media\\stills\\security-ledger.v1.jsonl",
+      "mac": "314ebc8af9205f329f4a853060ba76cf3d321d8ec4ea7fddfba8ff6d3ae23f18"
+    },
+    "authorityId": "authority:51513fe53ed0c1f4eeaae4cbbb0a2da8",
+    "preparedApprovalId": "preparedApproval:27cc0c3de37e1fb47b2522729c18d60a",
+    "seals": [
+      "seal:acad4fc0a2c6e6f423a4a44adc12f3f7",
+      "seal:0d41dabfa4b4a83048e676bd23213f51"
+    ],
+    "receipts": [
+      {
+        "receiptId": "receipt:625a88b38f6ac3b536cf47182d0aab95",
+        "iterationId": "iteration:asset:location:coastal:archive:6c9088d4bae959fc",
+        "tokenDigest": "d6917be249a32e9f6a3ddf0d54ae719c847b58eda716b48341e6936c1fd3bc1b",
+        "sealId": "seal:acad4fc0a2c6e6f423a4a44adc12f3f7",
+        "workerIdentityDigest": "c53015efde0599d7f341c5f0ead3e6d4ebe2003ec2036e153168e30f19b75066",
+        "componentDigest": "5eee224a62f7f5cb9e32051d76f0ba4664c92d1845f34c9e09c93ed6902f6e03",
+        "continuityFindings": [
+          {
+            "id": "continuity:receipt:625a88b38f6ac3b536cf47182d0aab95:approved-locks",
+            "severity": "blocker",
+            "message": "Confirm visible approved identity/continuity locks: visible exterior night sky",
+            "confirmed": false
+          }
+        ],
+        "output": {
+          "mediaUri": "media://stills/ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png",
+          "mediaSha256": "a13308b4a38d4c6dc2d876698beb35124767ab0626fc50efe00c3cdaaad80f85",
+          "sidecarSha256": "4661a63a437e8d8d8020159326be1588ed80d9b5a0944b19117a52cf0b3c50d3",
+          "width": 512,
+          "height": 512,
+          "byteLength": 404712
+        }
+      },
+      {
+        "receiptId": "receipt:a6f18aca963de6ebcb2af24e9b0d780e",
+        "iterationId": "iteration:asset:location:coastal:archive:9836d16ba4a3e3ef",
+        "tokenDigest": "892532fbd3afdbd02295036b14b13609dd4a96a0f7849c64e2ce379eef5199dc",
+        "sealId": "seal:0d41dabfa4b4a83048e676bd23213f51",
+        "workerIdentityDigest": "c53015efde0599d7f341c5f0ead3e6d4ebe2003ec2036e153168e30f19b75066",
+        "componentDigest": "5eee224a62f7f5cb9e32051d76f0ba4664c92d1845f34c9e09c93ed6902f6e03",
+        "continuityFindings": [
+          {
+            "id": "continuity:receipt:a6f18aca963de6ebcb2af24e9b0d780e:approved-locks",
+            "severity": "blocker",
+            "message": "Confirm visible approved identity/continuity locks: visible exterior night sky",
+            "confirmed": false
+          }
+        ],
+        "output": {
+          "mediaUri": "media://stills/14718638-7d11-46db-b102-a4c949b74635.4fe0d08abe0cee3ae24a1457.png",
+          "mediaSha256": "4fe0d08abe0cee3ae24a14575f73e9d7bda38d7d1e58b28c738594f0e3bc29b1",
+          "sidecarSha256": "4201bcb3ec44156e2525ecb5a9fa6784c532b6de63b3485a781c31b5b61fce56",
+          "width": 512,
+          "height": 512,
+          "byteLength": 348225
+        }
+      }
+    ],
+    "rejection": {
+      "id": "rejection:cfae5694d76eb91452360ce2de6fd797",
+      "decisionId": "rejection:cfae5694d76eb91452360ce2de6fd797",
+      "authorityId": "authority:51513fe53ed0c1f4eeaae4cbbb0a2da8",
+      "receiptId": "receipt:625a88b38f6ac3b536cf47182d0aab95",
+      "generationReceiptDigest": "3e496b8c5468e08e70a0e457b9da4c889cc2b48f322e274c59f0c917d039a5fe",
+      "assetId": "asset:location:coastal:archive",
+      "preparedAssetId": "prepared:asset:location:coastal:archive",
+      "iterationId": "iteration:asset:location:coastal:archive:6c9088d4bae959fc",
+      "reviewer": "user",
+      "reason": "Rejecting first Wave4 candidate: this is a valid distinct local night image, but its visible setting is the comparatively weaker match for the approved exterior coastal archive and exterior-night-sky continuity.",
+      "reasonDigest": "715c6b4409d286e49a187ad0cce83d4ced509f16cb80b97bb94d4a7749eaf33d",
+      "preparedApprovalRootId": "preparedApproval:27cc0c3de37e1fb47b2522729c18d60a",
+      "preparedApprovalDigest": "ca27921ab4eb6673018ab55dcce6a25e87eeef118c35bbe686d83bd3b2b7cd5e",
+      "preparedSealDigest": "e4ab6d860f18046262143c8521f6579453766881cbcc3a4917a7826a9d8e1b30",
+      "outputDigest": "43f21195e5ff24594b77ce342cd8fc01b3c048c48e2284f1476c875927775e9b",
+      "productionDigest": "619f5f3241b6db5cb963fa97badcc9156aa854ed46b66777db6edb82bd28b280"
+    },
+    "canonical": {
+      "id": "canonical:d34f1e3156f1267199b56a6529d371e9",
+      "decisionId": "canonical:d34f1e3156f1267199b56a6529d371e9",
+      "authorityId": "authority:51513fe53ed0c1f4eeaae4cbbb0a2da8",
+      "receiptId": "receipt:a6f18aca963de6ebcb2af24e9b0d780e",
+      "generationReceiptDigest": "bfaa2b38535454ff379af5bc1d9c21ff412c9c865997d544441af04e7bcbefca",
+      "assetId": "asset:location:coastal:archive",
+      "preparedAssetId": "prepared:asset:location:coastal:archive",
+      "iterationId": "iteration:asset:location:coastal:archive:9836d16ba4a3e3ef",
+      "reviewer": "user",
+      "reason": "Approving second Wave4 candidate: it visibly presents an exterior dark night sky, rain-wet architecture, and practical lighting, making it the more defensible of the two visible interpretations of the required exterior-night continuity.",
+      "reasonDigest": "07ef206421537fae01d2d63133c495b15e5b86ccb281b6d580674c3d207896ba",
+      "continuityFindings": [
+        {
+          "id": "continuity:receipt:a6f18aca963de6ebcb2af24e9b0d780e:approved-locks",
+          "severity": "blocker",
+          "message": "Confirm visible approved identity/continuity locks: visible exterior night sky",
+          "confirmed": true
+        }
+      ],
+      "continuityDigest": "f9e9a88220c1fb35872b7e79007ba3562f58680123303461c25181eaa291cf98",
+      "outputDigest": "37239b5160ab54402b136fe831883f1c70a6c05e38d6228d5fb218990e5465de",
+      "preparedApprovalRootId": "preparedApproval:27cc0c3de37e1fb47b2522729c18d60a",
+      "preparedApprovalDigest": "ca27921ab4eb6673018ab55dcce6a25e87eeef118c35bbe686d83bd3b2b7cd5e",
+      "preparedSealDigest": "805761eb1fd80833420d61b8e2d6549157d442372f073919c4c3e33d03e382f2",
+      "manifestDigest": "45f3f1276be0e2ec95928a8d1d44df99316e2ab9a051fa823b7a49a732877186",
+      "productionDigest": "619f5f3241b6db5cb963fa97badcc9156aa854ed46b66777db6edb82bd28b280"
+    }
+  },
+  "offline": {
+    "workerExternalConnectionsAbsent": true,
+    "port8188Requests": 0,
+    "completionPosts": 0,
+    "rendererObservedNetwork": [
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/styles-7T3d-Kc5.css"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/index-CgbdNhYg.js"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/routes-6-hXIBz_.js"
+      },
+      {
+        "method": "GET",
+        "url": "https://grok.com/grok-app-builder/extensions.js"
+      },
+      {
+        "method": "GET",
+        "url": "media://stills/ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png"
+      },
+      {
+        "method": "GET",
+        "url": "media://stills/ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png"
+      },
+      {
+        "method": "GET",
+        "url": "media://stills/14718638-7d11-46db-b102-a4c949b74635.4fe0d08abe0cee3ae24a1457.png"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/client-DgvorinX.js"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/styles-7T3d-Kc5.css"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/index-CgbdNhYg.js"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/routes-6-hXIBz_.js"
+      },
+      {
+        "method": "GET",
+        "url": "https://grok.com/grok-app-builder/extensions.js"
+      },
+      {
+        "method": "GET",
+        "url": "media://stills/ace5017a-e46f-4445-bc1d-b1237938072a.a13308b4a38d4c6dc2d87669.png"
+      },
+      {
+        "method": "GET",
+        "url": "media://stills/14718638-7d11-46db-b102-a4c949b74635.4fe0d08abe0cee3ae24a1457.png"
+      }
+    ]
+  },
+  "preservation": {
+    "liveData": {
+      "appData": "C:\\Users\\teeja\\AppData\\Roaming\\Premiere316",
+      "beforeCount": 312,
+      "afterCount": 312,
+      "beforeContentManifestSha256": "118052f7a5695e7a9339c07be6b17c7df56eb5d7e20680121c6bbf26ffb875ca",
+      "afterContentManifestSha256": "118052f7a5695e7a9339c07be6b17c7df56eb5d7e20680121c6bbf26ffb875ca",
+      "differences": [],
+      "byteIdentical": true,
+      "same": true
+    },
+    "exactComponentsAllIdentical": true,
+    "externalRootsAllIdentical": true,
+    "ambientProcessesPreserved": true,
+    "ambientProcessIds": [
+      23356,
+      23756,
+      19552,
+      20712,
+      20972,
+      53312,
+      37076
+    ],
+    "residualPremiere316OrWorkerProcesses": 0,
+    "isolatedProfilesRemaining": 0
+  },
+  "priorVeto": {
+    "candidate": "p316-20260904115717-f8c5609e32d4",
+    "a07": "blocked",
+    "remediations": [
+      "Removed generated 1x1 reference fixture and asserted empty reference provenance/authority",
+      "Strengthened exact visible continuity lock to visible exterior night sky",
+      "Added conservative image darkness precheck before any acknowledgement",
+      "Acknowledged only the canonical candidate checklist; rejected candidate remains unchecked",
+      "Selected the candidate that visibly shows exterior night sky",
+      "Added authority-review Escape cancellation, focus trapping, and Cancel default"
+    ],
+    "history": "docs/release/audits and screenshots/wave4-audit-history"
+  },
+  "audits": {
+    "workflowRunId": "544b1c84-b21f-4360-8a3b-f3719851037a",
+    "A07": {
+      "verdict": "pass",
+      "runId": "4f86a2e6-1a45-48ae-a064-c96a928e3564",
+      "report": "docs/release/audits/wave4-final-A07.md"
+    },
+    "A08": {
+      "verdict": "pass",
+      "runId": "c0000148-adc3-4c1c-81d9-e33a9005f63d",
+      "report": "docs/release/audits/wave4-final-A08.md"
+    },
+    "A64": {
+      "verdict": "pass",
+      "runId": "a137d777-8c68-44bc-b291-f97e621df39e",
+      "report": "docs/release/audits/wave4-final-A64.md"
+    },
+    "A01": {
+      "status": "finalized",
+      "recovery": "Conditional A01 child exhausted the orchestration token budget without a persisted child session; root A01 recovered the already-authorized checkpoint from the three unanimous completed audits without reopening runtime gates.",
+      "tag": "wave4-p316-20260904124249-f8c5609e32d4"
+    }
+  },
+  "release": {
+    "visibleReleaseOnce": true,
+    "modelWorkerAbsentAfterRelease": true,
+    "restartRecoveredLedger": true
+  }
+}

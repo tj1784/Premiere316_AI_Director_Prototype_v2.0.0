@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "assetId": "asset:location:coastal:archive",
+  "engineId": "flux",
+  "engineName": "flux1-dev",
+  "runtimeAdapter": "flux",
+  "runtimeImplementation": "black-forest-labs/flux",
+  "baseCheckpoint": {
+    "id": "diffusion_models\\flux1-dev.safetensors",
+    "path": "diffusion_models\\flux1-dev.safetensors",
+    "fingerprint": "9e0074ce914321951f9e6eda25752e10cc88d407df91418879ff6d7b0b44b596",
+    "fingerprintKind": "sampled"
+  },
+  "components": [
+    {
+      "role": "runtime",
+      "id": "black-forest-labs/flux@802fb4713906133fcbd0d8dc5351620ca4773036",
+      "path": "flux",
+      "fingerprint": null
+    },
+    {
+      "role": "text_encoder",
+      "id": "t5xxl_fp16.safetensors@6e480b09fae049a72d2a8c5fbccb8d3e92febeb233bbe9dfe7256958a9167635",
+      "path": "text_encoders\\t5xxl_fp16.safetensors",
+      "fingerprint": "63a7773e9e9d031ae6a506342899b6015cc774aa0a9d456c48f21fea8291d04d"
+    },
+    {
+      "role": "tokenizer",
+      "id": "google/t5-v1_1-xxl-config-tokenizer@3db67ab1af984cf10548a73467f0e5bca2aaaeb2",
+      "path": "3db67ab1af984cf10548a73467f0e5bca2aaaeb2",
+      "fingerprint": null
+    },
+    {
+      "role": "text_encoder",
+      "id": "clip_l.safetensors@660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd",
+      "path": "text_encoders\\clip_l.safetensors",
+      "fingerprint": "9170e7e86a00bea20ed1bec8d0fadfd242bb115777488e1a2ce926a7b423f7ac"
+    },
+    {
+      "role": "tokenizer",
+      "id": "open_clip:bpe_simple_vocab_16e6@924691ac288e54409236115652ad4aa250f48203de50a9e4722a6ecd48d6804a",
+      "path": "bpe_simple_vocab_16e6.txt.gz",
+      "fingerprint": "924691ac288e54409236115652ad4aa250f48203de50a9e4722a6ecd48d6804a"
+    },
+    {
+      "role": "tokenizer_source",
+      "id": "open_clip:tokenizer.py@90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734",
+      "path": "tokenizer.py",
+      "fingerprint": "90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734"
+    },
+    {
+      "role": "vae",
+      "id": "ae.safetensors@afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+      "path": "vae\\ae.safetensors",
+      "fingerprint": "5a45aa6aadaa8e056860dda2ecbb932a9e1ca3244210235142e60c054c685b38"
+    }
+  ],
+  "loras": [],
+  "prompt": "Coastal Archive Wave4. Wave 4 verified concrete archive prop with salt air patina, amber canister label, and continuity-safe visible silhouette.. night",
+  "enhancedPrompt": null,
+  "references": [],
+  "width": 512,
+  "height": 512,
+  "steps": 20,
+  "guidance": 3.5,
+  "seed": 1817128981,
+  "scheduler": "flux1-official-20-guidance-3.5",
+  "precision": "BF16",
+  "outputFormat": "PNG",
+  "outputBitDepth": 8,
+  "timestepData": null,
+  "placementPlan": null,
+  "generatedAt": "2026-09-04T12:08:44.647Z",
+  "applicationVersion": "3.0.2",
+  "telemetry": {
+    "modelLoadMs": 125949.24240000546,
+    "inferenceMs": 21073.988000003737,
+    "totalMs": 149417.6344,
+    "peakVramBytes": 57721827328,
+    "peakSystemRamBytes": null,
+    "residentBeforeJob": false,
+    "residentAfterJob": true
+  }
+}

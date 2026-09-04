@@ -150,18 +150,70 @@ export type AssetVariant = {
   staleReasons: string[];
 };
 
+export type IterationContinuityFinding = {
+  id: string;
+  severity: "note" | "warning" | "blocker";
+  message: string;
+  confirmed: boolean;
+};
+
+export type BackendCanonicalProof = {
+  decisionId: string;
+  authorityId?: string;
+  receiptId: string;
+  signedRecordMac: string;
+  generationReceiptDigest: string;
+  preparedApprovalRootId: string;
+  preparedApprovalDigest: string;
+  preparedSealDigest: string;
+  assetId: string;
+  preparedAssetId: string;
+  iterationId: string;
+  reasonDigest: string;
+  continuityDigest: string;
+  outputDigest: string;
+};
+
+export type IterationReviewDecision = {
+  id: string;
+  iterationId: string;
+  at: number;
+  decision: "needs-review" | "approve" | "reject" | "confirm-continuity";
+  reviewer: "user" | "package-uat";
+  reason: string;
+  continuityFindings: IterationContinuityFinding[];
+  dependencyFingerprints: import("./dependency-graph.ts").SourceFingerprint[];
+  canonicalProof?: BackendCanonicalProof | null;
+};
+
 export type GeneratedIteration = {
   id: string;
+  preparedAssetId?: string;
+  assetId?: string;
   variantId: string | null;
+  specVersionId?: string;
   mediaUri: string;
+  mediaSha256?: string;
+  sidecarSha256?: string;
+  width?: number;
+  height?: number;
+  byteLength?: number;
   createdAt: number;
-  status: "GENERATED" | "NEEDS_REVIEW" | "APPROVED" | "REJECTED";
+  status: "GENERATED" | "NEEDS_REVIEW" | "APPROVED" | "REJECTED" | "STALE";
   provenance: Provenance;
+  execution?: import("../studio/generation-provenance.ts").GenerationProvenance | null;
+  dependencyFingerprints?: import("./dependency-graph.ts").SourceFingerprint[];
+  reviewDecisionIds?: string[];
+  reviewDecisions?: IterationReviewDecision[];
+  generationReceiptId?: string | null;
+  generationReceiptDigest?: string | null;
+  receiptContinuityFindings?: IterationContinuityFinding[];
+  canonicalProof?: BackendCanonicalProof | null;
 };
 
 export type AssetLineageEvent = {
   id: string;
-  type: "created" | "edited" | "merged" | "split" | "reference-linked" | "approved-spec" | "prepared" | "approved-prepared";
+  type: "created" | "edited" | "merged" | "split" | "reference-linked" | "approved-spec" | "prepared" | "approved-prepared" | "iteration-generated" | "iteration-reviewed" | "iteration-approved";
   at: number;
   sourceAssetIds: string[];
   targetAssetIds: string[];
@@ -242,6 +294,9 @@ export type PreparedAssetRecord = {
   noGeneration: true;
   createdAt: number;
   approvedAt: number | null;
+  preparedApprovalRootId?: string | null;
+  preparedApprovalDigest?: string | null;
+  productionAuthorityId?: string | null;
 };
 
 export type PreparationQueueRecord = {
@@ -273,6 +328,7 @@ export type ProductionBreakdown = {
   approvals?: AssetLineageEvent[];
   auditLog?: AssetLineageEvent[];
   preparedAssets?: PreparedAssetRecord[];
+  productionAuthority?: { authorityId: string | null; digest: string | null; createdAt: number | null; status: "CURRENT" | "DIRTY_RESEAL_REQUIRED" | "NO_AUTHORITY" | "INVALID" } | null;
   queue: PreparationQueueRecord[];
   createdAt: number;
   updatedAt: number;

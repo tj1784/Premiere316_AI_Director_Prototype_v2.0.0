@@ -30,6 +30,7 @@ const STAGE_LAYOUT: Record<StageId, StageLayoutPolicy> = {
   shots: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "shots" },
   prompts: { leftPanel: "none", rightPanel: "none", bottomPanel: "none", headerActions: [], workspaceMode: "prompts" },
   generate: { leftPanel: "generation", rightPanel: "generation", bottomPanel: "none", headerActions: [], workspaceMode: "generate" },
+  review: { leftPanel: "stage", rightPanel: "stage", bottomPanel: "none", headerActions: [], workspaceMode: "review" },
   timeline: { leftPanel: "media", rightPanel: "clip", bottomPanel: "timeline", headerActions: [], workspaceMode: "stitch" },
   score: { leftPanel: "none", rightPanel: "none", bottomPanel: "none", headerActions: [], workspaceMode: "score" },
   export: { leftPanel: "none", rightPanel: "none", bottomPanel: "none", headerActions: [], workspaceMode: "export" },

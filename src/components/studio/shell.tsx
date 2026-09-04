@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Bin } from "./bin";
 import { Inspector } from "./inspector";
 import { InterfaceScale } from "./interface-scale";
-import { StillBay } from "./still-bay";
 import { StageRail, StageView } from "./stage-views";
 import { ClipInspector, MediaBin } from "./stitch-panels";
 import { Timeline } from "./timeline";
@@ -19,7 +18,6 @@ import {
   type ShellLeftKind,
   type ShellRightKind,
 } from "@/lib/studio/stage-layout";
-import { MODEL_ROOT } from "@/lib/studio/types";
 
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -98,7 +96,6 @@ export function StudioShell() {
   const picture = useActivePicture();
   const stage = useStage();
   const closePicture = useStudio((state) => state.closePicture);
-  const stillBayShotId = useStudio((state) => state.stillBayShotId);
   const leftCollapsed = useStudio((state) => state.leftPanelCollapsed);
   const rightCollapsed = useStudio((state) => state.rightPanelCollapsed);
   const setLeftCollapsed = useStudio((state) => state.setLeftPanelCollapsed);
@@ -162,7 +159,7 @@ export function StudioShell() {
         {leftKind ? <Button variant="ghost" size="icon-sm" aria-label={layout.left ? `Collapse ${leftTitle}` : `Open ${leftTitle}`} title={layout.left ? `Collapse ${leftTitle}` : `Open ${leftTitle}`} onClick={toggleLeft}><PanelLeft /></Button> : null}
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-base leading-tight tracking-tight sm:text-lg" title={picture.title}>{picture.title}</p>
-          <p className="hidden truncate text-[10px] font-light text-subtle xl:block" title={MODEL_ROOT}>{MODEL_ROOT} · V3.02 · no ComfyUI</p>
+          <p className="hidden truncate text-[10px] font-light text-subtle xl:block">Local model vault · V3.02 · no ComfyUI</p>
         </div>
         {leftKind && !layout.left && leftCollapsed && layout.mode !== "narrow" ? <Button className="hidden xl:inline-flex" size="sm" variant="ghost" onClick={() => setLeftCollapsed(false)}>{leftTitle}</Button> : null}
         {rightKind && !layout.right && rightCollapsed && layout.mode === "wide" ? <Button className="hidden xl:inline-flex" size="sm" variant="ghost" onClick={() => setRightCollapsed(false)}>{rightTitle}</Button> : null}
@@ -187,7 +184,6 @@ export function StudioShell() {
 
       {leftDrawer && leftKind ? <Drawer side="left" title={leftTitle} onClose={closeLeftDrawer}><LeftPanel kind={leftKind} /></Drawer> : null}
       {rightDrawer && rightKind ? <Drawer side="right" title={rightTitle} onClose={closeRightDrawer}><RightPanel kind={rightKind} /></Drawer> : null}
-      {stillBayShotId && stage === "generate" ? <StillBay /> : null}
     </div>
   );
 }

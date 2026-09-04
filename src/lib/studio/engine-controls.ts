@@ -242,11 +242,7 @@ function commonControls(): Record<EngineControlId, EngineControlCapability> {
       runtimeDefault: "", recommendedDefault: "", allowedValues: [], help: "Native Black Forest Labs implementation; no ComfyUI.",
       fixed: true, perGenerationOverride: false, reloadEffect: "FULL_RELOAD",
     }),
-    benchmarkConfiguration: enabled({
-      id: "benchmarkConfiguration", label: "Benchmark configuration", group: "execution", level: "expert", kind: "action",
-      help: "Runs a user-initiated deterministic local calibration; results are measurements, not model rankings.",
-      perGenerationOverride: false,
-    }),
+    benchmarkConfiguration: disabled("benchmarkConfiguration", "Benchmark configuration", "execution", "expert", "action", "Benchmark and free wake routes are disabled; packaged Generate is prepared-asset only."),
     unload: disabled("unload", "Unload", "memory", "expert", "action"),
   };
 }
@@ -255,15 +251,15 @@ function nativePresets(values: { steps: number; guidance: number }): EngineQuali
   return [
     {
       id: "fast-preview", label: "Fast Preview", description: "Lower-resolution native preview; sampling remains adapter-defined.",
-      values: { qualityPreset: "fast-preview", width: 896, height: 512, aspectRatio: "16:9", ...values },
+      values: { qualityPreset: "fast-preview", width: 512, height: 512, aspectRatio: "1:1", ...values },
     },
     {
-      id: "production", label: "Production", description: "Production framing with the adapter's native sampling defaults.",
-      values: { qualityPreset: "production", width: 1280, height: 720, aspectRatio: "16:9", ...values },
+      id: "production", label: "Production", description: "Prepared Wave 4 draft framing with the adapter's native sampling defaults.",
+      values: { qualityPreset: "production", width: 512, height: 512, aspectRatio: "1:1", ...values },
     },
     {
-      id: "maximum-quality", label: "Maximum Quality", description: "Higher-resolution output without inventing unsupported sampling controls.",
-      values: { qualityPreset: "maximum-quality", width: 1536, height: 864, aspectRatio: "16:9", ...values },
+      id: "maximum-quality", label: "Maximum Quality", description: "Same fixed 512px Wave 4 native draft; higher-resolution controls stay disabled until a later gate.",
+      values: { qualityPreset: "maximum-quality", width: 512, height: 512, aspectRatio: "1:1", ...values },
     },
   ];
 }
@@ -274,9 +270,9 @@ function flux1(): NativeAdapterCapabilities {
   controls.guidance = fixedNumber("guidance", "Guidance", "advanced", 3.5, "The current FLUX.1 worker always uses native guidance 3.5.");
   controls.scheduler = enabled({
     id: "scheduler", label: "Timestep strategy", group: "generation", level: "expert", kind: "enum",
-    runtimeDefault: "flux1-linear-shift", recommendedDefault: "flux1-linear-shift",
-    allowedValues: [{ value: "flux1-linear-shift", label: "FLUX.1 linear shift" }],
-    help: "Official FLUX.1 schedule with its resolution-dependent linear time shift.", disabledReason: "Fixed by the current native worker.",
+    runtimeDefault: "flux1-official-20-guidance-3.5", recommendedDefault: "flux1-official-20-guidance-3.5",
+    allowedValues: [{ value: "flux1-official-20-guidance-3.5", label: "FLUX.1 official 20-step guidance 3.5" }],
+    help: "Official FLUX.1 schedule id flux1-official-20-guidance-3.5.", disabledReason: "Fixed by the current native worker.",
     fixed: true, perGenerationOverride: false,
   });
   controls.shift = fixedNumber("shift", "Schedule shift", "expert", true, "Schedule shifting is enabled by the current FLUX.1 worker.");

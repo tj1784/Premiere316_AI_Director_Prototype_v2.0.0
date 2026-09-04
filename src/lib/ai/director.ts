@@ -1,37 +1,33 @@
 import { createServerFn } from "@tanstack/react-start";
-import type { StillExposeInput } from "@/lib/desktop/protocol.ts";
+
+type DisabledStillInput = {
+  prompt?: string;
+  engineId?: string;
+  engineName?: string;
+  references?: string[];
+  selectedBasePath?: string;
+  values?: Record<string, unknown>;
+};
 
 /**
- * Local generation entry points only.
- *
- * Premiere316 never falls back to a hosted inference API. Text generation is
- * provided by the loopback LM Studio workflow and motion/audio adapters remain
- * unavailable until a native local adapter passes its capability gate.
+ * Browser/server-function generation is fail-closed. Packaged desktop prepared
+ * asset authorization is the only native image path.
  */
 export const generateStill = createServerFn({ method: "POST" })
-  .validator(
-    (input: StillExposeInput) => ({
-      prompt: input.prompt,
-      engineId: input.engineId ?? "",
-      engineName: input.engineName ?? "",
-      references: (input.references ?? []).filter((uri) => typeof uri === "string" && uri.startsWith("data:image/")).slice(0, 3),
-      selectedBasePath: input.selectedBasePath ?? "",
-      values: input.values ?? {},
-    }),
-  )
-  .handler(async ({ data }) => {
-    const { exposeLocalStill } = await import("@/lib/studio/local-still.server.ts");
-    return exposeLocalStill({
-      prompt: data.prompt,
-      engineId: data.engineId,
-      engineName: data.engineName,
-      references: data.references,
-      selectedBasePath: data.selectedBasePath,
-      values: data.values,
-    });
-  });
+  .validator((input: DisabledStillInput) => ({
+    prompt: input.prompt ?? "",
+    engineId: input.engineId ?? "",
+    engineName: input.engineName ?? "",
+    references: (input.references ?? []).filter((uri: string) => typeof uri === "string" && uri.startsWith("data:image/")).slice(0, 3),
+    selectedBasePath: input.selectedBasePath ?? "",
+    values: input.values ?? {},
+  }))
+  .handler(async () => ({
+    ok: false as const,
+    error: "Native still generation is disabled outside the packaged prepared-asset workflow.",
+  }));
 
-export const wakeLocalEngine = createServerFn({ method: "POST" }).handler(async () => {
-  const { ensureLocalEngine } = await import("@/lib/studio/local-still.server.ts");
-  return ensureLocalEngine();
-});
+export const wakeLocalEngine = createServerFn({ method: "POST" }).handler(async () => ({
+  ok: false as const,
+  error: "Free-standing model wake is disabled; use the packaged prepared-asset generation action.",
+}));

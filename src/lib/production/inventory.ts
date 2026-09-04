@@ -64,6 +64,28 @@ function bump(record: ProductionBreakdown): number {
   return (record.inventoryVersion ?? 1) + 1;
 }
 
+function dirtyAuthority(record: ProductionBreakdown): ProductionBreakdown {
+  const preparedAssets = (record.preparedAssets ?? []).map((item) => item.status === "APPROVED_PREPARED" || item.preparedApprovalRootId || item.preparedApprovalDigest
+    ? { ...item, status: item.blockers.length ? "BLOCKED" as const : "READY_TO_PREPARE" as const, approvedAt: null, preparedApprovalRootId: null, preparedApprovalDigest: null, productionAuthorityId: null }
+    : item);
+  return { ...record, preparedAssets, productionAuthority: record.productionAuthority?.authorityId ? { ...record.productionAuthority, status: "DIRTY_RESEAL_REQUIRED" as const } : record.productionAuthority ?? null };
+}
+
+function withAuthorityDirty(next: ProductionBreakdown, now: number): ProductionBreakdown {
+  const dirtied = dirtyAuthority(next);
+  return { ...dirtied, graph: buildDependencyGraphV2(dirtied, now) };
+}
+
+export function applyProductionAuthority(record: ProductionBreakdown, input: { authorityId: string; digest: string; createdAt: number }): ProductionBreakdown {
+  if (!/^authority:[a-f0-9]{32}$/.test(input.authorityId)) throw new Error("Production authority id is invalid.");
+  if (!/^[a-f0-9]{64}$/.test(input.digest)) throw new Error("Production authority digest is invalid.");
+  const preparedAssets = (record.preparedAssets ?? []).map((item) => item.status === "APPROVED_PREPARED" || item.preparedApprovalRootId || item.preparedApprovalDigest
+    ? { ...item, status: item.blockers.length ? "BLOCKED" as const : "READY_TO_PREPARE" as const, approvedAt: null, preparedApprovalRootId: null, preparedApprovalDigest: null, productionAuthorityId: null }
+    : item);
+  const next = { ...record, preparedAssets, productionAuthority: { authorityId: input.authorityId, digest: input.digest, createdAt: input.createdAt, status: "CURRENT" as const }, inventoryVersion: bump(record), updatedAt: input.createdAt };
+  return { ...next, graph: buildDependencyGraphV2(next, input.createdAt) };
+}
+
 type LineageType = NonNullable<ProductionAsset["lineage"]>[number]["type"];
 function audit(id: string, type: LineageType, at: number, sourceAssetIds: string[], targetAssetIds: string[], reason: string) {
   return { id: `lineage:${type}:${id}:${at}`, type, at, sourceAssetIds, targetAssetIds, reason };
@@ -108,7 +130,7 @@ export function editInventoryAsset(record: ProductionBreakdown, assetId: string,
     return { ...next, readiness: calculateReadiness(next) };
   });
   const next = { ...record, assets, inventoryVersion: bump(record), updatedAt: now };
-  return { ...next, graph: buildDependencyGraphV2(next, now) };
+  return withAuthorityDirty(next, now);
 }
 
 export function approveInventoryAssetSpec(record: ProductionBreakdown, assetId: string, now = Date.now()): ProductionBreakdown {
@@ -121,7 +143,7 @@ export function approveInventoryAssetSpec(record: ProductionBreakdown, assetId: 
     return { ...next, readiness: calculateReadiness(next) };
   });
   const next = { ...record, assets, inventoryVersion: bump(record), approvals: [...(record.approvals ?? []), audit(assetId, "approved-spec", now, [assetId], [assetId], "Approved spec")], updatedAt: now };
-  return { ...next, graph: buildDependencyGraphV2(next, now) };
+  return withAuthorityDirty(next, now);
 }
 
 export function mergeInventoryAssets(record: ProductionBreakdown, targetId: string, sourceIds: string[], now = Date.now()): ProductionBreakdown {
@@ -138,7 +160,7 @@ export function mergeInventoryAssets(record: ProductionBreakdown, targetId: stri
     return asset;
   });
   const next = { ...record, assets, inventoryVersion: bump(record), auditLog: [...(record.auditLog ?? []), audit(targetId, "merged", now, sourceIds, [targetId], "Inventory merge")], updatedAt: now };
-  return { ...next, graph: buildDependencyGraphV2(next, now) };
+  return withAuthorityDirty(next, now);
 }
 
 export function splitInventoryAsset(record: ProductionBreakdown, assetId: string, split: { newAssetId: string; name: string; requirementIds: string[]; copyReferences?: boolean }, now = Date.now()): ProductionBreakdown {
@@ -153,7 +175,7 @@ export function splitInventoryAsset(record: ProductionBreakdown, assetId: string
     return { ...base, readiness: calculateReadiness(base) };
   }).concat(child);
   const next = { ...record, assets, inventoryVersion: bump(record), auditLog: [...(record.auditLog ?? []), audit(assetId, "split", now, [assetId], [split.newAssetId], "Inventory split")], updatedAt: now };
-  return { ...next, graph: buildDependencyGraphV2(next, now) };
+  return withAuthorityDirty(next, now);
 }
 
 export function linkAssetReference(record: ProductionBreakdown, assetId: string, reference: AssetReference, now = Date.now()): ProductionBreakdown {
@@ -164,15 +186,42 @@ export function linkAssetReference(record: ProductionBreakdown, assetId: string,
     return { ...next, readiness: calculateReadiness(next) };
   });
   const next = { ...record, assets, inventoryVersion: bump(record), updatedAt: now };
-  return { ...next, graph: buildDependencyGraphV2(next, now) };
+  return withAuthorityDirty(next, now);
 }
 
 export function prepareAssetRecords(record: ProductionBreakdown, visualBibleVersionIds: string[] = [], cinematographyPlanIds: string[] = [], now = Date.now()): ProductionBreakdown {
   const preparedAssets: PreparedAssetRecord[] = record.assets.filter((asset) => !asset.tombstone).map((asset) => {
     const specVersionId = asset.approvedSpecVersionId ?? null;
     const blockers = [!specVersionId ? "Approve asset spec before preparation." : "", asset.referenceRequired && !asset.references.length ? "Required reference is missing." : "", !visualBibleVersionIds.length ? "Approved visual-development bible is required." : "", !cinematographyPlanIds.length ? "Approved cinematography plan is required." : ""].filter(Boolean);
-    return { id: `prepared:${asset.id}`, assetId: asset.id, variantId: null, specVersionId, visualBibleVersionIds, cinematographyPlanIds, status: blockers.length ? "BLOCKED" : "APPROVED_PREPARED", blockers, promptIngredients: [asset.name, asset.canonicalSpec.visualDescription, ...asset.canonicalSpec.continuityLocks].filter(Boolean), negativeRequirements: asset.canonicalSpec.negativeRequirements, referenceIds: asset.references.map((reference) => reference.id), dependencyFingerprints: [sourceFingerprint({ sourceKind: "asset", sourceId: asset.id, versionId: specVersionId, content: asset.canonicalSpec, approvedAt: asset.updatedAt, immutableBoundary: Boolean(specVersionId) })], noGeneration: true, createdAt: now, approvedAt: blockers.length ? null : now };
+    const approvedSpec = (asset.specVersions ?? []).find((version) => version.id === specVersionId);
+    const referenceIds = asset.references.map((reference) => reference.id);
+    const dependencyFingerprints = [
+      sourceFingerprint({ sourceKind: "asset", sourceId: asset.id, versionId: specVersionId, content: asset.canonicalSpec, approvedAt: approvedSpec?.createdAt ?? asset.updatedAt, immutableBoundary: Boolean(specVersionId) }),
+      ...asset.references.map((reference) => sourceFingerprint({ sourceKind: "asset", sourceId: reference.id, versionId: record.screenplayVersionId ?? null, content: reference, approvedAt: null, immutableBoundary: false })),
+      ...visualBibleVersionIds.map((id) => sourceFingerprint({ sourceKind: "visual-development", sourceId: id, versionId: id, content: id, approvedAt: null, immutableBoundary: true })),
+      ...cinematographyPlanIds.map((id) => sourceFingerprint({ sourceKind: "cinematography", sourceId: id, versionId: id, content: id, approvedAt: null, immutableBoundary: true })),
+    ];
+    return { id: `prepared:${asset.id}`, assetId: asset.id, variantId: null, specVersionId, visualBibleVersionIds, cinematographyPlanIds, status: blockers.length ? "BLOCKED" : "READY_TO_PREPARE", blockers, promptIngredients: [asset.name, asset.canonicalSpec.visualDescription, ...asset.canonicalSpec.continuityLocks].filter(Boolean), negativeRequirements: asset.canonicalSpec.negativeRequirements, referenceIds, dependencyFingerprints, noGeneration: true, createdAt: now, approvedAt: null, preparedApprovalRootId: null, preparedApprovalDigest: null };
   });
   const next = { ...record, preparedAssets, inventoryVersion: bump(record), updatedAt: now };
-  return { ...next, graph: buildDependencyGraphV2(next, now) };
+  return withAuthorityDirty(next, now);
+}
+
+
+export function applyPreparedApproval(record: ProductionBreakdown, input: { preparedAssetId: string; rootId: string; approvedAt: number; digest: string; authorityId?: string }): ProductionBreakdown {
+  if (!record.productionAuthority?.authorityId || record.productionAuthority.status !== "CURRENT") throw new Error("Production authority must be sealed before applying prepared approval.");
+  if (!input.authorityId || record.productionAuthority.authorityId !== input.authorityId) throw new Error("Prepared approval belongs to a different production authority.");
+  if (!/^preparedApproval:[a-zA-Z0-9:._-]{1,220}$/.test(input.rootId)) throw new Error("Prepared approval root id is invalid.");
+  if (!/^[a-f0-9]{64}$/.test(input.digest)) throw new Error("Prepared approval digest is invalid.");
+  let found = false;
+  const preparedAssets = (record.preparedAssets ?? []).map((item) => {
+    if (item.id !== input.preparedAssetId) return item;
+    found = true;
+    if (item.status !== "READY_TO_PREPARE") throw new Error("Only READY_TO_PREPARE assets can receive prepared approval roots.");
+    if (item.blockers.length) throw new Error("Blocked prepared assets cannot be approved.");
+    return { ...item, status: "APPROVED_PREPARED" as const, approvedAt: input.approvedAt, preparedApprovalRootId: input.rootId, preparedApprovalDigest: input.digest, productionAuthorityId: input.authorityId };
+  });
+  if (!found) throw new Error("Prepared asset record not found.");
+  const next = { ...record, preparedAssets, inventoryVersion: bump(record), updatedAt: input.approvedAt };
+  return { ...next, graph: buildDependencyGraphV2(next, input.approvedAt) };
 }

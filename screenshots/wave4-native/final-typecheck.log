@@ -1,0 +1,3 @@
+
+> app-builder-workspace@3.0.2 typecheck
+> tsc --noEmit

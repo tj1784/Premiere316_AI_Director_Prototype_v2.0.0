@@ -1132,13 +1132,20 @@
       "deps": [
         "B-002"
       ],
-      "status": "READY",
-      "branch": null,
-      "worktree": null,
+      "status": "GREEN",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
-        "Wave 3 GREEN finalized for packaged build p316-20260903203247-955eb4a6feaa",
-        "Wave 3 final tag wave3-p316-20260903203247-955eb4a6feaa",
-        "Wave 4 opened by A01 governance finalization; task not started"
+        "Current package p316-20260904124249-f8c5609e32d4",
+        "screenshots/wave4-native/report.json ok:true with exactly two genuine 512x512 FLUX.1 PNGs",
+        "Canonical image 4fe0d08abe0cee3ae24a14575f73e9d7bda38d7d1e58b28c738594f0e3bc29b1 visibly satisfies visible exterior night sky; rejected image a13308b4a38d4c6dc2d876698beb35124767ab0626fc50efe00c3cdaaad80f85 remained unchecked",
+        "No imported/generated reference fixture; references empty in authority/provenance",
+        "Same PID 71148 cold/warm, zero worker sockets, one visible release, restart verification",
+        "Live data, external roots, full selected component hashes, and ambient processes preserved",
+        "Prior A07 veto preserved under docs/release/audits and screenshots/wave4-audit-history",
+        "Exact FLUX/AE/T5/CLIP/BPE/tokenizer component identities and full selected hashes preserved",
+        "Independent A07/A08/A64 replacement-candidate re-audits PASS",
+        "docs/release/wave4-gate.md GREEN; tag wave4-p316-20260904124249-f8c5609e32d4; Wave 5 closed"
       ]
     },
     {
@@ -1150,11 +1157,20 @@
       "deps": [
         "I-001"
       ],
-      "status": "BLOCKED_BY_DEPENDENCY",
-      "branch": null,
-      "worktree": null,
+      "status": "GREEN",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
-        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+        "Current package p316-20260904124249-f8c5609e32d4",
+        "screenshots/wave4-native/report.json ok:true with exactly two genuine 512x512 FLUX.1 PNGs",
+        "Canonical image 4fe0d08abe0cee3ae24a14575f73e9d7bda38d7d1e58b28c738594f0e3bc29b1 visibly satisfies visible exterior night sky; rejected image a13308b4a38d4c6dc2d876698beb35124767ab0626fc50efe00c3cdaaad80f85 remained unchecked",
+        "No imported/generated reference fixture; references empty in authority/provenance",
+        "Same PID 71148 cold/warm, zero worker sockets, one visible release, restart verification",
+        "Live data, external roots, full selected component hashes, and ambient processes preserved",
+        "Prior A07 veto preserved under docs/release/audits and screenshots/wave4-audit-history",
+        "FLUX.1 is the sole verified Wave 4 runtime; genuine packaged cold/warm run used official local black-forest-labs/flux implementation",
+        "Independent A07/A08/A64 replacement-candidate re-audits PASS",
+        "docs/release/wave4-gate.md GREEN; tag wave4-p316-20260904124249-f8c5609e32d4; Wave 5 closed"
       ]
     },
     {
@@ -1166,11 +1182,21 @@
       "deps": [
         "I-001"
       ],
-      "status": "BLOCKED_BY_DEPENDENCY",
-      "branch": null,
-      "worktree": null,
+      "status": "GREEN",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
-        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+        "Current package p316-20260904124249-f8c5609e32d4",
+        "screenshots/wave4-native/report.json ok:true with exactly two genuine 512x512 FLUX.1 PNGs",
+        "Canonical image 4fe0d08abe0cee3ae24a14575f73e9d7bda38d7d1e58b28c738594f0e3bc29b1 visibly satisfies visible exterior night sky; rejected image a13308b4a38d4c6dc2d876698beb35124767ab0626fc50efe00c3cdaaad80f85 remained unchecked",
+        "No imported/generated reference fixture; references empty in authority/provenance",
+        "Same PID 71148 cold/warm, zero worker sockets, one visible release, restart verification",
+        "Live data, external roots, full selected component hashes, and ambient processes preserved",
+        "Prior A07 veto preserved under docs/release/audits and screenshots/wave4-audit-history",
+        "Disposition only: FLUX.2 Dev/quantized alternatives are not verified Wave 4 runtimes and remain disabled/Labs-only until a later gate",
+        "No FLUX.2 path was substituted for the accepted genuine FLUX.1 runtime",
+        "Independent A07/A08/A64 replacement-candidate re-audits PASS",
+        "docs/release/wave4-gate.md GREEN; tag wave4-p316-20260904124249-f8c5609e32d4; Wave 5 closed"
       ]
     },
     {
@@ -1182,11 +1208,21 @@
       "deps": [
         "I-001"
       ],
-      "status": "BLOCKED_BY_DEPENDENCY",
-      "branch": null,
-      "worktree": null,
+      "status": "GREEN",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
-        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+        "Current package p316-20260904124249-f8c5609e32d4",
+        "screenshots/wave4-native/report.json ok:true with exactly two genuine 512x512 FLUX.1 PNGs",
+        "Canonical image 4fe0d08abe0cee3ae24a14575f73e9d7bda38d7d1e58b28c738594f0e3bc29b1 visibly satisfies visible exterior night sky; rejected image a13308b4a38d4c6dc2d876698beb35124767ab0626fc50efe00c3cdaaad80f85 remained unchecked",
+        "No imported/generated reference fixture; references empty in authority/provenance",
+        "Same PID 71148 cold/warm, zero worker sockets, one visible release, restart verification",
+        "Live data, external roots, full selected component hashes, and ambient processes preserved",
+        "Prior A07 veto preserved under docs/release/audits and screenshots/wave4-audit-history",
+        "Disposition only: Klein 4B/9B is not a verified Wave 4 runtime and remains disabled/Labs-only until a later gate",
+        "No Klein path was substituted for the accepted genuine FLUX.1 runtime",
+        "Independent A07/A08/A64 replacement-candidate re-audits PASS",
+        "docs/release/wave4-gate.md GREEN; tag wave4-p316-20260904124249-f8c5609e32d4; Wave 5 closed"
       ]
     },
     {
@@ -1198,11 +1234,21 @@
       "deps": [
         "I-001"
       ],
-      "status": "BLOCKED_BY_DEPENDENCY",
-      "branch": null,
-      "worktree": null,
+      "status": "GREEN",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
-        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+        "Current package p316-20260904124249-f8c5609e32d4",
+        "screenshots/wave4-native/report.json ok:true with exactly two genuine 512x512 FLUX.1 PNGs",
+        "Canonical image 4fe0d08abe0cee3ae24a14575f73e9d7bda38d7d1e58b28c738594f0e3bc29b1 visibly satisfies visible exterior night sky; rejected image a13308b4a38d4c6dc2d876698beb35124767ab0626fc50efe00c3cdaaad80f85 remained unchecked",
+        "No imported/generated reference fixture; references empty in authority/provenance",
+        "Same PID 71148 cold/warm, zero worker sockets, one visible release, restart verification",
+        "Live data, external roots, full selected component hashes, and ambient processes preserved",
+        "Prior A07 veto preserved under docs/release/audits and screenshots/wave4-audit-history",
+        "Disposition only: Krea 2 is not a complete app-supported verified Wave 4 runtime and remains disabled until a later gate",
+        "No Krea path was substituted for the accepted genuine FLUX.1 runtime",
+        "Independent A07/A08/A64 replacement-candidate re-audits PASS",
+        "docs/release/wave4-gate.md GREEN; tag wave4-p316-20260904124249-f8c5609e32d4; Wave 5 closed"
       ]
     },
     {
@@ -1214,11 +1260,20 @@
       "deps": [
         "I-002"
       ],
-      "status": "BLOCKED_BY_DEPENDENCY",
-      "branch": null,
-      "worktree": null,
+      "status": "GREEN",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
-        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+        "Current package p316-20260904124249-f8c5609e32d4",
+        "screenshots/wave4-native/report.json ok:true with exactly two genuine 512x512 FLUX.1 PNGs",
+        "Canonical image 4fe0d08abe0cee3ae24a14575f73e9d7bda38d7d1e58b28c738594f0e3bc29b1 visibly satisfies visible exterior night sky; rejected image a13308b4a38d4c6dc2d876698beb35124767ab0626fc50efe00c3cdaaad80f85 remained unchecked",
+        "No imported/generated reference fixture; references empty in authority/provenance",
+        "Same PID 71148 cold/warm, zero worker sockets, one visible release, restart verification",
+        "Live data, external roots, full selected component hashes, and ambient processes preserved",
+        "Prior A07 veto preserved under docs/release/audits and screenshots/wave4-audit-history",
+        "Same-process cold/warm residency, load/inference telemetry, peak VRAM, zero worker sockets, and final release/restart evidence passed",
+        "Independent A07/A08/A64 replacement-candidate re-audits PASS",
+        "docs/release/wave4-gate.md GREEN; tag wave4-p316-20260904124249-f8c5609e32d4; Wave 5 closed"
       ]
     },
     {
@@ -1231,11 +1286,20 @@
         "I-002",
         "B-002"
       ],
-      "status": "BLOCKED_BY_DEPENDENCY",
-      "branch": null,
-      "worktree": null,
+      "status": "GREEN",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
-        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+        "Current package p316-20260904124249-f8c5609e32d4",
+        "screenshots/wave4-native/report.json ok:true with exactly two genuine 512x512 FLUX.1 PNGs",
+        "Canonical image 4fe0d08abe0cee3ae24a14575f73e9d7bda38d7d1e58b28c738594f0e3bc29b1 visibly satisfies visible exterior night sky; rejected image a13308b4a38d4c6dc2d876698beb35124767ab0626fc50efe00c3cdaaad80f85 remained unchecked",
+        "No imported/generated reference fixture; references empty in authority/provenance",
+        "Same PID 71148 cold/warm, zero worker sockets, one visible release, restart verification",
+        "Live data, external roots, full selected component hashes, and ambient processes preserved",
+        "Prior A07 veto preserved under docs/release/audits and screenshots/wave4-audit-history",
+        "Backend-authenticated rejection and canonical decisions bind distinct receipts; only canonical continuity finding was visibly confirmed",
+        "Independent A07/A08/A64 replacement-candidate re-audits PASS",
+        "docs/release/wave4-gate.md GREEN; tag wave4-p316-20260904124249-f8c5609e32d4; Wave 5 closed"
       ]
     },
     {
@@ -1248,11 +1312,21 @@
         "I-002",
         "I-007"
       ],
-      "status": "BLOCKED_BY_DEPENDENCY",
-      "branch": null,
-      "worktree": null,
+      "status": "GREEN",
+      "branch": "main",
+      "worktree": "D:/Projects/Premiere316_v3",
       "evidence": [
-        "Wave 4 open; blocked until dependency-root I-001 and declared dependencies complete"
+        "Current package p316-20260904124249-f8c5609e32d4",
+        "screenshots/wave4-native/report.json ok:true with exactly two genuine 512x512 FLUX.1 PNGs",
+        "Canonical image 4fe0d08abe0cee3ae24a14575f73e9d7bda38d7d1e58b28c738594f0e3bc29b1 visibly satisfies visible exterior night sky; rejected image a13308b4a38d4c6dc2d876698beb35124767ab0626fc50efe00c3cdaaad80f85 remained unchecked",
+        "No imported/generated reference fixture; references empty in authority/provenance",
+        "Same PID 71148 cold/warm, zero worker sockets, one visible release, restart verification",
+        "Live data, external roots, full selected component hashes, and ambient processes preserved",
+        "Prior A07 veto preserved under docs/release/audits and screenshots/wave4-audit-history",
+        "Independent visual inspection accepted the canonical dark exterior-night image; rejected candidate remained unchecked",
+        "Cold/warm timing and peak-VRAM evidence preserved without representing luminance metrics as human visual review",
+        "Independent A07/A08/A64 replacement-candidate re-audits PASS",
+        "docs/release/wave4-gate.md GREEN; tag wave4-p316-20260904124249-f8c5609e32d4; Wave 5 closed"
       ]
     },
     {
@@ -1593,5 +1667,5 @@
       "evidence": []
     }
   ],
-  "updatedAt": "2026-09-04T05:10:58.187Z"
+  "updatedAt": "2026-09-04T13:30:28.283Z"
 }

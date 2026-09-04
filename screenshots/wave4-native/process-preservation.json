@@ -1,0 +1,58 @@
+{
+  "capturedAt": "2026-09-04T13:04:39.099Z",
+  "baselineAmbientCount": 7,
+  "preserved": [
+    {
+      "processId": 23356,
+      "name": "LM Studio.exe",
+      "commandLine": "\"C:\\Users\\teeja\\AppData\\Local\\Programs\\LM Studio\\LM Studio.exe\" --run-as-service",
+      "presentAfter": true,
+      "commandLineIdentical": true
+    },
+    {
+      "processId": 23756,
+      "name": "LM Studio.exe",
+      "commandLine": "\"C:\\Users\\teeja\\AppData\\Local\\Programs\\LM Studio\\LM Studio.exe\" --type=crashpad-handler \"--user-data-dir=C:\\Users\\teeja\\AppData\\Roaming\\LM Studio\" /prefetch:4 --no-rate-limit --no-upload-gzip --monitor-self-annotation=ptype=crashpad-handler \"--database=C:\\Users\\teeja\\AppData\\Roaming\\LM Studio\\Crashpad\" \"--annotation=_productName=LM Studio\" --annotation=_version=0.4.23+1 --annotation=plat=Win64 --annotation=prod=Electron --annotation=ver=38.6.0 --initial-client-data=0x4c4,0x4c8,0x4cc,0x4c0,0x4d0,0x7ff6afdc34d4,0x7ff6afdc34e0,0x7ff6afdc34f0",
+      "presentAfter": true,
+      "commandLineIdentical": true
+    },
+    {
+      "processId": 19552,
+      "name": "LM Studio.exe",
+      "commandLine": "\"C:\\Users\\teeja\\AppData\\Local\\Programs\\LM Studio\\LM Studio.exe\" --type=gpu-process --user-data-dir=\"C:\\Users\\teeja\\AppData\\Roaming\\LM Studio\" --gpu-preferences=SAAAAAAAAADgAAAIAAAAAAAAAAAAAGAAAQAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAACAAAAAAAAAAIAAAAAAAAAA== --field-trial-handle=1836,i,9915770906605407888,11211094945526179149,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=1816 /prefetch:2",
+      "presentAfter": true,
+      "commandLineIdentical": true
+    },
+    {
+      "processId": 20712,
+      "name": "LM Studio.exe",
+      "commandLine": "\"C:\\Users\\teeja\\AppData\\Local\\Programs\\LM Studio\\LM Studio.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --user-data-dir=\"C:\\Users\\teeja\\AppData\\Roaming\\LM Studio\" --field-trial-handle=1836,i,9915770906605407888,11211094945526179149,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=1968 /prefetch:11",
+      "presentAfter": true,
+      "commandLineIdentical": true
+    },
+    {
+      "processId": 20972,
+      "name": "LM Studio.exe",
+      "commandLine": "\"C:\\Users\\teeja\\AppData\\Local\\Programs\\LM Studio\\LM Studio.exe\" --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --user-data-dir=\"C:\\Users\\teeja\\AppData\\Roaming\\LM Studio\" --field-trial-handle=1836,i,9915770906605407888,11211094945526179149,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=2564 /prefetch:14",
+      "presentAfter": true,
+      "commandLineIdentical": true
+    },
+    {
+      "processId": 53312,
+      "name": "LM Studio.exe",
+      "commandLine": "\"C:\\Users\\teeja\\AppData\\Local\\Programs\\LM Studio\\LM Studio.exe\" --type=renderer --user-data-dir=\"C:\\Users\\teeja\\AppData\\Roaming\\LM Studio\" --app-user-model-id=\"electron.app.LM Studio\" --app-path=\"C:\\Users\\teeja\\AppData\\Local\\Programs\\LM Studio\\resources\\app\" --no-sandbox --no-zygote --node-integration-in-worker --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=12 --time-ticks-at-unix-epoch=-1788405321223115 --launch-time-ticks=15518138333 --field-trial-handle=1836,i,9915770906605407888,11211094945526179149,262144 --enable-features=EnableTransparentHwndEnlargement,PdfUseShowSaveFilePicker --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=3624 --lmstudio-window-key=window-1 --lmstudio-project-identifier=default-project-identifier --lmstudio-window-context=%7B%22type%22%3A%22singleProject%22%2C%22projectIdentifier%22%3A%22default-project-identifier%22%7D /prefetch:1",
+      "presentAfter": true,
+      "commandLineIdentical": true
+    },
+    {
+      "processId": 37076,
+      "name": "python.exe",
+      "commandLine": "\"D:\\Dev\\Tools\\Python312\\python.exe\" \"D:\\AI\\ComfyUI\\Instances\\Production\\main.py\" --listen 127.0.0.1 --port 8188 --disable-auto-launch --models-directory D:\\AI\\Models --input-directory D:\\AI\\ComfyUI\\Data\\Production\\Input --user-directory D:\\AI\\ComfyUI\\Data\\Production\\User --output-directory D:\\Media\\Generated\\ComfyUI --temp-directory D:\\_Temp\\ComfyUI --preview-method auto --enable-manager",
+      "presentAfter": true,
+      "commandLineIdentical": true
+    }
+  ],
+  "preservedAll": true,
+  "premiere316OrWorkerResidual": [],
+  "residualCount": 0
+}

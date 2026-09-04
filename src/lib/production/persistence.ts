@@ -36,7 +36,14 @@ export function sanitizeProductionBreakdown(value: unknown, allowedStates = new 
     inventoryVersion: Number.isFinite(candidate.inventoryVersion) ? candidate.inventoryVersion : 1,
     approvals: Array.isArray(candidate.approvals) ? candidate.approvals : [],
     auditLog: Array.isArray(candidate.auditLog) ? candidate.auditLog : [],
-    preparedAssets: Array.isArray(candidate.preparedAssets) ? candidate.preparedAssets : [],
+    productionAuthority: typeof candidate.productionAuthority?.authorityId === "string" && /^authority:[a-f0-9]{32}$/.test(candidate.productionAuthority.authorityId) && typeof candidate.productionAuthority.digest === "string" && /^[a-f0-9]{64}$/.test(candidate.productionAuthority.digest)
+      ? { authorityId: candidate.productionAuthority.authorityId, digest: candidate.productionAuthority.digest, createdAt: Number(candidate.productionAuthority.createdAt ?? 0), status: "INVALID" }
+      : null,
+    preparedAssets: Array.isArray(candidate.preparedAssets) ? candidate.preparedAssets.map((item) => {
+      const hasRoot = typeof item?.preparedApprovalRootId === "string" && /^preparedApproval:[a-zA-Z0-9:._-]{1,220}$/.test(item.preparedApprovalRootId) && typeof item?.preparedApprovalDigest === "string" && /^[a-f0-9]{64}$/.test(item.preparedApprovalDigest) && typeof item?.productionAuthorityId === "string" && /^authority:[a-f0-9]{32}$/.test(item.productionAuthorityId);
+      if (item?.status === "APPROVED_PREPARED" && !hasRoot) return { ...item, status: "READY_TO_PREPARE", approvedAt: null, preparedApprovalRootId: null, preparedApprovalDigest: null, productionAuthorityId: null };
+      return { ...item, preparedApprovalRootId: hasRoot ? item.preparedApprovalRootId : null, preparedApprovalDigest: hasRoot ? item.preparedApprovalDigest : null, productionAuthorityId: hasRoot ? item.productionAuthorityId : null, approvedAt: hasRoot ? (item.approvedAt ?? null) : null };
+    }) : [],
     assets: candidate.assets.map((asset) => ({
       ...asset,
       specVersions: Array.isArray(asset.specVersions) ? asset.specVersions : [],

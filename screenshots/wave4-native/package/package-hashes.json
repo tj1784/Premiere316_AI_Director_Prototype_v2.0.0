@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-09-04T13:02:30.709Z",
+  "buildInfo": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260904124249-f8c5609e32d4",
+    "buildTimestamp": "2026-09-04T12:42:49.151Z",
+    "rendererSourceHash": "f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999",
+    "rendererMode": "PACKAGED DIST"
+  },
+  "files": {
+    "dist-desktop/win-unpacked/Premiere316.exe": {
+      "path": "dist-desktop/win-unpacked/Premiere316.exe",
+      "bytes": 205438464,
+      "sha256": "e0a37bbfb72b6c744fe5062a047d68c8dabd4d89ad5d846d2b8f7f14c8a0501c"
+    },
+    "dist-desktop/win-unpacked/resources/app.asar": {
+      "path": "dist-desktop/win-unpacked/resources/app.asar",
+      "bytes": 122339,
+      "sha256": "ded6af1c2716bc7762b5f6b3ebd730c5564781bf90afa0746dfe72799f453c7c"
+    },
+    "dist-desktop/Premiere316-Setup.exe": {
+      "path": "dist-desktop/Premiere316-Setup.exe",
+      "bytes": 88893642,
+      "sha256": "e0b1206cfb3672dc7e5e86fba039b482e68510164a4ad4621d90bd80424ccdbd"
+    },
+    "dist-desktop/win-unpacked/resources/backend.mjs": {
+      "path": "dist-desktop/win-unpacked/resources/backend.mjs",
+      "bytes": 155417,
+      "sha256": "6f2ea7ded467b6f8a2e37df37a21b1623774c3ce2e0840b5e48f9331a3dcbb86"
+    },
+    "dist-desktop/win-unpacked/resources/workers/flux1_jsonl_worker.py": {
+      "path": "dist-desktop/win-unpacked/resources/workers/flux1_jsonl_worker.py",
+      "bytes": 18509,
+      "sha256": "8c37b861137eb7d7b7d35b3966a6599ac034052844caab5aa707167e46032678"
+    },
+    "dist-desktop/win-unpacked/resources/ui/server/index.mjs": {
+      "path": "dist-desktop/win-unpacked/resources/ui/server/index.mjs",
+      "bytes": 39228,
+      "sha256": "692a28a68665fad4762c12ba0334c4e9dd619af1e15719f4e7f2180772e5c430"
+    }
+  }
+}

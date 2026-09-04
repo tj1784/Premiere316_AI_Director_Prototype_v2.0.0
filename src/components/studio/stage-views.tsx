@@ -19,7 +19,8 @@ import { MODEL_ROOT, STAGES, type Picture, type StageId } from "@/lib/studio/typ
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import { useDirector } from "@/lib/studio/use-director";
 import { totalDuration } from "@/lib/studio/prompt-compiler";
-import { desktopSaveMany, isDesktopApp } from "@/lib/desktop/client";
+import { desktopApproveCanonicalImage, desktopAuthorizePreparedImage, desktopGeneratePreparedImage, desktopImageManifests, desktopProductionAuthorityStatus, desktopRejectCanonicalImage, desktopSaveMany, isDesktopApp } from "@/lib/desktop/client";
+import type { ImageComponentManifest } from "@/lib/studio/image-component-resolver.server.ts";
 import { cn, copyText, formatTimecode, saveReadyFile, uid, type ReadyFile } from "@/lib/utils";
 import type { LocalLLMProviderDiscovery } from "@/lib/studio/local-llm-provider";
 import type { PictureIntake } from "@/lib/studio/picture-intake";
@@ -48,6 +49,10 @@ import {
   deterministicFountainExtractor,
   reconcileProductionBreakdown,
   runProductionBreakdown,
+  appendGeneratedIteration,
+  approveCanonicalIteration,
+  deterministicContinuityFindings,
+  reviewGeneratedIteration,
 } from "@/lib/production";
 import { approvedScreenplayBoundary } from "@/lib/studio/screenplay";
 import { PerformanceWorkspaceView } from "@/components/performance/performance-workspace";
@@ -79,6 +84,8 @@ export function StageView() {
       return <PromptStage picture={picture} />;
     case "generate":
       return <GenerateStage picture={picture} />;
+    case "review":
+      return <ReviewStage picture={picture} />;
     case "timeline":
       return <StitchStage picture={picture} />;
     case "score":
@@ -509,40 +516,234 @@ function PromptStage({ picture }: { picture: Picture }) {
 }
 
 function GenerateStage({ picture }: { picture: Picture }) {
-  const { busy } = useDirector();
-  const selectShot = useStudio((state) => state.selectShot);
-  const openStillBay = useStudio((state) => state.openStillBay);
+  const [manifests, setManifests] = useState<ImageComponentManifest[]>([]);
+  const [generating, setGenerating] = useState<string | null>(null);
+  const [backendStatus, setBackendStatus] = useState<Awaited<ReturnType<typeof desktopProductionAuthorityStatus>> | null>(null);
+  const setStage = useStudio((state) => state.setStage);
+  const replaceActive = useStudio((state) => state.replaceActive);
+  const refreshAuthorityStatus = useCallback(async () => {
+    if (!isDesktopApp()) return null;
+    const status = await desktopProductionAuthorityStatus({ pictureId: picture.id });
+    setBackendStatus(status);
+    return status;
+  }, [picture.id]);
+  useEffect(() => {
+    void desktopImageManifests().then(setManifests).catch(() => setManifests([]));
+    void refreshAuthorityStatus().catch(() => setBackendStatus({ ok: false, error: "Backend authority status unavailable." }));
+  }, [refreshAuthorityStatus]);
+  const prepared = picture.production?.preparedAssets ?? [];
+  const assets = picture.production?.assets ?? [];
+  const ready = prepared.filter((item) => item.status === "APPROVED_PREPARED");
+  const best = manifests.find((item) => item.status === "READY" && item.adapterId === "flux") ?? manifests.find((item) => item.adapterId === "flux") ?? manifests[0];
+  const blockedReason = best?.disabledReason ?? "No complete offline native image adapter is verified on this workstation.";
+  const authorityCurrent = backendStatus?.ok === true && backendStatus.status === "CURRENT" && backendStatus.authorityId === picture.production?.productionAuthority?.authorityId && backendStatus.digest === picture.production?.productionAuthority?.digest;
+  const verifiedRoots = new Map((backendStatus?.ok === true ? (backendStatus.preparedApprovals ?? []) : []).map((root) => [root.preparedAssetId, root]));
+  const canAuthorizeWithBest = Boolean(best && best.status === "READY" && best.controls && picture.production && authorityCurrent);
   return (
-    <Pane title="Generate" kicker="10 · Plates & performance">
-      <p className="mb-4 max-w-xl text-sm text-muted">Generate verified local stills. Motion remains unavailable until a native adapter passes validation.</p>
-      <div className="generation-grid grid min-w-0 gap-3">
-        {picture.shots.map((shot) => (
-          <article key={shot.id} className="min-w-0 overflow-hidden rounded-lg bg-elevated shadow-[var(--shadow-border)]">
-            <button type="button" className="block w-full" onClick={() => selectShot(shot.id)}>
-              <div className="aspect-video bg-inset">
-                {shot.videoUrl ? <video src={shot.videoUrl} className="size-full object-cover" controls playsInline /> : shot.stillUrl ? <img src={shot.stillUrl} alt="" className="size-full object-cover" /> : <div className="grid size-full place-items-center text-xs text-subtle">No plate</div>}
+    <Pane title="Generate" kicker="10 · Prepared asset generation">
+      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">Wave 4 generation is asset-first: select an approved prepared asset, request a one-use desktop authorization, then append immutable iterations. Shot-only still generation and calibration are not available from the product UI.</p>
+      <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; generation fails closed."}</div>
+      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
+        <section className="grid min-w-0 gap-3" aria-label="Prepared assets">
+          {prepared.length ? prepared.map((item) => {
+            const asset = assets.find((candidate) => candidate.id === item.assetId);
+            const prompt = item.promptIngredients.join(". ") || asset?.canonicalSpec.visualDescription || asset?.name || "";
+            const verifiedRoot = verifiedRoots.get(item.id);
+            const rootCurrent = Boolean(verifiedRoot && verifiedRoot.rootId === item.preparedApprovalRootId && verifiedRoot.digest === item.preparedApprovalDigest && verifiedRoot.authorityId === picture.production?.productionAuthority?.authorityId && verifiedRoot.authorityDigest === picture.production?.productionAuthority?.digest);
+            const blocked = !authorityCurrent ? "Production authority is missing or stale in the backend; explicitly reseal/reconcile in Inventory." : item.status !== "APPROVED_PREPARED" ? item.blockers.join(" ") || "Prepared asset is not approved." : !rootCurrent ? "Prepared approval root is not verified current by the backend ledger." : blockedReason;
+            return (
+              <article key={item.id} className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] tracking-wide text-subtle uppercase">{item.status.replaceAll("_", " ")}</p>
+                    <h3 className="mt-1 truncate font-display text-xl" title={asset?.name ?? item.assetId}>{asset?.name ?? item.assetId}</h3>
+                    <p className="mt-1 line-clamp-2 text-sm text-muted">{prompt || "No prompt ingredients"}</p>
+                  </div>
+                  <Badge>{asset?.category ?? "asset"}</Badge>
+                </div>
+                <div className="mt-3 rounded-sm bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]">
+                  {canAuthorizeWithBest && item.status === "APPROVED_PREPARED" ? "Ready for one-use desktop authorization." : blocked}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" disabled={generating === item.id || item.status !== "APPROVED_PREPARED" || !rootCurrent || !asset || !canAuthorizeWithBest} title={item.status === "APPROVED_PREPARED" && rootCurrent && canAuthorizeWithBest ? "Authorize and generate one immutable iteration for this prepared asset" : blocked} onClick={async () => {
+                    if (!picture.production || !asset || !best?.controls) return;
+                    setGenerating(item.id);
+                    try {
+                      const latest = await refreshAuthorityStatus();
+                      const latestRoot = latest?.ok === true ? (latest.preparedApprovals ?? []).find((root) => root.preparedAssetId === item.id) : null;
+                      if (latest?.ok !== true || latest.status !== "CURRENT" || latest.authorityId !== picture.production.productionAuthority?.authorityId || latest.digest !== picture.production.productionAuthority?.digest || latestRoot?.rootId !== item.preparedApprovalRootId || latestRoot?.digest !== item.preparedApprovalDigest) throw new Error("Backend authority/prepared root mismatch; reseal or re-approve prepared before generation.");
+                      const authorization = await desktopAuthorizePreparedImage({
+                        authorityId: picture.production.productionAuthority!.authorityId!,
+                        preparedAssetId: item.id,
+                        preparedApprovalRootId: item.preparedApprovalRootId ?? "",
+                        engineId: best.adapterId,
+                        engineName: best.modelVariant,
+                        values: { width: 512, height: 512, steps: 20, guidance: 3.5, scheduler: "flux1-official-20-guidance-3.5", seed: Date.now() % 2147483647, precision: "BF16", outputFormat: "PNG", outputBitDepth: 8 },
+                      });
+                      if (!authorization.ok) throw new Error(authorization.error);
+                      const result = await desktopGeneratePreparedImage({ token: authorization.token });
+                      if (!result.ok) throw new Error(result.error);
+                      const nextProduction = appendGeneratedIteration(picture.production, {
+                        preparedAssetId: item.id,
+                        iterationId: result.iterationId ?? `iteration:${asset.id}:${Date.now()}`,
+                        output: {
+                          ...result.output,
+                          mediaBytes: new Uint8Array(result.output.mediaBytes),
+                          sidecarBytes: new Uint8Array(result.output.sidecarBytes),
+                        },
+                        provenance: result.provenance,
+                        continuityFindings: result.continuityFindings,
+                        receiptDigest: result.receiptDigest,
+                      });
+                      replaceActive({ ...picture, production: nextProduction, updatedAt: Date.now() });
+                      await refreshAuthorityStatus();
+                      toast.success("Generated image iteration appended for review.");
+                      setStage("review");
+                    } catch (error) {
+                      toast.error(error instanceof Error ? error.message : "Prepared image generation failed.");
+                    } finally {
+                      setGenerating(null);
+                    }
+                  }}>{generating === item.id ? "Generating…" : "Authorize + generate"}</Button>
+                  <Button size="sm" variant="secondary" onClick={() => setStage("review")}>Review iterations</Button>
+                </div>
+              </article>
+            );
+          }) : <EmptyCard title="No prepared assets" body="Approve asset specs, Visual Development, and Cinematography, then run Prepare Assets from Inventory." />}
+        </section>
+        <aside className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Native adapter manifest">
+          <p className="text-[11px] tracking-wide text-subtle uppercase">Exact local adapter</p>
+          <h3 className="mt-1 font-display text-xl">{best ? best.modelVariant : "Unavailable"}</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted">{blockedReason}</p>
+          <div className="mt-4 grid gap-2">
+            {(best?.components ?? []).slice(0, 7).map((component) => (
+              <div key={component.opaqueId} className="rounded-sm bg-inset px-3 py-2 text-xs shadow-[var(--shadow-border)]">
+                <div className="flex items-center justify-between gap-2"><span className="text-muted">{component.role}</span><span className={component.present ? "text-accent" : "text-rec"}>{component.present ? "present" : "missing"}</span></div>
+                <p className="mt-1 truncate text-subtle" title={component.rendererPath}>{component.stableId}</p>
               </div>
-            </button>
-            <div className="p-3">
-              <p className="text-[11px] text-subtle">{String(shot.index).padStart(2, "0")} · {shot.durationSec}s · {shot.type}</p>
-              <p className="mt-1 line-clamp-2 text-sm">{shot.description}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button size="sm" variant="secondary" disabled={busy?.startsWith("still")} onClick={() => openStillBay(shot.id)}>Local still</Button>
-                <Button size="sm" variant="outline" disabled title="No verified native motion adapter is connected">I2V unavailable</Button>
+            ))}
+          </div>
+          <Button className="mt-4" variant="ghost" onClick={() => void import("@/lib/desktop/client").then((api) => api.desktopUnloadEngine()).then(() => toast.success("Local image model released."), (error) => toast.error(error instanceof Error ? error.message : "Release failed."))}>Release local image model</Button>
+        </aside>
+      </div>
+      {ready.length ? <p className="mt-4 text-xs text-subtle">{ready.length} prepared asset(s) are product-ready; generation still requires an exact READY manifest and one-use authorization.</p> : null}
+    </Pane>
+  );
+}
+
+function ReviewStage({ picture }: { picture: Picture }) {
+  const production = picture.production;
+  const replaceActive = useStudio((state) => state.replaceActive);
+  const iterations = production?.assets.flatMap((asset) => asset.iterations.map((iteration) => ({ asset, iteration }))) ?? [];
+  const [reasons, setReasons] = useState<Record<string, string>>({});
+  const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
+  const [backendStatus, setBackendStatus] = useState<Awaited<ReturnType<typeof desktopProductionAuthorityStatus>> | null>(null);
+  const refreshAuthorityStatus = useCallback(async () => {
+    if (!isDesktopApp()) return null;
+    const status = await desktopProductionAuthorityStatus({ pictureId: picture.id });
+    setBackendStatus(status);
+    return status;
+  }, [picture.id]);
+  useEffect(() => { void refreshAuthorityStatus().catch(() => setBackendStatus({ ok: false, error: "Backend authority status unavailable." })); }, [refreshAuthorityStatus]);
+  const authorityCurrent = backendStatus?.ok === true && backendStatus.status === "CURRENT" && backendStatus.authorityId === production?.productionAuthority?.authorityId && backendStatus.digest === production?.productionAuthority?.digest;
+  const verifiedRoots = new Map((backendStatus?.ok === true ? (backendStatus.preparedApprovals ?? []) : []).map((root) => [root.preparedAssetId, root]));
+  const backendCanonicalHistory = backendStatus?.ok === true ? (backendStatus.canonicalHistory ?? []) : [];
+  function applyReview(nextProduction: NonNullable<Picture["production"]>) {
+    replaceActive({ ...picture, production: nextProduction, updatedAt: Date.now() });
+  }
+  return (
+    <Pane title="Review" kicker="11 · Iteration decisions">
+      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">A/B review is append-only. Rejections, continuity confirmations, and canonical approvals preserve every generated file and sidecar; no output becomes canonical while dependencies, durable media, or identity confirmations are stale.</p>
+      <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"} · scoped decisions ${backendCanonicalHistory.length}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; review decisions fail closed."}</div>
+      <div className="grid min-w-0 gap-3 lg:grid-cols-2">
+        {iterations.length ? iterations.map(({ asset, iteration }) => {
+          const findings = iteration.receiptContinuityFindings?.length ? iteration.receiptContinuityFindings : deterministicContinuityFindings(asset, iteration);
+          const reason = reasons[iteration.id] ?? "";
+          const allRequiredConfirmed = findings.every((finding) => finding.severity !== "blocker" || confirmed[finding.id]);
+          const verifiedRoot = verifiedRoots.get(iteration.preparedAssetId ?? "");
+          const rootCurrent = Boolean(verifiedRoot && verifiedRoot.rootId === (production?.preparedAssets ?? []).find((item) => item.id === iteration.preparedAssetId)?.preparedApprovalRootId && verifiedRoot.authorityId === production?.productionAuthority?.authorityId && verifiedRoot.authorityDigest === production?.productionAuthority?.digest);
+          const backendDecision = backendCanonicalHistory.find((entry) => typeof entry === "object" && entry && "iterationId" in entry && entry.iterationId === iteration.id) as { kind?: string } | undefined;
+          const backendCanonical = backendDecision?.kind === "canonicalDecision";
+          const backendRejected = backendDecision?.kind === "rejectionDecision";
+          return (
+            <article key={iteration.id} className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0"><p className="text-[11px] tracking-wide text-subtle uppercase">{backendCanonical ? "APPROVED" : backendRejected ? "REJECTED" : iteration.status}</p><h3 className="truncate font-display text-xl">{asset.name}</h3></div>
+                <Badge>{backendCanonical ? "canonical" : backendRejected ? "rejected" : "iteration"}</Badge>
               </div>
-            </div>
-          </article>
-        ))}
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="overflow-hidden rounded-md bg-inset shadow-[var(--shadow-border)]">
+                  <div className="flex min-h-11 items-center justify-between px-3 py-2 text-xs text-muted"><span>Approved reference/spec</span><span>A</span></div>
+                  <div className="p-3 text-xs leading-relaxed text-muted">{asset.canonicalSpec.visualDescription || asset.canonicalSpec.distinguishingFeatures.join(" · ") || "No approved visual description recorded."}</div>
+                </div>
+                {iteration.mediaUri ? <div className="overflow-hidden rounded-md bg-inset shadow-[var(--shadow-border)]"><div className="flex min-h-11 items-center justify-between px-3 py-2 text-xs text-muted"><span>Generated candidate</span><span>B</span></div><img src={iteration.mediaUri} alt={`Generated iteration for ${asset.name}`} className="aspect-square w-full object-contain" /></div> : null}
+              </div>
+              <p className="mt-2 truncate text-xs text-muted" title={iteration.mediaUri}>{iteration.mediaUri}</p>
+              <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <Stat k="Media hash" v={iteration.mediaSha256 ? `${iteration.mediaSha256.slice(0, 10)}…` : "not recorded"} />
+                <Stat k="Sidecar" v={iteration.sidecarSha256 ? `${iteration.sidecarSha256.slice(0, 10)}…` : "not recorded"} />
+                <Stat k="Size" v={iteration.width && iteration.height ? `${iteration.width} × ${iteration.height}` : "unknown"} />
+                <Stat k="Decisions" v={String(iteration.reviewDecisionIds?.length ?? iteration.reviewDecisions?.length ?? 0)} />
+              </dl>
+              <fieldset className="mt-3 rounded-sm bg-inset p-3 shadow-[var(--shadow-border)]">
+                <legend className="text-[11px] tracking-wide text-subtle uppercase">Continuity checklist</legend>
+                {findings.length ? findings.map((finding) => (
+                  <label key={finding.id} className="mt-2 flex min-h-11 items-start gap-2 text-xs text-muted">
+                    <input className="mt-1" type="checkbox" checked={Boolean(confirmed[finding.id])} onChange={(event) => setConfirmed((current) => ({ ...current, [finding.id]: event.target.checked }))} />
+                    <span><span className={finding.severity === "blocker" ? "text-rec" : "text-fg"}>{finding.severity}</span> · {finding.message}</span>
+                  </label>
+                )) : <p className="mt-2 text-xs text-muted">No automated vision claim is made. Enter a visible review reason before approval.</p>}
+              </fieldset>
+              <div className="mt-3"><Label htmlFor={`reason-${iteration.id}`}>Reviewer reason</Label><Textarea id={`reason-${iteration.id}`} className="mt-1.5 min-h-20" value={reason} onChange={(event) => setReasons((current) => ({ ...current, [iteration.id]: event.target.value }))} placeholder="Describe the visible identity/continuity evidence for this decision." /></div>
+              <div className="mt-3 flex flex-wrap gap-2"><Button size="sm" disabled={!production || !authorityCurrent || !rootCurrent || !iteration.generationReceiptId || !iteration.generationReceiptDigest || backendRejected || backendCanonical || !reason.trim() || !allRequiredConfirmed} title="Verify durable media, then approve this reviewed iteration as canonical" onClick={async () => {
+                if (!production) return;
+                try {
+                  const latest = await refreshAuthorityStatus();
+                  const latestRoot = latest?.ok === true ? (latest.preparedApprovals ?? []).find((root) => root.preparedAssetId === iteration.preparedAssetId) : null;
+                  const preparedApprovalRootId = (production.preparedAssets ?? []).find((item) => item.id === iteration.preparedAssetId)?.preparedApprovalRootId ?? "";
+                  if (latest?.ok !== true || latest.status !== "CURRENT" || latest.authorityId !== production.productionAuthority?.authorityId || latest.digest !== production.productionAuthority?.digest || latestRoot?.rootId !== preparedApprovalRootId) throw new Error("Backend authority/prepared root mismatch; reseal or re-approve before canonical approval.");
+                  const confirmedContinuityFindings = findings.map((finding) => ({ ...finding, confirmed: finding.confirmed || Boolean(confirmed[finding.id]) }));
+                  const approved = await desktopApproveCanonicalImage({ authorityId: latest.authorityId ?? "", preparedApprovalRootId, receiptId: iteration.generationReceiptId ?? "", iterationId: iteration.id, reason, findings: confirmedContinuityFindings.map(({ id, confirmed }) => ({ id, confirmed })) });
+                  if (!approved.ok) throw new Error(approved.error);
+                  applyReview(approveCanonicalIteration(production, { iterationId: iteration.id, reviewer: "user", reason, canonicalProof: approved.proof, continuityFindings: confirmedContinuityFindings }));
+                  await refreshAuthorityStatus();
+                  toast.success("Canonical image iteration approved.");
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : "Canonical approval failed.");
+                }
+              }}>Approve canonical</Button><Button size="sm" variant="outline" disabled={!production || !authorityCurrent || !rootCurrent || backendRejected || backendCanonical || !iteration.generationReceiptId || !reason.trim()} title="Reject this iteration append-only" onClick={async () => {
+                if (!production) return;
+                try {
+                  const latest = await refreshAuthorityStatus();
+                  const latestRoot = latest?.ok === true ? (latest.preparedApprovals ?? []).find((root) => root.preparedAssetId === iteration.preparedAssetId) : null;
+                  const preparedApprovalRootId = (production.preparedAssets ?? []).find((item) => item.id === iteration.preparedAssetId)?.preparedApprovalRootId ?? "";
+                  if (latest?.ok !== true || latest.status !== "CURRENT" || latest.authorityId !== production.productionAuthority?.authorityId || latest.digest !== production.productionAuthority?.digest || latestRoot?.rootId !== preparedApprovalRootId) throw new Error("Backend authority/prepared root mismatch; reseal or re-approve before rejection.");
+                  const rejected = await desktopRejectCanonicalImage({ authorityId: latest.authorityId ?? "", preparedApprovalRootId, receiptId: iteration.generationReceiptId ?? "", iterationId: iteration.id, reason });
+                  if (!rejected.ok) throw new Error(rejected.error);
+                  applyReview(reviewGeneratedIteration(production, { iterationId: iteration.id, decision: "reject", reviewer: "user", reason }));
+                  await refreshAuthorityStatus();
+                  toast.success("Image iteration rejected.");
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : "Reject failed.");
+                }
+              }}>Reject</Button></div>
+            </article>
+          );
+        }) : <EmptyCard title="No generated iterations" body="Generate from an approved prepared asset after the native adapter gate passes. Imported or shot-only stills do not satisfy Wave 4." />}
       </div>
     </Pane>
   );
+}
+
+function EmptyCard({ title, body }: { title: string; body: string }) {
+  return <div className="rounded-lg bg-elevated p-5 text-sm text-muted shadow-[var(--shadow-border)]"><h3 className="font-display text-xl text-fg">{title}</h3><p className="mt-2 leading-relaxed">{body}</p></div>;
 }
 
 function StitchStage({ picture }: { picture: Picture }) {
   const selectedShotId = useStudio((s) => s.selectedShotId);
   const shot = picture.shots.find((s) => s.id === selectedShotId) ?? picture.shots[0];
   return (
-    <Pane title="Stitch" kicker="11 · Assembly">
+    <Pane title="Stitch" kicker="12 · Assembly">
       <div className="overflow-hidden rounded-lg bg-inset shadow-[var(--shadow-border)]">
         <div className="grid h-[clamp(12rem,48dvh,32rem)] place-items-center">
           {shot?.videoUrl ? (
@@ -570,7 +771,7 @@ function StitchStage({ picture }: { picture: Picture }) {
 
 function ScoreStage({ picture }: { picture: Picture }) {
   return (
-    <Pane title="Score" kicker="12 · Music + SFX">
+    <Pane title="Score" kicker="13 · Music + SFX">
       <p className="mb-4 max-w-xl text-sm text-muted">Review the saved cue sheet locally. Music generation remains unavailable until a native adapter passes validation.</p>
       <div role="status" className="max-w-xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]">Local score adapter unavailable · no cloud fallback</div>
       <div className="mt-5 grid gap-3">
@@ -606,7 +807,7 @@ function ExportStage({ picture }: { picture: Picture }) {
   }
 
   return (
-    <Pane title="Export" kicker="13 · Delivery">
+    <Pane title="Export" kicker="14 · Delivery">
       <dl className="grid max-w-md grid-cols-2 gap-3 text-sm">
         <Stat k="Runtime" v={formatTimecode(dur, picture.fps)} />
         <Stat k="Shots" v={String(picture.shots.length)} />

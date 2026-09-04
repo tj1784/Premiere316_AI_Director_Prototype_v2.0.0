@@ -1,0 +1,217 @@
+{
+  "workflowRunId": "b84291bb-9015-47f7-a78d-1d55d87618f0",
+  "status": "BLOCKED_WAVE4_FINAL_AUDIT",
+  "audits": [
+    {
+      "runId": "05660041-8eaf-4b0e-9647-57a66f7937dc",
+      "ok": true,
+      "structuredOutput": {
+        "verdict": "blocked",
+        "roleId": "A07",
+        "summary": "Inherited decisions: Wave 4 may pass only on candidate p316-20260904115717-f8c5609e32d4, with renderer/source hash f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999 and the named EXE/ASAR/installer hashes; A07 has independent veto and must block on any gate blocker. Diagnosis: most mechanical evidence is strong: package hashes match, npm test and typecheck pass in my bounded Node-only rerun, stage visual report is 28/28 across 14 stages at 100%/150%, packaged smoke reports no model auto-load/completion POST, UAT report has exactly two preserved 512x512 PNGs with distinct hashes/seeds and cold/warm telemetry on the same worker PID. However the accepted visual/canonical evidence is internally contradicted: the signed generation receipts require visible confirmation of the approved identity/continuity lock `night`, while both generated PNGs and native review captures are plainly daylight coastal scenes. The canonical decision records that blocker as confirmed=true. Additionally, the gate prose says no imported media was used, but scripts/wave4-native-uat.mjs creates screenshots/wave4-native/reference.png and uploads it via setInputFiles before authority sealing; the authority review capture shows that reference in the sealed root. Recommendation: do not open Wave 5 or tag this candidate as passed until a new accepted packaged UAT run produces evidence whose visible continuity confirmations are true and whose final gate prose accurately describes any reference/import use.",
+        "blockers": [
+          "Canonical approval confirmed a visible continuity blocker that the PNG/native captures contradict: ledger generation receipts require `Confirm visible approved identity/continuity locks: night`; the review UI shows that blocker checked; the canonical ledger entry records it confirmed=true; but both generated 512x512 PNGs and native captures are daylight scenes, not night.",
+          "Authoritative gate/evidence claim drift: docs/release/wave4-gate.md states no imported media was used, but scripts/wave4-native-uat.mjs writes a 1x1 reference PNG and uploads it with setInputFiles, and the authority-review capture shows reference.png sealed in the authority/root evidence."
+        ],
+        "findings": [
+          {
+            "severity": "critical",
+            "title": "False visible continuity confirmation in accepted canonical approval",
+            "evidence": "screenshots/wave4-native/generated/security-ledger.v1.jsonl entries 4 and 6 contain continuityFindings message `Confirm visible approved identity/continuity locks: night` with confirmed:false; entry 8 canonicalDecision for receipt:ee0e0f300806e8eb8df2d764b11162b5 records the same finding confirmed:true. screenshots/wave4-native/captures/12-review-two-iterations.png and 14-approved-one.png show the checkbox/decision on daylight coastal images; visual inspection of both generated PNGs confirms daylight sky/sun/water, not night."
+          },
+          {
+            "severity": "high",
+            "title": "Gate prose says no imported media, but UAT script and authority evidence used an uploaded reference.png",
+            "evidence": "scripts/wave4-native-uat.mjs defines onePixel, writes screenshots/wave4-native/reference.png, then calls page.locator('input[type=\"file\"]').first().setInputFiles(pngPath). screenshots/wave4-native/captures/06-authority-review-main-owned.png visibly includes `references` with `name\":\"reference.png\"`, `mediaType\":\"image/png\"`, `preferred\":true`. This contradicts docs/release/wave4-gate.md: `No ... imported media was used.`"
+          },
+          {
+            "severity": "info",
+            "title": "Package identity and preserved generated output hashes match the candidate claims",
+            "evidence": "Independent Node SHA-256 recomputation matched: Premiere316.exe f4523887fd45ff05d3c3d59dfe7c28ec2408f9fb201acc96fbf3254577f8d38b; app.asar 12a8a6e23a2ab249abb1947c8e19f8de64bdd7568b7f5fc2ad3c401623c46c92; installer 3292597e7ad942adf989c289ac9db9e79662fcf282ee4fceaa5d63d6e812377b; generated PNGs d3221e53... and daf7b221... matched report values."
+          },
+          {
+            "severity": "info",
+            "title": "Bounded Node-only test/typecheck rerun passed",
+            "evidence": "`npm test -- --runInBand` passed 255/255; `npm run typecheck` completed with tsc --noEmit and no errors."
+          },
+          {
+            "severity": "info",
+            "title": "Static inspection supports main-owned confirmation design rather than direct renderer/backend confirmation injection",
+            "evidence": "desktop/main.mjs wraps renderer IPC with assertTrustedSender, routes privileged actions through showAuthorityReviewModal/showMainOwnedConfirmation, and nonce-binds p316:confirmation / p316:authorityReview senders to modal webContents. scripts/wave4-native-uat.mjs uses role-based clicks/fills and waits for Electron windows; I did not find direct preload/backend/IPC calls in the UAT script."
+          },
+          {
+            "severity": "info",
+            "title": "Runtime/offline evidence is mechanically consistent aside from the visual blocker",
+            "evidence": "screenshots/wave4-native/report.json ok:true has generated.length=2, pendingFiles=[], consoleErrors=[], pageErrors=[], no network requests to port 8188 and no POSTs. stage-visual/report.json ok:true has 28 screenshots, 14 stages, zooms 100 and 150, and zero violations."
+          }
+        ],
+        "checks": [
+          "Reconstructed Wave 4 gate contract from docs/release/wave4-gate.md and task constraints.",
+          "Read authoritative UAT report, summary report, packaged smoke report, stage visual report, package hashes, source-build identity, live-data compare, exact component hash compare, process preservation, and cleanup reports.",
+          "Visually inspected both generated PNGs and key native captures: authority review, generate confirmation, review/two-iteration, canonical approval, approved/restart recovery.",
+          "Inspected scripts/wave4-native-uat.mjs for forbidden direct IPC/backend/state injection and inspected desktop/main.mjs confirmation/IPC boundary.",
+          "Recomputed bounded SHA-256 hashes for EXE, ASAR, installer, packaged backend, packaged worker, packaged UI server entry, and both preserved generated PNGs.",
+          "Ran bounded Node-only npm test and npm run typecheck; did not build/package, launch model/media runtime, contact ComfyUI/cloud, mutate external roots, or use git."
+        ],
+        "residualRisks": [
+          "I did not rerun packaged Electron/model UAT or invoke Python/CUDA by instruction, so runtime genuineness beyond preserved evidence was not re-executed.",
+          "I did not access safeStorage secrets, so ledger MAC cryptographic validation is accepted only to the extent exposed by existing reports/tests and source review.",
+          "The imported-reference issue may be considered descriptive drift rather than runtime compromise, but the false `night` continuity confirmation is an independent gate blocker for visible-control UAT legality."
+        ]
+      }
+    },
+    {
+      "runId": "e31ede82-b75d-4b61-9084-3119c2007f48",
+      "ok": true,
+      "structuredOutput": {
+        "verdict": "pass",
+        "roleId": "A08",
+        "summary": "A08 Release & Data audit PASS for immutable candidate p316-20260904115717-f8c5609e32d4. I worked read-only, did not launch model/CUDA/Python workers or touch external model/repos, and independently re-hashed the candidate EXE, ASAR, installer, backend, worker, packaged UI server, and generated PNG artifacts. The package identity, source-build identity, resource manifest, live-data preservation, external-root preservation, selected full component hashes, external Git evidence, ambient process preservation, isolated-profile cleanup, release/restart evidence, and Wave 5/tag gating evidence are mutually consistent. No blocker remains for A08; Wave 5 remains closed and A01 still must create the immutable Wave 4 checkpoint/tag after all required independent audits pass.",
+        "blockers": [],
+        "findings": [
+          {
+            "severity": "info",
+            "title": "Immutable package hashes match the declared candidate",
+            "evidence": "Independent Node SHA-256 hashing returned: Premiere316.exe f4523887fd45ff05d3c3d59dfe7c28ec2408f9fb201acc96fbf3254577f8d38b (205,438,464 bytes); resources/app.asar 12a8a6e23a2ab249abb1947c8e19f8de64bdd7568b7f5fc2ad3c401623c46c92 (121,421 bytes); Premiere316-Setup.exe 3292597e7ad942adf989c289ac9db9e79662fcf282ee4fceaa5d63d6e812377b (88,893,644 bytes); backend.mjs 6f2ea7ded467b6f8a2e37df37a21b1623774c3ce2e0840b5e48f9331a3dcbb86; flux1_jsonl_worker.py 8c37b861137eb7d7b7d35b3966a6599ac034052844caab5aa707167e46032678; ui/server/index.mjs d708ab859d9a64c0d435761914af1fd89878f4941b234403effd867ac65b9286."
+          },
+          {
+            "severity": "info",
+            "title": "Source-build identity and packaging metadata are consistent",
+            "evidence": "screenshots/wave4-native/package/source-build-identity.json reports sourceHash f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999, desktop and packaged build-info both buildId p316-20260904115717-f8c5609e32d4, rendererMode PACKAGED DIST, sourceMatchesDesktop true, sourceMatchesPackaged true, and buildInfoIdentical true. package/build-info.json matches the same appVersion 3.0.2 and timestamp 2026-09-04T11:57:17.362Z."
+          },
+          {
+            "severity": "info",
+            "title": "Resources manifest is durable and complete for the audited package",
+            "evidence": "screenshots/wave4-native/package/runtime-resources-manifest.json records root dist-desktop/win-unpacked/resources, count 57, bytes 4,850,574, manifestSha256 d8ec2443b48ac8b46eb5d798419dab53e67acf2774aa8a5262fa017fb8ea8a45, including app.asar, backend.mjs, build-info.json, icon/elevate, UI public assets, server chunks/libs, worker resources, and packaged UI server. package/asar-list.txt contains the expected app shell entries under desktop plus package.json."
+          },
+          {
+            "severity": "info",
+            "title": "Accepted final UAT evidence is clear and not superseded by debug attempts",
+            "evidence": "docs/release/wave4-gate.md identifies screenshots/wave4-native/report.json as authoritative ok:true and states earlier isolated recovery attempts are failed evidence, not acceptance runs. screenshots/wave4-native/report.json has ok:true and 22 native capturePage screenshots. screenshots/wave4-native/wave4-native-uat-accepted.log records main-owned visible confirmations for cancel, prepared approval, two generates, canonical rejection, and canonical approval before the ok:true report."
+          },
+          {
+            "severity": "info",
+            "title": "Generated media artifacts are exactly two genuine, preserved PNGs",
+            "evidence": "The generated directory contains exactly two PNGs plus their provenance sidecars, worker log, ledger, and ledger tail. Independent hashing confirmed PNG 1 is 402,502 bytes, SHA-256 d3221e53b0655ed6605e6e171c2d5d46abbf90657353555c0e9550aab461ed07, PNG header 89504e470d0a1a0a0000000d494844520000020000000200; PNG 2 is 480,587 bytes, SHA-256 daf7b221e515efcc08ccbae022ab456c92b28d868ddb303cf7203031a7c8ced3 with the same 512x512 PNG header. No *.pending.png files were present in screenshots/wave4-native/generated."
+          },
+          {
+            "severity": "info",
+            "title": "Visual evidence supports the final decision chain",
+            "evidence": "I visually inspected both generated PNGs and key native captures. The first generated image is a coastal archive/cliffside architectural scene with water, bridge/ferris-wheel-like structure, and buildings; the second is a distinct coastal cliff village image. captures/14-approved-one.png shows the Review screen with the first candidate approved/canonical and the second rejected. captures/16-restart-ledger-verified.png shows restart recovery with Backend authority current/exact verified/scoped decisions 2 and the same canonical/rejected images."
+          },
+          {
+            "severity": "info",
+            "title": "Live AppData profile was preserved byte-for-byte",
+            "evidence": "screenshots/wave4-native/live-data-compare.json reports C:\\Users\\teeja\\AppData\\Roaming\\Premiere316 beforeCount 312, afterCount 312, beforeContentManifestSha256 and afterContentManifestSha256 both 11d23f2e881f8d69f2e2ca69487a127f293652dfc7a8ba811c2d3618768baad0, differences [], byteIdentical true, same true."
+          },
+          {
+            "severity": "info",
+            "title": "External model/cache/repo roots preserved by count and bytes; selected full component hashes unchanged",
+            "evidence": "external-roots-after-summary.json reports metadataIdentical true for D:/AI/Models (1,152 entries, 2,310,237,986,323 bytes), D:/Projects/flux (134 entries, 77,126,456 bytes), D:/Projects/Flux2 (104 entries, 95,573,984 bytes), D:/_Cache/HuggingFace (115 entries, 53,202,038,520 bytes), and D:/Dev/Tools/Python312 (79,951 entries, 5,656,102,517 bytes). exact-component-hashes-compare.json reports same:true and sha256Same true for FLUX transformer, AE, T5, CLIP, OpenCLIP BPE/tokenizer source, and pinned T5 config/tokenizer files."
+          },
+          {
+            "severity": "info",
+            "title": "External Git HEAD/status evidence matches baseline without touching external repos",
+            "evidence": "screenshots/wave4-native/baseline/external-git-status.txt and screenshots/wave4-native/external-git-status-after.txt are identical: D:/Projects/flux HEAD 802fb4713906133fcbd0d8dc5351620ca4773036; D:/Projects/Flux2 HEAD 50fe5162777813d869182b139e83b10743caef15 with the same pre-existing untracked entries (BLOKEY.env, blokey-studio/, src/flux2/__init__.py). I did not run git in those external directories."
+          },
+          {
+            "severity": "info",
+            "title": "Ambient processes preserved and no residual Premiere316/worker remained",
+            "evidence": "process-preservation.json reports premiere316ResidualProcesses [], baselineAmbientPids and finalAmbientPids both [23356,23756,19552,20712,20972,53312,37076], comfyPid37076Preserved true, and allBaselineAmbientPidsPreserved true. summary-report.json also reports workerCountAfterVisibleRelease 0 and workerCountAfterRestart 0."
+          },
+          {
+            "severity": "info",
+            "title": "Isolated profile cleanup and artifact durability are evidenced",
+            "evidence": "isolated-profile-cleanup.json reports removedCount 9 and remainingCount 0 for premiere316-wave4-native-* temp profiles. Artifact directories remain present: captures contains 22 native PNGs, generated contains 7 files (two PNGs, two provenance JSONs, worker log, ledger, ledger tail), and package contains 6 identity/manifest/shortcut files. summary-report.json records evidence hashes for UAT report, ledger, and ledger tail."
+          },
+          {
+            "severity": "info",
+            "title": "No secret/key leakage found in audited package/evidence text scope",
+            "evidence": "Searches across screenshots/wave4-native JSON evidence and packaged resources text files found no XAI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, AWS_SECRET, private-key blocks, sk-* style keys, xai-* style keys, or Google API key patterns. Matches in evidence were benign tokenizer/tokenDigest terms, not credentials."
+          },
+          {
+            "severity": "info",
+            "title": "Release/restart and offline/no-ComfyUI constraints are supported",
+            "evidence": "summary-report.json reports workerExternalConnectionsAbsent true, port8188Requests 0, completionPosts 0, and renderer-observed traffic limited to loopback UI/media plus https://grok.com/grok-app-builder/extensions.js. captures/15-released-model.png visually shows 'Local image model released.' captures/16-restart-ledger-verified.png shows the restarted review ledger verification."
+          },
+          {
+            "severity": "info",
+            "title": "Wave 5 is closed and no Wave 4 tag/checkpoint exists yet",
+            "evidence": "docs/orchestration/wave-status.json has wave 4 status PACKAGE_PASS_AWAITING_A07_A08_A64 and wave 5 status BLOCKED_BY_PREVIOUS_GATE. .git/refs/tags contains protected-baseline, wave1, wave2, and wave3 tags only; no wave4 tag is present, and no packed-refs file exists. checkpoints/ has no wave4 checkpoint files. docs/release/wave4-gate.md says no Wave 4 tag and no Wave 5 opening are authorized until independent A07/A08/A64 pass and A01 finalizes."
+          }
+        ],
+        "checks": [
+          "Reconstructed inherited gate contract from docs/release/wave4-gate.md and docs/orchestration/wave-status.json.",
+          "Read and cross-checked screenshots/wave4-native/report.json, summary-report.json, package identity files, package hashes, runtime resources manifest, ASAR listing, shortcut evidence, live-data comparison, external-root summary, exact component hash comparison, process preservation, isolated profile cleanup, accepted UAT log, smoke/visual reports, and final gate logs.",
+          "Independently hashed the immutable candidate EXE, ASAR, installer, backend.mjs, packaged FLUX worker, packaged UI server entry, and both generated PNGs using Node crypto only.",
+          "Visually inspected both generated PNGs and key native captures including canonical approval/rejection, local model release, and restart ledger verification.",
+          "Confirmed final test/build evidence: npm test 255/255, typecheck log clean, build log completed, packaged smoke ok:true, native visual matrix ok:true.",
+          "Searched audited package/evidence text for common secret/API-key/private-key indicators.",
+          "Inspected local .git tag refs read-only and wave status evidence to confirm no Wave 4 tag and Wave 5 remains blocked."
+        ],
+        "residualRisks": [
+          "This audit relies on the recorded baseline evidence for external-root counts/bytes and external Git states; I did not enter or run git inside the protected external repositories and did not re-hash massive external model files beyond the preserved exact-component comparison evidence.",
+          "I did not access safeStorage secrets or live renderer local-storage state; signed ledger validity is accepted from the copied evidence and summary, consistent with the read-only/no-secret constraints.",
+          "A08 pass does not itself authorize Wave 5 or create the Wave 4 tag; A01 finalization remains gated on all required independent audit passes."
+        ]
+      }
+    },
+    {
+      "runId": "cc4ed9e6-8452-4436-a370-5dc3becdd67b",
+      "ok": true,
+      "structuredOutput": {
+        "verdict": "pass",
+        "roleId": "A64",
+        "summary": "Inherited decisions: Wave 4 candidate p316-20260904115717-f8c5609e32d4 is PACKAGE_PASS_AWAITING_A07_A08_A64; Wave 5 remains closed until independent audits and A01 checkpoint/tag. Candidate identity, source hash, EXE/ASAR/installer hashes, and the accepted ok:true native UAT evidence are authoritative; failed/debug attempts are not acceptance evidence. A64 scope was adversarial red-team, read-only, with renderer/local-storage state treated as untrusted.\n\nDiagnosis: I tried to falsify the trust-boundary claims from source and evidence. The main security boundary is in Electron main/backend, not renderer state: primary renderer IPC is origin/window checked, mediaRoot is overwritten by main-owned app userData, confirmation resolution channels are not exposed through the primary preload, privileged confirmations use separate nonce-bound modal BrowserWindows, and backend appends authority/prepared/generation/canonical records only after proposal/confirmation revalidation. The backend ledger validates sequence, prevMac, duplicate ids, signed tail, stale authority, exact prepared root binding, one-use generation token deletion, manifest changes, receipt output verification, reject-then-approve, and duplicate canonical approvals. Evidence shows two genuine distinct 512x512 PNGs, matching sidecars, worker/component digests, cold/warm telemetry, no worker sockets, no ComfyUI/8188/completion POST, live profile unchanged, external roots unchanged, and cleanup complete.\n\nDrift / contradiction check: I found no material drift from the Wave 4 gate. The package/source identities recompute and match. The accepted evidence set is distinguishable from earlier debug/recovery files. One non-blocking documentation overclaim remains: authority-review.html/preload does not implement the same Escape/focus trap behavior visible in confirmation-preload.cjs, so the blanket modal accessibility wording should not be read as literally true for the large authority review window. This is not a privilege bypass because close/cancel resolves false and the authority review IPC is nonce/sender-bound.\n\nRecommendation: PASS A64. No executor handoff is warranted. Keep Wave 5 closed until A07/A08 and A01 checkpoint/tag complete, but I do not have an A64 veto blocker.",
+        "blockers": [],
+        "findings": [
+          {
+            "severity": "info",
+            "title": "Candidate package and renderer identity independently matched the gate",
+            "evidence": "Recomputed renderer source hash: f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999. Node SHA-256 checks matched Premiere316.exe f4523887..., app.asar 12a8a6..., installer 3292597..., backend.mjs 6f2ea7..., worker 8c37b8..., and UI server d708ab...."
+          },
+          {
+            "severity": "info",
+            "title": "Renderer-forged authority and decision attempts are materially constrained by main/backend revalidation",
+            "evidence": "desktop/main.mjs assertTrustedSender checks event.senderFrame origin and mainWindow webContents; withMediaRoot overwrites renderer mediaRoot with app.getPath('userData')/media. desktop/backend.mjs deletes proposal/token maps on confirmation/generation, revalidates authority/prepared/manifest/receipt at confirm/generate time, rejects stale authorities, duplicate ids, duplicate canonical approvals, and reject-then-approve."
+          },
+          {
+            "severity": "info",
+            "title": "Signed ledger chain and security tests cover the adversarial cases in scope",
+            "evidence": "Read-only Node test run passed 23/23 including backend-ledger.test.mjs and preload.test.mjs. Covered reorder/timestamp/tail tamper, duplicate canonical, cancel/replay, forged/cross-root/stale roots, reject-then-approve, authority status scoping, absence of generic fs/spawn/model APIs, sandbox/no nodeIntegration, nonce-bound modals, and native-confirmed canonical rejection."
+          },
+          {
+            "severity": "info",
+            "title": "Accepted evidence supports genuine offline FLUX run and release cleanup",
+            "evidence": "Visually inspected both generated PNGs and key native captures. Generated image hashes and sidecar hashes matched report values: d3221e53.../53c12b5... and daf7b221.../401b032.... screenshots/wave4-native/report.json records exactly two outputs, cold then warm telemetry, same worker PID 41040, no pending files, no console/page errors, and observed network limited to loopback/media plus Grok extension."
+          },
+          {
+            "severity": "info",
+            "title": "External/live state preservation evidence is consistent",
+            "evidence": "live-data-compare.json reports %APPDATA%/Premiere316 byteIdentical true with unchanged manifest hash 11d23f.... exact-component-hashes-compare.json reports selected model/runtime component hashes unchanged. external-roots-after-summary.json reports metadataIdentical true for D:/AI/Models, D:/Projects/flux, D:/Projects/Flux2, HuggingFace cache, and Python312. process-preservation.json reports no residual Premiere316 processes and baseline ambient PIDs preserved."
+          },
+          {
+            "severity": "low",
+            "title": "Non-blocking documentation overclaim for the large authority review modal",
+            "evidence": "confirmation-preload.cjs implements Escape cancellation and focus trapping; authority-review-preload.cjs does not. The gate's blanket wording about modal keyboard focus/Escape should be narrowed for the authority review window. Security impact appears low/non-blocking because authority review close/cancel resolves false, it is nonce/sender-bound, network-denied, CSP-restricted, sandboxed, and not auto-confirmed."
+          }
+        ],
+        "checks": [
+          "Read docs/release/wave4-gate.md and reconstructed candidate identity, accepted evidence, pending-audit semantics, and Wave 5 closure condition.",
+          "Read screenshots/wave4-native/report.json, summary-report.json, stage-visual/report.json, premiere316-desktop-smoke.json, live-data-compare.json, exact-component-hashes-compare.json, external-roots-after-summary.json, process-preservation.json, isolated-profile-cleanup.json, package evidence, generated sidecars/ledger snippets, and key logs by reference.",
+          "Visually inspected generated PNGs and native captures including authority review, approved/rejected review, and restart ledger verification.",
+          "Hashed EXE, ASAR, installer, backend, worker, UI server, generated PNGs, and sidecars with bounded Node-only scripts; all matched authoritative hashes.",
+          "Recomputed renderer source hash from desktop/pack.mjs algorithm; matched f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999.",
+          "Inspected desktop/main.mjs, backend.mjs, preload.cjs, confirmation/authority modal HTML/preloads, and backend-ledger/preload tests for trust boundary, nonce/sender binding, stale/TOCTOU rejection, one-use auth, ledger chain, media root, CSP/network/permission denial, and absence of direct confirmation APIs in primary preload.",
+          "Ran bounded Node-only security tests: node --test desktop/backend-ledger.test.mjs desktop/preload.test.mjs; 23 pass, 0 fail."
+        ],
+        "residualRisks": [
+          "I did not decrypt or access safeStorage secrets, so I did not independently recompute production HMACs from the profile key; I relied on source behavior, copied ledger structure, restart-verification evidence, and tests.",
+          "I did not launch the packaged app or worker, contact ComfyUI/cloud, or mutate external roots, by task constraint; live runtime claims are audited from preserved native evidence and package/source inspection.",
+          "Network evidence includes the allowed Grok extension request; I did not perform packet capture beyond preserved reports.",
+          "The authority-review modal accessibility overclaim should be corrected in release prose, but it is not a material bypass of Wave 4 security semantics."
+        ]
+      }
+    }
+  ]
+}

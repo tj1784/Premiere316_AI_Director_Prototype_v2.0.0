@@ -80,13 +80,37 @@
     },
     {
       "wave": 4,
-      "status": "OPEN",
-      "note": "Wave 4 is open but not started. Dependency-root I-001 is READY; all dependent Wave 4 tasks remain BLOCKED_BY_DEPENDENCY until I-001 completes. No model/media lifecycle action is authorized by this ledger update.",
+      "status": "GREEN",
+      "note": "Wave 4 GREEN for packaged build p316-20260904124249-f8c5609e32d4. The replacement candidate remediates the prior A07 veto: no reference fixture exists, the exact visible lock is exterior night sky, only the visibly qualifying canonical candidate was acknowledged, and authority review has Escape/focus/Cancel-default behavior. Genuine packaged FLUX.1 cold/warm UAT, release/restart, package, preservation, and security evidence passed; independent A07/A08/A64 re-audits unanimously passed. FLUX.2 Dev, Klein 4B/9B, and Krea 2 remain honestly disabled/non-selected, not substitute verified runtimes. A01 created the immutable Wave 4 checkpoint/tag while deliberately retaining Wave 5 closed.",
       "tasks": [
-        "I-001"
+        "I-001",
+        "I-002",
+        "I-003",
+        "I-004",
+        "I-005",
+        "I-006",
+        "I-007",
+        "I-008"
       ],
       "evidence": [
-        "Wave 3 GREEN tag wave3-p316-20260903203247-955eb4a6feaa"
+        "docs/release/wave4-gate.md",
+        "desktop/build-info.json p316-20260904124249-f8c5609e32d4",
+        "screenshots/wave4-native/report.json ok:true",
+        "screenshots/wave4-native/summary-report.json green_audited_checkpoint",
+        "screenshots/wave4-native/final-validation.json checkpoint-ready 36/36",
+        "screenshots/wave4-native/generated/ exactly two current PNGs, sidecars, signed ledger/tail",
+        "screenshots/wave4-native/package/ exact package/source/resources identities",
+        "screenshots/wave4-native/captures/ native visible-control UAT",
+        "screenshots/wave4-native/stage-visual/report.json 28/28",
+        "screenshots/wave4-native/live-data-compare.json byte identical",
+        "screenshots/wave4-native/exact-component-hashes-compare.json full selected hashes identical",
+        "screenshots/wave4-native/external-roots-after-summary.json metadata identical",
+        "screenshots/wave4-native/process-preservation.json seven ambient PIDs preserved and zero residual app/worker",
+        "docs/release/audits/wave4-final-A07.md PASS run 4f86a2e6-1a45-48ae-a064-c96a928e3564",
+        "docs/release/audits/wave4-final-A08.md PASS run c0000148-adc3-4c1c-81d9-e33a9005f63d",
+        "docs/release/audits/wave4-final-A64.md PASS run a137d777-8c68-44bc-b291-f97e621df39e",
+        "Historical veto and parent-rejected candidates remain segregated under docs/release/audits and screenshots/wave4-audit-history",
+        "A01 finalization tag wave4-p316-20260904124249-f8c5609e32d4; Wave 5 retained BLOCKED_BY_PREVIOUS_GATE"
       ]
     },
     {
@@ -106,5 +130,5 @@
       "status": "BLOCKED_BY_PREVIOUS_GATE"
     }
   ],
-  "updatedAt": "2026-09-04T05:10:58.187Z"
+  "updatedAt": "2026-09-04T13:30:28.283Z"
 }

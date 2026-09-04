@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { buildEngineConfigs, type EngineConfig } from "@/lib/studio/engine-config";
 import { formatBytes, modalitySummary, type LogicalModel, type ModelCatalog } from "@/lib/studio/model-catalog";
-import { desktopBenchmarkEngine, desktopCatalog, desktopInspectEngine } from "@/lib/desktop/client";
+import { desktopCatalog } from "@/lib/desktop/client";
 import { configureEngine } from "@/lib/studio/configured-engine";
-import { initialGenerationValues } from "@/lib/studio/generation-config";
-import type { AdapterBenchmark } from "@/lib/studio/engine-adapter";
 import { MODEL_ROOT } from "@/lib/studio/types";
 import { useActivePicture, useStudio } from "@/lib/studio/store";
 import { cn } from "@/lib/utils";
@@ -60,21 +58,13 @@ export function Bin() {
 function EngineConfigsBay() {
   const [catalog, setCatalog] = useState<ModelCatalog | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [runtimeErrors, setRuntimeErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     void desktopCatalog({}).then(setCatalog);
   }, []);
 
   const configs = catalog ? buildEngineConfigs(catalog) : [];
-  const ready = configs.filter((config) => config.status === "Ready" && !runtimeErrors[config.id]).length;
-
-  useEffect(() => {
-    if (!catalog) return;
-    const runnable = buildEngineConfigs(catalog).filter((config) => config.adapterId && config.status === "Ready");
-    void Promise.all(runnable.map(async (config) => ({ id: config.id, result: await desktopInspectEngine({ engineId: config.adapterId!, engineName: config.displayName, selectedBasePath: config.base.path }) })))
-      .then((checks) => setRuntimeErrors(Object.fromEntries(checks.filter((check) => !check.result.ok).map((check) => [check.id, check.result.ok ? "" : check.result.error]))));
-  }, [catalog]);
+  const ready = configs.filter((config) => config.status === "Ready").length;
 
   return (
     <div>
@@ -93,14 +83,14 @@ function EngineConfigsBay() {
               <div className="flex items-baseline justify-between gap-2">
                 <p className="min-w-0 truncate text-xs" title={config.displayName}>{config.displayName}</p>
                 <span className={cn("shrink-0 text-[10px]", config.status === "Ready" ? "text-accent" : "text-muted")}>
-                  {runtimeErrors[config.id]?.startsWith("MEMORY RISK") ? "Memory risk" : runtimeErrors[config.id] ? "Unavailable offline" : config.status}
+                  {config.status}
                 </span>
               </div>
               <p className="truncate text-[10px] text-subtle">
                 {config.family} · {config.modality} · {formatBytes(config.runtimeSizeBytes)} load
               </p>
             </button>
-            {openId === config.id ? <EngineConfigExpert config={config} runtimeError={runtimeErrors[config.id]} /> : null}
+            {openId === config.id ? <EngineConfigExpert config={config} /> : null}
           </li>
         ))}
       </ul>
@@ -108,10 +98,8 @@ function EngineConfigsBay() {
   );
 }
 
-function EngineConfigExpert({ config, runtimeError }: { config: EngineConfig; runtimeError?: string }) {
+function EngineConfigExpert({ config }: { config: EngineConfig }) {
   const configured = configureEngine(config);
-  const [benchmark, setBenchmark] = useState<AdapterBenchmark | null>(null);
-  const [benchmarking, setBenchmarking] = useState(false);
   return (
     <div className="mt-1 border-l border-border py-1 pl-2">
       <ComponentLine label="Base" components={[config.base]} />
@@ -136,20 +124,14 @@ function EngineConfigExpert({ config, runtimeError }: { config: EngineConfig; ru
       {config.status === "Adapter unavailable" ? (
         <p className="mt-1 text-[10px] text-muted">Runtime adapter not yet implemented. This configuration remains visible and disabled.</p>
       ) : null}
-      {runtimeError ? <p className="mt-1 text-[10px] text-rec">Offline runtime unavailable · {runtimeError}</p> : null}
+      <p className="mt-1 text-[10px] text-subtle">Runtime inspect/wake is intentionally unavailable; packaged Generate performs the privileged worker check after one-use authorization.</p>
       {configured.capabilities ? (
         <>
           <p className="mt-2 text-[10px] text-subtle">Native controls · {configured.capabilities.modelVariant}</p>
           <p className="text-[10px] text-muted">
             {configured.capabilities.presets.map((preset) => preset.label).join(" · ")} · {configured.capabilities.controls.steps.runtimeDefault} steps · guidance {configured.capabilities.controls.guidance.runtimeDefault}
           </p>
-          <button type="button" disabled={benchmarking || Boolean(runtimeError)} className="mt-2 text-[10px] text-accent disabled:text-subtle" onClick={async () => {
-            setBenchmarking(true);
-            try {
-              setBenchmark(await desktopBenchmarkEngine({ engineId: config.adapterId!, engineName: config.displayName, selectedBasePath: config.base.path, values: initialGenerationValues(configured.capabilities!) }));
-            } finally { setBenchmarking(false); }
-          }}>{benchmarking ? "Calibrating…" : "Benchmark configuration"}</button>
-          {benchmark ? <div className="mt-1 rounded-sm bg-inset px-2 py-1.5"><ConfigMetric label="Cold generation" value={benchmark.firstGenerationMs === null ? "Unavailable" : `${(benchmark.firstGenerationMs / 1000).toFixed(2)} s`} /><ConfigMetric label="Warm generation" value={benchmark.warmGenerationMs === null ? "Unavailable" : `${(benchmark.warmGenerationMs / 1000).toFixed(2)} s`} /><p className="mt-1 text-[9px] text-subtle">{benchmark.warnings.join(" ")}</p></div> : null}
+          <p className="mt-2 text-[10px] text-subtle">Benchmarking is package-gate evidence only; the product UI cannot generate calibration media outside a prepared asset.</p>
         </>
       ) : null}
     </div>
