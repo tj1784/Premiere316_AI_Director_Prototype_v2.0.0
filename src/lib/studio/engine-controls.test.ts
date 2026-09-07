@@ -48,10 +48,12 @@ function engine(adapterId: EngineConfig["adapterId"] = "flux2"): EngineConfig {
 
 describe("native engine capability schemas", () => {
   it("exposes only worker-backed controls in the normal visible set", () => {
-    assert.ok(visibleControls(flux2, "basic").some((control) => control.id === "references"));
+    assert.ok(!visibleControls(flux2, "basic").some((control) => control.id === "references"));
     assert.ok(!visibleControls(flux1, "basic").some((control) => control.id === "references"));
     assert.equal(flux1.controls.references.supported, false);
+    assert.equal(flux2.controls.references.supported, false);
     assert.match(flux1.controls.references.disabledReason!, /current native adapter/);
+    assert.match(flux2.controls.references.disabledReason!, /T2I-only/i);
     assert.equal(flux2.controls.loras.supported, false);
     assert.equal(flux2.controls.negativePrompt.supported, false);
   });

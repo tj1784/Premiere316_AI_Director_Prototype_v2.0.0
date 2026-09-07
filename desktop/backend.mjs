@@ -450,8 +450,10 @@ function verifyPreparedSnapshot(params, manifest) {
   if (!approval) throw new Error("Prepared generation requires a backend-signed prepared approval root.");
   if (approval.authorityId !== authority.authorityId || approval.authorityDigest !== authority.projectionDigest || approval.preparedAssetId !== prepared.id || approval.assetId !== asset.id) throw new Error("Prepared approval ledger root is not bound to the current authority.");
   const references = Array.isArray(params.references) ? params.references.filter((uri) => typeof uri === "string" && uri.startsWith("data:image/") && uri.length < 8 * 1024 * 1024).slice(0, MAX_REF_COUNT) : [];
-  if (references.length) throw new Error("FLUX.1 prepared generation does not accept renderer-supplied reference bytes in Wave 4.");
-  const fixedValues = { ...mediaSettings(params.values), width: 512, height: 512, steps: 20, guidance: 3.5, scheduler: "flux1-official-20-guidance-3.5", precision: "BF16", outputFormat: "PNG", outputBitDepth: 8 };
+  if (references.length) throw new Error("Prepared T2I generation does not accept renderer-supplied reference bytes.");
+  const adapter = preparedT2iAdapter(String(params.engineId ?? ""));
+  if (!adapter) throw new Error("Only FLUX.2 Dev (default T2I) or FLUX.1 prepared generation is enabled.");
+  const fixedValues = { ...mediaSettings(params.values), ...adapter.values };
   return {
     authorityId: authority.authorityId,
     authorityDigest: authority.projectionDigest,
@@ -469,15 +471,39 @@ function verifyPreparedSnapshot(params, manifest) {
     provenanceExpected: true,
     visualBibleVersionIds: prepared.visualBibleVersionIds ?? [],
     cinematographyPlanIds: prepared.cinematographyPlanIds ?? [],
-    engineId: String(params.engineId ?? ""),
-    engineName: String(params.engineName ?? ""),
-    selectedBasePath: "diffusion_models/flux1-dev.safetensors",
+    engineId: adapter.engineId,
+    engineName: adapter.engineName,
+    selectedBasePath: adapter.selectedBasePath,
     prompt: prepared.prompt,
     references,
     values: fixedValues,
-    configDigest: domainDigest("p316.preparedGeneration.config.v1", { engineId: String(params.engineId ?? ""), selectedBasePath: String(params.selectedBasePath ?? ""), promptDigest: prepared.promptDigest, values: fixedValues, adapter: "flux/flux1-dev" }),
+    configDigest: domainDigest("p316.preparedGeneration.config.v1", { engineId: adapter.engineId, selectedBasePath: adapter.selectedBasePath, promptDigest: prepared.promptDigest, values: fixedValues, adapter: adapter.adapter }),
     manifestDigest: stableManifestDigest(manifest),
   };
+}
+
+function preparedT2iAdapter(engineId) {
+  if (engineId === "flux2") {
+    return {
+      engineId: "flux2",
+      engineName: "FLUX.2 Dev",
+      selectedBasePath: "diffusion_models/flux2_dev.safetensors",
+      adapter: "flux2/flux2-dev",
+      summary: "FLUX.2 Dev · official 50 steps · guidance 4.0 · 512×512 PNG",
+      values: { width: 512, height: 512, steps: 50, guidance: 4, scheduler: "flux2-empirical-snr", precision: "BF16", outputFormat: "PNG", outputBitDepth: 8 },
+    };
+  }
+  if (engineId === "flux") {
+    return {
+      engineId: "flux",
+      engineName: "FLUX.1 Dev",
+      selectedBasePath: "diffusion_models/flux1-dev.safetensors",
+      adapter: "flux/flux1-dev",
+      summary: "FLUX.1 Dev · official 20 steps · guidance 3.5 · 512×512 PNG",
+      values: { width: 512, height: 512, steps: 20, guidance: 3.5, scheduler: "flux1-official-20-guidance-3.5", precision: "BF16", outputFormat: "PNG", outputBitDepth: 8 },
+    };
+  }
+  return null;
 }
 
 function receiptContinuityFindings(job, receiptId) {
@@ -496,7 +522,7 @@ function proposalSummary(payload, manifest) {
     preparedAssetId: payload.preparedAssetId,
     specVersionId: payload.specVersionId,
     prompt: payload.prompt.slice(0, 700),
-    engine: "FLUX.1 dev · official 20 steps · guidance 3.5 · 512×512 PNG",
+    engine: preparedT2iAdapter(payload.engineId)?.summary ?? payload.engineName,
     manifestDigest: payload.manifestDigest,
     dependencyCount: payload.dependencyFingerprints.length,
     componentSummary: (manifest.components ?? []).map((component) => `${component.role}: ${component.stableId}`).slice(0, 8),
@@ -504,10 +530,13 @@ function proposalSummary(payload, manifest) {
 }
 
 function proposePrepared(params) {
-  const safeSelectedBasePath = "diffusion_models/flux1-dev.safetensors";
-  const manifest = resolveImageComponentManifest(String(params?.engineId ?? ""), safeSelectedBasePath);
-  params = { ...(params ?? {}), selectedBasePath: safeSelectedBasePath, engineName: String(params?.engineName ?? "FLUX.1 Dev") };
-  if (String(params?.engineId ?? "") !== "flux") return { ok: false, error: "Only FLUX.1 prepared generation is enabled in Wave 4.", manifest };
+  const adapter = preparedT2iAdapter(String(params?.engineId ?? "flux2"));
+  if (!adapter) {
+    const manifest = resolveImageComponentManifest(String(params?.engineId ?? ""), "");
+    return { ok: false, error: "Only FLUX.2 Dev (default T2I) or FLUX.1 prepared generation is enabled.", manifest };
+  }
+  const manifest = resolveImageComponentManifest(adapter.engineId, adapter.selectedBasePath);
+  params = { ...(params ?? {}), engineId: adapter.engineId, selectedBasePath: adapter.selectedBasePath, engineName: adapter.engineName };
   let payload;
   try {
     payload = verifyPreparedSnapshot(params, manifest);

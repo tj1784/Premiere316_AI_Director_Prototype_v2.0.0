@@ -177,9 +177,9 @@ try {
   assert.equal(await page.getByRole("button", { name: "Benchmark configuration", exact: true }).count(), 0, "benchmark generation must not be reachable from product UI");
   const manifestPanel = page.getByLabel("Native adapter manifest");
   await manifestPanel.waitFor();
-  await page.waitForFunction(() => /flux1-dev|Unavailable|Missing exact|offline native image adapter/i.test(document.querySelector('[aria-label="Native adapter manifest"]')?.textContent ?? ""));
+  await page.waitForFunction(() => /flux2-dev|flux1-dev|Unavailable|Missing exact|offline native image adapter/i.test(document.querySelector('[aria-label="Native adapter manifest"]')?.textContent ?? ""));
   const manifestText = await manifestPanel.innerText();
-  assert.match(manifestText, /flux1-dev|Unavailable|Missing exact|offline native image adapter/i);
+  assert.match(manifestText, /flux2-dev|flux1-dev|Unavailable|Missing exact|offline native image adapter/i);
   engineState = {
     discoveredImageConfigurations: Number((manifestText.match(/present/g) ?? []).length + (manifestText.match(/missing/g) ?? []).length),
     adapterPlaceholders: Number((manifestText.match(/adapter/i) ?? []).length),

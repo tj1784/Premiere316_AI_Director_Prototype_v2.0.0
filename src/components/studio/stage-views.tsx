@@ -21,6 +21,7 @@ import { useDirector } from "@/lib/studio/use-director";
 import { totalDuration } from "@/lib/studio/prompt-compiler";
 import { desktopApproveCanonicalImage, desktopAuthorizePreparedImage, desktopGeneratePreparedImage, desktopImageManifests, desktopProductionAuthorityStatus, desktopRejectCanonicalImage, desktopSaveMany, isDesktopApp } from "@/lib/desktop/client";
 import type { ImageComponentManifest } from "@/lib/studio/image-component-resolver.server.ts";
+import { runtimeDefaults } from "@/lib/studio/engine-controls.ts";
 import { cn, copyText, formatTimecode, saveReadyFile, uid, type ReadyFile } from "@/lib/utils";
 import type { LocalLLMProviderDiscovery } from "@/lib/studio/local-llm-provider";
 import type { PictureIntake } from "@/lib/studio/picture-intake";
@@ -534,14 +535,14 @@ function GenerateStage({ picture }: { picture: Picture }) {
   const prepared = picture.production?.preparedAssets ?? [];
   const assets = picture.production?.assets ?? [];
   const ready = prepared.filter((item) => item.status === "APPROVED_PREPARED");
-  const best = manifests.find((item) => item.status === "READY" && item.adapterId === "flux") ?? manifests.find((item) => item.adapterId === "flux") ?? manifests[0];
+  const best = manifests.find((item) => item.status === "READY" && item.adapterId === "flux2") ?? manifests.find((item) => item.adapterId === "flux2") ?? manifests.find((item) => item.status === "READY" && item.adapterId === "flux") ?? manifests.find((item) => item.adapterId === "flux") ?? manifests[0];
   const blockedReason = best?.disabledReason ?? "No complete offline native image adapter is verified on this workstation.";
   const authorityCurrent = backendStatus?.ok === true && backendStatus.status === "CURRENT" && backendStatus.authorityId === picture.production?.productionAuthority?.authorityId && backendStatus.digest === picture.production?.productionAuthority?.digest;
   const verifiedRoots = new Map((backendStatus?.ok === true ? (backendStatus.preparedApprovals ?? []) : []).map((root) => [root.preparedAssetId, root]));
   const canAuthorizeWithBest = Boolean(best && best.status === "READY" && best.controls && picture.production && authorityCurrent);
   return (
     <Pane title="Generate" kicker="10 · Prepared asset generation">
-      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">Wave 4 generation is asset-first: select an approved prepared asset, request a one-use desktop authorization, then append immutable iterations. Shot-only still generation and calibration are not available from the product UI.</p>
+      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">Prepared generation is asset-first. FLUX.2 Dev is the default T2I engine when its exact local adapter is READY; FLUX.1 remains a secondary packaged adapter. Select an approved prepared asset, request a one-use desktop authorization, then append immutable iterations.</p>
       <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; generation fails closed."}</div>
       <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
         <section className="grid min-w-0 gap-3" aria-label="Prepared assets">
@@ -578,7 +579,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
                         preparedApprovalRootId: item.preparedApprovalRootId ?? "",
                         engineId: best.adapterId,
                         engineName: best.modelVariant,
-                        values: { width: 512, height: 512, steps: 20, guidance: 3.5, scheduler: "flux1-official-20-guidance-3.5", seed: Date.now() % 2147483647, precision: "BF16", outputFormat: "PNG", outputBitDepth: 8 },
+                        values: { ...runtimeDefaults(best.controls), width: 512, height: 512, seed: Date.now() % 2147483647, precision: "BF16", outputFormat: "PNG", outputBitDepth: 8 },
                       });
                       if (!authorization.ok) throw new Error(authorization.error);
                       const result = await desktopGeneratePreparedImage({ token: authorization.token });

@@ -24,6 +24,8 @@ extraResources:
     to: build-info.json
   - from: desktop/workers/flux1_jsonl_worker.py
     to: workers/flux1_jsonl_worker.py
+  - from: desktop/workers/flux2_jsonl_worker.py
+    to: workers/flux2_jsonl_worker.py
   - from: desktop/icon.ico
     to: icon.ico
   - from: .output

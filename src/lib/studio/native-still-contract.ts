@@ -45,8 +45,8 @@ export function toNativeStillWorkerRequest(input: {
     method: "generate",
     prompt: input.prompt.trim(),
     out: input.out,
-    width: capabilities.adapterId === "flux" ? 512 : integer(values.width, capabilities.controls.width.runtimeDefault),
-    height: capabilities.adapterId === "flux" ? 512 : integer(values.height, capabilities.controls.height.runtimeDefault),
+    width: capabilities.adapterId === "flux" || capabilities.adapterId === "flux2" ? 512 : integer(values.width, capabilities.controls.width.runtimeDefault),
+    height: capabilities.adapterId === "flux" || capabilities.adapterId === "flux2" ? 512 : integer(values.height, capabilities.controls.height.runtimeDefault),
     seed: integer(values.seed, capabilities.controls.seed.runtimeDefault),
   };
 }

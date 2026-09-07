@@ -5,6 +5,7 @@ import { join } from "node:path";
 
 const source = readFileSync(new URL("./local-still.server.ts", import.meta.url), "utf8");
 const worker = readFileSync(new URL("../../../desktop/workers/flux1_jsonl_worker.py", import.meta.url), "utf8");
+const flux2Worker = readFileSync(new URL("../../../desktop/workers/flux2_jsonl_worker.py", import.meta.url), "utf8");
 const backend = readFileSync(new URL("../../../desktop/backend.mjs", import.meta.url), "utf8");
 const contract = readFileSync(new URL("./native-still-contract.ts", import.meta.url), "utf8");
 const waveStatus = readFileSync(new URL("../../../docs/orchestration/wave-status.json", import.meta.url), "utf8");
@@ -20,7 +21,8 @@ describe("native still runtime policy", () => {
     assert.match(source, /P316_CACHE_ROOT/);
     assert.match(source, /P316_PACKAGED_APP !== "1"/);
     assert.doesNotMatch(source, /D:\\_Temp\\Premiere316\\stills-out/);
-    assert.doesNotMatch(source, /D:\\Projects\\Flux2/);
+    assert.match(source, /FLUX2_ROOT/);
+    assert.doesNotMatch(source, /BLOKEY\.env|blokey-studio/);
   });
 
   it("binds FLUX.1 to standalone encoder files and exact approved identities", () => {
@@ -48,14 +50,19 @@ describe("native still runtime policy", () => {
 
   it("keeps JSONL worker methods strict and free of download/Comfy markers", () => {
     assert.equal(existsSync(join(process.cwd(), "desktop", "workers", "flux1_jsonl_worker.py")), true);
+    assert.equal(existsSync(join(process.cwd(), "desktop", "workers", "flux2_jsonl_worker.py")), true);
     assert.match(worker, /PROTOCOL_VERSION = "premiere316\.flux1-jsonl\.v1"/);
+    assert.match(flux2Worker, /PROTOCOL_VERSION = "premiere316\.flux2-jsonl\.v1"/);
     assert.match(worker, /method == "ping"/);
     assert.match(worker, /method == "generate"/);
     assert.match(worker, /method == "release"/);
     assert.match(worker, /Unsupported FLUX\.1 JSONL keys/);
+    assert.match(flux2Worker, /Unsupported FLUX\.2 JSONL keys/);
     assert.match(worker, /failed_id = json\.loads\(line\)\.get\("id"\)/);
+    assert.match(flux2Worker, /local_files_only=True/);
     assert.doesNotMatch(contract, /engineId: string;\n  engineName: string;\n  out: string;\n  width:[\s\S]*refs: string\[\]/);
     assert.doesNotMatch(worker, /from_pretrained|hf_hub_download|snapshot_download|8188|ComfyUI|Flux2/i);
+    assert.doesNotMatch(flux2Worker, /hf_hub_download|snapshot_download|8188|ComfyUI|BLOKEY|OpenRouterAPIClient/i);
   });
 
   it("derives privileged prompt authorization from sealed backend authority, not renderer parameters", () => {
@@ -69,9 +76,9 @@ describe("native still runtime policy", () => {
   });
 
   it("fails closed when audited CUDA weight files exceed installed GPU memory", () => {
-    assert.match(source, /requirePlausibleGpuMemory\(identity\)/);
-    assert.match(source, /component\.role === "text_encoder" \|\| component\.role === "vae"/);
-    assert.match(source, /MEMORY RISK: audited FLUX\.1 CUDA lower-bound/);
+    assert.match(source, /requirePlausibleGpuMemory\(identity,/);
+    assert.match(source, /cudaRoles.includes\(component.role\)/);
+    assert.match(source, /MEMORY RISK: audited CUDA lower-bound/);
     assert.match(source, /--query-gpu=memory\.total/);
   });
 });

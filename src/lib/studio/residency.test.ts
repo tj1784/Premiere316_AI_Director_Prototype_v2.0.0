@@ -271,12 +271,14 @@ describe("visibility and no-comfy gate", () => {
     assert.doesNotMatch(stills, /8188/);
     assert.doesNotMatch(stills, /ComfyUI/i);
     assert.doesNotMatch(stills, /class_type/);
-    assert.doesNotMatch(stills, /Flux2/);
-    assert.doesNotMatch(stills, /FLUX2_MODEL_PATH/);
+    assert.match(stills, /flux2_dev\.safetensors/);
     assert.match(stills, /flux1-dev\.safetensors/);
     const worker = readFileSync(join(process.cwd(), "desktop/workers/flux1_jsonl_worker.py"), "utf8");
     assert.doesNotMatch(worker, /8188|ComfyUI|Flux2/i);
     assert.doesNotMatch(worker, /from_pretrained|hf_hub_download|snapshot_download/);
+    const flux2Worker = readFileSync(join(process.cwd(), "desktop/workers/flux2_jsonl_worker.py"), "utf8");
+    assert.doesNotMatch(flux2Worker, /8188|ComfyUI/i);
+    assert.doesNotMatch(flux2Worker, /hf_hub_download|snapshot_download/);
     const engines = readFileSync(join(process.cwd(), "src/lib/studio/engines.ts"), "utf8");
     assert.doesNotMatch(engines, /comfy/i);
   });

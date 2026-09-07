@@ -11,6 +11,9 @@ const PYTHON = "D:\\Dev\\Tools\\Python312\\python.exe";
 const FLUX_ROOT = "D:\\Projects\\flux";
 const FLUX2_ROOT = "D:\\Projects\\Flux2";
 const T5_SNAPSHOT_REVISION = "3db67ab1af984cf10548a73467f0e5bca2aaaeb2";
+const FLUX2_SOURCE_HEAD = "50fe5162777813d869182b139e83b10743caef15";
+const MISTRAL_REVISION = "95a6d26c4bfb886c58daf9d3f7332c857cb27b43";
+const PROCESSOR_REVISION = "68faf511d618ef198fef186659617cfd2eb8e33a";
 
 export type ComponentManifestStatus = "READY" | "MISSING_COMPONENT" | "ADAPTER_UNAVAILABLE" | "MEMORY_RISK" | "BLOCKED_LICENSE";
 
@@ -59,12 +62,20 @@ export function resolveImageComponentManifest(adapterId: string, selectedBasePat
   return kreaManifest(now);
 }
 
+export function preferredImageManifest(manifests: ImageComponentManifest[]): ImageComponentManifest | undefined {
+  return manifests.find((item) => item.status === "READY" && item.adapterId === "flux2")
+    ?? manifests.find((item) => item.adapterId === "flux2")
+    ?? manifests.find((item) => item.status === "READY" && item.adapterId === "flux")
+    ?? manifests.find((item) => item.adapterId === "flux")
+    ?? manifests[0];
+}
+
 function manifest(adapterId: "flux" | "flux2" | "klein-demo", variant: ImageComponentManifest["modelVariant"], now: number): ImageComponentManifest {
   const capabilities = nativeAdapterCapabilities(adapterId, variant);
   const components = componentSpecs(variant).map(toComponent);
   const missing = components.filter((component) => component.required && !component.present);
   const implementation = variant === "flux1-dev" ? "black-forest-labs/flux" : "black-forest-labs/flux2";
-  const disabledUnsupported = variant === "flux1-dev" ? null : "FLUX.2/Klein adapters remain disabled for Wave 4; Labs-only until a later gate.";
+  const disabledUnsupported = variant === "flux1-dev" || variant === "flux2-dev" ? null : "Klein adapters remain disabled/Labs-only until a later independently gated runtime.";
   const memoryRisk = missing.length || disabledUnsupported ? null : memoryRiskReason(components);
   const runtimeMissing = disabledUnsupported ?? runtimeMissingReason(variant);
   const disabledReason = missing.length
@@ -80,7 +91,11 @@ function manifest(adapterId: "flux" | "flux2" | "klein-demo", variant: ImageComp
     components,
     placementPlan: placementFor(components),
     controls: capabilities,
-    licenseNote: variant === "flux1-dev" ? "App-owned Premiere316 worker with local operator-installed FLUX.1 components; no ComfyUI, cloud, or HF weight lookup." : "Disabled Labs adapter; no packaged Generate route is available in Wave 4.",
+    licenseNote: variant === "flux1-dev"
+      ? "App-owned Premiere316 worker with local operator-installed FLUX.1 components; no ComfyUI, cloud, or HF weight lookup."
+      : variant === "flux2-dev"
+        ? "App-owned Premiere316 worker with local operator-installed FLUX.2 Dev components; default T2I adapter; no ComfyUI, cloud, or HF weight lookup."
+        : "Disabled Labs adapter; no packaged Generate route is available.",
     resolvedAt: now,
   };
 }
@@ -117,13 +132,13 @@ function componentSpecs(variant: ImageComponentManifest["modelVariant"]): Compon
     { role: "vae", stableId: "ae.safetensors@afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38", path: join(MODEL_ROOT, "vae", "ae.safetensors"), required: true },
   ];
   if (variant === "flux2-dev") return [
-    { role: "runtime", stableId: "black-forest-labs/flux2", path: FLUX2_ROOT, required: true },
+    { role: "runtime", stableId: `black-forest-labs/flux2@${FLUX2_SOURCE_HEAD}`, path: FLUX2_ROOT, required: true },
     { role: "python", stableId: "Python312", path: PYTHON, required: true },
-    { role: "transformer", stableId: "diffusion_models/flux2_dev.safetensors", path: join(MODEL_ROOT, "diffusion_models", "flux2_dev.safetensors"), required: true },
-    { role: "text_encoder", stableId: "mistralai/Mistral-Small-3.2-24B-Instruct-2506", path: hfSnapshot("mistralai/Mistral-Small-3.2-24B-Instruct-2506"), required: true },
-    { role: "processor", stableId: "mistralai/Mistral-Small-3.1-24B-Instruct-2503", path: hfSnapshot("mistralai/Mistral-Small-3.1-24B-Instruct-2503"), required: true },
-    { role: "support", stableId: "Falconsai/nsfw_image_detection", path: hfSnapshot("Falconsai/nsfw_image_detection"), required: true },
-    { role: "vae", stableId: "vae/flux2-vae.safetensors", path: join(MODEL_ROOT, "vae", "flux2-vae.safetensors"), required: true },
+    { role: "worker", stableId: "Premiere316:desktop/workers/flux2_jsonl_worker.py", path: process.env.P316_RESOURCES_PATH ? join(process.env.P316_RESOURCES_PATH, "workers", "flux2_jsonl_worker.py") : join(process.cwd(), "desktop", "workers", "flux2_jsonl_worker.py"), required: true },
+    { role: "transformer", stableId: "flux2_dev.safetensors@6159a3f19f829c8e84ba6e9996b7afaf7c0a5f3428677f5b37445778a320d275", path: join(MODEL_ROOT, "diffusion_models", "flux2_dev.safetensors"), required: true },
+    { role: "text_encoder", stableId: `mistralai/Mistral-Small-3.2-24B-Instruct-2506@${MISTRAL_REVISION}:config@01ab910a5dda7995709cc355d094eabb8094b78d49240cd167188606c3ff5edb:index@664a049408e8694e5867312145b74b1971ad5472061a1f176e0806dec9b3d21c`, path: join(HF_HUB, "models--mistralai--Mistral-Small-3.2-24B-Instruct-2506", "snapshots", MISTRAL_REVISION), required: true },
+    { role: "processor", stableId: `mistralai/Mistral-Small-3.1-24B-Instruct-2503@${PROCESSOR_REVISION}:config@ce3ec410cac74da358f786c574b73b6624c50c8bb876bcb628f06500fe07adcc:tokenizer@b76085f9923309d873994d444989f7eb6ec074b06f25b58f1e8d7b7741070949`, path: join(HF_HUB, "models--mistralai--Mistral-Small-3.1-24B-Instruct-2503", "snapshots", PROCESSOR_REVISION), required: true },
+    { role: "vae", stableId: "flux2-vae.safetensors@d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5", path: join(MODEL_ROOT, "vae", "flux2-vae.safetensors"), required: true },
   ];
   const four = variant === "flux2-klein-4b";
   return [
@@ -161,13 +176,53 @@ export function componentHasRequiredPayload(spec: ComponentSpec): boolean {
   if (spec.stableId.includes("flux1-dev.safetensors@")) return exactSizedFileHash(spec.path, 23_802_932_552, "4610115bb0c89560703c892c59ac2742fa821e60ef5871b33493ba544683abd7");
   if (spec.stableId.includes("ae.safetensors@")) return exactSizedFileHash(spec.path, 335_304_388, "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38");
   if (spec.stableId.includes("open_clip:tokenizer.py@")) return exactSizedFileHash(spec.path, 22_680, "90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734");
+  if (spec.stableId.includes("flux2_dev.safetensors@")) return exactSizedFileHash(spec.path, 64_446_596_128, "6159a3f19f829c8e84ba6e9996b7afaf7c0a5f3428677f5b37445778a320d275");
+  if (spec.stableId.includes("flux2-vae.safetensors@")) return exactSizedFileHash(spec.path, 336_213_556, "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5");
+  if (spec.stableId.includes("Mistral-Small-3.2-24B-Instruct-2506@")) return mistralSnapshotPresent(spec.path);
+  if (spec.stableId.includes("Mistral-Small-3.1-24B-Instruct-2503@")) return processorSnapshotPresent(spec.path);
   return true;
 }
 
+function mistralSnapshotPresent(path: string): boolean {
+  const shards: Array<[string, number]> = [
+    ["model-00001-of-00010.safetensors", 4_883_550_696],
+    ["model-00002-of-00010.safetensors", 4_781_593_336],
+    ["model-00003-of-00010.safetensors", 4_886_472_224],
+    ["model-00004-of-00010.safetensors", 4_781_593_376],
+    ["model-00005-of-00010.safetensors", 4_781_593_368],
+    ["model-00006-of-00010.safetensors", 4_886_472_248],
+    ["model-00007-of-00010.safetensors", 4_781_593_376],
+    ["model-00008-of-00010.safetensors", 4_781_593_368],
+    ["model-00009-of-00010.safetensors", 4_886_472_248],
+    ["model-00010-of-00010.safetensors", 4_571_866_320],
+  ];
+  return exactFileHash(join(path, "config.json"), "01ab910a5dda7995709cc355d094eabb8094b78d49240cd167188606c3ff5edb")
+    && exactFileHash(join(path, "model.safetensors.index.json"), "664a049408e8694e5867312145b74b1971ad5472061a1f176e0806dec9b3d21c")
+    && shards.every(([name, size]) => exactSizedFilePresent(join(path, name), size));
+}
+
+function processorSnapshotPresent(path: string): boolean {
+  return exactFileHash(join(path, "config.json"), "ce3ec410cac74da358f786c574b73b6624c50c8bb876bcb628f06500fe07adcc")
+    && exactSizedFileHash(join(path, "tokenizer.json"), 17_078_037, "b76085f9923309d873994d444989f7eb6ec074b06f25b58f1e8d7b7741070949");
+}
+
+function exactSizedFilePresent(path: string, expectedSize: number): boolean {
+  try {
+    const stats = statSync(path);
+    return stats.isFile() && stats.size === expectedSize;
+  } catch { return false; }
+}
+
+const exactHashCache = new Map<string, { size: number; mtimeMs: number; hash: string; ok: boolean }>();
 function exactSizedFileHash(path: string, expectedSize: number, expectedHash: string): boolean {
   try {
     const stats = statSync(path);
-    return stats.isFile() && stats.size === expectedSize && exactFileHash(path, expectedHash);
+    if (!stats.isFile() || stats.size !== expectedSize) return false;
+    const cached = exactHashCache.get(path);
+    if (cached && cached.size === stats.size && cached.mtimeMs === stats.mtimeMs && cached.hash === expectedHash) return cached.ok;
+    const ok = exactFileHash(path, expectedHash);
+    exactHashCache.set(path, { size: stats.size, mtimeMs: stats.mtimeMs, hash: expectedHash, ok });
+    return ok;
   } catch { return false; }
 }
 

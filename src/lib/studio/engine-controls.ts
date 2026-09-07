@@ -298,12 +298,7 @@ function flux2(modelVariant: NativeAdapterCapabilities["modelVariant"]): NativeA
     help: "Official FLUX.2 empirical SNR schedule computed from token sequence length and native step count.",
     disabledReason: "Fixed by the current native worker.", fixed: true, perGenerationOverride: false,
   });
-  controls.references = enabled({
-    id: "references", label: "Reference images", group: "conditioning", level: "basic", kind: "images",
-    runtimeDefault: [], recommendedDefault: [], multiple: true,
-    help: "One or more images are encoded as sequence conditioning by the native FLUX.2 adapter.",
-    reloadEffect: "CACHE_INVALIDATION",
-  });
+  controls.references = disabled("references", "Reference images", "conditioning", "basic", "images", "The current FLUX.2 Dev worker is T2I-only; reference/edit conditioning is not enabled.");
   controls.keepResident = enabled({
     id: "keepResident", label: "Keep warm", group: "memory", level: "expert", kind: "boolean",
     runtimeDefault: true, recommendedDefault: true,

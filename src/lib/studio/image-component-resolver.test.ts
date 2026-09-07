@@ -19,7 +19,7 @@ describe("Wave 4 image component resolver", () => {
     }
   });
 
-  it("models FLUX.1 as standalone T5/CLIP/BPE components and disables Labs adapters", () => {
+  it("models FLUX.2 Dev as the default T2I adapter and keeps FLUX.1 as a secondary packaged path", () => {
     const flux = resolveImageComponentManifest("flux", "diffusion_models/flux1-dev.safetensors", 1800);
     assert.equal(flux.adapterId, "flux");
     assert.ok(flux.components.some((component) => component.stableId.includes("t5xxl_fp16.safetensors@6e480b09")));
@@ -30,9 +30,17 @@ describe("Wave 4 image component resolver", () => {
     if (flux.status !== "READY") assert.match(flux.disabledReason ?? "", /Missing exact|runtime|MEMORY RISK/i);
     assert.doesNotMatch(flux.disabledReason ?? "", /source-disabled|cannot prove sticky residency/i);
 
-    const flux2 = resolveImageComponentManifest("flux2", "", 1800);
-    assert.equal(flux2.status, "ADAPTER_UNAVAILABLE");
-    assert.match(flux2.disabledReason ?? "", /disabled for Wave 4/i);
+    const flux2 = resolveImageComponentManifest("flux2", "diffusion_models/flux2_dev.safetensors", 1800);
+    assert.equal(flux2.adapterId, "flux2");
+    assert.equal(flux2.modelVariant, "flux2-dev");
+    assert.ok(flux2.components.some((component) => component.stableId.includes("flux2_dev.safetensors@6159a3f1")));
+    assert.ok(flux2.components.some((component) => component.stableId.includes("flux2-vae.safetensors@d64f3a68")));
+    assert.ok(flux2.components.some((component) => component.stableId.includes("Mistral-Small-3.2-24B-Instruct-2506@95a6d26")));
+    assert.doesNotMatch(flux2.disabledReason ?? "", /disabled for Wave 4/i);
+    if (flux2.status !== "READY") assert.match(flux2.disabledReason ?? "", /Missing exact|runtime|MEMORY RISK/i);
+    const klein = resolveImageComponentManifest("klein-demo", "", 1800);
+    assert.notEqual(klein.status, "READY");
+    assert.match(klein.disabledReason ?? "", /Missing exact|disabled|Labs/i);
     const krea = resolveImageComponentManifest("krea-2", "", 1800);
     assert.equal(krea.status, "ADAPTER_UNAVAILABLE");
     assert.match(krea.disabledReason ?? "", /not a complete app-supported native adapter/i);
