@@ -26,6 +26,10 @@ extraResources:
     to: workers/flux1_jsonl_worker.py
   - from: desktop/workers/flux2_jsonl_worker.py
     to: workers/flux2_jsonl_worker.py
+  - from: desktop/workers/minimax_h3_jsonl_worker.py
+    to: workers/minimax_h3_jsonl_worker.py
+  - from: desktop/workers/ltx25_jsonl_worker.py
+    to: workers/ltx25_jsonl_worker.py
   - from: desktop/icon.ico
     to: icon.ico
   - from: .output

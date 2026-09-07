@@ -5,6 +5,7 @@ import type { ProductionBreakdown } from "../production/types.ts";
 import type { PerformanceWorkspace } from "../performance/types.ts";
 import type { PictureResearchBible } from "../research/bible.ts";
 import type { PromptLabState } from "./prompt-lab.ts";
+import type { VideoWorkspace } from "../production/video-types.ts";
 import type { VisualDevelopmentState } from "../visual-development.ts";
 import type { CinematographyState } from "../cinematography.ts";
 
@@ -146,6 +147,7 @@ export type Picture = {
   screenplay: PictureScreenplay;
   research?: PictureResearchBible | null;
   promptLab?: PromptLabState | null;
+  video?: VideoWorkspace | null;
   production?: ProductionBreakdown | null;
   visualDevelopment?: VisualDevelopmentState | null;
   cinematography?: CinematographyState | null;

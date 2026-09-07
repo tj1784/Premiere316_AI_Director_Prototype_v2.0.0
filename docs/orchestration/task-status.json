@@ -1339,10 +1339,10 @@
         "C-001",
         "I-007"
       ],
-      "status": "BLOCKED_BY_GATE",
-      "branch": null,
-      "worktree": null,
-      "evidence": []
+      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
+      "branch": "premiere316-v3",
+      "worktree": "D:/Projects/Premiere316_v3",
+      "evidence": ["src/lib/studio/prompt-compiler.ts", "docs/release/wave5-gate.md"]
     },
     {
       "id": "H-001",
@@ -1353,10 +1353,10 @@
       "deps": [
         "P-001"
       ],
-      "status": "BLOCKED_BY_GATE",
-      "branch": null,
-      "worktree": null,
-      "evidence": []
+      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
+      "branch": "premiere316-v3",
+      "worktree": "D:/Projects/Premiere316_v3",
+      "evidence": ["desktop/workers/minimax_h3_jsonl_worker.py", "docs/release/wave5-gate.md"]
     },
     {
       "id": "L-001",
@@ -1367,10 +1367,10 @@
       "deps": [
         "P-001"
       ],
-      "status": "BLOCKED_BY_GATE",
-      "branch": null,
-      "worktree": null,
-      "evidence": []
+      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
+      "branch": "premiere316-v3",
+      "worktree": "D:/Projects/Premiere316_v3",
+      "evidence": ["desktop/workers/ltx25_jsonl_worker.py", "docs/release/wave5-gate.md"]
     },
     {
       "id": "Q-001",
@@ -1383,10 +1383,10 @@
         "H-001",
         "L-001"
       ],
-      "status": "BLOCKED_BY_GATE",
-      "branch": null,
-      "worktree": null,
-      "evidence": []
+      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
+      "branch": "premiere316-v3",
+      "worktree": "D:/Projects/Premiere316_v3",
+      "evidence": ["src/lib/studio/cross-media-scheduler.ts", "docs/release/wave5-gate.md"]
     },
     {
       "id": "T-001",
@@ -1399,10 +1399,10 @@
         "L-001",
         "Q-001"
       ],
-      "status": "BLOCKED_BY_GATE",
-      "branch": null,
-      "worktree": null,
-      "evidence": []
+      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
+      "branch": "premiere316-v3",
+      "worktree": "D:/Projects/Premiere316_v3",
+      "evidence": ["src/lib/production/video-iterations.ts", "docs/release/wave5-gate.md"]
     },
     {
       "id": "T-002",
@@ -1413,10 +1413,10 @@
       "deps": [
         "T-001"
       ],
-      "status": "BLOCKED_BY_GATE",
-      "branch": null,
-      "worktree": null,
-      "evidence": []
+      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
+      "branch": "premiere316-v3",
+      "worktree": "D:/Projects/Premiere316_v3",
+      "evidence": ["src/lib/production/video-iterations.ts", "docs/release/wave5-gate.md"]
     },
     {
       "id": "A-001",

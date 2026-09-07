@@ -124,3 +124,35 @@ function sameValue(a: unknown, b: unknown): boolean {
     ? a.length === b.length && a.every((value, index) => value === b[index])
     : Object.is(a, b);
 }
+
+export type VideoEngineId = "ltx-2" | "minimax-h3";
+export type CompiledMediaTarget = "flux1-dev" | "flux2-dev" | "ltx-2.5" | "minimax-h3";
+export type SeedPolicy = {
+  mode: "locked" | "randomize";
+  seed: number | null;
+};
+export type EngineSpecificVideoSettings = {
+  engineId: VideoEngineId;
+  durationSec: number;
+  fps: number;
+  width: number;
+  height: number;
+  motionIntensity: number;
+  negativePrompt: string;
+};
+
+export function defaultVideoSettings(engineId: VideoEngineId, durationSec = 8): EngineSpecificVideoSettings {
+  return {
+    engineId,
+    durationSec: Math.max(1, Math.min(15, durationSec)),
+    fps: 24,
+    width: 768,
+    height: 432,
+    motionIntensity: 0.5,
+    negativePrompt: "morphing faces, extra limbs, identity drift, watermark, text overlay",
+  };
+}
+
+export function videoEngineFromSelection(selectedVideo: string): VideoEngineId {
+  return /minimax|h3/i.test(selectedVideo) ? "minimax-h3" : "ltx-2";
+}

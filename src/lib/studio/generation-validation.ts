@@ -1,5 +1,7 @@
 import type { EngineConfig } from "./engine-config.ts";
 import type { EngineControlCapability, EngineControlId, NativeAdapterCapabilities, NativeGenerationValues } from "./engine-controls.ts";
+import type { EngineSpecificVideoSettings } from "./generation-config.ts";
+import type { EnginePromptPackage } from "./prompt-compiler.ts";
 
 export type GenerationReadiness = "READY" | "READY WITH WARNING" | "MISSING COMPONENT" | "INVALID CONFIGURATION" | "UNSUPPORTED" | "MEMORY RISK" | "NEEDS VALIDATION";
 
@@ -87,4 +89,33 @@ function sameValue(a: unknown, b: unknown): boolean {
   return Array.isArray(a) && Array.isArray(b)
     ? a.length === b.length && a.every((value, index) => value === b[index])
     : Object.is(a, b);
+}
+
+export type EnginePromptValidation = {
+  ok: boolean;
+  warnings: string[];
+  blockers: string[];
+};
+
+export function validateEnginePromptPackage(pkg: EnginePromptPackage): EnginePromptValidation {
+  const warnings = [...pkg.validationWarnings];
+  const blockers: string[] = [];
+  if (!pkg.enginePrompt.trim()) blockers.push("Compiled engine prompt is empty.");
+  if (!pkg.shotSummary.trim()) blockers.push("Shot summary is missing.");
+  if (pkg.durationSec < 1 || pkg.durationSec > 15) blockers.push("Duration must be between 1 and 15 seconds.");
+  if (![24, 25, 30].includes(pkg.fps)) blockers.push("FPS must be 24, 25, or 30.");
+  if (pkg.resolution.width < 256 || pkg.resolution.height < 256) blockers.push("Resolution is below the minimum native draft size.");
+  if ((pkg.engineTarget === "minimax-h3" || pkg.engineTarget === "ltx-2.5") && !pkg.actionTimeline.trim()) {
+    warnings.push("Action timeline is thin; motion may be under-specified.");
+  }
+  return { ok: blockers.length === 0, warnings, blockers };
+}
+
+export function validateVideoSettings(settings: EngineSpecificVideoSettings): EnginePromptValidation {
+  const warnings: string[] = [];
+  const blockers: string[] = [];
+  if (settings.durationSec < 1 || settings.durationSec > 15) blockers.push("Video duration must be 1–15 seconds.");
+  if (settings.fps !== 24) warnings.push("Wave 5 native draft assumes 24 fps.");
+  if (settings.motionIntensity < 0 || settings.motionIntensity > 1) blockers.push("Motion intensity must be 0–1.");
+  return { ok: blockers.length === 0, warnings, blockers };
 }

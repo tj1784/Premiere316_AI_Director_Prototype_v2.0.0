@@ -115,7 +115,10 @@
     },
     {
       "wave": 5,
-      "status": "BLOCKED_BY_PREVIOUS_GATE"
+      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
+      "note": "Prompt compiler, video queue/review, scheduler, and fail-closed H3/LTX workers are implemented. No genuine video file was produced. Packaged smoke/visual matrix not run. Wave 6 remains closed.",
+      "tasks": ["P-001", "H-001", "L-001", "Q-001", "T-001", "T-002"],
+      "evidence": ["docs/release/wave5-gate.md"]
     },
     {
       "wave": 6,
@@ -130,5 +133,5 @@
       "status": "BLOCKED_BY_PREVIOUS_GATE"
     }
   ],
-  "updatedAt": "2026-09-04T13:30:28.283Z"
+  "updatedAt": "2026-09-07T14:00:00.000Z"
 }

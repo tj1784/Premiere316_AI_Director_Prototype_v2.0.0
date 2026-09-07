@@ -18,7 +18,7 @@ import { ENGINES, KIND_LABEL, engineById } from "@/lib/studio/engines";
 import { MODEL_ROOT, STAGES, type Picture, type StageId } from "@/lib/studio/types";
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import { useDirector } from "@/lib/studio/use-director";
-import { totalDuration } from "@/lib/studio/prompt-compiler";
+import { compileEnginePromptPackage, compilePicture, totalDuration } from "@/lib/studio/prompt-compiler";
 import { desktopApproveCanonicalImage, desktopAuthorizePreparedImage, desktopGeneratePreparedImage, desktopImageManifests, desktopProductionAuthorityStatus, desktopRejectCanonicalImage, desktopSaveMany, isDesktopApp } from "@/lib/desktop/client";
 import type { ImageComponentManifest } from "@/lib/studio/image-component-resolver.server.ts";
 import { runtimeDefaults } from "@/lib/studio/engine-controls.ts";
@@ -35,7 +35,12 @@ import { ScreenplayWorkspace } from "./screenplay-workspace";
 import { ResearchWorkspace } from "@/components/research/research-workspace";
 import { hydratePictureResearch, isResearchApproved, researchBlocksScreenplay } from "@/lib/research/bible.ts";
 import { qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
-import { hydratePromptLabState, promptLabRuntimeBlock } from "@/lib/studio/prompt-lab.ts";
+import { canonicalSpecHash, hydratePromptLabState, promptLabRuntimeBlock } from "@/lib/studio/prompt-lab.ts";
+import { videoEngineFromSelection } from "@/lib/studio/generation-config.ts";
+import { videoRuntimeBlock } from "@/lib/studio/video-runtime.ts";
+import { enqueueVideoJob, failClosedVideoJob, reviewVideoTake, shotVideoReadiness } from "@/lib/production/video-iterations.ts";
+import { hydrateVideoWorkspace } from "@/lib/production/video-types.ts";
+import { enqueueSchedulerJob, emptySchedulerSnapshot, recoverSchedulerSnapshot } from "@/lib/studio/cross-media-scheduler.ts";
 import { DEFAULT_CREW_WRITER_DISPLAY, OPTIONAL_CREW_WRITER_DISPLAY } from "@/lib/studio/model-routing.ts";
 import type { ScreenplayRewriteTarget, ScreenplayScope } from "@/lib/studio/screenplay-scope.ts";
 import { isLlamaQaCandidate as isLlamaFamily } from "@/lib/studio/qwen-writer-identity.ts";
@@ -488,7 +493,19 @@ function PromptStage({ picture }: { picture: Picture }) {
           <option value="qwen">Alternate · Qwen (explicit A/B only)</option>
         </select>
         <p className="mt-2 text-xs leading-relaxed text-muted">{promptLabRuntimeBlock()}</p>
-        <Button className="mt-3" size="sm" variant="secondary" disabled title={promptLabRuntimeBlock()}>Compile drafts</Button>
+        <Button className="mt-3" size="sm" variant="secondary" onClick={() => {
+          const compiled = compilePicture(picture);
+          const drafts = compiled.shots.flatMap((shot) => {
+            const still = compileEnginePromptPackage({ picture: compiled, shot, target: "still" });
+            const motion = compileEnginePromptPackage({ picture: compiled, shot, target: "video" });
+            return [
+              { id: `${shot.id}:still`, family: "llama" as const, engineId: still.engineTarget, text: still.enginePrompt, canonicalSpecHash: canonicalSpecHash(still), createdAt: Date.now(), logicalRole: "prompt-engineer" as const, runtimeActivation: "gated-wave-5" as const },
+              { id: `${shot.id}:video`, family: "llama" as const, engineId: motion.engineTarget, text: motion.enginePrompt, canonicalSpecHash: canonicalSpecHash(motion), createdAt: Date.now(), logicalRole: "prompt-engineer" as const, runtimeActivation: "gated-wave-5" as const },
+            ];
+          });
+          patchActive({ shots: compiled.shots, promptLab: { ...lab, drafts } });
+          toast.success("Deterministic Llama-default compiler wrote still and motion drafts. No video runtime was invoked.");
+        }}>Compile drafts</Button>
         <Button className="mt-3 ml-2" size="sm" variant="ghost" disabled title={promptLabRuntimeBlock()}>A/B benchmark</Button>
       </div>
       <div className="grid gap-3">
@@ -627,6 +644,31 @@ function GenerateStage({ picture }: { picture: Picture }) {
           <Button className="mt-4" variant="ghost" onClick={() => void import("@/lib/desktop/client").then((api) => api.desktopUnloadEngine()).then(() => toast.success("Local image model released."), (error) => toast.error(error instanceof Error ? error.message : "Release failed."))}>Release local image model</Button>
         </aside>
       </div>
+      <section className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Video generation queue">
+        <p className="text-[11px] tracking-wide text-subtle uppercase">Wave 5 · Video queue</p>
+        <h3 className="mt-1 font-display text-xl">Motion / {engineById(picture.selectedEngine.video)?.name ?? "video"}</h3>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{videoRuntimeBlock(videoEngineFromSelection(picture.selectedEngine.video))}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button size="sm" variant="secondary" onClick={() => {
+            const now = Date.now();
+            let workspace = hydrateVideoWorkspace(picture.video);
+            let scheduler = recoverSchedulerSnapshot(emptySchedulerSnapshot(), now);
+            for (const shot of picture.shots) {
+              const pkg = compileEnginePromptPackage({ picture, shot, target: "video", now });
+              workspace = enqueueVideoJob(workspace, { pictureId: picture.id, shotId: shot.id, selectedVideoEngine: picture.selectedEngine.video, promptPackage: pkg, now: now + picture.shots.indexOf(shot) });
+              const job = workspace.jobs.at(-1);
+              if (!job) continue;
+              scheduler = enqueueSchedulerJob(scheduler, { id: job.id, kind: "video", pictureId: picture.id, label: shot.description, engineId: job.engineId, priority: 80, createdAt: now, dependsOn: [], vramHintBytes: 0 });
+              workspace = failClosedVideoJob(workspace, job.id, videoRuntimeBlock(job.engineId), now + 1 + picture.shots.indexOf(shot));
+            }
+            replaceActive({ ...picture, video: { ...workspace, schedulerSnapshot: scheduler }, updatedAt: now });
+            toast.error("Video jobs were queued and fail-closed. No still was substituted as video.");
+            setStage("review");
+          }} disabled={!picture.shots.length} title={picture.shots.length ? "Queue every shot and fail closed without invoking Comfy or cloud" : "Add shots first"}>Queue missing video</Button>
+          <Button size="sm" variant="ghost" onClick={() => setStage("review")}>Review takes</Button>
+        </div>
+        <p className="mt-3 text-xs text-subtle">Shot readiness: {picture.shots.length ? picture.shots.map((shot) => `${shot.index}:${shotVideoReadiness(hydrateVideoWorkspace(picture.video), shot.id)}`).join(" · ") : "no shots"}</p>
+      </section>
       {ready.length ? <p className="mt-4 text-xs text-subtle">{ready.length} prepared asset(s) are product-ready; generation still requires an exact READY manifest and one-use authorization.</p> : null}
     </Pane>
   );
@@ -732,6 +774,32 @@ function ReviewStage({ picture }: { picture: Picture }) {
           );
         }) : <EmptyCard title="No generated iterations" body="Generate from an approved prepared asset after the native adapter gate passes. Imported or shot-only stills do not satisfy Wave 4." />}
       </div>
+      <section className="mt-6" aria-label="Video takes">
+        <p className="mb-3 text-[11px] tracking-wide text-subtle uppercase">Video takes</p>
+        <div className="grid min-w-0 gap-3 lg:grid-cols-2">
+          {hydrateVideoWorkspace(picture.video).takes.length ? hydrateVideoWorkspace(picture.video).takes.map((take) => (
+            <article key={take.id} className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0"><p className="text-[11px] tracking-wide text-subtle uppercase">{take.status.replaceAll("_", " ")}</p><h3 className="truncate font-display text-xl">{take.shotId} · {take.engineId}</h3></div>
+                <Badge>{take.canonical ? "canonical" : take.kind}</Badge>
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-muted">{take.failClosedReason ?? take.reviewReason ?? "Queued video take."}</p>
+              <p className="mt-2 text-xs text-subtle">{take.mediaUri ?? "No durable video media. Stills are not video."}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => {
+                  try {
+                    replaceActive({ ...picture, video: reviewVideoTake(hydrateVideoWorkspace(picture.video), take.id, "reject", "Rejected: no genuine video media.") });
+                    toast.success("Video take rejected and retained as history.");
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : "Reject failed.");
+                  }
+                }}>Reject take</Button>
+                <Button size="sm" disabled title="Canonical video approval requires durable probed media from an official native worker.">Approve canonical</Button>
+              </div>
+            </article>
+          )) : <EmptyCard title="No video takes" body="Queue missing video from Generate. Wave 5 fail-closes MiniMax H3 and LTX 2.5 until an official non-Comfy native worker exists." />}
+        </div>
+      </section>
     </Pane>
   );
 }

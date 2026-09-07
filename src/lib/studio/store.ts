@@ -10,6 +10,7 @@ import { sanitizeProductionBreakdown } from "../production/persistence.ts";
 import { migratePicturePerformance } from "../performance/persistence.ts";
 import { hydratePictureResearch } from "../research/bible.ts";
 import { hydratePromptLabState } from "./prompt-lab.ts";
+import { hydrateVideoWorkspace } from "../production/video-types.ts";
 import { hydrateVisualDevelopmentState } from "../visual-development.ts";
 import { hydrateCinematographyState } from "../cinematography.ts";
 
@@ -235,7 +236,7 @@ function migratePicture(picture: LegacyPicture): Picture {
   const prepared = migratePicturePreparation(picture);
   const productionReady = { ...prepared, production: sanitizeProductionBreakdown(prepared.production) };
   const withPerformance = { ...productionReady, performance: migratePicturePerformance(productionReady) };
-  const withResearch = { ...withPerformance, research: hydratePictureResearch(withPerformance.research, withPerformance.intake), promptLab: hydratePromptLabState(withPerformance.promptLab) };
+  const withResearch = { ...withPerformance, research: hydratePictureResearch(withPerformance.research, withPerformance.intake), promptLab: hydratePromptLabState(withPerformance.promptLab), video: hydrateVideoWorkspace(withPerformance.video) };
   const withVisual = { ...withResearch, visualDevelopment: hydrateVisualDevelopmentState(withResearch.visualDevelopment, withResearch) };
   return { ...withVisual, cinematography: hydrateCinematographyState(withVisual.cinematography, withVisual) };
 }

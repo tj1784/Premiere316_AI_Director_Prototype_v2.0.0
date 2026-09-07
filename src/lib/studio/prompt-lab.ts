@@ -74,5 +74,5 @@ export function canonicalSpecHash(spec: unknown): string {
 }
 
 export function promptLabRuntimeBlock(): string {
-  return "Prompt compiler runtime is gated until Wave 5. Canonical specs remain the source of truth. Llama is the default compiler; Qwen is optional. No media is generated.";
+  return "Deterministic Llama-default compiler is available. Canonical specs remain the source of truth. Optional Qwen A/B stays explicit and unrun until a served Qwen compiler is pinned. Prompt Lab does not generate video.";
 }
