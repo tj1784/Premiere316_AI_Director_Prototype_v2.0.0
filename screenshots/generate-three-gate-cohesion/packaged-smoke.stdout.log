@@ -1,0 +1,73 @@
+{
+  "ok": true,
+  "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+  "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave2-smoke-oW3hHj",
+  "launchedUserData": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave2-smoke-oW3hHj",
+  "realProfileUntouched": "C:\\Users\\teeja\\AppData\\Roaming\\Premiere316",
+  "buildInfo": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260907234856-679651a385b1",
+    "buildTimestamp": "2026-09-07T23:48:56.748Z",
+    "rendererSourceHash": "679651a385b19034db5bfa7dd242acbb57884f74046b8f35e0b7d2e93c44864d",
+    "rendererMode": "PACKAGED DIST",
+    "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+    "appPath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\app.asar"
+  },
+  "zoom": {
+    "original": 1,
+    "reset": 1,
+    "persisted": 1.1,
+    "reopened": 1.1,
+    "restored": 1
+  },
+  "stageNavigation": [
+    "01 Intake",
+    "02 Research",
+    "03 Screenplay",
+    "04 Inventory",
+    "05 Visual Dev",
+    "06 Cinematography",
+    "07 Performance",
+    "08 Shots",
+    "09 Prompt Lab",
+    "10 Generate",
+    "11 Review",
+    "12 Stitch",
+    "13 Score",
+    "14 Export"
+  ],
+  "lmStudio": {
+    "localCatalogCandidates": 0,
+    "servedModels": 0,
+    "generationEnabled": false,
+    "loopbackOnly": true,
+    "researchGate": "approve-then-pin",
+    "writerPinUi": "Default writer · Llama 3.3 70B Instruct",
+    "doctorPinUi": "Default QA · Llama 3.3 70B Instruct",
+    "qwenSecondOpinionExplicit": true,
+    "critiqueFirst": true,
+    "scopedApplyEnabled": false
+  },
+  "engines": {
+    "discoveredImageConfigurations": 0,
+    "adapterPlaceholders": 1,
+    "selectableAfterRuntimeInspection": 0,
+    "selectedConfiguration": "",
+    "selectedRuntimeBlocker": "EXACT LOCAL ADAPTER\n\nUnavailable\n\nNo complete offline native image adapter is verified on this workstation.\n\nRelease local image model",
+    "generationEnabled": false
+  },
+  "timeline": {
+    "hiddenOutsideStitch": true,
+    "visibleInStitch": true
+  },
+  "persistedStage": "shots",
+  "network": {
+    "probed8080": 0,
+    "completionPosts": 0,
+    "observed": 10
+  },
+  "consoleErrors": [],
+  "screenshotPath": "D:\\Projects\\Premiere316_v3\\screenshots\\premiere316-windows-final.png"
+}
+SMOKE:0

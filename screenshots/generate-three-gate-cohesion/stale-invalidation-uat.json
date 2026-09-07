@@ -1,0 +1,3 @@
+{
+  "unitTests": "src/lib/production/generate-gates.test.ts"
+}

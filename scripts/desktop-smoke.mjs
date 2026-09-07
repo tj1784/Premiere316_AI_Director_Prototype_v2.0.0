@@ -172,10 +172,14 @@ try {
 
   await selectStage(page, "generate", "10 Generate");
   await page.getByRole("heading", { name: "Generate" }).waitFor();
-  await page.getByText(/Prepared generation is asset-first/i).waitFor();
+  await page.getByText(/Assets first, first\/last frames second/i).waitFor();
+  await page.getByRole("button", { name: "Asset Pass" }).waitFor();
+  await page.getByRole("button", { name: "Video Pass" }).click();
   await page.getByText(/Wave 5 · Video queue/i).waitFor();
   await page.getByText(/Video generation stays fail-closed/i).waitFor();
   await page.getByRole("button", { name: "Queue missing video" }).waitFor();
+  await page.getByRole("button", { name: "Import video" }).waitFor();
+  await page.getByRole("button", { name: "Asset Pass" }).click();
   assert.equal(await page.getByRole("button", { name: "Generate local still", exact: true }).count(), 0, "legacy shot StillBay generation must not be reachable");
   assert.equal(await page.getByRole("button", { name: "Benchmark configuration", exact: true }).count(), 0, "benchmark generation must not be reachable from product UI");
   const manifestPanel = page.getByLabel("Native adapter manifest");

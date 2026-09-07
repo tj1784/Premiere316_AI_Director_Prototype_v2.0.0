@@ -12,6 +12,7 @@ import { hydratePictureResearch } from "../research/bible.ts";
 import { hydratePromptLabState } from "./prompt-lab.ts";
 import { hydrateVideoWorkspace } from "../production/video-types.ts";
 import { restoreAudioWorkspace } from "../production/audio-iterations.ts";
+import { hydrateGenerateGates } from "../production/generate-gates.ts";
 import { hydrateVisualDevelopmentState } from "../visual-development.ts";
 import { hydrateCinematographyState } from "../cinematography.ts";
 
@@ -22,6 +23,8 @@ interface StudioState {
   selectedShotId: string | null;
   stillBayShotId: string | null;
   binTab: "engines" | "assets" | "models";
+  generateGate: "assets" | "keyframes" | "video";
+  generateFilterId: string | null;
   leftPanelCollapsed: boolean;
   rightPanelCollapsed: boolean;
   residency: { pinned: Record<string, boolean>; idleUnload: IdleUnloadOption };
@@ -40,6 +43,7 @@ interface StudioState {
   openStillBay: (shotId: string) => void;
   closeStillBay: () => void;
   setBinTab: (tab: StudioState["binTab"]) => void;
+  setGenerateFocus: (gate: StudioState["generateGate"], filterId?: string | null) => void;
   setLeftPanelCollapsed: (collapsed: boolean) => void;
   setRightPanelCollapsed: (collapsed: boolean) => void;
   bumpUsage: (key: keyof Picture["usage"], n?: number) => boolean;
@@ -95,6 +99,8 @@ export const useStudio = create<StudioState>()(
       selectedShotId: null,
       stillBayShotId: null,
       binTab: "assets",
+      generateGate: "assets",
+      generateFilterId: null,
       leftPanelCollapsed: false,
       rightPanelCollapsed: false,
       residency: { pinned: {}, idleUnload: 30 },
@@ -171,6 +177,7 @@ export const useStudio = create<StudioState>()(
       openStillBay: (shotId) => set({ stillBayShotId: shotId, selectedShotId: shotId }),
       closeStillBay: () => set({ stillBayShotId: null }),
       setBinTab: (tab) => set({ binTab: tab }),
+      setGenerateFocus: (gate, filterId = null) => set({ generateGate: gate, generateFilterId: filterId, stageOverride: "generate" }),
       setLeftPanelCollapsed: (leftPanelCollapsed) => set({ leftPanelCollapsed }),
       setRightPanelCollapsed: (rightPanelCollapsed) => set({ rightPanelCollapsed }),
       bumpUsage: (key, n = 1) => {
@@ -239,7 +246,8 @@ function migratePicture(picture: LegacyPicture): Picture {
   const withPerformance = { ...productionReady, performance: migratePicturePerformance(productionReady) };
   const withResearch = { ...withPerformance, research: hydratePictureResearch(withPerformance.research, withPerformance.intake), promptLab: hydratePromptLabState(withPerformance.promptLab), video: hydrateVideoWorkspace(withPerformance.video), audio: restoreAudioWorkspace(withPerformance.audio) };
   const withVisual = { ...withResearch, visualDevelopment: hydrateVisualDevelopmentState(withResearch.visualDevelopment, withResearch) };
-  return { ...withVisual, cinematography: hydrateCinematographyState(withVisual.cinematography, withVisual) };
+  const withCinema = { ...withVisual, cinematography: hydrateCinematographyState(withVisual.cinematography, withVisual) };
+  return { ...withCinema, generateGates: hydrateGenerateGates(withCinema.generateGates, withCinema) };
 }
 
 export function useActivePicture(): Picture | null {

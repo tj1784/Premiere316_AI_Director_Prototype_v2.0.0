@@ -1,0 +1,6 @@
+{
+  "importVideoStillVisible": true,
+  "packagedSmokeOk": true,
+  "full30sExportRerun": false,
+  "note": "Video Pass still exposes Import video; native queue remains fail-closed unless keyframes approved/waived."
+}

@@ -44,6 +44,7 @@ import { guidedNextStage, movieLifecycle } from "@/lib/studio/movie-lifecycle.ts
 import { planLiteImportedExport, planPictureExport, planPlusImportedExport } from "@/lib/studio/ffmpeg-export.ts";
 import { buildTimelinePlan, importedCanonicalFilm } from "@/lib/studio/timeline-plan.ts";
 import { enqueueVideoJob, failClosedVideoJob, nextShotForImport, recordImportedVideoTake, reviewVideoTake, shotVideoReadiness } from "@/lib/production/video-iterations.ts";
+import { failClosedKeyframe, generateGateReadiness, hydrateGenerateGates, nativeVideoLockedForShot, savePromptVersion, waiveKeyframePair } from "@/lib/production/generate-gates.ts";
 import { hydrateVideoWorkspace } from "@/lib/production/video-types.ts";
 import { hydratePictureAudio, queueMissingDialogue, queueMissingScore, recordImportedAudioTake, reviewAudioTake } from "@/lib/production/audio-iterations.ts";
 import { hydrateAudioWorkspace } from "@/lib/production/audio-types.ts";
@@ -365,9 +366,13 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
 
 function InventoryStage({ picture }: { picture: Picture }) {
   const patchActive = useStudio((state) => state.patchActive);
+  const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
   const [busy, setBusy] = useState(false);
   const boundary = approvedScreenplayBoundary(picture.id, picture.intake, picture.screenplay);
   return (
+    <div className="flex h-full min-h-0 flex-col">
+    <div className="shrink-0 px-4 pt-3"><Button size="sm" variant="secondary" onClick={() => setGenerateFocus("assets")}>Open Generate / Assets</Button></div>
+    <div className="min-h-0 flex-1 overflow-hidden">
     <InventoryWorkspace
       boundary={boundary}
       record={picture.production ?? null}
@@ -400,6 +405,7 @@ function InventoryStage({ picture }: { picture: Picture }) {
       cinematographyApprovals={picture.cinematography?.approvals.map((approval) => approval.id) ?? []}
       onChange={(production) => patchActive({ production })}
     />
+    </div></div>
   );
 }
 
@@ -455,6 +461,7 @@ function PerformanceStage({ picture }: { picture: Picture }) {
 function ShotsStage({ picture }: { picture: Picture }) {
   const patchActive = useStudio((state) => state.patchActive);
   const setStage = useStudio((state) => state.setStage);
+  const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
   const workspace = picture.performance ?? migratePicturePerformance(picture);
 
   useEffect(() => {
@@ -470,6 +477,9 @@ function ShotsStage({ picture }: { picture: Picture }) {
   }
 
   return (
+    <div className="flex h-full min-h-0 flex-col">
+    <div className="shrink-0 px-4 pt-3"><Button size="sm" variant="secondary" onClick={() => setGenerateFocus("keyframes", picture.shots[0]?.id ?? null)}>Open Generate / First-Last Frames</Button></div>
+    <div className="min-h-0 flex-1 overflow-hidden">
     <ShotPreparationWorkspace
       workspace={workspace}
       assets={picture.production?.assets ?? []}
@@ -477,6 +487,7 @@ function ShotsStage({ picture }: { picture: Picture }) {
       onBack={() => setStage("performance")}
       onOpenPromptLab={() => setStage("prompts")}
     />
+    </div></div>
   );
 }
 
@@ -546,6 +557,9 @@ function GenerateStage({ picture }: { picture: Picture }) {
   const [backendStatus, setBackendStatus] = useState<Awaited<ReturnType<typeof desktopProductionAuthorityStatus>> | null>(null);
   const setStage = useStudio((state) => state.setStage);
   const replaceActive = useStudio((state) => state.replaceActive);
+  const generateGate = useStudio((state) => state.generateGate);
+  const generateFilterId = useStudio((state) => state.generateFilterId);
+  const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
   const refreshAuthorityStatus = useCallback(async () => {
     if (!isDesktopApp()) return null;
     const status = await desktopProductionAuthorityStatus({ pictureId: picture.id });
@@ -564,11 +578,28 @@ function GenerateStage({ picture }: { picture: Picture }) {
   const authorityCurrent = backendStatus?.ok === true && backendStatus.status === "CURRENT" && backendStatus.authorityId === picture.production?.productionAuthority?.authorityId && backendStatus.digest === picture.production?.productionAuthority?.digest;
   const verifiedRoots = new Map((backendStatus?.ok === true ? (backendStatus.preparedApprovals ?? []) : []).map((root) => [root.preparedAssetId, root]));
   const canAuthorizeWithBest = Boolean(best && best.status === "READY" && best.controls && picture.production && authorityCurrent);
+  const gateReadiness = generateGateReadiness(picture);
+  const gateWorkspace = hydrateGenerateGates(picture.generateGates, picture);
+  const unlockedNativeShots = picture.shots.filter((shot) => !nativeVideoLockedForShot(picture, shot.id));
   return (
-    <Pane title="Generate" kicker="10 · Prepared asset generation">
-      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">Prepared generation is asset-first. FLUX.2 Dev is the default T2I engine when its exact local adapter is READY; FLUX.1 remains a secondary packaged adapter. Select an approved prepared asset, request a one-use desktop authorization, then append immutable iterations.</p>
+    <Pane title="Generate" kicker="10 · Three-gate cohesion">
+      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">Assets first, first/last frames second, video third. Prompts are compiled output, not project truth. Native H3/LTX stays fail-closed; imported video remains allowed and labeled imported.</p>
       <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; generation fails closed."}</div>
-      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
+      <div className="mb-4 grid gap-2 sm:grid-cols-3" aria-label="Generate gate readiness">
+        {gateReadiness.map((item) => (
+          <button key={item.gate} type="button" className="rounded-md bg-elevated px-3 py-2 text-left text-xs shadow-[var(--shadow-border)]" onClick={() => setGenerateFocus(item.gate)}>
+            <span className="text-[11px] tracking-wide text-subtle uppercase">{item.status}</span>
+            <span className="mt-1 block font-display text-lg">{item.gate === "assets" ? "Assets" : item.gate === "keyframes" ? "First / Last" : "Video Clips"}</span>
+            <span className="mt-1 block text-muted">{item.approved}/{item.required} · {item.reason}</span>
+          </button>
+        ))}
+      </div>
+      <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Generate gates">
+        {(["assets", "keyframes", "video"] as const).map((gate) => (
+          <Button key={gate} size="sm" variant={generateGate === gate ? "secondary" : "ghost"} onClick={() => setGenerateFocus(gate)}>{gate === "assets" ? "Asset Pass" : gate === "keyframes" ? "Keyframe Pass" : "Video Pass"}</Button>
+        ))}
+      </div>
+      {generateGate === "assets" ? <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
         <section className="grid min-w-0 gap-3" aria-label="Prepared assets">
           {prepared.length ? prepared.map((item) => {
             const asset = assets.find((candidate) => candidate.id === item.assetId);
@@ -650,8 +681,43 @@ function GenerateStage({ picture }: { picture: Picture }) {
           </div>
           <Button className="mt-4" variant="ghost" onClick={() => void import("@/lib/desktop/client").then((api) => api.desktopUnloadEngine()).then(() => toast.success("Local image model released."), (error) => toast.error(error instanceof Error ? error.message : "Release failed."))}>Release local image model</Button>
         </aside>
-      </div>
-      <section className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Video generation queue">
+      </div> : null}
+      {generateGate === "keyframes" ? (
+        <section className="grid min-w-0 gap-3" aria-label="First last frames">
+          <p className="text-sm text-muted">First/Last frames lock video generate until each shot has an approved pair or is waived for imported video. Native keyframe generate stays fail-closed; import/waive is allowed.</p>
+          {(generateFilterId ? gateWorkspace.pairs.filter((pair) => pair.shotId === generateFilterId) : gateWorkspace.pairs).map((pair) => {
+            const shot = picture.shots.find((item) => item.id === pair.shotId);
+            return (
+              <article key={pair.shotId} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+                <p className="text-[11px] tracking-wide text-subtle uppercase">{pair.status}{pair.waived ? " · waived" : ""}</p>
+                <h3 className="mt-1 font-display text-xl">{shot ? `${String(shot.index).padStart(2, "0")} ${shot.description}` : pair.shotId}</h3>
+                <p className="mt-1 text-xs text-muted">Refs: {pair.assetRefIds.join(", ") || "none"}{pair.staleReasons.length ? ` · ${pair.staleReasons[0]}` : ""}</p>
+                <label className="mt-3 block text-[11px] tracking-wide text-subtle uppercase">First frame prompt
+                  <textarea className="mt-1 min-h-20 w-full rounded-sm bg-inset p-2 text-sm" defaultValue={pair.firstPrompt} onBlur={(event) => replaceActive({ ...picture, generateGates: savePromptVersion(gateWorkspace, { gate: "keyframes", shotId: pair.shotId, assetId: null, kind: "first", text: event.target.value, assetRefIds: pair.assetRefIds, firstFrameId: pair.firstApprovedId, lastFrameId: pair.lastApprovedId }) })} />
+                </label>
+                <label className="mt-3 block text-[11px] tracking-wide text-subtle uppercase">Last frame prompt
+                  <textarea className="mt-1 min-h-20 w-full rounded-sm bg-inset p-2 text-sm" defaultValue={pair.lastPrompt} onBlur={(event) => replaceActive({ ...picture, generateGates: savePromptVersion(gateWorkspace, { gate: "keyframes", shotId: pair.shotId, assetId: null, kind: "last", text: event.target.value, assetRefIds: pair.assetRefIds, firstFrameId: pair.firstApprovedId, lastFrameId: pair.lastApprovedId }) })} />
+                </label>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="secondary" onClick={() => {
+                    replaceActive({ ...picture, generateGates: failClosedKeyframe(gateWorkspace, pair.shotId, "first", "Native first-frame generate is fail-closed. Import a still or waive for imported video.") });
+                    toast.error("First frame generate fail-closed. No still was labeled as video.");
+                  }}>Generate first frame</Button>
+                  <Button size="sm" variant="secondary" onClick={() => {
+                    replaceActive({ ...picture, generateGates: failClosedKeyframe(gateWorkspace, pair.shotId, "last", "Native last-frame generate is fail-closed. Import a still or waive for imported video.") });
+                    toast.error("Last frame generate fail-closed.");
+                  }}>Generate last frame</Button>
+                  <Button size="sm" variant="outline" onClick={() => {
+                    replaceActive({ ...picture, generateGates: waiveKeyframePair(gateWorkspace, pair.shotId, "Waived for imported video path.") });
+                    toast.success("Keyframe pair waived. Imported video may proceed.");
+                  }}>Waive pair for import</Button>
+                </div>
+              </article>
+            );
+          })}
+        </section>
+      ) : null}
+      {generateGate === "video" ? <section className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Video generation queue">
         <p className="text-[11px] tracking-wide text-subtle uppercase">Wave 5 · Video queue</p>
         <h3 className="mt-1 font-display text-xl">Motion / {engineById(picture.selectedEngine.video)?.name ?? "video"}</h3>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{videoRuntimeBlock(videoEngineFromSelection(picture.selectedEngine.video))}</p>
@@ -660,7 +726,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
             const now = Date.now();
             let workspace = hydrateVideoWorkspace(picture.video);
             let scheduler = recoverSchedulerSnapshot(emptySchedulerSnapshot(), now);
-            for (const shot of picture.shots) {
+            for (const shot of unlockedNativeShots) {
               const pkg = compileEnginePromptPackage({ picture, shot, target: "video", now });
               workspace = enqueueVideoJob(workspace, { pictureId: picture.id, shotId: shot.id, selectedVideoEngine: picture.selectedEngine.video, promptPackage: pkg, now: now + picture.shots.indexOf(shot) });
               const job = workspace.jobs.at(-1);
@@ -671,7 +737,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
             replaceActive({ ...picture, video: { ...workspace, schedulerSnapshot: scheduler }, updatedAt: now });
             toast.error("Video jobs were queued and fail-closed. No still was substituted as video.");
             setStage("review");
-          }} disabled={!picture.shots.length} title={picture.shots.length ? "Queue every shot and fail closed without invoking Comfy or cloud" : "Add shots first"}>Queue missing video</Button>
+          }} disabled={!unlockedNativeShots.length} title={unlockedNativeShots.length ? "Queue unlocked shots and fail closed without invoking Comfy or cloud" : "Approve or waive first/last frames before native video generate. Import remains allowed."}>Queue missing video</Button>
           <Button size="sm" onClick={() => {
             void (async () => {
               const latest = useStudio.getState().pictures.find((item) => item.id === picture.id) ?? picture;
@@ -708,8 +774,8 @@ function GenerateStage({ picture }: { picture: Picture }) {
           <Button size="sm" variant="ghost" onClick={() => setStage("review")}>Review takes</Button>
         </div>
         <p className="mt-3 text-xs text-subtle">Shot readiness: {picture.shots.length ? picture.shots.map((shot) => `${shot.index}:${shotVideoReadiness(hydrateVideoWorkspace(picture.video), shot.id)}`).join(" · ") : "no shots"}</p>
-      </section>
-      <section className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Voice generation queue">
+      </section> : null}
+      {generateGate === "assets" ? <section className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Voice generation queue">
         <p className="text-[11px] tracking-wide text-subtle uppercase">Wave 6 · Voice / ADR</p>
         <h3 className="mt-1 font-display text-xl">Dialogue / {engineById(picture.selectedEngine.voice)?.name ?? "Qwen3 TTS"}</h3>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{voiceRuntimeBlock(voiceEngineFromSelection(picture.selectedEngine.voice))}</p>
@@ -727,8 +793,8 @@ function GenerateStage({ picture }: { picture: Picture }) {
           }}>Queue missing dialogue</Button>
           <Button size="sm" variant="ghost" onClick={() => setStage("score")}>Open Score</Button>
         </div>
-      </section>
-      {ready.length ? <p className="mt-4 text-xs text-subtle">{ready.length} prepared asset(s) are product-ready; generation still requires an exact READY manifest and one-use authorization.</p> : null}
+      </section> : null}
+      {generateGate === "assets" && ready.length ? <p className="mt-4 text-xs text-subtle">{ready.length} prepared asset(s) are product-ready; generation still requires an exact READY manifest and one-use authorization.</p> : null}
     </Pane>
   );
 }
@@ -736,6 +802,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
 function ReviewStage({ picture }: { picture: Picture }) {
   const production = picture.production;
   const replaceActive = useStudio((state) => state.replaceActive);
+  const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
   const iterations = production?.assets.flatMap((asset) => asset.iterations.map((iteration) => ({ asset, iteration }))) ?? [];
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
@@ -834,6 +901,7 @@ function ReviewStage({ picture }: { picture: Picture }) {
         }) : <EmptyCard title="No generated iterations" body="Generate from an approved prepared asset after the native adapter gate passes. Imported or shot-only stills do not satisfy Wave 4." />}
       </div>
       <section className="mt-6" aria-label="Video takes">
+        <div className="mb-3"><Button size="sm" variant="secondary" onClick={() => setGenerateFocus("video")}>Open Generate / Video Clips</Button></div>
         <p className="mb-3 text-[11px] tracking-wide text-subtle uppercase">Video takes</p>
         <div className="grid min-w-0 gap-3 lg:grid-cols-2">
           {hydrateVideoWorkspace(picture.video).takes.length ? hydrateVideoWorkspace(picture.video).takes.map((take) => (
@@ -1105,7 +1173,11 @@ function ExportStage({ picture }: { picture: Picture }) {
         <ul className="mt-4 grid gap-1 sm:grid-cols-2">
           {readiness.map((item) => (
             <li key={item.id}>
-              <button type="button" className="flex w-full items-start justify-between gap-2 rounded-sm bg-inset px-3 py-2 text-left text-xs shadow-[var(--shadow-border)]" onClick={() => setStage(item.stage)}>
+              <button type="button" className="flex w-full items-start justify-between gap-2 rounded-sm bg-inset px-3 py-2 text-left text-xs shadow-[var(--shadow-border)]" onClick={() => {
+                if (item.id === "images" || item.id === "voice") useStudio.getState().setGenerateFocus("assets");
+                else if (item.id === "video") useStudio.getState().setGenerateFocus("video");
+                else setStage(item.stage);
+              }}>
                 <span><span className="text-subtle uppercase">{item.status}</span> · {item.label}<span className="mt-1 block text-muted">{item.reason}</span></span>
               </button>
             </li>

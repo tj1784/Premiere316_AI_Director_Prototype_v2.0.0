@@ -12,3 +12,4 @@ export * from "./video-types.ts";
 export * from "./video-iterations.ts";
 export * from "./audio-types.ts";
 export * from "./audio-iterations.ts";
+export * from "./generate-gates.ts";
