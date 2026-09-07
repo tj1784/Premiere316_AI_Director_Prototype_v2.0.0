@@ -34,7 +34,9 @@ const channels = {
   zoomChanged: "p316:zoom:changed",
   mediaDiscover: "p316:media:discover",
   mediaImportVideo: "p316:media:importVideo",
+  mediaImportAudio: "p316:media:importAudio",
   mediaExportLite: "p316:media:exportLite",
+  mediaExportPlus: "p316:media:exportPlus",
   mediaOpenFolder: "p316:media:openFolder",
 };
 
@@ -93,7 +95,9 @@ contextBridge.exposeInMainWorld("premiere316", {
   media: {
     discover: () => invoke(channels.mediaDiscover),
     importVideo: () => invoke(channels.mediaImportVideo),
+    importAudio: () => invoke(channels.mediaImportAudio),
     exportLite: (input) => invoke(channels.mediaExportLite, input ?? {}),
+    exportPlus: (input) => invoke(channels.mediaExportPlus, input ?? {}),
     openFolder: () => invoke(channels.mediaOpenFolder),
   },
   zoom: {

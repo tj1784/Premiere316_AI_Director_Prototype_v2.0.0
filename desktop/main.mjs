@@ -7,7 +7,7 @@ import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
-import { assertImportableVideo, buildLiteExportArgs, missingFfmpegResult, parseFfprobeJson } from "./ffmpeg-tool.mjs";
+import { assertImportableAudio, assertImportableVideo, assertPlusExportReady, buildLiteExportArgs, buildPlusExportArgs, concatListContents, missingFfmpegResult, parseFfprobeAudioJson, parseFfprobeJson, plusExportDurationSec, timelineDurationSec } from "./ffmpeg-tool.mjs";
 
 const require = createRequire(import.meta.url);
 const channels = require("./channels.cjs");
@@ -42,6 +42,7 @@ let quitting = false;
 let interfaceZoom = DEFAULT_ZOOM;
 let lastExportDir = "";
 let lastExportPath = "";
+let uatVideoQueue = null;
 let previousCpuTimes = readCpuTimes();
 const authorityReviewModals = new Map();
 const confirmationModals = new Map();
@@ -326,10 +327,18 @@ async function discoverFfmpegTools() {
   return { ok: true, ffmpeg, ffprobe, reason: "Local FFmpeg/FFprobe discovered on PATH." };
 }
 
+function takeUatVideoPath() {
+  if (!uatVideoQueue) {
+    const listed = process.env.PREMIERE316_UAT_IMPORT_VIDEOS || process.env.PREMIERE316_UAT_IMPORT || "";
+    uatVideoQueue = listed.split(/[;|]/).map((item) => item.trim()).filter((item) => item && existsSync(item));
+  }
+  return uatVideoQueue.shift() || "";
+}
+
 async function importVideoFromDisk() {
-  const uat = process.env.PREMIERE316_UAT_IMPORT;
+  const uat = takeUatVideoPath();
   let source = "";
-  if (uat && existsSync(uat)) {
+  if (uat) {
     source = uat;
   } else {
     const picked = await dialog.showOpenDialog(mainWindow ?? undefined, {
@@ -416,6 +425,119 @@ async function exportLiteMp4(input) {
     byteLength: statSync(finalPath).size,
     probe: outProbe,
     sourceSha256: String(input?.mediaSha256 || ""),
+    ffmpeg: tools.ffmpeg,
+    ffprobe: tools.ffprobe,
+  };
+}
+
+async function importAudioFromDisk() {
+  const uat = process.env.PREMIERE316_UAT_IMPORT_AUDIO;
+  let source = "";
+  if (uat && existsSync(uat)) {
+    source = uat;
+  } else {
+    const picked = await dialog.showOpenDialog(mainWindow ?? undefined, {
+      title: "Import audio",
+      properties: ["openFile"],
+      filters: [{ name: "Audio", extensions: ["wav", "mp3", "m4a", "aac", "flac"] }],
+    });
+    if (picked.canceled || !picked.filePaths[0]) return { ok: false, canceled: true };
+    source = picked.filePaths[0];
+  }
+  if (isUnderModelRoot(source) || isUnderProtectedRuntimeRoot(source)) {
+    throw new Error("Cannot import from model, runtime, or cache roots.");
+  }
+  const info = statSync(source);
+  assertImportableAudio({ filePath: source, byteLength: info.size, extension: extname(source) });
+  const tools = await discoverFfmpegTools();
+  if (!tools.ok) return { ok: false, canceled: false, error: tools.reason };
+  const probed = await spawnCapture(tools.ffprobe, ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", source]);
+  if (probed.code !== 0) return { ok: false, canceled: false, error: probed.stderr || "ffprobe failed." };
+  const probe = parseFfprobeAudioJson(probed.stdout);
+  if (!probe.ok) return { ok: false, canceled: false, error: probe.error || "Imported file is not real audio." };
+  const sha = hashFile(source);
+  const destDir = join(app.getPath("userData"), "imported-audio");
+  mkdirSync(destDir, { recursive: true });
+  const dest = join(destDir, `${sha.slice(0, 16)}${extname(source).toLowerCase() || ".wav"}`);
+  copyFileSync(source, dest);
+  const destHash = hashFile(dest);
+  if (destHash !== sha) throw new Error("Imported audio copy hash mismatch.");
+  return {
+    ok: true,
+    canceled: false,
+    origin: "imported",
+    filename: basename(source),
+    mediaUri: dest,
+    mediaSha256: destHash,
+    byteLength: statSync(dest).size,
+    probe,
+  };
+}
+
+async function exportPlusMp4(input) {
+  const tools = await discoverFfmpegTools();
+  if (!tools.ok) return { ok: false, error: tools.reason };
+  const videos = Array.isArray(input?.videos) ? input.videos : [];
+  const audioPath = String(input?.audioUri || "");
+  const userData = app.getPath("userData");
+  try {
+    assertPlusExportReady({ videos, audioPath });
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+  for (const clip of videos) {
+    const source = String(clip?.mediaUri || "");
+    if (!source || !existsSync(source)) return { ok: false, error: "Canonical imported video is missing on disk." };
+    if (isUnderModelRoot(source) || isUnderProtectedRuntimeRoot(source) || !isUnderRoot(source, userData)) {
+      throw new Error("Export source must be inside the app profile imported store.");
+    }
+  }
+  if (!existsSync(audioPath) || !isUnderRoot(audioPath, userData)) return { ok: false, error: "Canonical imported audio is missing on disk." };
+  const durationSec = plusExportDurationSec(timelineDurationSec(videos));
+  const outDir = join(userData, "exports");
+  mkdirSync(outDir, { recursive: true });
+  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
+  const finalPath = join(outDir, `m1-plus-${stamp}.mp4`);
+  const tmpPath = join(outDir, `m1-plus-${stamp}.tmp.mp4`);
+  const listPath = join(outDir, `m1-plus-${stamp}.concat.txt`);
+  writeFileSync(listPath, concatListContents(videos.map((clip) => clip.mediaUri)), "utf8");
+  const args = buildPlusExportArgs({
+    ffmpeg: tools.ffmpeg,
+    videos,
+    audioPath,
+    concatListPath: listPath,
+    outputTmpPath: tmpPath,
+    durationSec,
+    fps: input?.fps || 24,
+  });
+  try {
+    const ran = await spawnCapture(args[0], args.slice(1), 180_000);
+    if (ran.code !== 0 || !existsSync(tmpPath)) {
+      try { unlinkSync(tmpPath); } catch { /* none */ }
+      return { ok: false, error: ran.stderr || "FFmpeg 30s export failed." };
+    }
+    renameSync(tmpPath, finalPath);
+  } catch (error) {
+    try { unlinkSync(tmpPath); } catch { /* none */ }
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+  const outHash = hashFile(finalPath);
+  const outProbeRaw = await spawnCapture(tools.ffprobe, ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", finalPath]);
+  const outProbe = parseFfprobeJson(outProbeRaw.stdout || "{}");
+  lastExportDir = outDir;
+  lastExportPath = finalPath;
+  return {
+    ok: true,
+    origin: "imported",
+    kind: "m1-plus",
+    outputPath: finalPath,
+    outputDir: outDir,
+    sha256: outHash,
+    byteLength: statSync(finalPath).size,
+    probe: outProbe,
+    durationSec,
+    sourceVideos: videos.map((clip) => ({ mediaUri: clip.mediaUri, mediaSha256: clip.mediaSha256, durationSec: clip.durationSec })),
+    sourceAudioSha256: String(input?.audioSha256 || ""),
     ffmpeg: tools.ffmpeg,
     ffprobe: tools.ffprobe,
   };
@@ -835,7 +957,9 @@ function registerIpc() {
   ipcMain.handle(channels.zoomSet, wrap((_e, factor) => applyInterfaceZoom(factor)));
   ipcMain.handle(channels.mediaDiscover, wrap(() => discoverFfmpegTools()));
   ipcMain.handle(channels.mediaImportVideo, wrap(() => importVideoFromDisk()));
+  ipcMain.handle(channels.mediaImportAudio, wrap(() => importAudioFromDisk()));
   ipcMain.handle(channels.mediaExportLite, wrap((_e, input) => exportLiteMp4(input)));
+  ipcMain.handle(channels.mediaExportPlus, wrap((_e, input) => exportPlusMp4(input)));
   ipcMain.handle(channels.mediaOpenFolder, wrap(async () => {
     const folder = lastExportDir || join(app.getPath("userData"), "exports");
     if (isUnderModelRoot(folder) || isUnderProtectedRuntimeRoot(folder)) throw new Error("Refusing to open a protected root.");

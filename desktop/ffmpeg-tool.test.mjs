@@ -1,12 +1,19 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  assertImportableAudio,
   assertImportableVideo,
+  assertPlusExportReady,
   buildLiteExportArgs,
+  buildPlusExportArgs,
+  concatListContents,
   liteExportDurationSec,
   missingFfmpegResult,
+  parseFfprobeAudioJson,
   parseFfprobeJson,
+  plusExportDurationSec,
   provenanceImported,
+  timelineDurationSec,
 } from "./ffmpeg-tool.mjs";
 
 describe("M1-LITE ffmpeg/import helpers", () => {
@@ -50,5 +57,44 @@ describe("M1-LITE ffmpeg/import helpers", () => {
 
   it("fail-closes export construction without duration", () => {
     assert.throws(() => buildLiteExportArgs({ ffmpeg: "ffmpeg", sourcePath: "a", outputTmpPath: "b", durationSec: 0 }), /duration/);
+  });
+
+  it("parses audio probes and rejects empty audio imports", () => {
+    const probe = parseFfprobeAudioJson({
+      format: { duration: "30.000000", size: "48000", format_name: "wav" },
+      streams: [{ codec_type: "audio", codec_name: "pcm_s16le", sample_rate: "48000", channels: 2 }],
+    });
+    assert.equal(probe.ok, true);
+    assert.equal(probe.durationSec, 30);
+    assert.equal(probe.sampleRate, 48000);
+    assert.throws(() => assertImportableAudio({ filePath: "x.txt", byteLength: 4000, extension: "txt" }), /wav/);
+    assert.equal(assertImportableAudio({ filePath: "x.wav", byteLength: 4000, extension: "wav" }), true);
+  });
+
+  it("builds a 30s concat+audio command and refuses fake generated provenance", () => {
+    const videos = [
+      { path: "C:/tmp/a.mp4", durationSec: 10 },
+      { path: "C:/tmp/b.mp4", durationSec: 10 },
+      { path: "C:/tmp/c.mp4", durationSec: 10 },
+    ];
+    assert.equal(timelineDurationSec(videos), 30);
+    assert.equal(plusExportDurationSec(30), 30);
+    const list = concatListContents(videos.map((item) => item.path));
+    assert.match(list, /file 'C:\/tmp\/a.mp4'/);
+    assert.throws(() => assertPlusExportReady({ videos: videos.slice(0, 1), audioPath: "C:/tmp/a.wav" }), /multiple/);
+    assert.throws(() => assertPlusExportReady({ videos, audioPath: "" }), /audio/);
+    const args = buildPlusExportArgs({
+      ffmpeg: "ffmpeg.exe",
+      videos,
+      audioPath: "C:/tmp/score.wav",
+      concatListPath: "C:/tmp/list.txt",
+      outputTmpPath: "C:/tmp/out.tmp.mp4",
+      durationSec: 30,
+      fps: 24,
+    });
+    assert.ok(args.includes("concat"));
+    assert.ok(args.includes("C:/tmp/score.wav"));
+    assert.ok(args.includes("-map"));
+    assert.equal(provenanceImported(), "imported");
   });
 });

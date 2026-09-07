@@ -20,8 +20,11 @@ import type {
   SaveTextInput,
   SaveTextResult,
   ImportedVideoResult,
+  ImportedAudioResult,
   LiteExportInput,
   LiteExportResult,
+  PlusExportInput,
+  PlusExportResult,
   StillExposeResult,
   SystemStatus,
   DesktopBuildInfo,
@@ -133,9 +136,19 @@ export async function desktopImportVideo(): Promise<ImportedVideoResult> {
   return window.premiere316!.media.importVideo();
 }
 
+export async function desktopImportAudio(): Promise<ImportedAudioResult> {
+  if (!isDesktopApp()) return { ok: false, canceled: false, error: "Audio import is available only in the packaged desktop application." };
+  return window.premiere316!.media.importAudio();
+}
+
 export async function desktopExportLite(input: LiteExportInput): Promise<LiteExportResult> {
   if (!isDesktopApp()) return { ok: false, error: "MP4 export is available only in the packaged desktop application." };
   return window.premiere316!.media.exportLite(input);
+}
+
+export async function desktopExportPlus(input: PlusExportInput): Promise<PlusExportResult> {
+  if (!isDesktopApp()) return { ok: false, error: "30-second film export is available only in the packaged desktop application." };
+  return window.premiere316!.media.exportPlus(input);
 }
 
 export async function desktopOpenExportFolder(): Promise<{ ok: boolean; folder: string; error: string | null; lastExportPath: string | null }> {

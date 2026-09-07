@@ -127,6 +127,35 @@ export type LiteExportResult =
   | { ok: true; origin: "imported"; outputPath: string; outputDir: string; sha256: string; byteLength: number; probe: ImportedVideoProbe; sourceSha256: string; ffmpeg: string; ffprobe: string }
   | { ok: false; error: string };
 
+export type ImportedAudioProbe = {
+  ok: boolean;
+  durationSec: number | null;
+  sampleRate: number | null;
+  channels: number | null;
+  codec: string | null;
+  container: string | null;
+  byteLength: number;
+  error: string | null;
+};
+
+export type ImportedAudioResult =
+  | { ok: true; canceled: false; origin: "imported"; filename: string; mediaUri: string; mediaSha256: string; byteLength: number; probe: ImportedAudioProbe }
+  | { ok: false; canceled: true }
+  | { ok: false; canceled: false; error: string };
+
+export type PlusExportClip = { mediaUri: string; mediaSha256: string; durationSec: number; shotId?: string };
+
+export type PlusExportInput = {
+  videos: PlusExportClip[];
+  audioUri: string;
+  audioSha256: string;
+  fps: number;
+};
+
+export type PlusExportResult =
+  | { ok: true; origin: "imported"; kind: "m1-plus"; outputPath: string; outputDir: string; sha256: string; byteLength: number; probe: ImportedVideoProbe; durationSec: number; sourceVideos: PlusExportClip[]; sourceAudioSha256: string; ffmpeg: string; ffprobe: string }
+  | { ok: false; error: string };
+
 export type SystemStatus = {
   sampledAt: number;
   cpu: {
@@ -185,7 +214,9 @@ export type Premiere316Desktop = {
   media: {
     discover: () => Promise<{ ok: boolean; ffmpeg: string | null; ffprobe: string | null; reason: string }>;
     importVideo: () => Promise<ImportedVideoResult>;
+    importAudio: () => Promise<ImportedAudioResult>;
     exportLite: (input: LiteExportInput) => Promise<LiteExportResult>;
+    exportPlus: (input: PlusExportInput) => Promise<PlusExportResult>;
     openFolder: () => Promise<{ ok: boolean; folder: string; error: string | null; lastExportPath: string | null }>;
   };
   files: {
@@ -244,6 +275,8 @@ export const DESKTOP_CHANNELS = {
   zoomChanged: "p316:zoom:changed",
   mediaDiscover: "p316:media:discover",
   mediaImportVideo: "p316:media:importVideo",
+  mediaImportAudio: "p316:media:importAudio",
   mediaExportLite: "p316:media:exportLite",
+  mediaExportPlus: "p316:media:exportPlus",
   mediaOpenFolder: "p316:media:openFolder",
 } as const;

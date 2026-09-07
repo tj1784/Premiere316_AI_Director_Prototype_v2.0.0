@@ -5,8 +5,8 @@ import { makePictureScreenplay } from "./screenplay.ts";
 import type { Picture } from "./types.ts";
 import { movieLifecycle } from "./movie-lifecycle.ts";
 import { movieReadiness, nextReadinessAction } from "./movie-readiness.ts";
-import { planLiteImportedExport, planPictureExport } from "./ffmpeg-export.ts";
-import { buildTimelinePlan } from "./timeline-plan.ts";
+import { planLiteImportedExport, planPictureExport, planPlusImportedExport } from "./ffmpeg-export.ts";
+import { buildTimelinePlan, importedCanonicalFilm } from "./timeline-plan.ts";
 import { emptyVideoWorkspace } from "../production/video-types.ts";
 import { recordImportedVideoTake, reviewVideoTake } from "../production/video-iterations.ts";
 
@@ -70,5 +70,9 @@ describe("Wave 7-8 readiness, import, export, lifecycle", () => {
     const blocked = planLiteImportedExport(picture(), null);
     assert.equal(blocked.ok, false);
     assert.match(blocked.reason, /will not download/);
+    assert.equal(importedCanonicalFilm(pic).clips.length, 1);
+    const plusBlocked = planPlusImportedExport(pic, "C:/ffmpeg.exe");
+    assert.equal(plusBlocked.ok, false);
+    assert.match(plusBlocked.reason, /audio|multiple/i);
   });
 });

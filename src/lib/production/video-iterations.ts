@@ -137,6 +137,10 @@ export function reviewVideoTake(workspace: VideoWorkspace, takeId: string, decis
   };
 }
 
+export function nextShotForImport(shots: Array<{ id: string }>, workspace: VideoWorkspace): { id: string } | null {
+  return shots.find((shot) => !workspace.takes.some((take) => take.shotId === shot.id && take.origin === "imported" && take.status !== "REJECTED")) ?? null;
+}
+
 export function shotVideoReadiness(workspace: VideoWorkspace, shotId: string): "MISSING" | "QUEUED" | "FAILED" | "NEEDS_REVIEW" | "CANONICAL" {
   const takes = workspace.takes.filter((take) => take.shotId === shotId);
   if (takes.some((take) => take.canonical && take.status === "CANONICAL")) return "CANONICAL";

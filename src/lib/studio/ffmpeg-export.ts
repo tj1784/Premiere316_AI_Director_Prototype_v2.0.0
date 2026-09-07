@@ -1,6 +1,7 @@
 import { hydrateAudioWorkspace } from "../production/audio-types.ts";
 import { hydrateVideoWorkspace } from "../production/video-types.ts";
 import { shotStarts } from "./prompt-compiler.ts";
+import { importedCanonicalFilm } from "./timeline-plan.ts";
 import type { Picture } from "./types.ts";
 
 export type ExportPlan = {
@@ -55,4 +56,20 @@ export function planLiteImportedExport(picture: Picture, ffmpegBinary: string | 
     return { schemaVersion: 1, ok: false, kind: "paper", reason: "Lite MP4 export needs a canonical imported video take.", fps: picture.fps || 24, durationSec, inputs, ffmpeg: { discovered: true, binary: ffmpegBinary } };
   }
   return { schemaVersion: 1, ok: true, kind: "mp4", reason: "Lite export from canonical imported video. Provenance remains imported, not generated.", fps: picture.fps || 24, durationSec, inputs, ffmpeg: { discovered: true, binary: ffmpegBinary } };
+}
+
+export function planPlusImportedExport(picture: Picture, ffmpegBinary: string | null = null): ExportPlan {
+  const film = importedCanonicalFilm(picture);
+  const audio = hydrateAudioWorkspace(picture.audio).takes.find((take) => take.canonical && take.origin === "imported" && take.mediaUri);
+  const inputs = film.clips.map((clip) => ({ shotId: clip.shotId, mediaUri: clip.mediaUri, origin: "imported", durationSec: clip.durationSec }));
+  if (!ffmpegBinary) {
+    return { schemaVersion: 1, ok: false, kind: "paper", reason: "FFmpeg/FFprobe is unavailable. Premiere316 will not download it or fake an MP4.", fps: picture.fps || 24, durationSec: film.durationSec, inputs, ffmpeg: { discovered: false, binary: null } };
+  }
+  if (film.clips.length < 2 || film.durationSec < 25) {
+    return { schemaVersion: 1, ok: false, kind: "paper", reason: "30-second film needs multiple canonical imported clips totaling about 30s.", fps: picture.fps || 24, durationSec: film.durationSec, inputs, ffmpeg: { discovered: true, binary: ffmpegBinary } };
+  }
+  if (!audio) {
+    return { schemaVersion: 1, ok: false, kind: "paper", reason: "30-second film requires canonical imported audio. TTS/Music3 remain fail-closed.", fps: picture.fps || 24, durationSec: film.durationSec, inputs, ffmpeg: { discovered: true, binary: ffmpegBinary } };
+  }
+  return { schemaVersion: 1, ok: true, kind: "mp4", reason: "M1-PLUS 30s imported film with audio. Provenance remains imported, not generated.", fps: picture.fps || 24, durationSec: film.durationSec, inputs, ffmpeg: { discovered: true, binary: ffmpegBinary } };
 }

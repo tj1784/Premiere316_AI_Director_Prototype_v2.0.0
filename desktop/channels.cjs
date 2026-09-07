@@ -28,6 +28,8 @@ module.exports = {
   zoomChanged: "p316:zoom:changed",
   mediaDiscover: "p316:media:discover",
   mediaImportVideo: "p316:media:importVideo",
+  mediaImportAudio: "p316:media:importAudio",
   mediaExportLite: "p316:media:exportLite",
+  mediaExportPlus: "p316:media:exportPlus",
   mediaOpenFolder: "p316:media:openFolder",
 };

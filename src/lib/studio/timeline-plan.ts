@@ -36,3 +36,13 @@ export function buildTimelinePlan(picture: Picture): { durationSec: number; clip
   });
   return { durationSec: clips.at(-1)?.endSec ?? 0, clips };
 }
+
+export function importedCanonicalFilm(picture: Picture): { durationSec: number; clips: Array<{ shotId: string; mediaUri: string; mediaSha256: string; durationSec: number }> } {
+  const video = hydrateVideoWorkspace(picture.video);
+  const clips = picture.shots.flatMap((shot) => {
+    const take = video.takes.find((item) => item.shotId === shot.id && item.canonical && item.origin === "imported" && item.mediaUri && item.mediaSha256);
+    if (!take?.mediaUri || !take.mediaSha256) return [];
+    return [{ shotId: shot.id, mediaUri: take.mediaUri, mediaSha256: take.mediaSha256, durationSec: take.probe?.durationSec ?? 0 }];
+  });
+  return { durationSec: clips.reduce((sum, clip) => sum + clip.durationSec, 0), clips };
+}

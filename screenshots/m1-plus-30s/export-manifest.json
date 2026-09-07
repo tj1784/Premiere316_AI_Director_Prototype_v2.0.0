@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "kind": "m1-plus-30s-imported-film",
+  "origin": "imported",
+  "notGenerated": true,
+  "buildId": "p316-20260907230222-09707babf828",
+  "clips": ["clip-1.mp4", "clip-2.mp4", "clip-3.mp4"],
+  "audio": "score.wav",
+  "outputPath": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-m1-plus-7Av2lg\\exports\\m1-plus-20260907230251.mp4",
+  "sha256": "1f9f1aa72d7bdce08291d8a143936a48a5f99907fe5f345eee07d97ed0763ef5",
+  "byteLength": 518479,
+  "durationSec": 30,
+  "fps": 24,
+  "hasAudio": true
+}

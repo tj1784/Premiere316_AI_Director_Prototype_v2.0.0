@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "port8188": 0,
+  "completionPosts": 0,
+  "cloudInference": 0,
+  "comfy": false,
+  "note": "Isolated packaged M1-PLUS UAT. 30s film from imported clips + imported WAV. Not native generation."
+}
