@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "currentWave": 4,
+  "currentWave": 5,
   "gates": [
     {
       "wave": 0,
@@ -115,23 +115,26 @@
     },
     {
       "wave": 5,
-      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
-      "note": "Wave 5 source/package/smoke/14-stage visual/fail-closed UAT passed for p316-20260907141538-8286ff6d5eb0. No genuine H3/LTX video file. Not GREEN. Wave 6 remains closed.",
+      "status": "PARTIAL_5A_GREEN_5B_BLOCKED",
+      "note": "Full Wave 5 is not GREEN. Wave 5A GREEN for packaged build p316-20260907141538-8286ff6d5eb0 (prompt compiler, video queue/review, fail-closed H3/LTX, smoke, 14-stage visual, no-8188/no-cloud). Wave 5B BLOCKED until official non-Comfy H3 or LTX 2.5 emits real video through Premiere316.exe. Tag wave5a-p316-20260907141538-8286ff6d5eb0 only. Wave 6 may start. Wave 7 remains blocked on real video.",
       "tasks": ["P-001", "H-001", "L-001", "Q-001", "T-001", "T-002"],
-      "evidence": ["docs/release/wave5-gate.md", "screenshots/wave5-closeout/packaged-smoke.json", "screenshots/wave5-closeout/stage-visual-report.json", "screenshots/wave5-closeout/wave5-fail-closed-uat.json", "screenshots/wave5-closeout/no-cloud-no-8188-proof.json"]
+      "evidence": ["docs/release/wave5-gate.md", "docs/release/wave5a-gate.md", "docs/release/wave5b-blockers.md", "screenshots/wave5-closeout/packaged-smoke.json", "screenshots/wave5-closeout/stage-visual-report.json", "screenshots/wave5-closeout/wave5-fail-closed-uat.json", "screenshots/wave5-closeout/no-cloud-no-8188-proof.json"]
     },
     {
       "wave": 6,
-      "status": "BLOCKED_BY_PREVIOUS_GATE"
+      "status": "READY_TO_START",
+      "note": "Unblocked by Wave 5A. Audio/voice/score may bind to screenplay, characters, shots, Prompt Lab, and placeholder/fail-closed video. Not implemented in the Wave 5 split checkpoint. See docs/release/wave6-prep.md. Does not require Wave 5B.",
+      "tasks": ["A-001", "A-002", "A-003", "F-001", "M-001", "M-002", "A-004"]
     },
     {
       "wave": 7,
-      "status": "BLOCKED_BY_PREVIOUS_GATE"
+      "status": "BLOCKED_UNTIL_REAL_VIDEO",
+      "note": "Final-film/export acceptance stays blocked until Wave 5B GREEN or an approved imported video source exists."
     },
     {
       "wave": 8,
       "status": "BLOCKED_BY_PREVIOUS_GATE"
     }
   ],
-  "updatedAt": "2026-09-07T14:00:00.000Z"
+  "updatedAt": "2026-09-07T15:30:00.000Z"
 }

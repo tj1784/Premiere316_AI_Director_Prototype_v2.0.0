@@ -1339,10 +1339,11 @@
         "C-001",
         "I-007"
       ],
-      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
+      "status": "GREEN",
       "branch": "premiere316-v3",
       "worktree": "D:/Projects/Premiere316_v3",
-      "evidence": ["src/lib/studio/prompt-compiler.ts", "docs/release/wave5-gate.md"]
+      "evidence": ["src/lib/studio/prompt-compiler.ts", "docs/release/wave5a-gate.md"],
+      "note": "Wave 5A: Llama-default compiler verified. Optional Qwen A/B remains explicit and unrun."
     },
     {
       "id": "H-001",
@@ -1353,10 +1354,11 @@
       "deps": [
         "P-001"
       ],
-      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
+      "status": "WAVE_5B_BLOCKED",
       "branch": "premiere316-v3",
       "worktree": "D:/Projects/Premiere316_v3",
-      "evidence": ["desktop/workers/minimax_h3_jsonl_worker.py", "docs/release/wave5-gate.md"]
+      "evidence": ["desktop/workers/minimax_h3_jsonl_worker.py", "docs/release/wave5b-blockers.md"],
+      "note": "Fail-closed worker packaged and verified. Real H3 generate remains Wave 5B."
     },
     {
       "id": "L-001",
@@ -1367,10 +1369,11 @@
       "deps": [
         "P-001"
       ],
-      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
+      "status": "WAVE_5B_BLOCKED",
       "branch": "premiere316-v3",
       "worktree": "D:/Projects/Premiere316_v3",
-      "evidence": ["desktop/workers/ltx25_jsonl_worker.py", "docs/release/wave5-gate.md"]
+      "evidence": ["desktop/workers/ltx25_jsonl_worker.py", "docs/release/wave5b-blockers.md"],
+      "note": "Fail-closed worker packaged and verified. Real LTX 2.5 generate remains Wave 5B."
     },
     {
       "id": "Q-001",
@@ -1383,10 +1386,10 @@
         "H-001",
         "L-001"
       ],
-      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
+      "status": "GREEN",
       "branch": "premiere316-v3",
       "worktree": "D:/Projects/Premiere316_v3",
-      "evidence": ["src/lib/studio/cross-media-scheduler.ts", "docs/release/wave5-gate.md"]
+      "evidence": ["src/lib/studio/cross-media-scheduler.ts", "docs/release/wave5a-gate.md"]
     },
     {
       "id": "T-001",
@@ -1399,10 +1402,10 @@
         "L-001",
         "Q-001"
       ],
-      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
+      "status": "GREEN",
       "branch": "premiere316-v3",
       "worktree": "D:/Projects/Premiere316_v3",
-      "evidence": ["src/lib/production/video-iterations.ts", "docs/release/wave5-gate.md"]
+      "evidence": ["src/lib/production/video-iterations.ts", "docs/release/wave5a-gate.md"]
     },
     {
       "id": "T-002",
@@ -1413,10 +1416,10 @@
       "deps": [
         "T-001"
       ],
-      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
+      "status": "GREEN",
       "branch": "premiere316-v3",
       "worktree": "D:/Projects/Premiere316_v3",
-      "evidence": ["src/lib/production/video-iterations.ts", "docs/release/wave5-gate.md"]
+      "evidence": ["src/lib/production/video-iterations.ts", "docs/release/wave5a-gate.md"]
     },
     {
       "id": "A-001",
@@ -1427,7 +1430,7 @@
       "deps": [
         "Q-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "PREPARED_NOT_STARTED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1441,7 +1444,7 @@
       "deps": [
         "Q-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "PREPARED_NOT_STARTED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1455,7 +1458,7 @@
       "deps": [
         "A-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "PREPARED_NOT_STARTED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1469,7 +1472,7 @@
       "deps": [
         "T-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "PREPARED_NOT_STARTED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1483,7 +1486,7 @@
       "deps": [
         "Q-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "PREPARED_NOT_STARTED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1497,7 +1500,7 @@
       "deps": [
         "M-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "PREPARED_NOT_STARTED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1513,7 +1516,7 @@
         "F-001",
         "M-002"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "PREPARED_NOT_STARTED",
       "branch": null,
       "worktree": null,
       "evidence": []

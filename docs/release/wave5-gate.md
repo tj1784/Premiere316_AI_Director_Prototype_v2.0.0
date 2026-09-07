@@ -1,48 +1,34 @@
-# Wave 5 Gate — prompt compiler, video queue, fail-closed H3/LTX
+# Wave 5 Gate — split
 
-Status: `SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED`
+Overall status: **PARTIAL — 5A GREEN / 5B BLOCKED**
 
-Wave 4 remains GREEN and unmutated as accepted evidence. Wave 5 source, package, smoke, 14-stage visual matrix, and fail-closed UAT passed. No genuine MiniMax H3 or LTX 2.5 video file was produced. Wave 5 is **not GREEN**. Wave 6 remains closed.
+Do **not** treat full Wave 5 as GREEN. There is no `wave5-p316-…` tag.
+
+| Gate | Status | Meaning |
+|---|---|---|
+| Wave 5A | **GREEN** | App-side video architecture verified and packaged |
+| Wave 5B | **BLOCKED** | Real local non-Comfy H3/LTX video runtime missing |
+| Wave 5 overall | PARTIAL | Architecture yes; generated video no |
 
 Build: `p316-20260907141538-8286ff6d5eb0`  
-Renderer source hash: `8286ff6d5eb0c456a9293bc6f03c3044ad489e20aa5a38b41d6962364e828147`
+5A tag: `wave5a-p316-20260907141538-8286ff6d5eb0`
 
-## What is implemented and packaged
+## What 5A verified
 
-- Prompt Compiler v1: Creative Intent → Canonical Spec → deterministic Llama-default compiler → engine prompt package (still and motion).
-- Optional Qwen A/B remains explicit and unrun.
-- Cross-media scheduler: priority, dependencies, single running job, cancel, restart re-queue without duplicate execution.
-- Video jobs/takes: queue, fail-closed execution record, QC, reject; canonical blocked without durable media.
-- Generate: “Queue missing video” writes fail-closed takes. Review lists video takes. Prompt Lab “Compile drafts” writes still/motion drafts without invoking a video runtime.
-- JSONL workers `minimax_h3_jsonl_worker.py` and `ltx25_jsonl_worker.py` ping/release and refuse generate.
+Wave 5A is **app-side video architecture verified**: Prompt Compiler, video queue, take/review data model, Generate queue UI, Review take structure, fail-closed MiniMax H3 worker, fail-closed LTX 2.5 worker, packaged Electron smoke, 14-stage visual matrix, no-Comfy / no-8188 / no-cloud proof.
 
-## Closeout verification
+Details: `docs/release/wave5a-gate.md`  
+Evidence: `screenshots/wave5-closeout/`
 
-- `npm test` 269/269
-- `npm run typecheck` pass
-- `npm run build` pass
-- `npm run electron:pack` pass
-- Packaged smoke pass (`screenshots/wave5-closeout/packaged-smoke.json`)
-- 14-stage visual matrix 28/28 at 100% and 150%, 0 violations, 0 console/page errors
-- Isolated Wave 5 UAT: Prompt Lab compiled; Generate video queue visible; LTX fail-closed copy visible; queue produced no durable media; Review listed fail-closed takes; no still presented as video
-- MiniMax H3 fail-closed copy is packaged in the worker and Review empty-state copy; Generate shows the selected video engine (default LTX 2.5)
-- No port 8188, no Comfy graph, no cloud inference POST, no `/v1/chat/completions`
+## What 5B still blocks
 
-## What is not implemented / not verified
+Wave 5B is **real video runtime blocked**. GREEN requires an official non-Comfy H3 or LTX 2.5 worker that emits a valid video file through Premiere316.exe, with receipt, SHA-256, probe metadata, provenance, review/reject/canonical, and ledger binding.
 
-- No genuine MiniMax H3 or LTX 2.5 video file was produced.
-- Comfy-named checkpoints are not used.
-- Therefore Wave 5 is **not GREEN**.
+Details: `docs/release/wave5b-blockers.md`
 
-## Crash fix included in this closeout
+## Downstream
 
-`makeSamplePicture()` compiled engine prompts before screenplay hydration, which threw `Cannot read properties of undefined (reading 'currentVersionId')` on Pictures. Closeout now hydrates then compiles, and the compiler treats missing screenplay as null provenance.
+- Wave 6 **may proceed** because audio/voice/score can bind to screenplay, characters, shots, and placeholder video states.
+- Wave 7 final-film acceptance remains **blocked** until real video runtime or approved imported video exists.
 
-## Fail-closed engines
-
-- MiniMax H3: weights may exist; no app-owned official native runtime.
-- LTX 2.5: components may exist; no official non-Comfy native worker.
-
-## Next
-
-Do not open Wave 6 until Wave 5 is GREEN. GREEN requires a real official non-Comfy H3 or LTX 2.5 local worker that emits a valid video file through Premiere316.exe, with receipt, hash, probe metadata, provenance, and review/canonical/reject support.
+Wave 4 remains GREEN and unmutated.
