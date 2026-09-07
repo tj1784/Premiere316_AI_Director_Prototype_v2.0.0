@@ -47,7 +47,9 @@ describe("Wave 5 video jobs and take review", () => {
       20,
     );
     assert.throws(() => reviewVideoTake(workspace, workspace.takes[0].id, "canonical", "no"), /Failed or cancelled/);
-    workspace = { ...workspace, takes: [{ ...workspace.takes[0], status: "NEEDS_REVIEW", mediaSha256: null }] };
+    workspace = { ...workspace, takes: [{ ...workspace.takes[0], status: "NEEDS_REVIEW", origin: "fail-closed", mediaSha256: null }] };
+    assert.throws(() => reviewVideoTake(workspace, workspace.takes[0].id, "canonical", "no"), /Fail-closed video|durable media/);
+    workspace = { ...workspace, takes: [{ ...workspace.takes[0], origin: "imported", mediaSha256: null, probe: null }] };
     assert.throws(() => reviewVideoTake(workspace, workspace.takes[0].id, "canonical", "no"), /durable media/);
     workspace = reviewVideoTake({ ...workspace, takes: [{ ...workspace.takes[0], mediaSha256: "a".repeat(64) }] }, workspace.takes[0].id, "reject", "Wrong motion.");
     assert.equal(workspace.takes[0].status, "REJECTED");

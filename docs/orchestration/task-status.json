@@ -1430,7 +1430,7 @@
       "deps": [
         "Q-001"
       ],
-      "status": "PREPARED_NOT_STARTED",
+      "status": "WAVE_6A_GREEN_6B_BLOCKED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1444,7 +1444,7 @@
       "deps": [
         "Q-001"
       ],
-      "status": "PREPARED_NOT_STARTED",
+      "status": "WAVE_6A_GREEN_6B_BLOCKED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1458,7 +1458,7 @@
       "deps": [
         "A-001"
       ],
-      "status": "PREPARED_NOT_STARTED",
+      "status": "WAVE_6A_GREEN_6B_BLOCKED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1472,7 +1472,7 @@
       "deps": [
         "T-001"
       ],
-      "status": "PREPARED_NOT_STARTED",
+      "status": "WAVE_6A_GREEN_6B_BLOCKED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1486,7 +1486,7 @@
       "deps": [
         "Q-001"
       ],
-      "status": "PREPARED_NOT_STARTED",
+      "status": "WAVE_6A_GREEN_6B_BLOCKED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1500,7 +1500,7 @@
       "deps": [
         "M-001"
       ],
-      "status": "PREPARED_NOT_STARTED",
+      "status": "WAVE_6A_GREEN_6B_BLOCKED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1516,7 +1516,7 @@
         "F-001",
         "M-002"
       ],
-      "status": "PREPARED_NOT_STARTED",
+      "status": "WAVE_6A_GREEN_6B_BLOCKED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1533,7 +1533,7 @@
         "F-001",
         "M-002"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "WAVE_7A_GREEN_7B_BLOCKED",
       "branch": null,
       "worktree": null,
       "evidence": []
@@ -1577,7 +1577,7 @@
         "D-001",
         "X-001"
       ],
-      "status": "BLOCKED_BY_GATE",
+      "status": "WAVE_7A_GREEN_7B_BLOCKED",
       "branch": null,
       "worktree": null,
       "evidence": []

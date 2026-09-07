@@ -3,7 +3,8 @@ import type { VideoEngineId } from "../studio/generation-config.ts";
 
 export type VideoTakeStatus = "QUEUED" | "RUNNING" | "FAILED" | "NEEDS_REVIEW" | "REJECTED" | "CANONICAL" | "CANCELLED";
 
-export type VideoJobKind = "t2v" | "i2v";
+export type VideoJobKind = "t2v" | "i2v" | "imported";
+export type VideoOrigin = "fail-closed" | "imported" | "native-generated";
 
 export type VideoProbe = {
   ok: boolean;
@@ -30,6 +31,8 @@ export type VideoTake = {
   pictureId: string;
   engineId: VideoEngineId;
   kind: VideoJobKind;
+  origin?: VideoOrigin;
+  filename?: string | null;
   status: VideoTakeStatus;
   createdAt: number;
   updatedAt: number;
@@ -76,7 +79,7 @@ export function hydrateVideoWorkspace(state: VideoWorkspace | null | undefined):
   return {
     schemaVersion: 1,
     jobs: Array.isArray(state.jobs) ? state.jobs : [],
-    takes: Array.isArray(state.takes) ? state.takes : [],
+    takes: Array.isArray(state.takes) ? state.takes.map((take) => ({ ...take, origin: take.origin ?? (take.mediaUri ? "imported" : "fail-closed") })) : [],
     schedulerSnapshot: state.schedulerSnapshot ?? null,
   };
 }

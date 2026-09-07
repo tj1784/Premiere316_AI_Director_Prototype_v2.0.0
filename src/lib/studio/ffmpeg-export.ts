@@ -1,0 +1,44 @@
+import { hydrateAudioWorkspace } from "../production/audio-types.ts";
+import { hydrateVideoWorkspace } from "../production/video-types.ts";
+import { shotStarts } from "./prompt-compiler.ts";
+import type { Picture } from "./types.ts";
+
+export type ExportPlan = {
+  schemaVersion: 1;
+  ok: boolean;
+  kind: "paper" | "mp4" | "placeholder-montage";
+  reason: string;
+  fps: number;
+  durationSec: number;
+  inputs: Array<{ shotId: string; mediaUri: string | null; origin: string; durationSec: number }>;
+  ffmpeg: { discovered: boolean; binary: string | null };
+};
+
+export function planPictureExport(picture: Picture, ffmpegBinary: string | null = null): ExportPlan {
+  const video = hydrateVideoWorkspace(picture.video);
+  const audio = hydrateAudioWorkspace(picture.audio);
+  const starts = shotStarts(picture);
+  const durationSec = starts.at(-1)?.end ?? picture.shots.reduce((sum, shot) => sum + shot.durationSec, 0);
+  const inputs = picture.shots.map((shot) => {
+    const canonical = video.takes.find((take) => take.shotId === shot.id && take.canonical);
+    return {
+      shotId: shot.id,
+      mediaUri: canonical?.mediaUri ?? shot.videoUrl ?? null,
+      origin: canonical?.origin ?? (shot.videoUrl ? "legacy-url" : shot.stillUrl ? "still-placeholder" : "missing"),
+      durationSec: shot.durationSec,
+    };
+  });
+  const imported = inputs.filter((item) => item.origin === "imported" && item.mediaUri);
+  const missing = inputs.filter((item) => !item.mediaUri);
+  const stillPlaceholders = inputs.filter((item) => item.origin === "still-placeholder");
+  if (imported.length && imported.length === picture.shots.length && ffmpegBinary) {
+    return { schemaVersion: 1, ok: true, kind: "mp4", reason: "Canonical imported video can be conformed with FFmpeg.", fps: picture.fps || 24, durationSec, inputs, ffmpeg: { discovered: true, binary: ffmpegBinary } };
+  }
+  if (stillPlaceholders.length && !imported.length) {
+    return { schemaVersion: 1, ok: false, kind: "placeholder-montage", reason: "Stills may only be labeled a placeholder/montage export, never native video generation.", fps: picture.fps || 24, durationSec, inputs, ffmpeg: { discovered: Boolean(ffmpegBinary), binary: ffmpegBinary } };
+  }
+  if (missing.length && !ffmpegBinary) {
+    return { schemaVersion: 1, ok: false, kind: "paper", reason: `FFmpeg is not bound. Paper package remains available. ${audio.takes.filter((take) => take.canonical).length} canonical audio take(s).`, fps: picture.fps || 24, durationSec, inputs, ffmpeg: { discovered: false, binary: null } };
+  }
+  return { schemaVersion: 1, ok: false, kind: "paper", reason: "MP4 export stays fail-closed until FFmpeg is discovered and every shot has canonical imported or native video.", fps: picture.fps || 24, durationSec, inputs, ffmpeg: { discovered: Boolean(ffmpegBinary), binary: ffmpegBinary } };
+}

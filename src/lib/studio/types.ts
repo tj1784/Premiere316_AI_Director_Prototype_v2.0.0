@@ -6,6 +6,7 @@ import type { PerformanceWorkspace } from "../performance/types.ts";
 import type { PictureResearchBible } from "../research/bible.ts";
 import type { PromptLabState } from "./prompt-lab.ts";
 import type { VideoWorkspace } from "../production/video-types.ts";
+import type { AudioWorkspace } from "../production/audio-types.ts";
 import type { VisualDevelopmentState } from "../visual-development.ts";
 import type { CinematographyState } from "../cinematography.ts";
 
@@ -70,7 +71,7 @@ export const DEFAULT_ENGINES: SelectedEngines = {
   director: "dramatron",
   image: "flux2",
   video: "ltx-2",
-  voice: "index-tts",
+  voice: "qwen3-tts",
   music: "minimax-music3",
 };
 
@@ -148,6 +149,7 @@ export type Picture = {
   research?: PictureResearchBible | null;
   promptLab?: PromptLabState | null;
   video?: VideoWorkspace | null;
+  audio?: AudioWorkspace | null;
   production?: ProductionBreakdown | null;
   visualDevelopment?: VisualDevelopmentState | null;
   cinematography?: CinematographyState | null;

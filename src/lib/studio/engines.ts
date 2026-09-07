@@ -45,6 +45,7 @@ export const ENGINES: Engine[] = [
   { id: "fish-speech", name: "Fish Speech", org: "fishaudio", repo: "fish-speech", kind: "voice" },
   { id: "qwen3-tts", name: "Qwen3 TTS", org: "QwenLM", repo: "Qwen3-TTS", kind: "voice" },
   { id: "voxcpm", name: "VoxCPM", org: "OpenBMB", repo: "VoxCPM", kind: "voice" },
+  { id: "voxcpm2", name: "VoxCPM2", org: "OpenBMB", repo: "VoxCPM", kind: "voice" },
   { id: "rtvc", name: "Real-Time Voice Cloning", org: "CorentinJ", repo: "Real-Time-Voice-Cloning", kind: "voice" },
   { id: "voicestudio", name: "VoiceStudio", org: "debpalash", repo: "VoiceStudio", kind: "voice" },
   { id: "minimax-music3", name: "MiniMax Music3", org: "MiniMax-AI", repo: "MiniMax-Music3", kind: "music" },

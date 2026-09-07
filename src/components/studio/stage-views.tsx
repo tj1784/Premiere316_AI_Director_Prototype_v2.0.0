@@ -38,8 +38,15 @@ import { qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
 import { canonicalSpecHash, hydratePromptLabState, promptLabRuntimeBlock } from "@/lib/studio/prompt-lab.ts";
 import { videoEngineFromSelection } from "@/lib/studio/generation-config.ts";
 import { videoRuntimeBlock } from "@/lib/studio/video-runtime.ts";
+import { audioEngineStatuses, musicRuntimeBlock, voiceEngineFromSelection, voiceRuntimeBlock } from "@/lib/studio/audio-runtime.ts";
+import { movieReadiness } from "@/lib/studio/movie-readiness.ts";
+import { guidedNextStage, movieLifecycle } from "@/lib/studio/movie-lifecycle.ts";
+import { planPictureExport } from "@/lib/studio/ffmpeg-export.ts";
+import { buildTimelinePlan } from "@/lib/studio/timeline-plan.ts";
 import { enqueueVideoJob, failClosedVideoJob, reviewVideoTake, shotVideoReadiness } from "@/lib/production/video-iterations.ts";
 import { hydrateVideoWorkspace } from "@/lib/production/video-types.ts";
+import { hydratePictureAudio, queueMissingDialogue, queueMissingScore, reviewAudioTake } from "@/lib/production/audio-iterations.ts";
+import { hydrateAudioWorkspace } from "@/lib/production/audio-types.ts";
 import { enqueueSchedulerJob, emptySchedulerSnapshot, recoverSchedulerSnapshot } from "@/lib/studio/cross-media-scheduler.ts";
 import { DEFAULT_CREW_WRITER_DISPLAY, OPTIONAL_CREW_WRITER_DISPLAY } from "@/lib/studio/model-routing.ts";
 import type { ScreenplayRewriteTarget, ScreenplayScope } from "@/lib/studio/screenplay-scope.ts";
@@ -669,6 +676,25 @@ function GenerateStage({ picture }: { picture: Picture }) {
         </div>
         <p className="mt-3 text-xs text-subtle">Shot readiness: {picture.shots.length ? picture.shots.map((shot) => `${shot.index}:${shotVideoReadiness(hydrateVideoWorkspace(picture.video), shot.id)}`).join(" · ") : "no shots"}</p>
       </section>
+      <section className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Voice generation queue">
+        <p className="text-[11px] tracking-wide text-subtle uppercase">Wave 6 · Voice / ADR</p>
+        <h3 className="mt-1 font-display text-xl">Dialogue / {engineById(picture.selectedEngine.voice)?.name ?? "Qwen3 TTS"}</h3>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{voiceRuntimeBlock(voiceEngineFromSelection(picture.selectedEngine.voice))}</p>
+        <ul className="mt-3 grid gap-2 text-xs text-muted">
+          {audioEngineStatuses().map((engine) => (
+            <li key={engine.id} className="rounded-sm bg-inset px-3 py-2 shadow-[var(--shadow-border)]"><span className="text-subtle uppercase">{engine.role}</span> · {engine.id} · {engine.status}</li>
+          ))}
+        </ul>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button size="sm" variant="secondary" onClick={() => {
+            const audio = queueMissingDialogue(picture);
+            replaceActive({ ...picture, audio, updatedAt: Date.now() });
+            toast.error("Dialogue jobs were queued and fail-closed. No cloud TTS ran.");
+            setStage("review");
+          }}>Queue missing dialogue</Button>
+          <Button size="sm" variant="ghost" onClick={() => setStage("score")}>Open Score</Button>
+        </div>
+      </section>
       {ready.length ? <p className="mt-4 text-xs text-subtle">{ready.length} prepared asset(s) are product-ready; generation still requires an exact READY manifest and one-use authorization.</p> : null}
     </Pane>
   );
@@ -794,10 +820,50 @@ function ReviewStage({ picture }: { picture: Picture }) {
                     toast.error(error instanceof Error ? error.message : "Reject failed.");
                   }
                 }}>Reject take</Button>
-                <Button size="sm" disabled title="Canonical video approval requires durable probed media from an official native worker.">Approve canonical</Button>
+                <Button size="sm" disabled={take.origin !== "imported" || !take.mediaSha256 || !take.probe?.ok} title={take.origin === "imported" ? "Approve imported video as canonical. This is not native generation." : "Canonical video approval requires imported probed media or a real native worker."} onClick={() => {
+                  try {
+                    replaceActive({ ...picture, video: reviewVideoTake(hydrateVideoWorkspace(picture.video), take.id, "canonical", "Canonical imported video. Not native generation.") });
+                    toast.success("Imported video marked canonical. Not labeled as generated.");
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : "Canonical failed.");
+                  }
+                }}>Approve canonical</Button>
               </div>
             </article>
           )) : <EmptyCard title="No video takes" body="Queue missing video from Generate. Wave 5 fail-closes MiniMax H3 and LTX 2.5 until an official non-Comfy native worker exists." />}
+        </div>
+      </section>
+      <section className="mt-6" aria-label="Audio takes">
+        <p className="mb-3 text-[11px] tracking-wide text-subtle uppercase">Audio takes</p>
+        <div className="grid min-w-0 gap-3 lg:grid-cols-2">
+          {hydrateAudioWorkspace(picture.audio).takes.length ? hydrateAudioWorkspace(picture.audio).takes.map((take) => (
+            <article key={take.id} className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0"><p className="text-[11px] tracking-wide text-subtle uppercase">{take.status.replaceAll("_", " ")}</p><h3 className="truncate font-display text-xl">{take.kind} · {take.engineId}</h3></div>
+                <Badge>{take.origin}</Badge>
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-muted">{take.failClosedReason ?? take.reviewReason ?? take.filename ?? "Queued audio take."}</p>
+              <p className="mt-2 text-xs text-subtle">{take.mediaUri ?? "No durable audio. Silence is not a take."}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => {
+                  try {
+                    replaceActive({ ...picture, audio: reviewAudioTake(hydrateAudioWorkspace(picture.audio), take.id, "reject", "Rejected audio take.") });
+                    toast.success("Audio take rejected.");
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : "Reject failed.");
+                  }
+                }}>Reject take</Button>
+                <Button size="sm" disabled={take.origin !== "imported" || !take.mediaSha256} onClick={() => {
+                  try {
+                    replaceActive({ ...picture, audio: reviewAudioTake(hydrateAudioWorkspace(picture.audio), take.id, "canonical", "Canonical imported audio.") });
+                    toast.success("Imported audio marked canonical.");
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : "Canonical failed.");
+                  }
+                }}>Approve canonical</Button>
+              </div>
+            </article>
+          )) : <EmptyCard title="No audio takes" body="Queue missing dialogue from Generate or Score. Qwen3-TTS, VoxCPM2, and Music3 stay fail-closed." />}
         </div>
       </section>
     </Pane>
@@ -811,6 +877,7 @@ function EmptyCard({ title, body }: { title: string; body: string }) {
 function StitchStage({ picture }: { picture: Picture }) {
   const selectedShotId = useStudio((s) => s.selectedShotId);
   const shot = picture.shots.find((s) => s.id === selectedShotId) ?? picture.shots[0];
+  const plan = buildTimelinePlan(picture);
   return (
     <Pane title="Stitch" kicker="12 · Assembly">
       <div className="overflow-hidden rounded-lg bg-inset shadow-[var(--shadow-border)]">
@@ -825,34 +892,63 @@ function StitchStage({ picture }: { picture: Picture }) {
         </div>
       </div>
       <ol className="mt-4 grid gap-1">
-        {picture.shots.map((s) => (
-          <li key={s.id} className="flex items-center justify-between rounded-sm bg-elevated px-3 py-2 text-xs">
+        {plan.clips.map((clip) => {
+          const s = picture.shots.find((item) => item.id === clip.shotId);
+          return (
+          <li key={clip.shotId} className="flex items-center justify-between rounded-sm bg-elevated px-3 py-2 text-xs">
             <span>
-              {String(s.index).padStart(2, "0")} {s.description}
+              {String(s?.index ?? 0).padStart(2, "0")} {s?.description} · {clip.videoOrigin}
             </span>
-            <span className="text-subtle">{s.durationSec}s</span>
+            <span className="text-subtle">{clip.missing.length ? `missing ${clip.missing.join(", ")}` : `${clip.endSec - clip.startSec}s`}</span>
           </li>
-        ))}
+          );
+        })}
       </ol>
+      <p className="mt-3 text-xs text-subtle">Timeline duration {plan.durationSec}s. Imported canonical video is labeled imported, never generated.</p>
     </Pane>
   );
 }
 
 function ScoreStage({ picture }: { picture: Picture }) {
+  const replaceActive = useStudio((state) => state.replaceActive);
+  const setStage = useStudio((state) => state.setStage);
+  const audio = hydratePictureAudio(picture);
   return (
-    <Pane title="Score" kicker="13 · Music + SFX">
-      <p className="mb-4 max-w-xl text-sm text-muted">Review the saved cue sheet locally. Music generation remains unavailable until a native adapter passes validation.</p>
-      <div role="status" className="max-w-xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]">Local score adapter unavailable · no cloud fallback</div>
+    <Pane title="Score" kicker="13 · Voice + Sound + Music">
+      <p className="mb-4 max-w-2xl text-sm text-muted">Cue sheet, voice bible, and fail-closed Music3. Import remains the only canonical audio path until a native TTS or Music runtime exists.</p>
+      <div role="status" className="max-w-2xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]">{musicRuntimeBlock()} Local score adapter unavailable · no cloud fallback.</div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button size="sm" variant="secondary" onClick={() => {
+          replaceActive({ ...picture, audio: queueMissingDialogue(picture), updatedAt: Date.now() });
+          toast.error("Dialogue queued fail-closed. No cloud TTS.");
+        }}>Queue missing dialogue</Button>
+        <Button size="sm" variant="secondary" onClick={() => {
+          replaceActive({ ...picture, audio: queueMissingScore(picture), updatedAt: Date.now() });
+          toast.error("Score cues queued fail-closed. Music3 did not generate.");
+        }}>Queue missing score</Button>
+        <Button size="sm" variant="ghost" onClick={() => setStage("review")}>Review audio takes</Button>
+      </div>
       <div className="mt-5 grid gap-3">
-        {picture.cues.map((c) => (
+        {audio.profiles.map((profile) => (
+          <article key={profile.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+            <p className="text-[11px] tracking-wide text-subtle uppercase">Voice bible</p>
+            <h3 className="font-display text-xl">{profile.characterName}</h3>
+            <p className="mt-1 text-xs text-muted">{profile.engineId} · {profile.notes}</p>
+          </article>
+        ))}
+        {audio.lines.map((line) => (
+          <article key={line.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+            <p className="text-[11px] tracking-wide text-subtle uppercase">Dialogue · {line.targetDurationSec}s</p>
+            <h3 className="font-display text-xl">{line.characterName}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted">{line.text}</p>
+            <p className="mt-2 text-xs text-subtle">{line.emotion} · {line.delivery}</p>
+          </article>
+        ))}
+        {(audio.cues.length ? audio.cues : picture.cues.map((c) => ({ id: c.id, name: c.name, notes: c.mood, instrumentation: c.instruments, kind: "score" as const, startSec: c.startSec, durationSec: c.durationSec, sceneId: null, shotId: null }))).map((c) => (
           <article key={c.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
             <h3 className="font-display text-xl">{c.name}</h3>
-            <p className="mt-1 text-xs text-muted">{c.mood}</p>
-            <p className="mt-2 text-xs">{c.instruments}</p>
-            <p className="mt-3 text-[11px] text-subtle uppercase">Music3</p>
-            <p className="mt-1 text-xs text-muted">{c.minimaxPrompt}</p>
-            <p className="mt-3 text-[11px] text-subtle uppercase">SFX</p>
-            <p className="mt-1 text-xs text-muted">{c.sfx}</p>
+            <p className="mt-1 text-xs text-muted">{c.notes}</p>
+            <p className="mt-2 text-xs">{c.instrumentation}</p>
           </article>
         ))}
       </div>
@@ -864,6 +960,11 @@ function ExportStage({ picture }: { picture: Picture }) {
   const dur = totalDuration(picture);
   const [files, setFiles] = useState<ReadyFile[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
+  const setStage = useStudio((state) => state.setStage);
+  const readiness = movieReadiness(picture);
+  const lifecycle = movieLifecycle(picture);
+  const exportPlan = planPictureExport(picture, null);
+  const nextStage = guidedNextStage(picture);
 
   async function pull(file: ReadyFile) {
     setFiles((prev) => {
@@ -877,6 +978,22 @@ function ExportStage({ picture }: { picture: Picture }) {
 
   return (
     <Pane title="Export" kicker="14 · Delivery">
+      <section className="mb-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Movie readiness">
+        <p className="text-[11px] tracking-wide text-subtle uppercase">Movie readiness</p>
+        <h3 className="mt-1 font-display text-xl">Guided finish path</h3>
+        <p className="mt-2 text-sm text-muted">{exportPlan.reason}</p>
+        <Button className="mt-3" size="sm" variant="secondary" onClick={() => setStage(nextStage)}>Next recommended · {nextStage}</Button>
+        <ul className="mt-4 grid gap-1 sm:grid-cols-2">
+          {readiness.map((item) => (
+            <li key={item.id}>
+              <button type="button" className="flex w-full items-start justify-between gap-2 rounded-sm bg-inset px-3 py-2 text-left text-xs shadow-[var(--shadow-border)]" onClick={() => setStage(item.stage)}>
+                <span><span className="text-subtle uppercase">{item.status}</span> · {item.label}<span className="mt-1 block text-muted">{item.reason}</span></span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-[11px] text-subtle">{lifecycle.filter((stage) => stage.readiness).length} lifecycle stages tracked. Checkpoint/resume uses the existing picture store; jobs re-queue instead of duplicating.</p>
+      </section>
       <dl className="grid max-w-md grid-cols-2 gap-3 text-sm">
         <Stat k="Runtime" v={formatTimecode(dur, picture.fps)} />
         <Stat k="Shots" v={String(picture.shots.length)} />

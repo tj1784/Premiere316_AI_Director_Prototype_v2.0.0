@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "currentWave": 5,
+  "currentWave": 8,
   "gates": [
     {
       "wave": 0,
@@ -122,19 +122,23 @@
     },
     {
       "wave": 6,
-      "status": "READY_TO_START",
-      "note": "Unblocked by Wave 5A. Audio/voice/score may bind to screenplay, characters, shots, Prompt Lab, and placeholder/fail-closed video. Not implemented in the Wave 5 split checkpoint. See docs/release/wave6-prep.md. Does not require Wave 5B.",
-      "tasks": ["A-001", "A-002", "A-003", "F-001", "M-001", "M-002", "A-004"]
+      "status": "PARTIAL_6A_GREEN_6B_BLOCKED",
+      "note": "Wave 6A audio architecture, fail-closed Qwen3-TTS/VoxCPM2/Music3, import/review/canonical. Wave 6B blocked until real local audio generation.",
+      "tasks": ["A-001", "A-002", "A-003", "F-001", "M-001", "M-002", "A-004"],
+      "evidence": ["docs/release/wave6-gate.md"]
     },
     {
       "wave": 7,
-      "status": "BLOCKED_UNTIL_REAL_VIDEO",
-      "note": "Final-film/export acceptance stays blocked until Wave 5B GREEN or an approved imported video source exists."
+      "status": "PARTIAL_7A_GREEN_7B_BLOCKED",
+      "note": "Wave 7A imported video canonical, timeline plan, paper export, FFmpeg fail-closed, Movie Readiness. Wave 7B blocked for native-generated film, live FFmpeg 30s master, full SQLite.",
+      "evidence": ["docs/release/wave7-gate.md"]
     },
     {
       "wave": 8,
-      "status": "BLOCKED_BY_PREVIOUS_GATE"
+      "status": "PARTIAL_8A_GREEN_8B_BLOCKED",
+      "note": "Wave 8A lifecycle/readiness/guided next action/checkpoint re-queue. Wave 8B blocked for autonomous crew execution.",
+      "evidence": ["docs/release/wave8-gate.md"]
     }
   ],
-  "updatedAt": "2026-09-07T15:30:00.000Z"
+  "updatedAt": "2026-09-07T18:00:00.000Z"
 }

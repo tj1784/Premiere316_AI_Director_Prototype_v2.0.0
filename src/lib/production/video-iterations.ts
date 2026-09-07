@@ -66,6 +66,8 @@ export function failClosedVideoJob(workspace: VideoWorkspace, jobId: string, rea
     pictureId: job.pictureId,
     engineId: job.engineId,
     kind: job.kind,
+    origin: "fail-closed",
+    filename: null,
     status: "FAILED",
     createdAt: now,
     updatedAt: now,
@@ -114,7 +116,9 @@ export function reviewVideoTake(workspace: VideoWorkspace, takeId: string, decis
   const take = workspace.takes.find((item) => item.id === takeId);
   if (!take) throw new Error("Video take not found.");
   if (take.status === "FAILED" || take.status === "CANCELLED") throw new Error("Failed or cancelled takes cannot become canonical.");
+  if (decision === "canonical" && take.origin === "fail-closed") throw new Error("Fail-closed video cannot become canonical.");
   if (decision === "canonical" && !take.mediaSha256) throw new Error("Canonical video approval requires durable media.");
+  if (decision === "canonical" && take.origin === "imported" && !take.probe?.ok) throw new Error("Imported canonical video requires a successful probe.");
   if (decision === "canonical") {
     return {
       ...workspace,
@@ -140,6 +144,68 @@ export function shotVideoReadiness(workspace: VideoWorkspace, shotId: string): "
   if (workspace.jobs.some((job) => job.shotId === shotId && (job.status === "queued" || job.status === "running"))) return "QUEUED";
   if (takes.some((take) => take.status === "FAILED")) return "FAILED";
   return "MISSING";
+}
+
+export function recordImportedVideoTake(workspace: VideoWorkspace, input: {
+  pictureId: string;
+  shotId: string;
+  filename: string;
+  mediaUri: string;
+  mediaSha256: string;
+  byteLength: number;
+  durationSec: number;
+  fps?: number | null;
+  width?: number | null;
+  height?: number | null;
+  now?: number;
+}): VideoWorkspace {
+  if (!/^[a-f0-9]{64}$/.test(input.mediaSha256)) throw new Error("Imported video requires a SHA-256.");
+  if (input.byteLength <= 1024) throw new Error("Imported video must be a real nonzero movie file, not a still fixture.");
+  const now = input.now ?? Date.now();
+  const probe = {
+    ok: true,
+    durationSec: input.durationSec,
+    fps: input.fps ?? 24,
+    frameCount: Math.max(1, Math.round(input.durationSec * (input.fps ?? 24))),
+    width: input.width ?? null,
+    height: input.height ?? null,
+    codec: null,
+    hasAudio: false,
+    byteLength: input.byteLength,
+    error: null,
+  };
+  const take = {
+    id: `videotake:import:${input.shotId}:${now}`,
+    jobId: `videojob:import:${input.shotId}:${now}`,
+    shotId: input.shotId,
+    pictureId: input.pictureId,
+    engineId: "ltx-2" as const,
+    kind: "imported" as const,
+    origin: "imported" as const,
+    filename: input.filename,
+    status: "NEEDS_REVIEW" as const,
+    createdAt: now,
+    updatedAt: now,
+    seed: null,
+    promptPackageHash: "imported",
+    mediaUri: input.mediaUri,
+    mediaSha256: input.mediaSha256,
+    sidecarSha256: null,
+    probe,
+    qc: inspectVideoTakeQC({
+      expectedDurationSec: input.durationSec,
+      expectedFps: input.fps ?? 24,
+      probe,
+      mediaSha256: input.mediaSha256,
+      provenancePresent: true,
+      authorityFresh: true,
+      tokenUnused: true,
+    }),
+    failClosedReason: null,
+    reviewReason: null,
+    canonical: false,
+  };
+  return { ...workspace, takes: [...workspace.takes, take] };
 }
 
 export function restoreVideoWorkspace(workspace: VideoWorkspace | null | undefined): VideoWorkspace {

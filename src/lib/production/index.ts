@@ -10,3 +10,5 @@ export * from "./dependency-graph.ts";
 export * from "./image-iterations.ts";
 export * from "./video-types.ts";
 export * from "./video-iterations.ts";
+export * from "./audio-types.ts";
+export * from "./audio-iterations.ts";

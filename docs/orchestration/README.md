@@ -18,6 +18,6 @@ External immutable checkpoint: see `baseline-audit.json`; model weights and user
 - Wave 5 overall: **PARTIAL** — 5A GREEN / 5B BLOCKED (`docs/release/wave5-gate.md`)
 - Wave 5A: **GREEN** — app-side video architecture, fail-closed H3/LTX, packaged verification (`docs/release/wave5a-gate.md`, tag `wave5a-p316-20260907141538-8286ff6d5eb0`)
 - Wave 5B: **BLOCKED** — real non-Comfy H3/LTX video runtime (`docs/release/wave5b-blockers.md`)
-- Wave 6: **READY_TO_START** — audio/voice/score may bind to screenplay, shots, and placeholder video (`docs/release/wave6-prep.md`). Not implemented in the split checkpoint.
-- Wave 7 final-film/export acceptance: **BLOCKED** until Wave 5B or approved imported video exists.
-- Wave 8: **BLOCKED_BY_PREVIOUS_GATE**
+- Wave 6: **PARTIAL** — 6A audio architecture GREEN / 6B real TTS/Music3 BLOCKED (`docs/release/wave6-gate.md`)
+- Wave 7: **PARTIAL** — 7A import/timeline/readiness/paper export GREEN / 7B native film + live FFmpeg master + SQLite BLOCKED (`docs/release/wave7-gate.md`)
+- Wave 8: **PARTIAL** — 8A lifecycle/readiness/guided path GREEN / 8B autonomous crew BLOCKED (`docs/release/wave8-gate.md`)
