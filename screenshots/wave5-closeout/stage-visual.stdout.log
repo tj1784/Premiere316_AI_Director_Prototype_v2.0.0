@@ -1,0 +1,627 @@
+{
+  "ok": true,
+  "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+  "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-stage-visual-ToUJsN",
+  "launchedUserData": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-stage-visual-ToUJsN",
+  "realProfileUntouched": "C:\\Users\\teeja\\AppData\\Roaming\\Premiere316",
+  "stages": [
+    "intake",
+    "research",
+    "screenplay",
+    "inventory",
+    "visual-development",
+    "cinematography",
+    "performance",
+    "shots",
+    "prompts",
+    "generate",
+    "review",
+    "timeline",
+    "score",
+    "export"
+  ],
+  "screenshots": [
+    {
+      "stage": "intake",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\intake-100.png",
+      "facts": {
+        "expectedStage": "intake",
+        "actualStage": "intake",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "research",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\research-100.png",
+      "facts": {
+        "expectedStage": "research",
+        "actualStage": "research",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "screenplay",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\screenplay-100.png",
+      "facts": {
+        "expectedStage": "screenplay",
+        "actualStage": "screenplay",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "inventory",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\inventory-100.png",
+      "facts": {
+        "expectedStage": "inventory",
+        "actualStage": "inventory",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "visual-development",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\visual-development-100.png",
+      "facts": {
+        "expectedStage": "visual-development",
+        "actualStage": "visual-development",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "cinematography",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\cinematography-100.png",
+      "facts": {
+        "expectedStage": "cinematography",
+        "actualStage": "cinematography",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "performance",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\performance-100.png",
+      "facts": {
+        "expectedStage": "performance",
+        "actualStage": "performance",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "shots",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\shots-100.png",
+      "facts": {
+        "expectedStage": "shots",
+        "actualStage": "shots",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "prompts",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\prompts-100.png",
+      "facts": {
+        "expectedStage": "prompts",
+        "actualStage": "prompts",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "generate",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\generate-100.png",
+      "facts": {
+        "expectedStage": "generate",
+        "actualStage": "generate",
+        "leftPanel": "generation",
+        "rightPanel": "generation",
+        "timelineVisible": false,
+        "visiblePanelKinds": [
+          "generation",
+          "generation"
+        ],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "review",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\review-100.png",
+      "facts": {
+        "expectedStage": "review",
+        "actualStage": "review",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "timeline",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\timeline-100.png",
+      "facts": {
+        "expectedStage": "timeline",
+        "actualStage": "timeline",
+        "leftPanel": "media",
+        "rightPanel": "clip",
+        "timelineVisible": true,
+        "visiblePanelKinds": [
+          "media",
+          "clip",
+          "timeline"
+        ],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "score",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\score-100.png",
+      "facts": {
+        "expectedStage": "score",
+        "actualStage": "score",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "export",
+      "zoomPercent": 100,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\export-100.png",
+      "facts": {
+        "expectedStage": "export",
+        "actualStage": "export",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "BUTTON",
+        "activeControlVisible": true,
+        "documentWidth": 1424,
+        "viewportWidth": 1424,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 100
+      },
+      "violations": []
+    },
+    {
+      "stage": "intake",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\intake-150.png",
+      "facts": {
+        "expectedStage": "intake",
+        "actualStage": "intake",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    },
+    {
+      "stage": "research",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\research-150.png",
+      "facts": {
+        "expectedStage": "research",
+        "actualStage": "research",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    },
+    {
+      "stage": "screenplay",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\screenplay-150.png",
+      "facts": {
+        "expectedStage": "screenplay",
+        "actualStage": "screenplay",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    },
+    {
+      "stage": "inventory",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\inventory-150.png",
+      "facts": {
+        "expectedStage": "inventory",
+        "actualStage": "inventory",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    },
+    {
+      "stage": "visual-development",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\visual-development-150.png",
+      "facts": {
+        "expectedStage": "visual-development",
+        "actualStage": "visual-development",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    },
+    {
+      "stage": "cinematography",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\cinematography-150.png",
+      "facts": {
+        "expectedStage": "cinematography",
+        "actualStage": "cinematography",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    },
+    {
+      "stage": "performance",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\performance-150.png",
+      "facts": {
+        "expectedStage": "performance",
+        "actualStage": "performance",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    },
+    {
+      "stage": "shots",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\shots-150.png",
+      "facts": {
+        "expectedStage": "shots",
+        "actualStage": "shots",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    },
+    {
+      "stage": "prompts",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\prompts-150.png",
+      "facts": {
+        "expectedStage": "prompts",
+        "actualStage": "prompts",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    },
+    {
+      "stage": "generate",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\generate-150.png",
+      "facts": {
+        "expectedStage": "generate",
+        "actualStage": "generate",
+        "leftPanel": "generation",
+        "rightPanel": "generation",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    },
+    {
+      "stage": "review",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\review-150.png",
+      "facts": {
+        "expectedStage": "review",
+        "actualStage": "review",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    },
+    {
+      "stage": "timeline",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\timeline-150.png",
+      "facts": {
+        "expectedStage": "timeline",
+        "actualStage": "timeline",
+        "leftPanel": "media",
+        "rightPanel": "clip",
+        "timelineVisible": true,
+        "visiblePanelKinds": [
+          "timeline"
+        ],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    },
+    {
+      "stage": "score",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\score-150.png",
+      "facts": {
+        "expectedStage": "score",
+        "actualStage": "score",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    },
+    {
+      "stage": "export",
+      "zoomPercent": 150,
+      "path": "D:\\Projects\\Premiere316_v3\\screenshots\\stage-visual\\export-150.png",
+      "facts": {
+        "expectedStage": "export",
+        "actualStage": "export",
+        "leftPanel": "none",
+        "rightPanel": "none",
+        "timelineVisible": false,
+        "visiblePanelKinds": [],
+        "activeControlTag": "SELECT",
+        "activeControlVisible": true,
+        "documentWidth": 949,
+        "viewportWidth": 949,
+        "horizontalOverflow": false,
+        "prohibitedCloudActions": [],
+        "zoomPercent": 150
+      },
+      "violations": []
+    }
+  ],
+  "violations": [],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "error": null
+}
+VISUAL_EXIT:0

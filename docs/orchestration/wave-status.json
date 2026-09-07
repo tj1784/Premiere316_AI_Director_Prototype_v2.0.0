@@ -115,10 +115,10 @@
     },
     {
       "wave": 5,
-      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
-      "note": "Prompt compiler, video queue/review, scheduler, and fail-closed H3/LTX workers are implemented. No genuine video file was produced. Packaged smoke/visual matrix not run. Wave 6 remains closed.",
+      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
+      "note": "Wave 5 source/package/smoke/14-stage visual/fail-closed UAT passed for p316-20260907141538-8286ff6d5eb0. No genuine H3/LTX video file. Not GREEN. Wave 6 remains closed.",
       "tasks": ["P-001", "H-001", "L-001", "Q-001", "T-001", "T-002"],
-      "evidence": ["docs/release/wave5-gate.md"]
+      "evidence": ["docs/release/wave5-gate.md", "screenshots/wave5-closeout/packaged-smoke.json", "screenshots/wave5-closeout/stage-visual-report.json", "screenshots/wave5-closeout/wave5-fail-closed-uat.json", "screenshots/wave5-closeout/no-cloud-no-8188-proof.json"]
     },
     {
       "wave": 6,

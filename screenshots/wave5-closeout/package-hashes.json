@@ -1,0 +1,86 @@
+{
+  "exe": {
+    "path": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+    "exists": true,
+    "bytes": 205438464,
+    "sha256": "e0a37bbfb72b6c744fe5062a047d68c8dabd4d89ad5d846d2b8f7f14c8a0501c"
+  },
+  "asar": {
+    "path": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\app.asar",
+    "exists": true,
+    "bytes": 122339,
+    "sha256": "ded6af1c2716bc7762b5f6b3ebd730c5564781bf90afa0746dfe72799f453c7c"
+  },
+  "installer": {
+    "path": "D:\\Projects\\Premiere316_v3\\dist-desktop\\Premiere316-Setup.exe",
+    "exists": true,
+    "bytes": 88908867,
+    "sha256": "76f94360e3db2a70d65a45f79b481ef229f2b8261e8770de6159036a450b093e"
+  },
+  "h3": {
+    "path": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\workers\\minimax_h3_jsonl_worker.py",
+    "exists": true,
+    "bytes": 1649,
+    "sha256": "0174c5868abe9649c4150264623c0467a0b5111d6f60c8b9611cf58c88d0ca08",
+    "refusesGenerate": true,
+    "mentions8188": true,
+    "mentionsComfy": true,
+    "snippet": "\"\"\"Premiere316 MiniMax H3 JSONL worker.\n\nFail-closed Wave 5 adapter. It never contacts the network, never uses Comfy\ngraph runtimes, and never pretends a still image is video.\n\"\"\"\nfrom __future__ import annotations\n\nimport json\nimport os\nimport sys\n\nPROTOCOL_VERSION = \"premiere316.minimax-h3-jsonl.v1\"\nREASON = (\n    \"MiniMax H3 weights may be present locally, but no app-owned official native H3 \"\n"
+  },
+  "ltx": {
+    "path": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\workers\\ltx25_jsonl_worker.py",
+    "exists": true,
+    "bytes": 1604,
+    "sha256": "0c2c76597683a0dd567f4ab8ea51090703f52b471734905cab82c2affb9d008d",
+    "refusesGenerate": true,
+    "mentions8188": false,
+    "mentionsComfy": true,
+    "snippet": "\"\"\"Premiere316 LTX 2.5 JSONL worker.\n\nFail-closed Wave 5 adapter. It never contacts the network, never uses Comfy\ngraph runtimes, and never pretends a still image is video.\n\"\"\"\nfrom __future__ import annotations\n\nimport json\nimport os\nimport sys\n\nPROTOCOL_VERSION = \"premiere316.ltx25-jsonl.v1\"\nREASON = (\n    \"LTX 2.5 components may be catalogued, but Premiere316 has no official non-Comfy \"\n    \"na"
+  },
+  "uiAssets": {
+    "client-7_ZQCetc.js": {
+      "path": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\ui\\public\\assets\\client-7_ZQCetc.js",
+      "exists": true,
+      "bytes": 74,
+      "sha256": "5fc54c86494b62830a4cfdc13dd5ea7f1faa913b0a00d84aef3c837174d792af"
+    },
+    "index-DWEzjzUO.js": {
+      "path": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\ui\\public\\assets\\index-DWEzjzUO.js",
+      "exists": true,
+      "bytes": 434586,
+      "sha256": "e2ad6bc8835e30bf75915ab834aade788d891ee69db516541314436990ba5342"
+    },
+    "model-registry-CqmPrbng.js": {
+      "path": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\ui\\public\\assets\\model-registry-CqmPrbng.js",
+      "exists": true,
+      "bytes": 214,
+      "sha256": "46691be43aad226383c8bbf3ddf39777d01b3482adb99e71795869c222329a3b"
+    },
+    "routes-iia6LV9i.js": {
+      "path": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\ui\\public\\assets\\routes-iia6LV9i.js",
+      "exists": true,
+      "bytes": 397036,
+      "sha256": "6cce2fe18927ffe66c074a30ff4026db678a757714c0df8d932d6a0806361bc7"
+    },
+    "styles-7T3d-Kc5.css": {
+      "path": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\ui\\public\\assets\\styles-7T3d-Kc5.css",
+      "exists": true,
+      "bytes": 40739,
+      "sha256": "159153e30e6e4db50186b7655347d8865fe81cff406971733f1fbf17bc18ea92"
+    }
+  },
+  "backend": {
+    "path": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\backend.mjs",
+    "exists": true,
+    "bytes": 162586,
+    "sha256": "cd90fa8e0bfb3c1996cbbdf552e90d34fdf8608dc7a4556ce80848ab707f88db"
+  },
+  "buildInfo": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260907141538-8286ff6d5eb0",
+    "buildTimestamp": "2026-09-07T14:15:38.819Z",
+    "rendererSourceHash": "8286ff6d5eb0c456a9293bc6f03c3044ad489e20aa5a38b41d6962364e828147",
+    "rendererMode": "PACKAGED DIST"
+  }
+}

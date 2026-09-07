@@ -148,7 +148,7 @@ export function makeSamplePicture(): Picture {
     sample: true,
   };
   picture.screenplayFountain = fountainFrom(picture as Picture);
-  return migratePicturePreparation(compilePicture(picture as Picture));
+  return compilePicture(migratePicturePreparation(picture));
 }
 
 function shot(

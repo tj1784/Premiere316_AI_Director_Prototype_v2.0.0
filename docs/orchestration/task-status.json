@@ -1339,7 +1339,7 @@
         "C-001",
         "I-007"
       ],
-      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
+      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
       "branch": "premiere316-v3",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": ["src/lib/studio/prompt-compiler.ts", "docs/release/wave5-gate.md"]
@@ -1353,7 +1353,7 @@
       "deps": [
         "P-001"
       ],
-      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
+      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
       "branch": "premiere316-v3",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": ["desktop/workers/minimax_h3_jsonl_worker.py", "docs/release/wave5-gate.md"]
@@ -1367,7 +1367,7 @@
       "deps": [
         "P-001"
       ],
-      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
+      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
       "branch": "premiere316-v3",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": ["desktop/workers/ltx25_jsonl_worker.py", "docs/release/wave5-gate.md"]
@@ -1383,7 +1383,7 @@
         "H-001",
         "L-001"
       ],
-      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
+      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
       "branch": "premiere316-v3",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": ["src/lib/studio/cross-media-scheduler.ts", "docs/release/wave5-gate.md"]
@@ -1399,7 +1399,7 @@
         "L-001",
         "Q-001"
       ],
-      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
+      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
       "branch": "premiere316-v3",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": ["src/lib/production/video-iterations.ts", "docs/release/wave5-gate.md"]
@@ -1413,7 +1413,7 @@
       "deps": [
         "T-001"
       ],
-      "status": "SOURCE_PASS_VIDEO_RUNTIME_FAIL_CLOSED",
+      "status": "SOURCE_VERIFIED_VIDEO_RUNTIME_BLOCKED",
       "branch": "premiere316-v3",
       "worktree": "D:/Projects/Premiere316_v3",
       "evidence": ["src/lib/production/video-iterations.ts", "docs/release/wave5-gate.md"]

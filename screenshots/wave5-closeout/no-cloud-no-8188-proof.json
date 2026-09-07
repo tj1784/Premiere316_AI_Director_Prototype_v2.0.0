@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "buildId": "p316-20260907141538-8286ff6d5eb0",
+  "isolatedProfilesOnly": true,
+  "realProfileUntouched": "C:\\Users\\teeja\\AppData\\Roaming\\Premiere316",
+  "packagedSmoke": {
+    "ok": true,
+    "probed8080": 0,
+    "completionPosts": 0
+  },
+  "failClosedUat": {
+    "ok": true,
+    "port8188": 0,
+    "completionPosts": 0,
+    "cloudInference": 0,
+    "stillNotPresentedAsVideo": true,
+    "queuedWithoutMedia": true
+  },
+  "packagedWorkers": {
+    "minimax_h3_jsonl_worker.py": {
+      "sha256": "0174c5868abe9649c4150264623c0467a0b5111d6f60c8b9611cf58c88d0ca08",
+      "refusesGenerate": true,
+      "mentionsComfyOnlyToRefuse": true
+    },
+    "ltx25_jsonl_worker.py": {
+      "sha256": "0c2c76597683a0dd567f4ab8ea51090703f52b471734905cab82c2affb9d008d",
+      "refusesGenerate": true,
+      "mentionsComfyOnlyToRefuse": true
+    }
+  },
+  "observedRendererNetwork": [
+    "local packaged UI assets on an ephemeral loopback port",
+    "GET https://grok.com/grok-app-builder/extensions.js branding injector"
+  ],
+  "notObserved": [
+    "no request to port 8188",
+    "no ComfyUI graph POST",
+    "no OpenAI/Anthropic/OpenRouter/xAI inference POST",
+    "no /v1/chat/completions",
+    "no fabricated video receipt"
+  ]
+}

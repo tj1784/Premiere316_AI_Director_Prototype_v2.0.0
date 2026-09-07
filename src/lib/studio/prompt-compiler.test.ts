@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { compileEnginePromptPackage, compilePicture } from "./prompt-compiler.ts";
+import { makeSamplePicture } from "./sample.ts";
 import { validateEnginePromptPackage } from "./generation-validation.ts";
 import { makePictureIntake } from "./picture-intake.ts";
 import { makePictureScreenplay } from "./screenplay.ts";
@@ -85,5 +86,18 @@ describe("Wave 5 prompt compiler", () => {
     const next = compilePicture(picture());
     assert.ok(next.shots[0].t2iPrompt.includes("Mara") || next.shots[0].t2iPrompt.includes("rain"));
     assert.ok(next.shots[0].i2vPrompt.length > 20);
+  });
+
+  it("does not crash when screenplay is not yet hydrated", () => {
+    const pic = picture();
+    Reflect.deleteProperty(pic, "screenplay");
+    const pkg = compileEnginePromptPackage({ picture: pic, shot: pic.shots[0], target: "still" });
+    assert.equal(pkg.provenance.screenplayVersionId, null);
+  });
+
+  it("hydrates The Last Reel sample without reading currentVersionId of undefined", () => {
+    const sample = makeSamplePicture();
+    assert.ok(sample.screenplay.currentVersionId);
+    assert.equal(sample.title, "The Last Reel");
   });
 });

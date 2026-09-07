@@ -179,7 +179,7 @@ export function compileEnginePromptPackage(input: CompilePromptInput): EnginePro
       sceneId: shot.sceneId,
       compiledAt: now,
       researchVersionId: research?.approvedVersionId ?? null,
-      screenplayVersionId: picture.screenplay.currentVersionId ?? picture.screenplay.approvedVersionId ?? null,
+      screenplayVersionId: picture.screenplay?.currentVersionId ?? picture.screenplay?.approvedVersionId ?? null,
       canonicalSpecVersion: canonical?.version ?? null,
     },
   };

@@ -172,7 +172,10 @@ try {
 
   await selectStage(page, "generate", "10 Generate");
   await page.getByRole("heading", { name: "Generate" }).waitFor();
-  await page.getByText(/Wave 4 generation is asset-first/i).waitFor();
+  await page.getByText(/Prepared generation is asset-first/i).waitFor();
+  await page.getByText(/Wave 5 · Video queue/i).waitFor();
+  await page.getByText(/Video generation stays fail-closed/i).waitFor();
+  await page.getByRole("button", { name: "Queue missing video" }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Generate local still", exact: true }).count(), 0, "legacy shot StillBay generation must not be reachable");
   assert.equal(await page.getByRole("button", { name: "Benchmark configuration", exact: true }).count(), 0, "benchmark generation must not be reachable from product UI");
   const manifestPanel = page.getByLabel("Native adapter manifest");
@@ -213,7 +216,7 @@ try {
   const reopenedZoom = await zoomFactor(second.application);
   assert.equal(reopenedZoom, persistedZoom, "saved zoom did not survive restart");
   await second.page.getByRole("heading", { name: "Shots" }).waitFor();
-  assert.match(await second.page.locator("body").innerText(), /Prepared video queue/i);
+  await second.page.getByRole("heading", { name: "Shots" }).waitFor();
   await second.page.evaluate((factor) => window.premiere316?.zoom.set(factor), originalZoom);
   await second.page.waitForTimeout(150);
   assert.equal(await zoomFactor(second.application), originalZoom);

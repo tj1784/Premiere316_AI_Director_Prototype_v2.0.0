@@ -1,0 +1,39 @@
+{
+  "ok": true,
+  "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
+  "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave5-closeout-OJKVNR",
+  "realProfileUntouched": "C:\\Users\\teeja\\AppData\\Roaming\\Premiere316",
+  "promptLabCompiled": true,
+  "generateVideoQueueVisible": true,
+  "reviewVideoTakesVisible": true,
+  "ltxFailClosedVisible": true,
+  "h3FailClosedInPage": false,
+  "stillNotPresentedAsVideo": true,
+  "queuedWithoutMedia": true,
+  "network": {
+    "port8188": 0,
+    "completionPosts": 0,
+    "cloudInference": 0,
+    "observed": [
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/styles-7T3d-Kc5.css"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/index-DWEzjzUO.js"
+      },
+      {
+        "method": "GET",
+        "url": "http://127.0.0.1:18731/assets/routes-iia6LV9i.js"
+      },
+      {
+        "method": "GET",
+        "url": "https://grok.com/grok-app-builder/extensions.js"
+      }
+    ]
+  },
+  "consoleErrors": [],
+  "error": null,
+  "launchedUserData": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave5-closeout-OJKVNR"
+}
