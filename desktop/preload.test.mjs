@@ -90,7 +90,7 @@ describe("desktop security boundary", () => {
   });
   it("packages every local Electron runtime dependency and audits the output", () => {
     assert.match(builder, /desktop\/workers\/flux1_jsonl_worker\.py/);
-    for (const file of ["main.mjs", "preload.cjs", "authority-review-preload.cjs", "authority-review.html", "confirmation-preload.cjs", "confirmation.html", "channels.cjs", "zoom.cjs"]) {
+    for (const file of ["main.mjs", "ffmpeg-tool.mjs", "preload.cjs", "authority-review-preload.cjs", "authority-review.html", "confirmation-preload.cjs", "confirmation.html", "channels.cjs", "zoom.cjs"]) {
       assert.equal(existsSync(join(root, "desktop", file)), true);
       assert.equal(builder.includes(`desktop/${file}`), true);
     }

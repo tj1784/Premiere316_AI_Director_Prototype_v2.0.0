@@ -42,3 +42,17 @@ export function planPictureExport(picture: Picture, ffmpegBinary: string | null 
   }
   return { schemaVersion: 1, ok: false, kind: "paper", reason: "MP4 export stays fail-closed until FFmpeg is discovered and every shot has canonical imported or native video.", fps: picture.fps || 24, durationSec, inputs, ffmpeg: { discovered: Boolean(ffmpegBinary), binary: ffmpegBinary } };
 }
+
+export function planLiteImportedExport(picture: Picture, ffmpegBinary: string | null = null): ExportPlan {
+  const video = hydrateVideoWorkspace(picture.video);
+  const canonical = video.takes.filter((take) => take.canonical && take.origin === "imported" && take.mediaUri);
+  const durationSec = canonical[0]?.probe?.durationSec ?? 0;
+  const inputs = canonical.map((take) => ({ shotId: take.shotId, mediaUri: take.mediaUri, origin: "imported", durationSec: take.probe?.durationSec ?? 0 }));
+  if (!ffmpegBinary) {
+    return { schemaVersion: 1, ok: false, kind: "paper", reason: "FFmpeg/FFprobe is unavailable. Premiere316 will not download it or fake an MP4.", fps: picture.fps || 24, durationSec, inputs, ffmpeg: { discovered: false, binary: null } };
+  }
+  if (!canonical.length) {
+    return { schemaVersion: 1, ok: false, kind: "paper", reason: "Lite MP4 export needs a canonical imported video take.", fps: picture.fps || 24, durationSec, inputs, ffmpeg: { discovered: true, binary: ffmpegBinary } };
+  }
+  return { schemaVersion: 1, ok: true, kind: "mp4", reason: "Lite export from canonical imported video. Provenance remains imported, not generated.", fps: picture.fps || 24, durationSec, inputs, ffmpeg: { discovered: true, binary: ffmpegBinary } };
+}

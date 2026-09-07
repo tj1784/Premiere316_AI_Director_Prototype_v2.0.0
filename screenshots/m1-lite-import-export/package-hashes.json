@@ -1,0 +1,18 @@
+{
+  "exe": {
+    "bytes": 205438464,
+    "sha256": "a5319f80cfa33b334482ac877aa8e458314817cabbcc11b86faa0a07dab8a55e"
+  },
+  "installer": {
+    "bytes": 88924323,
+    "sha256": "b9453b13b7e0c16293d65c8e9436a8322b5933c3e75fb5b1beef94d0fdde21ed"
+  },
+  "buildInfo": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260907223751-28fb28ffdbba",
+    "buildTimestamp": "2026-09-07T22:37:51.319Z",
+    "rendererSourceHash": "28fb28ffdbba7e6d0fca04c69309f13d08a78bcf50536f8138ee52c3831a3741",
+    "rendererMode": "PACKAGED DIST"
+  }
+}

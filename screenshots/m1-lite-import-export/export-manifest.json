@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "kind": "m1-lite-imported-mp4",
+  "origin": "imported",
+  "notGenerated": true,
+  "buildId": "p316-20260907223751-28fb28ffdbba",
+  "outputPath": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-m1-lite-jvTMcK\\exports\\m1-lite-20260907223833.mp4",
+  "sha256": "d5378dee812906397761fe6c48aab759c84d94a0208a11847b50479390193d5d",
+  "byteLength": 93934,
+  "durationSec": 6,
+  "fps": 24,
+  "width": 512,
+  "height": 288,
+  "codec": "h264",
+  "frameCount": 144,
+  "audio": true
+}

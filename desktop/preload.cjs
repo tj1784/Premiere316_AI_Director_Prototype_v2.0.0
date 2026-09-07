@@ -32,6 +32,10 @@ const channels = {
   zoomGet: "p316:zoom:get",
   zoomSet: "p316:zoom:set",
   zoomChanged: "p316:zoom:changed",
+  mediaDiscover: "p316:media:discover",
+  mediaImportVideo: "p316:media:importVideo",
+  mediaExportLite: "p316:media:exportLite",
+  mediaOpenFolder: "p316:media:openFolder",
 };
 
 const ALLOWED = new Set(Object.values(channels));
@@ -85,6 +89,12 @@ contextBridge.exposeInMainWorld("premiere316", {
     platform: process.platform,
     modelRootLabel: () => invoke(channels.appModelRoot),
     systemStatus: () => invoke(channels.appSystemStatus),
+  },
+  media: {
+    discover: () => invoke(channels.mediaDiscover),
+    importVideo: () => invoke(channels.mediaImportVideo),
+    exportLite: (input) => invoke(channels.mediaExportLite, input ?? {}),
+    openFolder: () => invoke(channels.mediaOpenFolder),
   },
   zoom: {
     get: () => invoke(channels.zoomGet),

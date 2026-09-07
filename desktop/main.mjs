@@ -1,12 +1,13 @@
 import { app, BrowserWindow, Menu, dialog, ipcMain, protocol as electronProtocol, safeStorage, session, shell } from "electron";
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
-import { randomBytes } from "node:crypto";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { createHash, randomBytes } from "node:crypto";
 import { cpus, freemem, totalmem } from "node:os";
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { assertImportableVideo, buildLiteExportArgs, missingFfmpegResult, parseFfprobeJson } from "./ffmpeg-tool.mjs";
 
 const require = createRequire(import.meta.url);
 const channels = require("./channels.cjs");
@@ -39,6 +40,8 @@ const rpcWait = new Map();
 let uiOrigin = DEV_UI_ORIGIN;
 let quitting = false;
 let interfaceZoom = DEFAULT_ZOOM;
+let lastExportDir = "";
+let lastExportPath = "";
 let previousCpuTimes = readCpuTimes();
 const authorityReviewModals = new Map();
 const confirmationModals = new Map();
@@ -266,6 +269,156 @@ function startBackend() {
 
 function imageMediaRoot() {
   return join(app.getPath("userData"), "media");
+}
+
+function hashFile(filePath) {
+  return createHash("sha256").update(readFileSync(filePath)).digest("hex");
+}
+
+function spawnCapture(command, args, timeoutMs = 30_000) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    const timer = setTimeout(() => {
+      killTree(child);
+      reject(new Error(`${command} timed out`));
+    }, timeoutMs);
+    child.stdout?.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr?.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.on("exit", (code) => {
+      clearTimeout(timer);
+      resolve({ code: code ?? 1, stdout, stderr });
+    });
+  });
+}
+
+function resolveOnPath(exe) {
+  return new Promise((resolveBin) => {
+    const cmd = process.platform === "win32" ? "where" : "which";
+    const child = spawn(cmd, [exe], { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+    let out = "";
+    child.stdout?.on("data", (chunk) => {
+      out += chunk;
+    });
+    child.on("error", () => resolveBin(null));
+    child.on("exit", () => {
+      const line = out.split(/\r?\n/).map((item) => item.trim()).find(Boolean);
+      resolveBin(line && existsSync(line) ? line : null);
+    });
+  });
+}
+
+async function discoverFfmpegTools() {
+  const ffmpegName = process.platform === "win32" ? "ffmpeg.exe" : "ffmpeg";
+  const ffprobeName = process.platform === "win32" ? "ffprobe.exe" : "ffprobe";
+  const ffmpeg = (process.env.P316_FFMPEG_BINARY && existsSync(process.env.P316_FFMPEG_BINARY) ? process.env.P316_FFMPEG_BINARY : null) || await resolveOnPath(ffmpegName);
+  const ffprobe = (process.env.P316_FFPROBE_BINARY && existsSync(process.env.P316_FFPROBE_BINARY) ? process.env.P316_FFPROBE_BINARY : null) || await resolveOnPath(ffprobeName);
+  if (!ffmpeg || !ffprobe) return missingFfmpegResult();
+  return { ok: true, ffmpeg, ffprobe, reason: "Local FFmpeg/FFprobe discovered on PATH." };
+}
+
+async function importVideoFromDisk() {
+  const uat = process.env.PREMIERE316_UAT_IMPORT;
+  let source = "";
+  if (uat && existsSync(uat)) {
+    source = uat;
+  } else {
+    const picked = await dialog.showOpenDialog(mainWindow ?? undefined, {
+      title: "Import video",
+      properties: ["openFile"],
+      filters: [{ name: "Video", extensions: ["mp4", "mov", "m4v", "mkv"] }],
+    });
+    if (picked.canceled || !picked.filePaths[0]) return { ok: false, canceled: true };
+    source = picked.filePaths[0];
+  }
+  if (isUnderModelRoot(source) || isUnderProtectedRuntimeRoot(source)) {
+    throw new Error("Cannot import from model, runtime, or cache roots.");
+  }
+  const info = statSync(source);
+  assertImportableVideo({ filePath: source, byteLength: info.size, extension: extname(source) });
+  const tools = await discoverFfmpegTools();
+  if (!tools.ok) return { ok: false, canceled: false, error: tools.reason };
+  const probed = await spawnCapture(tools.ffprobe, ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", source]);
+  if (probed.code !== 0) return { ok: false, canceled: false, error: probed.stderr || "ffprobe failed." };
+  const probe = parseFfprobeJson(probed.stdout);
+  if (!probe.ok) return { ok: false, canceled: false, error: probe.error || "Imported file is not a real video." };
+  const sha = hashFile(source);
+  const destDir = join(app.getPath("userData"), "imported");
+  mkdirSync(destDir, { recursive: true });
+  const dest = join(destDir, `${sha.slice(0, 16)}${extname(source).toLowerCase() || ".mp4"}`);
+  copyFileSync(source, dest);
+  const destHash = hashFile(dest);
+  if (destHash !== sha) throw new Error("Imported copy hash mismatch.");
+  return {
+    ok: true,
+    canceled: false,
+    origin: "imported",
+    filename: basename(source),
+    mediaUri: dest,
+    mediaSha256: destHash,
+    byteLength: statSync(dest).size,
+    probe,
+  };
+}
+
+async function exportLiteMp4(input) {
+  const tools = await discoverFfmpegTools();
+  if (!tools.ok) return { ok: false, error: tools.reason };
+  const source = String(input?.mediaUri || "");
+  if (!source || !existsSync(source)) return { ok: false, error: "Canonical imported media is missing on disk." };
+  if (isUnderModelRoot(source) || isUnderProtectedRuntimeRoot(source)) throw new Error("Cannot export from model, runtime, or cache roots.");
+  const userData = app.getPath("userData");
+  if (!isUnderRoot(source, userData)) throw new Error("Export source must be inside the app profile imported store.");
+  const outDir = join(userData, "exports");
+  mkdirSync(outDir, { recursive: true });
+  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
+  const finalPath = join(outDir, `m1-lite-${stamp}.mp4`);
+  const tmpPath = join(outDir, `m1-lite-${stamp}.tmp.mp4`);
+  const args = buildLiteExportArgs({
+    ffmpeg: tools.ffmpeg,
+    sourcePath: source,
+    outputTmpPath: tmpPath,
+    durationSec: input?.durationSec,
+    fps: input?.fps,
+    hasAudio: input?.hasAudio === true,
+  });
+  try {
+    const ran = await spawnCapture(args[0], args.slice(1), 120_000);
+    if (ran.code !== 0 || !existsSync(tmpPath)) {
+      try { unlinkSync(tmpPath); } catch { /* none */ }
+      return { ok: false, error: ran.stderr || "FFmpeg export failed." };
+    }
+    renameSync(tmpPath, finalPath);
+  } catch (error) {
+    try { unlinkSync(tmpPath); } catch { /* none */ }
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+  const outHash = hashFile(finalPath);
+  const outProbeRaw = await spawnCapture(tools.ffprobe, ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", finalPath]);
+  const outProbe = parseFfprobeJson(outProbeRaw.stdout || "{}");
+  lastExportDir = outDir;
+  lastExportPath = finalPath;
+  return {
+    ok: true,
+    origin: "imported",
+    outputPath: finalPath,
+    outputDir: outDir,
+    sha256: outHash,
+    byteLength: statSync(finalPath).size,
+    probe: outProbe,
+    sourceSha256: String(input?.mediaSha256 || ""),
+    ffmpeg: tools.ffmpeg,
+    ffprobe: tools.ffprobe,
+  };
 }
 
 function withMediaRoot(params = {}) {
@@ -680,6 +833,16 @@ function registerIpc() {
   ipcMain.handle(channels.appSystemStatus, wrap(() => readSystemStatus()));
   ipcMain.handle(channels.zoomGet, wrap(() => interfaceZoom));
   ipcMain.handle(channels.zoomSet, wrap((_e, factor) => applyInterfaceZoom(factor)));
+  ipcMain.handle(channels.mediaDiscover, wrap(() => discoverFfmpegTools()));
+  ipcMain.handle(channels.mediaImportVideo, wrap(() => importVideoFromDisk()));
+  ipcMain.handle(channels.mediaExportLite, wrap((_e, input) => exportLiteMp4(input)));
+  ipcMain.handle(channels.mediaOpenFolder, wrap(async () => {
+    const folder = lastExportDir || join(app.getPath("userData"), "exports");
+    if (isUnderModelRoot(folder) || isUnderProtectedRuntimeRoot(folder)) throw new Error("Refusing to open a protected root.");
+    if (!existsSync(folder)) mkdirSync(folder, { recursive: true });
+    const result = await shell.openPath(folder);
+    return { ok: !result, folder, error: result || null, lastExportPath: lastExportPath || null };
+  }));
   ipcMain.handle(
     channels.dialogOpenImages,
     wrap(async () => {

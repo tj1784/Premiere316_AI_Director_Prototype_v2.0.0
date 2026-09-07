@@ -19,7 +19,7 @@ import { MODEL_ROOT, STAGES, type Picture, type StageId } from "@/lib/studio/typ
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import { useDirector } from "@/lib/studio/use-director";
 import { compileEnginePromptPackage, compilePicture, totalDuration } from "@/lib/studio/prompt-compiler";
-import { desktopApproveCanonicalImage, desktopAuthorizePreparedImage, desktopGeneratePreparedImage, desktopImageManifests, desktopProductionAuthorityStatus, desktopRejectCanonicalImage, desktopSaveMany, isDesktopApp } from "@/lib/desktop/client";
+import { desktopApproveCanonicalImage, desktopAuthorizePreparedImage, desktopExportLite, desktopGeneratePreparedImage, desktopImageManifests, desktopImportVideo, desktopMediaDiscover, desktopOpenExportFolder, desktopProductionAuthorityStatus, desktopRejectCanonicalImage, desktopSaveMany, isDesktopApp } from "@/lib/desktop/client";
 import type { ImageComponentManifest } from "@/lib/studio/image-component-resolver.server.ts";
 import { runtimeDefaults } from "@/lib/studio/engine-controls.ts";
 import { cn, copyText, formatTimecode, saveReadyFile, uid, type ReadyFile } from "@/lib/utils";
@@ -41,9 +41,9 @@ import { videoRuntimeBlock } from "@/lib/studio/video-runtime.ts";
 import { audioEngineStatuses, musicRuntimeBlock, voiceEngineFromSelection, voiceRuntimeBlock } from "@/lib/studio/audio-runtime.ts";
 import { movieReadiness } from "@/lib/studio/movie-readiness.ts";
 import { guidedNextStage, movieLifecycle } from "@/lib/studio/movie-lifecycle.ts";
-import { planPictureExport } from "@/lib/studio/ffmpeg-export.ts";
+import { planLiteImportedExport, planPictureExport } from "@/lib/studio/ffmpeg-export.ts";
 import { buildTimelinePlan } from "@/lib/studio/timeline-plan.ts";
-import { enqueueVideoJob, failClosedVideoJob, reviewVideoTake, shotVideoReadiness } from "@/lib/production/video-iterations.ts";
+import { enqueueVideoJob, failClosedVideoJob, recordImportedVideoTake, reviewVideoTake, shotVideoReadiness } from "@/lib/production/video-iterations.ts";
 import { hydrateVideoWorkspace } from "@/lib/production/video-types.ts";
 import { hydratePictureAudio, queueMissingDialogue, queueMissingScore, reviewAudioTake } from "@/lib/production/audio-iterations.ts";
 import { hydrateAudioWorkspace } from "@/lib/production/audio-types.ts";
@@ -672,6 +672,38 @@ function GenerateStage({ picture }: { picture: Picture }) {
             toast.error("Video jobs were queued and fail-closed. No still was substituted as video.");
             setStage("review");
           }} disabled={!picture.shots.length} title={picture.shots.length ? "Queue every shot and fail closed without invoking Comfy or cloud" : "Add shots first"}>Queue missing video</Button>
+          <Button size="sm" onClick={() => {
+            void (async () => {
+              const shot = picture.shots.find((item) => item.id === useStudio.getState().selectedShotId) ?? picture.shots[0];
+              if (!shot) {
+                toast.error("Add a shot before importing video.");
+                return;
+              }
+              const imported = await desktopImportVideo();
+              if (!imported.ok) {
+                if (imported.canceled) return;
+                toast.error(imported.error);
+                return;
+              }
+              const workspace = recordImportedVideoTake(hydrateVideoWorkspace(picture.video), {
+                pictureId: picture.id,
+                shotId: shot.id,
+                filename: imported.filename,
+                mediaUri: imported.mediaUri,
+                mediaSha256: imported.mediaSha256,
+                byteLength: imported.byteLength,
+                durationSec: imported.probe.durationSec ?? 0,
+                fps: imported.probe.fps,
+                width: imported.probe.width,
+                height: imported.probe.height,
+                codec: imported.probe.codec,
+                hasAudio: imported.probe.hasAudio,
+              });
+              replaceActive({ ...picture, video: workspace, updatedAt: Date.now() });
+              toast.success(`Imported ${imported.filename} as ${shot.id}. Provenance is imported, not generated.`);
+              setStage("review");
+            })();
+          }} disabled={!picture.shots.length}>Import video</Button>
           <Button size="sm" variant="ghost" onClick={() => setStage("review")}>Review takes</Button>
         </div>
         <p className="mt-3 text-xs text-subtle">Shot readiness: {picture.shots.length ? picture.shots.map((shot) => `${shot.index}:${shotVideoReadiness(hydrateVideoWorkspace(picture.video), shot.id)}`).join(" · ") : "no shots"}</p>
@@ -960,11 +992,18 @@ function ExportStage({ picture }: { picture: Picture }) {
   const dur = totalDuration(picture);
   const [files, setFiles] = useState<ReadyFile[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
+  const [ffmpeg, setFfmpeg] = useState<{ ok: boolean; ffmpeg: string | null; ffprobe: string | null; reason: string } | null>(null);
+  const [lastExport, setLastExport] = useState<string | null>(null);
   const setStage = useStudio((state) => state.setStage);
+  useEffect(() => {
+    void desktopMediaDiscover().then(setFfmpeg);
+  }, []);
   const readiness = movieReadiness(picture);
   const lifecycle = movieLifecycle(picture);
   const exportPlan = planPictureExport(picture, null);
   const nextStage = guidedNextStage(picture);
+  const canonicalImported = hydrateVideoWorkspace(picture.video).takes.find((take) => take.canonical && take.origin === "imported" && take.mediaUri);
+  const litePlan = planLiteImportedExport(picture, ffmpeg?.ok ? ffmpeg.ffmpeg : null);
 
   async function pull(file: ReadyFile) {
     setFiles((prev) => {
@@ -982,7 +1021,37 @@ function ExportStage({ picture }: { picture: Picture }) {
         <p className="text-[11px] tracking-wide text-subtle uppercase">Movie readiness</p>
         <h3 className="mt-1 font-display text-xl">Guided finish path</h3>
         <p className="mt-2 text-sm text-muted">{exportPlan.reason}</p>
-        <Button className="mt-3" size="sm" variant="secondary" onClick={() => setStage(nextStage)}>Next recommended · {nextStage}</Button>
+        <p className="mt-2 text-xs text-subtle">{ffmpeg?.reason ?? "Checking local FFmpeg…"} {litePlan.reason}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button className="mt-0" size="sm" variant="secondary" onClick={() => setStage(nextStage)}>Next recommended · {nextStage}</Button>
+          <Button size="sm" disabled={!canonicalImported || !ffmpeg?.ok} onClick={() => {
+            void (async () => {
+              if (!canonicalImported?.mediaUri || !canonicalImported.mediaSha256 || !canonicalImported.probe?.durationSec) {
+                toast.error("Canonical imported video is missing.");
+                return;
+              }
+              const exported = await desktopExportLite({
+                mediaUri: canonicalImported.mediaUri,
+                mediaSha256: canonicalImported.mediaSha256,
+                durationSec: canonicalImported.probe.durationSec,
+                fps: canonicalImported.probe.fps ?? picture.fps ?? 24,
+                hasAudio: canonicalImported.probe.hasAudio,
+              });
+              if (!exported.ok) {
+                toast.error(exported.error);
+                return;
+              }
+              setLastExport(exported.outputPath);
+              toast.success(`Exported imported MP4 ${exported.sha256.slice(0, 12)}…`);
+            })();
+          }}>Export MP4</Button>
+          <Button size="sm" variant="outline" onClick={() => {
+            void desktopOpenExportFolder().then((result) => {
+              if (!result.ok) toast.error(result.error || "Could not open folder");
+            });
+          }}>Open output folder</Button>
+        </div>
+        {lastExport ? <p className="mt-2 truncate text-xs text-subtle" title={lastExport}>Last export {lastExport}</p> : null}
         <ul className="mt-4 grid gap-1 sm:grid-cols-2">
           {readiness.map((item) => (
             <li key={item.id}>

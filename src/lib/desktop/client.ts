@@ -19,6 +19,9 @@ import type {
   SaveManyResult,
   SaveTextInput,
   SaveTextResult,
+  ImportedVideoResult,
+  LiteExportInput,
+  LiteExportResult,
   StillExposeResult,
   SystemStatus,
   DesktopBuildInfo,
@@ -118,4 +121,24 @@ export async function desktopZoomSet(factor: number): Promise<number> {
 export function desktopZoomSubscribe(callback: (factor: number) => void): () => void {
   if (!isDesktopApp()) return () => {};
   return window.premiere316!.zoom.onChanged(callback);
+}
+
+export async function desktopMediaDiscover(): Promise<{ ok: boolean; ffmpeg: string | null; ffprobe: string | null; reason: string }> {
+  if (!isDesktopApp()) return { ok: false, ffmpeg: null, ffprobe: null, reason: "FFmpeg discovery is available only in the packaged desktop application." };
+  return window.premiere316!.media.discover();
+}
+
+export async function desktopImportVideo(): Promise<ImportedVideoResult> {
+  if (!isDesktopApp()) return { ok: false, canceled: false, error: "Video import is available only in the packaged desktop application." };
+  return window.premiere316!.media.importVideo();
+}
+
+export async function desktopExportLite(input: LiteExportInput): Promise<LiteExportResult> {
+  if (!isDesktopApp()) return { ok: false, error: "MP4 export is available only in the packaged desktop application." };
+  return window.premiere316!.media.exportLite(input);
+}
+
+export async function desktopOpenExportFolder(): Promise<{ ok: boolean; folder: string; error: string | null; lastExportPath: string | null }> {
+  if (!isDesktopApp()) return { ok: false, folder: "", error: "Open folder is available only in the packaged desktop application.", lastExportPath: null };
+  return window.premiere316!.media.openFolder();
 }

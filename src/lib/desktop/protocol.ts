@@ -96,6 +96,37 @@ export type SaveManyResult = { canceled: true } | { canceled: false; count: numb
 
 export type FolderPickResult = { canceled: true } | { canceled: false; label: string };
 
+export type ImportedVideoProbe = {
+  ok: boolean;
+  durationSec: number | null;
+  fps: number | null;
+  frameCount: number | null;
+  width: number | null;
+  height: number | null;
+  codec: string | null;
+  container: string | null;
+  hasAudio: boolean;
+  byteLength: number;
+  error: string | null;
+};
+
+export type ImportedVideoResult =
+  | { ok: true; canceled: false; origin: "imported"; filename: string; mediaUri: string; mediaSha256: string; byteLength: number; probe: ImportedVideoProbe }
+  | { ok: false; canceled: true }
+  | { ok: false; canceled: false; error: string };
+
+export type LiteExportInput = {
+  mediaUri: string;
+  mediaSha256: string;
+  durationSec: number;
+  fps: number;
+  hasAudio: boolean;
+};
+
+export type LiteExportResult =
+  | { ok: true; origin: "imported"; outputPath: string; outputDir: string; sha256: string; byteLength: number; probe: ImportedVideoProbe; sourceSha256: string; ffmpeg: string; ffprobe: string }
+  | { ok: false; error: string };
+
 export type SystemStatus = {
   sampledAt: number;
   cpu: {
@@ -151,6 +182,12 @@ export type Premiere316Desktop = {
     saveText: (input: SaveTextInput) => Promise<SaveTextResult>;
     saveMany: (input: SaveManyInput) => Promise<SaveManyResult>;
   };
+  media: {
+    discover: () => Promise<{ ok: boolean; ffmpeg: string | null; ffprobe: string | null; reason: string }>;
+    importVideo: () => Promise<ImportedVideoResult>;
+    exportLite: (input: LiteExportInput) => Promise<LiteExportResult>;
+    openFolder: () => Promise<{ ok: boolean; folder: string; error: string | null; lastExportPath: string | null }>;
+  };
   files: {
     fromDrop: (file: File) => Promise<OpenImage | null>;
   };
@@ -205,4 +242,8 @@ export const DESKTOP_CHANNELS = {
   zoomGet: "p316:zoom:get",
   zoomSet: "p316:zoom:set",
   zoomChanged: "p316:zoom:changed",
+  mediaDiscover: "p316:media:discover",
+  mediaImportVideo: "p316:media:importVideo",
+  mediaExportLite: "p316:media:exportLite",
+  mediaOpenFolder: "p316:media:openFolder",
 } as const;

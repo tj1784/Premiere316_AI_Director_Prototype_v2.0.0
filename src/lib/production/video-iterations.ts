@@ -157,6 +157,8 @@ export function recordImportedVideoTake(workspace: VideoWorkspace, input: {
   fps?: number | null;
   width?: number | null;
   height?: number | null;
+  codec?: string | null;
+  hasAudio?: boolean;
   now?: number;
 }): VideoWorkspace {
   if (!/^[a-f0-9]{64}$/.test(input.mediaSha256)) throw new Error("Imported video requires a SHA-256.");
@@ -169,8 +171,8 @@ export function recordImportedVideoTake(workspace: VideoWorkspace, input: {
     frameCount: Math.max(1, Math.round(input.durationSec * (input.fps ?? 24))),
     width: input.width ?? null,
     height: input.height ?? null,
-    codec: null,
-    hasAudio: false,
+    codec: input.codec ?? null,
+    hasAudio: input.hasAudio === true,
     byteLength: input.byteLength,
     error: null,
   };

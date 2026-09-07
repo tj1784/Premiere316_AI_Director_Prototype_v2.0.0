@@ -26,4 +26,8 @@ module.exports = {
   zoomGet: "p316:zoom:get",
   zoomSet: "p316:zoom:set",
   zoomChanged: "p316:zoom:changed",
+  mediaDiscover: "p316:media:discover",
+  mediaImportVideo: "p316:media:importVideo",
+  mediaExportLite: "p316:media:exportLite",
+  mediaOpenFolder: "p316:media:openFolder",
 };

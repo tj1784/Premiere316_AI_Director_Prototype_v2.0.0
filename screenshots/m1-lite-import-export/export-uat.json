@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "ffmpeg": "C:\\Users\\teeja\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.1-full_build\\bin\\ffmpeg.exe",
+  "ffprobe": "C:\\Users\\teeja\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.1-full_build\\bin\\ffprobe.exe",
+  "imported": true,
+  "canonical": true,
+  "timeline": true,
+  "exported": true,
+  "outputPath": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-m1-lite-jvTMcK\\exports\\m1-lite-20260907223833.mp4",
+  "outputSha256": "d5378dee812906397761fe6c48aab759c84d94a0208a11847b50479390193d5d",
+  "network": {
+    "port8188": 0,
+    "completionPosts": 0,
+    "cloudInference": 0
+  },
+  "error": null,
+  "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-m1-lite-jvTMcK",
+  "outputBytes": 93934
+}
