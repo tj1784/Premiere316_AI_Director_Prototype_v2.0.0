@@ -1,0 +1,45 @@
+{
+  "exe": {
+    "path": "dist-desktop/win-unpacked/Premiere316.exe",
+    "bytes": 205438464,
+    "sha256": "e0a37bbfb72b6c744fe5062a047d68c8dabd4d89ad5d846d2b8f7f14c8a0501c"
+  },
+  "installer": {
+    "path": "dist-desktop/Premiere316-Setup.exe",
+    "bytes": 88919634,
+    "sha256": "5a396fc46b893e6450f5fd3d5a201213ceb8d9625025fc2bf83e104e1fea9c53"
+  },
+  "qwen3": {
+    "path": "dist-desktop/win-unpacked/resources/workers/qwen3_tts_jsonl_worker.py",
+    "bytes": 1613,
+    "sha256": "de2bfb27d9aab8ed0f9b23d1ac1e45b60cdea599852b29d5cf9ce851442ccdda"
+  },
+  "voxcpm2": {
+    "path": "dist-desktop/win-unpacked/resources/workers/voxcpm2_jsonl_worker.py",
+    "bytes": 1533,
+    "sha256": "85891b957bf1f49033a798268182c80907281fda466b059a57cbd08ee1867513"
+  },
+  "music3": {
+    "path": "dist-desktop/win-unpacked/resources/workers/music3_jsonl_worker.py",
+    "bytes": 1553,
+    "sha256": "17787c33a0032ab5d81c759e0cfaab01afeb587048621a447d3471d11c47561f"
+  },
+  "h3": {
+    "path": "dist-desktop/win-unpacked/resources/workers/minimax_h3_jsonl_worker.py",
+    "bytes": 1649,
+    "sha256": "0174c5868abe9649c4150264623c0467a0b5111d6f60c8b9611cf58c88d0ca08"
+  },
+  "ltx": {
+    "path": "dist-desktop/win-unpacked/resources/workers/ltx25_jsonl_worker.py",
+    "bytes": 1604,
+    "sha256": "0c2c76597683a0dd567f4ab8ea51090703f52b471734905cab82c2affb9d008d"
+  },
+  "buildInfo": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260907203242-2d8c881051d4",
+    "buildTimestamp": "2026-09-07T20:32:42.613Z",
+    "rendererSourceHash": "2d8c881051d45a2fbd608dd7d0b9f079a4034e51830181e09f8276bdc14c4d1f",
+    "rendererMode": "PACKAGED DIST"
+  }
+}

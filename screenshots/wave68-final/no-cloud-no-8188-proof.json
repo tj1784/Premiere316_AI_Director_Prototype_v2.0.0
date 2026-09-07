@@ -1,0 +1,24 @@
+{
+  "ok": true,
+  "packagedSmoke": {
+    "probed8080": 0,
+    "completionPosts": 0
+  },
+  "visual": {
+    "ok": true,
+    "shots": 28
+  },
+  "workersRefuseGenerate": [
+    "qwen3-tts",
+    "voxcpm2",
+    "music3",
+    "minimax-h3",
+    "ltx-2.5"
+  ],
+  "notObserved": [
+    "no :8188",
+    "no Comfy graph",
+    "no cloud TTS",
+    "no /v1/chat/completions"
+  ]
+}
