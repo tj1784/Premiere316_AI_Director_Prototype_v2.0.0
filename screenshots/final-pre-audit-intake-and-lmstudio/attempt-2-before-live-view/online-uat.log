@@ -1,0 +1,41 @@
+online: clicking Build Movie Plan in packaged app
+{
+  "ok": false,
+  "startedAt": 1788893289705,
+  "skipped": false,
+  "packaged": true,
+  "onlineVerified": false,
+  "researchGenerated": false,
+  "screenplayGenerated": false,
+  "qaGenerated": false,
+  "assetsExtracted": false,
+  "noSilentFallback": false,
+  "actualProviderCalls": 1,
+  "errors": [],
+  "build": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260908184031-55bfd1c1c00c",
+    "buildTimestamp": "2026-09-08T18:40:31.513Z",
+    "rendererSourceHash": "55bfd1c1c00c959a74c98eb083f60ee1481a57fe62cf5fc49af338c3b74c5693",
+    "rendererMode": "PACKAGED DIST"
+  },
+  "error": "page.waitForFunction: Target page, context or browser has been closed\n    at D:\\Projects\\Premiere316_v3\\scripts\\final-pre-audit-uat.mjs:101:16",
+  "endedAt": 1788893557874,
+  "providerModels": [
+    "llama-3.3-70b-instruct"
+  ],
+  "network": {
+    "verified": true,
+    "port8188": 0,
+    "cloud": 0,
+    "web": 1,
+    "comfy": 0,
+    "external": [
+      "https://grok.com/grok-app-builder/extensions.js"
+    ],
+    "scope": "Renderer requests and LM Studio server request logs; not an OS-wide or all-server egress capture"
+  },
+  "functionalPassed": false,
+  "greenEligible": false
+}

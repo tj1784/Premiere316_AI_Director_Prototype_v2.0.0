@@ -1,10 +1,59 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
+import ts from "typescript";
+import { livePackagedUatPassed } from "./pre-audit-evidence.mjs";
 
 function source(path) {
   return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
+
+test("GREEN requires successful live packaged provider and artifact evidence", () => {
+  assert.equal(livePackagedUatPassed({ ok: false, skipped: true }), false);
+  assert.equal(livePackagedUatPassed({ ok: true, offlineHonest: true }), false);
+  const live = { ok: true, skipped: false, packaged: true, onlineVerified: true, actualProviderCalls: 8,
+    researchGenerated: true, screenplayGenerated: true, qaGenerated: true, assetsExtracted: true,
+    noSilentFallback: true, network: { verified: true, cloud: 0, web: 0, comfy: 0, port8188: 0 } };
+  assert.equal(livePackagedUatPassed(live), true);
+  for (const key of ["packaged", "onlineVerified", "researchGenerated", "screenplayGenerated", "qaGenerated", "assetsExtracted", "noSilentFallback"]) {
+    assert.equal(livePackagedUatPassed({ ...live, [key]: false }), false, key);
+  }
+  assert.equal(livePackagedUatPassed({ ...live, actualProviderCalls: 0 }), false);
+  assert.equal(livePackagedUatPassed({ ...live, network: { ...live.network, verified: false } }), false);
+  assert.equal(livePackagedUatPassed({ ...live, network: { ...live.network, web: 1 } }), false);
+});
+
+test("Intake keeps optional fields inside a closed disclosure and the idea/action/review outside", () => {
+  const file = ts.createSourceFile("stage-views.tsx", source("src/components/studio/stage-views.tsx"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const intake = file.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === "IntakeStage");
+  assert.ok(intake);
+  const disclosures = [];
+  const visit = (node) => {
+    if (ts.isJsxElement(node) && node.openingElement.tagName.getText(file) === "details") disclosures.push(node);
+    ts.forEachChild(node, visit);
+  };
+  visit(intake);
+  assert.equal(disclosures.length, 1);
+  const details = disclosures[0];
+  assert.equal(details.openingElement.attributes.properties.some((attr) => attr.name?.getText(file) === "open"), false);
+  const optional = details.getText(file);
+  for (const field of ["Source mode", "Title", "Logline", "Premise", "Treatment / Outline", "Existing screenplay", "Source material", "Source passages / references", "Genre", "Runtime (min)", "Tone", "Director notes"]) {
+    assert.ok(optional.includes(field), `${field} must remain inside Optional details`);
+  }
+  const primary = intake.getText(file).replace(optional, "");
+  assert.match(optional, />Optional details<\/summary>/);
+  assert.match(primary, /What are we making\?/);
+  assert.match(primary, /Build Movie Plan/);
+  assert.match(primary, /Review and approve every production phase/);
+  assert.doesNotMatch(primary, /<Field|<Label>(?:Logline|Premise|Director notes)/);
+  assert.doesNotMatch(optional, /Build Movie Plan|What are we making\?/);
+});
+
+test("New Picture opens Intake without a mandatory title or creation form", () => {
+  const home = source("src/components/studio/home.tsx");
+  assert.match(home, /onNew=\{\(\) => newPicture\(makePictureIntake\(\)\)\}/);
+  assert.doesNotMatch(home, /PictureIntakeForm|setIntakeOpen/);
+});
 
 test("director runtime fails closed outside packaged prepared-asset inference", () => {
   const director = source("src/lib/ai/director.ts");

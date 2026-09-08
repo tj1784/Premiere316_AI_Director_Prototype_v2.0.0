@@ -1,0 +1,105 @@
+
+> app-builder-workspace@3.0.2 build
+> node scripts/with-app-env.mjs vite build && npm run db:migrate
+
+[nitro:vercel] i Using nodejs24.x runtime.
+[nitro:vercel] i Using web entry format.
+vite v8.2.2 building client environment for production...
+transforming...
+✓ 1955 modules transformed.
+rendering chunks...
+computing gzip size...
+.vercel/output/static/assets/styles-DoIWHL_K.css          41.38 kB │ gzip:   8.40 kB
+.vercel/output/static/assets/client-DEgOZ_bV.js            0.07 kB │ gzip:   0.08 kB
+.vercel/output/static/assets/model-registry-CVciIiHo.js    0.21 kB │ gzip:   0.19 kB
+.vercel/output/static/assets/index-3pYxzUDy.js           434.58 kB │ gzip: 134.09 kB
+.vercel/output/static/assets/routes-C-irPNn-.js          469.78 kB │ gzip: 128.14 kB
+
+[INEFFECTIVE_DYNAMIC_IMPORT] src/lib/desktop/client.ts is dynamically imported by src/components/studio/stage-views.tsx but also statically imported by src/components/production/prepared-assets-panel.tsx, src/components/studio/bin.tsx, src/components/studio/interface-scale.tsx, src/components/studio/stage-views.tsx, src/components/studio/system-context.tsx, dynamic import will not move module into another chunk.
+
+✓ built in 1.13s
+vite v8.2.2 building ssr environment for production...
+transforming...
+✓ 176 modules transformed.
+rendering chunks...
+computing gzip size...
+node_modules/.nitro/vite/services/ssr/assets/styles-DoIWHL_K.css                      41.38 kB │ gzip:   8.40 kB
+node_modules/.nitro/vite/services/ssr/assets/client-C_xZM7KF.js                        0.09 kB │ gzip:   0.09 kB
+node_modules/.nitro/vite/services/ssr/assets/start-5Z2QO8AU.js                         0.14 kB │ gzip:   0.13 kB
+node_modules/.nitro/vite/services/ssr/assets/empty-plugin-adapters-D9UWiqvJ.js         0.22 kB │ gzip:   0.16 kB
+node_modules/.nitro/vite/services/ssr/assets/createServerRpc-A6pJPYTF.js               0.38 kB │ gzip:   0.26 kB
+node_modules/.nitro/vite/services/ssr/assets/model-registry-XDrRj-kd.js                0.42 kB │ gzip:   0.30 kB
+node_modules/.nitro/vite/services/ssr/assets/_tanstack-start-manifest_v-Cfv9TkIX.js    0.50 kB │ gzip:   0.29 kB
+node_modules/.nitro/vite/services/ssr/assets/model-registry-BDbnLCh0.js                0.96 kB │ gzip:   0.48 kB
+node_modules/.nitro/vite/services/ssr/assets/movie-plan-api-DBIS7LbJ.js                2.10 kB │ gzip:   0.92 kB
+node_modules/.nitro/vite/services/ssr/assets/model-catalog-B1grMz8f.js                 2.13 kB │ gzip:   0.93 kB
+node_modules/.nitro/vite/services/ssr/assets/screenplay-api-DLy4UerI.js                5.90 kB │ gzip:   1.70 kB
+node_modules/.nitro/vite/services/ssr/assets/lmstudio-provider.server-0YQ-AYy7.js     12.31 kB │ gzip:   3.79 kB
+node_modules/.nitro/vite/services/ssr/assets/router-C_K3WlnW.js                       12.40 kB │ gzip:   4.23 kB
+node_modules/.nitro/vite/services/ssr/assets/bible-D3IVg9KV.js                        12.77 kB │ gzip:   3.90 kB
+node_modules/.nitro/vite/services/ssr/assets/screenplay-models-ZBsrgB2T.js            12.98 kB │ gzip:   4.57 kB
+node_modules/.nitro/vite/services/ssr/assets/screenplay-jobs.server-_f0F03q5.js       14.61 kB │ gzip:   4.00 kB
+node_modules/.nitro/vite/services/ssr/assets/screenplay-qa-Dv5VAvbM.js                31.84 kB │ gzip:   8.44 kB
+node_modules/.nitro/vite/services/ssr/assets/model-scan.server-BKPrfw1i.js            36.37 kB │ gzip:   9.86 kB
+node_modules/.nitro/vite/services/ssr/index.js                                        70.38 kB │ gzip:  18.04 kB
+node_modules/.nitro/vite/services/ssr/assets/movie-plan-stream-B_VPdROe.js           145.86 kB │ gzip:  36.93 kB
+node_modules/.nitro/vite/services/ssr/assets/routes-CgL74nnS.js                      500.26 kB │ gzip: 104.13 kB
+
+[INEFFECTIVE_DYNAMIC_IMPORT] src/lib/desktop/client.ts is dynamically imported by src/components/studio/stage-views.tsx but also statically imported by src/components/production/prepared-assets-panel.tsx, src/components/studio/bin.tsx, src/components/studio/interface-scale.tsx, src/components/studio/stage-views.tsx, src/components/studio/system-context.tsx, dynamic import will not move module into another chunk.
+
+✓ built in 271ms
+
+[nitro] o Building [Nitro] (preset: vercel, compatibility: 2026-09-03)
+[nitro] √ Generated public .vercel/output/static
+vite v8.2.2 building nitro environment for production...
+transforming...
+✓ 1892 modules transformed.
+rendering chunks...
+computing gzip size...
+.vercel/output/functions/__server.func/_ssr/client-C_xZM7KF.mjs                        0.09 kB │ gzip:   0.09 kB
+.vercel/output/functions/__server.func/_ssr/start-5Z2QO8AU.mjs                         0.14 kB │ gzip:   0.13 kB
+.vercel/output/functions/__server.func/_ssr/empty-plugin-adapters-D9UWiqvJ.mjs         0.23 kB │ gzip:   0.16 kB
+.vercel/output/functions/__server.func/_ssr/createServerRpc-A6pJPYTF.mjs               0.38 kB │ gzip:   0.26 kB
+.vercel/output/functions/__server.func/_ssr/model-registry-XDrRj-kd.mjs                0.46 kB │ gzip:   0.32 kB
+.vercel/output/functions/__server.func/_tanstack-start-manifest_v-Cfv9TkIX.mjs         0.56 kB │ gzip:   0.33 kB
+.vercel/output/functions/__server.func/_chunks/ssr-renderer.mjs                        0.96 kB │ gzip:   0.49 kB
+.vercel/output/functions/__server.func/_ssr/model-registry-BDbnLCh0.mjs                0.98 kB │ gzip:   0.51 kB
+.vercel/output/functions/__server.func/_runtime.mjs                                    1.58 kB │ gzip:   0.74 kB
+.vercel/output/functions/__server.func/_ssr/model-catalog-B1grMz8f.mjs                 2.17 kB │ gzip:   0.96 kB
+.vercel/output/functions/__server.func/_ssr/movie-plan-api-DBIS7LbJ.mjs                2.18 kB │ gzip:   0.97 kB
+.vercel/output/functions/__server.func/_libs/class-variance-authority+clsx.mjs         3.17 kB │ gzip:   1.24 kB
+.vercel/output/functions/__server.func/_libs/radix-ui__react-slot.mjs                  5.61 kB │ gzip:   1.73 kB
+.vercel/output/functions/__server.func/_ssr/screenplay-api-DLy4UerI.mjs                5.92 kB │ gzip:   1.72 kB
+.vercel/output/functions/__server.func/_libs/zustand.mjs                               6.72 kB │ gzip:   2.08 kB
+.vercel/output/functions/__server.func/_libs/h3-v2+rou3.mjs                            9.83 kB │ gzip:   3.05 kB
+.vercel/output/functions/__server.func/_libs/tanstack__history.mjs                    12.05 kB │ gzip:   3.46 kB
+.vercel/output/functions/__server.func/_ssr/lmstudio-provider.server-0YQ-AYy7.mjs     12.35 kB │ gzip:   3.83 kB
+.vercel/output/functions/__server.func/_ssr/bible-D3IVg9KV.mjs                        12.62 kB │ gzip:   3.91 kB
+.vercel/output/functions/__server.func/_ssr/router-C_K3WlnW.mjs                       12.87 kB │ gzip:   4.36 kB
+.vercel/output/functions/__server.func/_ssr/screenplay-models-ZBsrgB2T.mjs            12.96 kB │ gzip:   4.59 kB
+.vercel/output/functions/__server.func/_ssr/screenplay-jobs.server-_f0F03q5.mjs       14.59 kB │ gzip:   4.03 kB
+.vercel/output/functions/__server.func/_libs/@radix-ui/react-compose-refs+[...].mjs   16.79 kB │ gzip:   4.66 kB
+.vercel/output/functions/__server.func/_libs/h3+rou3+srvx.mjs                         22.57 kB │ gzip:   6.12 kB
+.vercel/output/functions/__server.func/_libs/lucide-react.mjs                         24.70 kB │ gzip:   5.06 kB
+.vercel/output/functions/__server.func/_ssr/screenplay-qa-Dv5VAvbM.mjs                31.66 kB │ gzip:   8.44 kB
+.vercel/output/functions/__server.func/index.mjs                                      32.92 kB │ gzip:  10.28 kB
+.vercel/output/functions/__server.func/_ssr/model-scan.server-BKPrfw1i.mjs            36.35 kB │ gzip:   9.88 kB
+.vercel/output/functions/__server.func/_libs/sonner.mjs                               53.69 kB │ gzip:  12.13 kB
+.vercel/output/functions/__server.func/_ssr/ssr.mjs                                   68.65 kB │ gzip:  17.99 kB
+.vercel/output/functions/__server.func/_libs/tailwind-merge.mjs                       88.13 kB │ gzip:  15.66 kB
+.vercel/output/functions/__server.func/_libs/@tanstack/router-core+[...].mjs         122.94 kB │ gzip:  25.89 kB
+.vercel/output/functions/__server.func/_ssr/movie-plan-stream-B_VPdROe.mjs           145.11 kB │ gzip:  36.80 kB
+.vercel/output/functions/__server.func/_libs/zod.mjs                                 159.58 kB │ gzip:  34.87 kB
+.vercel/output/functions/__server.func/_ssr/routes-CgL74nnS.mjs                      538.96 kB │ gzip: 104.98 kB
+.vercel/output/functions/__server.func/_libs/@tanstack/react-router+[...].mjs        660.86 kB │ gzip: 138.70 kB
+
+✓ built in 228ms
+i Generated .vercel/output/nitro.json
+
+[nitro] √ You can preview this build using npx vite preview
+[nitro] √ You can deploy this build using npx nitro deploy --prebuilt
+
+> app-builder-workspace@3.0.2 db:migrate
+> node scripts/migrate.mjs
+
+[migrate] DATABASE_URL not set — skipping (the PGLite fallback migrates itself).

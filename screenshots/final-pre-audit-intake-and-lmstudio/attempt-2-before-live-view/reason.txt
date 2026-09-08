@@ -1,0 +1,1 @@
+Deliberately stopped to rebuild the packaged app with the user-requested live model activity view. Not a completed UAT.

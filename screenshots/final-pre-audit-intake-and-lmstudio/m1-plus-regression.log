@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "error": null,
+  "importedVideos": 3,
+  "canonicalVideo": 3,
+  "importedAudio": true,
+  "exported": true,
+  "durationSec": 30,
+  "hasAudio": true,
+  "outputSha256": "1f9f1aa72d7bdce08291d8a143936a48a5f99907fe5f345eee07d97ed0763ef5"
+}

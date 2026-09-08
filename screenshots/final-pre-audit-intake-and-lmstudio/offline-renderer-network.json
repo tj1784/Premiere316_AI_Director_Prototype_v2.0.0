@@ -1,0 +1,34 @@
+[
+  {
+    "url": "http://127.0.0.1:18731/assets/routes-C-irPNn-.js",
+    "method": "GET"
+  },
+  {
+    "url": "https://grok.com/grok-app-builder/extensions.js",
+    "method": "GET"
+  },
+  {
+    "url": "http://127.0.0.1:18731/",
+    "method": "GET"
+  },
+  {
+    "url": "http://127.0.0.1:18731/assets/styles-DoIWHL_K.css",
+    "method": "GET"
+  },
+  {
+    "url": "http://127.0.0.1:18731/assets/index-3pYxzUDy.js",
+    "method": "GET"
+  },
+  {
+    "url": "http://127.0.0.1:18731/assets/routes-C-irPNn-.js",
+    "method": "GET"
+  },
+  {
+    "url": "https://grok.com/grok-app-builder/extensions.js",
+    "method": "GET"
+  },
+  {
+    "url": "http://127.0.0.1:18731/_serverFn/ea6ddb234b935a74c44f7c83c5230881c865f067cd28ae197d79f20796d2ec73",
+    "method": "POST"
+  }
+]

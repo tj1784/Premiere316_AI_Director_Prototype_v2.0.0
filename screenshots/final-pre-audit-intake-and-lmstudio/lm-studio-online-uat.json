@@ -1,0 +1,127 @@
+{
+  "ok": false,
+  "startedAt": 1788893635006,
+  "skipped": false,
+  "packaged": true,
+  "onlineVerified": false,
+  "researchGenerated": true,
+  "screenplayGenerated": false,
+  "qaGenerated": false,
+  "assetsExtracted": false,
+  "noSilentFallback": true,
+  "actualProviderCalls": 2,
+  "errors": [],
+  "build": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260908185301-6e6cab548fb4",
+    "buildTimestamp": "2026-09-08T18:53:01.884Z",
+    "rendererSourceHash": "6e6cab548fb49e1b463e2e24cec752731f596bded46c9394dd3ef41b3f3a11cb",
+    "rendererMode": "PACKAGED DIST"
+  },
+  "streamVisibleBeforeCompletion": true,
+  "flow": {
+    "schemaVersion": 1,
+    "reviewInternalPhases": false,
+    "reviewPhases": {
+      "research": false,
+      "screenplay": false,
+      "screenplayQa": false,
+      "breakdown": false,
+      "visualDevelopment": false,
+      "cinematography": false,
+      "performance": false,
+      "shots": false,
+      "promptLab": false
+    },
+    "steps": [
+      {
+        "id": "research",
+        "status": "draftReady",
+        "message": "Research Bible generated from the configured model."
+      },
+      {
+        "id": "screenplay",
+        "status": "failed",
+        "message": "Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "screenplayQa",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "breakdown",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "visualDevelopment",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "cinematography",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "performance",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "shots",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "promptLab",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      }
+    ],
+    "llamaAvailable": true,
+    "nextTouchpoint": "intake",
+    "lastRunAt": 1788893636777,
+    "executed": true,
+    "servedModelId": "llama-3.3-70b-instruct",
+    "manualFallback": false
+  },
+  "offlineHonest": false,
+  "noDraftReady": false,
+  "assetsVisible": false,
+  "endedAt": 1788894384145,
+  "providerModels": [
+    "llama-3.3-70b-instruct"
+  ],
+  "network": {
+    "verified": true,
+    "cloud": 0,
+    "web": 1,
+    "comfy": 0,
+    "port8188": 0,
+    "external": [
+      {
+        "url": "https://grok.com/grok-app-builder/extensions.js",
+        "method": "GET"
+      }
+    ],
+    "scope": "Renderer requests, LM Studio server logs, and npm test/pack source guards. No OS-wide packet capture; other server egress is not independently traced."
+  },
+  "functionalPassed": false,
+  "greenEligible": false,
+  "providerCalls": [
+    {
+      "timestamp": 1788893636870,
+      "model": "llama-3.3-70b-instruct",
+      "system": "You are Premiere316 research. Return only JSON. Do not browse the web. Do not mention providers or modes."
+    },
+    {
+      "timestamp": 1788894206257,
+      "model": "llama-3.3-70b-instruct",
+      "system": "You are Premiere316 screenwriter. Return JSON { fo... <Truncated in logs> ...ude INT./EXT. sluglines. No web. Separate from QA."
+    }
+  ],
+  "status": "FINAL_PRE_AUDIT_NOT_GREEN"
+}

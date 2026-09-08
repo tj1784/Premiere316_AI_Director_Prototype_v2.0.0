@@ -17,6 +17,8 @@ import {
 import { ENGINES, KIND_LABEL, engineById } from "@/lib/studio/engines";
 import { MODEL_ROOT, type Picture } from "@/lib/studio/types";
 import { AdvancedDepartmentsDashboard, AdvancedDepartmentsRail } from "./advanced-departments";
+import { MoviePlanActivity } from "./movie-plan-activity";
+import type { MoviePlanProgress } from "@/lib/studio/movie-plan-stream.ts";
 import { isAdvancedDashboard } from "@/lib/studio/advanced-departments.ts";
 import { DEFAULT_NAV_STEPS, INTERNAL_PHASES, PHASE_LABELS, PHASE_STAGE, allPhaseReviewsOn, hydrateProductFlow, pausedInternalPhase, PHASE_REVIEW_DEFAULTS, type InternalPhase } from "@/lib/studio/product-flow.ts";
 import { CONFIGURED_MODEL_UNAVAILABLE, MANUAL_FALLBACK_LABEL } from "@/lib/studio/movie-plan-pipeline.ts";
@@ -140,6 +142,8 @@ function IntakeStage({ picture }: { picture: Picture }) {
   const [reviewInternal, setReviewInternal] = useState(flow.reviewInternalPhases);
   const [reviewPhases, setReviewPhases] = useState(flow.reviewPhases);
   const [building, setBuilding] = useState(false);
+  const [activity, setActivity] = useState<MoviePlanProgress[]>([]);
+  const [activityStartedAt, setActivityStartedAt] = useState<number | null>(null);
   const patchIntake = <K extends keyof PictureIntake>(key: K, value: PictureIntake[K]) => {
     const intake = { ...picture.intake, [key]: value, updatedAt: Date.now() };
     patchActive({
@@ -155,11 +159,13 @@ function IntakeStage({ picture }: { picture: Picture }) {
 
   async function buildPlan() {
     setBuilding(true);
+    setActivity([]);
+    setActivityStartedAt(Date.now());
     try {
       const result = await executeMoviePlanOnServer({
         ...picture,
         productFlow: { ...flow, reviewInternalPhases: reviewInternal, reviewPhases },
-      });
+      }, (event) => setActivity((current) => [...current.filter((item) => item.phase !== event.phase), event]));
       replaceActive(result.picture);
       const paused = pausedInternalPhase(result.flow);
       if (paused) {
@@ -180,8 +186,8 @@ function IntakeStage({ picture }: { picture: Picture }) {
     <Pane title="Picture Intake" kicker="01 · Source & intent">
       <div className="grid max-w-3xl gap-5">
         <div>
-          <Label>What are we making?</Label>
-          <Textarea className="mt-1.5 min-h-32 text-base" value={picture.intake.concept || picture.intake.premise || picture.intake.logline} onChange={(event) => patchIntake("concept", event.target.value)} placeholder="2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal…" />
+          <Label htmlFor="movie-idea">What are we making?</Label>
+          <Textarea id="movie-idea" className="mt-1.5 min-h-32 text-base" value={picture.intake.concept || picture.intake.premise || picture.intake.logline} onChange={(event) => patchIntake("concept", event.target.value)} placeholder="2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal…" />
         </div>
         <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
           <label className="flex min-h-11 items-start gap-2 text-sm">
@@ -190,7 +196,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
               setReviewInternal(on);
               setReviewPhases(on ? allPhaseReviewsOn() : { ...PHASE_REVIEW_DEFAULTS });
             }} />
-            <span>I want to review internal phases before Premiere316 continues. Default is off: Research, Screenplay, Inventory, and other departments run in the background.</span>
+            <span>Review and approve every production phase</span>
           </label>
           {reviewInternal ? (
             <div className="mt-3 grid gap-2">
@@ -205,6 +211,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
           ) : null}
         </div>
         <Button className="h-12 text-base" onClick={() => void buildPlan()} disabled={building}>{building ? "Building…" : "Build Movie Plan"}</Button>
+        {activityStartedAt !== null ? <MoviePlanActivity events={activity} startedAt={activityStartedAt} running={building} /> : null}
         {flow.manualFallback || flow.steps.some((step) => step.status === "failed") ? (
           <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" data-movie-plan-blocked="true">
             <p className="text-sm">{flow.steps.find((step) => step.status === "failed")?.message ?? CONFIGURED_MODEL_UNAVAILABLE}</p>
@@ -217,27 +224,37 @@ function IntakeStage({ picture }: { picture: Picture }) {
           </div>
         ) : null}
         {flow.steps.length ? <ul className="grid gap-1 text-sm text-muted">{flow.steps.map((step) => <li key={step.id}>{step.status === "failed" ? "! failed" : step.status === "waitingForOptionalUserReview" ? "⏸ paused" : step.status === "draftReady" ? "· generated" : step.status} — {step.id}: {step.message}</li>)}</ul> : null}
-        <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-          <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Source mode</p>
-          <p className="mt-2 text-sm">{SOURCE_TYPE_LABELS[picture.intake.sourceType]}</p>
-          <p className="mt-1 text-xs text-muted">The original intake and every imported text source remain preserved in version history.</p>
-        </div>
-        <Field label="Title" value={picture.intake.title} onChange={(value) => patchIntake("title", value)} />
-        <div>
-          <Label>Logline</Label>
-          <Textarea className="mt-1.5 min-h-24" value={picture.intake.logline} onChange={(event) => patchIntake("logline", event.target.value)} />
-        </div>
-        {picture.intake.sourceType === "concept" ? <div><Label>Premise</Label><Textarea className="mt-1.5 min-h-32" value={picture.intake.premise} onChange={(event) => patchIntake("premise", event.target.value)} /></div> : null}
-        {picture.intake.sourceType === "treatment" ? <div><Label>Treatment / Outline</Label><Textarea className="mt-1.5 min-h-80" value={picture.intake.treatment} onChange={(event) => patchIntake("treatment", event.target.value)} /></div> : null}
-        {picture.intake.sourceType === "existing-screenplay" ? <div><Label>Existing screenplay</Label><Textarea className="screenplay mt-1.5 min-h-[30rem]" value={picture.intake.existingScreenplay} onChange={(event) => patchIntake("existingScreenplay", event.target.value)} /></div> : null}
-        {picture.intake.sourceType === "source-material" ? <div><Label>Source material</Label><Textarea className="mt-1.5 min-h-80" value={picture.intake.sourceMaterial} onChange={(event) => patchIntake("sourceMaterial", event.target.value)} /></div> : null}
-        {picture.intake.sourceType === "biblical-historical" ? <><div><Label>Source passages / references</Label><Textarea className="mt-1.5" value={picture.intake.sourcePassages} onChange={(event) => patchIntake("sourcePassages", event.target.value)} /></div><div><Label>Supplied Scripture / source text</Label><Textarea className="mt-1.5 min-h-80" value={picture.intake.suppliedSourceText} onChange={(event) => patchIntake("suppliedSourceText", event.target.value)} /></div><div><Label>Fidelity requirements</Label><Textarea className="mt-1.5" value={picture.intake.fidelityRequirements} onChange={(event) => patchIntake("fidelityRequirements", event.target.value)} /></div></> : null}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Genre" value={picture.intake.genre} onChange={(value) => patchIntake("genre", value)} />
-          <Field label="Runtime (min)" value={String(picture.intake.targetRuntimeMinutes)} onChange={(value) => patchIntake("targetRuntimeMinutes", Number(value) || 1)} type="number" />
-        </div>
-        <Field label="Tone" value={picture.intake.tone} onChange={(value) => patchIntake("tone", value)} />
-        <div><Label>Director notes</Label><Textarea className="mt-1.5" value={picture.intake.directorNotes} onChange={(event) => patchIntake("directorNotes", event.target.value)} /></div>
+        <details key={picture.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" data-optional-intake="true">
+          <summary className="min-h-11 cursor-pointer content-center text-sm text-muted">Optional details</summary>
+          <div className="mt-4 grid gap-5">
+            <div>
+              <Label htmlFor="intake-source-mode">Source mode</Label>
+              <select id="intake-source-mode" className="mt-1.5 h-11 w-full rounded-md bg-inset px-3 text-sm text-fg shadow-[var(--shadow-border)]" value={picture.intake.sourceType} onChange={(event) => {
+                const sourceType = event.target.value as PictureIntake["sourceType"];
+                patchActive({ intake: { ...picture.intake, sourceType, workflow: sourceType === "biblical-historical" ? "biblical-7-pass" : picture.intake.workflow === "biblical-7-pass" ? "single" : picture.intake.workflow, updatedAt: Date.now() } });
+              }}>
+                {Object.entries(SOURCE_TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+              <p className="mt-1 text-xs text-muted">The original intake and every imported text source remain preserved in version history.</p>
+            </div>
+            <Field label="Title" value={picture.intake.title} onChange={(value) => patchIntake("title", value)} />
+            <div>
+              <Label>Logline</Label>
+              <Textarea className="mt-1.5 min-h-24" value={picture.intake.logline} onChange={(event) => patchIntake("logline", event.target.value)} />
+            </div>
+            {picture.intake.sourceType === "concept" ? <div><Label>Premise</Label><Textarea className="mt-1.5 min-h-32" value={picture.intake.premise} onChange={(event) => patchIntake("premise", event.target.value)} /></div> : null}
+            {picture.intake.sourceType === "treatment" ? <div><Label>Treatment / Outline</Label><Textarea className="mt-1.5 min-h-80" value={picture.intake.treatment} onChange={(event) => patchIntake("treatment", event.target.value)} /></div> : null}
+            {picture.intake.sourceType === "existing-screenplay" ? <div><Label>Existing screenplay</Label><Textarea className="screenplay mt-1.5 min-h-[30rem]" value={picture.intake.existingScreenplay} onChange={(event) => patchIntake("existingScreenplay", event.target.value)} /></div> : null}
+            {picture.intake.sourceType === "source-material" ? <div><Label>Source material</Label><Textarea className="mt-1.5 min-h-80" value={picture.intake.sourceMaterial} onChange={(event) => patchIntake("sourceMaterial", event.target.value)} /></div> : null}
+            {picture.intake.sourceType === "biblical-historical" ? <><div><Label>Source passages / references</Label><Textarea className="mt-1.5" value={picture.intake.sourcePassages} onChange={(event) => patchIntake("sourcePassages", event.target.value)} /></div><div><Label>Supplied Scripture / source text</Label><Textarea className="mt-1.5 min-h-80" value={picture.intake.suppliedSourceText} onChange={(event) => patchIntake("suppliedSourceText", event.target.value)} /></div><div><Label>Fidelity requirements</Label><Textarea className="mt-1.5" value={picture.intake.fidelityRequirements} onChange={(event) => patchIntake("fidelityRequirements", event.target.value)} /></div></> : null}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Genre" value={picture.intake.genre} onChange={(value) => patchIntake("genre", value)} />
+              <Field label="Runtime (min)" value={String(picture.intake.targetRuntimeMinutes)} onChange={(value) => patchIntake("targetRuntimeMinutes", Number(value) || 1)} type="number" />
+            </div>
+            <Field label="Tone" value={picture.intake.tone} onChange={(value) => patchIntake("tone", value)} />
+            <div><Label>Director notes</Label><Textarea className="mt-1.5" value={picture.intake.directorNotes} onChange={(event) => patchIntake("directorNotes", event.target.value)} /></div>
+          </div>
+        </details>
       </div>
     </Pane>
   );

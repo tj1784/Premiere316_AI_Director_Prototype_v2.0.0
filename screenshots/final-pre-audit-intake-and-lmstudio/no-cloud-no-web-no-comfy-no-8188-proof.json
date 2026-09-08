@@ -1,0 +1,19 @@
+{
+  "ok": false,
+  "greenEligible": false,
+  "buildId": "p316-20260908185301-6e6cab548fb4",
+  "noCloudInferenceObserved": true,
+  "noComfyObserved": true,
+  "no8188Observed": true,
+  "noWeb": false,
+  "actualProviderCalls": 2,
+  "providerModels": [
+    "llama-3.3-70b-instruct"
+  ],
+  "externalUrls": [
+    "https://grok.com/grok-app-builder/extensions.js"
+  ],
+  "scope": "Renderer requests, LM Studio server logs, and npm test/pack source guards. No OS-wide packet capture; other server egress is not independently traced.",
+  "sourceChecks": "npm test: no-cloud-runtime, model selection, phase-review, and pipeline guards; electron:pack: forbidden legacy runtime markers audit",
+  "knownLimitation": "Packaged renderer requests the existing Grok branding extension; strict no-web requirement is not satisfied."
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "url": "http://127.0.0.1:18731/assets/routes-C-irPNn-.js",
+    "method": "GET"
+  },
+  {
+    "url": "https://grok.com/grok-app-builder/extensions.js",
+    "method": "GET"
+  },
+  {
+    "url": "http://127.0.0.1:18731/_serverFn/ea6ddb234b935a74c44f7c83c5230881c865f067cd28ae197d79f20796d2ec73",
+    "method": "POST"
+  },
+  {
+    "url": "http://127.0.0.1:18731/_serverFn/2a1714aacb81a4342a0990e222ff08aee78e95315b862eb963c64e598ae16bac",
+    "method": "POST"
+  },
+  {
+    "url": "http://127.0.0.1:18731/_serverFn/2a1714aacb81a4342a0990e222ff08aee78e95315b862eb963c64e598ae16bac",
+    "method": "POST"
+  }
+]

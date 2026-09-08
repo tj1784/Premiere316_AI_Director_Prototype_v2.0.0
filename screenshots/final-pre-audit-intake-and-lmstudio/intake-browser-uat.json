@@ -1,0 +1,32 @@
+{
+  "ok": true,
+  "startedAt": 1788893624082,
+  "skipped": false,
+  "packaged": false,
+  "onlineVerified": false,
+  "researchGenerated": false,
+  "screenplayGenerated": false,
+  "qaGenerated": false,
+  "assetsExtracted": false,
+  "noSilentFallback": false,
+  "actualProviderCalls": 0,
+  "errors": [],
+  "defaultOnlyIdeaActionReview": true,
+  "optionalCollapsed": true,
+  "optionalFieldsPreserved": true,
+  "endedAt": 1788893627673,
+  "providerModels": [],
+  "network": {
+    "verified": false,
+    "port8188": 0,
+    "cloud": 0,
+    "web": 2,
+    "comfy": 0,
+    "external": [
+      "https://grok.com/grok-app-builder/extensions.js",
+      "https://grok.com/grok-app-builder/extensions.js"
+    ],
+    "scope": "Renderer requests and LM Studio server request logs; not an OS-wide or all-server egress capture"
+  },
+  "functionalPassed": true
+}

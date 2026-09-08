@@ -1,0 +1,331 @@
+{
+  "id": "pic_kny6i8pl5s",
+  "title": "Xenogears",
+  "logline": "2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal, with Fei and Elly escaping a desert battle.",
+  "genre": "Drama",
+  "tone": "Cinematic, naturalistic, restrained",
+  "format": "16:9",
+  "fps": 24,
+  "runtimeMinutes": 90,
+  "createdAt": 1788893010784,
+  "updatedAt": 1788893011982,
+  "stage": "intake",
+  "intake": {
+    "schemaVersion": 1,
+    "sourceType": "concept",
+    "title": "Xenogears",
+    "concept": "2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal, with Fei and Elly escaping a desert battle.",
+    "premise": "2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal, with Fei and Elly escaping a desert battle.",
+    "logline": "2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal, with Fei and Elly escaping a desert battle.",
+    "storyNotes": "",
+    "treatment": "",
+    "existingScreenplay": "",
+    "existingScreenplayMode": "use-as-is",
+    "sourceMaterial": "",
+    "adaptationInstructions": "",
+    "materialToPreserve": "",
+    "materialMayDramatize": "",
+    "sourcePassages": "",
+    "suppliedSourceText": "",
+    "fidelityRequirements": "",
+    "historicalPeriod": "",
+    "culturalSocialWorld": "",
+    "adaptationBoundaries": "",
+    "importedSources": [],
+    "targetRuntimeMinutes": 90,
+    "genre": "Drama",
+    "tone": "Cinematic, naturalistic, restrained",
+    "audienceRating": "",
+    "aspectRatio": "16:9",
+    "frameRate": 24,
+    "productionStyle": "Live-action photoreal",
+    "directorNotes": "",
+    "dialogueStyle": "",
+    "storyConstraints": "",
+    "mustInclude": "",
+    "mustAvoid": "",
+    "workflow": "single",
+    "screenplayModelId": null,
+    "socialWorld": [],
+    "createdAt": 1788893010784,
+    "updatedAt": 1788893011982
+  },
+  "screenplay": {
+    "schemaVersion": 1,
+    "workflow": "single",
+    "selectedModelId": null,
+    "pinnedWriterServedId": null,
+    "pinnedQaServedId": null,
+    "status": "DRAFT",
+    "versions": [
+      {
+        "id": "pic_kny6i8pl5s:intake:1788893010784",
+        "label": "Original Intake",
+        "kind": "original-intake",
+        "fountain": "",
+        "createdAt": 1788893010784,
+        "model": null,
+        "workflow": "single",
+        "pass": null,
+        "sourceVersionId": null,
+        "settings": null
+      }
+    ],
+    "currentVersionId": "pic_kny6i8pl5s:intake:1788893010784",
+    "approvedVersionId": null,
+    "workingFountain": "",
+    "generation": null,
+    "lastTelemetry": null,
+    "lastQaReport": null,
+    "updatedAt": 1788893010784,
+    "crewProfile": {
+      "schemaVersion": 1,
+      "defaultFamily": "llama",
+      "optionalFamily": "qwen",
+      "writer": {
+        "role": "writer",
+        "family": "llama",
+        "preferredModelKey": "llama-3.3-70b-instruct",
+        "pinnedServedId": null,
+        "executionEnabled": true,
+        "sameResidentAllowed": true
+      },
+      "qa": {
+        "role": "qa-critic",
+        "family": "llama",
+        "preferredModelKey": "llama-3.3-70b-instruct",
+        "pinnedServedId": null,
+        "executionEnabled": true,
+        "sameResidentAllowed": true
+      },
+      "promptEngineer": {
+        "role": "prompt-engineer",
+        "family": "llama",
+        "preferredModelKey": "llama-3.3-70b-instruct",
+        "pinnedServedId": null,
+        "executionEnabled": false,
+        "sameResidentAllowed": true
+      },
+      "flags": {
+        "neverAutoLoad": true,
+        "neverAutoStartServer": true,
+        "neverDualLoad": true,
+        "neverAutoRunBoth": true,
+        "sequentialReuse": true,
+        "physicalUnload": "explicit-stage-or-workflow-boundary"
+      }
+    },
+    "preferredWriterKey": "llama-3.3-70b-instruct",
+    "pinnedCompilerServedId": null,
+    "activeLogicalRole": null,
+    "residentSession": null,
+    "hierarchy": null,
+    "lastRoleTelemetry": []
+  },
+  "lastOpenedStage": "intake",
+  "thumbnailUrl": null,
+  "research": {
+    "schemaVersion": 1,
+    "status": "DRAFT",
+    "scope": "whole-picture",
+    "content": {
+      "mode": "local-only",
+      "sources": [],
+      "disputes": [],
+      "socialWorldNotes": [],
+      "cinematographyManifesto": {
+        "thesis": "",
+        "lensLanguage": "",
+        "lighting": "",
+        "geography": "",
+        "movement": "",
+        "texture": "",
+        "soundWorld": "",
+        "musicResearch": ""
+      },
+      "risks": "",
+      "feasibility": "",
+      "notes": "",
+      "sections": {
+        "sourceCanonLedger": "",
+        "worldOverview": "",
+        "characters": "",
+        "locations": "",
+        "storyTheme": "",
+        "audienceContext": "",
+        "visualIdentity": "",
+        "productionDesign": "",
+        "costumeProps": "",
+        "cinematographyResearch": "",
+        "soundMusicWorld": "",
+        "risksDisputes": "",
+        "aiProductionFeasibility": "",
+        "confidenceLedger": ""
+      }
+    },
+    "versions": [],
+    "currentVersionId": null,
+    "approvedVersionId": null,
+    "approvedAt": null,
+    "updatedAt": 1788893010784
+  },
+  "visualDevelopment": {
+    "schemaVersion": 1,
+    "boards": [
+      {
+        "id": "board:pic_kny6i8pl5s:look",
+        "title": "Picture look bible",
+        "intent": "Cinematic, naturalistic, restrained",
+        "palette": [
+          "wet charcoal",
+          "warm practical",
+          "salt grey"
+        ],
+        "motifs": [
+          "faces held past comfort",
+          "practical light islands"
+        ],
+        "referenceSlots": [],
+        "status": "DRAFT",
+        "approvedVersionId": null
+      }
+    ],
+    "characterBibles": [],
+    "wardrobeStates": [],
+    "locationBibles": [],
+    "propBibles": [],
+    "versions": [],
+    "approvals": [],
+    "driftChecks": [],
+    "updatedAt": 1788893010784
+  },
+  "cinematography": {
+    "schemaVersion": 1,
+    "manifestoVersions": [
+      {
+        "id": "cine-manifesto:pic_kny6i8pl5s:v1",
+        "createdAt": 1788893010784,
+        "thesis": "Cinematic, naturalistic, restrained",
+        "hash": "686a4eb8",
+        "approved": false,
+        "sourceFingerprints": [
+          {
+            "sourceKind": "cinematography",
+            "sourceId": "pic_kny6i8pl5s",
+            "versionId": null,
+            "hash": "686a4eb8",
+            "approvedAt": null,
+            "immutableBoundary": false
+          }
+        ]
+      }
+    ],
+    "sequenceArcs": [],
+    "shotPlans": [],
+    "qaReports": [
+      {
+        "id": "cineqa:741638a5",
+        "createdAt": 1788893010784,
+        "findings": [],
+        "planUnchanged": true
+      }
+    ],
+    "approvals": [],
+    "updatedAt": 1788893010784
+  },
+  "selectedEngine": {
+    "director": "dramatron",
+    "image": "flux2",
+    "video": "ltx-2",
+    "voice": "qwen3-tts",
+    "music": "minimax-music3"
+  },
+  "screenplayFountain": "",
+  "production": null,
+  "performance": null,
+  "acts": [],
+  "scenes": [],
+  "characters": [],
+  "locations": [],
+  "props": [],
+  "wardrobe": [],
+  "vfx": [],
+  "shots": [],
+  "cues": [],
+  "voices": [],
+  "directorNotes": "",
+  "usage": {
+    "llm": 0,
+    "stills": 0,
+    "clips": 0,
+    "tts": 0
+  },
+  "productFlow": {
+    "schemaVersion": 1,
+    "reviewInternalPhases": false,
+    "reviewPhases": {
+      "research": false,
+      "screenplay": false,
+      "screenplayQa": false,
+      "breakdown": false,
+      "visualDevelopment": false,
+      "cinematography": false,
+      "performance": false,
+      "shots": false,
+      "promptLab": false
+    },
+    "steps": [
+      {
+        "id": "research",
+        "status": "failed",
+        "message": "Model did not return a JSON object."
+      },
+      {
+        "id": "screenplay",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "screenplayQa",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "breakdown",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "visualDevelopment",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "cinematography",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "performance",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "shots",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "promptLab",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      }
+    ],
+    "llamaAvailable": true,
+    "nextTouchpoint": "intake",
+    "lastRunAt": 1788893011982,
+    "executed": true,
+    "servedModelId": "llama-3.3-70b-instruct",
+    "manualFallback": false
+  }
+}

@@ -10,10 +10,11 @@ import {
 import { explicitMoviePlanServedId, selectMoviePlanModel } from "./movie-plan-model.ts";
 import type { Picture } from "./types.ts";
 import type { InternalPhase } from "./product-flow.ts";
+import { readMoviePlanStream, type MoviePlanProgress } from "./movie-plan-stream.ts";
 
 const endpointCache = new BrowserEndpointCache();
 
-async function runtimeFromStatus(picture: Picture): Promise<MoviePlanRuntime> {
+async function runtimeFromStatus(picture: Picture, onProgress?: (event: MoviePlanProgress) => void): Promise<MoviePlanRuntime> {
   const status = await localLLMStatus();
   if (status.provider.endpoint) endpointCache.set(status.provider.endpoint);
   const ready = status.models.filter((model) => model.status === "ready");
@@ -36,7 +37,11 @@ async function runtimeFromStatus(picture: Picture): Promise<MoviePlanRuntime> {
     servedModelId: selected.servedModelId,
     displayName: selected.displayName,
     generate: async ({ stepId, system, prompt }) => {
-      const result = await moviePlanGenerate({
+      let text = "";
+      const progress = (status: MoviePlanProgress["status"], message?: string) => onProgress?.({ phase: stepId, model: selected.servedModelId, status, text, message });
+      progress("generating");
+      try {
+      const response = await moviePlanGenerate({
         data: {
           endpoint: endpointCache.get(),
           stepId,
@@ -45,13 +50,19 @@ async function runtimeFromStatus(picture: Picture): Promise<MoviePlanRuntime> {
           servedModelId: selected.servedModelId,
         },
       });
+      const result = await readMoviePlanStream(response, (partial) => { text = partial; progress("generating"); });
+      progress("completed");
       return { text: result.text };
+      } catch (error) {
+        progress("failed", error instanceof Error ? error.message : "Local generation failed.");
+        throw error;
+      }
     },
   };
 }
 
-export async function executeMoviePlanOnServer(picture: Picture) {
-  return executeMoviePlan(picture, { runtime: await runtimeFromStatus(picture) });
+export async function executeMoviePlanOnServer(picture: Picture, onProgress?: (event: MoviePlanProgress) => void) {
+  return executeMoviePlan(picture, { runtime: await runtimeFromStatus(picture, onProgress) });
 }
 
 export async function executeResearchDraftOnServer(picture: Picture) {

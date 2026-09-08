@@ -1,0 +1,534 @@
+{
+  "id": "pic_0xjuks2zka",
+  "title": "Xenogears",
+  "logline": "2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal, with Fei and Elly escaping a desert battle.",
+  "genre": "Drama",
+  "tone": "Cinematic, naturalistic, restrained",
+  "format": "16:9",
+  "fps": 24,
+  "runtimeMinutes": 90,
+  "createdAt": 1788893635978,
+  "updatedAt": 1788893636777,
+  "stage": "intake",
+  "intake": {
+    "schemaVersion": 1,
+    "sourceType": "concept",
+    "title": "Xenogears",
+    "concept": "2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal, with Fei and Elly escaping a desert battle.",
+    "premise": "2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal, with Fei and Elly escaping a desert battle.",
+    "logline": "2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal, with Fei and Elly escaping a desert battle.",
+    "storyNotes": "",
+    "treatment": "",
+    "existingScreenplay": "",
+    "existingScreenplayMode": "use-as-is",
+    "sourceMaterial": "",
+    "adaptationInstructions": "",
+    "materialToPreserve": "",
+    "materialMayDramatize": "",
+    "sourcePassages": "",
+    "suppliedSourceText": "",
+    "fidelityRequirements": "",
+    "historicalPeriod": "",
+    "culturalSocialWorld": "",
+    "adaptationBoundaries": "",
+    "importedSources": [],
+    "targetRuntimeMinutes": 90,
+    "genre": "Drama",
+    "tone": "Cinematic, naturalistic, restrained",
+    "audienceRating": "",
+    "aspectRatio": "16:9",
+    "frameRate": 24,
+    "productionStyle": "Live-action photoreal",
+    "directorNotes": "",
+    "dialogueStyle": "",
+    "storyConstraints": "",
+    "mustInclude": "",
+    "mustAvoid": "",
+    "workflow": "single",
+    "screenplayModelId": null,
+    "socialWorld": [],
+    "createdAt": 1788893635978,
+    "updatedAt": 1788893636777
+  },
+  "screenplay": {
+    "schemaVersion": 1,
+    "workflow": "single",
+    "selectedModelId": null,
+    "pinnedWriterServedId": null,
+    "pinnedQaServedId": null,
+    "status": "DRAFT",
+    "versions": [
+      {
+        "id": "pic_0xjuks2zka:intake:1788893635978",
+        "label": "Original Intake",
+        "kind": "original-intake",
+        "fountain": "",
+        "createdAt": 1788893635978,
+        "model": null,
+        "workflow": "single",
+        "pass": null,
+        "sourceVersionId": null,
+        "settings": null
+      }
+    ],
+    "currentVersionId": "pic_0xjuks2zka:intake:1788893635978",
+    "approvedVersionId": null,
+    "workingFountain": "",
+    "generation": null,
+    "lastTelemetry": null,
+    "lastQaReport": null,
+    "updatedAt": 1788893635978,
+    "crewProfile": {
+      "schemaVersion": 1,
+      "defaultFamily": "llama",
+      "optionalFamily": "qwen",
+      "writer": {
+        "role": "writer",
+        "family": "llama",
+        "preferredModelKey": "llama-3.3-70b-instruct",
+        "pinnedServedId": null,
+        "executionEnabled": true,
+        "sameResidentAllowed": true
+      },
+      "qa": {
+        "role": "qa-critic",
+        "family": "llama",
+        "preferredModelKey": "llama-3.3-70b-instruct",
+        "pinnedServedId": null,
+        "executionEnabled": true,
+        "sameResidentAllowed": true
+      },
+      "promptEngineer": {
+        "role": "prompt-engineer",
+        "family": "llama",
+        "preferredModelKey": "llama-3.3-70b-instruct",
+        "pinnedServedId": null,
+        "executionEnabled": false,
+        "sameResidentAllowed": true
+      },
+      "flags": {
+        "neverAutoLoad": true,
+        "neverAutoStartServer": true,
+        "neverDualLoad": true,
+        "neverAutoRunBoth": true,
+        "sequentialReuse": true,
+        "physicalUnload": "explicit-stage-or-workflow-boundary"
+      }
+    },
+    "preferredWriterKey": "llama-3.3-70b-instruct",
+    "pinnedCompilerServedId": null,
+    "activeLogicalRole": null,
+    "residentSession": null,
+    "hierarchy": null,
+    "lastRoleTelemetry": []
+  },
+  "lastOpenedStage": "intake",
+  "thumbnailUrl": null,
+  "research": {
+    "schemaVersion": 1,
+    "status": "APPROVED",
+    "scope": "whole-picture",
+    "content": {
+      "mode": "local-only",
+      "sources": [
+        {
+          "id": "mp:1788893636777:9lysc9:src:0",
+          "title": "Xenogears game",
+          "locator": "PS1 game disc",
+          "quote": "The world of Xenogears is a complex, interconnected web of characters, plot threads, and philosophical themes.",
+          "confidence": "C",
+          "importedFrom": null,
+          "createdAt": 1788893636777
+        },
+        {
+          "id": "mp:1788893636777:9lysc9:src:1",
+          "title": "Xenogears wiki",
+          "locator": "Online encyclopedia",
+          "quote": "Fei's past is marked by tragedy and loss, shaping his personality and motivations throughout the game.",
+          "confidence": "C",
+          "importedFrom": null,
+          "createdAt": 1788893636777
+        },
+        {
+          "id": "mp:1788893636777:9lysc9:src:2",
+          "title": "Fan art and cosplay",
+          "locator": "Social media platforms",
+          "quote": "The Xenogears community is passionate and dedicated, with a wealth of creative interpretations and reimaginings of the game's characters and world.",
+          "confidence": "C",
+          "importedFrom": null,
+          "createdAt": 1788893636777
+        }
+      ],
+      "disputes": [],
+      "socialWorldNotes": [],
+      "cinematographyManifesto": {
+        "thesis": "Our cinematography will be highly stylized, with a focus on sweeping vistas, intense action sequences, and nuanced character moments. We'll research the game's original cutscenes, as well as film and television references, to inform our camera angles, lighting, and composition.",
+        "lensLanguage": "",
+        "lighting": "",
+        "geography": "",
+        "movement": "",
+        "texture": "Our visual identity will be cinematic, photoreal, and restrained, with a focus on practical effects, stunning landscapes, and nuanced character performances. We'll research the game's original art style, color palette, and visual motifs to create a cohesive look that honors the source material while offering a unique perspective.",
+        "soundWorld": "Our sound design and music will be critical in creating an immersive, cinematic experience. We'll research the game's original soundtrack, as well as real-world references, to create a haunting, atmospheric score that complements the on-screen action.",
+        "musicResearch": ""
+      },
+      "risks": "As with any fan-made project, there are risks associated with copyright, licensing, and community reception. We'll research the legal landscape, consulting with experts and ensuring we have the necessary permissions to create and distribute our trailer. We'll also engage with the community, soliciting feedback and addressing concerns to minimize potential disputes.",
+      "feasibility": "We'll explore the use of AI tools in our production pipeline, from pre-visualization to post-production. Our research will focus on the feasibility of using AI for tasks such as character animation, environment generation, and visual effects, ensuring we can create a high-quality trailer within our budget and timeframe.",
+      "notes": "Our trailer will explore themes of survival, sacrifice, and redemption, as Fei and Elly navigate the treacherous landscape and confront their own demons. We'll research the game's original story, identifying key plot points, character moments, and emotional resonance to create a narrative that resonates with fans and newcomers alike.",
+      "sections": {
+        "sourceCanonLedger": "The Xenogears universe is rich in complex characters, political intrigue, and philosophical themes. Our research will delve into the original game's story, exploring the connections between Fei, Elly, and the world of Babel. We'll examine the canon to ensure our fan-made trailer stays true to the spirit of the game while offering a unique perspective.",
+        "worldOverview": "The world of Xenogears is a mix of sci-fi and fantasy elements, with ancient technologies and mystical forces shaping the destiny of humanity. Our trailer will focus on the desert landscape, where Fei and Elly find themselves in the midst of a chaotic battle. We'll research the geography, climate, and cultural influences that define this world.",
+        "characters": "Fei and Elly are our main characters, each with their own distinct personality, backstory, and motivations. Fei is a young, brooding protagonist with a mysterious past, while Elly is a skilled warrior with a deep sense of compassion. Our research will explore their character arcs, relationships, and emotional journeys to create a compelling narrative for our trailer.",
+        "locations": "The desert landscape will be a key location in our trailer, with its harsh environment and breathtaking vistas providing an epic backdrop for Fei and Elly's escape. We'll also research the architecture, technology, and cultural influences that shape the world of Xenogears, from the ancient ruins to the futuristic cities.",
+        "storyTheme": "Our trailer will explore themes of survival, sacrifice, and redemption, as Fei and Elly navigate the treacherous landscape and confront their own demons. We'll research the game's original story, identifying key plot points, character moments, and emotional resonance to create a narrative that resonates with fans and newcomers alike.",
+        "audienceContext": "Our target audience is fans of the Xenogears game, as well as viewers who appreciate sci-fi, fantasy, and action genres. We'll research the cultural context, social media trends, and community engagement to ensure our trailer speaks to the existing fan base while also appealing to a broader audience.",
+        "visualIdentity": "Our visual identity will be cinematic, photoreal, and restrained, with a focus on practical effects, stunning landscapes, and nuanced character performances. We'll research the game's original art style, color palette, and visual motifs to create a cohesive look that honors the source material while offering a unique perspective.",
+        "productionDesign": "Our production design will focus on creating a believable, immersive world that transports viewers to the desert landscape of Xenogears. We'll research the game's original designs, concept art, and production materials to inform our set construction, prop creation, and special effects.",
+        "costumeProps": "Fei and Elly's costumes will be a key aspect of our trailer, with a focus on functional, practical design that reflects their characters' personalities and skills. We'll research the game's original costume designs, as well as real-world references, to create authentic, detailed props that enhance the narrative.",
+        "cinematographyResearch": "Our cinematography will be highly stylized, with a focus on sweeping vistas, intense action sequences, and nuanced character moments. We'll research the game's original cutscenes, as well as film and television references, to inform our camera angles, lighting, and composition.",
+        "soundMusicWorld": "Our sound design and music will be critical in creating an immersive, cinematic experience. We'll research the game's original soundtrack, as well as real-world references, to create a haunting, atmospheric score that complements the on-screen action.",
+        "risksDisputes": "As with any fan-made project, there are risks associated with copyright, licensing, and community reception. We'll research the legal landscape, consulting with experts and ensuring we have the necessary permissions to create and distribute our trailer. We'll also engage with the community, soliciting feedback and addressing concerns to minimize potential disputes.",
+        "aiProductionFeasibility": "We'll explore the use of AI tools in our production pipeline, from pre-visualization to post-production. Our research will focus on the feasibility of using AI for tasks such as character animation, environment generation, and visual effects, ensuring we can create a high-quality trailer within our budget and timeframe.",
+        "confidenceLedger": "Our confidence ledger will track our progress, identifying areas of strength and weakness in our research, production, and post-production phases. We'll regularly assess our risks, opportunities, and challenges, making adjustments as needed to ensure the successful completion of our trailer."
+      }
+    },
+    "versions": [
+      {
+        "id": "mp:1788893636777:9lysc9",
+        "label": "Generated Research Draft",
+        "kind": "draft",
+        "scope": "whole-picture",
+        "createdAt": 1788893636777,
+        "sourceVersionId": null,
+        "content": {
+          "mode": "local-only",
+          "sources": [
+            {
+              "id": "mp:1788893636777:9lysc9:src:0",
+              "title": "Xenogears game",
+              "locator": "PS1 game disc",
+              "quote": "The world of Xenogears is a complex, interconnected web of characters, plot threads, and philosophical themes.",
+              "confidence": "C",
+              "importedFrom": null,
+              "createdAt": 1788893636777
+            },
+            {
+              "id": "mp:1788893636777:9lysc9:src:1",
+              "title": "Xenogears wiki",
+              "locator": "Online encyclopedia",
+              "quote": "Fei's past is marked by tragedy and loss, shaping his personality and motivations throughout the game.",
+              "confidence": "C",
+              "importedFrom": null,
+              "createdAt": 1788893636777
+            },
+            {
+              "id": "mp:1788893636777:9lysc9:src:2",
+              "title": "Fan art and cosplay",
+              "locator": "Social media platforms",
+              "quote": "The Xenogears community is passionate and dedicated, with a wealth of creative interpretations and reimaginings of the game's characters and world.",
+              "confidence": "C",
+              "importedFrom": null,
+              "createdAt": 1788893636777
+            }
+          ],
+          "disputes": [],
+          "socialWorldNotes": [],
+          "cinematographyManifesto": {
+            "thesis": "Our cinematography will be highly stylized, with a focus on sweeping vistas, intense action sequences, and nuanced character moments. We'll research the game's original cutscenes, as well as film and television references, to inform our camera angles, lighting, and composition.",
+            "lensLanguage": "",
+            "lighting": "",
+            "geography": "",
+            "movement": "",
+            "texture": "Our visual identity will be cinematic, photoreal, and restrained, with a focus on practical effects, stunning landscapes, and nuanced character performances. We'll research the game's original art style, color palette, and visual motifs to create a cohesive look that honors the source material while offering a unique perspective.",
+            "soundWorld": "Our sound design and music will be critical in creating an immersive, cinematic experience. We'll research the game's original soundtrack, as well as real-world references, to create a haunting, atmospheric score that complements the on-screen action.",
+            "musicResearch": ""
+          },
+          "risks": "As with any fan-made project, there are risks associated with copyright, licensing, and community reception. We'll research the legal landscape, consulting with experts and ensuring we have the necessary permissions to create and distribute our trailer. We'll also engage with the community, soliciting feedback and addressing concerns to minimize potential disputes.",
+          "feasibility": "We'll explore the use of AI tools in our production pipeline, from pre-visualization to post-production. Our research will focus on the feasibility of using AI for tasks such as character animation, environment generation, and visual effects, ensuring we can create a high-quality trailer within our budget and timeframe.",
+          "notes": "Our trailer will explore themes of survival, sacrifice, and redemption, as Fei and Elly navigate the treacherous landscape and confront their own demons. We'll research the game's original story, identifying key plot points, character moments, and emotional resonance to create a narrative that resonates with fans and newcomers alike.",
+          "sections": {
+            "sourceCanonLedger": "The Xenogears universe is rich in complex characters, political intrigue, and philosophical themes. Our research will delve into the original game's story, exploring the connections between Fei, Elly, and the world of Babel. We'll examine the canon to ensure our fan-made trailer stays true to the spirit of the game while offering a unique perspective.",
+            "worldOverview": "The world of Xenogears is a mix of sci-fi and fantasy elements, with ancient technologies and mystical forces shaping the destiny of humanity. Our trailer will focus on the desert landscape, where Fei and Elly find themselves in the midst of a chaotic battle. We'll research the geography, climate, and cultural influences that define this world.",
+            "characters": "Fei and Elly are our main characters, each with their own distinct personality, backstory, and motivations. Fei is a young, brooding protagonist with a mysterious past, while Elly is a skilled warrior with a deep sense of compassion. Our research will explore their character arcs, relationships, and emotional journeys to create a compelling narrative for our trailer.",
+            "locations": "The desert landscape will be a key location in our trailer, with its harsh environment and breathtaking vistas providing an epic backdrop for Fei and Elly's escape. We'll also research the architecture, technology, and cultural influences that shape the world of Xenogears, from the ancient ruins to the futuristic cities.",
+            "storyTheme": "Our trailer will explore themes of survival, sacrifice, and redemption, as Fei and Elly navigate the treacherous landscape and confront their own demons. We'll research the game's original story, identifying key plot points, character moments, and emotional resonance to create a narrative that resonates with fans and newcomers alike.",
+            "audienceContext": "Our target audience is fans of the Xenogears game, as well as viewers who appreciate sci-fi, fantasy, and action genres. We'll research the cultural context, social media trends, and community engagement to ensure our trailer speaks to the existing fan base while also appealing to a broader audience.",
+            "visualIdentity": "Our visual identity will be cinematic, photoreal, and restrained, with a focus on practical effects, stunning landscapes, and nuanced character performances. We'll research the game's original art style, color palette, and visual motifs to create a cohesive look that honors the source material while offering a unique perspective.",
+            "productionDesign": "Our production design will focus on creating a believable, immersive world that transports viewers to the desert landscape of Xenogears. We'll research the game's original designs, concept art, and production materials to inform our set construction, prop creation, and special effects.",
+            "costumeProps": "Fei and Elly's costumes will be a key aspect of our trailer, with a focus on functional, practical design that reflects their characters' personalities and skills. We'll research the game's original costume designs, as well as real-world references, to create authentic, detailed props that enhance the narrative.",
+            "cinematographyResearch": "Our cinematography will be highly stylized, with a focus on sweeping vistas, intense action sequences, and nuanced character moments. We'll research the game's original cutscenes, as well as film and television references, to inform our camera angles, lighting, and composition.",
+            "soundMusicWorld": "Our sound design and music will be critical in creating an immersive, cinematic experience. We'll research the game's original soundtrack, as well as real-world references, to create a haunting, atmospheric score that complements the on-screen action.",
+            "risksDisputes": "As with any fan-made project, there are risks associated with copyright, licensing, and community reception. We'll research the legal landscape, consulting with experts and ensuring we have the necessary permissions to create and distribute our trailer. We'll also engage with the community, soliciting feedback and addressing concerns to minimize potential disputes.",
+            "aiProductionFeasibility": "We'll explore the use of AI tools in our production pipeline, from pre-visualization to post-production. Our research will focus on the feasibility of using AI for tasks such as character animation, environment generation, and visual effects, ensuring we can create a high-quality trailer within our budget and timeframe.",
+            "confidenceLedger": "Our confidence ledger will track our progress, identifying areas of strength and weakness in our research, production, and post-production phases. We'll regularly assess our risks, opportunities, and challenges, making adjustments as needed to ensure the successful completion of our trailer."
+          }
+        }
+      },
+      {
+        "id": "mp:1788893636777:9lysc9:approved",
+        "label": "Automation-approved Research Bible",
+        "kind": "approved",
+        "scope": "whole-picture",
+        "createdAt": 1788893636777,
+        "sourceVersionId": "mp:1788893636777:9lysc9",
+        "content": {
+          "mode": "local-only",
+          "sources": [
+            {
+              "id": "mp:1788893636777:9lysc9:src:0",
+              "title": "Xenogears game",
+              "locator": "PS1 game disc",
+              "quote": "The world of Xenogears is a complex, interconnected web of characters, plot threads, and philosophical themes.",
+              "confidence": "C",
+              "importedFrom": null,
+              "createdAt": 1788893636777
+            },
+            {
+              "id": "mp:1788893636777:9lysc9:src:1",
+              "title": "Xenogears wiki",
+              "locator": "Online encyclopedia",
+              "quote": "Fei's past is marked by tragedy and loss, shaping his personality and motivations throughout the game.",
+              "confidence": "C",
+              "importedFrom": null,
+              "createdAt": 1788893636777
+            },
+            {
+              "id": "mp:1788893636777:9lysc9:src:2",
+              "title": "Fan art and cosplay",
+              "locator": "Social media platforms",
+              "quote": "The Xenogears community is passionate and dedicated, with a wealth of creative interpretations and reimaginings of the game's characters and world.",
+              "confidence": "C",
+              "importedFrom": null,
+              "createdAt": 1788893636777
+            }
+          ],
+          "disputes": [],
+          "socialWorldNotes": [],
+          "cinematographyManifesto": {
+            "thesis": "Our cinematography will be highly stylized, with a focus on sweeping vistas, intense action sequences, and nuanced character moments. We'll research the game's original cutscenes, as well as film and television references, to inform our camera angles, lighting, and composition.",
+            "lensLanguage": "",
+            "lighting": "",
+            "geography": "",
+            "movement": "",
+            "texture": "Our visual identity will be cinematic, photoreal, and restrained, with a focus on practical effects, stunning landscapes, and nuanced character performances. We'll research the game's original art style, color palette, and visual motifs to create a cohesive look that honors the source material while offering a unique perspective.",
+            "soundWorld": "Our sound design and music will be critical in creating an immersive, cinematic experience. We'll research the game's original soundtrack, as well as real-world references, to create a haunting, atmospheric score that complements the on-screen action.",
+            "musicResearch": ""
+          },
+          "risks": "As with any fan-made project, there are risks associated with copyright, licensing, and community reception. We'll research the legal landscape, consulting with experts and ensuring we have the necessary permissions to create and distribute our trailer. We'll also engage with the community, soliciting feedback and addressing concerns to minimize potential disputes.",
+          "feasibility": "We'll explore the use of AI tools in our production pipeline, from pre-visualization to post-production. Our research will focus on the feasibility of using AI for tasks such as character animation, environment generation, and visual effects, ensuring we can create a high-quality trailer within our budget and timeframe.",
+          "notes": "Our trailer will explore themes of survival, sacrifice, and redemption, as Fei and Elly navigate the treacherous landscape and confront their own demons. We'll research the game's original story, identifying key plot points, character moments, and emotional resonance to create a narrative that resonates with fans and newcomers alike.",
+          "sections": {
+            "sourceCanonLedger": "The Xenogears universe is rich in complex characters, political intrigue, and philosophical themes. Our research will delve into the original game's story, exploring the connections between Fei, Elly, and the world of Babel. We'll examine the canon to ensure our fan-made trailer stays true to the spirit of the game while offering a unique perspective.",
+            "worldOverview": "The world of Xenogears is a mix of sci-fi and fantasy elements, with ancient technologies and mystical forces shaping the destiny of humanity. Our trailer will focus on the desert landscape, where Fei and Elly find themselves in the midst of a chaotic battle. We'll research the geography, climate, and cultural influences that define this world.",
+            "characters": "Fei and Elly are our main characters, each with their own distinct personality, backstory, and motivations. Fei is a young, brooding protagonist with a mysterious past, while Elly is a skilled warrior with a deep sense of compassion. Our research will explore their character arcs, relationships, and emotional journeys to create a compelling narrative for our trailer.",
+            "locations": "The desert landscape will be a key location in our trailer, with its harsh environment and breathtaking vistas providing an epic backdrop for Fei and Elly's escape. We'll also research the architecture, technology, and cultural influences that shape the world of Xenogears, from the ancient ruins to the futuristic cities.",
+            "storyTheme": "Our trailer will explore themes of survival, sacrifice, and redemption, as Fei and Elly navigate the treacherous landscape and confront their own demons. We'll research the game's original story, identifying key plot points, character moments, and emotional resonance to create a narrative that resonates with fans and newcomers alike.",
+            "audienceContext": "Our target audience is fans of the Xenogears game, as well as viewers who appreciate sci-fi, fantasy, and action genres. We'll research the cultural context, social media trends, and community engagement to ensure our trailer speaks to the existing fan base while also appealing to a broader audience.",
+            "visualIdentity": "Our visual identity will be cinematic, photoreal, and restrained, with a focus on practical effects, stunning landscapes, and nuanced character performances. We'll research the game's original art style, color palette, and visual motifs to create a cohesive look that honors the source material while offering a unique perspective.",
+            "productionDesign": "Our production design will focus on creating a believable, immersive world that transports viewers to the desert landscape of Xenogears. We'll research the game's original designs, concept art, and production materials to inform our set construction, prop creation, and special effects.",
+            "costumeProps": "Fei and Elly's costumes will be a key aspect of our trailer, with a focus on functional, practical design that reflects their characters' personalities and skills. We'll research the game's original costume designs, as well as real-world references, to create authentic, detailed props that enhance the narrative.",
+            "cinematographyResearch": "Our cinematography will be highly stylized, with a focus on sweeping vistas, intense action sequences, and nuanced character moments. We'll research the game's original cutscenes, as well as film and television references, to inform our camera angles, lighting, and composition.",
+            "soundMusicWorld": "Our sound design and music will be critical in creating an immersive, cinematic experience. We'll research the game's original soundtrack, as well as real-world references, to create a haunting, atmospheric score that complements the on-screen action.",
+            "risksDisputes": "As with any fan-made project, there are risks associated with copyright, licensing, and community reception. We'll research the legal landscape, consulting with experts and ensuring we have the necessary permissions to create and distribute our trailer. We'll also engage with the community, soliciting feedback and addressing concerns to minimize potential disputes.",
+            "aiProductionFeasibility": "We'll explore the use of AI tools in our production pipeline, from pre-visualization to post-production. Our research will focus on the feasibility of using AI for tasks such as character animation, environment generation, and visual effects, ensuring we can create a high-quality trailer within our budget and timeframe.",
+            "confidenceLedger": "Our confidence ledger will track our progress, identifying areas of strength and weakness in our research, production, and post-production phases. We'll regularly assess our risks, opportunities, and challenges, making adjustments as needed to ensure the successful completion of our trailer."
+          }
+        }
+      }
+    ],
+    "currentVersionId": "mp:1788893636777:9lysc9:approved",
+    "approvedVersionId": "mp:1788893636777:9lysc9:approved",
+    "approvedAt": 1788893636777,
+    "updatedAt": 1788893636777
+  },
+  "visualDevelopment": {
+    "schemaVersion": 1,
+    "boards": [
+      {
+        "id": "board:pic_0xjuks2zka:look",
+        "title": "Picture look bible",
+        "intent": "Cinematic, naturalistic, restrained",
+        "palette": [
+          "wet charcoal",
+          "warm practical",
+          "salt grey"
+        ],
+        "motifs": [
+          "faces held past comfort",
+          "practical light islands"
+        ],
+        "referenceSlots": [],
+        "status": "DRAFT",
+        "approvedVersionId": null
+      }
+    ],
+    "characterBibles": [],
+    "wardrobeStates": [],
+    "locationBibles": [],
+    "propBibles": [],
+    "versions": [],
+    "approvals": [],
+    "driftChecks": [],
+    "updatedAt": 1788893635978
+  },
+  "cinematography": {
+    "schemaVersion": 1,
+    "manifestoVersions": [
+      {
+        "id": "cine-manifesto:pic_0xjuks2zka:v1",
+        "createdAt": 1788893635978,
+        "thesis": "Cinematic, naturalistic, restrained",
+        "hash": "686a4eb8",
+        "approved": false,
+        "sourceFingerprints": [
+          {
+            "sourceKind": "cinematography",
+            "sourceId": "pic_0xjuks2zka",
+            "versionId": null,
+            "hash": "686a4eb8",
+            "approvedAt": null,
+            "immutableBoundary": false
+          }
+        ]
+      }
+    ],
+    "sequenceArcs": [],
+    "shotPlans": [],
+    "qaReports": [
+      {
+        "id": "cineqa:741638a5",
+        "createdAt": 1788893635978,
+        "findings": [],
+        "planUnchanged": true
+      }
+    ],
+    "approvals": [],
+    "updatedAt": 1788893635978
+  },
+  "selectedEngine": {
+    "director": "dramatron",
+    "image": "flux2",
+    "video": "ltx-2",
+    "voice": "qwen3-tts",
+    "music": "minimax-music3"
+  },
+  "screenplayFountain": "",
+  "production": null,
+  "performance": null,
+  "acts": [],
+  "scenes": [],
+  "characters": [
+    {
+      "id": "ch1",
+      "name": "Fei",
+      "role": "Protagonist",
+      "age": "19",
+      "look": "Brooding, athletic build, short black hair",
+      "arc": "Fei's journey is one of self-discovery and redemption, as he confronts his past and learns to trust others.",
+      "voiceId": "ara"
+    },
+    {
+      "id": "ch2",
+      "name": "Elly",
+      "role": "Supporting character",
+      "age": "22",
+      "look": "Confident, athletic build, long brown hair",
+      "arc": "Elly's character arc is one of sacrifice and loyalty, as she puts the needs of others before her own and faces difficult choices.",
+      "voiceId": "ara"
+    }
+  ],
+  "locations": [
+    {
+      "id": "loc1",
+      "name": "Desert landscape",
+      "description": "A harsh, arid environment with sand dunes, rocky outcroppings, and limited vegetation.",
+      "lighting": "Intense sunlight during the day, with warm oranges and yellows giving way to cool blues and purples at night."
+    },
+    {
+      "id": "loc2",
+      "name": "Ancient ruins",
+      "description": "A mysterious, abandoned structure with crumbling architecture and cryptic symbols.",
+      "lighting": "Muted, with an emphasis on shadows and atmospheric lighting to create a sense of foreboding and discovery."
+    }
+  ],
+  "props": [],
+  "wardrobe": [],
+  "vfx": [],
+  "shots": [],
+  "cues": [],
+  "voices": [],
+  "directorNotes": "",
+  "usage": {
+    "llm": 0,
+    "stills": 0,
+    "clips": 0,
+    "tts": 0
+  },
+  "productFlow": {
+    "schemaVersion": 1,
+    "reviewInternalPhases": false,
+    "reviewPhases": {
+      "research": false,
+      "screenplay": false,
+      "screenplayQa": false,
+      "breakdown": false,
+      "visualDevelopment": false,
+      "cinematography": false,
+      "performance": false,
+      "shots": false,
+      "promptLab": false
+    },
+    "steps": [
+      {
+        "id": "research",
+        "status": "draftReady",
+        "message": "Research Bible generated from the configured model."
+      },
+      {
+        "id": "screenplay",
+        "status": "failed",
+        "message": "Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "screenplayQa",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "breakdown",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "visualDevelopment",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "cinematography",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "performance",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "shots",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      },
+      {
+        "id": "promptLab",
+        "status": "blocked",
+        "message": "Blocked after screenplay: Bad control character in string literal in JSON at position 56 (line 3 column 16)"
+      }
+    ],
+    "llamaAvailable": true,
+    "nextTouchpoint": "intake",
+    "lastRunAt": 1788893636777,
+    "executed": true,
+    "servedModelId": "llama-3.3-70b-instruct",
+    "manualFallback": false
+  }
+}

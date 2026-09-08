@@ -1,0 +1,120 @@
+{
+  "ok": false,
+  "startedAt": 1788893615008,
+  "skipped": false,
+  "packaged": true,
+  "onlineVerified": false,
+  "researchGenerated": false,
+  "screenplayGenerated": false,
+  "qaGenerated": false,
+  "assetsExtracted": false,
+  "noSilentFallback": false,
+  "actualProviderCalls": 0,
+  "errors": [],
+  "build": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260908185301-6e6cab548fb4",
+    "buildTimestamp": "2026-09-08T18:53:01.884Z",
+    "rendererSourceHash": "6e6cab548fb49e1b463e2e24cec752731f596bded46c9394dd3ef41b3f3a11cb",
+    "rendererMode": "PACKAGED DIST"
+  },
+  "defaultOnlyIdeaActionReview": true,
+  "optionalCollapsed": true,
+  "optionalFieldsPreserved": true,
+  "flow": {
+    "schemaVersion": 1,
+    "reviewInternalPhases": false,
+    "reviewPhases": {
+      "research": false,
+      "screenplay": false,
+      "screenplayQa": false,
+      "breakdown": false,
+      "visualDevelopment": false,
+      "cinematography": false,
+      "performance": false,
+      "shots": false,
+      "promptLab": false
+    },
+    "steps": [
+      {
+        "id": "research",
+        "status": "failed",
+        "message": "LM Studio local server is unavailable. Start its local API and load a text model, then rescan."
+      },
+      {
+        "id": "screenplay",
+        "status": "failed",
+        "message": "LM Studio local server is unavailable. Start its local API and load a text model, then rescan."
+      },
+      {
+        "id": "screenplayQa",
+        "status": "failed",
+        "message": "LM Studio local server is unavailable. Start its local API and load a text model, then rescan."
+      },
+      {
+        "id": "breakdown",
+        "status": "failed",
+        "message": "LM Studio local server is unavailable. Start its local API and load a text model, then rescan."
+      },
+      {
+        "id": "visualDevelopment",
+        "status": "failed",
+        "message": "LM Studio local server is unavailable. Start its local API and load a text model, then rescan."
+      },
+      {
+        "id": "cinematography",
+        "status": "failed",
+        "message": "LM Studio local server is unavailable. Start its local API and load a text model, then rescan."
+      },
+      {
+        "id": "performance",
+        "status": "failed",
+        "message": "LM Studio local server is unavailable. Start its local API and load a text model, then rescan."
+      },
+      {
+        "id": "shots",
+        "status": "failed",
+        "message": "LM Studio local server is unavailable. Start its local API and load a text model, then rescan."
+      },
+      {
+        "id": "promptLab",
+        "status": "failed",
+        "message": "LM Studio local server is unavailable. Start its local API and load a text model, then rescan."
+      }
+    ],
+    "llamaAvailable": false,
+    "nextTouchpoint": "intake",
+    "lastRunAt": 1788893618787,
+    "executed": false,
+    "servedModelId": null,
+    "manualFallback": true
+  },
+  "offlineHonest": true,
+  "noDraftReady": true,
+  "assetsBlocked": true,
+  "endedAt": 1788893623136,
+  "providerModels": [],
+  "network": {
+    "verified": true,
+    "cloud": 0,
+    "web": 2,
+    "comfy": 0,
+    "port8188": 0,
+    "external": [
+      {
+        "url": "https://grok.com/grok-app-builder/extensions.js",
+        "method": "GET"
+      },
+      {
+        "url": "https://grok.com/grok-app-builder/extensions.js",
+        "method": "GET"
+      }
+    ],
+    "scope": "Renderer requests, LM Studio server logs, and npm test/pack source guards. No OS-wide packet capture; other server egress is not independently traced."
+  },
+  "functionalPassed": true,
+  "providerCalls": [],
+  "greenEligible": false,
+  "status": "FINAL_PRE_AUDIT_NOT_GREEN"
+}

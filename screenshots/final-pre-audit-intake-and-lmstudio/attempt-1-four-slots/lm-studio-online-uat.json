@@ -1,0 +1,105 @@
+{
+  "ok": false,
+  "skipped": false,
+  "packaged": true,
+  "onlineVerified": false,
+  "researchGenerated": false,
+  "screenplayGenerated": false,
+  "qaGenerated": false,
+  "assetsExtracted": false,
+  "noSilentFallback": false,
+  "actualProviderCalls": 0,
+  "errors": [],
+  "build": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260908184031-55bfd1c1c00c",
+    "buildTimestamp": "2026-09-08T18:40:31.513Z",
+    "rendererSourceHash": "55bfd1c1c00c959a74c98eb083f60ee1481a57fe62cf5fc49af338c3b74c5693",
+    "rendererMode": "PACKAGED DIST"
+  },
+  "flow": {
+    "schemaVersion": 1,
+    "reviewInternalPhases": false,
+    "reviewPhases": {
+      "research": false,
+      "screenplay": false,
+      "screenplayQa": false,
+      "breakdown": false,
+      "visualDevelopment": false,
+      "cinematography": false,
+      "performance": false,
+      "shots": false,
+      "promptLab": false
+    },
+    "steps": [
+      {
+        "id": "research",
+        "status": "failed",
+        "message": "Model did not return a JSON object."
+      },
+      {
+        "id": "screenplay",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "screenplayQa",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "breakdown",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "visualDevelopment",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "cinematography",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "performance",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "shots",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      },
+      {
+        "id": "promptLab",
+        "status": "blocked",
+        "message": "Blocked after research: Model did not return a JSON object."
+      }
+    ],
+    "llamaAvailable": true,
+    "nextTouchpoint": "intake",
+    "lastRunAt": 1788893011982,
+    "executed": true,
+    "servedModelId": "llama-3.3-70b-instruct",
+    "manualFallback": false
+  },
+  "offlineHonest": false,
+  "noDraftReady": true,
+  "assetsVisible": false,
+  "providerModels": [],
+  "network": {
+    "verified": false,
+    "port8188": 0,
+    "cloud": 0,
+    "web": 1,
+    "comfy": 0,
+    "external": [
+      "https://grok.com/grok-app-builder/extensions.js"
+    ],
+    "scope": "Renderer requests plus Node undici diagnostics from packaged UI/backend; no OS-wide packet capture"
+  },
+  "greenEligible": false
+}

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { DEFAULT_SCREENPLAY_SETTINGS } from "./screenplay.ts";
 import { normalizeLoopbackEndpoint } from "./local-llm-endpoint.ts";
 import { CONFIGURED_MODEL_UNAVAILABLE } from "./movie-plan-pipeline.ts";
+import { moviePlanStreamResponse } from "./movie-plan-stream.ts";
 
 type GenerateInput = { endpoint?: string | null; stepId: string; system: string; prompt: string; servedModelId: string };
 
@@ -27,9 +28,11 @@ export const moviePlanGenerate = createServerFn({ method: "POST" })
     const discovery = await provider.discover();
     if (!discovery.available) throw new Error(discovery.reason || CONFIGURED_MODEL_UNAVAILABLE);
     await provider.load({ servedModelId: data.servedModelId, settings: DEFAULT_SCREENPLAY_SETTINGS });
-    const result = await provider.generate(
-      { runId: "movie-plan", stepId: data.stepId, system: data.system, prompt: data.prompt },
-      { servedModelId: data.servedModelId, settings: DEFAULT_SCREENPLAY_SETTINGS },
+    return moviePlanStreamResponse(
+      (onToken) => provider.generate(
+        { runId: "movie-plan", stepId: data.stepId, system: data.system, prompt: data.prompt, onToken },
+        { servedModelId: data.servedModelId, settings: DEFAULT_SCREENPLAY_SETTINGS },
+      ),
+      () => provider.cancel(),
     );
-    return { text: result.text, servedModelId: data.servedModelId };
   });
