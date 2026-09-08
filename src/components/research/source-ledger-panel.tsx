@@ -9,7 +9,7 @@ export function SourceLedgerPanel({ content }: { content: ResearchContent }) {
     <div className="grid gap-4">
       <div>
         <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Sources & disputes</p>
-        <p className="mt-2 text-xs leading-relaxed text-muted">Local and user-provided only. Web-assisted research is listed but not connected.</p>
+        <p className="mt-2 text-xs leading-relaxed text-muted">User-provided sources stay with this picture. Nothing is fetched automatically.</p>
       </div>
       <ul className="grid gap-2">
         {content.sources.map((source) => (

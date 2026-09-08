@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "hits": [],
+  "primaryCtaPresent": true,
+  "modePanelAbsent": true,
+  "dropdownAbsent": true,
+  "scanned": [
+    "src/components/research/bible-nav.tsx",
+    "src/components/research/research-workspace.tsx",
+    "src/components/research/social-world-panel.tsx",
+    "src/components/research/source-ledger-panel.tsx",
+    "src/components/studio/advanced-departments.tsx",
+    "src/components/studio/stage-views.tsx"
+  ]
+}

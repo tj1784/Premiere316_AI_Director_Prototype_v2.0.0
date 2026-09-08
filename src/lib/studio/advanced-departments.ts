@@ -74,7 +74,7 @@ export function departmentCardStatus(picture: Picture, id: AdvancedDepartmentId)
     case "research": {
       const bible = picture.research;
       const room = researchRoomStatus(bible, null);
-      const label = room === "approved" ? "Approved" : room === "draft" ? "Draft exists" : room === "blocked" ? "Blocked" : "Not generated";
+      const label = room === "approved" ? "Approved" : room === "draft" ? "Draft ready" : room === "blocked" ? "Blocked" : "Draft missing";
       return { status: label, lastUpdated: bible?.updatedAt ?? null };
     }
     case "screenplay": {

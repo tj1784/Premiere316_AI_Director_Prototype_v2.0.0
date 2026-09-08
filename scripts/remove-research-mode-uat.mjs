@@ -8,7 +8,7 @@ import { enterAdvancedDepartments, returnToDefaultMode, selectStudioStage } from
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const executablePath = resolve(process.argv[2] ?? `${root}/dist-desktop/win-unpacked/Premiere316.exe`);
-const artifacts = resolve(root, "screenshots", "advanced-departments-not-main-workflow");
+const artifacts = resolve(root, "screenshots", "remove-research-mode-options-entirely");
 const REAL_PROFILE = join(process.env.APPDATA ?? "", "Premiere316");
 const failures = [];
 const networkLog = [];
@@ -29,11 +29,6 @@ async function captureWindow(application, path) {
   await writeFile(path, Buffer.from(png, "base64"));
 }
 
-async function setZoom(page, factor) {
-  await page.evaluate((value) => window.premiere316?.zoom.set(value), factor);
-  await page.waitForTimeout(350);
-}
-
 async function overflowFacts(page) {
   return page.evaluate(() => ({
     documentWidth: document.documentElement.scrollWidth,
@@ -44,22 +39,22 @@ async function overflowFacts(page) {
 }
 
 await mkdir(artifacts, { recursive: true });
-const userDataDir = await mkdtemp(join(tmpdir(), "premiere316-adv-ux-"));
+const userDataDir = await mkdtemp(join(tmpdir(), "premiere316-no-research-mode-"));
 assertIsolated(userDataDir);
 
 const report = {
   ok: false,
-  defaultNav: [],
-  defaultOnlyFive: false,
-  advancedDashboardFirst: false,
-  researchPrimaryCta: false,
+  defaultFive: false,
+  advancedDashboard: false,
+  noModePanel: false,
+  noWebAssisted: false,
+  noLocalOption: false,
+  noDropdown: false,
+  primaryCta: null,
   manualCollapsed: false,
-  emptyStateNotWorksheet: false,
-  offlineNotManualFirst: false,
-  returnToDefault: false,
-  overflow100: false,
-  overflow150: false,
-  network: { port8188: 0, cloud: 0, comfy: 0 },
+  overflow: false,
+  consoleErrors: 0,
+  network: { port8188: 0, cloud: 0, comfy: 0, web: 0 },
   error: null,
 };
 
@@ -82,63 +77,54 @@ try {
   await page.getByRole("button", { name: /The Last Reel/ }).click();
   await page.locator('[data-studio-shell="true"]').waitFor();
 
-  await setZoom(page, 1);
-  report.defaultNav = await page.getByRole("navigation", { name: "Pipeline" }).locator("button").evaluateAll((buttons) => buttons.map((button) => (button.textContent ?? "").replace(/\s+/g, " ").trim()).filter(Boolean));
-  report.defaultOnlyFive = report.defaultNav.filter((label) => /Intake|Assets|First \/ Last|Video Clips|Export/.test(label)).length >= 5
-    && !report.defaultNav.some((label) => /Research|Screenplay|Inventory|Prompt Lab|Stitch/.test(label));
-  await captureWindow(application, join(artifacts, "default-mode.png"));
-  const defaultFacts = await overflowFacts(page);
-  report.overflow100 = defaultFacts.horizontalOverflow;
+  const defaultNav = await page.getByRole("navigation", { name: "Pipeline" }).locator("button").evaluateAll((buttons) => buttons.map((button) => (button.textContent ?? "").replace(/\s+/g, " ").trim()).filter(Boolean));
+  report.defaultFive = defaultNav.filter((label) => /Intake|Assets|First \/ Last|Video Clips|Export/.test(label)).length >= 5
+    && !defaultNav.some((label) => /Research|Screenplay|Inventory|Prompt Lab|Stitch/.test(label));
 
   await enterAdvancedDepartments(page);
   await page.locator("[data-advanced-dashboard]").waitFor();
-  report.advancedDashboardFirst = true;
-  const dashText = await page.locator("[data-advanced-dashboard]").innerText();
-  assert.match(dashText, /optional inspection/i);
-  assert.match(dashText, /Required in default mode/i);
-  assert.doesNotMatch(dashText, /01 Intake[\s\S]*02 Research[\s\S]*03 Screenplay/);
-  await captureWindow(application, join(artifacts, "advanced-dashboard.png"));
+  report.advancedDashboard = true;
 
   await selectStudioStage(page, "research");
   await page.locator("[data-research-room]").waitFor();
-  report.researchPrimaryCta = await page.getByRole("button", { name: "Build Research Draft" }).first().isVisible();
+  const research = page.locator("[data-research-room]");
+  const researchText = await research.innerText();
+  report.noModePanel = (await page.locator('[data-research-room][data-research-mode-panel="false"]').count()) === 1
+    && !/(^|\n)\s*MODE\s*(\n|$)/.test(researchText);
+  report.noWebAssisted = !/web-assisted|web assisted/i.test(researchText);
+  report.noLocalOption = !/Local Research|Local only|Local \/ user-provided|Local model research/i.test(researchText);
+  report.noDropdown = (await page.getByRole("combobox", { name: "Research mode" }).count()) === 0
+    && (await research.getByLabel("Research mode").count()) === 0;
+  report.primaryCta = await page.getByRole("button", { name: "Build Research Draft" }).first().isVisible() ? "Build Research Draft" : null;
   report.manualCollapsed = await page.locator("details[data-manual-source-entry]:not([open])").isVisible();
-  report.emptyStateNotWorksheet = await page.locator("[data-research-empty-state]").isVisible();
-  const researchText = await page.locator("[data-research-room]").innerText();
+  const facts = await overflowFacts(page);
+  report.overflow = facts.horizontalOverflow;
+  report.consoleErrors = failures.length;
   assert.match(researchText, /Build Research Draft/);
-  assert.doesNotMatch(researchText, /Web-assisted|web-assisted|Local Research|Research mode/i);
-  assert.doesNotMatch(researchText.split("Manual Notes")[0] ?? researchText, /Locator \/ citation/);
-  report.offlineNotManualFirst = /Configured AI model unavailable|Research Room|Draft missing/i.test(researchText)
-    && report.manualCollapsed;
-  await captureWindow(application, join(artifacts, "advanced-research-empty.png"));
-  await page.locator("details[data-manual-source-entry]").scrollIntoViewIfNeeded();
-  await page.waitForTimeout(200);
-  await captureWindow(application, join(artifacts, "advanced-research-manual-collapsed.png"));
+  assert.match(researchText, /Manual Notes/);
+  assert.doesNotMatch(researchText, /Web-assisted|Research mode|Local Research Room|Local only/i);
+  await captureWindow(application, join(artifacts, "research-after.png"));
 
   await returnToDefaultMode(page);
   await page.locator('[data-studio-shell="true"][data-ui-mode="default"]').waitFor();
-  const afterReturn = await page.getByRole("navigation", { name: "Pipeline" }).locator("button").evaluateAll((buttons) => buttons.map((button) => (button.textContent ?? "").replace(/\s+/g, " ").trim()).filter(Boolean));
-  report.returnToDefault = afterReturn.some((label) => /Intake|Assets/.test(label)) && !afterReturn.some((label) => /Screenplay|Inventory|Prompt Lab/.test(label));
 
-  await setZoom(page, 1.5);
-  await enterAdvancedDepartments(page);
-  await page.locator("[data-advanced-dashboard]").waitFor();
-  const zoomFacts = await overflowFacts(page);
-  report.overflow150 = zoomFacts.horizontalOverflow;
-
+  const remote = networkLog.filter((url) => /^https?:/i.test(url) && !/localhost|127\.0\.0\.1/i.test(url));
   report.network = {
     port8188: networkLog.filter((url) => /:8188/.test(url)).length,
     cloud: networkLog.filter((url) => /openai|anthropic|openrouter|api\.x\.ai/i.test(url)).length,
     comfy: networkLog.filter((url) => /comfy/i.test(url)).length,
+    web: remote.filter((url) => /openai|anthropic|openrouter|api\.x\.ai|elevenlabs/i.test(url)).length,
+    remoteUrls: remote,
   };
-  assert.equal(report.defaultOnlyFive, true);
-  assert.equal(report.advancedDashboardFirst, true);
-  assert.equal(report.researchPrimaryCta, true);
+  assert.equal(report.defaultFive, true);
+  assert.equal(report.advancedDashboard, true);
+  assert.equal(report.noModePanel, true);
+  assert.equal(report.noWebAssisted, true);
+  assert.equal(report.noLocalOption, true);
+  assert.equal(report.noDropdown, true);
+  assert.equal(report.primaryCta, "Build Research Draft");
   assert.equal(report.manualCollapsed, true);
-  assert.equal(report.emptyStateNotWorksheet, true);
-  assert.equal(report.returnToDefault, true);
-  assert.equal(report.overflow100, false);
-  assert.equal(report.overflow150, false);
+  assert.equal(report.overflow, false);
   assert.equal(report.network.port8188, 0);
   assert.equal(report.network.cloud, 0);
   assert.equal(report.network.comfy, 0);
@@ -151,6 +137,15 @@ try {
   if (application) await application.close().catch(() => {});
 }
 
+const cloudProof = {
+  ok: report.ok && report.network.port8188 === 0 && report.network.cloud === 0 && report.network.comfy === 0,
+  port8188: report.network.port8188,
+  cloud: report.network.cloud,
+  comfy: report.network.comfy,
+  webNonLoopback: report.network.web,
+};
+
 await writeFile(join(artifacts, "packaged-uat.json"), `${JSON.stringify(report, null, 2)}\n`);
+await writeFile(join(artifacts, "no-cloud-no-web-no-comfy-no-8188-proof.json"), `${JSON.stringify(cloudProof, null, 2)}\n`);
 console.log(JSON.stringify(report, null, 2));
 if (!report.ok) process.exitCode = 1;

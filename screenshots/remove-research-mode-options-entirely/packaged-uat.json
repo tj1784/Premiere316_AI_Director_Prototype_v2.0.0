@@ -1,0 +1,23 @@
+{
+  "ok": true,
+  "defaultFive": true,
+  "advancedDashboard": true,
+  "noModePanel": true,
+  "noWebAssisted": true,
+  "noLocalOption": true,
+  "noDropdown": true,
+  "primaryCta": "Build Research Draft",
+  "manualCollapsed": true,
+  "overflow": false,
+  "consoleErrors": 0,
+  "network": {
+    "port8188": 0,
+    "cloud": 0,
+    "comfy": 0,
+    "web": 0,
+    "remoteUrls": [
+      "https://grok.com/grok-app-builder/extensions.js"
+    ]
+  },
+  "error": null
+}

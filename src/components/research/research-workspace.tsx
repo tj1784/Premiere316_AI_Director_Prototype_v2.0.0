@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Check, ClipboardPaste, FolderPlus, GitBranch, RefreshCw, Save, Search } from "lucide-react";
+import { Check, FolderPlus, GitBranch, RefreshCw, Save, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,11 +21,14 @@ import {
   RESEARCH_EMPTY_SECTIONS,
   RESEARCH_MANUAL_SUMMARY,
   RESEARCH_ROOM_PRIMARY_CTA,
+  RESEARCH_ROOM_REGENERATE_CTA,
+  RESEARCH_SOURCE_MATERIAL_CTA,
   researchBibleGenerated,
   researchRoomView,
 } from "@/lib/research/research-room.ts";
 import { uid } from "@/lib/utils";
 import type { Character, Asset } from "@/lib/studio/types";
+import { useStudio } from "@/lib/studio/store";
 
 export function ResearchWorkspace({
   title,
@@ -51,6 +54,7 @@ export function ResearchWorkspace({
   const [pasteText, setPasteText] = useState("");
   const manualRef = useRef<HTMLDetailsElement>(null);
   const packRef = useRef<HTMLInputElement>(null);
+  const returnToDefaultMode = useStudio((state) => state.returnToDefaultMode);
   const view = researchRoomView(bible, llamaAvailable);
 
   const persistContent = (content: ResearchContent) => {
@@ -72,17 +76,24 @@ export function ResearchWorkspace({
     });
   };
 
-  const runLocalResearchRoom = () => {
+  const openManualNotes = () => {
+    if (manualRef.current) manualRef.current.open = true;
+    manualRef.current?.scrollIntoView({ block: "nearest" });
+  };
+
+  const addSourceMaterial = () => packRef.current?.click();
+
+  const buildResearchDraft = () => {
     onRescan();
     if (llamaAvailable === false) {
       toast.error(`${view.offlineTitle} ${view.offlineBody}`);
       return;
     }
     if (llamaAvailable === true) {
-      toast.message("Local model is available. Research Room automation is not implemented in this build. Manual source entry stays secondary.");
+      toast.message("Research draft automation is not implemented in this build. Source material and notes stay secondary.");
       return;
     }
-    toast.message("Checking local research model… Start LM Studio Local API Server, then Rescan if this stays empty.");
+    toast.message("Checking the configured AI model. Start the configured model server, then Rescan if this stays empty.");
   };
 
   const generated = researchBibleGenerated(bible);
@@ -94,6 +105,7 @@ export function ResearchWorkspace({
       data-research-status={view.status}
       data-research-empty={view.showEmptyState ? "true" : "false"}
       data-research-offline={view.showOffline ? "true" : "false"}
+      data-research-mode-panel="false"
     >
       <aside className="hidden min-h-0 overflow-y-auto border-r border-border p-3 lg:block">
         <p className="mb-3 text-[10px] tracking-[0.2em] text-subtle uppercase">Bible</p>
@@ -106,7 +118,7 @@ export function ResearchWorkspace({
           Room overview
         </button>
         {generated ? <BibleNav bible={{ ...bible, content: draft }} active={section} onSelect={setSection} /> : (
-          <p className="mt-3 text-[11px] leading-relaxed text-muted">No generated Research Bible yet. Run the local research room instead of filling a worksheet.</p>
+          <p className="mt-3 text-[11px] leading-relaxed text-muted">No Research Bible has been generated yet. Build a research draft instead of filling a worksheet.</p>
         )}
       </aside>
 
@@ -117,15 +129,12 @@ export function ResearchWorkspace({
               <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Research Room</p>
               <h2 className="mt-1 font-display text-xl tracking-tight">{title || "Picture Research"}</h2>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge>{view.statusLabel}</Badge>
-              <Badge>{draft.mode === "local-only" ? "Local only" : "Web-assisted unavailable"}</Badge>
-            </div>
+            <Badge>{view.statusLabel}</Badge>
           </div>
           <p className="mt-3 max-w-2xl text-xs leading-relaxed text-muted">{view.purpose}</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={runLocalResearchRoom}><Search />{RESEARCH_ROOM_PRIMARY_CTA}</Button>
-            <Button variant="secondary" onClick={runLocalResearchRoom}><RefreshCw />Regenerate Research Draft</Button>
+            <Button onClick={buildResearchDraft}><Search />{RESEARCH_ROOM_PRIMARY_CTA}</Button>
+            <Button variant="secondary" onClick={buildResearchDraft}><RefreshCw />{RESEARCH_ROOM_REGENERATE_CTA}</Button>
             <Button
               variant="secondary"
               disabled={!bible.approvedVersionId}
@@ -156,12 +165,12 @@ export function ResearchWorkspace({
                     confidence: "C",
                     importedFrom: file.name,
                   });
-                })).then(() => toast.success("Source pack added locally."));
+                })).then(() => toast.success("Source material added."));
                 event.currentTarget.value = "";
               }}
             />
-            <Button variant="ghost" size="sm" onClick={() => packRef.current?.click()}><FolderPlus />Add Source Pack</Button>
-            <Button variant="ghost" size="sm" onClick={() => setPasteOpen((open) => !open)}><ClipboardPaste />Paste Source Text</Button>
+            <Button variant="ghost" size="sm" onClick={addSourceMaterial}><FolderPlus />{RESEARCH_SOURCE_MATERIAL_CTA}</Button>
+            <Button variant="ghost" size="sm" onClick={openManualNotes}>{RESEARCH_MANUAL_SUMMARY}</Button>
           </div>
         </header>
 
@@ -172,8 +181,9 @@ export function ResearchWorkspace({
               <p className="mt-2 text-sm leading-relaxed text-muted">{view.offlineBody}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button size="sm" variant="secondary" onClick={onRescan}><RefreshCw />Rescan</Button>
-                <Button size="sm" variant="ghost" onClick={() => setPasteOpen(true)}>Paste Source Text</Button>
-                <Button size="sm" variant="ghost" onClick={() => { if (manualRef.current) manualRef.current.open = true; }}>Open Manual Source Entry</Button>
+                <Button size="sm" variant="ghost" onClick={addSourceMaterial}>{RESEARCH_SOURCE_MATERIAL_CTA}</Button>
+                <Button size="sm" variant="ghost" onClick={openManualNotes}>{RESEARCH_MANUAL_SUMMARY}</Button>
+                <Button size="sm" variant="ghost" onClick={() => returnToDefaultMode()}>Return to Default Mode</Button>
               </div>
             </div>
           ) : null}
@@ -193,14 +203,14 @@ export function ResearchWorkspace({
                 setPasteTitle("");
                 setPasteText("");
                 setPasteOpen(false);
-                toast.success("Pasted source stored locally.");
+                toast.success("Source material added.");
               }}
             >
-              <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Paste source text</p>
+              <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Source material</p>
               <Input value={pasteTitle} onChange={(event) => setPasteTitle(event.target.value)} placeholder="Title" />
               <Textarea className="min-h-32" value={pasteText} onChange={(event) => setPasteText(event.target.value)} placeholder="Source text" required />
               <div className="flex flex-wrap gap-2">
-                <Button type="submit" size="sm">Add pasted source</Button>
+                <Button type="submit" size="sm">Add source material</Button>
                 <Button type="button" size="sm" variant="ghost" onClick={() => setPasteOpen(false)}>Cancel</Button>
               </div>
             </form>
@@ -209,11 +219,11 @@ export function ResearchWorkspace({
           {view.showEmptyState && section === "overview" ? (
             <div className="max-w-3xl rounded-lg bg-elevated p-5 shadow-[var(--shadow-border)]" data-research-empty-state="true">
               <p className="font-display text-xl tracking-tight">No Research Bible has been generated yet.</p>
-              <p className="mt-2 text-sm leading-relaxed text-muted">Run Local Research Room to draft:</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted">Build Research Draft to draft:</p>
               <ul className="mt-3 grid gap-1 text-sm text-muted">
                 {RESEARCH_EMPTY_SECTIONS.map((item) => <li key={item}>· {item}</li>)}
               </ul>
-              <Button className="mt-5" onClick={runLocalResearchRoom}><Search />{RESEARCH_ROOM_PRIMARY_CTA}</Button>
+              <Button className="mt-5" onClick={buildResearchDraft}><Search />{RESEARCH_ROOM_PRIMARY_CTA}</Button>
             </div>
           ) : null}
 
@@ -268,6 +278,7 @@ export function ResearchWorkspace({
             <summary className="cursor-pointer text-sm text-muted">{RESEARCH_MANUAL_SUMMARY}</summary>
             <div className="mt-4 grid gap-4">
               <AddSourceForm onAdd={addSource} />
+              <Button size="sm" variant="secondary" onClick={() => setPasteOpen(true)}>Paste source text</Button>
               <div>
                 <Label>Research notes</Label>
                 <Textarea className="mt-1.5 min-h-24" value={draft.notes} onChange={(event) => persistContent({ ...draft, notes: event.target.value })} />
@@ -311,22 +322,29 @@ export function ResearchWorkspace({
         </footer>
       </section>
 
-      <aside className="hidden min-h-0 overflow-y-auto border-l border-border p-4 lg:block">
-        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Mode</p>
-        <select
-          aria-label="Research mode"
-          className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]"
-          value={draft.mode}
-          onChange={(event) => persistContent({ ...draft, mode: event.target.value as ResearchContent["mode"] })}
-        >
-          <option value="local-only">Local / user-provided</option>
-          <option value="web-assisted-opt-in">Web-assisted (unavailable)</option>
-        </select>
-        {draft.mode === "web-assisted-opt-in" ? (
-          <p className="mt-3 text-xs leading-relaxed text-muted">Web-assisted research is not authorized. The flag is stored locally and does not browse or call a network.</p>
-        ) : (
-          <p className="mt-3 text-xs leading-relaxed text-muted">Sources stay on this machine. Nothing is fetched automatically.</p>
-        )}
+      <aside className="hidden min-h-0 overflow-y-auto border-l border-border p-4 lg:block" data-research-status-panel="true">
+        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Research status</p>
+        <p className="mt-2 text-sm">{view.statusLabel}</p>
+        <div className="my-5 border-t border-border" />
+        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Model status</p>
+        <p className="mt-2 text-sm">{view.modelStatusLabel}</p>
+        <div className="my-5 border-t border-border" />
+        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Actions</p>
+        <div className="mt-3 grid gap-2">
+          <Button size="sm" variant="secondary" onClick={onRescan}><RefreshCw />Rescan</Button>
+          <Button size="sm" variant="secondary" onClick={buildResearchDraft}><RefreshCw />{RESEARCH_ROOM_REGENERATE_CTA}</Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={!bible.approvedVersionId}
+            onClick={() => {
+              onChange(startDeltaResearch(bible, draft, uid("rsv")));
+              toast.message("Delta Research opened. Approved notes remain.");
+            }}
+          >
+            <GitBranch />Delta Research
+          </Button>
+        </div>
         <div className="my-5 border-t border-border" />
         <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Versions</p>
         <ol className="mt-3 grid gap-2">

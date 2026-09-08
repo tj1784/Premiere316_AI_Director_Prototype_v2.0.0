@@ -67,7 +67,7 @@ describe("advanced departments are optional tools, not the main path", () => {
     const research = cards.find((card) => card.id === "research");
     assert.ok(research);
     assert.equal(research.requiredInDefault, false);
-    assert.equal(research.status, "Not generated");
+    assert.equal(research.status, "Draft missing");
     assert.match(research.controls, /Research Bible/);
     assert.equal(PHASE_REVIEW_DEFAULTS.research, false);
   });
@@ -79,6 +79,8 @@ describe("advanced departments are optional tools, not the main path", () => {
       readFileSync(new URL("../../components/studio/advanced-departments.tsx", import.meta.url), "utf8"),
       readFileSync(new URL("../../components/research/research-workspace.tsx", import.meta.url), "utf8"),
     ].join("\n");
+    const workspace = readFileSync(new URL("../../components/research/research-workspace.tsx", import.meta.url), "utf8");
     assert.doesNotMatch(files, /ComfyUI|:8188|cloud fallback|openai|anthropic|openrouter|api\.x\.ai/i);
+    assert.doesNotMatch(workspace, /Web-assisted|web-assisted|Local Research Room|Research mode/);
   });
 });

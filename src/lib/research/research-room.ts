@@ -2,10 +2,11 @@ import type { PictureResearchBible } from "./bible.ts";
 
 export type ResearchRoomStatus = "not-generated" | "draft" | "approved" | "blocked";
 
-export const RESEARCH_ROOM_PRIMARY_CTA = "Run Local Research Room";
-export const RESEARCH_ROOM_REGENERATE_CTA = "Regenerate Research Draft";
+export const RESEARCH_ROOM_PRIMARY_CTA = "Build Research Draft";
+export const RESEARCH_ROOM_REGENERATE_CTA = "Regenerate";
 export const RESEARCH_ROOM_DELTA_CTA = "Delta Research";
-export const RESEARCH_MANUAL_SUMMARY = "Advanced: manual source entry";
+export const RESEARCH_SOURCE_MATERIAL_CTA = "Add Source Material";
+export const RESEARCH_MANUAL_SUMMARY = "Manual Notes";
 
 export const RESEARCH_EMPTY_SECTIONS = [
   "Source / Canon Ledger",
@@ -37,9 +38,15 @@ export function researchRoomStatus(
 
 export function researchRoomStatusLabel(status: ResearchRoomStatus): string {
   if (status === "approved") return "Approved";
-  if (status === "draft") return "Draft exists";
+  if (status === "draft") return "Draft ready";
   if (status === "blocked") return "Blocked";
-  return "Not generated";
+  return "Draft missing";
+}
+
+export function researchModelStatusLabel(llamaAvailable: boolean | null): string {
+  if (llamaAvailable === true) return "Available";
+  if (llamaAvailable === false) return "Unavailable";
+  return "Checking";
 }
 
 export function researchRoomView(
@@ -50,17 +57,34 @@ export function researchRoomView(
   return {
     status,
     statusLabel: researchRoomStatusLabel(status),
+    modelStatusLabel: researchModelStatusLabel(llamaAvailable),
     purpose: "Optional inspection and editing of the Research Bible.",
     primaryCta: RESEARCH_ROOM_PRIMARY_CTA,
     regenerateCta: RESEARCH_ROOM_REGENERATE_CTA,
     deltaCta: RESEARCH_ROOM_DELTA_CTA,
+    sourceMaterialCta: RESEARCH_SOURCE_MATERIAL_CTA,
     manualSummary: RESEARCH_MANUAL_SUMMARY,
     showEmptyState: !researchBibleGenerated(bible),
     showManualByDefault: false,
     showOffline: llamaAvailable === false,
     showWorksheetFirst: false,
     emptySections: [...RESEARCH_EMPTY_SECTIONS],
-    offlineTitle: "Local research model unavailable.",
-    offlineBody: "Start LM Studio Local API Server, then Rescan.",
+    offlineTitle: "Configured AI model unavailable.",
+    offlineBody: "Start the configured model server, then Rescan.",
   };
+}
+
+const USER_FACING_MODE_STRINGS = [
+  /web-assisted/i,
+  /web assisted/i,
+  /research mode/i,
+  /local research/i,
+  /local model research/i,
+  /local research room/i,
+];
+
+export function userFacingResearchModeStrings(source: string): string[] {
+  return USER_FACING_MODE_STRINGS
+    .filter((pattern) => pattern.test(source))
+    .map((pattern) => String(pattern));
 }
