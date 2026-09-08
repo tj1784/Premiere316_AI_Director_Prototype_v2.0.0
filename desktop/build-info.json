@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "appVersion": "3.0.2",
-  "buildId": "p316-20260907234856-679651a385b1",
-  "buildTimestamp": "2026-09-07T23:48:56.748Z",
-  "rendererSourceHash": "679651a385b19034db5bfa7dd242acbb57884f74046b8f35e0b7d2e93c44864d",
+  "buildId": "p316-20260908052218-44d151d83cda",
+  "buildTimestamp": "2026-09-08T05:22:18.667Z",
+  "rendererSourceHash": "44d151d83cda0d4f6e0578aeab30a13ad962fceaffcf561aabf871f772cd104b",
   "rendererMode": "PACKAGED DIST"
 }

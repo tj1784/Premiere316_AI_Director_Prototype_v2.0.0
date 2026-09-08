@@ -51,6 +51,8 @@ try {
   await page.getByRole("heading", { name: "Pictures" }).waitFor();
   await page.getByRole("button", { name: /The Last Reel/ }).click();
   await page.locator('[data-studio-shell="true"]').waitFor();
+  const advanced = page.getByRole("button", { name: "Advanced Departments" });
+  if (await advanced.isVisible().catch(() => false)) await advanced.click();
 
   await selectStage(page, "inventory", "04 Inventory");
   await page.getByRole("button", { name: "Open Generate / Assets" }).click();

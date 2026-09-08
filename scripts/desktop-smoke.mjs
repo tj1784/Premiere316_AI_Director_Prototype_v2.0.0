@@ -99,7 +99,15 @@ try {
   assert.equal(await zoomFactor(application), 1);
 
   await openLastReel(page);
-  stageNavigation = await page.getByRole("navigation", { name: "Pipeline" }).locator("button").evaluateAll((buttons) => buttons.map((button) => button.textContent?.trim() ?? "").filter(Boolean));
+  const defaultNav = await page.getByRole("navigation", { name: "Pipeline" }).locator("button").evaluateAll((buttons) => buttons.map((button) => button.textContent?.trim() ?? "").filter(Boolean));
+  assert.match(defaultNav.join(" | "), /Intake/);
+  assert.match(defaultNav.join(" | "), /Assets/);
+  assert.match(defaultNav.join(" | "), /Video Clips/);
+  assert.match(defaultNav.join(" | "), /Export/);
+  assert.match(defaultNav.join(" | "), /Advanced Departments/);
+  assert.equal(defaultNav.filter((label) => /Research|Screenplay|Inventory|Prompt Lab|Stitch/.test(label)).length, 0, "internal departments must not be default nav");
+  await page.getByRole("button", { name: "Advanced Departments" }).click();
+  stageNavigation = await page.getByRole("navigation", { name: "Pipeline" }).locator("button").evaluateAll((buttons) => buttons.map((button) => button.textContent?.trim() ?? "").filter(Boolean).filter((label) => !/Default Mode|Advanced departments/i.test(label)));
   assert.equal(stageNavigation.length, 14, `expected 14 pipeline stages, found ${stageNavigation.length}: ${stageNavigation.join(" | ")}`);
   stageNavigation = stageNavigation.map((label) => label.replace(/\s+/g, " ").replace(/^(\d{2})(\S)/, "$1 $2"));
   assert.deepEqual(stageNavigation, [

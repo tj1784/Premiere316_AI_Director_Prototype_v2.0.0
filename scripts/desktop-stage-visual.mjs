@@ -194,6 +194,8 @@ try {
   report.launchedUserData = launched.launchedUserData;
   await setZoom(page, 1);
   await openLastReel(page);
+  const advanced = page.getByRole("button", { name: "Advanced Departments" });
+  if (await advanced.isVisible().catch(() => false)) await advanced.click();
   await captureStages(application, page, 100, report);
   await setZoom(page, 1.5);
   await captureStages(application, page, 150, report);

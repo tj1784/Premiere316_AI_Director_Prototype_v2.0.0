@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "defaultNav": [
+    "01Intake",
+    "02Assets",
+    "03First / Last",
+    "04Video Clips",
+    "05Export",
+    "Advanced Departments"
+  ],
+  "advancedHiddenByDefault": true,
+  "buildCta": true,
+  "reviewDefaultOff": true,
+  "landedAssets": true,
+  "llamaOffline": false,
+  "error": null,
+  "network": {
+    "port8188": 0,
+    "cloud": 0
+  }
+}

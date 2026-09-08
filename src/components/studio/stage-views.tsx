@@ -16,6 +16,7 @@ import {
 } from "@/lib/studio/export";
 import { ENGINES, KIND_LABEL, engineById } from "@/lib/studio/engines";
 import { MODEL_ROOT, STAGES, type Picture, type StageId } from "@/lib/studio/types";
+import { DEFAULT_NAV_STEPS, buildMoviePlan, hydrateProductFlow } from "@/lib/studio/product-flow.ts";
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import { useDirector } from "@/lib/studio/use-director";
 import { compileEnginePromptPackage, compilePicture, totalDuration } from "@/lib/studio/prompt-compiler";
@@ -125,6 +126,11 @@ function Pane({ title, kicker, children }: { title: string; kicker: string; chil
 
 function IntakeStage({ picture }: { picture: Picture }) {
   const patchActive = useStudio((state) => state.patchActive);
+  const replaceActive = useStudio((state) => state.replaceActive);
+  const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
+  const flow = hydrateProductFlow(picture.productFlow);
+  const [reviewInternal, setReviewInternal] = useState(flow.reviewInternalPhases);
+  const [building, setBuilding] = useState(false);
   const patchIntake = <K extends keyof PictureIntake>(key: K, value: PictureIntake[K]) => {
     const intake = { ...picture.intake, [key]: value, updatedAt: Date.now() };
     patchActive({
@@ -138,9 +144,41 @@ function IntakeStage({ picture }: { picture: Picture }) {
     });
   };
 
+  async function buildPlan() {
+    setBuilding(true);
+    let llamaAvailable = false;
+    try {
+      const status = await localLLMStatus();
+      llamaAvailable = Boolean(status.provider?.available);
+    } catch {
+      llamaAvailable = false;
+    }
+    const result = buildMoviePlan({
+      ...picture,
+      productFlow: { ...flow, reviewInternalPhases: reviewInternal },
+    }, { llamaAvailable });
+    replaceActive(result.picture);
+    if (result.flow.nextTouchpoint === "asset-approval") setGenerateFocus("assets");
+    if (llamaAvailable) toast.success("Movie plan prepared. Next: Approve Assets.");
+    else toast.error("Local Llama unavailable. Intake skeleton prepared. Start LM Studio Local API, then Rescan. Next: Approve Assets.");
+    setBuilding(false);
+  }
   return (
     <Pane title="Picture Intake" kicker="01 · Source & intent">
       <div className="grid max-w-3xl gap-5">
+        <div>
+          <Label>What are we making?</Label>
+          <Textarea className="mt-1.5 min-h-32 text-base" value={picture.intake.concept || picture.intake.premise || picture.intake.logline} onChange={(event) => patchIntake("concept", event.target.value)} placeholder="2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal…" />
+        </div>
+        <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+          <label className="flex min-h-11 items-start gap-2 text-sm">
+            <input className="mt-1" type="checkbox" checked={reviewInternal} onChange={(event) => setReviewInternal(event.target.checked)} />
+            <span>I want to review internal phases before Premiere316 continues. Default is off: Research, Screenplay, Inventory, and other departments run in the background.</span>
+          </label>
+          {reviewInternal ? <p className="mt-2 text-xs text-muted">Advanced phase pauses are optional. Assets, First/Last Frames, Video Clips, and Export remain required.</p> : null}
+        </div>
+        <Button className="h-12 text-base" onClick={() => void buildPlan()} disabled={building}>{building ? "Building…" : "Build Movie Plan"}</Button>
+        {flow.steps.length ? <ul className="grid gap-1 text-sm text-muted">{flow.steps.map((step) => <li key={step.id}>{step.status === "failed" ? "!" : "✓"} {step.id}: {step.message}</li>)}</ul> : null}
         <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
           <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Source mode</p>
           <p className="mt-2 text-sm">{SOURCE_TYPE_LABELS[picture.intake.sourceType]}</p>
@@ -1341,6 +1379,10 @@ export function StageRail() {
   const stage = useStage();
   const setStage = useStudio((state) => state.setStage);
   const picture = useActivePicture();
+  const uiMode = useStudio((state) => state.uiMode);
+  const setUiMode = useStudio((state) => state.setUiMode);
+  const generateGate = useStudio((state) => state.generateGate);
+  const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
   const currentIndex = Math.max(0, STAGES.findIndex((item) => item.id === stage));
   const current = STAGES[currentIndex];
   const stageDone = (id: StageId) =>
@@ -1356,45 +1398,68 @@ export function StageRail() {
     (id === "generate" && Boolean(picture?.shots.some((shot) => shot.stillUrl))) ||
     (id === "score" && (picture?.cues.length ?? 0) > 0);
 
+  const defaultIndex = Math.max(0, DEFAULT_NAV_STEPS.findIndex((step) => step.stage === stage && (step.gate ? generateGate === step.gate : true)));
+  const goDefault = (step: (typeof DEFAULT_NAV_STEPS)[number]) => {
+    if (step.gate) setGenerateFocus(step.gate);
+    else setStage(step.stage);
+  };
   return (
-    <nav className="min-w-0 max-w-full overflow-hidden" aria-label="Pipeline" data-active-stage={stage}>
-      <div className="hidden grid-cols-[repeat(13,minmax(0,1fr))] gap-1 px-2 py-2 xl:grid">
-        {STAGES.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            data-stage-id={item.id}
-            aria-label={`${item.number} ${item.label}`}
-            aria-current={stage === item.id ? "step" : undefined}
-            onClick={() => setStage(item.id as StageId)}
-            className={cn(
-              "flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-sm px-2 text-xs",
-              stage === item.id ? "bg-elevated text-fg" : "text-muted hover:text-fg",
-            )}
-          >
-            <span className="shrink-0 text-[10px] text-subtle">{item.number}</span>
-            <span className="min-w-0 truncate" title={item.label}>{item.label}</span>
-            {stageDone(item.id as StageId) ? <span className="size-1.5 shrink-0 rounded-full bg-good" /> : null}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex min-w-0 items-center gap-2 px-2 py-2 xl:hidden">
-        <Button size="icon-sm" variant="ghost" aria-label="Previous stage" disabled={currentIndex === 0} onClick={() => setStage(STAGES[currentIndex - 1].id as StageId)}><ChevronLeft /></Button>
-        <label className="relative min-w-0 flex-1">
-          <span className="pointer-events-none absolute left-3 top-1 text-[9px] tracking-wide text-subtle uppercase">Stage {currentIndex + 1} of {STAGES.length}</span>
-          <select
-            aria-label="Pipeline stage"
-            value={stage}
-            onChange={(event) => setStage(event.target.value as StageId)}
-            className="h-11 w-full min-w-0 appearance-none rounded-sm bg-elevated px-3 pb-1 pt-4 text-xs text-fg shadow-[var(--shadow-border)] outline-none focus:shadow-[var(--shadow-border-hover)]"
-          >
-            {STAGES.map((item) => <option key={item.id} value={item.id}>{item.number} · {item.label}</option>)}
-          </select>
-        </label>
-        <span className="hidden shrink-0 items-center gap-2 text-xs text-muted sm:flex" aria-hidden="true"><span className="text-subtle">{current.number}</span>{current.label}{stageDone(current.id as StageId) ? <span className="size-1.5 rounded-full bg-good" /> : null}</span>
-        <Button size="icon-sm" variant="ghost" aria-label="Next stage" disabled={currentIndex === STAGES.length - 1} onClick={() => setStage(STAGES[currentIndex + 1].id as StageId)}><ChevronRight /></Button>
-      </div>
+    <nav className="min-w-0 max-w-full overflow-hidden" aria-label="Pipeline" data-active-stage={stage} data-ui-mode={uiMode}>
+      {uiMode === "default" ? (
+        <div className="flex min-w-0 items-center gap-1 px-2 py-2">
+          <div className="hidden min-w-0 flex-1 grid-cols-5 gap-1 xl:grid">
+            {DEFAULT_NAV_STEPS.map((item) => {
+              const currentDefault = item.stage === stage && (item.gate ? generateGate === item.gate : item.stage !== "generate");
+              return (
+                <button key={item.id} type="button" data-stage-id={item.stage} aria-label={`${item.number} ${item.label}`} aria-current={currentDefault ? "step" : undefined} onClick={() => goDefault(item)} className={cn("flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-sm px-2 text-sm", currentDefault ? "bg-elevated text-fg" : "text-muted hover:text-fg")}>
+                  <span className="shrink-0 text-xs text-subtle">{item.number}</span>
+                  <span className="min-w-0 truncate" title={item.label}>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex min-w-0 flex-1 items-center gap-2 xl:hidden">
+            <Button size="icon-sm" variant="ghost" aria-label="Previous stage" disabled={defaultIndex === 0} onClick={() => goDefault(DEFAULT_NAV_STEPS[defaultIndex - 1])}><ChevronLeft /></Button>
+            <label className="relative min-w-0 flex-1">
+              <span className="pointer-events-none absolute left-3 top-1 text-[9px] tracking-wide text-subtle uppercase">Touchpoint {defaultIndex + 1} of 5</span>
+              <select aria-label="Pipeline stage" value={DEFAULT_NAV_STEPS[defaultIndex]?.id} onChange={(event) => {
+                const step = DEFAULT_NAV_STEPS.find((item) => item.id === event.target.value);
+                if (step) goDefault(step);
+              }} className="h-11 w-full min-w-0 appearance-none rounded-sm bg-elevated px-3 pb-1 pt-4 text-sm text-fg shadow-[var(--shadow-border)] outline-none">
+                {DEFAULT_NAV_STEPS.map((item) => <option key={item.id} value={item.id}>{item.number} · {item.label}</option>)}
+              </select>
+            </label>
+            <Button size="icon-sm" variant="ghost" aria-label="Next stage" disabled={defaultIndex === DEFAULT_NAV_STEPS.length - 1} onClick={() => goDefault(DEFAULT_NAV_STEPS[defaultIndex + 1])}><ChevronRight /></Button>
+          </div>
+          <Button size="sm" variant="ghost" onClick={() => setUiMode("advanced")}>Advanced Departments</Button>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-2 px-2 pt-2">
+            <p className="text-xs text-muted">Advanced departments</p>
+            <Button size="sm" variant="secondary" onClick={() => setUiMode("default")}>Default Mode</Button>
+          </div>
+          <div className="hidden grid-cols-[repeat(13,minmax(0,1fr))] gap-1 px-2 py-2 xl:grid">
+            {STAGES.map((item) => (
+              <button key={item.id} type="button" data-stage-id={item.id} aria-label={`${item.number} ${item.label}`} aria-current={stage === item.id ? "step" : undefined} onClick={() => setStage(item.id as StageId)} className={cn("flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-sm px-2 text-xs", stage === item.id ? "bg-elevated text-fg" : "text-muted hover:text-fg")}>
+                <span className="shrink-0 text-[10px] text-subtle">{item.number}</span>
+                <span className="min-w-0 truncate" title={item.label}>{item.label}</span>
+                {stageDone(item.id as StageId) ? <span className="size-1.5 shrink-0 rounded-full bg-good" /> : null}
+              </button>
+            ))}
+          </div>
+          <div className="flex min-w-0 items-center gap-2 px-2 py-2 xl:hidden">
+            <Button size="icon-sm" variant="ghost" aria-label="Previous stage" disabled={currentIndex === 0} onClick={() => setStage(STAGES[currentIndex - 1].id as StageId)}><ChevronLeft /></Button>
+            <label className="relative min-w-0 flex-1">
+              <span className="pointer-events-none absolute left-3 top-1 text-[9px] tracking-wide text-subtle uppercase">Stage {currentIndex + 1} of {STAGES.length}</span>
+              <select aria-label="Pipeline stage" value={stage} onChange={(event) => setStage(event.target.value as StageId)} className="h-11 w-full min-w-0 appearance-none rounded-sm bg-elevated px-3 pb-1 pt-4 text-xs text-fg shadow-[var(--shadow-border)] outline-none">
+                {STAGES.map((item) => <option key={item.id} value={item.id}>{item.number} · {item.label}</option>)}
+              </select>
+            </label>
+            <Button size="icon-sm" variant="ghost" aria-label="Next stage" disabled={currentIndex === STAGES.length - 1} onClick={() => setStage(STAGES[currentIndex + 1].id as StageId)}><ChevronRight /></Button>
+          </div>
+        </>
+      )}
     </nav>
   );
 }

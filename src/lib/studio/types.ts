@@ -8,6 +8,7 @@ import type { PromptLabState } from "./prompt-lab.ts";
 import type { VideoWorkspace } from "../production/video-types.ts";
 import type { AudioWorkspace } from "../production/audio-types.ts";
 import type { GenerateGateWorkspace } from "../production/generate-gates.ts";
+import type { ProductFlowState } from "./product-flow.ts";
 import type { VisualDevelopmentState } from "../visual-development.ts";
 import type { CinematographyState } from "../cinematography.ts";
 
@@ -152,6 +153,7 @@ export type Picture = {
   video?: VideoWorkspace | null;
   audio?: AudioWorkspace | null;
   generateGates?: GenerateGateWorkspace | null;
+  productFlow?: ProductFlowState | null;
   production?: ProductionBreakdown | null;
   visualDevelopment?: VisualDevelopmentState | null;
   cinematography?: CinematographyState | null;

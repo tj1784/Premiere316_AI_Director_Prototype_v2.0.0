@@ -13,6 +13,7 @@ import { hydratePromptLabState } from "./prompt-lab.ts";
 import { hydrateVideoWorkspace } from "../production/video-types.ts";
 import { restoreAudioWorkspace } from "../production/audio-iterations.ts";
 import { hydrateGenerateGates } from "../production/generate-gates.ts";
+import { hydrateProductFlow } from "./product-flow.ts";
 import { hydrateVisualDevelopmentState } from "../visual-development.ts";
 import { hydrateCinematographyState } from "../cinematography.ts";
 
@@ -25,6 +26,7 @@ interface StudioState {
   binTab: "engines" | "assets" | "models";
   generateGate: "assets" | "keyframes" | "video";
   generateFilterId: string | null;
+  uiMode: "default" | "advanced";
   leftPanelCollapsed: boolean;
   rightPanelCollapsed: boolean;
   residency: { pinned: Record<string, boolean>; idleUnload: IdleUnloadOption };
@@ -44,6 +46,7 @@ interface StudioState {
   closeStillBay: () => void;
   setBinTab: (tab: StudioState["binTab"]) => void;
   setGenerateFocus: (gate: StudioState["generateGate"], filterId?: string | null) => void;
+  setUiMode: (mode: StudioState["uiMode"]) => void;
   setLeftPanelCollapsed: (collapsed: boolean) => void;
   setRightPanelCollapsed: (collapsed: boolean) => void;
   bumpUsage: (key: keyof Picture["usage"], n?: number) => boolean;
@@ -64,7 +67,7 @@ function blankPicture(intake: PictureIntake): Picture {
     runtimeMinutes: intake.targetRuntimeMinutes,
     createdAt: now,
     updatedAt: now,
-    stage: "research",
+    stage: "intake",
     ...makePreparationForIntake(intake, id, now),
     research: hydratePictureResearch(null, intake, now),
     visualDevelopment: null,
@@ -101,6 +104,7 @@ export const useStudio = create<StudioState>()(
       binTab: "assets",
       generateGate: "assets",
       generateFilterId: null,
+      uiMode: "default",
       leftPanelCollapsed: false,
       rightPanelCollapsed: false,
       residency: { pinned: {}, idleUnload: 30 },
@@ -178,6 +182,7 @@ export const useStudio = create<StudioState>()(
       closeStillBay: () => set({ stillBayShotId: null }),
       setBinTab: (tab) => set({ binTab: tab }),
       setGenerateFocus: (gate, filterId = null) => set({ generateGate: gate, generateFilterId: filterId, stageOverride: "generate" }),
+      setUiMode: (mode) => set({ uiMode: mode }),
       setLeftPanelCollapsed: (leftPanelCollapsed) => set({ leftPanelCollapsed }),
       setRightPanelCollapsed: (rightPanelCollapsed) => set({ rightPanelCollapsed }),
       bumpUsage: (key, n = 1) => {
@@ -247,7 +252,7 @@ function migratePicture(picture: LegacyPicture): Picture {
   const withResearch = { ...withPerformance, research: hydratePictureResearch(withPerformance.research, withPerformance.intake), promptLab: hydratePromptLabState(withPerformance.promptLab), video: hydrateVideoWorkspace(withPerformance.video), audio: restoreAudioWorkspace(withPerformance.audio) };
   const withVisual = { ...withResearch, visualDevelopment: hydrateVisualDevelopmentState(withResearch.visualDevelopment, withResearch) };
   const withCinema = { ...withVisual, cinematography: hydrateCinematographyState(withVisual.cinematography, withVisual) };
-  return { ...withCinema, generateGates: hydrateGenerateGates(withCinema.generateGates, withCinema) };
+  return { ...withCinema, generateGates: hydrateGenerateGates(withCinema.generateGates, withCinema), productFlow: hydrateProductFlow(withCinema.productFlow) };
 }
 
 export function useActivePicture(): Picture | null {
