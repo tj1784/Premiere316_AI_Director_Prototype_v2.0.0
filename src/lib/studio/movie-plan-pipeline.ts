@@ -3,6 +3,7 @@ import {
   INTERNAL_PHASES,
   hydrateProductFlow,
   parseMovieIntent,
+  resolveMovieRuntime,
   pausedInternalPhase,
   allPhaseReviewsOn,
   PHASE_REVIEW_DEFAULTS,
@@ -35,13 +36,15 @@ import { compilePicture } from "./prompt-compiler.ts";
 import { seedVisualDevelopmentFromPicture } from "../visual-development.ts";
 import { seedCinematographyFromPicture } from "../cinematography.ts";
 import { migratePicturePerformance } from "../performance/persistence.ts";
+import { addPerformanceDirection } from "../performance/domain.ts";
+import { stableHash } from "../production/dependency-graph.ts";
 import { savePromptVersion, hydrateGenerateGates } from "../production/generate-gates.ts";
 import type { ScreenplayModelRef } from "./screenplay.ts";
 
 export const CONFIGURED_MODEL_UNAVAILABLE = LLAMA_NOT_SERVED;
 export const MANUAL_FALLBACK_LABEL = "Manual fallback — no AI movie plan has been generated.";
 
-export type MoviePlanGenerate = (input: { stepId: InternalPhase; system: string; prompt: string }) => Promise<{ text: string }>;
+export type MoviePlanGenerate = (input: { stepId: InternalPhase; system: string; prompt: string; sceneCount?: number; runtimeSeconds?: number }) => Promise<{ text: string }>;
 
 export type MoviePlanRuntime = {
   available: boolean;
@@ -73,7 +76,7 @@ function applyIntake(picture: Picture, now: number): Picture {
     genre: picture.intake.genre || brief.genre,
     tone: picture.intake.tone || brief.tone,
     productionStyle: picture.intake.productionStyle || brief.productionStyle,
-    targetRuntimeMinutes: picture.intake.targetRuntimeMinutes || brief.targetRuntimeMinutes,
+    targetRuntimeMinutes: resolveMovieRuntime(picture, brief.concept),
     updatedAt: now,
   };
   return {
@@ -82,7 +85,7 @@ function applyIntake(picture: Picture, now: number): Picture {
     logline: picture.logline || intake.logline,
     genre: picture.genre || intake.genre,
     tone: picture.tone || intake.tone,
-    runtimeMinutes: picture.runtimeMinutes || intake.targetRuntimeMinutes,
+    runtimeMinutes: intake.targetRuntimeMinutes,
     intake,
     updatedAt: now,
   };
@@ -127,6 +130,41 @@ function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+/** Editorial timing is frame-exact even when a model's arithmetic is wrong. */
+export function fitShotDurations(shots: Shot[], seconds: number, fps: number): Shot[] {
+  const rate = Number.isFinite(fps) && fps > 0 ? fps : 24;
+  const frames = Math.round(seconds * rate);
+  if (!shots.length || !Number.isFinite(frames) || frames < shots.length) throw new Error("Runtime is too short for the generated shot count.");
+  const weights = shots.map((shot) => Number.isFinite(shot.durationSec) && shot.durationSec > 0 ? shot.durationSec : 1);
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  let cumulative = 0;
+  let previous = 0;
+  return shots.map((shot, index) => {
+    cumulative += weights[index];
+    const edge = Math.round(cumulative / total * (frames - shots.length));
+    const durationSec = (1 + edge - previous) / rate;
+    previous = edge;
+    return { ...shot, durationSec };
+  });
+}
+
+function suppliedResearchEvidence(picture: Picture): string {
+  return [picture.intake.suppliedSourceText, picture.intake.sourceMaterial, picture.intake.sourcePassages, ...picture.intake.importedSources.map((source) => source.text)].filter(Boolean).join("\n");
+}
+
+function assetSceneIds(item: Record<string, unknown>, scenes: { id: string; slugline: string }[], fountain: string): string[] {
+  if (Array.isArray(item.sceneNumbers)) {
+    const ids = item.sceneNumbers.map((number) => scenes[Number(number) - 1]?.id).filter((id): id is string => Boolean(id));
+    if (ids.length !== item.sceneNumbers.length) throw new Error(`Asset ${asString(item.name)} references an invalid screenplay scene.`);
+    if (ids.length) return [...new Set(ids)];
+    throw new Error(`Asset ${asString(item.name)} references no valid screenplay scene.`);
+  }
+  // Older providers omitted scene numbers. Recover only text-grounded matches.
+  const name = asString(item.name).toLocaleLowerCase();
+  const nodes = sceneNodes(parseScreenplayHierarchy(fountain));
+  return nodes.filter((node) => name && node.fountain.toLocaleLowerCase().includes(name)).map((node) => node.id);
+}
+
 function modelRef(servedModelId: string, displayName?: string): ScreenplayModelRef {
   return {
     id: servedModelId,
@@ -146,14 +184,15 @@ function modelRef(servedModelId: string, displayName?: string): ScreenplayModelR
 
 function researchPrompt(picture: Picture): { system: string; prompt: string } {
   return {
-    system: "You are Premiere316 research. Return only JSON. Do not browse the web. Do not mention providers or modes.",
+    system: "You are Premiere316 research. Return only JSON. No web access. Produce completed story-development decisions, not promises to research later. Distinguish user-supplied evidence, unverified remembered context, and invented adaptation choices. Never invent quotations or claim sources were consulted.",
     prompt: `Write a Research Bible for this picture as JSON with keys:
 title, sections, characters, locations, sources.
 sections must include every key: ${RESEARCH_BIBLE_SECTION_KEYS.join(", ")}
-Each section value must be non-empty prose.
+Each section must contain ONE concrete sentence of at most 20 words. Do not write tasks or generic advice. Supplied source text controls story events: never invent events, dialogue, or character relationships. Artistic staging may fill visual details only. confidenceLedger must distinguish source events from visual interpretation. Keep characters and locations to the essential cast and settings.
 characters: [{name, role, age, look, arc}]
 locations: [{name, description, lighting}]
-sources: [{title, locator, quote}]
+sources: [] unless quoting exact text supplied below; never quote from memory.
+Supplied evidence: ${JSON.stringify([picture.intake.suppliedSourceText, picture.intake.sourceMaterial, picture.intake.sourcePassages, ...picture.intake.importedSources.map((source) => source.text)].filter(Boolean))}
 Picture: ${JSON.stringify({
       title: picture.title,
       concept: picture.intake.concept || picture.intake.premise || picture.logline,
@@ -166,10 +205,13 @@ Picture: ${JSON.stringify({
 
 function screenplayPrompt(picture: Picture, research: ResearchContent): { system: string; prompt: string } {
   return {
-    system: "You are Premiere316 screenwriter. Return JSON { fountain }. Fountain must include INT./EXT. sluglines. No web. Separate from QA.",
+    system: "You are Premiere316 screenwriter. Return JSON { title, fountain }. Escape line breaks inside the fountain JSON string as \\n. Fountain must include INT./EXT. sluglines, concrete action and a complete ending. No web. Separate from QA.",
     prompt: `Write a playable Fountain screenplay/trailer from Intake and Research.
 JSON: { "title": string, "fountain": string }
+Target duration: ${picture.intake.targetRuntimeMinutes} minutes. Respect this duration, including pauses and visual action. For a trailer use a compact set of complete beats, not a feature screenplay. No explanatory preface or follow-up notes.
 Research sections: ${JSON.stringify(research.sections)}
+Source evidence (authoritative for events): ${suppliedResearchEvidence(picture)}
+Fidelity requirements: ${picture.intake.fidelityRequirements}. Preserve the source sequence. Do not invent story events or dialogue. Express the duration using timed visual beats. Keep the screenplay compact, with a complete ending.
 Intake: ${picture.intake.concept || picture.intake.premise || picture.logline}`,
   };
 }
@@ -177,14 +219,14 @@ Intake: ${picture.intake.concept || picture.intake.premise || picture.logline}`,
 function qaPrompt(fountain: string): { system: string; prompt: string } {
   return {
     system: "You are Premiere316 Story Doctor QA. You did not write this screenplay. Return JSON { findings: [{ category, severity, summary, recommendation, revisionRequired }] }. fountainUnchanged is implied. Do not rewrite the Fountain.",
-    prompt: `Critique this Fountain. Categories: SOURCE DRIFT, CHARACTER DRIFT, PACING ISSUE, CONTINUITY ISSUE, DIALOGUE ISSUE, THEMATIC DRIFT, CINEMATOGRAPHY OPPORTUNITY.
+    prompt: `Critique this Fountain. Return 1-4 specific findings grounded in named scenes/actions. Do not invent problems; a constructive opportunity can be a note with revisionRequired false. Severity must be note, warning, or blocker. Categories: SOURCE DRIFT, CHARACTER DRIFT, PACING ISSUE, CONTINUITY ISSUE, DIALOGUE ISSUE, THEMATIC DRIFT, CINEMATOGRAPHY OPPORTUNITY.
 ${fountain}`,
   };
 }
 
 function breakdownPrompt(fountain: string): { system: string; prompt: string } {
   return {
-    system: "You are Premiere316 script supervisor. Return JSON { assets: [{ category, name, description }] }. Categories: character, location, wardrobe, prop, vehicle, creature, vfx, voice, sound, music.",
+    system: "You are Premiere316 script supervisor. Return JSON { assets: [{ category, name, description, sceneNumbers }] }. sceneNumbers are 1-based screenplay scene numbers. Categories: character, location, wardrobe, prop, vehicle, creature, vfx, voice, sound, music. Extract distinct assets actually present. Descriptions must be concrete visual specifications suitable for generating an image, not tasks. Keep each description under 50 words.",
     prompt: `Extract production assets from this Fountain.\n${fountain}`,
   };
 }
@@ -205,19 +247,19 @@ function cinemaPrompt(picture: Picture): { system: string; prompt: string } {
 
 function performancePrompt(picture: Picture): { system: string; prompt: string } {
   return {
-    system: "You are Premiere316 performance. Return JSON { notes, shots: [{ description, type, durationSec, camera, lens, emotion }] }.",
+    system: "You are Premiere316 performance. Return JSON { notes, shots: [{ sceneNumber, description, type, durationSec, camera, lens, cameraMove, emotion, expression }] }. Use 1-based scene numbers. Give concise playable acting direction with specific gestures, gaze and emotion, one representative shot per scene.",
     prompt: `Performance and shot plan for ${picture.title}. Fountain:\n${picture.screenplay.workingFountain}`,
   };
 }
 
 function shotsPrompt(picture: Picture): { system: string; prompt: string } {
   return {
-    system: "You are Premiere316 shot director. Return JSON { shots: [{ description, type, durationSec, camera, lens, cameraMove, emotion, expression }] }.",
-    prompt: `Shot list for ${picture.title}. Fountain:\n${picture.screenplay.workingFountain}`,
+    system: "You are Premiere316 shot director. Return JSON { shots: [{ sceneNumber, description, type, durationSec, camera, lens, cameraMove, emotion, expression }] }. Use 1-based screenplay scene numbers. Cover every scene with concrete action. Keep descriptions concise.",
+    prompt: `Shot list for ${picture.title}. Target ${picture.intake.targetRuntimeMinutes * 60} seconds total. Use exactly ${Math.max(picture.scenes.length, Math.ceil(picture.intake.targetRuntimeMinutes * 6))} shots, equal durations, covering all story events. Description at most 15 words; each other text field at most 5 words. Fountain:\n${picture.screenplay.workingFountain}`,
   };
 }
 
-function applyResearchJson(bible: PictureResearchBible, parsed: Record<string, unknown>, now: number, id: string, autoApprove: boolean): PictureResearchBible {
+function applyResearchJson(bible: PictureResearchBible, parsed: Record<string, unknown>, now: number, id: string, autoApprove: boolean, suppliedEvidence = ""): PictureResearchBible {
   const sections = hydrateResearchSections(parsed.sections);
   const content: ResearchContent = {
     ...cloneResearchContent(bible.content),
@@ -235,6 +277,8 @@ function applyResearchJson(bible: PictureResearchBible, parsed: Record<string, u
   const sources = Array.isArray(parsed.sources) ? parsed.sources : [];
   for (const raw of sources) {
     const item = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
+    const quote = asString(item.quote);
+    if (!quote || !suppliedEvidence.includes(quote)) continue;
     const added = addResearchSource(content.sources, {
       id: `${id}:src:${content.sources.length}`,
       title: asString(item.title) || "Generated source",
@@ -246,7 +290,7 @@ function applyResearchJson(bible: PictureResearchBible, parsed: Record<string, u
     });
     if (!("error" in added)) content.sources = added.sources;
   }
-  if (!researchSectionsArePopulated(sections) || researchSectionsLookPlaceholder(sections)) {
+  if (!researchSectionsArePopulated(sections) || researchSectionsLookPlaceholder(sections) || Object.values(sections).some((value) => /\bwe(?:['’]ll| will)\s+(?:research|investigate|explore|gather|study)\b/i.test(value))) {
     throw new Error("Research Bible sections were empty or placeholder after the model call.");
   }
   const drafted = appendResearchVersion(bible, {
@@ -319,6 +363,8 @@ export async function executeMoviePlan(picture: Picture, input: {
   const steps: ProductFlowState["steps"] = [];
 
   const finish = (status: DepartmentRunState, phase: InternalPhase, message: string, touch: ProductTouchpoint): MoviePlanResult => {
+    const existingPhase = steps.findIndex((row) => row.id === phase);
+    if (existingPhase >= 0 && status === "failed") steps[existingPhase] = step(phase, status, message);
     const remaining = INTERNAL_PHASES.filter((item) => !steps.some((row) => row.id === item));
     for (const item of remaining) {
       steps.push(step(item, item === phase ? status : "blocked", item === phase ? message : `Blocked after ${phase}: ${message}`));
@@ -361,7 +407,7 @@ export async function executeMoviePlan(picture: Picture, input: {
       const researchAsk = researchPrompt(next);
       const researchText = await generate({ stepId: "research", ...researchAsk });
       const researchJson = extractJsonObject(researchText.text);
-      research = applyResearchJson(hydratePictureResearch(next.research, next.intake, now), researchJson, now, id(), !reviewThis("research"));
+      research = applyResearchJson(hydratePictureResearch(next.research, next.intake, now), researchJson, now, id(), !reviewThis("research"), suppliedResearchEvidence(next));
       next = {
         ...next,
         research,
@@ -403,7 +449,12 @@ export async function executeMoviePlan(picture: Picture, input: {
       if (pausedScreen) return pausedScreen;
     }
 
-    if (flow.reviewInternalPhases && screenplay.lastQaReport?.findings.length && (!reviewThis("screenplayQa") || screenplay.approvedVersionId)) {
+    if (flow.qaEnabled !== true) {
+      screenplay = { ...screenplay, lastQaReport: null };
+      if (!reviewThis("screenplay")) screenplay = approveCurrentScreenplay(screenplay, `${id()}:approved`, now);
+      next = { ...next, screenplay };
+      steps.push(step("screenplayQa", "skipped", "QA disabled by user; no critique or QA approval was generated."));
+    } else if (flow.reviewInternalPhases && screenplay.lastQaReport?.findings.length && (!reviewThis("screenplayQa") || screenplay.approvedVersionId)) {
       steps.push(step("screenplayQa", "draftReady", "Screenplay QA already reviewed; continuing."));
     } else if (flow.reviewInternalPhases && reviewThis("screenplayQa") && screenplay.lastQaReport?.findings.length && !screenplay.approvedVersionId) {
       next = { ...next, screenplay };
@@ -411,11 +462,29 @@ export async function executeMoviePlan(picture: Picture, input: {
       if (pausedQa) return pausedQa;
     } else {
       calls.push("screenplayQa");
-      const qaAsk = qaPrompt(fountain);
-      const qaText = await generate({ stepId: "screenplayQa", ...qaAsk });
-      const qa = parseScreenplayQaReport(JSON.stringify(extractJsonObject(qaText.text)), id(), now, modelRef(input.runtime.servedModelId, input.runtime.displayName), "qa-critic");
-      if ("error" in qa || !qa.findings.length) throw new Error("QA report was empty.");
-      screenplay = { ...screenplay, lastQaReport: { id: qa.id, createdAt: qa.createdAt, modelId: qa.model.id, servedModelId: qa.model.servedModelId, displayName: qa.model.displayName, findings: qa.findings, fountainUnchanged: true } };
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const qaAsk = qaPrompt(fountain);
+        qaAsk.prompt += `\nCheck events against supplied source evidence: ${suppliedResearchEvidence(next)}\nFidelity: ${next.intake.fidelityRequirements}`;
+        qaAsk.prompt = `Target duration: ${next.intake.targetRuntimeMinutes} minutes. Brief: ${next.intake.concept}. Research/adaptation boundaries: ${research.content.sections.risksDisputes}.\n${qaAsk.prompt}`;
+        const qaText = await generate({ stepId: "screenplayQa", ...qaAsk });
+        const qa = parseScreenplayQaReport(JSON.stringify(extractJsonObject(qaText.text)), id(), now, modelRef(input.runtime.servedModelId, input.runtime.displayName), "qa-critic");
+        if ("error" in qa || !qa.findings.length) throw new Error("QA report was empty.");
+        screenplay = { ...screenplay, lastQaReport: { id: qa.id, createdAt: qa.createdAt, modelId: qa.model.id, servedModelId: qa.model.servedModelId, displayName: qa.model.displayName, findings: qa.findings, fountainUnchanged: true } };
+        next = { ...next, screenplay };
+        const required = qa.findings.filter((finding) => finding.severity === "blocker" || finding.revisionRequired);
+        if (!required.length || reviewThis("screenplayQa")) break;
+        if (attempt === 1 || reviewThis("screenplay")) throw new Error("Screenplay QA requires revision: " + required.map((finding) => finding.summary).join(" "));
+        // A bounded writer correction followed by a fresh, separate QA context.
+        calls.push("screenplay");
+        const revisionAsk = screenplayPrompt(next, research.content);
+        revisionAsk.prompt += `\nRevise this exact draft to resolve the following QA findings while retaining its story and target duration. Return the complete revised screenplay.\nDraft: ${fountain}\nQA: ${JSON.stringify(required)}`;
+        const revised = await generate({ stepId: "screenplay", ...revisionAsk });
+        fountain = asString(extractJsonObject(revised.text).fountain);
+        if (!/^(INT\.|EXT\.|INT\.\/EXT\.|I\/E\.)/im.test(fountain)) throw new Error("Revised screenplay missing INT./EXT. sluglines.");
+        screenplay = appendScreenplayVersion(screenplay, { id: id(), label: "QA-revised screenplay", kind: "draft", fountain, createdAt: now, model: modelRef(input.runtime.servedModelId, input.runtime.displayName), workflow: next.intake.workflow, pass: null, sourceVersionId: screenplay.currentVersionId, settings: null });
+        next = { ...next, screenplay, screenplayFountain: fountain };
+        calls.push("screenplayQa");
+      }
       if (!reviewThis("screenplay") && !reviewThis("screenplayQa")) {
         screenplay = approveCurrentScreenplay(screenplay, `${id()}:approved`, now);
       }
@@ -426,10 +495,11 @@ export async function executeMoviePlan(picture: Picture, input: {
 
     calls.push("breakdown");
     const breakAsk = breakdownPrompt(screenplay.workingFountain);
-    const breakText = await generate({ stepId: "breakdown", ...breakAsk });
     const hierarchy = parseScreenplayHierarchy(screenplay.workingFountain);
     const scenes = sceneNodes(hierarchy).map((scene) => ({ id: scene.id, slugline: scene.slugline ?? scene.title }));
     if (!scenes.length) throw new Error("Approved screenplay has no scenes.");
+    breakAsk.prompt += `\nUse this exact scene index: ${JSON.stringify(scenes.map((scene, index) => ({ number: index + 1, heading: scene.slugline })))}\nSource constraints: ${next.intake.fidelityRequirements}`;
+    const breakText = await generate({ stepId: "breakdown", ...breakAsk, sceneCount: scenes.length });
     const parsedAssets = extractJsonObject(breakText.text).assets;
     const llmDrafts: BreakdownRequirementDraft[] = Array.isArray(parsedAssets)
       ? parsedAssets.map((raw, index) => {
@@ -440,7 +510,7 @@ export async function executeMoviePlan(picture: Picture, input: {
           category,
           name: asString(item.name) || `Asset ${index + 1}`,
           description: asString(item.description) || asString(item.name),
-          sceneIds: [scenes[0].id],
+          sceneIds: assetSceneIds(item, scenes, screenplay.workingFountain),
           confidence: "C",
           evidenceNote: "Extracted from generated screenplay.",
         };
@@ -462,6 +532,7 @@ export async function executeMoviePlan(picture: Picture, input: {
     });
     const drafts = [...llmDrafts, ...fallback.filter((item) => !llmDrafts.some((draft) => draft.name.toLocaleLowerCase() === item.name.toLocaleLowerCase()))];
     if (!drafts.length) throw new Error("No production assets were extracted.");
+    if (!llmDrafts.length) throw new Error("The model returned no production assets.");
     const production = createProductionBreakdown(approvedInput, drafts, now);
     next = {
       ...next,
@@ -501,7 +572,8 @@ export async function executeMoviePlan(picture: Picture, input: {
     if (next.cinematography?.manifestoVersions[0]) {
       next.cinematography.manifestoVersions[0] = {
         ...next.cinematography.manifestoVersions[0],
-        thesis: asString(cine.thesis) || next.cinematography.manifestoVersions[0].thesis,
+        thesis: [cine.thesis, cine.lensLanguage, cine.lighting, cine.movement].map(asString).filter(Boolean).join(" · "),
+        hash: stableHash([cine.thesis, cine.lensLanguage, cine.lighting, cine.movement].map(asString).filter(Boolean).join(" · ")),
       };
     }
     const pausedCine = maybePause("cinematography", "Cinematography plan drafted from generated research.");
@@ -509,14 +581,24 @@ export async function executeMoviePlan(picture: Picture, input: {
 
     calls.push("performance");
     const perfAsk = performancePrompt(next);
-    await generate({ stepId: "performance", ...perfAsk });
+    const perf = extractJsonObject((await generate({ stepId: "performance", ...perfAsk, sceneCount: scenes.length })).text);
+    if (!asString(perf.notes)) throw new Error("Performance response has no acting direction.");
     next = { ...next, performance: migratePicturePerformance(next) };
+    if (next.performance) {
+      for (const beat of next.performance.beats) {
+        for (const character of next.characters) {
+          const directions = Array.isArray(perf.shots) ? perf.shots as Record<string, unknown>[] : [];
+          const direction = directions.find((row) => next.scenes[Number(row.sceneNumber) - 1]?.id === beat.sceneId);
+          next.performance = addPerformanceDirection(next.performance, { schemaVersion: 1, sourceType: "ai-suggestion", beatId: beat.id, characterId: character.id, emotionalState: { primary: asString(direction?.emotion) }, face: { microExpression: asString(direction?.expression) }, body: { posture: asString(direction?.description) || asString(perf.notes) }, updatedAt: now });
+        }
+      }
+    }
     const pausedPerf = maybePause("performance", "Performance workspace drafted from the generated screenplay.");
     if (pausedPerf) return pausedPerf;
 
     calls.push("shots");
     const shotAsk = shotsPrompt(next);
-    const shotText = await generate({ stepId: "shots", ...shotAsk });
+    const shotText = await generate({ stepId: "shots", ...shotAsk, sceneCount: scenes.length, runtimeSeconds: next.intake.targetRuntimeMinutes * 60 });
     const shotRows = extractJsonObject(shotText.text).shots;
     const sceneId = next.scenes[0]?.id ?? "SCENE-001";
     const shots: Shot[] = Array.isArray(shotRows)
@@ -524,7 +606,7 @@ export async function executeMoviePlan(picture: Picture, input: {
         const item = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
         return {
           id: `sh${index + 1}`,
-          sceneId,
+          sceneId: next.scenes[Number(item.sceneNumber) - 1]?.id ?? sceneId,
           index: index + 1,
           type: asString(item.type) || "coverage",
           description: asString(item.description) || `Shot ${index + 1}`,
@@ -541,8 +623,15 @@ export async function executeMoviePlan(picture: Picture, input: {
       })
       : [];
     if (!shots.length) throw new Error("Shot list was empty.");
-    next = { ...next, shots };
-    const pausedShots = maybePause("shots", `${shots.length} shots planned from the generated screenplay.`);
+    next = { ...next, shots: fitShotDurations(shots, next.intake.targetRuntimeMinutes * 60, next.fps) };
+    // These workspaces were first created before shots existed. Bind the actual
+    // generated coverage now so image preparation can see its camera plans.
+    if (next.cinematography) next.cinematography = { ...next.cinematography, shotPlans: seedCinematographyFromPicture(next, now).shotPlans.map((plan) => ({ ...plan, lighting: asString(cine.lighting) || plan.lighting })) };
+    const directions = next.performance?.performance;
+    const performance = migratePicturePerformance({ ...next, performance: null });
+    if (performance && directions) performance.performance = directions;
+    next = { ...next, performance };
+    const pausedShots = maybePause("shots", `${shots.length} shots planned from the generated screenplay; timing fitted to ${next.intake.targetRuntimeMinutes * 60} seconds.`);
     if (pausedShots) return pausedShots;
 
     calls.push("promptLab");
@@ -592,7 +681,7 @@ export async function executeResearchDraft(picture: Picture, input: { runtime: M
   const ask = researchPrompt(picture);
   const text = await input.runtime.generate({ stepId: "research", ...ask });
   const parsed = extractJsonObject(text.text);
-  const research = applyResearchJson(hydratePictureResearch(picture.research, picture.intake, now), parsed, now, (input.id ?? (() => `rs:${now}`))(), false);
+  const research = applyResearchJson(hydratePictureResearch(picture.research, picture.intake, now), parsed, now, (input.id ?? (() => `rs:${now}`))(), false, suppliedResearchEvidence(picture));
   const flow = hydrateProductFlow(picture.productFlow);
   const nextFlow: ProductFlowState = {
     ...flow,

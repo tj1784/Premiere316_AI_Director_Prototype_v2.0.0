@@ -448,7 +448,10 @@ export function injectGrokPwaHead(html, ctx = {}) {
   );
 
   if (!next.includes("/grok-app-builder/extensions.js")) {
-    missing.push(...grokExtensionsHeadTags(projectId));
+    if (ctx.desktopOffline) {
+      // Packaged desktop has no web dependency. Keep attribution visible locally.
+      if (!next.includes('id="grok-desktop-attribution"')) missing.push(`<script id="grok-desktop-attribution">addEventListener("DOMContentLoaded",()=>{const pill=document.createElement("div");pill.textContent="Created with Grok / Remix";pill.setAttribute("aria-label","Created with Grok / Remix");Object.assign(pill.style,{position:"fixed",bottom:"8px",right:"8px",zIndex:"9999",background:"#18181b",color:"#fafafa",border:"1px solid #52525b",borderRadius:"20px",padding:"6px 12px",font:"11px system-ui"});document.body.append(pill)},{once:true});</script>`);
+    } else missing.push(...grokExtensionsHeadTags(projectId));
   } else if (projectId && !next.includes('name="grok-project-id"')) {
     missing.push(`<meta name="grok-project-id" content="${escapeHtml(projectId)}">`);
   }
@@ -498,6 +501,7 @@ export function createHeadInjector(ctx = {}) {
       host: normalized.host,
       cwd: normalized.cwd,
       site: normalized.site,
+      desktopOffline: ctx.desktopOffline === true,
     });
 
   return {

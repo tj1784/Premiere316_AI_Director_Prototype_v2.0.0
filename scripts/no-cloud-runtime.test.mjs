@@ -3,6 +3,19 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import ts from "typescript";
 import { livePackagedUatPassed } from "./pre-audit-evidence.mjs";
+import { injectGrokPwaHead, createHeadInjector } from "./grok-pwa-shared.mjs";
+
+test("packaged desktop keeps visible local attribution without a remote script", () => {
+  const html = '<html><head><title>Premiere316</title></head><body>Picture</body></html>';
+  const desktop = injectGrokPwaHead(html, { desktopOffline: true });
+  assert.doesNotMatch(desktop, /src="https:\/\/grok.com/);
+  assert.match(desktop, /Created with Grok \/ Remix/);
+  assert.match(injectGrokPwaHead(html), /src="https:\/\/grok.com/);
+  const injector = createHeadInjector({ desktopOffline: true });
+  const streamed = Buffer.concat([...injector.push(html.slice(0, 35)), ...injector.push(html.slice(35)), ...injector.flush()]).toString();
+  assert.doesNotMatch(streamed, /src="https:\/\/grok.com/);
+  assert.match(streamed, /grok-desktop-attribution/);
+});
 
 function source(path) {
   return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");

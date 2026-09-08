@@ -22,7 +22,7 @@ import type { MoviePlanProgress } from "@/lib/studio/movie-plan-stream.ts";
 import { isAdvancedDashboard } from "@/lib/studio/advanced-departments.ts";
 import { DEFAULT_NAV_STEPS, INTERNAL_PHASES, PHASE_LABELS, PHASE_STAGE, allPhaseReviewsOn, hydrateProductFlow, pausedInternalPhase, PHASE_REVIEW_DEFAULTS, type InternalPhase } from "@/lib/studio/product-flow.ts";
 import { CONFIGURED_MODEL_UNAVAILABLE, MANUAL_FALLBACK_LABEL } from "@/lib/studio/movie-plan-pipeline.ts";
-import { executeMoviePlanOnServer, executeResearchDraftOnServer } from "@/lib/studio/movie-plan-client.ts";
+import { executeMoviePlanOnServer, executeResearchDraftOnServer, releaseMoviePlanWriterForImages } from "@/lib/studio/movie-plan-client.ts";
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import { useDirector } from "@/lib/studio/use-director";
 import { compileEnginePromptPackage, compilePicture, totalDuration } from "@/lib/studio/prompt-compiler";
@@ -145,7 +145,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
   const [activity, setActivity] = useState<MoviePlanProgress[]>([]);
   const [activityStartedAt, setActivityStartedAt] = useState<number | null>(null);
   const patchIntake = <K extends keyof PictureIntake>(key: K, value: PictureIntake[K]) => {
-    const intake = { ...picture.intake, [key]: value, updatedAt: Date.now() };
+    const intake = { ...picture.intake, [key]: value, ...(key === "targetRuntimeMinutes" ? { runtimeSource: "manual" as const } : {}), updatedAt: Date.now() };
     patchActive({
       intake,
       ...(key === "title" ? { title: String(value) } : {}),
@@ -227,6 +227,14 @@ function IntakeStage({ picture }: { picture: Picture }) {
         <details key={picture.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" data-optional-intake="true">
           <summary className="min-h-11 cursor-pointer content-center text-sm text-muted">Optional details</summary>
           <div className="mt-4 grid gap-5">
+            <label className="flex min-h-11 items-center gap-2 text-sm">
+              <input type="checkbox" checked={flow.thinkingEnabled === true} disabled={building} onChange={(event) => patchActive({ productFlow: { ...flow, thinkingEnabled: event.target.checked } })} />
+              <span>Enable model thinking (slower, supported models only)</span>
+            </label>
+            <label className="flex min-h-11 items-center gap-2 text-sm">
+              <input type="checkbox" checked={flow.qaEnabled === true} disabled={building} onChange={(event) => patchActive({ productFlow: { ...flow, qaEnabled: event.target.checked } })} />
+              <span>Run screenplay QA and corrections (slower)</span>
+            </label>
             <div>
               <Label htmlFor="intake-source-mode">Source mode</Label>
               <select id="intake-source-mode" className="mt-1.5 h-11 w-full rounded-md bg-inset px-3 text-sm text-fg shadow-[var(--shadow-border)]" value={picture.intake.sourceType} onChange={(event) => {
@@ -702,7 +710,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
   const prepared = picture.production?.preparedAssets ?? [];
   const assets = picture.production?.assets ?? [];
   const ready = prepared.filter((item) => item.status === "APPROVED_PREPARED");
-  const best = manifests.find((item) => item.status === "READY" && item.adapterId === "flux2") ?? manifests.find((item) => item.adapterId === "flux2") ?? manifests.find((item) => item.status === "READY" && item.adapterId === "flux") ?? manifests.find((item) => item.adapterId === "flux") ?? manifests[0];
+  const best = manifests.find((item) => item.status === "READY" && item.adapterId === "flux2") ?? manifests.find((item) => item.status === "READY" && item.adapterId === "flux") ?? manifests.find((item) => item.adapterId === "flux2") ?? manifests.find((item) => item.adapterId === "flux") ?? manifests[0];
   const blockedReason = best?.disabledReason ?? "No complete offline native image adapter is verified on this workstation.";
   const authorityCurrent = backendStatus?.ok === true && backendStatus.status === "CURRENT" && backendStatus.authorityId === picture.production?.productionAuthority?.authorityId && backendStatus.digest === picture.production?.productionAuthority?.digest;
   const verifiedRoots = new Map((backendStatus?.ok === true ? (backendStatus.preparedApprovals ?? []) : []).map((root) => [root.preparedAssetId, root]));
@@ -749,6 +757,10 @@ function GenerateStage({ picture }: { picture: Picture }) {
             }
             return (
               <div className="grid gap-3" data-extracted-assets="true">
+                {!prepared.length ? <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+                  <p className="text-sm text-muted">The asset descriptions are ready. Review their specifications and prepare them for image generation.</p>
+                  <Button className="mt-3" onClick={() => setStage("inventory")}>Prepare asset images</Button>
+                </div> : null}
                 {extracted.map((asset) => (
                   <article key={asset.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
                     <p className="text-[11px] tracking-wide text-subtle uppercase">{asset.category}</p>
@@ -776,7 +788,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
                   <Badge>{asset?.category ?? "asset"}</Badge>
                 </div>
                 <div className="mt-3 rounded-sm bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]">
-                  {canAuthorizeWithBest && item.status === "APPROVED_PREPARED" ? "Ready for one-use desktop authorization." : blocked}
+                  {canAuthorizeWithBest && item.status === "APPROVED_PREPARED" ? "Ready to generate. The writer model will be released to make room for images." : blocked}
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button size="sm" disabled={generating === item.id || item.status !== "APPROVED_PREPARED" || !rootCurrent || !asset || !canAuthorizeWithBest} title={item.status === "APPROVED_PREPARED" && rootCurrent && canAuthorizeWithBest ? "Authorize and generate one immutable iteration for this prepared asset" : blocked} onClick={async () => {
@@ -795,6 +807,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
                         values: { ...runtimeDefaults(best.controls), width: 512, height: 512, seed: Date.now() % 2147483647, precision: "BF16", outputFormat: "PNG", outputBitDepth: 8 },
                       });
                       if (!authorization.ok) throw new Error(authorization.error);
+                      if (picture.productFlow?.servedModelId) await releaseMoviePlanWriterForImages(picture.productFlow.servedModelId);
                       const result = await desktopGeneratePreparedImage({ token: authorization.token });
                       if (!result.ok) throw new Error(result.error);
                       const nextProduction = appendGeneratedIteration(picture.production, {
@@ -828,7 +841,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
         <aside className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Native adapter manifest">
           <p className="text-[11px] tracking-wide text-subtle uppercase">Exact local adapter</p>
           <h3 className="mt-1 font-display text-xl">{best ? best.modelVariant : "Unavailable"}</h3>
-          <p className="mt-2 text-sm leading-relaxed text-muted">{blockedReason}</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted">{best?.status === "READY" ? "Local image model and required components verified." : blockedReason}</p>
           <div className="mt-4 grid gap-2">
             {(best?.components ?? []).slice(0, 7).map((component) => (
               <div key={component.opaqueId} className="rounded-sm bg-inset px-3 py-2 text-xs shadow-[var(--shadow-border)]">

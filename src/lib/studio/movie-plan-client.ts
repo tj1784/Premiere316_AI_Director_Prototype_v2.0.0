@@ -1,6 +1,10 @@
 import { BrowserEndpointCache } from "./local-llm-endpoint.ts";
 import { localLLMStatus } from "./screenplay-client.ts";
-import { moviePlanGenerate } from "./movie-plan-api.ts";
+import { moviePlanGenerate, releaseMoviePlanModel } from "./movie-plan-api.ts";
+
+export async function releaseMoviePlanWriterForImages(servedModelId: string) {
+  return releaseMoviePlanModel({ data: { servedModelId, endpoint: endpointCache.get() } });
+}
 import {
   CONFIGURED_MODEL_UNAVAILABLE,
   executeMoviePlan,
@@ -36,7 +40,7 @@ async function runtimeFromStatus(picture: Picture, onProgress?: (event: MoviePla
     reason: "",
     servedModelId: selected.servedModelId,
     displayName: selected.displayName,
-    generate: async ({ stepId, system, prompt }) => {
+    generate: async ({ stepId, system, prompt, sceneCount, runtimeSeconds }) => {
       let text = "";
       const progress = (status: MoviePlanProgress["status"], message?: string) => onProgress?.({ phase: stepId, model: selected.servedModelId, status, text, message });
       progress("generating");
@@ -48,6 +52,9 @@ async function runtimeFromStatus(picture: Picture, onProgress?: (event: MoviePla
           system,
           prompt,
           servedModelId: selected.servedModelId,
+          thinkingEnabled: picture.productFlow?.thinkingEnabled === true,
+          sceneCount,
+          runtimeSeconds,
         },
       });
       const result = await readMoviePlanStream(response, (partial) => { text = partial; progress("generating"); });

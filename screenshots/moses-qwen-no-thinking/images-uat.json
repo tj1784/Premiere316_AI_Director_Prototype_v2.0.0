@@ -1,0 +1,259 @@
+{
+  "ok": true,
+  "startedAt": 1788899374228,
+  "profile": "C:\\Users\\teeja\\AppData\\Local\\Temp\\p316-final-online-tkbG2i",
+  "generated": [
+    {
+      "name": "f334e6ff-a8f4-4c89-ace1-a0fb2f0aef2f.4432922188717427b6accc40.png",
+      "bytes": 416272,
+      "sha256": "4432922188717427b6accc40c72ec73443480fe5f4a49d3dda5213d1facf5b66",
+      "provenance": {
+        "schemaVersion": 1,
+        "assetId": "asset:character:moses",
+        "engineId": "flux",
+        "engineName": "FLUX.1 Dev",
+        "runtimeAdapter": "flux",
+        "runtimeImplementation": "black-forest-labs/flux",
+        "baseCheckpoint": {
+          "id": "diffusion_models\\flux1-dev.safetensors",
+          "path": "diffusion_models\\Flux.1\\flux1-dev.safetensors",
+          "fingerprint": "9e0074ce914321951f9e6eda25752e10cc88d407df91418879ff6d7b0b44b596",
+          "fingerprintKind": "sampled"
+        },
+        "components": [
+          {
+            "role": "runtime",
+            "id": "black-forest-labs/flux@802fb4713906133fcbd0d8dc5351620ca4773036",
+            "path": "flux",
+            "fingerprint": null
+          },
+          {
+            "role": "text_encoder",
+            "id": "t5xxl_fp16.safetensors@6e480b09fae049a72d2a8c5fbccb8d3e92febeb233bbe9dfe7256958a9167635",
+            "path": "text_encoders\\t5xxl_fp16.safetensors",
+            "fingerprint": "63a7773e9e9d031ae6a506342899b6015cc774aa0a9d456c48f21fea8291d04d"
+          },
+          {
+            "role": "tokenizer",
+            "id": "google/t5-v1_1-xxl-config-tokenizer@3db67ab1af984cf10548a73467f0e5bca2aaaeb2",
+            "path": "3db67ab1af984cf10548a73467f0e5bca2aaaeb2",
+            "fingerprint": null
+          },
+          {
+            "role": "text_encoder",
+            "id": "clip_l.safetensors@660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd",
+            "path": "text_encoders\\clip_l.safetensors",
+            "fingerprint": "9170e7e86a00bea20ed1bec8d0fadfd242bb115777488e1a2ce926a7b423f7ac"
+          },
+          {
+            "role": "tokenizer",
+            "id": "open_clip:bpe_simple_vocab_16e6@924691ac288e54409236115652ad4aa250f48203de50a9e4722a6ecd48d6804a",
+            "path": "bpe_simple_vocab_16e6.txt.gz",
+            "fingerprint": "924691ac288e54409236115652ad4aa250f48203de50a9e4722a6ecd48d6804a"
+          },
+          {
+            "role": "tokenizer_source",
+            "id": "open_clip:tokenizer.py@90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734",
+            "path": "tokenizer.py",
+            "fingerprint": "90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734"
+          },
+          {
+            "role": "vae",
+            "id": "ae.safetensors@afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+            "path": "vae\\Flux.1\\ae.safetensors",
+            "fingerprint": "5a45aa6aadaa8e056860dda2ecbb932a9e1ca3244210235142e60c054c685b38"
+          }
+        ],
+        "loras": [],
+        "prompt": "Moses. Middle-aged Hebrew leader with weathered face, long beard, wearing simple linen robes and sandals, holding wooden staff in hand. Standing figure of authority at shoreline.",
+        "enhancedPrompt": null,
+        "references": [],
+        "width": 512,
+        "height": 512,
+        "steps": 20,
+        "guidance": 3.5,
+        "seed": 45555339,
+        "scheduler": "flux1-official-20-guidance-3.5",
+        "precision": "BF16",
+        "outputFormat": "PNG",
+        "outputBitDepth": 8,
+        "timestepData": null,
+        "placementPlan": null,
+        "generatedAt": "2026-09-08T20:32:21.852Z",
+        "applicationVersion": "3.0.2",
+        "telemetry": {
+          "modelLoadMs": 98202.92770000378,
+          "inferenceMs": 4002.6642000011634,
+          "totalMs": 104584.70869999999,
+          "peakVramBytes": 57721827328,
+          "peakSystemRamBytes": null,
+          "residentBeforeJob": false,
+          "residentAfterJob": true
+        }
+      }
+    },
+    {
+      "name": "678afd6a-ded8-47ab-877f-4a20fc8292b7.2f81c8f5e895b02c0a902bc1.png",
+      "bytes": 292086,
+      "sha256": "2f81c8f5e895b02c0a902bc1d464896b4d454d0cbedf02237bf8222d2c0ffd90",
+      "provenance": {
+        "schemaVersion": 1,
+        "assetId": "asset:location:red:sea:shoreline:night",
+        "engineId": "flux",
+        "engineName": "FLUX.1 Dev",
+        "runtimeAdapter": "flux",
+        "runtimeImplementation": "black-forest-labs/flux",
+        "baseCheckpoint": {
+          "id": "diffusion_models\\flux1-dev.safetensors",
+          "path": "diffusion_models\\Flux.1\\flux1-dev.safetensors",
+          "fingerprint": "9e0074ce914321951f9e6eda25752e10cc88d407df91418879ff6d7b0b44b596",
+          "fingerprintKind": "sampled"
+        },
+        "components": [
+          {
+            "role": "runtime",
+            "id": "black-forest-labs/flux@802fb4713906133fcbd0d8dc5351620ca4773036",
+            "path": "flux",
+            "fingerprint": null
+          },
+          {
+            "role": "text_encoder",
+            "id": "t5xxl_fp16.safetensors@6e480b09fae049a72d2a8c5fbccb8d3e92febeb233bbe9dfe7256958a9167635",
+            "path": "text_encoders\\t5xxl_fp16.safetensors",
+            "fingerprint": "63a7773e9e9d031ae6a506342899b6015cc774aa0a9d456c48f21fea8291d04d"
+          },
+          {
+            "role": "tokenizer",
+            "id": "google/t5-v1_1-xxl-config-tokenizer@3db67ab1af984cf10548a73467f0e5bca2aaaeb2",
+            "path": "3db67ab1af984cf10548a73467f0e5bca2aaaeb2",
+            "fingerprint": null
+          },
+          {
+            "role": "text_encoder",
+            "id": "clip_l.safetensors@660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd",
+            "path": "text_encoders\\clip_l.safetensors",
+            "fingerprint": "9170e7e86a00bea20ed1bec8d0fadfd242bb115777488e1a2ce926a7b423f7ac"
+          },
+          {
+            "role": "tokenizer",
+            "id": "open_clip:bpe_simple_vocab_16e6@924691ac288e54409236115652ad4aa250f48203de50a9e4722a6ecd48d6804a",
+            "path": "bpe_simple_vocab_16e6.txt.gz",
+            "fingerprint": "924691ac288e54409236115652ad4aa250f48203de50a9e4722a6ecd48d6804a"
+          },
+          {
+            "role": "tokenizer_source",
+            "id": "open_clip:tokenizer.py@90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734",
+            "path": "tokenizer.py",
+            "fingerprint": "90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734"
+          },
+          {
+            "role": "vae",
+            "id": "ae.safetensors@afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+            "path": "vae\\Flux.1\\ae.safetensors",
+            "fingerprint": "5a45aa6aadaa8e056860dda2ecbb932a9e1ca3244210235142e60c054c685b38"
+          }
+        ],
+        "loras": [],
+        "prompt": "Red Sea Shoreline - Night. Dark coastal landscape at night. Wind-swept sand meeting turbulent sea. Fog rolling across water surface with ominous atmosphere.",
+        "enhancedPrompt": null,
+        "references": [],
+        "width": 512,
+        "height": 512,
+        "steps": 20,
+        "guidance": 3.5,
+        "seed": 45667591,
+        "scheduler": "flux1-official-20-guidance-3.5",
+        "precision": "BF16",
+        "outputFormat": "PNG",
+        "outputBitDepth": 8,
+        "timestepData": null,
+        "placementPlan": null,
+        "generatedAt": "2026-09-08T20:32:31.629Z",
+        "applicationVersion": "3.0.2",
+        "telemetry": {
+          "modelLoadMs": 0,
+          "inferenceMs": 3947.296500002267,
+          "totalMs": 5302.757499999978,
+          "peakVramBytes": 57721827328,
+          "peakSystemRamBytes": null,
+          "residentBeforeJob": true,
+          "residentAfterJob": true
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "network": [
+    {
+      "url": "http://127.0.0.1:18731/assets/styles-DoIWHL_K.css",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:18731/assets/index-CxzvJx2y.js",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:18731/assets/routes-Ca4YqK-c.js",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:18731/_serverFn/e3533110abbcaf1bdf0231032e353a6539338b6b8b87062100818db701938714",
+      "method": "POST"
+    },
+    {
+      "url": "media://stills/77a82aa0-bae5-458f-9f60-0ed45c1b8e97.8e0d8f705fbb56f7199e1a1f.png",
+      "method": "GET"
+    },
+    {
+      "url": "media://stills/f334e6ff-a8f4-4c89-ace1-a0fb2f0aef2f.4432922188717427b6accc40.png",
+      "method": "GET"
+    },
+    {
+      "url": "media://stills/7202dcd1-144c-49c9-927d-76b361965350.ebb469e8fb7f019f86f6a1b2.png",
+      "method": "GET"
+    },
+    {
+      "url": "http://127.0.0.1:18731/_serverFn/e3533110abbcaf1bdf0231032e353a6539338b6b8b87062100818db701938714",
+      "method": "POST"
+    },
+    {
+      "url": "media://stills/77a82aa0-bae5-458f-9f60-0ed45c1b8e97.8e0d8f705fbb56f7199e1a1f.png",
+      "method": "GET"
+    },
+    {
+      "url": "media://stills/f334e6ff-a8f4-4c89-ace1-a0fb2f0aef2f.4432922188717427b6accc40.png",
+      "method": "GET"
+    },
+    {
+      "url": "media://stills/7202dcd1-144c-49c9-927d-76b361965350.ebb469e8fb7f019f86f6a1b2.png",
+      "method": "GET"
+    },
+    {
+      "url": "media://stills/678afd6a-ded8-47ab-877f-4a20fc8292b7.2f81c8f5e895b02c0a902bc1.png",
+      "method": "GET"
+    }
+  ],
+  "selectedAssets": [
+    {
+      "id": "asset:character:moses",
+      "name": "Moses",
+      "category": "character",
+      "description": "Middle-aged Hebrew leader with weathered face, long beard, wearing simple linen robes and sandals, holding wooden staff in hand. Standing figure of authority at shoreline."
+    },
+    {
+      "id": "asset:location:red:sea:shoreline:night",
+      "name": "Red Sea Shoreline - Night",
+      "category": "location",
+      "description": "Dark coastal landscape at night. Wind-swept sand meeting turbulent sea. Fog rolling across water surface with ominous atmosphere."
+    }
+  ],
+  "build": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260908202917-dcc1cec36743",
+    "buildTimestamp": "2026-09-08T20:29:17.948Z",
+    "rendererSourceHash": "dcc1cec3674398b51580c9bc995560a5e5bdbdfc6a5dffac87e8acb6a8d82035",
+    "rendererMode": "PACKAGED DIST"
+  },
+  "endedAt": 1788899554307
+}

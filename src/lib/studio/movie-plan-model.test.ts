@@ -27,7 +27,7 @@ describe("movie plan model selection never silently substitutes", () => {
       { providerAvailable: true },
     );
     assert.equal(blocked.allowed, false);
-    assert.match(blocked.reason ?? "", /configured Llama model/i);
+    assert.match(blocked.reason ?? "", /selected local writer model/i);
     const allowed = selectMoviePlanModel(
       [model("qwen", "qwen2.5-72b-instruct", "Qwen2.5 72B Instruct")],
       { providerAvailable: true, explicitServedId: "qwen2.5-72b-instruct" },

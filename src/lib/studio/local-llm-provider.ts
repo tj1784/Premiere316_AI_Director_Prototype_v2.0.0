@@ -42,6 +42,8 @@ export type LocalLLMGenerateRequest = {
   stepId: string;
   system: string;
   prompt: string;
+  thinkingEnabled?: boolean;
+  responseFormat?: { type: "json_schema"; json_schema: { name: string; strict: boolean; schema: Record<string, unknown> } };
   onToken?: (token: string) => void;
 };
 

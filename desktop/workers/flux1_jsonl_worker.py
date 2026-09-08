@@ -301,7 +301,10 @@ def _encode_prompt(prompt: str) -> dict[str, Any]:
     device = MODELS["device"]
     with torch.no_grad():
         t5_inputs = MODELS["t5_tokenizer"]([prompt], padding="max_length", max_length=512, truncation=True, return_tensors="pt").to(device)
-        txt = MODELS["t5"](**t5_inputs).last_hidden_state
+        # Match BFL HFEmbedder: FLUX was trained on the full padded sequence.
+        # Masking padding changes every conditioning token and weakens adherence.
+        txt = MODELS["t5"](input_ids=t5_inputs["input_ids"], attention_mask=None,
+                           output_hidden_states=False).last_hidden_state
         clip_tokens = MODELS["clip_tokenizer"]([prompt]).to(device)
         clip_out = MODELS["clip"](input_ids=clip_tokens)
         vec = clip_out.pooler_output

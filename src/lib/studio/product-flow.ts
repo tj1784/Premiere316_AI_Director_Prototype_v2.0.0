@@ -21,6 +21,7 @@ export type DepartmentRunState =
   | "waitingForOptionalUserReview"
   | "needsUserAttention"
   | "failed"
+  | "skipped"
   | "blocked";
 
 export type DefaultNavStep = {
@@ -65,6 +66,8 @@ export const PHASE_REVIEW_DEFAULTS: Record<InternalPhase, boolean> = {
 
 export type ProductFlowState = {
   schemaVersion: 1;
+  qaEnabled?: boolean;
+  thinkingEnabled?: boolean;
   reviewInternalPhases: boolean;
   reviewPhases: Record<InternalPhase, boolean>;
   steps: Array<{ id: InternalPhase; status: DepartmentRunState; message: string }>;
@@ -79,6 +82,8 @@ export type ProductFlowState = {
 export function emptyProductFlow(): ProductFlowState {
   return {
     schemaVersion: 1,
+    qaEnabled: false,
+    thinkingEnabled: false,
     reviewInternalPhases: false,
     reviewPhases: { ...PHASE_REVIEW_DEFAULTS },
     steps: [],
@@ -105,6 +110,19 @@ export function hydrateProductFlow(state: ProductFlowState | null | undefined): 
   };
 }
 
+export function explicitMovieRuntime(text: string): number | null {
+  const words: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, ten: 10, thirty: 30, sixty: 60 };
+  const match = text.match(/\b(\d+(?:\.\d+)?|one|two|three|four|five|ten|thirty|sixty)\s*-?\s*(minutes?|mins?|seconds?|secs?)\b/i);
+  if (!match) return null;
+  const amount = Number(match[1]) || words[match[1].toLowerCase()];
+  return amount > 0 ? amount / (/^s/i.test(match[2]) ? 60 : 1) : null;
+}
+
+export function resolveMovieRuntime(picture: Picture, idea: string): number {
+  if (picture.intake.runtimeSource === "manual") return picture.intake.targetRuntimeMinutes;
+  return explicitMovieRuntime(idea) ?? picture.intake.targetRuntimeMinutes ?? picture.runtimeMinutes ?? 2;
+}
+
 export function parseMovieIntent(text: string): {
   title: string;
   concept: string;
@@ -116,7 +134,7 @@ export function parseMovieIntent(text: string): {
   productionStyle: string;
 } {
   const raw = text.trim();
-  const runtime = Number((raw.match(/(\d+)\s*-?\s*minute/i) ?? [])[1] || 0);
+  const runtime = explicitMovieRuntime(raw) ?? 0;
   const forMatch = raw.match(/\bfor\s+([^,.]+)/i);
   const title = (forMatch?.[1] ?? raw.split(/[.,]/)[0] ?? "Untitled Picture").trim().slice(0, 80) || "Untitled Picture";
   const live = /photoreal|live-action|real people|real robots|naturalistic/i.test(raw);
@@ -197,7 +215,7 @@ export function buildMoviePlan(picture: Picture, input: { llamaAvailable: boolea
     genre: picture.intake.genre || brief.genre,
     tone: picture.intake.tone || brief.tone,
     productionStyle: picture.intake.productionStyle || brief.productionStyle,
-    targetRuntimeMinutes: picture.intake.targetRuntimeMinutes || brief.targetRuntimeMinutes,
+    targetRuntimeMinutes: resolveMovieRuntime(picture, brief.concept),
     updatedAt: now,
   };
   const reason = "Configured AI model unavailable. Start LM Studio Local API Server and serve the configured Llama model, then Rescan.";
@@ -222,7 +240,7 @@ export function buildMoviePlan(picture: Picture, input: { llamaAvailable: boolea
       logline: picture.logline || intake.logline,
       genre: picture.genre || intake.genre,
       tone: picture.tone || intake.tone,
-      runtimeMinutes: picture.runtimeMinutes || intake.targetRuntimeMinutes,
+      runtimeMinutes: intake.targetRuntimeMinutes,
       intake,
       productFlow: nextFlow,
       updatedAt: now,

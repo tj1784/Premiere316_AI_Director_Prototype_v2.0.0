@@ -43,7 +43,7 @@ export function MoviePlanActivity({ events, startedAt, running }: { events: Movi
         {events.map((event) => <option key={event.phase} value={event.phase}>{PHASES[event.phase].label} · {event.status}</option>)}
       </select>
     </label> : null}
-    <p className="text-xs text-muted">Live draft output from the local model. It is checked before becoming a completed draft.</p>
+    <p className="text-xs text-muted">Live draft output from the local model. Its format is validated before saving. Story QA runs only when enabled.</p>
     <pre ref={output} className="max-h-72 min-h-24 overflow-auto whitespace-pre-wrap break-words rounded-md bg-inset p-3 font-mono text-xs leading-relaxed text-fg" data-model-output="true">{active?.text || (running ? "Waiting for the first output text…" : "No output text.")}</pre>
     <label className="flex min-h-11 items-center gap-2 text-xs text-muted"><input type="checkbox" checked={follow} onChange={(event) => setFollow(event.target.checked)} />Follow new output</label>
     {active?.message ? <p role="alert" className="text-sm text-rec">{active.message}</p> : null}

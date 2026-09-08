@@ -6,6 +6,7 @@ import { createInterface } from "node:readline";
 import { nativeAdapterCapabilities, runtimeDefaults, type NativeGenerationValues } from "./engine-controls.ts";
 import { createGenerationProvenance, provenanceSidecarName, serializeGenerationProvenance, telemetryFromWorker, type GenerationProvenance } from "./generation-provenance.ts";
 import { executedNativeStillSettings, toNativeStillWorkerRequest } from "./native-still-contract.ts";
+import { NATIVE_STILL_MODEL_PATHS } from "./native-model-paths.server.ts";
 
 const PYTHON = "D:\\Dev\\Tools\\Python312\\python.exe";
 const FLUX_ROOT = "D:\\Projects\\flux";
@@ -16,8 +17,8 @@ const MISTRAL_REVISION = "95a6d26c4bfb886c58daf9d3f7332c857cb27b43";
 const PROCESSOR_REVISION = "68faf511d618ef198fef186659617cfd2eb8e33a";
 type NativeWorkerKind = "flux" | "flux2";
 const EXACT_COMPONENTS = {
-  flux: { role: "transformer", id: "flux1-dev.safetensors@4610115bb0c89560703c892c59ac2742fa821e60ef5871b33493ba544683abd7", path: "D:\\AI\\Models\\diffusion_models\\flux1-dev.safetensors" },
-  ae: { role: "vae", id: "ae.safetensors@afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38", path: "D:\\AI\\Models\\vae\\ae.safetensors" },
+  flux: { role: "transformer", id: "flux1-dev.safetensors@4610115bb0c89560703c892c59ac2742fa821e60ef5871b33493ba544683abd7", path: NATIVE_STILL_MODEL_PATHS.flux1 },
+  ae: { role: "vae", id: "ae.safetensors@afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38", path: NATIVE_STILL_MODEL_PATHS.flux1Vae },
   t5: { role: "text_encoder", id: "t5xxl_fp16.safetensors@6e480b09fae049a72d2a8c5fbccb8d3e92febeb233bbe9dfe7256958a9167635", path: "D:\\AI\\Models\\text_encoders\\t5xxl_fp16.safetensors" },
   t5Config: { role: "tokenizer", id: `google/t5-v1_1-xxl-config-tokenizer@${T5_SNAPSHOT_REVISION}`, path: `D:\\_Cache\\HuggingFace\\hub\\models--google--t5-v1_1-xxl\\snapshots\\${T5_SNAPSHOT_REVISION}` },
   clip: { role: "text_encoder", id: "clip_l.safetensors@660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd", path: "D:\\AI\\Models\\text_encoders\\clip_l.safetensors" },
@@ -26,8 +27,8 @@ const EXACT_COMPONENTS = {
   runtime: { role: "runtime", id: "black-forest-labs/flux@802fb4713906133fcbd0d8dc5351620ca4773036", path: FLUX_ROOT },
 } as const;
 const EXACT_FLUX2_COMPONENTS = {
-  flux2: { role: "transformer", id: "flux2_dev.safetensors@6159a3f19f829c8e84ba6e9996b7afaf7c0a5f3428677f5b37445778a320d275", path: "D:\\AI\\Models\\diffusion_models\\flux2_dev.safetensors" },
-  ae: { role: "vae", id: "flux2-vae.safetensors@d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5", path: "D:\\AI\\Models\\vae\\flux2-vae.safetensors" },
+  flux2: { role: "transformer", id: "flux2_dev.safetensors@6159a3f19f829c8e84ba6e9996b7afaf7c0a5f3428677f5b37445778a320d275", path: NATIVE_STILL_MODEL_PATHS.flux2 },
+  ae: { role: "vae", id: "flux2-vae.safetensors@d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5", path: NATIVE_STILL_MODEL_PATHS.flux2Vae },
   mistral: { role: "text_encoder", id: `mistralai/Mistral-Small-3.2-24B-Instruct-2506@${MISTRAL_REVISION}`, path: `D:\\_Cache\\HuggingFace\\hub\\models--mistralai--Mistral-Small-3.2-24B-Instruct-2506\\snapshots\\${MISTRAL_REVISION}` },
   processor: { role: "processor", id: `mistralai/Mistral-Small-3.1-24B-Instruct-2503@${PROCESSOR_REVISION}`, path: `D:\\_Cache\\HuggingFace\\hub\\models--mistralai--Mistral-Small-3.1-24B-Instruct-2503\\snapshots\\${PROCESSOR_REVISION}` },
   runtime: { role: "runtime", id: "black-forest-labs/flux2@50fe5162777813d869182b139e83b10743caef15", path: FLUX2_ROOT },

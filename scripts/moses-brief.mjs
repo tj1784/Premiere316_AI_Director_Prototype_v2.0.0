@@ -1,0 +1,18 @@
+export const mosesBrief = "3-minute cinematic live-action video of Moses parting the Red Sea, the Israelites crossing on dry ground while pursued by Egyptian chariots, and the returning waters drowning the pursuing army. Follow Exodus 14 faithfully from night through morning.";
+export const mosesFidelity = "Faithful adaptation of Exodus 14, not a claim of independently verified history. Open with pursuing chariots and the cloud moving between the camps BEFORE the crossing. God parts the sea as Moses stretches his hand; convey a strong east wind blowing ALL NIGHT through time compression. Dry crossing, water walls on both sides. Egyptian chariots follow; their wheels COME OFF in the morning watch (verse 25), not an invented muddy bog. Keep the seabed DRY. Moses stretches his hand again; the sea returns at morning and drowns the army that entered. Survivors see Egyptians dead on the shore. Do not assert Pharaoh personally drowned. No invented duel or dialogue. Visual appearance is artistic interpretation. Show drowning and deaths without gore. Exactly 180 seconds total.";
+// Public-domain KJV excerpts, checked against https://www.biblegateway.com/passage/?search=Exodus+14&version=KJV
+export const mosesSource = `Exodus 14, King James Version (public domain), selected verses:
+9 But the Egyptians pursued after them, all the horses and chariots of Pharaoh, and his horsemen, and his army, and overtook them encamping by the sea, beside Pihahiroth, before Baalzephon.
+16 But lift thou up thy rod, and stretch out thine hand over the sea, and divide it: and the children of Israel shall go on dry ground through the midst of the sea.
+19 And the angel of God, which went before the camp of Israel, removed and went behind them; and the pillar of the cloud went from before their face, and stood behind them:
+20 And it came between the camp of the Egyptians and the camp of Israel; and it was a cloud and darkness to them, but it gave light by night to these: so that the one came not near the other all the night.
+21 And Moses stretched out his hand over the sea; and the LORD caused the sea to go back by a strong east wind all that night, and made the sea dry land, and the waters were divided.
+22 And the children of Israel went into the midst of the sea upon the dry ground: and the waters were a wall unto them on their right hand, and on their left.
+23 And the Egyptians pursued, and went in after them to the midst of the sea, even all Pharaoh's horses, his chariots, and his horsemen.
+24 And it came to pass, that in the morning watch the LORD looked unto the host of the Egyptians through the pillar of fire and of the cloud, and troubled the host of the Egyptians,
+25 And took off their chariot wheels, that they drave them heavily: so that the Egyptians said, Let us flee from the face of Israel; for the LORD fighteth for them against the Egyptians.
+26 And the LORD said unto Moses, Stretch out thine hand over the sea, that the waters may come again upon the Egyptians, upon their chariots, and upon their horsemen.
+27 And Moses stretched forth his hand over the sea, and the sea returned to his strength when the morning appeared; and the Egyptians fled against it; and the LORD overthrew the Egyptians in the midst of the sea.
+28 And the waters returned, and covered the chariots, and the horsemen, and all the host of Pharaoh that came into the sea after them; there remained not so much as one of them.
+29 But the children of Israel walked upon dry land in the midst of the sea; and the waters were a wall unto them on their right hand, and on their left.
+30 Thus the LORD saved Israel that day out of the hand of the Egyptians; and Israel saw the Egyptians dead upon the sea shore.`;

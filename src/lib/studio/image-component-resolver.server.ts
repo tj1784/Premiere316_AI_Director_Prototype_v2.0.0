@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { nativeAdapterCapabilities, type NativeAdapterCapabilities } from "./engine-controls.ts";
 import { planPlacement, type PipelineComponent, type PlacementPlan } from "./residency.ts";
+import { NATIVE_STILL_MODEL_PATHS } from "./native-model-paths.server.ts";
 
 const MODEL_ROOT = "D:\\AI\\Models";
 const HF_HUB = "D:\\_Cache\\HuggingFace\\hub";
@@ -123,22 +124,22 @@ function componentSpecs(variant: ImageComponentManifest["modelVariant"]): Compon
     { role: "runtime", stableId: "black-forest-labs/flux@802fb4713906133fcbd0d8dc5351620ca4773036", path: FLUX_ROOT, required: true },
     { role: "python", stableId: "Python312", path: PYTHON, required: true },
     { role: "worker", stableId: "Premiere316:desktop/workers/flux1_jsonl_worker.py", path: process.env.P316_RESOURCES_PATH ? join(process.env.P316_RESOURCES_PATH, "workers", "flux1_jsonl_worker.py") : join(process.cwd(), "desktop", "workers", "flux1_jsonl_worker.py"), required: true },
-    { role: "transformer", stableId: "flux1-dev.safetensors@4610115bb0c89560703c892c59ac2742fa821e60ef5871b33493ba544683abd7", path: join(MODEL_ROOT, "diffusion_models", "flux1-dev.safetensors"), required: true },
+    { role: "transformer", stableId: "flux1-dev.safetensors@4610115bb0c89560703c892c59ac2742fa821e60ef5871b33493ba544683abd7", path: NATIVE_STILL_MODEL_PATHS.flux1, required: true },
     { role: "text_encoder", stableId: "t5xxl_fp16.safetensors@6e480b09fae049a72d2a8c5fbccb8d3e92febeb233bbe9dfe7256958a9167635", path: join(MODEL_ROOT, "text_encoders", "t5xxl_fp16.safetensors"), required: true },
     { role: "tokenizer", stableId: `google/t5-v1_1-xxl-config-tokenizer@${T5_SNAPSHOT_REVISION}:config@a58c2192a7166501ad2382c3d7ca3d694a1259b71a23a1925887e5afe7adcbd8:spiece@d60acb128cf7b7f2536e8f38a5b18a05535c9e14c7a355904270e15b0945ea86`, path: join(HF_HUB, "models--google--t5-v1_1-xxl", "snapshots", T5_SNAPSHOT_REVISION), required: true },
     { role: "text_encoder", stableId: "clip_l.safetensors@660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd", path: join(MODEL_ROOT, "text_encoders", "clip_l.safetensors"), required: true },
     { role: "tokenizer", stableId: "open_clip:bpe_simple_vocab_16e6@924691ac288e54409236115652ad4aa250f48203de50a9e4722a6ecd48d6804a", path: "D:\\Dev\\Tools\\Python312\\Lib\\site-packages\\open_clip\\bpe_simple_vocab_16e6.txt.gz", required: true },
     { role: "tokenizer_source", stableId: "open_clip:tokenizer.py@90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734", path: "D:\\Dev\\Tools\\Python312\\Lib\\site-packages\\open_clip\\tokenizer.py", required: true },
-    { role: "vae", stableId: "ae.safetensors@afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38", path: join(MODEL_ROOT, "vae", "ae.safetensors"), required: true },
+    { role: "vae", stableId: "ae.safetensors@afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38", path: NATIVE_STILL_MODEL_PATHS.flux1Vae, required: true },
   ];
   if (variant === "flux2-dev") return [
     { role: "runtime", stableId: `black-forest-labs/flux2@${FLUX2_SOURCE_HEAD}`, path: FLUX2_ROOT, required: true },
     { role: "python", stableId: "Python312", path: PYTHON, required: true },
     { role: "worker", stableId: "Premiere316:desktop/workers/flux2_jsonl_worker.py", path: process.env.P316_RESOURCES_PATH ? join(process.env.P316_RESOURCES_PATH, "workers", "flux2_jsonl_worker.py") : join(process.cwd(), "desktop", "workers", "flux2_jsonl_worker.py"), required: true },
-    { role: "transformer", stableId: "flux2_dev.safetensors@6159a3f19f829c8e84ba6e9996b7afaf7c0a5f3428677f5b37445778a320d275", path: join(MODEL_ROOT, "diffusion_models", "flux2_dev.safetensors"), required: true },
+    { role: "transformer", stableId: "flux2_dev.safetensors@6159a3f19f829c8e84ba6e9996b7afaf7c0a5f3428677f5b37445778a320d275", path: NATIVE_STILL_MODEL_PATHS.flux2, required: true },
     { role: "text_encoder", stableId: `mistralai/Mistral-Small-3.2-24B-Instruct-2506@${MISTRAL_REVISION}:config@01ab910a5dda7995709cc355d094eabb8094b78d49240cd167188606c3ff5edb:index@664a049408e8694e5867312145b74b1971ad5472061a1f176e0806dec9b3d21c`, path: join(HF_HUB, "models--mistralai--Mistral-Small-3.2-24B-Instruct-2506", "snapshots", MISTRAL_REVISION), required: true },
     { role: "processor", stableId: `mistralai/Mistral-Small-3.1-24B-Instruct-2503@${PROCESSOR_REVISION}:config@ce3ec410cac74da358f786c574b73b6624c50c8bb876bcb628f06500fe07adcc:tokenizer@b76085f9923309d873994d444989f7eb6ec074b06f25b58f1e8d7b7741070949`, path: join(HF_HUB, "models--mistralai--Mistral-Small-3.1-24B-Instruct-2503", "snapshots", PROCESSOR_REVISION), required: true },
-    { role: "vae", stableId: "flux2-vae.safetensors@d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5", path: join(MODEL_ROOT, "vae", "flux2-vae.safetensors"), required: true },
+    { role: "vae", stableId: "flux2-vae.safetensors@d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5", path: NATIVE_STILL_MODEL_PATHS.flux2Vae, required: true },
   ];
   const four = variant === "flux2-klein-4b";
   return [
@@ -146,7 +147,7 @@ function componentSpecs(variant: ImageComponentManifest["modelVariant"]): Compon
     { role: "python", stableId: "Python312", path: PYTHON, required: true },
     { role: "transformer", stableId: four ? "diffusion_models/flux2/flux-2-klein-4b-fp8.safetensors" : "diffusion_models/flux2/flux-2-klein-9b-fp8mixed.safetensors", path: join(MODEL_ROOT, "diffusion_models", "flux2", four ? "flux-2-klein-4b-fp8.safetensors" : "flux-2-klein-9b-fp8mixed.safetensors"), required: true },
     { role: "text_encoder", stableId: four ? "Qwen/Qwen3-4B-FP8" : "Qwen/Qwen3-8B-FP8", path: hfSnapshot(four ? "Qwen/Qwen3-4B-FP8" : "Qwen/Qwen3-8B-FP8"), required: true },
-    { role: "vae", stableId: "vae/flux2-vae.safetensors", path: join(MODEL_ROOT, "vae", "flux2-vae.safetensors"), required: true },
+    { role: "vae", stableId: "vae/flux2-vae.safetensors", path: NATIVE_STILL_MODEL_PATHS.flux2Vae, required: true },
   ];
 }
 

@@ -4,6 +4,25 @@ import { MemoryEndpointCache, discoverCachedLoopbackEndpoint, normalizeLoopbackE
 import { NativeLlamaProvider } from "./local-llm-provider.ts";
 import { LMStudioProvider } from "./lmstudio-provider.server.ts";
 import type { ScreenplayTelemetry } from "./screenplay.ts";
+import { moviePlanResponseFormat } from "./movie-plan-schema.ts";
+
+test("movie-plan JSON schema reaches the actual streaming completion request", async () => {
+  let body: Record<string, unknown> = {};
+  const provider = new LMStudioProvider({ endpointCache: new MemoryEndpointCache(), sampleResources: () => ({ peakVramBytes: null, peakSystemRamBytes: null }), fetch: async (input, init) => {
+    const url = String(input);
+    if (url.endsWith('/api/v1/models')) return json({ models: [{ key: 'writer', type: 'llm', loaded_instances: [{ id: 'instance-1' }] }] });
+    if (url.endsWith('/v1/models')) return json({ data: [{ id: 'writer' }] });
+    if (url.endsWith('/v1/chat/completions')) { body = JSON.parse(String(init?.body)); return new Response('data: {"choices":[{"delta":{"content":"{}"}}]}\n\ndata: [DONE]\n\n'); }
+    throw new Error(url);
+  } });
+  const responseFormat = moviePlanResponseFormat('screenplay');
+  await provider.load({ servedModelId: 'writer', settings });
+  await provider.generate({ runId: 'r', stepId: 'screenplay', system: 's', prompt: 'p', responseFormat, thinkingEnabled: false }, { servedModelId: 'writer', settings });
+  assert.deepEqual(body.response_format, responseFormat);
+  assert.equal(body.stream, true);
+  assert.equal(body.reasoning_effort, "none");
+  assert.deepEqual(body.chat_template_kwargs, { enable_thinking: false });
+});
 
 const settings = { temperature: 0.7, topP: 0.9, maxTokens: 128, contextSize: 4096, gpuLayers: 0, seed: 1 };
 const resources = () => ({ peakVramBytes: null, peakSystemRamBytes: null });

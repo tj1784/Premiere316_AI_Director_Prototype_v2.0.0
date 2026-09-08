@@ -5,8 +5,18 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import { componentHasRequiredPayload, resolveImageComponentManifest, resolveImageComponentManifests } from "./image-component-resolver.server.ts";
+import { nativeModelPath } from "./native-model-paths.server.ts";
 
 describe("Wave 4 image component resolver", () => {
+  it("finds organized model files while preserving an existing flat vault path", async () => {
+    const root = await mkdtemp(join(tmpdir(), "p316-model-path-"));
+    const family = join(root, "vae", "Flux.1");
+    mkdirSync(family, { recursive: true });
+    writeFileSync(join(family, "ae.safetensors"), "location fixture only");
+    assert.equal(nativeModelPath(root, "vae", "Flux.1", "ae.safetensors"), join(family, "ae.safetensors"));
+    writeFileSync(join(root, "vae", "ae.safetensors"), "old vault fixture");
+    assert.equal(nativeModelPath(root, "vae", "Flux.1", "ae.safetensors"), join(root, "vae", "ae.safetensors"));
+  });
   it("returns renderer-safe manifests without raw model-root paths", () => {
     const manifests = resolveImageComponentManifests(1700);
     assert.ok(manifests.length >= 5);

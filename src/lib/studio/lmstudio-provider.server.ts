@@ -130,7 +130,7 @@ export class LMStudioProvider implements LocalLLMProvider {
 
   async #probe(endpoint: string): Promise<boolean> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.options.timeoutMs ?? 1_500);
+    const timer = setTimeout(() => controller.abort(), this.options.timeoutMs ?? 5_000);
     try {
       const response = await this.fetcher(`${endpoint}/v1/models`, { signal: controller.signal });
       if (!response.ok) return false;
@@ -263,6 +263,11 @@ export class LMStudioProvider implements LocalLLMProvider {
         top_p: config.settings.topP,
         max_tokens: config.settings.maxTokens,
         seed: config.settings.seed,
+        ...(request.responseFormat ? { response_format: request.responseFormat } : {}),
+        ...(request.thinkingEnabled !== undefined ? {
+          reasoning_effort: request.thinkingEnabled ? "medium" : "none",
+          chat_template_kwargs: { enable_thinking: request.thinkingEnabled },
+        } : {}),
         stream: true,
         stream_options: { include_usage: true },
       }),

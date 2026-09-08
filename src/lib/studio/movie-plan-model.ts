@@ -1,7 +1,9 @@
 import { classifyLocalWriterFamily } from "./model-routing.ts";
 
+export const DEFAULT_MOVIE_PLAN_MODEL = "qwen3.6-40b-claude-4.6-opus-deckard-heretic-uncensored-thinking-neo-code-di-imatrix-max";
+
 export const LLAMA_NOT_SERVED =
-  "Configured AI model unavailable. Start LM Studio Local API Server and serve the configured Llama model, then Rescan.";
+  "Configured AI model unavailable. Start LM Studio Local API Server and serve the selected local writer model, then Rescan.";
 
 export type MoviePlanModelCandidate = {
   id: string;
@@ -74,5 +76,5 @@ export function selectMoviePlanModel(
 export function explicitMoviePlanServedId(picture: {
   screenplay?: { pinnedWriterServedId?: string | null; selectedModelId?: string | null };
 } | null | undefined): string | null {
-  return picture?.screenplay?.pinnedWriterServedId?.trim() || picture?.screenplay?.selectedModelId?.trim() || null;
+  return picture?.screenplay?.pinnedWriterServedId?.trim() || picture?.screenplay?.selectedModelId?.trim() || DEFAULT_MOVIE_PLAN_MODEL;
 }

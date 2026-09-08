@@ -6,6 +6,7 @@ import { makePictureIntake } from "./picture-intake.ts";
 import { makePictureScreenplay } from "./screenplay.ts";
 import type { Picture } from "./types.ts";
 import { emptyProductFlow, PHASE_REVIEW_DEFAULTS, buildMoviePlan } from "./product-flow.ts";
+import { moviePlanResponseFormat } from "./movie-plan-schema.ts";
 import {
   CONFIGURED_MODEL_UNAVAILABLE,
   executeMoviePlan,
@@ -27,7 +28,7 @@ function picture(concept: string): Picture {
     selectedEngine: { director: "dramatron", image: "flux2", video: "ltx-2", voice: "qwen3-tts", music: "minimax-music3" },
     screenplayFountain: "", acts: [], scenes: [], characters: [], locations: [], props: [], wardrobe: [], vfx: [],
     shots: [], cues: [], voices: [], directorNotes: "", usage: { llm: 0, stills: 0, clips: 0, tts: 0 },
-    productFlow: emptyProductFlow(),
+    productFlow: { ...emptyProductFlow(), qaEnabled: true },
   };
 }
 
@@ -66,7 +67,7 @@ const RESPONSES: Record<string, string> = {
     title: "Xenogears Trailer",
     sections: SECTIONS,
     characters: [{ name: "Fei Fong Wong", role: "Painter", age: "18", look: "Black hair, worn jacket", arc: "Witness" }],
-    locations: [{ name: "Lahan", description: "Mountain village at dusk", lighting: "Amber practicals" }],
+    locations: [{ name: "Lahan", sceneNumbers: [1], description: "Mountain village at dusk", lighting: "Amber practicals" }],
     sources: [{ title: "Xenogears", locator: "Squaresoft 1998", quote: "A thousand years of sorrow." }],
   }),
   screenplay: JSON.stringify({ fountain: FOUNTAIN }),
@@ -81,13 +82,13 @@ const RESPONSES: Record<string, string> = {
   }),
   breakdown: JSON.stringify({
     assets: [
-      { category: "character", name: "Fei Fong Wong", description: "Painter in a worn jacket from the Lahan studio scene" },
-      { category: "character", name: "Elly", description: "Soldier who looks back on the Ignas plain" },
-      { category: "location", name: "Lahan", description: "Studio at dusk from the first slugline" },
-      { category: "prop", name: "Canvas", description: "Burning painting from INT. LAHAN STUDIO" },
-      { category: "creature", name: "Weltall", description: "Gear stepping through smoke in EXT. IGNAS PLAIN" },
-      { category: "voice", name: "Fei voice", description: "Held silence, then later ADR if needed" },
-      { category: "music", name: "Restrained strings", description: "Score world from research, not a MIDI dump" },
+      { category: "character", name: "Fei Fong Wong", sceneNumbers: [1], description: "Painter in a worn jacket from the Lahan studio scene" },
+      { category: "character", name: "Elly", sceneNumbers: [2], description: "Soldier who looks back on the Ignas plain" },
+      { category: "location", name: "Lahan", sceneNumbers: [1], description: "Studio at dusk from the first slugline" },
+      { category: "prop", name: "Canvas", sceneNumbers: [1], description: "Burning painting from INT. LAHAN STUDIO" },
+      { category: "creature", name: "Weltall", sceneNumbers: [2], description: "Gear stepping through smoke in EXT. IGNAS PLAIN" },
+      { category: "voice", name: "Fei voice", sceneNumbers: [1], description: "Held silence, then later ADR if needed" },
+      { category: "music", name: "Restrained strings", sceneNumbers: [1, 2], description: "Score world from research, not a MIDI dump" },
     ],
   }),
   visualDevelopment: JSON.stringify({ intent: "Photoreal dusk for Xenogears", palette: ["amber", "iron"], motifs: ["burning canvas"] }),
@@ -116,6 +117,87 @@ function ids(prefix: string) {
 }
 
 describe("Build Movie Plan executes the configured model", () => {
+  it("skips QA completely when disabled and carries source evidence into the screenplay", async () => {
+    const draft = picture("3-minute Moses crossing the Red Sea");
+    draft.productFlow = emptyProductFlow();
+    draft.intake.suppliedSourceText = "The waters were a wall unto them on their right hand, and on their left.";
+    let screenplayAsk = "";
+    const runtime = { ...mockRuntime(), generate: async (request: Parameters<MoviePlanGenerate>[0]) => {
+      assert.notEqual(request.stepId, "screenplayQa");
+      if (request.stepId === "screenplay") screenplayAsk = request.prompt;
+      return { text: RESPONSES[request.stepId] };
+    } };
+    const result = await executeMoviePlan(draft, { runtime });
+    assert.equal(result.flow.nextTouchpoint, "asset-approval");
+    assert.equal(result.flow.steps.find((row) => row.id === "screenplayQa")?.status, "skipped");
+    assert.equal(result.picture.screenplay.lastQaReport, null);
+    assert.equal(result.calls.includes("screenplayQa"), false);
+    assert.match(screenplayAsk, /The waters were a wall/);
+  });
+  it("honors the sentence runtime, but preserves an explicit manual override", async () => {
+    let seen = "";
+    const runtime = { ...mockRuntime(), generate: async (request: Parameters<MoviePlanGenerate>[0]) => { if (request.stepId === "research") seen = request.prompt; return { text: RESPONSES[request.stepId] }; } };
+    const first = await executeMoviePlan(picture("two-minute trailer for Xenogears"), { runtime });
+    assert.equal(first.picture.runtimeMinutes, 2);
+    assert.equal(first.picture.shots.reduce((sum, shot) => sum + Math.round(shot.durationSec * first.picture.fps), 0), 120 * first.picture.fps);
+    assert.equal(first.picture.intake.targetRuntimeMinutes, 2);
+    assert.match(seen, /"runtimeMinutes":2/);
+    const manual = picture(BRIEF);
+    manual.intake.runtimeSource = "manual";
+    manual.intake.targetRuntimeMinutes = 5;
+    assert.equal((await executeMoviePlan(manual, { runtime })).picture.runtimeMinutes, 5);
+  });
+
+  it("uses structured output for all model phases and rejects malformed screenplay JSON", async () => {
+    for (const phase of Object.keys(RESPONSES)) assert.equal(moviePlanResponseFormat(phase).json_schema.strict, true);
+    const bounded = JSON.parse(JSON.stringify(moviePlanResponseFormat("breakdown", 5)));
+    assert.deepEqual(bounded.json_schema.schema.properties.assets.items.properties.sceneNumbers.items.enum, [1, 2, 3, 4, 5]);
+    const timed = JSON.parse(JSON.stringify(moviePlanResponseFormat("shots", 6, 180))).json_schema.schema.properties.shots;
+    assert.equal(timed.minItems, 18);
+    assert.equal(timed.maxItems, 18);
+    assert.equal(timed.items.properties.durationSec.const, 10);
+    const runtime = { ...mockRuntime(), generate: async ({ stepId }: Parameters<MoviePlanGenerate>[0]) => ({ text: stepId === "screenplay" ? '{"fountain":"INT. ROOM - DAY\nUnescaped"}' : RESPONSES[stepId] }) };
+    const result = await executeMoviePlan(picture(BRIEF), { runtime });
+    assert.equal(result.flow.steps.find((step) => step.id === "screenplay")?.status, "failed");
+    assert.equal(result.picture.production, undefined);
+  });
+
+  it("does not promote remembered quotes to supplied evidence, and preserves scene links and acting direction", async () => {
+    const result = await executeMoviePlan(picture(BRIEF), { runtime: mockRuntime() });
+    assert.doesNotMatch(JSON.stringify(result.picture.research?.content.sources), /A thousand years of sorrow/);
+    const elly = result.picture.production?.assets.find((asset) => asset.name === "Elly");
+    assert.deepEqual(elly?.requiredSceneIds, [result.picture.scenes[1].id]);
+    assert.match(JSON.stringify(result.picture.performance?.performance), /Silence over speech in Lahan/);
+  });
+
+  it("rejects research promises instead of completed analysis", async () => {
+    const research = JSON.parse(RESPONSES.research);
+    research.sections.worldOverview = "We'll research the source world and investigate its cultural background.";
+    const runtime = { ...mockRuntime(), generate: async ({ stepId }: Parameters<MoviePlanGenerate>[0]) => ({ text: stepId === "research" ? JSON.stringify(research) : RESPONSES[stepId] }) };
+    const result = await executeMoviePlan(picture(BRIEF), { runtime });
+    assert.equal(result.flow.steps[0].status, "failed");
+    assert.equal(result.picture.research?.approvedVersionId ?? null, null);
+  });
+
+  it("rechecks a bounded writer correction and never approves unresolved QA blockers", async () => {
+    const blocker = JSON.stringify({ findings: [{ category: "CONTINUITY ISSUE", severity: "blocker", summary: "Fei must react to the burning canvas.", recommendation: "Add his reaction.", revisionRequired: true }] });
+    let qaCalls = 0;
+    const runtime = { ...mockRuntime(), generate: async ({ stepId }: Parameters<MoviePlanGenerate>[0]) => ({ text: stepId === "screenplayQa" && ++qaCalls === 1 ? blocker : RESPONSES[stepId] }) };
+    const corrected = await executeMoviePlan(picture(BRIEF), { runtime });
+    assert.equal(corrected.flow.nextTouchpoint, "asset-approval");
+    assert.equal(corrected.calls.filter((phase) => phase === "screenplayQa").length, 2);
+    assert.ok(corrected.picture.screenplay.versions.some((version) => version.label === "QA-revised screenplay"));
+    assert.equal(corrected.picture.cinematography?.shotPlans.length, corrected.picture.shots.length);
+    const unresolved = await executeMoviePlan(picture(BRIEF), { runtime: { ...mockRuntime(), generate: async ({ stepId }) => ({ text: stepId === "screenplayQa" ? blocker : RESPONSES[stepId] }) } });
+    assert.equal(unresolved.flow.steps.find((phase) => phase.id === "screenplayQa")?.status, "failed");
+    assert.equal(unresolved.picture.screenplay.approvedVersionId, null);
+    assert.equal(unresolved.calls.filter((phase) => phase === "screenplayQa").length, 2);
+    assert.ok(unresolved.picture.screenplay.lastQaReport?.findings.length);
+    let writerCalls = 0;
+    const malformedRevision = await executeMoviePlan(picture(BRIEF), { runtime: { ...mockRuntime(), generate: async ({ stepId }) => ({ text: stepId === "screenplayQa" ? blocker : stepId === "screenplay" && ++writerCalls > 1 ? "truncated" : RESPONSES[stepId] }) } });
+    assert.equal(malformedRevision.flow.steps.find((phase) => phase.id === "screenplay")?.status, "failed");
+    assert.equal(malformedRevision.picture.screenplay.approvedVersionId, null);
+  });
   it("offline does not mark draftReady or invent research/screenplay", async () => {
     const result = await executeMoviePlan(picture(BRIEF), {
       runtime: { available: false, reason: CONFIGURED_MODEL_UNAVAILABLE, servedModelId: null, generate: null },
@@ -204,7 +286,7 @@ describe("Build Movie Plan executes the configured model", () => {
   it("phase-review QA keeps the report and does not auto-approve the screenplay", async () => {
     const withReview = {
       ...picture(BRIEF),
-      productFlow: { ...emptyProductFlow(), reviewInternalPhases: true, reviewPhases: { ...PHASE_REVIEW_DEFAULTS, screenplayQa: true } },
+      productFlow: { ...emptyProductFlow(), qaEnabled: true, reviewInternalPhases: true, reviewPhases: { ...PHASE_REVIEW_DEFAULTS, screenplayQa: true } },
     };
     const result = await executeMoviePlan(withReview, { runtime: mockRuntime(), now: 15, id: ids("id-q") });
     assert.equal(result.flow.steps.find((step) => step.id === "screenplayQa")?.status, "waitingForOptionalUserReview");

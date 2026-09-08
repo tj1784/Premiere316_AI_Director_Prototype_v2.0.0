@@ -52,6 +52,7 @@ export type PictureIntake = {
   adaptationBoundaries: string;
   importedSources: ImportedTextSource[];
   targetRuntimeMinutes: number;
+  runtimeSource?: "manual" | "idea";
   genre: string;
   tone: string;
   audienceRating: string;

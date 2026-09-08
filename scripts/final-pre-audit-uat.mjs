@@ -5,12 +5,14 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron as electron, chromium } from "playwright";
 import { livePackagedUatPassed } from "./pre-audit-evidence.mjs";
+import { mosesBrief, mosesSource, mosesFidelity } from "./moses-brief.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const artifacts = join(root, "screenshots/final-pre-audit-intake-and-lmstudio");
+const artifacts = resolve(root, process.env.P316_EVIDENCE_DIR || "screenshots/final-pre-audit-intake-and-lmstudio");
 const mode = process.argv[2] ?? "offline";
 assert.ok(["offline", "online", "browser"].includes(mode));
-const brief = "2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal, with Fei and Elly escaping a desert battle.";
+const brief = mosesBrief;
+const selectedModel = "qwen3.6-40b-claude-4.6-opus-deckard-heretic-uncensored-thinking-neo-code-di-imatrix-max";
 const report = { ok: false, startedAt: Date.now(), skipped: false, packaged: mode !== "browser", onlineVerified: false, researchGenerated: false, screenplayGenerated: false, qaGenerated: false, assetsExtracted: false, noSilentFallback: false, actualProviderCalls: 0, errors: [] };
 const rendererRequests = [];
 let application, browser, page;
@@ -73,6 +75,7 @@ try {
     page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   } else {
     const profile = await mkdtemp(join(tmpdir(), `p316-final-${mode}-`));
+    report.userDataDir = profile;
     assert.ok(!profile.toLowerCase().includes("appdata\\roaming\\premiere316"));
     application = await electron.launch({ executablePath: join(root, "dist-desktop/win-unpacked/Premiere316.exe"), args: [`--user-data-dir=${profile}`], env: { ...process.env, ELECTRON_USER_DATA_DIR: profile } });
     page = await application.firstWindow();
@@ -87,6 +90,18 @@ try {
   await newPicture();
   if (mode !== "online") await checkIntake();
   await page.getByLabel("What are we making?", { exact: true }).fill(brief);
+  if (mode === "online") {
+    const details = page.locator('[data-optional-intake="true"]');
+    await details.locator("summary").click();
+    assert.equal(await page.getByRole("checkbox", { name: /Enable model thinking/ }).isChecked(), false);
+    assert.equal(await page.getByRole("checkbox", { name: /Run screenplay QA/ }).isChecked(), false);
+    await page.getByLabel("Source mode", { exact: true }).selectOption("biblical-historical");
+    for (const [label, text] of [["Title", "Moses — The Red Sea"], ["Source passages / references", "Exodus 14 (KJV)"], ["Supplied Scripture / source text", mosesSource], ["Fidelity requirements", mosesFidelity]]) {
+      const field = details.locator("label").filter({ hasText: new RegExp(`^${label}$`) }).locator("..").locator("input, textarea").first();
+      await field.fill(text);
+    }
+    await details.locator("summary").click();
+  }
   if (mode === "browser") {
     for (const [name, width, height] of [["desktop", 1280, 800], ["mobile", 390, 844]]) {
       await page.setViewportSize({ width, height });
@@ -131,13 +146,15 @@ try {
       await page.getByText("Movie plan did not complete.", { exact: true }).waitFor();
       report.assetsBlocked = true;
     } else {
-      report.onlineVerified = picture.productFlow.executed === true && picture.productFlow.nextTouchpoint === "asset-approval" && picture.productFlow.steps.every((step) => step.status === "draftReady");
-      report.noSilentFallback = picture.productFlow.servedModelId === "llama-3.3-70b-instruct";
+      report.qaSkipped = picture.productFlow.steps.some((step) => step.id === "screenplayQa" && step.status === "skipped") && !report.qaGenerated;
+      report.thinkingDisabled = picture.productFlow.thinkingEnabled !== true;
+      report.onlineVerified = picture.productFlow.executed === true && picture.productFlow.nextTouchpoint === "asset-approval" && picture.productFlow.steps.every((step) => step.status === "draftReady" || step.id === "screenplayQa" && step.status === "skipped");
+      report.noSilentFallback = picture.productFlow.servedModelId === selectedModel;
       report.assetsVisible = await page.locator('body').innerText().then((body) => picture.production?.assets?.some((asset) => body.includes(asset.name)) ?? false);
     }
     await page.screenshot({ path: join(artifacts, `lm-studio-${mode}-result.png`) });
     assert.deepEqual(report.errors, []);
-    report.ok = mode === "offline" || (report.onlineVerified && report.researchGenerated && report.screenplayGenerated && report.qaGenerated && report.assetsExtracted && report.assetsVisible);
+    report.ok = mode === "offline" || (report.onlineVerified && report.researchGenerated && report.screenplayGenerated && report.qaSkipped && report.thinkingDisabled && report.assetsExtracted && report.assetsVisible);
   }
 } catch (error) {
   report.error = error.stack ?? String(error);
@@ -148,7 +165,9 @@ try {
   if (browser) await browser.close();
   report.endedAt = Date.now();
   const observed = (await readFile(join(artifacts, "lm-studio-server.jsonl"), "utf8").catch(() => "")).trim().split(/\r?\n/).filter(Boolean).flatMap((line) => { try { return [JSON.parse(line)]; } catch { return []; } }).filter((event) => event.timestamp >= report.startedAt);
-  const requests = observed.filter((event) => /Received request: POST to \/v1\/chat\/completions/.test(event.data?.content));
+  const allRequests = observed.filter((event) => /Received request: POST to \/v1\/chat\/completions/.test(event.data?.content));
+  const requests = allRequests.filter((event) => /"content":\s*"You are Premiere316/.test(event.data?.content));
+  report.otherLocalAgentCalls = allRequests.length - requests.length;
   const urls = rendererRequests.map((request) => request.url);
   const external = urls.filter((url) => /^https?:/.test(url) && !["127.0.0.1", "localhost", "[::1]"].includes(new URL(url).hostname));
   report.actualProviderCalls = requests.length;
@@ -157,9 +176,9 @@ try {
   report.functionalPassed = report.ok;
   if (mode !== "browser") report.ok = report.ok && report.network.verified && [report.network.port8188, report.network.cloud, report.network.web, report.network.comfy].every((count) => count === 0);
   if (mode === "online") {
-    report.noSilentFallback = report.noSilentFallback && report.providerModels.length === 1 && report.providerModels[0] === "llama-3.3-70b-instruct";
-    report.ok = livePackagedUatPassed(report);
-    report.greenEligible = report.ok;
+    report.noSilentFallback = report.noSilentFallback && report.providerModels.length === 1 && report.providerModels[0] === selectedModel;
+    report.ok = report.ok && report.noSilentFallback && report.actualProviderCalls === 7;
+    report.greenEligible = false; // This user-requested QA-off run does not satisfy the older mandatory-QA release contract.
   }
   await save(mode === "browser" ? "intake-browser-uat.json" : `lm-studio-${mode}-uat.json`, report);
   await save(`${mode}-renderer-network.json`, rendererRequests);

@@ -1,0 +1,63 @@
+▶ native still runtime policy
+  ✔ keeps orchestration wave status valid JSON (0.4219ms)
+  ✔ forces offline isolated app-profile roots before any Python launch (0.3957ms)
+  ✔ binds FLUX.1 to standalone encoder files and exact approved identities (0.2009ms)
+  ✔ keeps JSONL worker methods strict and free of download/Comfy markers (1.0821ms)
+  ✔ derives privileged prompt authorization from sealed backend authority, not renderer parameters (0.1744ms)
+  ✔ fails closed when audited CUDA weight files exceed installed GPU memory (0.1045ms)
+✔ native still runtime policy (3.2215ms)
+▶ 70 GiB full-VRAM override
+  ✔ keeps every component in VRAM when pipeline weights total 70 GiB or less (0.6256ms)
+  ✔ offloads text encoder to RAM when weights exceed 70 GiB (0.1091ms)
+✔ 70 GiB full-VRAM override (1.2562ms)
+▶ text encoder RAM vs core VRAM
+  ✔ 1. text encoder may reside in RAM while core stays in VRAM (0.0801ms)
+✔ text encoder RAM vs core VRAM (0.1431ms)
+▶ prompt embedding cache
+  ✔ 2. reuses embeddings across same-prompt multiple-seed jobs (0.4731ms)
+✔ prompt embedding cache (0.5397ms)
+▶ sticky media residency
+  ✔ 3. does not unload after each job (0.0858ms)
+  ✔ 4. does not unload immediately after batch by default (0.0907ms)
+✔ sticky media residency (0.2883ms)
+▶ queue grouping
+  ✔ 5. groups same-model queued jobs (0.5379ms)
+  ✔ 6. independent jobs may reorder to minimize swaps (0.0853ms)
+  ✔ 7. dependency-constrained jobs retain required order (0.1044ms)
+  ✔ 16. no media model swap per shot in a homogeneous batch (0.1164ms)
+✔ queue grouping (1.0804ms)
+▶ LoRA residency
+  ✔ 8. base remains resident while compatible LoRAs change (0.1238ms)
+✔ LoRA residency (0.1569ms)
+▶ crew vs media
+  ✔ 9. crew unload does not evict an active media model (0.0582ms)
+✔ crew vs media (0.0871ms)
+▶ BF16 fit and fallbacks
+  ✔ 10. BF16 fit uses peak headroom, not disk size alone (0.0785ms)
+  ✔ 11. when BF16 cannot fit, text encoder is offloaded before core eviction (0.0391ms)
+  ✔ 12. quantized fallback is suggested before full model swapping (0.0435ms)
+✔ BF16 fit and fallbacks (0.2108ms)
+▶ pin, idle, pressure
+  ✔ 13. user-pinned resident model stays loaded across review and retake (0.0752ms)
+  ✔ 14. idle eviction honors timeout (0.0389ms)
+  ✔ 15. VRAM pressure can evict an unpinned idle model (0.0266ms)
+✔ pin, idle, pressure (0.1846ms)
+▶ warm RAM and reference cache
+  ✔ 17. warm RAM cache is refused for 60+ GB models (0.1494ms)
+  ✔ 18. cached reference embeddings invalidate when source hash changes (0.1395ms)
+✔ warm RAM and reference cache (0.3541ms)
+▶ visibility and no-comfy gate
+  ✔ 19. residency plan exposes component placement (0.1031ms)
+  ✔ 20. No-ComfyUI gate still passes (3.1547ms)
+✔ visibility and no-comfy gate (3.3397ms)
+▶ budget constant
+  ✔ uses a 70 GiB full-VRAM weight budget (0.0499ms)
+✔ budget constant (0.0836ms)
+ℹ tests 29
+ℹ suites 13
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 125.0797

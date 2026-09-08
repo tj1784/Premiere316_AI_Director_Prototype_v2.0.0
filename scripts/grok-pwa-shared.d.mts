@@ -33,6 +33,7 @@ export type OgSite = {
 };
 
 export type GrokHeadContext = {
+  desktopOffline?: boolean;
   appName?: string;
   projectId?: string;
   creator?: string;

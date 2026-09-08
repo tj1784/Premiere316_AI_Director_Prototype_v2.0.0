@@ -1,0 +1,115 @@
+{
+  "ok": true,
+  "startedAt": 1788898214351,
+  "skipped": false,
+  "packaged": true,
+  "onlineVerified": true,
+  "researchGenerated": true,
+  "screenplayGenerated": true,
+  "qaGenerated": false,
+  "assetsExtracted": true,
+  "noSilentFallback": true,
+  "actualProviderCalls": 7,
+  "errors": [],
+  "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\p316-final-online-tkbG2i",
+  "build": {
+    "schemaVersion": 1,
+    "appVersion": "3.0.2",
+    "buildId": "p316-20260908200835-a5f15ca371b1",
+    "buildTimestamp": "2026-09-08T20:08:35.835Z",
+    "rendererSourceHash": "a5f15ca371b12b77c332398d08a1c4a2f4ecc15c430a2aa2f6de4459e9c2ef85",
+    "rendererMode": "PACKAGED DIST"
+  },
+  "streamVisibleBeforeCompletion": true,
+  "flow": {
+    "schemaVersion": 1,
+    "qaEnabled": false,
+    "thinkingEnabled": false,
+    "reviewInternalPhases": false,
+    "reviewPhases": {
+      "research": false,
+      "screenplay": false,
+      "screenplayQa": false,
+      "breakdown": false,
+      "visualDevelopment": false,
+      "cinematography": false,
+      "performance": false,
+      "shots": false,
+      "promptLab": false
+    },
+    "steps": [
+      {
+        "id": "research",
+        "status": "draftReady",
+        "message": "Research Bible generated from the configured model."
+      },
+      {
+        "id": "screenplay",
+        "status": "draftReady",
+        "message": "Screenplay generated from the configured model."
+      },
+      {
+        "id": "screenplayQa",
+        "status": "skipped",
+        "message": "QA disabled by user; no critique or QA approval was generated."
+      },
+      {
+        "id": "breakdown",
+        "status": "draftReady",
+        "message": "35 assets extracted from the generated screenplay."
+      },
+      {
+        "id": "visualDevelopment",
+        "status": "draftReady",
+        "message": "Visual development drafted from generated research."
+      },
+      {
+        "id": "cinematography",
+        "status": "draftReady",
+        "message": "Cinematography plan drafted from generated research."
+      },
+      {
+        "id": "performance",
+        "status": "draftReady",
+        "message": "Performance workspace drafted from the generated screenplay."
+      },
+      {
+        "id": "shots",
+        "status": "draftReady",
+        "message": "18 shots planned from the generated screenplay; timing fitted to 180 seconds."
+      },
+      {
+        "id": "promptLab",
+        "status": "draftReady",
+        "message": "Asset Gate prompts compiled from the generated plan."
+      }
+    ],
+    "llamaAvailable": true,
+    "nextTouchpoint": "asset-approval",
+    "lastRunAt": 1788898217739,
+    "executed": true,
+    "servedModelId": "qwen3.6-40b-claude-4.6-opus-deckard-heretic-uncensored-thinking-neo-code-di-imatrix-max",
+    "manualFallback": false
+  },
+  "offlineHonest": false,
+  "noDraftReady": false,
+  "qaSkipped": true,
+  "thinkingDisabled": true,
+  "assetsVisible": true,
+  "endedAt": 1788898436951,
+  "otherLocalAgentCalls": 8,
+  "providerModels": [
+    "qwen3.6-40b-claude-4.6-opus-deckard-heretic-uncensored-thinking-neo-code-di-imatrix-max"
+  ],
+  "network": {
+    "verified": true,
+    "port8188": 0,
+    "cloud": 0,
+    "web": 0,
+    "comfy": 0,
+    "external": [],
+    "scope": "Renderer requests and LM Studio server request logs; not an OS-wide or all-server egress capture"
+  },
+  "functionalPassed": true,
+  "greenEligible": false
+}
