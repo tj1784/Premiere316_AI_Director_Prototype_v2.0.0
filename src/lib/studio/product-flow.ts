@@ -127,6 +127,44 @@ export function defaultRequiredTouchpoints(): ProductTouchpoint[] {
   return ["intake", "asset-approval", "keyframe-approval", "video-approval", "export"];
 }
 
+export const PHASE_LABELS: Record<InternalPhase, string> = {
+  research: "Review Research Bible before screenplay",
+  screenplay: "Review Screenplay before breakdown",
+  screenplayQa: "Review Screenplay QA before breakdown",
+  breakdown: "Review Production Breakdown / Inventory before visual planning",
+  visualDevelopment: "Review Visual Development before cinematography",
+  cinematography: "Review Cinematography before performance/shots",
+  performance: "Review Performance / Shot plan before prompt compilation",
+  shots: "Review Shots before prompt compilation",
+  promptLab: "Review Prompt drafts before Generate gates",
+};
+
+export const PHASE_STAGE: Record<InternalPhase, StageId> = {
+  research: "research",
+  screenplay: "screenplay",
+  screenplayQa: "screenplay",
+  breakdown: "inventory",
+  visualDevelopment: "visual-development",
+  cinematography: "cinematography",
+  performance: "performance",
+  shots: "shots",
+  promptLab: "prompts",
+};
+
+export function allPhaseReviewsOn(): Record<InternalPhase, boolean> {
+  return {
+    research: true,
+    screenplay: true,
+    screenplayQa: true,
+    breakdown: true,
+    visualDevelopment: true,
+    cinematography: true,
+    performance: true,
+    shots: true,
+    promptLab: true,
+  };
+}
+
 export function pausedInternalPhase(flow: ProductFlowState): InternalPhase | null {
   if (!flow.reviewInternalPhases) return null;
   for (const phase of INTERNAL_PHASES) {
@@ -142,11 +180,12 @@ export function buildMoviePlan(picture: Picture, input: { llamaAvailable: boolea
   const now = input.now ?? Date.now();
   const flow = hydrateProductFlow(picture.productFlow);
   const brief = parseMovieIntent(picture.intake.concept || picture.intake.premise || picture.intake.logline || picture.logline || picture.title);
+  const reviewPhases = flow.reviewInternalPhases && !Object.values(flow.reviewPhases).some(Boolean) ? allPhaseReviewsOn() : flow.reviewPhases;
   const steps: ProductFlowState["steps"] = INTERNAL_PHASES.map((id) => {
     if (!input.llamaAvailable && (id === "research" || id === "screenplay" || id === "screenplayQa")) {
       return { id, status: "failed", message: "Local Llama unavailable. Intake skeleton only. Start LM Studio Local API, then Rescan." };
     }
-    if (flow.reviewInternalPhases && flow.reviewPhases[id]) {
+    if (flow.reviewInternalPhases && reviewPhases[id]) {
       return { id, status: "waitingForOptionalUserReview", message: `Paused for optional ${id} review.` };
     }
     return { id, status: "draftReady", message: `${id} prepared from Intake. Not a verified Llama runtime pass.` };
@@ -155,6 +194,7 @@ export function buildMoviePlan(picture: Picture, input: { llamaAvailable: boolea
   const nextTouchpoint: ProductTouchpoint = paused ? "intake" : "asset-approval";
   const nextFlow: ProductFlowState = {
     ...flow,
+    reviewPhases,
     steps,
     llamaAvailable: input.llamaAvailable,
     nextTouchpoint,

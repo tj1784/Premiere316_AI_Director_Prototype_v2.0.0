@@ -16,7 +16,7 @@ import {
 } from "@/lib/studio/export";
 import { ENGINES, KIND_LABEL, engineById } from "@/lib/studio/engines";
 import { MODEL_ROOT, STAGES, type Picture, type StageId } from "@/lib/studio/types";
-import { DEFAULT_NAV_STEPS, buildMoviePlan, hydrateProductFlow } from "@/lib/studio/product-flow.ts";
+import { DEFAULT_NAV_STEPS, INTERNAL_PHASES, PHASE_LABELS, PHASE_STAGE, allPhaseReviewsOn, buildMoviePlan, hydrateProductFlow, pausedInternalPhase, PHASE_REVIEW_DEFAULTS, type InternalPhase } from "@/lib/studio/product-flow.ts";
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import { useDirector } from "@/lib/studio/use-director";
 import { compileEnginePromptPackage, compilePicture, totalDuration } from "@/lib/studio/prompt-compiler";
@@ -129,7 +129,10 @@ function IntakeStage({ picture }: { picture: Picture }) {
   const replaceActive = useStudio((state) => state.replaceActive);
   const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
   const flow = hydrateProductFlow(picture.productFlow);
+  const setUiMode = useStudio((state) => state.setUiMode);
+  const setStage = useStudio((state) => state.setStage);
   const [reviewInternal, setReviewInternal] = useState(flow.reviewInternalPhases);
+  const [reviewPhases, setReviewPhases] = useState(flow.reviewPhases);
   const [building, setBuilding] = useState(false);
   const patchIntake = <K extends keyof PictureIntake>(key: K, value: PictureIntake[K]) => {
     const intake = { ...picture.intake, [key]: value, updatedAt: Date.now() };
@@ -155,12 +158,19 @@ function IntakeStage({ picture }: { picture: Picture }) {
     }
     const result = buildMoviePlan({
       ...picture,
-      productFlow: { ...flow, reviewInternalPhases: reviewInternal },
+      productFlow: { ...flow, reviewInternalPhases: reviewInternal, reviewPhases },
     }, { llamaAvailable });
     replaceActive(result.picture);
-    if (result.flow.nextTouchpoint === "asset-approval") setGenerateFocus("assets");
-    if (llamaAvailable) toast.success("Movie plan prepared. Next: Approve Assets.");
-    else toast.error("Local Llama unavailable. Intake skeleton prepared. Start LM Studio Local API, then Rescan. Next: Approve Assets.");
+    const paused = pausedInternalPhase(result.flow);
+    if (paused) {
+      setUiMode("advanced");
+      setStage(PHASE_STAGE[paused]);
+      toast.message(`Paused for optional ${paused} review. This is not an automated complete pass.`);
+    } else if (result.flow.nextTouchpoint === "asset-approval") {
+      setGenerateFocus("assets");
+      if (llamaAvailable) toast.success("Movie plan prepared. Next: Approve Assets. Internal phases are skeletons unless Llama actually ran.");
+      else toast.error("Local Llama unavailable. Research/Screenplay did not run. Skeleton from Intake only. Next: Approve Assets.");
+    }
     setBuilding(false);
   }
   return (
@@ -172,13 +182,27 @@ function IntakeStage({ picture }: { picture: Picture }) {
         </div>
         <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
           <label className="flex min-h-11 items-start gap-2 text-sm">
-            <input className="mt-1" type="checkbox" checked={reviewInternal} onChange={(event) => setReviewInternal(event.target.checked)} />
+            <input className="mt-1" type="checkbox" checked={reviewInternal} onChange={(event) => {
+              const on = event.target.checked;
+              setReviewInternal(on);
+              setReviewPhases(on ? allPhaseReviewsOn() : { ...PHASE_REVIEW_DEFAULTS });
+            }} />
             <span>I want to review internal phases before Premiere316 continues. Default is off: Research, Screenplay, Inventory, and other departments run in the background.</span>
           </label>
-          {reviewInternal ? <p className="mt-2 text-xs text-muted">Advanced phase pauses are optional. Assets, First/Last Frames, Video Clips, and Export remain required.</p> : null}
+          {reviewInternal ? (
+            <div className="mt-3 grid gap-2">
+              <p className="text-xs text-muted">Checking this pauses at every selected department. Uncheck a row to skip that pause. Assets, First/Last Frames, Video Clips, and Export remain required.</p>
+              {INTERNAL_PHASES.map((phase) => (
+                <label key={phase} className="flex min-h-10 items-start gap-2 text-sm">
+                  <input className="mt-1" type="checkbox" checked={reviewPhases[phase]} onChange={(event) => setReviewPhases((current) => ({ ...current, [phase]: event.target.checked }))} />
+                  <span>{PHASE_LABELS[phase]}</span>
+                </label>
+              ))}
+            </div>
+          ) : null}
         </div>
         <Button className="h-12 text-base" onClick={() => void buildPlan()} disabled={building}>{building ? "Building…" : "Build Movie Plan"}</Button>
-        {flow.steps.length ? <ul className="grid gap-1 text-sm text-muted">{flow.steps.map((step) => <li key={step.id}>{step.status === "failed" ? "!" : "✓"} {step.id}: {step.message}</li>)}</ul> : null}
+        {flow.steps.length ? <ul className="grid gap-1 text-sm text-muted">{flow.steps.map((step) => <li key={step.id}>{step.status === "failed" ? "! failed" : step.status === "waitingForOptionalUserReview" ? "⏸ paused" : step.status === "draftReady" ? "· skeleton" : step.status} — {step.id}: {step.message}</li>)}</ul> : null}
         <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
           <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Source mode</p>
           <p className="mt-2 text-sm">{SOURCE_TYPE_LABELS[picture.intake.sourceType]}</p>

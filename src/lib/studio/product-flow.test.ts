@@ -64,5 +64,18 @@ describe("five-touchpoint product flow", () => {
     const result = buildMoviePlan(withReview, { llamaAvailable: true, now: 3 });
     assert.equal(result.flow.steps.find((step) => step.id === "screenplay")?.status, "waitingForOptionalUserReview");
     assert.equal(pausedInternalPhase(result.flow), "screenplay");
+    assert.equal(result.flow.nextTouchpoint, "intake");
+  });
+
+  it("master phase-review checkbox with no per-phase flags pauses every internal phase", () => {
+    const withMaster = {
+      ...picture("Xenogears trailer"),
+      productFlow: { ...emptyProductFlow(), reviewInternalPhases: true, reviewPhases: { ...PHASE_REVIEW_DEFAULTS } },
+    };
+    const result = buildMoviePlan(withMaster, { llamaAvailable: true, now: 4 });
+    assert.equal(result.flow.reviewPhases.research, true);
+    assert.equal(result.flow.steps.find((step) => step.id === "research")?.status, "waitingForOptionalUserReview");
+    assert.equal(pausedInternalPhase(result.flow), "research");
+    assert.notEqual(result.flow.nextTouchpoint, "asset-approval");
   });
 });
