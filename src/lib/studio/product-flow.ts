@@ -200,7 +200,7 @@ export function buildMoviePlan(picture: Picture, input: { llamaAvailable: boolea
     targetRuntimeMinutes: picture.intake.targetRuntimeMinutes || brief.targetRuntimeMinutes,
     updatedAt: now,
   };
-  const reason = "Configured AI model unavailable. Start LM Studio Local API Server and serve a model, then Rescan.";
+  const reason = "Configured AI model unavailable. Start LM Studio Local API Server and serve the configured Llama model, then Rescan.";
   if (input.llamaAvailable) {
     throw new Error("Build Movie Plan cannot mark phases draftReady without executing the configured model. Call executeMoviePlan.");
   }

@@ -7,7 +7,7 @@ import { _electron as electron } from "playwright";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const executablePath = resolve(process.argv[2] ?? `${root}/dist-desktop/win-unpacked/Premiere316.exe`);
-const artifacts = resolve(root, "screenshots", "fix-build-movie-plan-functional-execution");
+const artifacts = resolve(root, "screenshots", "pre-audit-build-movie-plan-blockers");
 const REAL_PROFILE = join(process.env.APPDATA ?? "", "Premiere316");
 const failures = [];
 const networkLog = [];

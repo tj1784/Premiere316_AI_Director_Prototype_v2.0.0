@@ -7,22 +7,25 @@ import {
   executeResearchDraft,
   type MoviePlanRuntime,
 } from "./movie-plan-pipeline.ts";
+import { explicitMoviePlanServedId, selectMoviePlanModel } from "./movie-plan-model.ts";
 import type { Picture } from "./types.ts";
 import type { InternalPhase } from "./product-flow.ts";
 
 const endpointCache = new BrowserEndpointCache();
 
-async function runtimeFromStatus(): Promise<MoviePlanRuntime> {
+async function runtimeFromStatus(picture: Picture): Promise<MoviePlanRuntime> {
   const status = await localLLMStatus();
   if (status.provider.endpoint) endpointCache.set(status.provider.endpoint);
   const ready = status.models.filter((model) => model.status === "ready");
-  const model = ready.find((item) => /llama/i.test(item.servedModelId || item.id)) ?? ready[0] ?? null;
-  if (!status.provider.available || !model) {
+  const selected = selectMoviePlanModel(ready, {
+    providerAvailable: Boolean(status.provider.available),
+    providerReason: status.provider.reason,
+    explicitServedId: explicitMoviePlanServedId(picture),
+  });
+  if (!selected.allowed) {
     return {
       available: false,
-      reason: status.provider.available && !model
-        ? "Configured AI model unavailable. Start LM Studio Local API Server and serve a model, then Rescan."
-        : (status.provider.reason || CONFIGURED_MODEL_UNAVAILABLE),
+      reason: selected.reason || CONFIGURED_MODEL_UNAVAILABLE,
       servedModelId: null,
       generate: null,
     };
@@ -30,8 +33,8 @@ async function runtimeFromStatus(): Promise<MoviePlanRuntime> {
   return {
     available: true,
     reason: "",
-    servedModelId: model.servedModelId || model.id,
-    displayName: model.displayName,
+    servedModelId: selected.servedModelId,
+    displayName: selected.displayName,
     generate: async ({ stepId, system, prompt }) => {
       const result = await moviePlanGenerate({
         data: {
@@ -39,7 +42,7 @@ async function runtimeFromStatus(): Promise<MoviePlanRuntime> {
           stepId,
           system,
           prompt,
-          servedModelId: model.servedModelId || model.id,
+          servedModelId: selected.servedModelId,
         },
       });
       return { text: result.text };
@@ -48,11 +51,11 @@ async function runtimeFromStatus(): Promise<MoviePlanRuntime> {
 }
 
 export async function executeMoviePlanOnServer(picture: Picture) {
-  return executeMoviePlan(picture, { runtime: await runtimeFromStatus() });
+  return executeMoviePlan(picture, { runtime: await runtimeFromStatus(picture) });
 }
 
 export async function executeResearchDraftOnServer(picture: Picture) {
-  return executeResearchDraft(picture, { runtime: await runtimeFromStatus() });
+  return executeResearchDraft(picture, { runtime: await runtimeFromStatus(picture) });
 }
 
 export type { InternalPhase };

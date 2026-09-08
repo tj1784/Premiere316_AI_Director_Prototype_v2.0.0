@@ -124,6 +124,14 @@ export function researchSectionsArePopulated(sections: ResearchBibleSections | n
   return RESEARCH_BIBLE_SECTION_KEYS.every((key) => sections[key].trim().length > 0);
 }
 
+export function researchSectionsLookPlaceholder(sections: ResearchBibleSections | null | undefined): boolean {
+  if (!sections || !researchSectionsArePopulated(sections)) return true;
+  const texts = RESEARCH_BIBLE_SECTION_KEYS.map((key) => sections[key].trim());
+  if (texts.some((text) => /^Generated [A-Za-z]+ for /i.test(text))) return true;
+  if (new Set(texts).size < RESEARCH_BIBLE_SECTION_KEYS.length) return true;
+  return false;
+}
+
 export type ResearchContent = {
   mode: ResearchMode;
   sources: ResearchSource[];

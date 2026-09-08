@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "offlineHonest": true,
+  "noDraftReady": true,
+  "assetsBlocked": true,
+  "onlineAttempted": false,
+  "onlineVerified": false,
+  "status": "FUNCTIONAL_PIPELINE_SOURCE_READY_LM_STUDIO_UAT_BLOCKED",
+  "network": {
+    "port8188": 0,
+    "cloud": 0,
+    "comfy": 0
+  },
+  "error": null
+}

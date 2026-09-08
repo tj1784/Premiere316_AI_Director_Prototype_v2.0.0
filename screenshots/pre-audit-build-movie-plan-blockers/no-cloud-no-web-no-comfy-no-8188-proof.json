@@ -1,0 +1,27 @@
+{
+  "ok": true,
+  "ready0FallbackRemoved": true,
+  "port8188": 0,
+  "cloud": 0,
+  "comfy": 0,
+  "packagedOfflineUat": {
+    "ok": true,
+    "port8188": 0,
+    "cloud": 0,
+    "comfy": 0
+  },
+  "sourceScan": {
+    "ready0": [],
+    "comfy": [],
+    "port8188": [],
+    "cloud": [],
+    "scanned": [
+      "src/lib/studio/movie-plan-client.ts",
+      "src/lib/studio/movie-plan-model.ts",
+      "src/lib/studio/movie-plan-pipeline.ts",
+      "src/lib/studio/movie-plan-api.ts",
+      "src/lib/studio/product-flow.ts",
+      "src/components/studio/stage-views.tsx"
+    ]
+  }
+}

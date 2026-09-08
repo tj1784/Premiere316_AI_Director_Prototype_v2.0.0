@@ -1,0 +1,15 @@
+{
+  "researchPauseNoApprove": true,
+  "screenplayPauseNoApprove": true,
+  "qaPauseNoApprove": true,
+  "defaultModeAutoApproves": true,
+  "continuesAfterUserApprove": true,
+  "laterDepartments": {
+    "breakdown": "waitingForOptionalUserReview",
+    "visualDevelopment": "waitingForOptionalUserReview",
+    "cinematography": "waitingForOptionalUserReview",
+    "performance": "waitingForOptionalUserReview",
+    "shots": "waitingForOptionalUserReview",
+    "promptLab": "waitingForOptionalUserReview"
+  }
+}

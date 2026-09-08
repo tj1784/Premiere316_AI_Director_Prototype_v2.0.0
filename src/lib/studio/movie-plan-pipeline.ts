@@ -17,10 +17,13 @@ import {
   cloneResearchContent,
   hydratePictureResearch,
   hydrateResearchSections,
+  isResearchApproved,
   researchSectionsArePopulated,
+  researchSectionsLookPlaceholder,
   type PictureResearchBible,
   type ResearchContent,
 } from "../research/bible.ts";
+import { LLAMA_NOT_SERVED } from "./movie-plan-model.ts";
 import { addResearchSource } from "../research/source-ledger.ts";
 import { appendScreenplayVersion, approveCurrentScreenplay, makePictureScreenplay } from "./screenplay.ts";
 import { parseScreenplayHierarchy, sceneNodes } from "./screenplay-hierarchy.ts";
@@ -35,8 +38,7 @@ import { migratePicturePerformance } from "../performance/persistence.ts";
 import { savePromptVersion, hydrateGenerateGates } from "../production/generate-gates.ts";
 import type { ScreenplayModelRef } from "./screenplay.ts";
 
-export const CONFIGURED_MODEL_UNAVAILABLE =
-  "Configured AI model unavailable. Start LM Studio Local API Server and serve a model, then Rescan.";
+export const CONFIGURED_MODEL_UNAVAILABLE = LLAMA_NOT_SERVED;
 export const MANUAL_FALLBACK_LABEL = "Manual fallback — no AI movie plan has been generated.";
 
 export type MoviePlanGenerate = (input: { stepId: InternalPhase; system: string; prompt: string }) => Promise<{ text: string }>;
@@ -215,7 +217,7 @@ function shotsPrompt(picture: Picture): { system: string; prompt: string } {
   };
 }
 
-function applyResearchJson(bible: PictureResearchBible, parsed: Record<string, unknown>, now: number, id: string): PictureResearchBible {
+function applyResearchJson(bible: PictureResearchBible, parsed: Record<string, unknown>, now: number, id: string, autoApprove: boolean): PictureResearchBible {
   const sections = hydrateResearchSections(parsed.sections);
   const content: ResearchContent = {
     ...cloneResearchContent(bible.content),
@@ -244,8 +246,8 @@ function applyResearchJson(bible: PictureResearchBible, parsed: Record<string, u
     });
     if (!("error" in added)) content.sources = added.sources;
   }
-  if (!researchSectionsArePopulated(sections)) {
-    throw new Error("Research Bible sections were empty after the model call.");
+  if (!researchSectionsArePopulated(sections) || researchSectionsLookPlaceholder(sections)) {
+    throw new Error("Research Bible sections were empty or placeholder after the model call.");
   }
   const drafted = appendResearchVersion(bible, {
     id,
@@ -256,6 +258,7 @@ function applyResearchJson(bible: PictureResearchBible, parsed: Record<string, u
     sourceVersionId: bible.currentVersionId,
     content,
   });
+  if (!autoApprove) return drafted;
   return appendResearchVersion(drafted, {
     id: `${id}:approved`,
     label: "Automation-approved Research Bible",
@@ -334,59 +337,92 @@ export async function executeMoviePlan(picture: Picture, input: {
     return { picture: { ...next, productFlow: nextFlow, updatedAt: now }, flow: nextFlow, providerCalled: calls.length > 0, calls };
   };
 
+  const reviewThis = (phase: InternalPhase) => flow.reviewInternalPhases && reviewPhases[phase];
   const maybePause = (phase: InternalPhase, message: string): MoviePlanResult | null => {
-    steps.push(step(phase, flow.reviewInternalPhases && reviewPhases[phase] ? "waitingForOptionalUserReview" : "draftReady", message));
-    if (flow.reviewInternalPhases && reviewPhases[phase]) {
+    steps.push(step(phase, reviewThis(phase) ? "waitingForOptionalUserReview" : "draftReady", message));
+    if (reviewThis(phase)) {
       return finish("waitingForOptionalUserReview", phase, `Paused for optional ${phase} review.`, "intake");
     }
     return null;
   };
 
   try {
-    calls.push("research");
-    const researchAsk = researchPrompt(next);
-    const researchText = await generate({ stepId: "research", ...researchAsk });
-    const researchJson = extractJsonObject(researchText.text);
-    const research = applyResearchJson(hydratePictureResearch(next.research, next.intake, now), researchJson, now, id());
-    next = {
-      ...next,
-      research,
-      characters: peopleFromResearch(researchJson).length ? peopleFromResearch(researchJson) : next.characters,
-      locations: placesFromResearch(researchJson).length ? placesFromResearch(researchJson) : next.locations,
-    };
-    const pausedResearch = maybePause("research", "Research Bible generated from the configured model.");
-    if (pausedResearch) return pausedResearch;
+    let research = hydratePictureResearch(next.research, next.intake, now);
+    if (flow.reviewInternalPhases && isResearchApproved(next.research)) {
+      research = next.research ?? research;
+      steps.push(step("research", "draftReady", "Research Bible already approved; continuing."));
+    } else if (flow.reviewInternalPhases && reviewThis("research") && researchSectionsArePopulated(next.research?.content.sections) && !isResearchApproved(next.research)) {
+      research = next.research ?? research;
+      next = { ...next, research };
+      const pausedResearch = maybePause("research", "Research Bible draft waiting for user approval.");
+      if (pausedResearch) return pausedResearch;
+    } else {
+      calls.push("research");
+      const researchAsk = researchPrompt(next);
+      const researchText = await generate({ stepId: "research", ...researchAsk });
+      const researchJson = extractJsonObject(researchText.text);
+      research = applyResearchJson(hydratePictureResearch(next.research, next.intake, now), researchJson, now, id(), !reviewThis("research"));
+      next = {
+        ...next,
+        research,
+        characters: peopleFromResearch(researchJson).length ? peopleFromResearch(researchJson) : next.characters,
+        locations: placesFromResearch(researchJson).length ? placesFromResearch(researchJson) : next.locations,
+      };
+      const pausedResearch = maybePause("research", "Research Bible generated from the configured model.");
+      if (pausedResearch) return pausedResearch;
+    }
 
-    calls.push("screenplay");
-    const screenAsk = screenplayPrompt(next, research.content);
-    const screenText = await generate({ stepId: "screenplay", ...screenAsk });
-    let fountain = asString(extractJsonObject(screenText.text).fountain) || screenText.text.trim();
-    if (!/^(INT\.|EXT\.|INT\.\/EXT\.|I\/E\.)/im.test(fountain)) throw new Error("Screenplay missing INT./EXT. sluglines.");
-    let screenplay = appendScreenplayVersion(next.screenplay.schemaVersion ? next.screenplay : makePictureScreenplay(next.intake.workflow, null, now), {
-      id: id(),
-      label: "Generated Screenplay",
-      kind: "draft",
-      fountain,
-      createdAt: now,
-      model: modelRef(input.runtime.servedModelId, input.runtime.displayName),
-      workflow: next.intake.workflow,
-      pass: null,
-      sourceVersionId: next.screenplay.currentVersionId,
-      settings: null,
-    });
-    next = { ...next, screenplay, screenplayFountain: fountain };
-    const pausedScreen = maybePause("screenplay", "Screenplay generated from the configured model.");
-    if (pausedScreen) return pausedScreen;
+    let screenplay = next.screenplay.schemaVersion ? next.screenplay : makePictureScreenplay(next.intake.workflow, null, now);
+    let fountain = screenplay.workingFountain.trim();
+    if (flow.reviewInternalPhases && screenplay.approvedVersionId && /^(INT\.|EXT\.|INT\.\/EXT\.|I\/E\.)/im.test(fountain)) {
+      steps.push(step("screenplay", "draftReady", "Screenplay already approved; continuing."));
+    } else if (flow.reviewInternalPhases && reviewThis("screenplay") && /^(INT\.|EXT\.|INT\.\/EXT\.|I\/E\.)/im.test(fountain) && !screenplay.approvedVersionId) {
+      next = { ...next, screenplay, screenplayFountain: fountain };
+      const pausedScreen = maybePause("screenplay", "Screenplay draft waiting for user approval.");
+      if (pausedScreen) return pausedScreen;
+    } else {
+      calls.push("screenplay");
+      const screenAsk = screenplayPrompt(next, research.content);
+      const screenText = await generate({ stepId: "screenplay", ...screenAsk });
+      fountain = asString(extractJsonObject(screenText.text).fountain) || screenText.text.trim();
+      if (!/^(INT\.|EXT\.|INT\.\/EXT\.|I\/E\.)/im.test(fountain)) throw new Error("Screenplay missing INT./EXT. sluglines.");
+      screenplay = appendScreenplayVersion(screenplay, {
+        id: id(),
+        label: "Generated Screenplay",
+        kind: "draft",
+        fountain,
+        createdAt: now,
+        model: modelRef(input.runtime.servedModelId, input.runtime.displayName),
+        workflow: next.intake.workflow,
+        pass: null,
+        sourceVersionId: next.screenplay.currentVersionId,
+        settings: null,
+      });
+      next = { ...next, screenplay, screenplayFountain: fountain };
+      const pausedScreen = maybePause("screenplay", "Screenplay generated from the configured model.");
+      if (pausedScreen) return pausedScreen;
+    }
 
-    calls.push("screenplayQa");
-    const qaAsk = qaPrompt(fountain);
-    const qaText = await generate({ stepId: "screenplayQa", ...qaAsk });
-    const qa = parseScreenplayQaReport(JSON.stringify(extractJsonObject(qaText.text)), id(), now, modelRef(input.runtime.servedModelId, input.runtime.displayName), "qa-critic");
-    if ("error" in qa || !qa.findings.length) throw new Error("QA report was empty.");
-    screenplay = approveCurrentScreenplay({ ...screenplay, lastQaReport: { id: qa.id, createdAt: qa.createdAt, modelId: qa.model.id, servedModelId: qa.model.servedModelId, displayName: qa.model.displayName, findings: qa.findings, fountainUnchanged: true } }, id(), now);
-    next = { ...next, screenplay, screenplayFountain: screenplay.workingFountain };
-    const pausedQa = maybePause("screenplayQa", "QA critique generated in a separate model context.");
-    if (pausedQa) return pausedQa;
+    if (flow.reviewInternalPhases && screenplay.lastQaReport?.findings.length && (!reviewThis("screenplayQa") || screenplay.approvedVersionId)) {
+      steps.push(step("screenplayQa", "draftReady", "Screenplay QA already reviewed; continuing."));
+    } else if (flow.reviewInternalPhases && reviewThis("screenplayQa") && screenplay.lastQaReport?.findings.length && !screenplay.approvedVersionId) {
+      next = { ...next, screenplay };
+      const pausedQa = maybePause("screenplayQa", "QA report waiting for user approval.");
+      if (pausedQa) return pausedQa;
+    } else {
+      calls.push("screenplayQa");
+      const qaAsk = qaPrompt(fountain);
+      const qaText = await generate({ stepId: "screenplayQa", ...qaAsk });
+      const qa = parseScreenplayQaReport(JSON.stringify(extractJsonObject(qaText.text)), id(), now, modelRef(input.runtime.servedModelId, input.runtime.displayName), "qa-critic");
+      if ("error" in qa || !qa.findings.length) throw new Error("QA report was empty.");
+      screenplay = { ...screenplay, lastQaReport: { id: qa.id, createdAt: qa.createdAt, modelId: qa.model.id, servedModelId: qa.model.servedModelId, displayName: qa.model.displayName, findings: qa.findings, fountainUnchanged: true } };
+      if (!reviewThis("screenplay") && !reviewThis("screenplayQa")) {
+        screenplay = approveCurrentScreenplay(screenplay, `${id()}:approved`, now);
+      }
+      next = { ...next, screenplay, screenplayFountain: screenplay.workingFountain };
+      const pausedQa = maybePause("screenplayQa", "QA critique generated in a separate model context.");
+      if (pausedQa) return pausedQa;
+    }
 
     calls.push("breakdown");
     const breakAsk = breakdownPrompt(screenplay.workingFountain);
@@ -526,7 +562,8 @@ export async function executeMoviePlan(picture: Picture, input: {
       });
     }
     next = { ...next, generateGates: gates };
-    steps.push(step("promptLab", "draftReady", "Asset Gate prompts compiled from the generated plan."));
+    const pausedPrompts = maybePause("promptLab", "Asset Gate prompts compiled from the generated plan.");
+    if (pausedPrompts) return pausedPrompts;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const phase = calls.at(-1) ?? "research";
@@ -555,7 +592,7 @@ export async function executeResearchDraft(picture: Picture, input: { runtime: M
   const ask = researchPrompt(picture);
   const text = await input.runtime.generate({ stepId: "research", ...ask });
   const parsed = extractJsonObject(text.text);
-  const research = applyResearchJson(hydratePictureResearch(picture.research, picture.intake, now), parsed, now, (input.id ?? (() => `rs:${now}`))());
+  const research = applyResearchJson(hydratePictureResearch(picture.research, picture.intake, now), parsed, now, (input.id ?? (() => `rs:${now}`))(), false);
   const flow = hydrateProductFlow(picture.productFlow);
   const nextFlow: ProductFlowState = {
     ...flow,
