@@ -95,6 +95,8 @@ function RightPanel({ kind }: { kind: ShellRightKind }) {
 export function StudioShell() {
   const picture = useActivePicture();
   const stage = useStage();
+  const uiMode = useStudio((state) => state.uiMode);
+  const advancedSurface = useStudio((state) => state.advancedSurface);
   const closePicture = useStudio((state) => state.closePicture);
   const leftCollapsed = useStudio((state) => state.leftPanelCollapsed);
   const rightCollapsed = useStudio((state) => state.rightPanelCollapsed);
@@ -105,9 +107,11 @@ export function StudioShell() {
   const closeLeftDrawer = useCallback(() => setLeftDrawer(false), []);
   const closeRightDrawer = useCallback(() => setRightDrawer(false), []);
   const width = useViewportWidth();
-  const policy = resolveStageLayout(stage);
-  const layout = dockedPanels(width, { leftCollapsed, rightCollapsed }, stage);
-  const showTimeline = showTimelineForStage(stage);
+  const showingDashboard = uiMode === "advanced" && advancedSurface === "dashboard";
+  const layoutStage = showingDashboard ? "dashboard" : stage;
+  const policy = resolveStageLayout(layoutStage);
+  const layout = dockedPanels(width, { leftCollapsed, rightCollapsed }, layoutStage);
+  const showTimeline = showTimelineForStage(layoutStage);
   const leftKind = shellLeftKind(policy);
   const rightKind = shellRightKind(policy);
   const leftTitle = leftKind ? shellLeftTitle(leftKind) : "";
@@ -116,7 +120,7 @@ export function StudioShell() {
   useEffect(() => {
     setLeftDrawer(false);
     setRightDrawer(false);
-  }, [stage]);
+  }, [stage, uiMode, advancedSurface]);
 
   if (!picture) return null;
 
@@ -149,7 +153,9 @@ export function StudioShell() {
   return (
     <div
       data-studio-shell="true"
-      data-stage={stage}
+      data-stage={showingDashboard ? "dashboard" : stage}
+      data-ui-mode={uiMode}
+      data-advanced-surface={advancedSurface}
       data-left-panel={leftKind ?? "none"}
       data-right-panel={rightKind ?? "none"}
       className="flex h-dvh min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-bg"

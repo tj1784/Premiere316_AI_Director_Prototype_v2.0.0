@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "defaultNav": [
+    "01Intake",
+    "02Assets",
+    "03First / Last",
+    "04Video Clips",
+    "05Export",
+    "Advanced Departments"
+  ],
+  "defaultOnlyFive": true,
+  "advancedDashboardFirst": true,
+  "researchPrimaryCta": true,
+  "manualCollapsed": true,
+  "emptyStateNotWorksheet": true,
+  "offlineNotManualFirst": true,
+  "returnToDefault": true,
+  "overflow100": false,
+  "overflow150": false,
+  "network": {
+    "port8188": 0,
+    "cloud": 0,
+    "comfy": 0
+  },
+  "error": null
+}

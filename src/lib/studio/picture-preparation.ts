@@ -95,7 +95,7 @@ export function makePreparationForIntake(intake: PictureIntake, pictureId: strin
       versions: [original],
       currentVersionId: original.id,
     },
-    lastOpenedStage: "research",
+    lastOpenedStage: "intake",
     thumbnailUrl: null,
   };
 }

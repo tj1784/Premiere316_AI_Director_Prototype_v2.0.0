@@ -39,10 +39,15 @@ test("Stitch owns dedicated media and clip panels", () => {
 
 test("packaged stage harness uses responsive controls and writes failure evidence", () => {
   const rail = source("src/components/studio/stage-views.tsx");
+  const advanced = source("src/components/studio/advanced-departments.tsx");
   const harness = source("scripts/desktop-stage-visual.mjs");
-  assert.match(rail, /aria-current=\{stage === item\.id \? "step"/);
   assert.match(rail, /aria-label="Pipeline stage"/);
-  assert.match(harness, /selectOption\(stage\.id\)/);
+  assert.match(rail, /Advanced Departments/);
+  assert.match(rail, /AdvancedDepartmentsRail/);
+  assert.doesNotMatch(rail, /grid-cols-\[repeat\(13/);
+  assert.match(advanced, /Return to Default Mode/);
+  assert.match(advanced, /aria-current=\{current \? "step"/);
+  assert.match(harness, /selectStudioStage/);
   assert.match(harness, /data-studio-shell/);
   assert.match(harness, /report\.error/);
   assert.doesNotMatch(harness, /textContent\?\.replace\(\/\\s\+\/g/);

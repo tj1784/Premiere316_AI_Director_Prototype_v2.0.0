@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { _electron as electron } from "playwright";
+import { selectStudioStage } from "./studio-nav.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const executablePath = resolve(process.argv[2] ?? `${root}/dist-desktop/win-unpacked/Premiere316.exe`);
@@ -68,13 +69,9 @@ async function openLastReel(page) {
 }
 
 async function selectStage(page, stage) {
-  const navigation = page.getByRole("navigation", { name: "Pipeline" });
-  const wideButton = navigation.getByRole("button", { name: stage.button, exact: true });
-  if (await wideButton.isVisible().catch(() => false)) {
-    await wideButton.click();
-  } else {
-    await navigation.getByRole("combobox", { name: "Pipeline stage" }).selectOption(stage.id);
-  }
+  if (stage.id === "generate") await selectStudioStage(page, "generate");
+  else if (stage.id === "intake" || stage.id === "export") await selectStudioStage(page, stage.id, { mode: "default" });
+  else await selectStudioStage(page, stage.id);
   await page.waitForFunction((id) => document.querySelector('[data-studio-shell="true"]')?.getAttribute("data-stage") === id, stage.id);
   if (stage.timeline) await page.locator('[data-panel-kind="timeline"]').waitFor();
   await page.waitForTimeout(100);
@@ -91,7 +88,7 @@ async function visualFacts(page, stage, zoomPercent) {
     const shell = document.querySelector('[data-studio-shell="true"]');
     const nav = document.querySelector('nav[aria-label="Pipeline"]');
     const activeButton = nav?.querySelector('button[aria-current="step"]');
-    const compactSelect = nav?.querySelector('select[aria-label="Pipeline stage"]');
+    const compactSelect = nav?.querySelector('select[aria-label="Pipeline stage"], select[aria-label="Advanced department"]');
     const activeControl = visible(activeButton) ? activeButton : visible(compactSelect) ? compactSelect : null;
     const activeRect = activeControl?.getBoundingClientRect();
     const viewportWidth = document.documentElement.clientWidth;
@@ -194,8 +191,6 @@ try {
   report.launchedUserData = launched.launchedUserData;
   await setZoom(page, 1);
   await openLastReel(page);
-  const advanced = page.getByRole("button", { name: "Advanced Departments" });
-  if (await advanced.isVisible().catch(() => false)) await advanced.click();
   await captureStages(application, page, 100, report);
   await setZoom(page, 1.5);
   await captureStages(application, page, 150, report);

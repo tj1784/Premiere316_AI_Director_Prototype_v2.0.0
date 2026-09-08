@@ -13,9 +13,14 @@ import { hydratePromptLabState } from "./prompt-lab.ts";
 import { hydrateVideoWorkspace } from "../production/video-types.ts";
 import { restoreAudioWorkspace } from "../production/audio-iterations.ts";
 import { hydrateGenerateGates } from "../production/generate-gates.ts";
-import { hydrateProductFlow } from "./product-flow.ts";
+import { hydrateProductFlow, type ProductTouchpoint } from "./product-flow.ts";
 import { hydrateVisualDevelopmentState } from "../visual-development.ts";
 import { hydrateCinematographyState } from "../cinematography.ts";
+import {
+  isAdvancedDepartmentId,
+  lastDefaultTouchpointFor,
+  type AdvancedSurface,
+} from "./advanced-departments.ts";
 
 interface StudioState {
   pictures: Picture[];
@@ -27,6 +32,8 @@ interface StudioState {
   generateGate: "assets" | "keyframes" | "video";
   generateFilterId: string | null;
   uiMode: "default" | "advanced";
+  advancedSurface: AdvancedSurface;
+  lastDefaultTouchpoint: ProductTouchpoint;
   leftPanelCollapsed: boolean;
   rightPanelCollapsed: boolean;
   residency: { pinned: Record<string, boolean>; idleUnload: IdleUnloadOption };
@@ -47,6 +54,9 @@ interface StudioState {
   setBinTab: (tab: StudioState["binTab"]) => void;
   setGenerateFocus: (gate: StudioState["generateGate"], filterId?: string | null) => void;
   setUiMode: (mode: StudioState["uiMode"]) => void;
+  enterAdvancedDepartments: () => void;
+  openAdvancedDepartment: (stage: StageId) => void;
+  returnToDefaultMode: () => void;
   setLeftPanelCollapsed: (collapsed: boolean) => void;
   setRightPanelCollapsed: (collapsed: boolean) => void;
   bumpUsage: (key: keyof Picture["usage"], n?: number) => boolean;
@@ -105,6 +115,8 @@ export const useStudio = create<StudioState>()(
       generateGate: "assets",
       generateFilterId: null,
       uiMode: "default",
+      advancedSurface: "dashboard",
+      lastDefaultTouchpoint: "intake",
       leftPanelCollapsed: false,
       rightPanelCollapsed: false,
       residency: { pinned: {}, idleUnload: 30 },
@@ -126,6 +138,8 @@ export const useStudio = create<StudioState>()(
             stageOverride: null,
             selectedShotId: null,
             stillBayShotId: null,
+            uiMode: "default",
+            advancedSurface: "dashboard",
           };
         });
       },
@@ -134,8 +148,10 @@ export const useStudio = create<StudioState>()(
         set((s) => ({
           pictures: [picture, ...s.pictures],
           activeId: picture.id,
-          stageOverride: "research",
+          stageOverride: "intake",
           selectedShotId: null,
+          uiMode: "default",
+          advancedSurface: "dashboard",
         }));
         return picture.id;
       },
@@ -147,9 +163,9 @@ export const useStudio = create<StudioState>()(
         }
         if (!exists) return;
         const picture = get().pictures.find((item) => item.id === id)!;
-        set({ activeId: id, stageOverride: picture.lastOpenedStage, selectedShotId: null });
+        set({ activeId: id, stageOverride: picture.lastOpenedStage, selectedShotId: null, uiMode: "default", advancedSurface: "dashboard" });
       },
-      closePicture: () => set({ activeId: null, selectedShotId: null, stillBayShotId: null }),
+      closePicture: () => set({ activeId: null, selectedShotId: null, stillBayShotId: null, uiMode: "default", advancedSurface: "dashboard" }),
       deletePicture: (id) =>
         set((s) => ({
           pictures: s.pictures.filter((p) => p.id !== id),
@@ -165,7 +181,11 @@ export const useStudio = create<StudioState>()(
         }));
       },
       setStage: (stage) => {
-        set({ stageOverride: stage });
+        const uiMode = get().uiMode;
+        set({
+          stageOverride: stage,
+          advancedSurface: uiMode === "advanced" && isAdvancedDepartmentId(stage) ? stage : get().advancedSurface,
+        });
         const { activeId } = get();
         if (!activeId) return;
         set((s) => ({
@@ -182,7 +202,40 @@ export const useStudio = create<StudioState>()(
       closeStillBay: () => set({ stillBayShotId: null }),
       setBinTab: (tab) => set({ binTab: tab }),
       setGenerateFocus: (gate, filterId = null) => set({ generateGate: gate, generateFilterId: filterId, stageOverride: "generate" }),
-      setUiMode: (mode) => set({ uiMode: mode }),
+      setUiMode: (mode) => {
+        if (mode === "advanced") get().enterAdvancedDepartments();
+        else get().returnToDefaultMode();
+      },
+      enterAdvancedDepartments: () => {
+        const current = get();
+        const picture = current.pictures.find((item) => item.id === current.activeId);
+        const stage = normalizeStage(current.stageOverride ?? picture?.stage) ?? "intake";
+        set({
+          uiMode: "advanced",
+          advancedSurface: "dashboard",
+          lastDefaultTouchpoint: current.uiMode === "default"
+            ? lastDefaultTouchpointFor(stage, current.generateGate)
+            : current.lastDefaultTouchpoint,
+        });
+      },
+      openAdvancedDepartment: (stage) => {
+        const current = get();
+        if (current.uiMode !== "advanced") {
+          const picture = current.pictures.find((item) => item.id === current.activeId);
+          const fromStage = normalizeStage(current.stageOverride ?? picture?.stage) ?? "intake";
+          set({ lastDefaultTouchpoint: lastDefaultTouchpointFor(fromStage, current.generateGate) });
+        }
+        set({ uiMode: "advanced", advancedSurface: isAdvancedDepartmentId(stage) ? stage : "dashboard" });
+        get().setStage(stage);
+      },
+      returnToDefaultMode: () => {
+        const touch = get().lastDefaultTouchpoint ?? "intake";
+        set({ uiMode: "default", advancedSurface: "dashboard" });
+        if (touch === "keyframe-approval") get().setGenerateFocus("keyframes");
+        else if (touch === "video-approval") get().setGenerateFocus("video");
+        else if (touch === "asset-approval") get().setGenerateFocus("assets");
+        else get().setStage(touch === "export" ? "export" : "intake");
+      },
       setLeftPanelCollapsed: (leftPanelCollapsed) => set({ leftPanelCollapsed }),
       setRightPanelCollapsed: (rightPanelCollapsed) => set({ rightPanelCollapsed }),
       bumpUsage: (key, n = 1) => {

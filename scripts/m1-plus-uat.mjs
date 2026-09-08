@@ -7,6 +7,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { _electron as electron } from "playwright";
+import { selectStudioStage } from "./studio-nav.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const executablePath = resolve(process.argv[2] ?? `${root}/dist-desktop/win-unpacked/Premiere316.exe`);
@@ -46,11 +47,8 @@ async function resolveFfmpeg() {
   return { ffmpeg, ffprobe };
 }
 
-async function selectStage(page, id, buttonName) {
-  const navigation = page.getByRole("navigation", { name: "Pipeline" });
-  const wideButton = navigation.getByRole("button", { name: buttonName, exact: true });
-  if (await wideButton.isVisible().catch(() => false)) await wideButton.click();
-  else await navigation.getByRole("combobox", { name: "Pipeline stage" }).selectOption(id);
+async function selectStage(page, id, options = {}) {
+  await selectStudioStage(page, id, options);
 }
 
 const report = {
@@ -117,17 +115,14 @@ try {
   await page.getByRole("heading", { name: "Pictures" }).waitFor();
   await page.getByRole("button", { name: /The Last Reel/ }).click();
   await page.locator('[data-studio-shell="true"]').waitFor();
-  const advanced = page.getByRole("button", { name: "Advanced Departments" });
-  if (await advanced.isVisible().catch(() => false)) await advanced.click();
-
   for (let index = 0; index < 3; index += 1) {
-    await selectStage(page, "generate", "10 Generate");
+    await selectStage(page, "generate", { gate: "video" });
     await page.getByRole("button", { name: "Import video" }).click();
     await page.getByRole("heading", { name: "Review" }).waitFor({ timeout: 45000 });
     report.importedVideos += 1;
   }
 
-  await selectStage(page, "review", "11 Review");
+  await selectStage(page, "review");
   for (let guard = 0; guard < 6; guard += 1) {
     const videoApproves = page.getByLabel("Video takes").getByRole("button", { name: "Approve canonical" });
     const videoCount = await videoApproves.count();
@@ -145,7 +140,7 @@ try {
     if (!clicked) break;
   }
 
-  await selectStage(page, "score", "13 Score");
+  await selectStage(page, "score");
   await page.getByRole("button", { name: "Import audio" }).click();
   await page.getByRole("heading", { name: "Review" }).waitFor({ timeout: 45000 });
   report.importedAudio = true;
@@ -154,12 +149,12 @@ try {
   await page.getByText(/Imported audio marked canonical/i).waitFor({ timeout: 15000 });
   report.canonicalAudio = true;
 
-  await selectStage(page, "timeline", "12 Stitch");
+  await selectStage(page, "timeline");
   const stitch = await page.locator("body").innerText();
   const durationMatch = stitch.match(/Imported film ([0-9.]+)s/);
   report.timelineDuration = durationMatch ? Number(durationMatch[1]) : null;
 
-  await selectStage(page, "export", "14 Export");
+  await selectStage(page, "export", { mode: "default" });
   report.exportPage = (await page.locator("body").innerText()).slice(0, 2500);
   await page.waitForFunction(() => [...document.querySelectorAll("button")].some((button) => (button.textContent ?? "").includes("Export 30s film") && !button.disabled), null, { timeout: 20000 });
   await page.getByRole("button", { name: "Export 30s film" }).click();

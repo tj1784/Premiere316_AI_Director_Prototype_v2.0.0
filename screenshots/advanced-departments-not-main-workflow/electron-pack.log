@@ -1,0 +1,114 @@
+
+> app-builder-workspace@3.0.2 electron:pack
+> node desktop/pack.mjs
+
+[premiere316] build identity p316-20260908170524-18c3fa365c05
+[premiere316] bundling desktop backendΓÇª
+
+  desktop\dist\backend.mjs  158.8kb
+
+Done in 9ms
+[premiere316] building UI for the desktop Node serverΓÇª
+vite v8.2.2 building client environment for production...
+transforming...
+Γ£ô 1950 modules transformed.
+rendering chunks...
+computing gzip size...
+.output/public/assets/styles-CiRxD0dT.css          41.29 kB Γöé gzip:   8.38 kB
+.output/public/assets/client-CBMN0ech.js            0.07 kB Γöé gzip:   0.08 kB
+.output/public/assets/model-registry-BVO_5j43.js    0.21 kB Γöé gzip:   0.19 kB
+.output/public/assets/index-RGVh83N2.js           434.58 kB Γöé gzip: 134.09 kB
+.output/public/assets/routes-BnLcdQCY.js          459.72 kB Γöé gzip: 123.48 kB
+
+[INEFFECTIVE_DYNAMIC_IMPORT] src/lib/desktop/client.ts is dynamically imported by src/components/studio/stage-views.tsx but also statically imported by src/components/production/prepared-assets-panel.tsx, src/components/studio/bin.tsx, src/components/studio/interface-scale.tsx, src/components/studio/stage-views.tsx, src/components/studio/system-context.tsx, dynamic import will not move module into another chunk.
+
+Γ£ô built in 389ms
+vite v8.2.2 building ssr environment for production...
+transforming...
+Γ£ô 170 modules transformed.
+rendering chunks...
+computing gzip size...
+node_modules/.nitro/vite/services/ssr/assets/styles-CiRxD0dT.css                      41.29 kB Γöé gzip:   8.38 kB
+node_modules/.nitro/vite/services/ssr/assets/client-DIMYe7N0.js                        0.09 kB Γöé gzip:   0.09 kB
+node_modules/.nitro/vite/services/ssr/assets/start-5Z2QO8AU.js                         0.14 kB Γöé gzip:   0.13 kB
+node_modules/.nitro/vite/services/ssr/assets/empty-plugin-adapters-D9UWiqvJ.js         0.22 kB Γöé gzip:   0.16 kB
+node_modules/.nitro/vite/services/ssr/assets/createServerRpc-A6pJPYTF.js               0.38 kB Γöé gzip:   0.26 kB
+node_modules/.nitro/vite/services/ssr/assets/model-registry-B-3CbopW.js                0.42 kB Γöé gzip:   0.30 kB
+node_modules/.nitro/vite/services/ssr/assets/_tanstack-start-manifest_v-DTP0xRgY.js    0.50 kB Γöé gzip:   0.30 kB
+node_modules/.nitro/vite/services/ssr/assets/model-registry-BDbnLCh0.js                0.96 kB Γöé gzip:   0.48 kB
+node_modules/.nitro/vite/services/ssr/assets/model-catalog-B1grMz8f.js                 2.13 kB Γöé gzip:   0.93 kB
+node_modules/.nitro/vite/services/ssr/assets/screenplay-api-cwKzhjUP.js                5.90 kB Γöé gzip:   1.70 kB
+node_modules/.nitro/vite/services/ssr/assets/lmstudio-provider.server-Bs6B7Jet.js     12.31 kB Γöé gzip:   3.80 kB
+node_modules/.nitro/vite/services/ssr/assets/router-eoatjLgx.js                       12.40 kB Γöé gzip:   4.23 kB
+node_modules/.nitro/vite/services/ssr/assets/bible-DuZQAFhL.js                        12.96 kB Γöé gzip:   3.93 kB
+node_modules/.nitro/vite/services/ssr/assets/screenplay-jobs.server-RkIqqcGt.js       14.56 kB Γöé gzip:   3.99 kB
+node_modules/.nitro/vite/services/ssr/assets/model-scan.server-BKPrfw1i.js            36.37 kB Γöé gzip:   9.86 kB
+node_modules/.nitro/vite/services/ssr/assets/screenplay-models-D_HCauFo.js            44.80 kB Γöé gzip:  12.65 kB
+node_modules/.nitro/vite/services/ssr/index.js                                        70.18 kB Γöé gzip:  17.94 kB
+node_modules/.nitro/vite/services/ssr/assets/routes-Du1HIWIG.js                      623.71 kB Γöé gzip: 132.70 kB
+
+[INEFFECTIVE_DYNAMIC_IMPORT] src/lib/desktop/client.ts is dynamically imported by src/components/studio/stage-views.tsx but also statically imported by src/components/production/prepared-assets-panel.tsx, src/components/studio/bin.tsx, src/components/studio/interface-scale.tsx, src/components/studio/stage-views.tsx, src/components/studio/system-context.tsx, dynamic import will not move module into another chunk.
+
+Γ£ô built in 212ms
+
+[nitro] o Building [Nitro] (preset: node-server, compatibility: 2026-09-03)
+[nitro] ΓêÜ Generated public .output/public
+vite v8.2.2 building nitro environment for production...
+transforming...
+Γ£ô 1897 modules transformed.
+rendering chunks...
+computing gzip size...
+.output/server/_ssr/client-DIMYe7N0.mjs                        0.09 kB Γöé gzip:   0.09 kB
+.output/server/_ssr/start-5Z2QO8AU.mjs                         0.14 kB Γöé gzip:   0.13 kB
+.output/server/_ssr/empty-plugin-adapters-D9UWiqvJ.mjs         0.23 kB Γöé gzip:   0.16 kB
+.output/server/_ssr/createServerRpc-A6pJPYTF.mjs               0.38 kB Γöé gzip:   0.26 kB
+.output/server/_ssr/model-registry-B-3CbopW.mjs                0.46 kB Γöé gzip:   0.33 kB
+.output/server/_tanstack-start-manifest_v-DTP0xRgY.mjs         0.56 kB Γöé gzip:   0.33 kB
+.output/server/_chunks/ssr-renderer.mjs                        0.96 kB Γöé gzip:   0.49 kB
+.output/server/_ssr/model-registry-BDbnLCh0.mjs                0.98 kB Γöé gzip:   0.51 kB
+.output/server/_runtime.mjs                                    1.58 kB Γöé gzip:   0.74 kB
+.output/server/_ssr/model-catalog-B1grMz8f.mjs                 2.17 kB Γöé gzip:   0.96 kB
+.output/server/_libs/ufo.mjs                                   2.21 kB Γöé gzip:   0.72 kB
+.output/server/_libs/class-variance-authority+clsx.mjs         3.17 kB Γöé gzip:   1.24 kB
+.output/server/_libs/radix-ui__react-slot.mjs                  5.61 kB Γöé gzip:   1.73 kB
+.output/server/_ssr/screenplay-api-cwKzhjUP.mjs                5.92 kB Γöé gzip:   1.72 kB
+.output/server/_libs/zustand.mjs                               6.72 kB Γöé gzip:   2.08 kB
+.output/server/_libs/h3-v2+rou3.mjs                            9.83 kB Γöé gzip:   3.05 kB
+.output/server/_libs/tanstack__history.mjs                    12.05 kB Γöé gzip:   3.46 kB
+.output/server/_ssr/lmstudio-provider.server-Bs6B7Jet.mjs     12.35 kB Γöé gzip:   3.83 kB
+.output/server/_ssr/bible-DuZQAFhL.mjs                        12.82 kB Γöé gzip:   3.93 kB
+.output/server/_ssr/router-eoatjLgx.mjs                       12.87 kB Γöé gzip:   4.36 kB
+.output/server/_ssr/screenplay-jobs.server-RkIqqcGt.mjs       14.54 kB Γöé gzip:   4.02 kB
+.output/server/_libs/@radix-ui/react-compose-refs+[...].mjs   16.79 kB Γöé gzip:   4.66 kB
+.output/server/_libs/lucide-react.mjs                         25.87 kB Γöé gzip:   5.29 kB
+.output/server/_ssr/model-scan.server-BKPrfw1i.mjs            36.35 kB Γöé gzip:   9.88 kB
+.output/server/index.mjs                                      39.22 kB Γöé gzip:  12.09 kB
+.output/server/_ssr/screenplay-models-D_HCauFo.mjs            44.50 kB Γöé gzip:  12.63 kB
+.output/server/_libs/h3+rou3+srvx.mjs                         46.00 kB Γöé gzip:  12.36 kB
+.output/server/_libs/sonner.mjs                               53.69 kB Γöé gzip:  12.13 kB
+.output/server/_ssr/ssr.mjs                                   68.45 kB Γöé gzip:  17.89 kB
+.output/server/_libs/tailwind-merge.mjs                       88.13 kB Γöé gzip:  15.66 kB
+.output/server/_libs/@tanstack/router-core+[...].mjs         122.94 kB Γöé gzip:  25.89 kB
+.output/server/_libs/zod.mjs                                 159.58 kB Γöé gzip:  34.87 kB
+.output/server/_libs/@tanstack/react-router+[...].mjs        660.86 kB Γöé gzip: 138.70 kB
+.output/server/_ssr/routes-Du1HIWIG.mjs                      663.00 kB Γöé gzip: 133.39 kB
+
+Γ£ô built in 166ms
+i Generated .output/nitro.json
+
+[nitro] ΓêÜ You can preview this build using npx vite preview
+[premiere316] electron-builder --win --x64ΓÇª
+  ΓÇó electron-builder  version=26.0.12 os=10.0.26200
+  ΓÇó loaded configuration  file=D:\Projects\Premiere316_v3\electron-builder.yml
+  ΓÇó skipped dependencies rebuild  reason=npmRebuild is set to false
+  ΓÇó packaging       platform=win32 arch=x64 electron=37.4.0 appOutDir=dist-desktop\win-unpacked
+(node:45124) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ΓÇó updating asar integrity executable resource  executablePath=dist-desktop\win-unpacked\Premiere316.exe
+  ΓÇó building        target=nsis file=dist-desktop\Premiere316-Setup.exe archs=x64 oneClick=false perMachine=false
+  ΓÇó signing with signtool.exe  path=dist-desktop\__uninstaller-nsis-app-builder-workspace.exe
+  ΓÇó signing with signtool.exe  path=dist-desktop\Premiere316-Setup.exe
+  ΓÇó building block map  blockMapFile=dist-desktop\Premiere316-Setup.exe.blockmap
+[premiere316] packaged runtime audit passed (9 ASAR modules, 4 resources)
+[premiere316] Premiere316.exe ΓåÆ D:\Projects\Premiere316_v3\dist-desktop\win-unpacked\Premiere316.exe
+[premiere316] installer ΓåÆ D:\Projects\Premiere316_v3\dist-desktop\Premiere316-Setup.exe

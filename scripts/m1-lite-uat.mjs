@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { _electron as electron } from "playwright";
+import { selectStudioStage } from "./studio-nav.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const executablePath = resolve(process.argv[2] ?? `${root}/dist-desktop/win-unpacked/Premiere316.exe`);
@@ -53,11 +54,8 @@ async function resolveFfmpeg() {
   return { ffmpeg, ffprobe };
 }
 
-async function selectStage(page, id, buttonName) {
-  const navigation = page.getByRole("navigation", { name: "Pipeline" });
-  const wideButton = navigation.getByRole("button", { name: buttonName, exact: true });
-  if (await wideButton.isVisible().catch(() => false)) await wideButton.click();
-  else await navigation.getByRole("combobox", { name: "Pipeline stage" }).selectOption(id);
+async function selectStage(page, id, options = {}) {
+  await selectStudioStage(page, id, options);
 }
 
 const report = {
@@ -121,10 +119,7 @@ try {
   await page.getByRole("heading", { name: "Pictures" }).waitFor();
   await page.getByRole("button", { name: /The Last Reel/ }).click();
   await page.locator('[data-studio-shell="true"]').waitFor();
-  const advanced = page.getByRole("button", { name: "Advanced Departments" });
-  if (await advanced.isVisible().catch(() => false)) await advanced.click();
-
-  await selectStage(page, "generate", "10 Generate");
+  await selectStage(page, "generate", { gate: "video" });
   await page.getByRole("button", { name: "Import video" }).click();
   await page.getByRole("heading", { name: "Review" }).waitFor({ timeout: 45000 });
   report.imported = true;
@@ -134,11 +129,11 @@ try {
   await page.getByText(/Imported video marked canonical/i).waitFor({ timeout: 15000 });
   report.canonical = true;
 
-  await selectStage(page, "timeline", "12 Stitch");
+  await selectStage(page, "timeline");
   await page.getByText(/imported/i).first().waitFor();
   report.timeline = true;
 
-  await selectStage(page, "export", "14 Export");
+  await selectStage(page, "export", { mode: "default" });
   await page.waitForFunction(() => [...document.querySelectorAll("button")].some((button) => (button.textContent ?? "").includes("Export MP4") && !(button).disabled), null, { timeout: 20000 });
   await page.getByRole("button", { name: "Export MP4" }).click();
   await page.getByText(/Last export /i).waitFor({ timeout: 60000 });

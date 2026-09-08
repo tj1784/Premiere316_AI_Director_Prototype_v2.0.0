@@ -1,18 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Input, Label, Textarea } from "@/components/ui/field";
+import { Input, Textarea } from "@/components/ui/field";
 import type { ResearchConfidence } from "@/lib/research/confidence.ts";
 import { confidenceLabel } from "@/lib/research/source-ledger.ts";
 import type { ResearchContent, ResearchSource } from "@/lib/research/bible.ts";
 
-export function SourceLedgerPanel({
-  content,
-  onChange,
-  onAdd,
-}: {
-  content: ResearchContent;
-  onChange: (content: ResearchContent) => void;
-  onAdd: (source: Omit<ResearchSource, "id" | "createdAt">) => void;
-}) {
+export function SourceLedgerPanel({ content }: { content: ResearchContent }) {
   return (
     <div className="grid gap-4">
       <div>
@@ -32,16 +24,11 @@ export function SourceLedgerPanel({
       {content.disputes.map((dispute) => (
         <p key={dispute.id} className="rounded-md bg-inset px-3 py-2 text-xs text-muted">{dispute.claim}</p>
       ))}
-      <AddSourceForm onAdd={onAdd} />
-      <div>
-        <Label>Research notes</Label>
-        <Textarea className="mt-1.5 min-h-24" value={content.notes} onChange={(event) => onChange({ ...content, notes: event.target.value })} />
-      </div>
     </div>
   );
 }
 
-function AddSourceForm({ onAdd }: { onAdd: (source: Omit<ResearchSource, "id" | "createdAt">) => void }) {
+export function AddSourceForm({ onAdd }: { onAdd: (source: Omit<ResearchSource, "id" | "createdAt">) => void }) {
   return (
     <form
       className="grid gap-2 rounded-md bg-inset p-3"

@@ -15,7 +15,9 @@ import {
   buildShotList,
 } from "@/lib/studio/export";
 import { ENGINES, KIND_LABEL, engineById } from "@/lib/studio/engines";
-import { MODEL_ROOT, STAGES, type Picture, type StageId } from "@/lib/studio/types";
+import { MODEL_ROOT, type Picture } from "@/lib/studio/types";
+import { AdvancedDepartmentsDashboard, AdvancedDepartmentsRail } from "./advanced-departments";
+import { isAdvancedDashboard } from "@/lib/studio/advanced-departments.ts";
 import { DEFAULT_NAV_STEPS, INTERNAL_PHASES, PHASE_LABELS, PHASE_STAGE, allPhaseReviewsOn, buildMoviePlan, hydrateProductFlow, pausedInternalPhase, PHASE_REVIEW_DEFAULTS, type InternalPhase } from "@/lib/studio/product-flow.ts";
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import { useDirector } from "@/lib/studio/use-director";
@@ -77,7 +79,10 @@ import { canonicalShotsToLegacy, migratePicturePerformance } from "@/lib/perform
 export function StageView() {
   const stage = useStage();
   const picture = useActivePicture();
+  const uiMode = useStudio((state) => state.uiMode);
+  const advancedSurface = useStudio((state) => state.advancedSurface);
   if (!picture) return null;
+  if (isAdvancedDashboard(uiMode, advancedSurface)) return <AdvancedDepartmentsDashboard />;
   switch (stage) {
     case "intake":
       return <IntakeStage picture={picture} />;
@@ -129,8 +134,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
   const replaceActive = useStudio((state) => state.replaceActive);
   const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
   const flow = hydrateProductFlow(picture.productFlow);
-  const setUiMode = useStudio((state) => state.setUiMode);
-  const setStage = useStudio((state) => state.setStage);
+  const openAdvancedDepartment = useStudio((state) => state.openAdvancedDepartment);
   const [reviewInternal, setReviewInternal] = useState(flow.reviewInternalPhases);
   const [reviewPhases, setReviewPhases] = useState(flow.reviewPhases);
   const [building, setBuilding] = useState(false);
@@ -163,8 +167,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
     replaceActive(result.picture);
     const paused = pausedInternalPhase(result.flow);
     if (paused) {
-      setUiMode("advanced");
-      setStage(PHASE_STAGE[paused]);
+      openAdvancedDepartment(PHASE_STAGE[paused]);
       toast.message(`Paused for optional ${paused} review. This is not an automated complete pass.`);
     } else if (result.flow.nextTouchpoint === "asset-approval") {
       setGenerateFocus("assets");
@@ -245,11 +248,27 @@ function offlineDiscovery(reason: string): LocalLLMProviderDiscovery {
 
 function ResearchStage({ picture }: { picture: Picture }) {
   const patchActive = useStudio((state) => state.patchActive);
+  const [llamaAvailable, setLlamaAvailable] = useState<boolean | null>(null);
   const bible = hydratePictureResearch(picture.research, picture.intake);
+  const scan = useCallback(async () => {
+    try {
+      const status = await localLLMStatus();
+      setLlamaAvailable(Boolean(status.provider?.available));
+    } catch {
+      setLlamaAvailable(false);
+    }
+  }, []);
+  useEffect(() => {
+    void scan();
+  }, [scan]);
   return (
     <ResearchWorkspace
       title={picture.title}
       bible={bible}
+      llamaAvailable={llamaAvailable}
+      characters={picture.characters}
+      locations={picture.locations}
+      onRescan={() => void scan()}
       onChange={(research) => patchActive({ research })}
     />
   );
@@ -1402,26 +1421,10 @@ function Stat({ k, v }: { k: string; v: string }) {
 export function StageRail() {
   const stage = useStage();
   const setStage = useStudio((state) => state.setStage);
-  const picture = useActivePicture();
   const uiMode = useStudio((state) => state.uiMode);
-  const setUiMode = useStudio((state) => state.setUiMode);
+  const enterAdvancedDepartments = useStudio((state) => state.enterAdvancedDepartments);
   const generateGate = useStudio((state) => state.generateGate);
   const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
-  const currentIndex = Math.max(0, STAGES.findIndex((item) => item.id === stage));
-  const current = STAGES[currentIndex];
-  const stageDone = (id: StageId) =>
-    (id === "intake" && Boolean(picture?.intake.title)) ||
-    (id === "research" && Boolean(picture?.research?.approvedVersionId)) ||
-    (id === "screenplay" && (picture?.screenplay.status === "READY_FOR_REVIEW" || picture?.screenplay.status === "APPROVED")) ||
-    (id === "inventory" && (picture?.production?.assets.length ?? 0) > 0) ||
-    (id === "visual-development" && Boolean(picture?.visualDevelopment?.approvals.length)) ||
-    (id === "cinematography" && Boolean(picture?.cinematography?.approvals.length)) ||
-    (id === "performance" && Object.values(picture?.performance?.performance ?? {}).some((directions) => Object.values(directions).some((direction) => Boolean(direction.approvedAt)))) ||
-    (id === "shots" && Boolean(picture?.performance?.shots.length) && Object.values(picture?.performance?.queue ?? {}).every((entry) => entry.readiness === "READY_TO_GENERATE")) ||
-    (id === "prompts" && Boolean(picture?.shots[0]?.t2iPrompt)) ||
-    (id === "generate" && Boolean(picture?.shots.some((shot) => shot.stillUrl))) ||
-    (id === "score" && (picture?.cues.length ?? 0) > 0);
-
   const defaultIndex = Math.max(0, DEFAULT_NAV_STEPS.findIndex((step) => step.stage === stage && (step.gate ? generateGate === step.gate : true)));
   const goDefault = (step: (typeof DEFAULT_NAV_STEPS)[number]) => {
     if (step.gate) setGenerateFocus(step.gate);
@@ -1455,34 +1458,10 @@ export function StageRail() {
             </label>
             <Button size="icon-sm" variant="ghost" aria-label="Next stage" disabled={defaultIndex === DEFAULT_NAV_STEPS.length - 1} onClick={() => goDefault(DEFAULT_NAV_STEPS[defaultIndex + 1])}><ChevronRight /></Button>
           </div>
-          <Button size="sm" variant="ghost" onClick={() => setUiMode("advanced")}>Advanced Departments</Button>
+          <Button size="sm" variant="ghost" onClick={() => enterAdvancedDepartments()}>Advanced Departments</Button>
         </div>
       ) : (
-        <>
-          <div className="flex items-center justify-between gap-2 px-2 pt-2">
-            <p className="text-xs text-muted">Advanced departments</p>
-            <Button size="sm" variant="secondary" onClick={() => setUiMode("default")}>Default Mode</Button>
-          </div>
-          <div className="hidden grid-cols-[repeat(13,minmax(0,1fr))] gap-1 px-2 py-2 xl:grid">
-            {STAGES.map((item) => (
-              <button key={item.id} type="button" data-stage-id={item.id} aria-label={`${item.number} ${item.label}`} aria-current={stage === item.id ? "step" : undefined} onClick={() => setStage(item.id as StageId)} className={cn("flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-sm px-2 text-xs", stage === item.id ? "bg-elevated text-fg" : "text-muted hover:text-fg")}>
-                <span className="shrink-0 text-[10px] text-subtle">{item.number}</span>
-                <span className="min-w-0 truncate" title={item.label}>{item.label}</span>
-                {stageDone(item.id as StageId) ? <span className="size-1.5 shrink-0 rounded-full bg-good" /> : null}
-              </button>
-            ))}
-          </div>
-          <div className="flex min-w-0 items-center gap-2 px-2 py-2 xl:hidden">
-            <Button size="icon-sm" variant="ghost" aria-label="Previous stage" disabled={currentIndex === 0} onClick={() => setStage(STAGES[currentIndex - 1].id as StageId)}><ChevronLeft /></Button>
-            <label className="relative min-w-0 flex-1">
-              <span className="pointer-events-none absolute left-3 top-1 text-[9px] tracking-wide text-subtle uppercase">Stage {currentIndex + 1} of {STAGES.length}</span>
-              <select aria-label="Pipeline stage" value={stage} onChange={(event) => setStage(event.target.value as StageId)} className="h-11 w-full min-w-0 appearance-none rounded-sm bg-elevated px-3 pb-1 pt-4 text-xs text-fg shadow-[var(--shadow-border)] outline-none">
-                {STAGES.map((item) => <option key={item.id} value={item.id}>{item.number} · {item.label}</option>)}
-              </select>
-            </label>
-            <Button size="icon-sm" variant="ghost" aria-label="Next stage" disabled={currentIndex === STAGES.length - 1} onClick={() => setStage(STAGES[currentIndex + 1].id as StageId)}><ChevronRight /></Button>
-          </div>
-        </>
+        <AdvancedDepartmentsRail />
       )}
     </nav>
   );
