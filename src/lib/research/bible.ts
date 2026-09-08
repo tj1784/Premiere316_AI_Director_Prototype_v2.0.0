@@ -54,6 +54,76 @@ export type CinematographyResearchManifesto = {
   musicResearch: string;
 };
 
+export const RESEARCH_BIBLE_SECTION_KEYS = [
+  "sourceCanonLedger",
+  "worldOverview",
+  "characters",
+  "locations",
+  "storyTheme",
+  "audienceContext",
+  "visualIdentity",
+  "productionDesign",
+  "costumeProps",
+  "cinematographyResearch",
+  "soundMusicWorld",
+  "risksDisputes",
+  "aiProductionFeasibility",
+  "confidenceLedger",
+] as const;
+
+export type ResearchBibleSectionKey = (typeof RESEARCH_BIBLE_SECTION_KEYS)[number];
+export type ResearchBibleSections = Record<ResearchBibleSectionKey, string>;
+
+export const RESEARCH_BIBLE_SECTION_LABELS: Record<ResearchBibleSectionKey, string> = {
+  sourceCanonLedger: "Source / Canon Ledger",
+  worldOverview: "World Overview",
+  characters: "Characters",
+  locations: "Locations",
+  storyTheme: "Story / Theme",
+  audienceContext: "Audience Context",
+  visualIdentity: "Visual Identity",
+  productionDesign: "Production Design",
+  costumeProps: "Costume / Props",
+  cinematographyResearch: "Cinematography Research",
+  soundMusicWorld: "Sound / Music World",
+  risksDisputes: "Risks / Disputes",
+  aiProductionFeasibility: "AI Production Feasibility",
+  confidenceLedger: "Confidence Ledger",
+};
+
+export function emptyResearchSections(): ResearchBibleSections {
+  return {
+    sourceCanonLedger: "",
+    worldOverview: "",
+    characters: "",
+    locations: "",
+    storyTheme: "",
+    audienceContext: "",
+    visualIdentity: "",
+    productionDesign: "",
+    costumeProps: "",
+    cinematographyResearch: "",
+    soundMusicWorld: "",
+    risksDisputes: "",
+    aiProductionFeasibility: "",
+    confidenceLedger: "",
+  };
+}
+
+export function hydrateResearchSections(value: unknown): ResearchBibleSections {
+  const raw = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const next = emptyResearchSections();
+  for (const key of RESEARCH_BIBLE_SECTION_KEYS) {
+    next[key] = typeof raw[key] === "string" ? raw[key] : "";
+  }
+  return next;
+}
+
+export function researchSectionsArePopulated(sections: ResearchBibleSections | null | undefined): boolean {
+  if (!sections) return false;
+  return RESEARCH_BIBLE_SECTION_KEYS.every((key) => sections[key].trim().length > 0);
+}
+
 export type ResearchContent = {
   mode: ResearchMode;
   sources: ResearchSource[];
@@ -63,6 +133,7 @@ export type ResearchContent = {
   risks: string;
   feasibility: string;
   notes: string;
+  sections: ResearchBibleSections;
 };
 
 export type ResearchVersion = {
@@ -120,6 +191,7 @@ export function emptyResearchContent(): ResearchContent {
     risks: "",
     feasibility: "",
     notes: "",
+    sections: emptyResearchSections(),
   };
 }
 
@@ -221,6 +293,7 @@ export function hydratePictureResearch(
         disputes: Array.isArray(research.content?.disputes) ? research.content.disputes : [],
         socialWorldNotes: Array.isArray(research.content?.socialWorldNotes) ? research.content.socialWorldNotes : [],
         cinematographyManifesto: { ...emptyManifesto(), ...research.content?.cinematographyManifesto },
+        sections: hydrateResearchSections(research.content?.sections),
       },
       versions: Array.isArray(research.versions) ? research.versions : [],
     };

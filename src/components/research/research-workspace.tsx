@@ -38,6 +38,8 @@ export function ResearchWorkspace({
   locations = [],
   onChange,
   onRescan,
+  onBuildDraft,
+  building = false,
 }: {
   title: string;
   bible: PictureResearchBible;
@@ -46,6 +48,8 @@ export function ResearchWorkspace({
   locations?: Asset[];
   onChange: (bible: PictureResearchBible) => void;
   onRescan: () => void;
+  onBuildDraft: () => Promise<void>;
+  building?: boolean;
 }) {
   const [section, setSection] = useState("overview");
   const [draft, setDraft] = useState<ResearchContent>(cloneResearchContent(bible.content));
@@ -84,16 +88,11 @@ export function ResearchWorkspace({
   const addSourceMaterial = () => packRef.current?.click();
 
   const buildResearchDraft = () => {
-    onRescan();
     if (llamaAvailable === false) {
-      toast.error(`${view.offlineTitle} ${view.offlineBody}`);
+      toast.error(view.offlineTitle + " " + view.offlineBody);
       return;
     }
-    if (llamaAvailable === true) {
-      toast.message("Research draft automation is not implemented in this build. Source material and notes stay secondary.");
-      return;
-    }
-    toast.message("Checking the configured AI model. Start the configured model server, then Rescan if this stays empty.");
+    void onBuildDraft();
   };
 
   const generated = researchBibleGenerated(bible);
@@ -133,7 +132,7 @@ export function ResearchWorkspace({
           </div>
           <p className="mt-3 max-w-2xl text-xs leading-relaxed text-muted">{view.purpose}</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={buildResearchDraft}><Search />{RESEARCH_ROOM_PRIMARY_CTA}</Button>
+            <Button onClick={buildResearchDraft} disabled={building}><Search />{building ? "Building…" : RESEARCH_ROOM_PRIMARY_CTA}</Button>
             <Button variant="secondary" onClick={buildResearchDraft}><RefreshCw />{RESEARCH_ROOM_REGENERATE_CTA}</Button>
             <Button
               variant="secondary"

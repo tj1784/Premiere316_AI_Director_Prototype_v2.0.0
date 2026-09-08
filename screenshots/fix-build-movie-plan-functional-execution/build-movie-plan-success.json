@@ -1,0 +1,15 @@
+{
+  "calls": [
+    "research",
+    "screenplay",
+    "screenplayQa",
+    "breakdown",
+    "visualDevelopment",
+    "cinematography",
+    "performance",
+    "shots",
+    "promptLab"
+  ],
+  "next": "asset-approval",
+  "servedModelId": "llama-3.3-70b-instruct"
+}

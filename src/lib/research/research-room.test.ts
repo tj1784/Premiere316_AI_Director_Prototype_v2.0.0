@@ -39,7 +39,7 @@ describe("research room has no mode options", () => {
     const view = researchRoomView(makeEmptyResearchBible(1), false);
     assert.equal(view.showOffline, true);
     assert.equal(view.offlineTitle, "Configured AI model unavailable.");
-    assert.equal(view.offlineBody, "Start the configured model server, then Rescan.");
+    assert.equal(view.offlineBody, "Start LM Studio Local API Server and serve a model, then Rescan.");
     assert.equal(userFacingResearchModeStrings(`${view.offlineTitle} ${view.offlineBody} ${view.primaryCta} ${view.manualSummary}`).length, 0);
   });
 

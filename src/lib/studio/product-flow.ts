@@ -71,6 +71,9 @@ export type ProductFlowState = {
   llamaAvailable: boolean | null;
   nextTouchpoint: ProductTouchpoint;
   lastRunAt: number | null;
+  executed?: boolean;
+  servedModelId?: string | null;
+  manualFallback?: boolean;
 };
 
 export function emptyProductFlow(): ProductFlowState {
@@ -82,6 +85,9 @@ export function emptyProductFlow(): ProductFlowState {
     llamaAvailable: null,
     nextTouchpoint: "intake",
     lastRunAt: null,
+    executed: false,
+    servedModelId: null,
+    manualFallback: false,
   };
 }
 
@@ -93,6 +99,9 @@ export function hydrateProductFlow(state: ProductFlowState | null | undefined): 
     reviewInternalPhases: state.reviewInternalPhases === true,
     reviewPhases: { ...PHASE_REVIEW_DEFAULTS, ...state.reviewPhases },
     steps: Array.isArray(state.steps) ? state.steps : [],
+    executed: state.executed === true,
+    servedModelId: state.servedModelId ?? null,
+    manualFallback: state.manualFallback === true,
   };
 }
 
@@ -178,28 +187,7 @@ export function pausedInternalPhase(flow: ProductFlowState): InternalPhase | nul
 
 export function buildMoviePlan(picture: Picture, input: { llamaAvailable: boolean; now?: number }): { picture: Picture; flow: ProductFlowState } {
   const now = input.now ?? Date.now();
-  const flow = hydrateProductFlow(picture.productFlow);
   const brief = parseMovieIntent(picture.intake.concept || picture.intake.premise || picture.intake.logline || picture.logline || picture.title);
-  const reviewPhases = flow.reviewInternalPhases && !Object.values(flow.reviewPhases).some(Boolean) ? allPhaseReviewsOn() : flow.reviewPhases;
-  const steps: ProductFlowState["steps"] = INTERNAL_PHASES.map((id) => {
-    if (!input.llamaAvailable && (id === "research" || id === "screenplay" || id === "screenplayQa")) {
-      return { id, status: "failed", message: "Local Llama unavailable. Intake skeleton only. Start LM Studio Local API, then Rescan." };
-    }
-    if (flow.reviewInternalPhases && reviewPhases[id]) {
-      return { id, status: "waitingForOptionalUserReview", message: `Paused for optional ${id} review.` };
-    }
-    return { id, status: "draftReady", message: `${id} prepared from Intake. Not a verified Llama runtime pass.` };
-  });
-  const paused = steps.find((item) => item.status === "waitingForOptionalUserReview");
-  const nextTouchpoint: ProductTouchpoint = paused ? "intake" : "asset-approval";
-  const nextFlow: ProductFlowState = {
-    ...flow,
-    reviewPhases,
-    steps,
-    llamaAvailable: input.llamaAvailable,
-    nextTouchpoint,
-    lastRunAt: now,
-  };
   const intake = {
     ...picture.intake,
     title: picture.intake.title || brief.title,
@@ -211,6 +199,21 @@ export function buildMoviePlan(picture: Picture, input: { llamaAvailable: boolea
     productionStyle: picture.intake.productionStyle || brief.productionStyle,
     targetRuntimeMinutes: picture.intake.targetRuntimeMinutes || brief.targetRuntimeMinutes,
     updatedAt: now,
+  };
+  const reason = "Configured AI model unavailable. Start LM Studio Local API Server and serve a model, then Rescan.";
+  if (input.llamaAvailable) {
+    throw new Error("Build Movie Plan cannot mark phases draftReady without executing the configured model. Call executeMoviePlan.");
+  }
+  const steps: ProductFlowState["steps"] = INTERNAL_PHASES.map((id) => ({ id, status: "failed", message: reason }));
+  const nextFlow: ProductFlowState = {
+    ...hydrateProductFlow(picture.productFlow),
+    steps,
+    llamaAvailable: false,
+    nextTouchpoint: "intake",
+    lastRunAt: now,
+    executed: false,
+    servedModelId: null,
+    manualFallback: true,
   };
   return {
     picture: {

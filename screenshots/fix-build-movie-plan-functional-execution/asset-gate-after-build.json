@@ -1,0 +1,54 @@
+{
+  "assets": [
+    {
+      "id": "asset:character:fei:fong:wong",
+      "name": "Fei Fong Wong",
+      "category": "character"
+    },
+    {
+      "id": "asset:character:elly",
+      "name": "Elly",
+      "category": "character"
+    },
+    {
+      "id": "asset:location:lahan",
+      "name": "Lahan",
+      "category": "location"
+    },
+    {
+      "id": "asset:prop:canvas",
+      "name": "Canvas",
+      "category": "prop"
+    },
+    {
+      "id": "asset:creature:weltall",
+      "name": "Weltall",
+      "category": "creature"
+    },
+    {
+      "id": "asset:voice:fei:voice",
+      "name": "Fei voice",
+      "category": "voice"
+    },
+    {
+      "id": "asset:music:score",
+      "name": "Score",
+      "category": "music"
+    },
+    {
+      "id": "asset:location:lahan:studio",
+      "name": "Lahan Studio",
+      "category": "location"
+    },
+    {
+      "id": "asset:location:ignas:plain",
+      "name": "Ignas Plain",
+      "category": "location"
+    },
+    {
+      "id": "asset:practical:effect:practical:smoke",
+      "name": "Practical Smoke",
+      "category": "practical_effect"
+    }
+  ]
+}

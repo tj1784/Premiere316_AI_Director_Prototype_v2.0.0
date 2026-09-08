@@ -70,7 +70,7 @@ export function researchRoomView(
     showWorksheetFirst: false,
     emptySections: [...RESEARCH_EMPTY_SECTIONS],
     offlineTitle: "Configured AI model unavailable.",
-    offlineBody: "Start the configured model server, then Rescan.",
+    offlineBody: "Start LM Studio Local API Server and serve a model, then Rescan.",
   };
 }
 

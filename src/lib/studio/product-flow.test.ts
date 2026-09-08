@@ -47,35 +47,20 @@ describe("five-touchpoint product flow", () => {
     assert.equal(pausedInternalPhase(flow), null);
   });
 
-  it("Build Movie Plan fail-closes Llama phases when offline and still lands on asset approval", () => {
+  it("Build Movie Plan fail-closes when the configured model is offline and does not land on Assets as ready", () => {
     const result = buildMoviePlan(picture("2-minute live-action Xenogears fan trailer"), { llamaAvailable: false, now: 9 });
-    assert.equal(result.flow.nextTouchpoint, "asset-approval");
+    assert.equal(result.flow.nextTouchpoint, "intake");
     assert.equal(result.flow.steps.find((step) => step.id === "research")?.status, "failed");
-    assert.match(result.flow.steps.find((step) => step.id === "research")?.message ?? "", /Llama unavailable/);
+    assert.equal(result.flow.steps.every((step) => step.status === "failed"), true);
+    assert.equal(result.flow.steps.some((step) => step.status === "draftReady"), false);
+    assert.match(result.flow.steps.find((step) => step.id === "research")?.message ?? "", /Configured AI model unavailable/);
     assert.match(result.picture.title, /Xenogears/i);
   });
 
-  it("optional review pauses only selected internal phases", () => {
-    const base = picture("Xenogears trailer");
-    const withReview = {
-      ...base,
-      productFlow: { ...emptyProductFlow(), reviewInternalPhases: true, reviewPhases: { ...PHASE_REVIEW_DEFAULTS, screenplay: true } },
-    };
-    const result = buildMoviePlan(withReview, { llamaAvailable: true, now: 3 });
-    assert.equal(result.flow.steps.find((step) => step.id === "screenplay")?.status, "waitingForOptionalUserReview");
-    assert.equal(pausedInternalPhase(result.flow), "screenplay");
-    assert.equal(result.flow.nextTouchpoint, "intake");
-  });
-
-  it("master phase-review checkbox with no per-phase flags pauses every internal phase", () => {
-    const withMaster = {
-      ...picture("Xenogears trailer"),
-      productFlow: { ...emptyProductFlow(), reviewInternalPhases: true, reviewPhases: { ...PHASE_REVIEW_DEFAULTS } },
-    };
-    const result = buildMoviePlan(withMaster, { llamaAvailable: true, now: 4 });
-    assert.equal(result.flow.reviewPhases.research, true);
-    assert.equal(result.flow.steps.find((step) => step.id === "research")?.status, "waitingForOptionalUserReview");
-    assert.equal(pausedInternalPhase(result.flow), "research");
-    assert.notEqual(result.flow.nextTouchpoint, "asset-approval");
+  it("refuses to fake a successful plan without executeMoviePlan", () => {
+    assert.throws(
+      () => buildMoviePlan(picture("Xenogears trailer"), { llamaAvailable: true, now: 3 }),
+      /executeMoviePlan/,
+    );
   });
 });

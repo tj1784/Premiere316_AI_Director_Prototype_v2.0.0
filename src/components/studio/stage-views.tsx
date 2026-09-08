@@ -18,7 +18,9 @@ import { ENGINES, KIND_LABEL, engineById } from "@/lib/studio/engines";
 import { MODEL_ROOT, type Picture } from "@/lib/studio/types";
 import { AdvancedDepartmentsDashboard, AdvancedDepartmentsRail } from "./advanced-departments";
 import { isAdvancedDashboard } from "@/lib/studio/advanced-departments.ts";
-import { DEFAULT_NAV_STEPS, INTERNAL_PHASES, PHASE_LABELS, PHASE_STAGE, allPhaseReviewsOn, buildMoviePlan, hydrateProductFlow, pausedInternalPhase, PHASE_REVIEW_DEFAULTS, type InternalPhase } from "@/lib/studio/product-flow.ts";
+import { DEFAULT_NAV_STEPS, INTERNAL_PHASES, PHASE_LABELS, PHASE_STAGE, allPhaseReviewsOn, hydrateProductFlow, pausedInternalPhase, PHASE_REVIEW_DEFAULTS, type InternalPhase } from "@/lib/studio/product-flow.ts";
+import { CONFIGURED_MODEL_UNAVAILABLE, MANUAL_FALLBACK_LABEL } from "@/lib/studio/movie-plan-pipeline.ts";
+import { executeMoviePlanOnServer, executeResearchDraftOnServer } from "@/lib/studio/movie-plan-client.ts";
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import { useDirector } from "@/lib/studio/use-director";
 import { compileEnginePromptPackage, compilePicture, totalDuration } from "@/lib/studio/prompt-compiler";
@@ -153,26 +155,24 @@ function IntakeStage({ picture }: { picture: Picture }) {
 
   async function buildPlan() {
     setBuilding(true);
-    let llamaAvailable = false;
     try {
-      const status = await localLLMStatus();
-      llamaAvailable = Boolean(status.provider?.available);
-    } catch {
-      llamaAvailable = false;
-    }
-    const result = buildMoviePlan({
-      ...picture,
-      productFlow: { ...flow, reviewInternalPhases: reviewInternal, reviewPhases },
-    }, { llamaAvailable });
-    replaceActive(result.picture);
-    const paused = pausedInternalPhase(result.flow);
-    if (paused) {
-      openAdvancedDepartment(PHASE_STAGE[paused]);
-      toast.message(`Paused for optional ${paused} review. This is not an automated complete pass.`);
-    } else if (result.flow.nextTouchpoint === "asset-approval") {
-      setGenerateFocus("assets");
-      if (llamaAvailable) toast.success("Movie plan prepared. Next: Approve Assets. Internal phases are skeletons unless Llama actually ran.");
-      else toast.error("Local Llama unavailable. Research/Screenplay did not run. Skeleton from Intake only. Next: Approve Assets.");
+      const result = await executeMoviePlanOnServer({
+        ...picture,
+        productFlow: { ...flow, reviewInternalPhases: reviewInternal, reviewPhases },
+      });
+      replaceActive(result.picture);
+      const paused = pausedInternalPhase(result.flow);
+      if (paused) {
+        openAdvancedDepartment(PHASE_STAGE[paused]);
+        toast.message(`Paused for optional ${paused} review after a real model pass.`);
+      } else if (!result.providerCalled || result.flow.manualFallback || result.flow.steps.some((step) => step.status === "failed")) {
+        toast.error(result.flow.steps.find((step) => step.status === "failed")?.message ?? CONFIGURED_MODEL_UNAVAILABLE);
+      } else if (result.flow.nextTouchpoint === "asset-approval") {
+        setGenerateFocus("assets");
+        toast.success("Movie plan generated. Next: Approve Assets.");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : CONFIGURED_MODEL_UNAVAILABLE);
     }
     setBuilding(false);
   }
@@ -205,7 +205,18 @@ function IntakeStage({ picture }: { picture: Picture }) {
           ) : null}
         </div>
         <Button className="h-12 text-base" onClick={() => void buildPlan()} disabled={building}>{building ? "Building…" : "Build Movie Plan"}</Button>
-        {flow.steps.length ? <ul className="grid gap-1 text-sm text-muted">{flow.steps.map((step) => <li key={step.id}>{step.status === "failed" ? "! failed" : step.status === "waitingForOptionalUserReview" ? "⏸ paused" : step.status === "draftReady" ? "· skeleton" : step.status} — {step.id}: {step.message}</li>)}</ul> : null}
+        {flow.manualFallback || flow.steps.some((step) => step.status === "failed") ? (
+          <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" data-movie-plan-blocked="true">
+            <p className="text-sm">{flow.steps.find((step) => step.status === "failed")?.message ?? CONFIGURED_MODEL_UNAVAILABLE}</p>
+            <p className="mt-2 text-xs text-muted">{MANUAL_FALLBACK_LABEL}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button size="sm" variant="secondary" onClick={() => void localLLMStatus().then(() => toast.message("Rescanned configured model."), () => toast.error(CONFIGURED_MODEL_UNAVAILABLE))}>Rescan</Button>
+              <Button size="sm" variant="secondary" onClick={() => toast.success("Intake draft is already saved on this picture.")}>Save Intake Draft</Button>
+              <Button size="sm" variant="ghost" onClick={() => openAdvancedDepartment("research")}>Open Manual Advanced Fallback</Button>
+            </div>
+          </div>
+        ) : null}
+        {flow.steps.length ? <ul className="grid gap-1 text-sm text-muted">{flow.steps.map((step) => <li key={step.id}>{step.status === "failed" ? "! failed" : step.status === "waitingForOptionalUserReview" ? "⏸ paused" : step.status === "draftReady" ? "· generated" : step.status} — {step.id}: {step.message}</li>)}</ul> : null}
         <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
           <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Source mode</p>
           <p className="mt-2 text-sm">{SOURCE_TYPE_LABELS[picture.intake.sourceType]}</p>
@@ -248,7 +259,9 @@ function offlineDiscovery(reason: string): LocalLLMProviderDiscovery {
 
 function ResearchStage({ picture }: { picture: Picture }) {
   const patchActive = useStudio((state) => state.patchActive);
+  const replaceActive = useStudio((state) => state.replaceActive);
   const [llamaAvailable, setLlamaAvailable] = useState<boolean | null>(null);
+  const [building, setBuilding] = useState(false);
   const bible = hydratePictureResearch(picture.research, picture.intake);
   const scan = useCallback(async () => {
     try {
@@ -268,8 +281,26 @@ function ResearchStage({ picture }: { picture: Picture }) {
       llamaAvailable={llamaAvailable}
       characters={picture.characters}
       locations={picture.locations}
+      building={building}
       onRescan={() => void scan()}
       onChange={(research) => patchActive({ research })}
+      onBuildDraft={async () => {
+        setBuilding(true);
+        try {
+          await scan();
+          const result = await executeResearchDraftOnServer(picture);
+          replaceActive(result.picture);
+          if (!result.providerCalled) {
+            toast.error(result.flow.steps.find((step) => step.status === "failed")?.message ?? CONFIGURED_MODEL_UNAVAILABLE);
+            return;
+          }
+          toast.success("Research Bible generated.");
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : CONFIGURED_MODEL_UNAVAILABLE);
+        } finally {
+          setBuilding(false);
+        }
+      }}
     />
   );
 }
@@ -682,6 +713,35 @@ function GenerateStage({ picture }: { picture: Picture }) {
       </div>
       {generateGate === "assets" ? <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
         <section className="grid min-w-0 gap-3" aria-label="Prepared assets">
+          {(() => {
+            const plan = hydrateProductFlow(picture.productFlow);
+            const extracted = picture.production?.assets ?? [];
+            const blocked = plan.manualFallback || plan.steps.some((step) => step.status === "failed" || step.status === "blocked") || extracted.length === 0;
+            if (blocked) {
+              return (
+                <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" data-assets-gate-blocked="true">
+                  <p className="font-display text-xl">Movie plan did not complete.</p>
+                  <p className="mt-2 text-sm text-muted">Assets were not generated.</p>
+                  <p className="mt-2 text-xs text-muted">{MANUAL_FALLBACK_LABEL}</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button size="sm" onClick={() => setStage("intake")}>Retry Build Movie Plan</Button>
+                    <Button size="sm" variant="secondary" onClick={() => useStudio.getState().enterAdvancedDepartments()}>Open Manual Advanced Fallback</Button>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <div className="grid gap-3" data-extracted-assets="true">
+                {extracted.map((asset) => (
+                  <article key={asset.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+                    <p className="text-[11px] tracking-wide text-subtle uppercase">{asset.category}</p>
+                    <h3 className="mt-1 font-display text-xl">{asset.name}</h3>
+                    <p className="mt-1 text-sm text-muted">{asset.canonicalSpec.visualDescription}</p>
+                  </article>
+                ))}
+              </div>
+            );
+          })()}
           {prepared.length ? prepared.map((item) => {
             const asset = assets.find((candidate) => candidate.id === item.assetId);
             const prompt = item.promptIngredients.join(". ") || asset?.canonicalSpec.visualDescription || asset?.name || "";
@@ -746,7 +806,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
                 </div>
               </article>
             );
-          }) : <EmptyCard title="No prepared assets" body="Approve asset specs, Visual Development, and Cinematography, then run Prepare Assets from Inventory." />}
+          }) : null}
         </section>
         <aside className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Native adapter manifest">
           <p className="text-[11px] tracking-wide text-subtle uppercase">Exact local adapter</p>
