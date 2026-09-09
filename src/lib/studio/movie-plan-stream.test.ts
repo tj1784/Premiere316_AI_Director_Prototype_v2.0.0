@@ -2,6 +2,17 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { moviePlanStreamResponse, readMoviePlanStream } from "./movie-plan-stream.ts";
 
+test("local model reasoning streams separately and never enters the saved output", async () => {
+  const reasoning: string[] = [];
+  const response = moviePlanStreamResponse(async (text, think) => {
+    think("Reported model reasoning");
+    text('{"assets":[]}');
+    return { text: '{"assets":[]}' };
+  }, async () => {});
+  assert.deepEqual(await readMoviePlanStream(response, undefined, (value) => reasoning.push(value)), { text: '{"assets":[]}' });
+  assert.deepEqual(reasoning, ["Reported model reasoning"]);
+});
+
 test("live output reaches the reader before model generation completes", async () => {
   let finish!: () => void;
   let sawText!: () => void;

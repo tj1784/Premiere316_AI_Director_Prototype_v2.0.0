@@ -6,7 +6,7 @@
   "canonicalAudio": true,
   "timelineDuration": 30,
   "exported": true,
-  "outputPath": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-m1-plus-cGwfOm\\exports\\m1-plus-20260908170607.mp4",
+  "outputPath": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-m1-plus-O9m4MY\\exports\\m1-plus-20260908180326.mp4",
   "outputSha256": "1f9f1aa72d7bdce08291d8a143936a48a5f99907fe5f345eee07d97ed0763ef5",
   "hasAudio": true,
   "durationSec": 30,
@@ -16,7 +16,7 @@
     "cloudInference": 0
   },
   "error": null,
-  "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-m1-plus-cGwfOm",
+  "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-m1-plus-O9m4MY",
   "exportPage": "The Last Reel\n\nLocal model vault · V3.02 · no ComfyUI\n\n100%\n01\nIntake\n02\nAssets\n03\nFirst / Last\n04\nVideo Clips\n05\nExport\nAdvanced Departments\n\n14 · DELIVERY\n\nExport\n\nMOVIE READINESS\n\nGuided finish path\n\nFFmpeg is not bound. Paper package remains available. 1 canonical audio take(s).\n\nChecking local FFmpeg… FFmpeg/FFprobe is unavailable. Premiere316 will not download it or fake an MP4. FFmpeg/FFprobe is unavailable. Premiere316 will not download it or fake an MP4.\n\nNext recommended · research\nExport MP4\nExport 30s film\nOpen output folder\nBLOCKED · Research\nResearch bible is not approved.\nREADY · Screenplay\nScreenplay present.\nREADY · Inventory\n2 characters.\nREADY · Visual Development\nBoards present.\nREADY · Cinematography\nCinematography present.\nREADY · Performance\nPerformance specs present.\nREADY · Shots\n8 shots.\nREADY · Prompts\nPrompt compiler can draft still/motion packages.\nPLACEHOLDER · Images\nCanonical stills require the native FLUX path.\nIMPORTED · Video\nCanonical imported video present.\nIMPORTED · Voice\nQwen3-TTS and VoxCPM2 stay fail-closed until a native runtime exists.\nIMPORTED · Sound\nFoley/ambience can be imported. No cloud SFX.\nPLACEHOLDER · Score\nMusic3 is fail-closed.\nPLACEHOLDER · Stitch/Edit\nTimeline can bind canonical imported media and placeholders.\nPLACEHOLDER · Master\nMastering waits for FFmpeg and canonical media.\nPLACEHOLDER · Export\nPaper exports work. MP4 export requires FFmpeg plus real or imported media.\n\n12 lifecycle stages tracked. Checkpoint/resume uses the existing picture store; jobs re-queue instead of duplicating.\n\nRuntime\n00:01:27:00\nShots\n8\nPlates\n0\nClips\n0\nFountain\nShot list\nEDL\nPrompt pack\nCue sheet\nProject JSON\nPrepare all\n\nStandalone delivery. No Comfy graph. Local weights remain at D:\\AI\\Models.\n\nImported audio marked canonical.\nImported score.wav as audio. Provenance is imported, not generated.\nImported video marked canonical. Not labeled as generated.\nImported video marked canonical. Not labeled as generated.\nImported video marked canonical. Not labeled as generated.\nImported clip-3.mp4 as sh3. Provenance is imported, not generated.\nImported clip-2.mp4 as sh2. Provenance is imported, not generated.\nImported clip-1.mp4 as sh1. Provenance is imported, not generated.",
   "outputBytes": 518479
 }

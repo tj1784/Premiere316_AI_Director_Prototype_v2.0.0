@@ -1,3 +1,5 @@
+import { GLOBAL_PRODUCTION_INSTRUCTIONS } from "./production-instructions.ts";
+import { visualDirectionText } from "./visual-direction.ts";
 import { SOURCE_TYPE_LABELS, sourceTextForIntake, type PictureIntake, type ScreenplayWorkflow } from "./picture-intake.ts";
 import type { ResearchContent } from "../research/bible.ts";
 import { RESEARCH_CONFIDENCE_LEGEND } from "../research/confidence.ts";
@@ -154,6 +156,7 @@ export function buildScreenplayPrompt(input: {
     labeled("Audience / rating", intake.audienceRating),
     labeled("Production style / visual direction", intake.productionStyle),
     labeled("Director notes", intake.directorNotes),
+    labeled("Visual direction — design reference only", visualDirectionText(intake.visualDirection)),
     labeled("Dialogue style", intake.dialogueStyle),
     labeled("Supplied story/source", source),
     sourceConstraints(intake),
@@ -166,16 +169,16 @@ export function buildScreenplayPrompt(input: {
     labeled("Story state OUT", input.scopedPack?.storyOut ?? ""),
     labeled("Revision instruction", input.scopedPack?.instruction ?? ""),
   ].filter(Boolean).join("\n\n");
-  if (step.id === "draft" && (!input.scopedPack || input.scopedPack.scope === "full")) {
+  if (step.id === "draft" && !previousFountain?.trim() && (!input.scopedPack || input.scopedPack.scope === "full")) {
     return {
-      system: systemDirection(intake),
+      system: GLOBAL_PRODUCTION_INSTRUCTIONS + "\n\n" + systemDirection(intake),
       user: `${common}\n\nTASK:\nCreate the first complete screenplay draft. Begin with a Fountain title page, then the screenplay.`,
     };
   }
   const polish = input.scopedPack?.polishOnly ? "Polish language, rhythm, and subtext only. Do not change plot, characters, or scene order." : "";
   const scoped = input.scopedPack && input.scopedPack.scope !== "full";
   return {
-    system: systemDirection(intake),
+    system: GLOBAL_PRODUCTION_INSTRUCTIONS + "\n\n" + systemDirection(intake),
     user: `${common}\n\nCURRENT TARGET (do not regenerate unrelated scenes):\n${previousFountain ?? ""}\n\n${step.pass ? `PASS ${step.pass} FOCUS:\n${step.focus}` : "TASK:\nRevise only the supplied scope. Preserve unrelated IDs and content byte-for-byte."}\n${polish}\n\n${scoped ? "Return ONLY the rewritten scoped Fountain." : "Return the full updated Fountain screenplay."}`,
   };
 }

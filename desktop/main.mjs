@@ -1,4 +1,5 @@
-import { app, BrowserWindow, Menu, dialog, ipcMain, protocol as electronProtocol, safeStorage, session, shell } from "electron";
+import { app, BrowserWindow, Menu, dialog, ipcMain, nativeImage, protocol as electronProtocol, safeStorage, session, shell } from "electron";
+import { assertPublicUrl, fetchPublicReference, searchVisualReferences } from "./web-references.mjs";
 import { spawn } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { createHash, randomBytes } from "node:crypto";
@@ -9,7 +10,10 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import { assertImportableAudio, assertImportableVideo, assertPlusExportReady, buildLiteExportArgs, buildPlusExportArgs, concatListContents, missingFfmpegResult, parseFfprobeAudioJson, parseFfprobeJson, plusExportDurationSec, timelineDurationSec } from "./ffmpeg-tool.mjs";
 
+import { createNativeFilmService } from "./native-film.mjs";
+
 const require = createRequire(import.meta.url);
+let nativeFilmService = null;
 const channels = require("./channels.cjs");
 const {
   DEFAULT_ZOOM,
@@ -250,6 +254,13 @@ function startBackend() {
   rl.on("line", (line) => {
     try {
       const msg = JSON.parse(line);
+      if (msg.event === "imageProgress") {
+        if (msg.id !== undefined || ![msg.pictureId, msg.assetId, msg.preparedAssetId].every((value) => typeof value === "string" && value.length > 0 && value.length <= 512) || typeof msg.message !== "string" || !msg.message.length || msg.message.length > 500 || !Number.isFinite(msg.at)) return;
+        if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed() && new URL(mainWindow.webContents.getURL()).origin === uiOrigin) {
+          mainWindow.webContents.send(channels.imageProgress, { pictureId: msg.pictureId, assetId: msg.assetId, preparedAssetId: msg.preparedAssetId, message: msg.message, at: msg.at });
+        }
+        return; // Notifications never resolve or remove the active generation RPC.
+      }
       const pending = rpcWait.get(msg.id);
       if (!pending) return;
       rpcWait.delete(msg.id);
@@ -551,14 +562,33 @@ function callBackend(method, params) {
   if (!backend?.stdin) return Promise.reject(new Error("Desktop backend is not running"));
   const id = ++rpcSeq;
   return new Promise((resolve, reject) => {
-    rpcWait.set(id, { resolve, reject });
-    backend.stdin.write(`${JSON.stringify({ id, method, params })}\n`);
-    setTimeout(() => {
+    // Native generation permits 30 minutes, including cold model loading.
+    // Leave time for output hashing and the durable receipt after it completes.
+    const timeoutMs = ["image.generatePrepared", "image.encodeDraftPrompts"].includes(method) ? 35 * 60_000 : 300_000;
+    const timer = setTimeout(() => {
       if (rpcWait.has(id)) {
         rpcWait.delete(id);
-        reject(new Error("Desktop backend timed out"));
+        reject(new Error(method === "image.generatePrepared"
+          ? "Image generation did not respond within 35 minutes. A saved result can be recovered by resuming."
+          : "Desktop backend timed out"));
       }
-    }, 300_000);
+    }, timeoutMs);
+    rpcWait.set(id, {
+      resolve: (result) => { clearTimeout(timer); resolve(result); },
+      reject: (error) => { clearTimeout(timer); reject(error); },
+    });
+    try {
+      backend.stdin.write(`${JSON.stringify({ id, method, params })}\n`, (error) => {
+        if (!error) return;
+        const pending = rpcWait.get(id);
+        rpcWait.delete(id);
+        pending?.reject(error);
+      });
+    } catch (error) {
+      rpcWait.delete(id);
+      clearTimeout(timer);
+      reject(error);
+    }
   });
 }
 
@@ -701,6 +731,15 @@ function registerMediaProtocol() {
   electronProtocol.registerFileProtocol("media", (request, callback) => {
     try {
       const url = new URL(request.url);
+      if (url.hostname === "films") {
+        const match = /^\/([a-f0-9]{64})\/(shot-\d{2}|movie)\.mp4$/.exec(url.pathname);
+        if (!match) throw new Error('Invalid film media path.');
+        const filmRoot = realpathSync(resolve(imageMediaRoot(), 'films'));
+        const file = realpathSync(resolve(filmRoot, match[1], `${match[2]}.mp4`));
+        const rel = relative(filmRoot, file);
+        if (rel.startsWith('..') || rel === '') throw new Error('Film path escapes media root.');
+        return callback({ path: file });
+      }
       if (url.hostname !== "stills") throw new Error("Unsupported media host.");
       const rawPath = url.pathname.replace(/^\/+/, "");
       if (/%2e|%2f|%5c|:/i.test(rawPath)) throw new Error("Encoded traversal is not allowed.");
@@ -853,8 +892,41 @@ function registerIpc() {
     state.resolve(input?.confirmed === true);
     return { ok: true };
   });
+  nativeFilmService = createNativeFilmService({ root: join(imageMediaRoot(), 'films'), workerRoot: app.isPackaged ? join(process.resourcesPath, 'workers') : join(ROOT, 'desktop', 'workers'), python: 'D:/Dev/Tools/Python312/python.exe', buildInfo: readBuildInfo() });
+  ipcMain.handle(channels.filmStart, wrap(async () => ({ ok: false, error: "Reference-conditioned video rendering is not connected. Approved asset images and first/last frames are required." })));
+  ipcMain.handle(channels.filmStatus, wrap((_e, jobId) => nativeFilmService.status(jobId)));
+  ipcMain.handle(channels.filmStop, wrap(() => nativeFilmService.stop()));
   ipcMain.handle(channels.catalogGet, wrap((_e, query) => callBackend("catalog.get", query ?? {})));
+  // The user's Intake/Generate action authorizes draft generation. Internal
+  // spec seals are automatic; generated images still need a separate review.
+  // These handlers never call canonical approval or rejection.
+  ipcMain.handle(channels.imagePrepareDrafts, wrap(async (_e, input) => {
+    const prepared = input?.rawCanonical?.preparedAssets;
+    if (!Array.isArray(prepared) || !prepared.length || prepared.length > 100) return { ok: false, error: "Prepare between 1 and 100 asset drafts." };
+    const proposal = await callBackend("image.proposeProductionAuthority", withMediaRoot(input));
+    if (!proposal.ok) return proposal;
+    const authority = await callBackend("image.confirmProductionAuthority", withMediaRoot({ proposalId: proposal.proposalId, confirmed: true }));
+    if (!authority.ok) return authority;
+    const approvals = [];
+    for (const item of prepared.filter((item) => item.status === "READY_TO_PREPARE")) {
+      const candidate = await callBackend("image.proposePreparedApproval", withMediaRoot({ authorityId: authority.authorityId, preparedAssetId: item.id }));
+      if (!candidate.ok) return candidate;
+      const approval = await callBackend("image.confirmPreparedApproval", withMediaRoot({ proposalId: candidate.proposalId, confirmed: true }));
+      if (!approval.ok) return approval;
+      approvals.push({ ...approval, preparedAssetId: item.id });
+    }
+    return { ok: true, authority, approvals };
+  }));
+  ipcMain.handle(channels.imageGenerateDraft, wrap(async (_e, input) => {
+    const proposal = await callBackend("image.proposePrepared", withMediaRoot(input));
+    if (!proposal.ok) return proposal;
+    const authorization = await callBackend("image.confirmPrepared", withMediaRoot({ proposalId: proposal.proposalId, confirmed: true }));
+    if (!authorization.ok) return authorization;
+    return callBackend("image.generatePrepared", withMediaRoot({ token: authorization.token }));
+  }));
   ipcMain.handle(channels.imageAuthorityStatus, wrap((_e, input) => callBackend("image.authorityStatus", withMediaRoot(input))));
+  ipcMain.handle(channels.imageRecoverDrafts, wrap((_e, input) => callBackend("image.recoverDrafts", withMediaRoot(input))));
+  ipcMain.handle(channels.imageEncodeDraftPrompts, wrap((_e, input) => callBackend("image.encodeDraftPrompts", withMediaRoot(input))));
   ipcMain.handle(channels.imageSealAuthority, wrap(async (_e, input) => {
     const proposal = await callBackend("image.proposeProductionAuthority", withMediaRoot(input));
     if (!proposal?.ok) return proposal;
@@ -949,6 +1021,20 @@ function registerIpc() {
   ipcMain.handle(channels.enginesStop, wrap(() => callBackend("engines.stop")));
 
   ipcMain.handle(channels.imageManifests, wrap(() => callBackend("image.manifests", {})));
+  ipcMain.handle(channels.imageSearchReferences, wrap((_event, query) => searchVisualReferences(query)));
+  ipcMain.handle(channels.imageImportWebReference, wrap(async (_event, input) => {
+    await assertPublicUrl(input?.sourceUrl);
+    const downloaded = await fetchPublicReference(input?.imageUrl, 8 * 1024 * 1024);
+    if (!/^image\/(png|jpeg|webp)/i.test(downloaded.type)) throw new Error("Reference URL did not return a supported image.");
+    let reference = nativeImage.createFromBuffer(downloaded.bytes);
+    if (reference.isEmpty()) throw new Error("Reference image could not be decoded.");
+    const size = reference.getSize();
+    if (Math.max(size.width, size.height) > 1024) reference = reference.resize(size.width >= size.height ? { width: 1024 } : { height: 1024 });
+    const bytes = reference.toPNG(); const sha256 = createHash("sha256").update(bytes).digest("hex");
+    const name = `reference-${sha256}.png`; const root = join(imageMediaRoot(), "stills"); mkdirSync(root, { recursive: true });
+    const path = join(root, name); if (!existsSync(path)) writeFileSync(path, bytes, { flag: "wx" });
+    return { uri: `media://stills/${name}`, sha256, sourceUrl: input.sourceUrl, imageUrl: downloaded.url };
+  }));
   ipcMain.handle(channels.appVersion, wrap(() => app.getVersion()));
   ipcMain.handle(channels.appBuildInfo, wrap(() => readBuildInfo()));
   ipcMain.handle(channels.appModelRoot, wrap(() => callBackend("app.modelRoot")));
@@ -1192,6 +1278,7 @@ function createWindow() {
 }
 
 async function stopSupervised() {
+  nativeFilmService?.stop();
   try {
     await Promise.race([callBackend("engines.stop"), new Promise((r) => setTimeout(r, 4000))]);
   } catch {

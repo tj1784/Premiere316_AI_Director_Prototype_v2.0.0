@@ -45,6 +45,7 @@ export type LocalLLMGenerateRequest = {
   thinkingEnabled?: boolean;
   responseFormat?: { type: "json_schema"; json_schema: { name: string; strict: boolean; schema: Record<string, unknown> } };
   onToken?: (token: string) => void;
+  onReasoning?: (text: string) => void;
 };
 
 export type LocalLLMGenerateResult = {

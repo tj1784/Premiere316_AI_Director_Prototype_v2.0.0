@@ -2,6 +2,10 @@ import type { PictureResearchBible } from "../research/bible.ts";
 import { BrowserEndpointCache } from "./local-llm-endpoint.ts";
 import { cancelScreenplayJob, getLocalLLMStatus, getScreenplayJob, releaseScreenplayResident, runScreenplayQa, startScreenplayJob } from "./screenplay-api.ts";
 import type { StartScreenplayJobInput } from "./screenplay-jobs.server.ts";
+import { readMoviePlanStream } from "./movie-plan-stream.ts";
+import type { ScreenplayQaReport } from "./screenplay-qa.ts";
+import { getGlobalProductionInstructions } from "./production-instructions.ts";
+import { prepareVisualDirection } from "./visual-direction-client.ts";
 
 const endpointCache = new BrowserEndpointCache();
 
@@ -12,7 +16,19 @@ export async function localLLMStatus() {
 }
 
 export async function beginScreenplayJob(input: StartScreenplayJobInput) {
-  return startScreenplayJob({ data: { ...input, endpoint: endpointCache.get() } });
+  const intake = await prepareVisualDirection(input.intake, input.screenplay.pinnedWriterServedId ?? undefined);
+  if (intake !== input.intake) {
+    if (input.screenplay.pinnedWriterServedId) {
+      const { ensureMoviePlanModel } = await import("./movie-plan-api.ts");
+      await ensureMoviePlanModel({ data: { servedModelId: input.screenplay.pinnedWriterServedId, endpoint: endpointCache.get() } });
+    }
+    const { useStudio } = await import("./store");
+    const state = useStudio.getState();
+    const active = state.pictures.find(picture => picture.id === state.activeId);
+    if (active?.intake.visualDirection?.boardId === intake.visualDirection?.boardId) state.patchActive({ intake });
+    input = { ...input, intake };
+  }
+  return startScreenplayJob({ data: { ...input, generationInstructions: getGlobalProductionInstructions(), endpoint: endpointCache.get() } });
 }
 
 export async function readScreenplayJob(jobId: string) {
@@ -38,8 +54,11 @@ export async function beginScreenplayQa(input: {
   characterState?: string;
   continuityState?: string;
   research?: PictureResearchBible | null;
-}) {
-  return runScreenplayQa({ data: { ...input, endpoint: endpointCache.get() } });
+  directorNotes?: string;
+}, progress?: { signal?: AbortSignal; onText?: (text: string) => void; onReasoning?: (text: string) => void }): Promise<ScreenplayQaReport> {
+  const response = await runScreenplayQa({ data: { ...input, generationInstructions: getGlobalProductionInstructions(), endpoint: endpointCache.get() }, signal: progress?.signal });
+  const result = await readMoviePlanStream(response, progress?.onText, progress?.onReasoning);
+  return JSON.parse(result.text) as ScreenplayQaReport;
 }
 
 export async function releaseLocalScreenplayModel() {

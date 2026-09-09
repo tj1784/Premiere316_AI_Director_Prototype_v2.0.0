@@ -3,6 +3,7 @@ import { compilePicture, fountainFrom } from "./prompt-compiler.ts";
 import { migratePicturePreparation, type LegacyPicture } from "./picture-preparation.ts";
 
 export const SAMPLE_ID = "pic_last_reel";
+export const RED_SEA_THUMBNAIL_URL = "/stills/red-sea-visual-direction.jpg";
 
 export function makeSamplePicture(): Picture {
   const picture: LegacyPicture = {

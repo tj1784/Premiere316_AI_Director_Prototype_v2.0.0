@@ -12,7 +12,7 @@ test("movie-plan JSON schema reaches the actual streaming completion request", a
     const url = String(input);
     if (url.endsWith('/api/v1/models')) return json({ models: [{ key: 'writer', type: 'llm', loaded_instances: [{ id: 'instance-1' }] }] });
     if (url.endsWith('/v1/models')) return json({ data: [{ id: 'writer' }] });
-    if (url.endsWith('/v1/chat/completions')) { body = JSON.parse(String(init?.body)); return new Response('data: {"choices":[{"delta":{"content":"{}"}}]}\n\ndata: [DONE]\n\n'); }
+    if (url.endsWith('/v1/chat/completions')) { body = JSON.parse(String(init?.body)); return new Response('data: {"model":"writer","choices":[{"delta":{"content":"{}"}}]}\n\ndata: [DONE]\n\n'); }
     throw new Error(url);
   } });
   const responseFormat = moviePlanResponseFormat('screenplay');
@@ -26,6 +26,39 @@ test("movie-plan JSON schema reaches the actual streaming completion request", a
 
 const settings = { temperature: 0.7, topP: 0.9, maxTokens: 128, contextSize: 4096, gpuLayers: 0, seed: 1 };
 const resources = () => ({ peakVramBytes: null, peakSystemRamBytes: null });
+
+test("GPT-OSS completion stays pinned and rejects Gemma or unidentified output before exposing text", async () => {
+  const writer = "gptoss-120b-uncensored-hauhaucs-aggressive";
+  for (const returnedModel of [writer, "gpt-instance", "gemma", undefined]) {
+    let postedModel = "";
+    let delivered = "";
+    let reasoning = "";
+    let requestSignal: AbortSignal | null | undefined;
+    const provider = new LMStudioProvider({ endpointCache: new MemoryEndpointCache(), sampleResources: resources, fetch: async (input, init) => {
+      const url = String(input);
+      if (url.endsWith("/api/v1/models")) return json({ models: [{ key: "gemma", type: "llm", loaded_instances: [{ id: "gemma-instance" }] }, { key: writer, type: "llm", loaded_instances: [{ id: "gpt-instance" }] }] });
+      if (url.endsWith("/v1/models")) return json({ data: [{ id: "gemma" }, { id: writer }] });
+      if (url.endsWith("/v1/chat/completions")) {
+        postedModel = JSON.parse(String(init?.body)).model;
+        requestSignal = init?.signal;
+        return new Response(`data: ${JSON.stringify({ model: returnedModel, choices: [{ delta: { reasoning_content: "local reasoning", content: "model output" } }] })}\n\ndata: [DONE]\n\n`);
+      }
+      throw new Error(url);
+    } });
+    await provider.load({ servedModelId: writer, settings });
+    const generation = provider.generate({ runId: "r", stepId: "assetPrompts", system: "s", prompt: "p", onToken: (text) => { delivered += text; }, onReasoning: (text) => { reasoning += text; } }, { servedModelId: writer, settings });
+    if (returnedModel === writer || returnedModel === "gpt-instance") {
+      assert.equal((await generation).text, "model output");
+      assert.equal(reasoning, "local reasoning");
+    } else {
+      await assert.rejects(generation, /response was rejected/);
+      assert.equal(delivered, "");
+      assert.equal(reasoning, "");
+      assert.equal(requestSignal?.aborted, true);
+    }
+    assert.equal(postedModel, writer);
+  }
+});
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });

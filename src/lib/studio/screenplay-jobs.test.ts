@@ -127,6 +127,36 @@ test("unapproved research blocks screenplay generation", async () => {
   await assert.rejects(manager.start({ ...base, research: seedResearchBibleFromIntake(base.intake, 1) }), /Approve Picture Research/);
 });
 
+test("applying recommendations sends critique to the writer and preserves the previous version", async () => {
+  const provider = new FakeProvider();
+  const manager = new ScreenplayJobManager(provider, () => emptyCatalog);
+  const base = input();
+  base.screenplay.workingFountain = "INT. ROOM - DAY\n\nOriginal scene.";
+  const original = base.screenplay.workingFountain;
+  const started = await manager.start({ ...base, rewriteScope: "full", revisionInstructions: "Keep the scene but correct the daylight lighting." });
+  const done = await settle(manager, started.id);
+  assert.equal(done.status, "completed", done.error ?? undefined);
+  assert.ok(provider.prompts.some((prompt) => prompt.includes("correct the daylight lighting") && prompt.includes("Original scene.")));
+  assert.equal(base.screenplay.workingFountain, original);
+  assert.equal(done.screenplay.versions.at(-1)?.label, "Story Doctor revision");
+});
+
+test("an exactly selected GPTOSS model runs in the Screenplay department without a Llama fallback", async () => {
+  const id = "gptoss-120b-uncensored-hauhaucs-aggressive";
+  const provider = new FakeProvider();
+  const discover = provider.discover.bind(provider);
+  provider.discover = async () => ({ ...await discover(), models: [{ ...served, id, displayName: "GPTOSS 120B" }] });
+  let loaded = "";
+  provider.load = async (config) => { loaded = config.servedModelId; };
+  const manager = new ScreenplayJobManager(provider, () => emptyCatalog);
+  const base = input();
+  const started = await manager.start({ ...base, modelId: `lmstudio:${id}`, screenplay: { ...base.screenplay, selectedModelId: `lmstudio:${id}`, pinnedWriterServedId: id } });
+  const finished = await settle(manager, started.id);
+  assert.equal(finished.status, "completed", finished.error ?? undefined);
+  assert.equal(loaded, id);
+  assert.equal(finished.screenplay.pinnedWriterServedId, id);
+});
+
 test("family-only or substring pins cannot start generation", async () => {
   const manager = new ScreenplayJobManager(new FakeProvider(), () => emptyCatalog);
   const base = input();

@@ -54,7 +54,7 @@ export function inventoryCards(record: ProductionBreakdown, filter: InventoryFil
       sceneCount: asset.requiredSceneIds.length,
       sceneLabels: asset.requiredSceneIds.map((id) => sceneMap.get(id) ?? id),
       variantCount: asset.variants.length,
-      previewUri: approved?.mediaUri ?? preferred?.uri ?? null,
+      previewUri: approved?.mediaUri ?? [...asset.iterations].reverse().find(iteration => iteration.mediaUri && iteration.status !== "REJECTED")?.mediaUri ?? preferred?.uri ?? null,
       canonicalApproved: asset.canonicalApproved,
     };
   });
@@ -92,6 +92,7 @@ function audit(id: string, type: LineageType, at: number, sourceAssetIds: string
 }
 
 export type InventoryAssetPatch = {
+  additionalSceneIds?: string[];
   name?: string;
   category?: ProductionCategory;
   canonicalSpec?: Partial<CanonicalAssetSpec>;
@@ -101,6 +102,10 @@ export type InventoryAssetPatch = {
 };
 
 export function editInventoryAsset(record: ProductionBreakdown, assetId: string, patch: InventoryAssetPatch, now = Date.now()): ProductionBreakdown {
+  if (patch.additionalSceneIds?.some(id => !record.scenes.some(scene => scene.id === id))) throw new Error("Scene link must belong to this screenplay.");
+  const existing = record.assets.find(asset => asset.id === assetId);
+  const added = [...new Set(patch.additionalSceneIds ?? [])].filter(id => !existing?.requiredSceneIds.includes(id));
+  const linkId = `manual-scene-link:${assetId}:${now}`;
   const assets = record.assets.map((asset) => {
     if (asset.id !== assetId) return asset;
     const currentVersions = asset.specVersions ?? [];
@@ -114,6 +119,8 @@ export function editInventoryAsset(record: ProductionBreakdown, assetId: string,
     const version = { id: `spec:${asset.id}:${now}`, assetId: asset.id, createdAt: now, sourceVersionId: approvedVersionId, spec: structuredClone(nextSpec), approved: false, provenance: asset.provenance };
     const next = {
       ...asset,
+      requiredSceneIds: [...new Set([...asset.requiredSceneIds, ...added])],
+      requirementIds: added.length ? [...asset.requirementIds, linkId] : asset.requirementIds,
       name,
       category,
       normalizedKey: `${category}:${normalizeAssetName(name, category)}`,
@@ -129,7 +136,8 @@ export function editInventoryAsset(record: ProductionBreakdown, assetId: string,
     };
     return { ...next, readiness: calculateReadiness(next) };
   });
-  const next = { ...record, assets, inventoryVersion: bump(record), updatedAt: now };
+  const requirements = added.length && existing ? [...record.requirements, { id: linkId, category: patch.category ?? existing.category, name: patch.name ?? existing.name, description: "Additional screenplay appearances confirmed during inventory review.", sceneIds: added, normalizedKey: existing.normalizedKey, unnecessary: false, stale: false, staleReasons: [], confidence: "C" as const, evidenceNote: "User-confirmed scene coverage." }] : record.requirements;
+  const next = { ...record, assets, requirements, inventoryVersion: bump(record), updatedAt: now };
   return withAuthorityDirty(next, now);
 }
 
@@ -224,4 +232,16 @@ export function applyPreparedApproval(record: ProductionBreakdown, input: { prep
   if (!found) throw new Error("Prepared asset record not found.");
   const next = { ...record, preparedAssets, inventoryVersion: bump(record), updatedAt: input.approvedAt };
   return { ...next, graph: buildDependencyGraphV2(next, input.approvedAt) };
+}
+
+/** A user upload replaces the displayed asset while retaining prior media in history. */
+export function replaceAssetImage(record: ProductionBreakdown, assetId: string, image: { uri: string; name: string; width?: number; height?: number }, now = Date.now()): ProductionBreakdown {
+  if (!record.assets.some(asset => asset.id === assetId)) throw new Error("Asset not found.");
+  if (!image.uri) throw new Error("An uploaded image is required.");
+  const assets = record.assets.map(asset => {
+    if (asset.id !== assetId) return asset;
+    const iteration = { id: `upload:${assetId}:${now}`, assetId, variantId: null, mediaUri: image.uri, width: image.width, height: image.height, createdAt: now, status: "NEEDS_REVIEW" as const, provenance: { sourceType: "user" as const, screenplayVersionId: record.screenplayVersionId, sceneIds: asset.requiredSceneIds, createdAt: now }, uploadedFileName: image.name };
+    return { ...asset, iterations: [...asset.iterations, iteration], approvedIterationId: null, readiness: "NEEDS_REVIEW" as const, updatedAt: now };
+  });
+  return withAuthorityDirty({ ...record, assets, inventoryVersion: bump(record), updatedAt: now }, now);
 }

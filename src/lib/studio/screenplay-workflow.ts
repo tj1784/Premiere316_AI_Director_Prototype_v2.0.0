@@ -1,3 +1,4 @@
+import { withProductionInstructions } from "./production-instructions.ts";
 import type { PictureIntake } from "./picture-intake.ts";
 import type { ResearchContent } from "../research/bible.ts";
 import { extractScopedFountain, spliceScopedFountain, type ScreenplayScope, type ScreenplaySelection } from "./screenplay-scope.ts";
@@ -56,6 +57,8 @@ export type WorkflowRunInput = {
   makeVersionId: () => string;
   now?: () => number;
   settings?: Partial<ScreenplayGenerationSettings>;
+  revisionInstructions?: string;
+  generationInstructions?: string;
   stepId?: ScreenplayStep["id"];
   resume?: boolean;
   rewriteScope?: ScreenplayScope;
@@ -151,8 +154,8 @@ export async function runScreenplayWorkflow(runtime: ScreenplayRuntimePort, inpu
       const result = await runtime.generate({
         runId: input.runId,
         stepId: step.id,
-        system: prompt.system,
-        prompt: prompt.user,
+        system: withProductionInstructions(prompt.system, input.generationInstructions),
+        prompt: input.revisionInstructions ? `${prompt.user}\n\nUSER-REQUESTED STORY DOCTOR REVISION\nApply the following critique recommendations to the supplied scope. Preserve story facts, character identities, cinematography choices and all unaffected wording. Return the complete revised scope as Fountain, with actual line breaks, without commentary or JSON. Do not replace the screenplay with a summary.\n${input.revisionInstructions}` : prompt.user,
       }, config);
       if (input.signal?.aborted) throw new ScreenplayGenerationCanceled();
       const generated = normalizeFountainOutput(result.text);
@@ -167,7 +170,7 @@ export async function runScreenplayWorkflow(runtime: ScreenplayRuntimePort, inpu
         : { fountain: generated, hierarchy: parseScreenplayHierarchy(generated, previousHierarchy) };
       const version: ScreenplayVersion = {
         id: input.makeVersionId(),
-        label: step.id === "draft" ? "Draft 1" : step.label,
+        label: input.revisionInstructions ? "Story Doctor revision" : step.id === "draft" ? "Draft 1" : step.label,
         kind: step.id === "draft" ? "draft" : "pass",
         fountain: spliced.fountain,
         createdAt: now(),

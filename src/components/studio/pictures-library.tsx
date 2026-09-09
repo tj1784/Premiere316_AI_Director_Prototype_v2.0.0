@@ -2,6 +2,7 @@ import { CheckCircle2, Clock3, Film, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { STAGES } from "@/lib/studio/types";
 import type { PreparedPicture } from "@/lib/studio/picture-preparation";
+import { useStudio } from "@/lib/studio/store";
 
 function relativeModified(timestamp: number): string {
   if (!timestamp || timestamp <= 1) return "Studio sample";
@@ -27,6 +28,7 @@ export function PicturesLibrary({
   onNew: () => void;
   onOpen: (id: string) => void;
 }) {
+  const deletePicture = useStudio((state) => state.deletePicture);
   return (
     <section aria-labelledby="pictures-heading">
       <div className="flex items-end justify-between gap-4">
@@ -89,6 +91,7 @@ export function PicturesLibrary({
                   </span>
                 </span>
               </button>
+              {!picture.sample ? <button type="button" className="mt-2 min-h-11 px-3 text-sm text-rec" aria-label={`Delete picture ${picture.title}`} onClick={() => deletePicture(picture.id)}>Delete picture</button> : null}
             </li>
           );
         })}

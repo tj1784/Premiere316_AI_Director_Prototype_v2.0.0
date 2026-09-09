@@ -2,18 +2,20 @@ import type { InternalPhase } from "./product-flow.ts";
 
 export type MoviePlanStreamEvent =
   | { type: "token"; text: string }
+  | { type: "reasoning"; text: string }
   | { type: "done"; text: string }
   | { type: "error"; message: string };
 
 export type MoviePlanProgress = {
-  phase: InternalPhase;
+  phase: InternalPhase | "assetPrompts" | "assetReferences" | "assetReferenceChoice";
   model: string;
   status: "generating" | "completed" | "failed";
   text: string;
+  reasoning?: string;
   message?: string;
 };
 
-export function moviePlanStreamResponse(generate: (onToken: (text: string) => void) => Promise<{ text: string }>, cancel: () => Promise<void>): Response {
+export function moviePlanStreamResponse(generate: (onToken: (text: string) => void, onReasoning: (text: string) => void) => Promise<{ text: string }>, cancel: () => Promise<void>): Response {
   const encoder = new TextEncoder();
   let canceled = false;
   const stream = new ReadableStream<Uint8Array>({
@@ -23,7 +25,7 @@ export function moviePlanStreamResponse(generate: (onToken: (text: string) => vo
       };
       void (async () => {
         try {
-          const result = await generate((text) => emit({ type: "token", text }));
+          const result = await generate((text) => emit({ type: "token", text }), (text) => emit({ type: "reasoning", text }));
           emit({ type: "done", text: result.text });
         } catch (error) {
           emit({ type: "error", message: error instanceof Error ? error.message : "Local model generation failed." });
@@ -37,7 +39,7 @@ export function moviePlanStreamResponse(generate: (onToken: (text: string) => vo
   return new Response(stream, { headers: { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store", "x-accel-buffering": "no" } });
 }
 
-export async function readMoviePlanStream(response: Response, onText?: (text: string) => void): Promise<{ text: string }> {
+export async function readMoviePlanStream(response: Response, onText?: (text: string) => void, onReasoning?: (text: string) => void): Promise<{ text: string }> {
   if (!response.ok || !response.body) throw new Error(`Local model stream unavailable (${response.status}).`);
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -51,6 +53,8 @@ export async function readMoviePlanStream(response: Response, onText?: (text: st
     if (event.type === "token") {
       text += event.text;
       onText?.(text);
+    } else if (event.type === "reasoning") {
+      onReasoning?.(event.text);
     } else if (event.type === "done") {
       text = event.text;
       completed = true;

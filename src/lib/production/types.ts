@@ -187,6 +187,7 @@ export type IterationReviewDecision = {
 };
 
 export type GeneratedIteration = {
+  uploadedFileName?: string;
   id: string;
   preparedAssetId?: string;
   assetId?: string;

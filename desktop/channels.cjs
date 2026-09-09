@@ -1,6 +1,16 @@
 "use strict";
 
 module.exports = {
+  imageSearchReferences: "p316:image:searchReferences",
+  imageImportWebReference: "p316:image:importWebReference",
+  imagePrepareDrafts: "p316:image:prepareDrafts",
+  imageGenerateDraft: "p316:image:generateDraft",
+  imageRecoverDrafts: "p316:image:recoverDrafts",
+  imageEncodeDraftPrompts: "p316:image:encodeDraftPrompts",
+  imageProgress: "p316:image:progress",
+  filmStart: "p316:film:start",
+  filmStatus: "p316:film:status",
+  filmStop: "p316:film:stop",
   catalogGet: "p316:catalog:get",
   enginesStop: "p316:engines:stop",
   imageManifests: "p316:image:manifests",

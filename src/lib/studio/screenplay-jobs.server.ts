@@ -1,3 +1,5 @@
+import { exactLocalWriterBlock } from "./exact-local-writer.ts";
+import { withProductionInstructions } from "./production-instructions.ts";
 import { randomUUID } from "node:crypto";
 import type { LocalLLMProvider, LocalLLMProviderDiscovery } from "./local-llm-provider.ts";
 import type { ModelCatalog } from "./model-catalog.ts";
@@ -28,6 +30,8 @@ export type ScreenplayJobSnapshot = {
   id: string;
   status: "queued" | "running" | "completed" | "canceled" | "failed";
   partialFountain: string;
+  reasoning?: string;
+  startedAt?: number;
   activeLabel: string;
   screenplay: PictureScreenplay;
   telemetry: ScreenplayTelemetry | null;
@@ -41,6 +45,8 @@ export type StartScreenplayJobInput = {
   research?: PictureResearchBible | null;
   modelId: string;
   settings?: Partial<ScreenplayGenerationSettings>;
+  revisionInstructions?: string;
+  generationInstructions?: string;
   stepId?: ScreenplayStep["id"];
   resume?: boolean;
   rewriteScope?: ScreenplayScope;
@@ -55,7 +61,9 @@ export class ScreenplayJobManager {
   readonly #jobs = new Map<string, ScreenplayJobSnapshot>();
   readonly #canceledJobs = new Set<string>();
   #activeJobId: string | null = null;
-  #residentFamily: "llama" | "qwen" | null = null;
+  #qaActive = false;
+  #qaCanceled = false;
+  #residentFamily: "llama" | "qwen" | "other" | null = null;
   private readonly provider: LocalLLMProvider;
   private readonly loadCatalog: () => Promise<ModelCatalog> | ModelCatalog;
   private readonly now: () => number;
@@ -79,6 +87,7 @@ export class ScreenplayJobManager {
   }
 
   async start(input: StartScreenplayJobInput): Promise<ScreenplayJobSnapshot> {
+    if (this.#qaActive) throw new Error("Story Doctor is still running. Stop it before starting a rewrite.");
     if (this.#activeJobId) {
       const active = this.#jobs.get(this.#activeJobId);
       if (active?.status === "queued" || active?.status === "running") throw new Error("Another screenplay workflow is already running.");
@@ -90,10 +99,9 @@ export class ScreenplayJobManager {
     if (!approvedResearch) throw new Error("Approve Picture Research before generating a screenplay.");
     const model = status.models.find((item) => item.id === input.modelId && item.status === "ready");
     if (!model) throw new Error("The selected screenplay model is not loaded and served by LM Studio.");
-    const blockedWriter = qwenWriterBlockReason(model, status.provider.available, input.screenplay.pinnedWriterServedId);
+    const blockedWriter = exactLocalWriterBlock(model, status.provider.available, input.screenplay.pinnedWriterServedId);
     if (blockedWriter) throw new Error(blockedWriter);
     const family = classifyLocalWriterFamily(model);
-    if (family !== "llama" && family !== "qwen") throw new Error(blockedWriter ?? "Unsupported writer family.");
     if (this.#residentFamily && this.#residentFamily !== family) {
       throw new Error("A different model family is still claimed as resident. Release the local model before switching families. Premiere316 will not dual-load.");
     }
@@ -102,6 +110,8 @@ export class ScreenplayJobManager {
       id: jobId,
       status: "queued",
       partialFountain: "",
+      reasoning: "",
+      startedAt: this.now(),
       activeLabel: "Preparing local model",
       screenplay: input.screenplay,
       telemetry: null,
@@ -130,10 +140,16 @@ export class ScreenplayJobManager {
     approvedResearch?: import("../research/bible.ts").ResearchContent | null;
     characterState?: string;
     continuityState?: string;
-  }): Promise<ScreenplayQaReport> {
+    directorNotes?: string;
+    generationInstructions?: string;
+  }, progress?: { onToken?: (text: string) => void; onReasoning?: (text: string) => void }): Promise<ScreenplayQaReport> {
+    if (this.#qaActive || this.#activeJobId) throw new Error("Another local screenplay operation is running. Stop it before starting Story Doctor.");
+    this.#qaActive = true;
+    this.#qaCanceled = false;
+    try {
     const status = await this.status();
     const model = status.models.find((item) => item.id === input.modelId && item.status === "ready");
-    const blocked = llamaQaBlockReason(model ?? null, input.writerId, status.provider.available, input.pinnedQaServedId ?? null, Boolean(input.secondOpinion));
+    const blocked = exactLocalWriterBlock(model ?? null, status.provider.available, input.pinnedQaServedId ?? input.writerId);
     if (blocked || !model) throw new Error(blocked ?? "Story Doctor model is not served.");
     const qaFamily = classifyLocalWriterFamily(model);
     const writerFamily = input.writerId && input.pinnedQaServedId === input.writerId ? qaFamily : classifyLocalWriterFamily({ id: input.writerId ?? "", servedModelId: input.writerId ?? "", displayName: input.writerId ?? "" });
@@ -149,10 +165,13 @@ export class ScreenplayJobManager {
       nodeIds: input.selectedNodeIds,
       selection: input.selection,
     });
+    if (this.#qaCanceled) throw new Error("Story Doctor stopped.");
     const result = await this.provider.generate({
       runId: this.id(),
       stepId: input.secondOpinion ? "qa-second-opinion" : "qa",
-      system: input.secondOpinion ? SECOND_OPINION_SYSTEM : STORY_DOCTOR_SYSTEM,
+      system: withProductionInstructions(input.secondOpinion ? SECOND_OPINION_SYSTEM : STORY_DOCTOR_SYSTEM, input.generationInstructions),
+      onToken: progress?.onToken,
+      onReasoning: progress?.onReasoning,
       prompt: buildStoryDoctorUser({
         goal: input.goal ?? "",
         approvedResearch: input.approvedResearch ?? null,
@@ -160,12 +179,16 @@ export class ScreenplayJobManager {
         continuityState: input.continuityState,
         fountain: scopedFountain,
         revisionTarget: input.revisionTarget ?? input.rewriteScope ?? "full",
-      }),
+      }) + `\n\nEXPLICIT PICTURE DIRECTOR INSTRUCTIONS: ${input.directorNotes ?? ""}\nEvaluate against the approved screenplay and these instructions. Do not recommend replacing explicitly chosen costume colors or creative presentation merely because another style is more common.`,
     }, { servedModelId: model.servedModelId, settings });
     const parsed = parseScreenplayQaReport(result.text, this.id(), this.now(), model, input.secondOpinion ? "second-opinion" : "qa-critic");
     if ("error" in parsed) throw new Error(parsed.error);
+    if (this.#qaCanceled) throw new Error("Story Doctor stopped.");
     return parsed;
+    } finally { this.#qaActive = false; }
   }
+
+  async cancelCritique(): Promise<void> { if (this.#qaActive) { this.#qaCanceled = true; await this.provider.cancel(); } }
 
   async releaseResident(): Promise<void> {
     if (this.provider.releaseResident) await this.provider.releaseResident("user-explicit");
@@ -191,6 +214,7 @@ export class ScreenplayJobManager {
     };
     job.updatedAt = this.now();
     await this.provider.cancel();
+    job.activeLabel = "Stopped";
     return this.get(jobId);
   }
 
@@ -200,8 +224,14 @@ export class ScreenplayJobManager {
       load: (config: ScreenplayRuntimeConfig) => this.provider.load({ servedModelId: config.servedModelId, settings: config.settings }),
       generate: async (request, config) => {
         job.partialFountain = "";
+        job.reasoning = "";
         const result = await this.provider.generate({
           ...request,
+          thinkingEnabled: false,
+          onReasoning: (text) => {
+            job.reasoning = ((job.reasoning ?? "") + text).slice(-40000);
+            job.updatedAt = this.now();
+          },
           onToken: (token) => {
             job.partialFountain += token;
             job.updatedAt = this.now();
@@ -227,6 +257,8 @@ export class ScreenplayJobManager {
         model,
         runId: jobId,
         settings: input.settings,
+        revisionInstructions: input.revisionInstructions,
+        generationInstructions: input.generationInstructions,
         stepId: input.stepId,
         resume: input.resume,
         rewriteScope: input.rewriteScope,
@@ -240,7 +272,8 @@ export class ScreenplayJobManager {
         now: this.now,
         onUpdate: ({ state, step, phase }) => {
           job.screenplay = state;
-          job.activeLabel = phase === "starting" ? step.label : `${step.label} complete`;
+          const label = input.revisionInstructions ? "Applying Story Doctor recommendations" : step.label;
+          job.activeLabel = phase === "starting" ? label : `${label} complete`;
           if (phase === "completed") job.partialFountain = state.workingFountain;
           job.updatedAt = this.now();
         },

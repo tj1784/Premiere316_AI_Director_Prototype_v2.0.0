@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { requiredFreeGpuMemoryBytes } from "./local-still.server.ts";
 
 const source = readFileSync(new URL("./local-still.server.ts", import.meta.url), "utf8");
 const worker = readFileSync(new URL("../../../desktop/workers/flux1_jsonl_worker.py", import.meta.url), "utf8");
@@ -78,7 +79,8 @@ describe("native still runtime policy", () => {
   it("fails closed when audited CUDA weight files exceed installed GPU memory", () => {
     assert.match(source, /requirePlausibleGpuMemory\(identity,/);
     assert.match(source, /cudaRoles.includes\(component.role\)/);
-    assert.match(source, /MEMORY RISK: audited CUDA lower-bound/);
+    assert.equal(requiredFreeGpuMemoryBytes(26_283_332_608, false), 26_283_332_608 + 2 * 1024 ** 3);
+    assert.equal(requiredFreeGpuMemoryBytes(26_283_332_608, true), 2 * 1024 ** 3);
     assert.match(source, /--query-gpu=memory\.total/);
   });
 });

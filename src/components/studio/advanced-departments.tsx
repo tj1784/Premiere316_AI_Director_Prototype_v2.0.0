@@ -85,17 +85,19 @@ export function AdvancedDepartmentsRail() {
     <div className="min-w-0">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 px-2 pt-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <p className="text-xs text-muted">Advanced departments are tools, not the primary workflow.</p>
+          <p className="text-xs text-muted">Production departments</p>
+          <Button size="sm" variant="ghost" onClick={() => openAdvancedDepartment("intake")}>Intake</Button>
+          <Button size="sm" variant="ghost" onClick={() => { useStudio.getState().setGenerateFocus("assets"); openAdvancedDepartment("generate"); }}>Assets</Button>
           {onDashboard ? null : (
             <Button size="sm" variant="ghost" onClick={() => enterAdvancedDepartments()}>
               All departments
             </Button>
           )}
         </div>
-        {onDashboard ? null : <Button size="sm" onClick={() => returnToDefaultMode()}>Return to Default Mode</Button>}
+        {onDashboard ? null : <Button size="sm" onClick={() => returnToDefaultMode()}>Simple workflow</Button>}
       </div>
       {onDashboard ? (
-        <p className="px-2 py-2 text-[11px] text-subtle">Choose a department card to inspect or override. None of these rooms are required in Default Mode.</p>
+        <p className="px-2 py-2 text-[11px] text-subtle">Open a department to review your screenplay, assets and production settings.</p>
       ) : (
         <>
           <div className="hidden min-w-0 flex-wrap gap-3 px-2 py-2 lg:flex">

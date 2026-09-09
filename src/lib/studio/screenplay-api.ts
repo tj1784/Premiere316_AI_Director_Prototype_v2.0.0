@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { moviePlanStreamResponse } from "./movie-plan-stream.ts";
 import { approvedResearchSnapshot, type PictureResearchBible } from "../research/bible.ts";
 import { normalizeLoopbackEndpoint } from "./local-llm-endpoint.ts";
 import type { PictureIntake } from "./picture-intake.ts";
@@ -51,6 +52,8 @@ export const startScreenplayJob = createServerFn({ method: "POST" })
     logicalRole: input.logicalRole,
     releaseAtEnd: Boolean(input.releaseAtEnd),
     settings: input.settings as Partial<ScreenplayGenerationSettings> | undefined,
+    revisionInstructions: input.revisionInstructions ? String(input.revisionInstructions).slice(0, 30000) : undefined,
+    generationInstructions: input.generationInstructions,
     stepId: input.stepId,
     resume: Boolean(input.resume),
   }))
@@ -77,6 +80,8 @@ export const runScreenplayQa = createServerFn({ method: "POST" })
     characterState?: string;
     continuityState?: string;
     research?: PictureResearchBible | null;
+    directorNotes?: string;
+    generationInstructions?: string;
   }) => {
     const research = input.research ?? null;
     const approvedResearch = approvedResearchSnapshot(research);
@@ -97,9 +102,14 @@ export const runScreenplayQa = createServerFn({ method: "POST" })
       characterState: input.characterState,
       continuityState: input.continuityState,
       approvedResearch,
+      directorNotes: String(input.directorNotes ?? ""),
+      generationInstructions: input.generationInstructions,
     };
   })
-  .handler(async ({ data }) => (await manager(data.endpoint)).critique(data));
+  .handler(async ({ data }) => {
+    const jobs = await manager(data.endpoint);
+    return moviePlanStreamResponse(async (onToken, onReasoning) => ({ text: JSON.stringify(await jobs.critique(data, { onToken, onReasoning })) }), () => jobs.cancelCritique());
+  });
 
 export const releaseScreenplayResident = createServerFn({ method: "POST" })
   .validator((input: EndpointQuery | undefined) => ({ endpoint: input?.endpoint ?? null }))

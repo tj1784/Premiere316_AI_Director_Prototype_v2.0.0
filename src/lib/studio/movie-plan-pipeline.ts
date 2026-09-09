@@ -44,7 +44,7 @@ import type { ScreenplayModelRef } from "./screenplay.ts";
 export const CONFIGURED_MODEL_UNAVAILABLE = LLAMA_NOT_SERVED;
 export const MANUAL_FALLBACK_LABEL = "Manual fallback — no AI movie plan has been generated.";
 
-export type MoviePlanGenerate = (input: { stepId: InternalPhase; system: string; prompt: string; sceneCount?: number; runtimeSeconds?: number }) => Promise<{ text: string }>;
+export type MoviePlanGenerate = (input: { stepId: InternalPhase | "assetPrompts" | "assetReferences" | "assetReferenceChoice"; system: string; prompt: string; sceneCount?: number; runtimeSeconds?: number; assetIds?: string[]; sourceQuotes?: string[] }) => Promise<{ text: string }>;
 
 export type MoviePlanRuntime = {
   available: boolean;
@@ -116,14 +116,43 @@ export function failClosedMoviePlan(picture: Picture, input: { reason?: string; 
 }
 
 export function extractJsonObject(text: string): Record<string, unknown> {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const raw = (fenced?.[1] ?? text).trim();
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start < 0 || end <= start) throw new Error("Model did not return a JSON object.");
-  const parsed = JSON.parse(raw.slice(start, end + 1)) as unknown;
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Model JSON was not an object.");
-  return parsed as Record<string, unknown>;
+  const raw = text.trim();
+  const parseObject = (candidate: string): Record<string, unknown> => {
+    const parsed = JSON.parse(candidate) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Model JSON was not an object.");
+    return parsed as Record<string, unknown>;
+  };
+  // Parse the full response first: backticks inside JSON strings are content,
+  // not a response wrapper and must never displace the enclosing object.
+  try { return parseObject(raw); } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error;
+  }
+  const fenced = raw.match(/^```(?:json)?[ \t]*\r?\n([\s\S]*)\r?\n```[ \t]*$/i);
+  if (fenced) return parseObject(fenced[1]);
+  // Do not turn a top-level array/string into an object by extracting its contents.
+  if (/^[\["]/.test(raw)) throw new Error("Model JSON was not an object.");
+  let start = -1;
+  let depth = 0;
+  let quoted = false;
+  let escaped = false;
+  for (let index = 0; index < raw.length; index++) {
+    const character = raw[index];
+    if (quoted) {
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === '"') quoted = false;
+      continue;
+    }
+    if (character === '"') { quoted = true; continue; }
+    if (character === "{") {
+      if (start < 0) start = index;
+      depth++;
+    } else if (character === "}" && start >= 0) {
+      depth--;
+      if (depth === 0) return parseObject(raw.slice(start, index + 1));
+    }
+  }
+  throw new Error("Model did not return a JSON object.");
 }
 
 function asString(value: unknown): string {
@@ -254,7 +283,7 @@ function performancePrompt(picture: Picture): { system: string; prompt: string }
 
 function shotsPrompt(picture: Picture): { system: string; prompt: string } {
   return {
-    system: "You are Premiere316 shot director. Return JSON { shots: [{ sceneNumber, description, type, durationSec, camera, lens, cameraMove, emotion, expression }] }. Use 1-based screenplay scene numbers. Cover every scene with concrete action. Keep descriptions concise.",
+    system: "You are Premiere316 shot director. Return JSON { shots: { shot_01: { sceneNumber, description, type, durationSec, camera, lens, cameraMove, emotion, expression }, shot_02: {...} } }. Follow the schema's fixed 1-based scene assignments in chronological order. Each assigned scene must show its actual screenplay events, including the final scene's ending. Keep descriptions concise.",
     prompt: `Shot list for ${picture.title}. Target ${picture.intake.targetRuntimeMinutes * 60} seconds total. Use exactly ${Math.max(picture.scenes.length, Math.ceil(picture.intake.targetRuntimeMinutes * 6))} shots, equal durations, covering all story events. Description at most 15 words; each other text field at most 5 words. Fountain:\n${picture.screenplay.workingFountain}`,
   };
 }
@@ -349,6 +378,7 @@ export async function executeMoviePlan(picture: Picture, input: {
   runtime: MoviePlanRuntime;
   now?: number;
   id?: () => string;
+  fromCompletedScreenplay?: boolean;
 }): Promise<MoviePlanResult> {
   const now = input.now ?? Date.now();
   const id = input.id ?? (() => `mp:${now}:${Math.random().toString(36).slice(2, 8)}`);
@@ -358,6 +388,7 @@ export async function executeMoviePlan(picture: Picture, input: {
   }
   const generate = input.runtime.generate;
   let next = applyIntake(picture, now);
+  if (next.nativeFilm) next = { ...next, nativeFilm: { ...next.nativeFilm, writer: undefined } };
   const flow = hydrateProductFlow(next.productFlow);
   const reviewPhases = flow.reviewInternalPhases && !Object.values(flow.reviewPhases).some(Boolean) ? allPhaseReviewsOn() : flow.reviewPhases;
   const steps: ProductFlowState["steps"] = [];
@@ -394,7 +425,9 @@ export async function executeMoviePlan(picture: Picture, input: {
 
   try {
     let research = hydratePictureResearch(next.research, next.intake, now);
-    if (flow.reviewInternalPhases && isResearchApproved(next.research)) {
+    if (input.fromCompletedScreenplay) {
+      steps.push(step("research", "draftReady", "Existing research retained for the completed screenplay."));
+    } else if (flow.reviewInternalPhases && isResearchApproved(next.research)) {
       research = next.research ?? research;
       steps.push(step("research", "draftReady", "Research Bible already approved; continuing."));
     } else if (flow.reviewInternalPhases && reviewThis("research") && researchSectionsArePopulated(next.research?.content.sections) && !isResearchApproved(next.research)) {
@@ -420,7 +453,10 @@ export async function executeMoviePlan(picture: Picture, input: {
 
     let screenplay = next.screenplay.schemaVersion ? next.screenplay : makePictureScreenplay(next.intake.workflow, null, now);
     let fountain = screenplay.workingFountain.trim();
-    if (flow.reviewInternalPhases && screenplay.approvedVersionId && /^(INT\.|EXT\.|INT\.\/EXT\.|I\/E\.)/im.test(fountain)) {
+    if (input.fromCompletedScreenplay) {
+      if (!/^(INT\.|EXT\.|INT\.\/EXT\.|I\/E\.)/im.test(fountain)) throw new Error("A completed screenplay with scene headings is required before restarting production.");
+      steps.push(step("screenplay", "draftReady", "Completed screenplay preserved verbatim; restarting at asset breakdown."));
+    } else if (flow.reviewInternalPhases && screenplay.approvedVersionId && /^(INT\.|EXT\.|INT\.\/EXT\.|I\/E\.)/im.test(fountain)) {
       steps.push(step("screenplay", "draftReady", "Screenplay already approved; continuing."));
     } else if (flow.reviewInternalPhases && reviewThis("screenplay") && /^(INT\.|EXT\.|INT\.\/EXT\.|I\/E\.)/im.test(fountain) && !screenplay.approvedVersionId) {
       next = { ...next, screenplay, screenplayFountain: fountain };
@@ -449,7 +485,9 @@ export async function executeMoviePlan(picture: Picture, input: {
       if (pausedScreen) return pausedScreen;
     }
 
-    if (flow.qaEnabled !== true) {
+    if (input.fromCompletedScreenplay) {
+      steps.push(step("screenplayQa", "skipped", "Restart begins after the completed screenplay; no rewrite or QA pass requested."));
+    } else if (flow.qaEnabled !== true) {
       screenplay = { ...screenplay, lastQaReport: null };
       if (!reviewThis("screenplay")) screenplay = approveCurrentScreenplay(screenplay, `${id()}:approved`, now);
       next = { ...next, screenplay };
@@ -499,8 +537,18 @@ export async function executeMoviePlan(picture: Picture, input: {
     const scenes = sceneNodes(hierarchy).map((scene) => ({ id: scene.id, slugline: scene.slugline ?? scene.title }));
     if (!scenes.length) throw new Error("Approved screenplay has no scenes.");
     breakAsk.prompt += `\nUse this exact scene index: ${JSON.stringify(scenes.map((scene, index) => ({ number: index + 1, heading: scene.slugline })))}\nSource constraints: ${next.intake.fidelityRequirements}`;
-    const breakText = await generate({ stepId: "breakdown", ...breakAsk, sceneCount: scenes.length });
-    const parsedAssets = extractJsonObject(breakText.text).assets;
+    let parsedAssets: unknown;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const breakText = await generate({ stepId: "breakdown", ...breakAsk, sceneCount: scenes.length });
+        parsedAssets = extractJsonObject(breakText.text).assets;
+        if (!Array.isArray(parsedAssets) || !parsedAssets.length) throw new Error("Asset breakdown was empty.");
+        break;
+      } catch (error) {
+        if (attempt === 1) throw error;
+        breakAsk.prompt += "\nThe prior response was incomplete or invalid. Return one COMPLETE compact JSON object with an assets array. Group repeated extras into representative characters, deduplicate repeated objects, and keep each description under 30 words. Do not repeat the screenplay or explain the answer.";
+      }
+    }
     const llmDrafts: BreakdownRequirementDraft[] = Array.isArray(parsedAssets)
       ? parsedAssets.map((raw, index) => {
         const item = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
@@ -530,7 +578,9 @@ export async function executeMoviePlan(picture: Picture, input: {
       scenes,
       socialWorld: [],
     });
-    const drafts = [...llmDrafts, ...fallback.filter((item) => !llmDrafts.some((draft) => draft.name.toLocaleLowerCase() === item.name.toLocaleLowerCase()))];
+    // Camera directions and incidental keywords are not additional story assets.
+    // The model has the full screenplay and owns the production breakdown.
+    const drafts = llmDrafts;
     if (!drafts.length) throw new Error("No production assets were extracted.");
     if (!llmDrafts.length) throw new Error("The model returned no production assets.");
     const production = createProductionBreakdown(approvedInput, drafts, now);
@@ -599,14 +649,16 @@ export async function executeMoviePlan(picture: Picture, input: {
     calls.push("shots");
     const shotAsk = shotsPrompt(next);
     const shotText = await generate({ stepId: "shots", ...shotAsk, sceneCount: scenes.length, runtimeSeconds: next.intake.targetRuntimeMinutes * 60 });
-    const shotRows = extractJsonObject(shotText.text).shots;
-    const sceneId = next.scenes[0]?.id ?? "SCENE-001";
+    const shotData = extractJsonObject(shotText.text).shots;
+    const shotRows = Array.isArray(shotData) ? shotData : shotData && typeof shotData === "object" ? Object.entries(shotData).sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true })).map(([, value]) => value) : [];
     const shots: Shot[] = Array.isArray(shotRows)
       ? shotRows.map((raw, index) => {
         const item = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
+        const sceneId = next.scenes[Number(item.sceneNumber) - 1]?.id;
+        if (!sceneId) throw new Error(`Shot ${index + 1} has an invalid screenplay scene number.`);
         return {
           id: `sh${index + 1}`,
-          sceneId: next.scenes[Number(item.sceneNumber) - 1]?.id ?? sceneId,
+          sceneId,
           index: index + 1,
           type: asString(item.type) || "coverage",
           description: asString(item.description) || `Shot ${index + 1}`,
@@ -623,6 +675,8 @@ export async function executeMoviePlan(picture: Picture, input: {
       })
       : [];
     if (!shots.length) throw new Error("Shot list was empty.");
+    const missingScenes = next.scenes.filter((scene) => !shots.some((shot) => shot.sceneId === scene.id));
+    if (missingScenes.length) throw new Error(`Shot list omitted ${missingScenes.length} screenplay scene(s), including required story events. Regenerate complete coverage before rendering.`);
     next = { ...next, shots: fitShotDurations(shots, next.intake.targetRuntimeMinutes * 60, next.fps) };
     // These workspaces were first created before shots existed. Bind the actual
     // generated coverage now so image preparation can see its camera plans.
@@ -636,6 +690,22 @@ export async function executeMoviePlan(picture: Picture, input: {
 
     calls.push("promptLab");
     next = compilePicture(next);
+    const promptResponse = await generate({ stepId: "promptLab", sceneCount: next.shots.length,
+      system: "You are Premiere316's generation-prompt writer. Write the actual final prompts yourself from the supplied screenplay, shot plan, researched appearance and user requirements. Return JSON { visualContinuity, shots: [{ shotNumber, videoPrompt, imagePrompt }] }. Do not output a template, abstract emotions in place of actions, explanations, or engine names. For each video prompt use 40–65 words describing visible subjects, concrete motion, setting, camera movement and sound. Each image prompt is 20–35 words. Keep every shot self-contained and consistent. No invented events that contradict the source. Only include characters present in that shot.",
+      prompt: `Write exactly one prompt pair for every numbered shot, preserving the screenplay's event sequence and complete ending.\nUser brief: ${next.intake.concept}\nFidelity and appearance requirements: ${next.intake.fidelityRequirements}\nResearch appearance: ${next.research?.content.sections.costumeProps}\nCast: ${JSON.stringify(next.characters)}\nScreenplay:\n${next.screenplay.workingFountain}\nShots: ${JSON.stringify(next.shots.map((shot, index) => ({ shotNumber: index + 1, description: shot.description, seconds: shot.durationSec, camera: shot.cameraMove })))}\nWrite a concise shared visualContinuity paragraph including wardrobe and source constraints. Native H3 uses text-to-video with sound; use natural language, no scheduler or guidance instructions.` });
+    const promptData = extractJsonObject(promptResponse.text);
+    const continuity = asString(promptData.visualContinuity);
+    const promptRows = Array.isArray(promptData.shots) ? promptData.shots : [];
+    if (!continuity || promptRows.length !== next.shots.length) throw new Error("Model prompt pass did not cover every shot.");
+    const prompts: Record<string, string> = {};
+    const imagePrompts: Record<string, string> = {};
+    for (const row of promptRows) {
+      const shot = next.shots[Number(row.shotNumber) - 1];
+      if (!shot || prompts[shot.id] || !asString(row.videoPrompt) || !asString(row.imagePrompt)) throw new Error("Model prompt pass contains missing, duplicate or invalid shot prompts.");
+      prompts[shot.id] = asString(row.videoPrompt);
+      imagePrompts[shot.id] = asString(row.imagePrompt);
+    }
+    next = { ...next, nativeFilm: { visualContinuity: continuity, prompts, imagePrompts, writer: { modelId: input.runtime.servedModelId, generatedAt: now, rawResponse: promptResponse.text } }, shots: next.shots.map((shot) => ({ ...shot, i2vPrompt: prompts[shot.id], t2iPrompt: imagePrompts[shot.id] })) };
     let gates = hydrateGenerateGates(next.generateGates, next);
     for (const shot of next.shots) {
       if (!shot.t2iPrompt) continue;
@@ -651,7 +721,7 @@ export async function executeMoviePlan(picture: Picture, input: {
       });
     }
     next = { ...next, generateGates: gates };
-    const pausedPrompts = maybePause("promptLab", "Asset Gate prompts compiled from the generated plan.");
+    const pausedPrompts = maybePause("promptLab", "Image and video prompts written by the configured model and saved verbatim.");
     if (pausedPrompts) return pausedPrompts;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

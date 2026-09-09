@@ -79,9 +79,9 @@ export type EngineQualityPreset = {
 };
 
 export type NativeAdapterCapabilities = {
-  adapterId: "flux" | "flux2" | "klein-demo";
+  adapterId: "flux" | "flux2" | "klein-demo" | "krea-2";
   runtimeImplementation: string;
-  modelVariant: "flux1-dev" | "flux2-dev" | "flux2-klein-4b" | "flux2-klein-9b";
+  modelVariant: "flux1-dev" | "flux2-dev" | "flux2-klein-4b" | "flux2-klein-9b" | "krea2-raw";
   controls: Record<EngineControlId, EngineControlCapability>;
   presets: EngineQualityPreset[];
 };
@@ -282,6 +282,7 @@ function flux1(): NativeAdapterCapabilities {
 
 function flux2(modelVariant: NativeAdapterCapabilities["modelVariant"]): NativeAdapterCapabilities {
   const controls = commonControls();
+  squareStillControls(controls);
   const klein = modelVariant === "flux2-klein-4b" || modelVariant === "flux2-klein-9b";
   const steps = klein ? 4 : 50;
   const guidance = klein ? 1 : 4;
@@ -298,7 +299,7 @@ function flux2(modelVariant: NativeAdapterCapabilities["modelVariant"]): NativeA
     help: "Official FLUX.2 empirical SNR schedule computed from token sequence length and native step count.",
     disabledReason: "Fixed by the current native worker.", fixed: true, perGenerationOverride: false,
   });
-  controls.references = disabled("references", "Reference images", "conditioning", "basic", "images", "The current FLUX.2 Dev worker is T2I-only; reference/edit conditioning is not enabled.");
+  controls.references = enabled({ id: "references", label: "Attached reference images", group: "conditioning", level: "basic", kind: "images", runtimeDefault: [], help: "FLUX.2 conditions generation on reference images attached to the sealed asset. Reference file hashes are recorded with each result.", perGenerationOverride: false, fixed: true });
   controls.keepResident = enabled({
     id: "keepResident", label: "Keep warm", group: "memory", level: "expert", kind: "boolean",
     runtimeDefault: true, recommendedDefault: true,
@@ -313,16 +314,43 @@ function flux2(modelVariant: NativeAdapterCapabilities["modelVariant"]): NativeA
   return { adapterId: klein ? "klein-demo" : "flux2", runtimeImplementation: "black-forest-labs/flux2", modelVariant, controls, presets: nativePresets({ steps, guidance }) };
 }
 
+function squareStillControls(controls: NativeAdapterCapabilities["controls"]) {
+  for (const id of ["width", "height"] as const) controls[id] = { ...controls[id], runtimeDefault: 512, recommendedDefault: 1024, minimum: 512, maximum: 1024, step: 512, help: "512px draft or 1024px character sheet. Width and height must match." };
+  controls.aspectRatio = { ...controls.aspectRatio, runtimeDefault: "1:1", recommendedDefault: "1:1", allowedValues: [{ value: "1:1", label: "1:1" }], fixed: true, perGenerationOverride: false, help: "Square drafts and character sheets." };
+}
+
+function krea2Raw(): NativeAdapterCapabilities {
+  const controls = commonControls();
+  squareStillControls(controls);
+  controls.width = { ...controls.width, maximum: 1536, recommendedDefault: 1536, help: "512×512 draft, 1024×1024 square, or 1536×1024 turnaround sheet." };
+  controls.height = { ...controls.height, help: "512px draft or 1024px sheet; landscape sheets use 1536×1024." };
+  controls.aspectRatio = { ...controls.aspectRatio, recommendedDefault: "3:2", allowedValues: [{ value: "1:1", label: "1:1" }, { value: "3:2", label: "3:2 turnaround" }], help: "Square drafts or landscape turnaround sheets." };
+  controls.steps = fixedNumber("steps", "Steps", "advanced", 52, "KREA 2 RAW official 52-step sampling.");
+  controls.guidance = fixedNumber("guidance", "Guidance", "advanced", 3.5, "KREA 2 RAW official classifier-free guidance 3.5.");
+  controls.scheduler = enabled({ id: "scheduler", label: "Timestep strategy", group: "generation", level: "expert", kind: "enum", runtimeDefault: "krea2-raw-resolution-aware-euler", recommendedDefault: "krea2-raw-resolution-aware-euler", allowedValues: [{ value: "krea2-raw-resolution-aware-euler", label: "KREA 2 RAW official" }], help: "Official KREA 2 RAW sampling schedule.", fixed: true, perGenerationOverride: false });
+  controls.references = disabled("references", "Image conditioning", "conditioning", "basic", "images", "KREA 2 RAW accepts text only. Attached research images guide the prompt writer and are recorded separately from image conditioning.");
+  controls.textEncoderPlacement = { ...controls.textEncoderPlacement, help: "Qwen3-VL-4B encodes the complete prompt queue on GPU, then unloads before image model loading." };
+  controls.promptEmbeddingCache = enabled({ id: "promptEmbeddingCache", label: "Prompt embedding cache", group: "memory", level: "expert", kind: "boolean", runtimeDefault: true, help: "Verified GPU-encoded prompts are cached in system RAM before image generation.", fixed: true, perGenerationOverride: false });
+  controls.keepResident = enabled({ id: "keepResident", label: "Keep warm", group: "memory", level: "expert", kind: "boolean", runtimeDefault: true, help: "Image transformer and VAE remain loaded across the image queue.", fixed: true, perGenerationOverride: false });
+  controls.unload = enabled({ id: "unload", label: "Unload", group: "memory", level: "expert", kind: "action", help: "Release the app-owned KREA 2 session.", perGenerationOverride: false });
+  controls.runtimeImplementation = { ...controls.runtimeImplementation, runtimeDefault: "krea-ai/krea-2", recommendedDefault: "krea-ai/krea-2", allowedValues: [{ value: "krea-ai/krea-2", label: "KREA 2 native" }], help: "Official local KREA 2 implementation." };
+  const presets = nativePresets({ steps: 52, guidance: 3.5 });
+  presets[2] = { ...presets[2], description: "1536×1024 turnaround sheet with official RAW sampling.", values: { ...presets[2].values, width: 1536, height: 1024, aspectRatio: "3:2" } };
+  return { adapterId: "krea-2", runtimeImplementation: "krea-ai/krea-2", modelVariant: "krea2-raw", controls, presets };
+}
+
 const ADAPTERS = {
   "flux1-dev": flux1(),
   "flux2-dev": flux2("flux2-dev"),
   "flux2-klein-4b": flux2("flux2-klein-4b"),
   "flux2-klein-9b": flux2("flux2-klein-9b"),
+  "krea2-raw": krea2Raw(),
 } satisfies Record<NativeAdapterCapabilities["modelVariant"], NativeAdapterCapabilities>;
 
 export function nativeAdapterCapabilities(adapterId: string | undefined, baseName = ""): NativeAdapterCapabilities | null {
   if (adapterId === "flux") return ADAPTERS["flux1-dev"];
   if (adapterId === "flux2") return ADAPTERS["flux2-dev"];
+  if (adapterId === "krea-2") return ADAPTERS["krea2-raw"];
   if (adapterId === "klein-demo") {
     return /4b/i.test(baseName) ? ADAPTERS["flux2-klein-4b"] : ADAPTERS["flux2-klein-9b"];
   }

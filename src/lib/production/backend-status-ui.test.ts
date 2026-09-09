@@ -37,6 +37,6 @@ describe("Wave 4 backend authority status UI fail-closed contract", () => {
     assert.match(stageViews, /disabled=\{generating === item\.id \|\| item\.status !== "APPROVED_PREPARED" \|\| !rootCurrent/);
     assert.doesNotMatch(stageViews, /disabled=\{!production \|\| production\.productionAuthority\?\.status !== "CURRENT"/);
     assert.match(preparedPanel, /desktopProductionAuthorityStatus/);
-    assert.match(preparedPanel, /disabled=\{approving === item\.id \|\| item\.status !== "READY_TO_PREPARE" \|\| !backendCurrent\}/);
+    assert.match(preparedPanel, /disabled=\{sealing \|\| Boolean\(approving\) \|\| item\.status !== "READY_TO_PREPARE" \|\| !backendCurrent\}/);
   });
 });

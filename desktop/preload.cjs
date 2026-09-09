@@ -7,9 +7,19 @@
 const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 const channels = {
+  imageSearchReferences: "p316:image:searchReferences",
+  imageImportWebReference: "p316:image:importWebReference",
+  filmStart: "p316:film:start",
+  filmStatus: "p316:film:status",
+  filmStop: "p316:film:stop",
   catalogGet: "p316:catalog:get",
   enginesStop: "p316:engines:stop",
   imageManifests: "p316:image:manifests",
+  imagePrepareDrafts: "p316:image:prepareDrafts",
+  imageGenerateDraft: "p316:image:generateDraft",
+  imageRecoverDrafts: "p316:image:recoverDrafts",
+  imageEncodeDraftPrompts: "p316:image:encodeDraftPrompts",
+  imageProgress: "p316:image:progress",
   imageSealAuthority: "p316:image:sealAuthority",
   imageAuthorityStatus: "p316:image:authorityStatus",
   imageAuthorizePrepared: "p316:image:authorizePrepared",
@@ -51,6 +61,7 @@ function invoke(channel, ...args) {
 
 contextBridge.exposeInMainWorld("premiere316", {
   isDesktop: true,
+  film: { start: (input) => invoke(channels.filmStart, input), status: (jobId) => invoke(channels.filmStatus, jobId), stop: () => invoke(channels.filmStop) },
   catalog: {
     get: (query) => invoke(channels.catalogGet, query ?? {}),
   },
@@ -58,6 +69,21 @@ contextBridge.exposeInMainWorld("premiere316", {
     unload: () => invoke(channels.enginesStop),
   },
   image: {
+    searchReferences: (query) => invoke(channels.imageSearchReferences, query),
+    importWebReference: (input) => invoke(channels.imageImportWebReference, input),
+    prepareDrafts: (input) => invoke(channels.imagePrepareDrafts, input),
+    generateDraft: (input) => invoke(channels.imageGenerateDraft, input),
+    recoverDrafts: (input) => invoke(channels.imageRecoverDrafts, input),
+    encodeDraftPrompts: (input) => invoke(channels.imageEncodeDraftPrompts, input),
+    onProgress: (callback) => {
+      if (typeof callback !== "function") return () => {};
+      const listener = (_event, progress) => {
+        if (!progress || ![progress.pictureId, progress.assetId, progress.preparedAssetId].every((value) => typeof value === "string" && value.length > 0 && value.length <= 512) || typeof progress.message !== "string" || !progress.message.length || progress.message.length > 500 || !Number.isFinite(progress.at)) return;
+        callback({ pictureId: progress.pictureId, assetId: progress.assetId, preparedAssetId: progress.preparedAssetId, message: progress.message, at: progress.at });
+      };
+      ipcRenderer.on(channels.imageProgress, listener);
+      return () => ipcRenderer.removeListener(channels.imageProgress, listener);
+    },
     manifests: () => invoke(channels.imageManifests),
     sealAuthority: (input) => invoke(channels.imageSealAuthority, input),
     authorityStatus: (input) => invoke(channels.imageAuthorityStatus, input),

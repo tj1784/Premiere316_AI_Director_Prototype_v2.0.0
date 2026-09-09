@@ -63,7 +63,7 @@ const FAMILY_SLOTS: Record<string, SlotSpec[]> = {
   "FLUX.1": [{ role: "text_encoder", label: "Text encoders", required: true, minimum: 2 }, ...DIFFUSION_SLOTS.slice(1)],
   "FLUX.2": DIFFUSION_SLOTS,
   "FLUX.2 Klein": DIFFUSION_SLOTS,
-  "Krea 2": [{ role: "text_encoder", label: "Text encoders", required: true, minimum: 2 }, ...DIFFUSION_SLOTS.slice(1)],
+  "Krea 2": DIFFUSION_SLOTS,
   "Qwen Image": DIFFUSION_SLOTS,
   "LTX 2.3": DIFFUSION_SLOTS,
   "LTX 2.5": DIFFUSION_SLOTS,
@@ -95,9 +95,13 @@ function allComponents(catalog: ModelCatalog): ModelComponent[] {
 
 function globalMatches(family: string, role: ModelRole, components: ModelComponent[]): ModelComponent[] {
   const candidates = components.filter((component) => component.role === role);
-  if (family === "FLUX.1" || family === "Krea 2") {
+  if (family === "Krea 2") {
+    if (role === "text_encoder") return candidates.filter((c) => /qwen3[- _]?vl[- _]?4b|qwen3vl_4b/.test(normalized(c)));
+    if (role === "vae") return candidates.filter((c) => /krea2realvae_v10|qwen.*image.*vae/.test(normalized(c)));
+  }
+  if (family === "FLUX.1") {
     if (role === "text_encoder") return candidates.filter((c) => /(^|[/ _-])clip_l|t5xxl/.test(normalized(c)));
-    if (role === "vae") return candidates.filter((c) => family === "Krea 2" ? /krea2.*vae/.test(normalized(c)) : /(^|[/ _-])ae([. _-]|$)/.test(normalized(c)));
+    if (role === "vae") return candidates.filter((c) => /(^|[/ _-])ae([. _-]|$)/.test(normalized(c)));
   }
   if (family === "FLUX.2 Klein") {
     if (role === "text_encoder") return candidates.filter((c) => /qwen[_ .-]*3[_ .-]*(4b|8b)/.test(normalized(c)));
@@ -125,13 +129,17 @@ function precisionAffinity(base: ModelComponent, component: ModelComponent): num
 
 function selectComponents(family: string, base: ModelComponent, role: ModelRole, candidates: ModelComponent[], minimum = 1): ModelComponent[] {
   if (candidates.length === 0) return [];
+  if (family === "Krea 2" && (role === "text_encoder" || role === "vae")) {
+    const selected = globalMatches(family, role, candidates).find((component) => role === "text_encoder" ? /qwen3vl_4b_bf16\.safetensors/.test(normalized(component)) : /krea2realvae_v10\.safetensors/.test(normalized(component)));
+    return selected ? [selected] : [];
+  }
   const ordered = [...candidates].sort((a, b) => {
     const affinity = precisionAffinity(base, b) - precisionAffinity(base, a);
     if (affinity !== 0) return affinity;
     return b.sizeBytes - a.sizeBytes;
   });
 
-  if (family === "FLUX.1" || family === "Krea 2") {
+  if (family === "FLUX.1") {
     if (role === "text_encoder") {
       const clip = ordered.find((c) => /(^|[/ _-])clip_l/.test(normalized(c)));
       const t5 = ordered.find((c) => /t5xxl/.test(normalized(c)));
@@ -164,6 +172,7 @@ function standaloneAdapterId(family: string, base: ModelComponent): string | und
   if (family === "FLUX.1" && /diffusion_models\/flux1-dev\.safetensors$/.test(value)) return "flux";
   if (family === "FLUX.2" && /diffusion_models\/flux2_dev\.safetensors$/.test(value)) return "flux2";
   if (family === "FLUX.2 Klein" && /diffusion_models\/flux2\/flux-2-klein-(4b-fp8|9b-fp8mixed)\.safetensors$/.test(value)) return "klein-demo";
+  if (family === "Krea 2" && /diffusion_models\/(?:krea 2\/)?krea2_raw_bf16\.safetensors$/.test(value)) return "krea-2";
   return undefined;
 }
 

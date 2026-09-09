@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { createProductionBreakdown } from "./breakdown.ts";
 import { approveCanonicalSpec, editAsset } from "./index.ts";
-import { approveInventoryAssetSpec, editInventoryAsset, linkAssetReference, mergeInventoryAssets, prepareAssetRecords, splitInventoryAsset } from "./inventory.ts";
+import { replaceAssetImage, inventoryCards, approveInventoryAssetSpec, editInventoryAsset, linkAssetReference, mergeInventoryAssets, prepareAssetRecords, splitInventoryAsset } from "./inventory.ts";
 import type { AssetReference } from "./types.ts";
 
 function record() {
@@ -13,6 +13,17 @@ function record() {
 }
 
 describe("Inventory 2.0 lineage and preparation", () => {
+  it("adds missing scene coverage with a linked requirement and preserves existing media", () => {
+    const base = record(), asset = base.assets[0];
+    const next = editInventoryAsset(base, asset.id, { additionalSceneIds: ["SCENE-002", "SCENE-002"] }, 30);
+    const changed = next.assets.find(a => a.id === asset.id)!;
+    assert.deepEqual(changed.requiredSceneIds, ["SCENE-001", "SCENE-002"]);
+    assert.deepEqual(changed.iterations, asset.iterations);
+    assert.ok(next.requirements.some(r => changed.requirementIds.includes(r.id) && r.sceneIds.includes("SCENE-002")));
+    assert.throws(() => editInventoryAsset(base, asset.id, { additionalSceneIds: ["unknown-scene"] }), /belong to this screenplay/);
+    const again = editInventoryAsset(next, asset.id, { additionalSceneIds: ["SCENE-002"] }, 31);
+    assert.equal(again.requirements.length, next.requirements.length);
+  });
   it("edits and approves specs append versions without changing asset ids", () => {
     const base = record();
     const id = base.assets[0]!.id;
@@ -126,4 +137,14 @@ describe("Inventory 2.0 lineage and preparation", () => {
     assert.equal(prepared?.preparedApprovalRootId, null);
     assert.equal(ready.graph?.nodes.some((node) => node.id === `prepared-asset:${prepared?.id}`), true);
   });
+});
+
+it("manual upload replaces the displayed image and retains history without generated provenance", () => {
+  const base = record(), id = base.assets[0].id;
+  const first = replaceAssetImage(base, id, { uri: "data:image/png;base64,old", name: "old.png" }, 40);
+  const next = replaceAssetImage(first, id, { uri: "data:image/png;base64,new", name: "new.png" }, 41);
+  assert.equal(next.assets[0].iterations.length, 2);
+  assert.equal(inventoryCards(next, { category: "all", readiness: "all", query: "" })[0].previewUri, "data:image/png;base64,new");
+  assert.equal(next.assets[0].iterations[1].provenance.sourceType, "user");
+  assert.equal(next.assets[0].approvedIterationId, null);
 });

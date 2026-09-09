@@ -2,6 +2,7 @@ import type { PlacementPlan } from "./residency.ts";
 
 export type ExecutedLora = { id: string; path?: string; fingerprint?: string; weight: number };
 export type ExecutedReference = { id: string; fingerprint?: string; strength?: number };
+export type ExecutedTextEncoding = { device: "cuda"; cached: true; cacheKey: string; cacheSha256: string; contextLength: number; encodeMs: number };
 
 export type GenerationTelemetry = {
   modelLoadMs: number | null;
@@ -26,6 +27,10 @@ export type GenerationProvenance = Readonly<{
   prompt: string;
   enhancedPrompt: string | null;
   references: ReadonlyArray<ExecutedReference>;
+  /** Research images used by the prompt writer, not supplied as pixel conditioning. */
+  promptReferences?: ReadonlyArray<ExecutedReference>;
+  conditioningMode?: "text-only" | "text-and-image";
+  textEncoding?: Readonly<ExecutedTextEncoding>;
   width: number;
   height: number;
   steps: number;

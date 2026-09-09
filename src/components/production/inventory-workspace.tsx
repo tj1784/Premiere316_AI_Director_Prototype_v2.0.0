@@ -21,6 +21,7 @@ import { AddAssetDialog } from "./inventory-dialogs";
 import { PRODUCTION_CATEGORY_LABELS } from "./inventory-constants";
 import { ReadinessBadge } from "./inventory-primitives";
 import { PreparedAssetsPanel } from "./prepared-assets-panel";
+import { AssetReferenceUpload } from "./asset-reference-upload";
 
 type PreflightFilter = "all" | "ready" | "review" | "blocked";
 
@@ -129,7 +130,7 @@ export function InventoryWorkspace({ boundary, record, busy = false, onRunBreakd
           <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),1fr))] gap-3">
             {cards.map((card) => {
               const asset = assets.find((item) => item.id === card.id)!;
-              return <AssetCard key={card.id} asset={asset} sceneLabels={card.sceneLabels} previewUri={card.previewUri} selected={card.id === selectedId} onClick={() => setSelectedId(card.id)} />;
+              return <div key={card.id} className="grid content-start gap-2"><AssetCard asset={asset} sceneLabels={card.sceneLabels} previewUri={card.previewUri} selected={card.id === selectedId} onClick={() => setSelectedId(card.id)} /><AssetReferenceUpload record={record} assetId={asset.id} onChange={onChange} disabled={busy} /></div>;
             })}
           </div>
         ) : (

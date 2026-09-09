@@ -30,7 +30,7 @@ export const ENGINES: Engine[] = [
   { id: "flux2", name: "FLUX.2", org: "black-forest-labs", repo: "flux2", kind: "image" },
   { id: "flux", name: "FLUX.1", org: "black-forest-labs", repo: "flux", kind: "image" },
   { id: "flux-krea", name: "FLUX Krea", org: "krea-ai", repo: "flux-krea", kind: "image" },
-  { id: "krea-2", name: "Krea 2", org: "krea-ai", repo: "krea-2", kind: "image" },
+  { id: "krea-2", name: "KREA 2 RAW", org: "krea-ai", repo: "krea-2", kind: "image" },
   { id: "fooocus-mre", name: "Fooocus MRE", org: "krea-ai", repo: "Fooocus-MRE", kind: "image" },
   { id: "bakllava", name: "BakLLaVA", org: "krea-ai", repo: "BakLLaVA", kind: "image" },
   { id: "klein-demo", name: "FLUX.2 Klein", org: "black-forest-labs", repo: "flux-2-klein-api-demo", kind: "image" },

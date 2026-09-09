@@ -30,6 +30,7 @@ export type SocialWorldEntry = {
 };
 
 export type PictureIntake = {
+  visualDirection?: import("./visual-direction.ts").VisualDirection;
   schemaVersion: 1;
   sourceType: IntakeSourceType;
   title: string;

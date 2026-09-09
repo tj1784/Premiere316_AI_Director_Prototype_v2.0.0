@@ -1,15 +1,15 @@
 {
   "ok": true,
   "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
-  "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave2-smoke-U5Fq4h",
-  "launchedUserData": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave2-smoke-U5Fq4h",
+  "userDataDir": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave2-smoke-MHJunn",
+  "launchedUserData": "C:\\Users\\teeja\\AppData\\Local\\Temp\\premiere316-wave2-smoke-MHJunn",
   "realProfileUntouched": "C:\\Users\\teeja\\AppData\\Roaming\\Premiere316",
   "buildInfo": {
     "schemaVersion": 1,
     "appVersion": "3.0.2",
-    "buildId": "p316-20260904124249-f8c5609e32d4",
-    "buildTimestamp": "2026-09-04T12:42:49.151Z",
-    "rendererSourceHash": "f8c5609e32d4642132076347b74b7f07ed1495430a8d1fa6de0ee41e15a36999",
+    "buildId": "p316-20260908052218-44d151d83cda",
+    "buildTimestamp": "2026-09-08T05:22:18.667Z",
+    "rendererSourceHash": "44d151d83cda0d4f6e0578aeab30a13ad962fceaffcf561aabf871f772cd104b",
     "rendererMode": "PACKAGED DIST",
     "executablePath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\Premiere316.exe",
     "appPath": "D:\\Projects\\Premiere316_v3\\dist-desktop\\win-unpacked\\resources\\app.asar"

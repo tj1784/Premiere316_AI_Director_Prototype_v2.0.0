@@ -204,9 +204,10 @@ export class LMStudioProvider implements LocalLLMProvider {
     if (this.#listingAuthority !== "native") {
       throw new Error("LM Studio native model status is unavailable. OpenAI /v1/models rows are not treated as loaded, and Premiere316 will not auto-load a model.");
     }
-    const model = models.find((item) => item.id === servedModelId && item.loaded && item.type === "llm");
+    const matches = models.filter((item) => item.id === servedModelId && item.loaded && item.type === "llm");
+    const model = matches.length === 1 ? matches[0] : null;
     if (!model) {
-      throw new Error(`The exact served model ${servedModelId} is not currently loaded. Premiere316 will not auto-load it.`);
+      throw new Error(`The exact served model ${servedModelId} is not currently loaded or is ambiguous. No substitute is used.`);
     }
     return model;
   }
@@ -244,11 +245,13 @@ export class LMStudioProvider implements LocalLLMProvider {
   }
 
   async generate(request: LocalLLMGenerateRequest, config: LocalLLMLoadConfig): Promise<LocalLLMGenerateResult> {
-    this.#activeModel = await this.#assertExactServedLoaded(config.servedModelId);
+    const expectedModel = await this.#assertExactServedLoaded(config.servedModelId);
+    this.#activeModel = expectedModel;
     const started = this.now();
     const controller = new AbortController();
     this.#abort = controller;
     let text = "";
+    let responseModelVerified = false;
     let promptTokens: number | null = null;
     let generatedTokens: number | null = null;
     try {
@@ -287,10 +290,22 @@ export class LMStudioProvider implements LocalLLMProvider {
           const value = line.slice(5).trim();
           if (!value || value === "[DONE]") continue;
           const event = asObject(JSON.parse(value));
+          if (event.model !== undefined) {
+            if (event.model !== expectedModel.id && event.model !== expectedModel.instanceId) {
+              throw new Error(`LM Studio returned ${String(event.model)} instead of the selected writer ${config.servedModelId}. The response was rejected.`);
+            }
+            responseModelVerified = true;
+          }
           const choices = Array.isArray(event.choices) ? event.choices.map(asObject) : [];
           const delta = asObject(choices[0]?.delta);
+          const reasoning = typeof delta.reasoning_content === "string" ? delta.reasoning_content : typeof delta.reasoning === "string" ? delta.reasoning : "";
+          if (reasoning) {
+            if (!responseModelVerified) throw new Error(`LM Studio did not identify the responding writer as ${config.servedModelId}. The response was rejected.`);
+            request.onReasoning?.(reasoning);
+          }
           const token = typeof delta.content === "string" ? delta.content : "";
           if (token) {
+            if (!responseModelVerified) throw new Error(`LM Studio did not identify the responding writer as ${config.servedModelId}. The response was rejected.`);
             text += token;
             request.onToken?.(token);
           }
@@ -316,6 +331,9 @@ export class LMStudioProvider implements LocalLLMProvider {
         };
       }
       return { text, durationMs, promptTokens, generatedTokens };
+    } catch (error) {
+      controller.abort(error);
+      throw error;
     } finally {
       if (this.#abort === controller) this.#abort = null;
     }

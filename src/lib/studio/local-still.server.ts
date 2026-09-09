@@ -4,9 +4,11 @@ import { dirname, join, relative, resolve } from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { createInterface } from "node:readline";
 import { nativeAdapterCapabilities, runtimeDefaults, type NativeGenerationValues } from "./engine-controls.ts";
-import { createGenerationProvenance, provenanceSidecarName, serializeGenerationProvenance, telemetryFromWorker, type GenerationProvenance } from "./generation-provenance.ts";
+import { createGenerationProvenance, provenanceSidecarName, serializeGenerationProvenance, telemetryFromWorker, type GenerationProvenance, type ExecutedTextEncoding } from "./generation-provenance.ts";
 import { executedNativeStillSettings, toNativeStillWorkerRequest } from "./native-still-contract.ts";
 import { NATIVE_STILL_MODEL_PATHS } from "./native-model-paths.server.ts";
+import { KREA2_COMPONENTS, KREA2_ROOT } from "./krea2-runtime.server.ts";
+import type { EncodeAssetDraftPromptsResult } from "../desktop/protocol.ts";
 
 const PYTHON = "D:\\Dev\\Tools\\Python312\\python.exe";
 const FLUX_ROOT = "D:\\Projects\\flux";
@@ -15,7 +17,7 @@ const APP_VERSION = "3.0.2";
 const T5_SNAPSHOT_REVISION = "3db67ab1af984cf10548a73467f0e5bca2aaaeb2";
 const MISTRAL_REVISION = "95a6d26c4bfb886c58daf9d3f7332c857cb27b43";
 const PROCESSOR_REVISION = "68faf511d618ef198fef186659617cfd2eb8e33a";
-type NativeWorkerKind = "flux" | "flux2";
+type NativeWorkerKind = "flux" | "flux2" | "krea-2";
 const EXACT_COMPONENTS = {
   flux: { role: "transformer", id: "flux1-dev.safetensors@4610115bb0c89560703c892c59ac2742fa821e60ef5871b33493ba544683abd7", path: NATIVE_STILL_MODEL_PATHS.flux1 },
   ae: { role: "vae", id: "ae.safetensors@afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38", path: NATIVE_STILL_MODEL_PATHS.flux1Vae },
@@ -40,13 +42,39 @@ let workerKind: NativeWorkerKind | null = null;
 let workerLogFd: number | undefined;
 let seq = 0;
 const pending = new Map<string, (msg: WorkerMsg) => void>();
+let activeProgress: { id: string; child: ChildProcess; onProgress?: (message: string) => void } | null = null;
 
-export type LocalStillInput = { prompt: string; engineId: string; engineName: string; references: string[]; selectedBasePath?: string; values?: NativeGenerationValues; assetId?: string; pictureId?: string; preparedAssetId?: string };
+/** Forward only bounded, explicit worker phase records; never arbitrary stderr or traceback text. */
+export function parseNativeStillProgress(line: string): string | null {
+  const match = /^\[(?:FLUX\.2|KREA\.2) \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] (.{1,500})$/.exec(line);
+  if (!match) return null;
+  const message = match[1];
+  const fixed = [
+    "Reusing loaded FLUX.2 models; text encoder remains in system RAM.",
+    "Verifying local component files and checkpoint hashes.",
+    "Validating transformer and VAE keys/shapes on CPU/meta before loading GPU weights.",
+    "Transformer and converted VAE passed strict key/shape validation.",
+    "Loading the Mistral text encoder into CPU/system RAM.", "CPU text encoder loaded.",
+    "Loading FLUX.2 transformer weights into GPU VRAM.", "Loading the image VAE into GPU VRAM.",
+    "FLUX.2 models loaded; ready to encode the prompt.",
+    "Sampling finished. Decoding and saving the generated image.",
+    "Loading Qwen3-VL-4B text encoder into GPU VRAM.",
+    "Verifying local KREA.2 component files and checkpoint hashes.",
+    "Unloading the GPU text encoder before image generation.",
+    "Text encoder unload confirmed. All saved prompt encodings are ready.",
+    "Reusing the loaded KREA.2 RAW image model.",
+    "Loading KREA.2 RAW image model and VAE into GPU VRAM.",
+    "Sampling finished. Decoding the generated image.",
+  ];
+  return fixed.includes(message) || /^(?:Encoding prompt \d+\/\d+ on GPU; no truncation\.|Prompt \d+\/\d+ encoded in \d+(?:\.\d+)? seconds\.|Sampling step \d+\/\d+ completed\.|Sampling KREA\.2 RAW at (?:512x512|1024x1024): 52 steps, CFG 3\.5\.|Encoding the complete \d+-character prompt on CPU; no truncation\.|CPU prompt encoding completed in \d+(?:\.\d+)? seconds\.|Encoding \d+ attached reference image\(s\) for conditioning\.|Sampling the image on GPU: \d+ denoising steps, guidance \d+(?:\.\d+)?\.|Image saved\. Total generation time: \d+(?:\.\d+)? seconds\.)$/.test(message) ? message : null;
+}
+
+export type LocalStillInput = { prompt: string; engineId: string; engineName: string; references: string[]; promptReferences?: string[]; selectedBasePath?: string; values?: NativeGenerationValues; assetId?: string; pictureId?: string; preparedAssetId?: string };
 export type LocalStillOutputProof = { mediaUri: string; mediaSha256: string; sidecarSha256: string; width: number; height: number; byteLength: number; mediaBytes: number[]; sidecarBytes: number[] };
 export type LocalStillResult = { ok: true; url: string; provenance: GenerationProvenance; output: LocalStillOutputProof; workerIdentityDigest?: string; componentDigest?: string } | { ok: false; error: string };
 export type LocalEngineCheck = { ok: true; modelName: string } | { ok: false; error: string };
 
-type WorkerMsg = { id?: string; ok?: boolean; error?: string; code?: string; loaded?: boolean; model?: string; engine?: string; seed?: number; workerIdentity?: unknown; componentDigest?: string; telemetry?: Record<string, unknown> };
+type WorkerMsg = { id?: string; ok?: boolean; error?: string; code?: string; loaded?: boolean; model?: string; engine?: string; seed?: number; referencesUsed?: Array<{ pathName: string; sha256: string }>; workerIdentity?: unknown; componentDigest?: string; telemetry?: Record<string, unknown>; promptCount?: number; cachedPromptCount?: number; encoderReleased?: boolean; textEncoderDevice?: string; encodeMs?: number; textEncoding?: unknown };
 
 export function setLocalStillMediaRoot(root: string): void {
   if (!root || /\0/.test(root)) throw new Error("Invalid durable media root.");
@@ -55,6 +83,13 @@ export function setLocalStillMediaRoot(root: string): void {
 
 function sha256(bytes: Uint8Array | string): string { return createHash("sha256").update(bytes).digest("hex"); }
 
+export function verifiedTextEncoding(value: unknown): ExecutedTextEncoding {
+  if (!value || typeof value !== "object") throw new Error("KREA worker did not return its GPU prompt encoding proof.");
+  const item = value as Record<string, unknown>;
+  if (item.device !== "cuda" || item.cached !== true || typeof item.cacheKey !== "string" || !/^[a-f0-9]{64}$/.test(item.cacheKey) || typeof item.cacheSha256 !== "string" || !/^[a-f0-9]{64}$/.test(item.cacheSha256) || typeof item.contextLength !== "number" || !Number.isInteger(item.contextLength) || item.contextLength < 1 || item.contextLength > 8192 || typeof item.encodeMs !== "number" || !Number.isFinite(item.encodeMs) || item.encodeMs < 0) throw new Error("KREA worker GPU prompt encoding proof is invalid.");
+  return { device: "cuda", cached: true, cacheKey: item.cacheKey, cacheSha256: item.cacheSha256, contextLength: item.contextLength, encodeMs: item.encodeMs };
+}
+
 function pngInfo(bytes: Uint8Array): { ok: true; width: number; height: number } | { ok: false; error: string } {
   if (bytes.byteLength < 33) return { ok: false, error: "Generated PNG is too small." };
   const sig = [137, 80, 78, 71, 13, 10, 26, 10];
@@ -62,7 +97,7 @@ function pngInfo(bytes: Uint8Array): { ok: true; width: number; height: number }
   if (String.fromCharCode(...bytes.slice(12, 16)) !== "IHDR") return { ok: false, error: "Generated PNG IHDR is missing." };
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const width = view.getUint32(16); const height = view.getUint32(20);
-  if (width !== 512 || height !== 512) return { ok: false, error: "Generated PNG must be exactly 512x512 for Wave 4." };
+  if (!(width === height && [512, 1024].includes(width)) && !(width === 1536 && height === 1024)) return { ok: false, error: "Generated PNG must be 512×512, 1024×1024 or 1536×1024." };
   return { ok: true, width, height };
 }
 
@@ -100,12 +135,13 @@ export function verifyLocalStillOutput(output: LocalStillOutputProof): { ok: tru
 }
 
 function profileRoot(): string { return resolve(durableMediaRoot, "..", ".."); }
-function workerRoot(kind: NativeWorkerKind): string { return join(profileRoot(), "native", kind === "flux2" ? "flux2-worker" : "flux1-worker"); }
-function cacheRoot(kind: NativeWorkerKind): string { return join(profileRoot(), "native", kind === "flux2" ? "flux2-cache" : "flux1-cache"); }
-function logPath(kind: NativeWorkerKind): string { return join(profileRoot(), "native", kind === "flux2" ? "flux2-worker.log" : "flux1-worker.log"); }
+function workerLabel(kind: NativeWorkerKind): string { return kind === "krea-2" ? "krea2" : kind === "flux2" ? "flux2" : "flux1"; }
+function workerRoot(kind: NativeWorkerKind): string { return join(profileRoot(), "native", `${workerLabel(kind)}-worker`); }
+function cacheRoot(kind: NativeWorkerKind): string { return join(profileRoot(), "native", `${workerLabel(kind)}-cache`); }
+function logPath(kind: NativeWorkerKind): string { return join(profileRoot(), "native", `${workerLabel(kind)}-worker.log`); }
 
 function workerSourcePath(kind: NativeWorkerKind): string {
-  const file = kind === "flux2" ? "flux2_jsonl_worker.py" : "flux1_jsonl_worker.py";
+  const file = `${workerLabel(kind)}_jsonl_worker.py`;
   const packaged = process.env.P316_RESOURCES_PATH ? join(process.env.P316_RESOURCES_PATH, "workers", file) : "";
   if (packaged && existsSync(packaged)) return packaged;
   return join(process.cwd(), "desktop", "workers", file);
@@ -119,15 +155,47 @@ function attachWorker(child: ChildProcess) {
   const rl = createInterface({ input: child.stdout! });
   rl.on("line", (line) => { if (!line.trim()) return; try { const msg = JSON.parse(line) as WorkerMsg; if (msg.id && pending.has(msg.id)) { const resolve = pending.get(msg.id); pending.delete(msg.id); resolve?.(msg); } } catch { /* stdout is JSONL-only; malformed records are ignored and timeout */ } });
   child.stderr?.on("data", (chunk) => { if (workerLogFd !== undefined) try { writeSync(workerLogFd, chunk); } catch { /* log closed */ } });
+  if (child.stderr) createInterface({ input: child.stderr }).on("line", (line) => {
+    const active = activeProgress;
+    if (worker !== child || active?.child !== child) return;
+    const message = parseNativeStillProgress(line);
+    if (message) try { active.onProgress?.(message); } catch { /* A progress observer cannot fail generation. */ }
+  });
   child.on("exit", () => { if (worker === child) { worker = null; workerKind = null; pending.forEach((resolve) => resolve({ ok: false, error: "App-owned image worker exited." })); pending.clear(); closeEngineLog(); } });
 }
-function callWorker(payload: Record<string, unknown>, timeoutMs: number): Promise<WorkerMsg> {
+function callWorker(payload: Record<string, unknown>, timeoutMs: number, onProgress?: (message: string) => void): Promise<WorkerMsg> {
   const child = worker; if (!child?.stdin) return Promise.resolve({ ok: false, error: "App-owned image worker is not running." });
+  const exclusive = payload.method === "generate" || payload.method === "encode_prompts";
+  if (exclusive && activeProgress) return Promise.resolve({ ok: false, error: "An app-owned image operation is already running." });
   const id = String(++seq);
-  return new Promise((resolve) => { const timer = setTimeout(() => { pending.delete(id); resolve({ ok: false, error: "App-owned FLUX.1 worker timed out." }); }, timeoutMs); pending.set(id, (msg) => { clearTimeout(timer); resolve(msg); }); child.stdin!.write(`${JSON.stringify({ ...payload, id })}\n`); });
+  if (exclusive) activeProgress = { id, child, onProgress };
+  return new Promise((resolve) => {
+    const clearProgress = () => { if (activeProgress?.id === id) activeProgress = null; };
+    const timer = setTimeout(() => {
+      pending.delete(id); clearProgress();
+      if (exclusive) killWorker();
+      resolve({ ok: false, error: "App-owned image worker timed out." });
+    }, timeoutMs);
+    pending.set(id, (msg) => { clearTimeout(timer); clearProgress(); resolve(msg); });
+    child.stdin!.write(`${JSON.stringify({ ...payload, id })}\n`);
+  });
 }
 
 export async function stopLocalEngine(): Promise<{ ok: true; stopped: boolean }> { const running = Boolean(worker?.pid); killWorker(); return { ok: true, stopped: running }; }
+
+export async function encodeLocalStillPrompts(input: { engineId: string; prompts: string[] }, onProgress?: (message: string) => void): Promise<EncodeAssetDraftPromptsResult> {
+  try {
+    if (input.engineId !== "krea-2") throw new Error("Selected worker does not support staged GPU prompt encoding.");
+    if (!input.prompts.length || input.prompts.length > 100 || input.prompts.some((prompt) => !prompt.trim() || prompt.length > 20_000)) throw new Error("Invalid native prompt batch.");
+    requireIdentityFiles(runtimeIdentity("krea-2"));
+    const ready = await ensureLocalEngine("krea-2");
+    if (!ready.ok) return ready;
+    const result = await callWorker({ method: "encode_prompts", prompts: input.prompts }, 34 * 60_000, onProgress);
+    if (!result.ok) throw new Error(result.error || "Native GPU prompt encoding failed.");
+    if (result.promptCount !== input.prompts.length || result.encoderReleased !== true || result.textEncoderDevice !== "cuda" || result.cachedPromptCount !== input.prompts.length || typeof result.encodeMs !== "number") throw new Error("Worker did not confirm complete GPU prompt encoding and text encoder release.");
+    return { ok: true, promptCount: result.promptCount, cachedPromptCount: result.cachedPromptCount, encoderReleased: true, textEncoderDevice: "cuda", encodeMs: result.encodeMs };
+  } catch (error) { return { ok: false, error: error instanceof Error ? error.message : "Native prompt encoding failed." }; }
+}
 
 export async function ensureLocalEngine(kind: NativeWorkerKind = "flux2"): Promise<{ ok: true; hello: WorkerMsg } | { ok: false; error: string }> {
   if (worker?.pid && workerKind === kind) { const ping = await callWorker({ method: "ping" }, 8_000); if (ping.ok) return { ok: true, hello: ping }; killWorker(); }
@@ -135,7 +203,7 @@ export async function ensureLocalEngine(kind: NativeWorkerKind = "flux2"): Promi
   if (process.env.P316_PACKAGED_APP !== "1") return { ok: false, error: "Native image generation is packaged-app only and never auto-loads from the dev renderer." };
   const workerFile = workerSourcePath(kind);
   if (!existsSync(PYTHON)) return { ok: false, error: "Local Python runtime is not installed." };
-  if (!existsSync(workerFile)) return { ok: false, error: kind === "flux2" ? "Packaged Premiere316 FLUX.2 worker is missing." : "Packaged Premiere316 FLUX.1 worker is missing." };
+  if (!existsSync(workerFile)) return { ok: false, error: `Packaged Premiere316 ${workerLabel(kind)} worker is missing.` };
   mkdirSync(workerRoot(kind), { recursive: true }); mkdirSync(cacheRoot(kind), { recursive: true }); mkdirSync(durableMediaRoot, { recursive: true }); mkdirSync(dirname(logPath(kind)), { recursive: true });
   workerLogFd = openSync(logPath(kind), "a");
   const env = workerEnv(kind, workerFile);
@@ -153,33 +221,52 @@ function workerEnv(kind: NativeWorkerKind, workerFile: string): NodeJS.ProcessEn
   for (const key of keep) if (process.env[key]) env[key] = process.env[key];
   const cache = cacheRoot(kind);
   const shared = { ...env, PYTHONUTF8: "1", PYTHONIOENCODING: "utf-8", PYTHONUNBUFFERED: "1", PYTHONDONTWRITEBYTECODE: "1", PYTHONPYCACHEPREFIX: join(cache, "pycache"), HF_HOME: join(cache, "hf"), TRANSFORMERS_CACHE: join(cache, "transformers"), TORCH_HOME: join(cache, "torch"), TMP: join(cache, "tmp"), TEMP: join(cache, "tmp"), HF_HUB_OFFLINE: "1", TRANSFORMERS_OFFLINE: "1", HF_DATASETS_OFFLINE: "1", NO_PROXY: "*", P316_WORKER_ROOT: workerRoot(kind), P316_OUTPUT_ROOT: durableMediaRoot, P316_CACHE_ROOT: cache, P316_PYCACHE_ROOT: join(cache, "pycache"), P316_WORKER_FILE: workerFile };
+  if (kind === "krea-2") return { ...shared, P316_KREA_SOURCE_ROOT: KREA2_ROOT, P316_MODEL_KREA2: KREA2_COMPONENTS.transformer.path, P316_MODEL_KREA2_QWEN: KREA2_COMPONENTS.encoder.path, P316_MODEL_KREA2_VAE: KREA2_COMPONENTS.vae.path, P316_KREA_QWEN_CONFIG: KREA2_COMPONENTS.encoderConfig.path, P316_KREA_VAE_CONFIG: KREA2_COMPONENTS.vaeConfig.path };
   if (kind === "flux2") {
     return { ...shared, P316_BFL_FLUX2_SOURCE_ROOT: join(FLUX2_ROOT, "src"), P316_MODEL_FLUX2: EXACT_FLUX2_COMPONENTS.flux2.path, P316_MODEL_FLUX2_AE: EXACT_FLUX2_COMPONENTS.ae.path, FLUX2_MODEL_PATH: EXACT_FLUX2_COMPONENTS.flux2.path, AE_MODEL_PATH: EXACT_FLUX2_COMPONENTS.ae.path, P316_MISTRAL_MODEL: EXACT_FLUX2_COMPONENTS.mistral.path, P316_MISTRAL_PROCESSOR: EXACT_FLUX2_COMPONENTS.processor.path };
   }
   return { ...shared, P316_BFL_FLUX_SOURCE_ROOT: join(FLUX_ROOT, "src"), P316_MODEL_FLUX: EXACT_COMPONENTS.flux.path, P316_MODEL_AE: EXACT_COMPONENTS.ae.path, FLUX_MODEL: EXACT_COMPONENTS.flux.path, FLUX_AE: EXACT_COMPONENTS.ae.path, P316_MODEL_T5: EXACT_COMPONENTS.t5.path, P316_T5_CONFIG_DIR: EXACT_COMPONENTS.t5Config.path, P316_MODEL_CLIP: EXACT_COMPONENTS.clip.path, P316_OPENCLIP_BPE: EXACT_COMPONENTS.bpe.path, P316_OPENCLIP_TOKENIZER: EXACT_COMPONENTS.openclipTokenizer.path };
 }
 
-export async function exposeLocalStill(input: LocalStillInput): Promise<LocalStillResult> {
+export async function exposeLocalStill(input: LocalStillInput, onProgress?: (message: string) => void): Promise<LocalStillResult> {
   let pendingPath: string | null = null;
   try {
     const capabilities = nativeAdapterCapabilities(input.engineId, input.selectedBasePath || input.engineName);
-    const kind: NativeWorkerKind | null = capabilities?.adapterId === "flux2" && capabilities.modelVariant === "flux2-dev" ? "flux2" : capabilities?.adapterId === "flux" && capabilities.modelVariant === "flux1-dev" ? "flux" : null;
-    if (!capabilities || !kind) return { ok: false, error: "Only packaged FLUX.2 Dev (default T2I) or FLUX.1 prepared-asset generation is enabled." };
-    if (input.references.length) return { ok: false, error: kind === "flux2" ? "FLUX.2 Dev T2I does not accept reference images in the current worker." : "FLUX.1 references are unsupported in the current worker." };
-    const identity = runtimeIdentity(kind); requireIdentityFiles(identity); requirePlausibleGpuMemory(identity, kind === "flux2" ? ["transformer", "vae"] : ["transformer", "text_encoder", "vae"]);
+    const kind: NativeWorkerKind | null = capabilities?.adapterId === "krea-2" && capabilities.modelVariant === "krea2-raw" ? "krea-2" : capabilities?.adapterId === "flux2" && capabilities.modelVariant === "flux2-dev" ? "flux2" : capabilities?.adapterId === "flux" && capabilities.modelVariant === "flux1-dev" ? "flux" : null;
+    if (!capabilities || !kind) return { ok: false, error: "Selected image model has no packaged prepared-asset worker." };
+    if (input.references.length && kind !== "flux2") return { ok: false, error: "This text-only worker does not support image conditioning." };
+    const referencePaths = input.references.map((uri) => {
+      if (!uri.startsWith("media://stills/")) throw new Error("Reference image must be attached to this app's media library.");
+      const path = safeDurablePath(uri.slice("media://stills/".length));
+      if (!existsSync(path)) throw new Error("Attached reference image is missing.");
+      return path;
+    });
+    const identity = runtimeIdentity(kind); requireIdentityFiles(identity);
     const selectedBasePath = input.selectedBasePath || identity.relativeBasePath;
     if (normalizeRelative(selectedBasePath) !== normalizeRelative(identity.relativeBasePath)) return { ok: false, error: "Selected checkpoint is not bound to this native runtime adapter." };
     const wake = await ensureLocalEngine(kind); if (!wake.ok) return wake;
+    requirePlausibleGpuMemory(identity, kind === "flux" ? ["transformer", "text_encoder", "vae"] : ["transformer", "vae"], wake.hello.loaded === true);
     const id = randomUUID();
     const temporaryName = `${id}.pending.png`; pendingPath = safeDurablePath(temporaryName);
-    const workerRequest = toNativeStillWorkerRequest({ capabilities, values: { ...runtimeDefaults(capabilities), ...(input.values ?? {}), prompt: input.prompt, width: 512, height: 512 }, prompt: input.prompt, engineId: input.engineId, engineName: input.engineName, out: pendingPath, referencePaths: [] });
+    const workerRequest = toNativeStillWorkerRequest({ capabilities, values: { ...runtimeDefaults(capabilities), ...(input.values ?? {}), prompt: input.prompt }, prompt: input.prompt, engineId: input.engineId, engineName: input.engineName, out: pendingPath, referencePaths });
     const started = performance.now();
     const before = await callWorker({ method: "ping" }, 8_000);
-    const result = await callWorker(workerRequest, 30 * 60_000);
+    const result = await callWorker(workerRequest, 30 * 60_000, onProgress);
     const totalMs = performance.now() - started;
     if (!result.ok) { cleanupPendingOutput(pendingPath); pendingPath = null; return { ok: false, error: result.error || "App-owned image generation failed." }; }
+    const textEncoding = kind === "krea-2" ? verifiedTextEncoding(result.textEncoding) : undefined;
+    const executedReferences = referencePaths.map((path, index) => ({ id: input.references[index], fingerprint: sha256(readFileSync(path)) }));
+    const promptReferences = (input.promptReferences ?? []).map((uri) => {
+      if (!uri.startsWith("media://stills/")) throw new Error("Prompt reference is not attached to the app media library.");
+      const path = safeDurablePath(uri.slice("media://stills/".length));
+      const real = realpathSync(path);
+      if (relative(realpathSync(durableMediaRoot), real).startsWith("..")) throw new Error("Prompt reference escapes the app media library.");
+      return { id: uri, fingerprint: sha256(readFileSync(real)) };
+    });
+    if (referencePaths.length && (result.referencesUsed?.length !== referencePaths.length || executedReferences.some((reference, index) => result.referencesUsed?.[index]?.sha256 !== reference.fingerprint))) throw new Error("Worker did not confirm the attached reference images were used.");
     if (!existsSync(pendingPath)) { pendingPath = null; return { ok: false, error: "App-owned image worker finished without a plate." }; }
     const bytes = readFileSync(pendingPath); const parsed = pngInfo(bytes); if (!parsed.ok) { cleanupPendingOutput(pendingPath); pendingPath = null; return parsed; }
+    if (parsed.width !== workerRequest.width || parsed.height !== workerRequest.height) throw new Error("Generated PNG dimensions do not match the authorized request.");
     const mediaSha = sha256(bytes); const outName = `${id}.${mediaSha.slice(0, 24)}.png`; const finalPath = safeDurablePath(outName);
     if (existsSync(finalPath)) throw new Error("Content-addressed generated media already exists.");
     renameSync(pendingPath, finalPath);
@@ -187,11 +274,11 @@ export async function exposeLocalStill(input: LocalStillInput): Promise<LocalSti
     const executed = executedNativeStillSettings(capabilities, workerRequest, { ...result, ok: true });
     const after = await callWorker({ method: "ping" }, 8_000);
     const telemetry = telemetryFromWorker({ ...(result.telemetry ?? {}), totalMs, residentBeforeJob: Boolean(before.loaded), residentAfterJob: Boolean(after.loaded) }, totalMs);
-    const provenance = createGenerationProvenance({ assetId: input.assetId ?? id, engineId: input.engineId, engineName: input.engineName, runtimeAdapter: capabilities.adapterId, runtimeImplementation: capabilities.runtimeImplementation, baseCheckpoint: { id: identity.relativeBasePath, path: rendererSafeRuntimePath(identity.basePath), fingerprint: fullOrSampleFingerprint(identity.basePath), fingerprintKind: "sampled" }, components: identity.components.map((component) => ({ ...component, path: rendererSafeRuntimePath(component.path), fingerprint: fullOrSampleFingerprint(component.path) })), loras: [], prompt: workerRequest.prompt, enhancedPrompt: null, references: [], ...executed, timestepData: null, placementPlan: null, generatedAt: new Date().toISOString(), applicationVersion: APP_VERSION, telemetry });
+    const provenance = createGenerationProvenance({ assetId: input.assetId ?? id, engineId: input.engineId, engineName: input.engineName, runtimeAdapter: capabilities.adapterId, runtimeImplementation: capabilities.runtimeImplementation, baseCheckpoint: { id: identity.relativeBasePath, path: rendererSafeRuntimePath(identity.basePath), fingerprint: fullOrSampleFingerprint(identity.basePath), fingerprintKind: "sampled" }, components: identity.components.map((component) => ({ ...component, path: rendererSafeRuntimePath(component.path), fingerprint: fullOrSampleFingerprint(component.path) })), loras: [], prompt: workerRequest.prompt, enhancedPrompt: null, references: executedReferences, ...(kind === "krea-2" ? { promptReferences, conditioningMode: "text-only" as const, textEncoding } : { conditioningMode: referencePaths.length ? "text-and-image" as const : "text-only" as const }), ...executed, timestepData: null, placementPlan: null, generatedAt: new Date().toISOString(), applicationVersion: APP_VERSION, telemetry });
     const sidecarPath = safeDurablePath(provenanceSidecarName(outName), "sidecar");
     writeFileSync(sidecarPath, serializeGenerationProvenance(provenance), { encoding: "utf8", flag: "wx" });
     const sidecarBytes = readFileSync(sidecarPath);
-    const output = { mediaUri: `media://stills/${outName}`, mediaSha256: mediaSha, sidecarSha256: sha256(sidecarBytes), width: 512, height: 512, byteLength: bytes.byteLength, mediaBytes: [...bytes], sidecarBytes: [...sidecarBytes] };
+    const output = { mediaUri: `media://stills/${outName}`, mediaSha256: mediaSha, sidecarSha256: sha256(sidecarBytes), width: parsed.width, height: parsed.height, byteLength: bytes.byteLength, mediaBytes: [...bytes], sidecarBytes: [...sidecarBytes] };
     return { ok: true, url: output.mediaUri, provenance, output, workerIdentityDigest: sha256(JSON.stringify(result.workerIdentity ?? wake.hello.workerIdentity ?? null)), componentDigest: result.componentDigest ?? after.componentDigest };
   } catch (e) { cleanupPendingOutput(pendingPath); return { ok: false, error: e instanceof Error ? e.message : "Local still failed." }; }
 }
@@ -207,12 +294,20 @@ function walkFingerprintFiles(root: string): string[] { const files: string[] = 
 function normalizeRelative(path: string): string { return path.replace(/\\/g, "/").replace(/^d:\/ai\/models\//i, "").replace(/^model-vault\//i, "").toLowerCase(); }
 function rendererSafeRuntimePath(path: string): string { const normalized = path.replace(/\//g, "\\"); const modelRoot = "D:\\AI\\Models\\"; if (normalized.toLowerCase().startsWith(modelRoot.toLowerCase())) return normalized.slice(modelRoot.length); return normalized.split(/[/\\]/).pop() || "local-component"; }
 function requireIdentityFiles(identity: ReturnType<typeof runtimeIdentity>): void { for (const path of [identity.basePath, ...identity.components.map((component) => component.path)]) if (!existsSync(path)) throw new Error(`Native runtime component is not installed: ${path.split(/[\\/]/).pop() || "component"}`); }
-function requirePlausibleGpuMemory(identity: ReturnType<typeof runtimeIdentity>, cudaRoles: string[] = ["transformer", "text_encoder", "vae"]): void { const memory = installedGpuMemory(); if (memory === null) return; const cudaPaths = [identity.basePath, ...identity.components.filter((component) => cudaRoles.includes(component.role)).map((component) => component.path)]; const minimumCudaWeightBytes = [...new Set(cudaPaths)].reduce((total, path) => total + pathFootprintBytes(path), 0); const activationHeadroomBytes = 2 * 1024 ** 3; const budget = worker?.pid ? memory.totalBytes : memory.freeBytes; if (minimumCudaWeightBytes + activationHeadroomBytes > budget) throw new Error(`MEMORY RISK: audited CUDA lower-bound ${formatGib(minimumCudaWeightBytes)} GiB plus activation headroom exceeds current free VRAM ${formatGib(budget)} GiB.`); }
+export function requiredFreeGpuMemoryBytes(cudaWeightBytes: number, confirmedResident: boolean): number { return (confirmedResident ? 0 : cudaWeightBytes) + 2 * 1024 ** 3; }
+function requirePlausibleGpuMemory(identity: ReturnType<typeof runtimeIdentity>, cudaRoles: string[] = ["transformer", "text_encoder", "vae"], confirmedResident = false): void {
+  const memory = installedGpuMemory(); if (memory === null) return;
+  const cudaPaths = [identity.basePath, ...identity.components.filter((component) => cudaRoles.includes(component.role)).map((component) => component.path)];
+  const cudaWeightBytes = [...new Set(cudaPaths)].reduce((total, path) => total + pathFootprintBytes(path), 0);
+  const required = requiredFreeGpuMemoryBytes(cudaWeightBytes, confirmedResident);
+  if (required > memory.freeBytes) throw new Error(`MEMORY RISK: ${confirmedResident ? "Loaded model working reserve" : "Audited CUDA weights plus working reserve"} requires ${formatGib(required)} GiB, but current free VRAM is ${formatGib(memory.freeBytes)} GiB.`);
+}
 function installedGpuMemory(): { totalBytes: number; freeBytes: number } | null { try { const result = spawnSync("nvidia-smi", ["--query-gpu=memory.total,memory.free", "--format=csv,noheader,nounits"], { windowsHide: true, encoding: "utf8", timeout: 5_000 }); if (result.status !== 0) return null; const rows = String(result.stdout).trim().split(/\r?\n/).map((line) => line.split(",").map((value) => Number(value.trim()))).filter(([total, free]) => Number.isFinite(total) && Number.isFinite(free) && total > 0 && free > 0); if (!rows.length) return null; const [total, free] = rows.sort((a, b) => b[1] - a[1])[0]; return { totalBytes: total * 1024 ** 2, freeBytes: free * 1024 ** 2 }; } catch { return null; } }
 const footprintCache = new Map<string, number>();
 function pathFootprintBytes(path: string): number { if (footprintCache.has(path)) return footprintCache.get(path) ?? 0; try { const stats = statSync(path); const value = stats.isDirectory() ? walkFingerprintFiles(path).reduce((total, file) => total + statSync(file).size, 0) : stats.size; footprintCache.set(path, value); return value; } catch { return 0; } }
 function formatGib(bytes: number): string { return (bytes / 1024 ** 3).toFixed(1); }
 function runtimeIdentity(kind: NativeWorkerKind = "flux") {
+  if (kind === "krea-2") return { modelName: "krea2-raw", relativeBasePath: "diffusion_models\\Krea 2\\krea2_raw_bf16.safetensors", basePath: KREA2_COMPONENTS.transformer.path, components: [KREA2_COMPONENTS.runtime, KREA2_COMPONENTS.encoder, KREA2_COMPONENTS.encoderConfig, KREA2_COMPONENTS.vae, KREA2_COMPONENTS.vaeConfig] };
   if (kind === "flux2") return { modelName: "flux2-dev", relativeBasePath: "diffusion_models\\flux2_dev.safetensors", basePath: EXACT_FLUX2_COMPONENTS.flux2.path, components: [EXACT_FLUX2_COMPONENTS.runtime, EXACT_FLUX2_COMPONENTS.mistral, EXACT_FLUX2_COMPONENTS.processor, EXACT_FLUX2_COMPONENTS.ae] };
   return { modelName: "flux-dev", relativeBasePath: "diffusion_models\\flux1-dev.safetensors", basePath: EXACT_COMPONENTS.flux.path, components: [EXACT_COMPONENTS.runtime, EXACT_COMPONENTS.t5, EXACT_COMPONENTS.t5Config, EXACT_COMPONENTS.clip, EXACT_COMPONENTS.bpe, EXACT_COMPONENTS.openclipTokenizer, EXACT_COMPONENTS.ae] };
 }

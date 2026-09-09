@@ -1,5 +1,6 @@
 import type { Picture, Shot } from "../studio/types.ts";
 import { hydrateVideoWorkspace } from "./video-types.ts";
+import { visualDirectionText } from "../studio/visual-direction.ts";
 
 export type GenerateGateId = "assets" | "keyframes" | "video";
 export type GateItemStatus =
@@ -110,20 +111,19 @@ function seedPair(picture: Picture, shot: Shot): KeyframePair {
 
 export function approvedVisualAssetIds(picture: Picture): string[] {
   const fromProduction = (picture.production?.assets ?? [])
-    .filter((asset) => !asset.tombstone && (asset.canonicalApproved || Boolean(asset.approvedIterationId) || asset.readiness === "APPROVED" || asset.readiness === "APPROVED_PREPARED" || asset.readiness === "READY_TO_GENERATE"))
+    .filter((asset) => !asset.tombstone && !["voice", "sound", "music", "continuity", "other"].includes(asset.category) && asset.canonicalApproved && Boolean(asset.approvedIterationId))
     .map((asset) => asset.id);
-  if (fromProduction.length) return fromProduction;
-  return [...picture.characters.map((item) => item.id), ...picture.locations.map((item) => item.id)];
+  return fromProduction;
 }
 
 export function requiredVisualAssetCount(picture: Picture): { required: number; approved: number } {
-  const assets = (picture.production?.assets ?? []).filter((asset) => !asset.tombstone);
+  const assets = (picture.production?.assets ?? []).filter((asset) => !asset.tombstone && !["voice", "sound", "music", "continuity", "other"].includes(asset.category));
   if (assets.length) {
-    const approved = assets.filter((asset) => asset.canonicalApproved || Boolean(asset.approvedIterationId) || asset.readiness === "APPROVED" || asset.readiness === "APPROVED_PREPARED" || asset.readiness === "READY_TO_GENERATE").length;
+    const approved = assets.filter((asset) => asset.canonicalApproved && Boolean(asset.approvedIterationId)).length;
     return { required: assets.length, approved };
   }
   const required = picture.characters.length + picture.locations.length;
-  return { required, approved: required };
+  return { required, approved: 0 };
 }
 
 export function generateGateReadiness(picture: Picture): GateReadiness[] {
@@ -157,7 +157,9 @@ export function nativeVideoLockedForShot(picture: Picture, shotId: string): bool
 export function compileKeyframePrompt(picture: Picture, shot: Shot, kind: KeyframeKind, assetRefIds: string[]): string {
   const refs = assetRefIds.join(", ") || "no approved asset refs";
   const beat = kind === "first" ? "opening frame / continuity IN" : "closing frame / continuity OUT";
-  return `${shot.type} ${beat}. ${shot.description}. ${shot.camera} ${shot.lens}, ${shot.cameraMove}. Emotion: ${shot.emotion}. Approved refs: ${refs}. ${picture.tone}.`;
+  const direction = picture.intake.visualDirection;
+  const style = direction?.guide && direction.analyzedBoardId === direction.boardId ? visualDirectionText(direction) : "";
+  return `${shot.type} ${beat}. ${shot.description}. ${shot.camera} ${shot.lens}, ${shot.cameraMove}. Emotion: ${shot.emotion}. Approved refs: ${refs}. ${picture.tone}.${style ? `\n\n${style}` : ""}`;
 }
 
 export function compileVideoPromptFromKeyframes(picture: Picture, shot: Shot, pair: KeyframePair): PromptVersion {

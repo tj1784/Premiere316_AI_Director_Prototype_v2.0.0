@@ -5,6 +5,7 @@ import { spawnSync } from "node:child_process";
 import { nativeAdapterCapabilities, type NativeAdapterCapabilities } from "./engine-controls.ts";
 import { planPlacement, type PipelineComponent, type PlacementPlan } from "./residency.ts";
 import { NATIVE_STILL_MODEL_PATHS } from "./native-model-paths.server.ts";
+import { KREA2_COMPONENTS, KREA2_ROOT } from "./krea2-runtime.server.ts";
 
 const MODEL_ROOT = "D:\\AI\\Models";
 const HF_HUB = "D:\\_Cache\\HuggingFace\\hub";
@@ -21,10 +22,10 @@ export type ComponentManifestStatus = "READY" | "MISSING_COMPONENT" | "ADAPTER_U
 export type ImageComponentManifest = {
   schemaVersion: 1;
   adapterId: "flux" | "flux2" | "klein-demo" | "krea-2";
-  modelVariant: "flux1-dev" | "flux2-dev" | "flux2-klein-4b" | "flux2-klein-9b" | "krea2";
+  modelVariant: "flux1-dev" | "flux2-dev" | "flux2-klein-4b" | "flux2-klein-9b" | "krea2-raw";
   status: ComponentManifestStatus;
   disabledReason: string | null;
-  runtimeImplementation: "black-forest-labs/flux" | "black-forest-labs/flux2" | "unavailable";
+  runtimeImplementation: "black-forest-labs/flux" | "black-forest-labs/flux2" | "krea-ai/krea-2" | "unavailable";
   components: ImageRuntimeComponent[];
   placementPlan: PlacementPlan;
   controls: NativeAdapterCapabilities | null;
@@ -77,7 +78,7 @@ function manifest(adapterId: "flux" | "flux2" | "klein-demo", variant: ImageComp
   const missing = components.filter((component) => component.required && !component.present);
   const implementation = variant === "flux1-dev" ? "black-forest-labs/flux" : "black-forest-labs/flux2";
   const disabledUnsupported = variant === "flux1-dev" || variant === "flux2-dev" ? null : "Klein adapters remain disabled/Labs-only until a later independently gated runtime.";
-  const memoryRisk = missing.length || disabledUnsupported ? null : memoryRiskReason(components);
+  const memoryRisk = missing.length || disabledUnsupported ? null : memoryRiskReason(components, variant);
   const runtimeMissing = disabledUnsupported ?? runtimeMissingReason(variant);
   const disabledReason = missing.length
     ? `Missing exact native component: ${missing.map((item) => item.stableId).join(", ")}`
@@ -85,7 +86,7 @@ function manifest(adapterId: "flux" | "flux2" | "klein-demo", variant: ImageComp
   return {
     schemaVersion: 1,
     adapterId,
-    modelVariant: variant as Exclude<ImageComponentManifest["modelVariant"], "krea2">,
+    modelVariant: variant as Exclude<ImageComponentManifest["modelVariant"], "krea2-raw">,
     status: disabledReason ? (memoryRisk ? "MEMORY_RISK" : disabledUnsupported ? "ADAPTER_UNAVAILABLE" : "MISSING_COMPONENT") : "READY",
     disabledReason,
     runtimeImplementation: implementation,
@@ -102,17 +103,25 @@ function manifest(adapterId: "flux" | "flux2" | "klein-demo", variant: ImageComp
 }
 
 function kreaManifest(now: number): ImageComponentManifest {
+  const components = [
+    ...Object.values(KREA2_COMPONENTS).map((component) => ({ role: component.role, stableId: component.id, path: component.path, required: true })),
+    { role: "python", stableId: "Python312", path: PYTHON, required: true },
+    { role: "worker", stableId: "Premiere316:desktop/workers/krea2_jsonl_worker.py", path: process.env.P316_RESOURCES_PATH ? join(process.env.P316_RESOURCES_PATH, "workers", "krea2_jsonl_worker.py") : join(process.cwd(), "desktop", "workers", "krea2_jsonl_worker.py"), required: true },
+  ].map(toComponent);
+  const missing = components.filter((component) => component.required && !component.present);
+  const memoryRisk = missing.length ? null : memoryRiskReason(components, "krea2-raw");
+  const disabledReason = missing.length ? `Missing exact KREA 2 RAW component: ${missing.map((component) => component.stableId).join(", ")}` : memoryRisk;
   return {
     schemaVersion: 1,
     adapterId: "krea-2",
-    modelVariant: "krea2",
-    status: "ADAPTER_UNAVAILABLE",
-    disabledReason: "Krea 2 weights are not a complete app-supported native adapter; no local official runtime is wired.",
-    runtimeImplementation: "unavailable",
-    components: ["diffusion_models\\krea2_raw_bf16.safetensors", "diffusion_models\\Krea 2\\krea2_turbo_bf16.safetensors", "diffusion_models\\krea2_turbo_nvfp4.safetensors"].map((path) => toComponent({ role: "transformer", stableId: path, path: join(MODEL_ROOT, path), required: false })),
-    placementPlan: planPlacement([], { vramBytes: gpuTotalBytes() ?? 72 * 1024 ** 3 }),
-    controls: null,
-    licenseNote: "Disabled until an exact local official Krea 2 runtime and license posture are proven.",
+    modelVariant: "krea2-raw",
+    status: missing.length ? "MISSING_COMPONENT" : memoryRisk ? "MEMORY_RISK" : "READY",
+    disabledReason,
+    runtimeImplementation: "krea-ai/krea-2",
+    components,
+    placementPlan: placementFor(components),
+    controls: nativeAdapterCapabilities("krea-2"),
+    licenseNote: "Local official KREA 2 RAW. Text-only: attached research images guide prompt writing; they are not image conditioning. Qwen3-VL-4B encodes the queue on GPU and unloads before the image model loads.",
     resolvedAt: now,
   };
 }
@@ -171,11 +180,15 @@ function toComponent(spec: ComponentSpec): ImageRuntimeComponent {
 
 export function componentHasRequiredPayload(spec: ComponentSpec): boolean {
   if (!existsSync(spec.path)) return false;
+  for (const component of [KREA2_COMPONENTS.transformer, KREA2_COMPONENTS.encoder, KREA2_COMPONENTS.vae]) if (spec.stableId === component.id) return exactSizedFileHash(spec.path, component.sizeBytes, component.id.split("@")[1]);
+  if (spec.stableId === KREA2_COMPONENTS.encoderConfig.id) return exactFileHash(join(spec.path, "config.json"), "edac7703329133edfc53e46ac0081835144c99d7eebf28b71c732694d435224d") && exactFileHash(join(spec.path, "tokenizer.json"), "a5d85b6dcc535e6b93115a9ef287e6132fdbf30270da6218194ba742261173c7") && exactFileHash(join(spec.path, "tokenizer_config.json"), "c2da771801886ad9ae98181793ffd3dfb7f1af30f6f7c6a4e15d7dbba52e2399");
+  if (spec.stableId === KREA2_COMPONENTS.vaeConfig.id) return exactFileHash(join(spec.path, "config.json"), "e4e61b7553f930e9eabf8935f0a77e6d004cc3ee67a601a56ef03cc41ccada68");
+  if (spec.stableId === KREA2_COMPONENTS.runtime.id) return exactFileHash(join(spec.path, "mmdit.py"), "6fabe02508a495027710456a1a480690cfab6d998dcd0307686eada81b00a6b9") && exactFileHash(join(spec.path, "sampling.py"), "57c86a7cf4bc8e31e0a5d22c740136461523cfeda0686237b301077c3adfac3b");
   if (spec.stableId.includes("google/t5-v1_1-xxl-config-tokenizer")) return ["config.json", "tokenizer_config.json", "special_tokens_map.json", "spiece.model"].every((file) => existsSync(join(spec.path, file))) && !directoryHasWeightFile(spec.path) && exactFileHash(join(spec.path, "config.json"), "a58c2192a7166501ad2382c3d7ca3d694a1259b71a23a1925887e5afe7adcbd8") && exactFileHash(join(spec.path, "tokenizer_config.json"), "b971dce1d2805c2a66da8657156e7114a30501c6ba602fc947c8bf607a3ead2d") && exactFileHash(join(spec.path, "special_tokens_map.json"), "4720c0fddbe4c5991334f85ad7073d9bd0a294a8ba4641a2f8dab614ca825949") && exactFileHash(join(spec.path, "spiece.model"), "d60acb128cf7b7f2536e8f38a5b18a05535c9e14c7a355904270e15b0945ea86");
   if (spec.stableId.includes("t5xxl_fp16.safetensors@")) return exactSizedFileHash(spec.path, 9_787_841_024, "6e480b09fae049a72d2a8c5fbccb8d3e92febeb233bbe9dfe7256958a9167635");
   if (spec.stableId.includes("clip_l.safetensors@")) return exactSizedFileHash(spec.path, 246_144_152, "660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd");
   if (spec.stableId.includes("flux1-dev.safetensors@")) return exactSizedFileHash(spec.path, 23_802_932_552, "4610115bb0c89560703c892c59ac2742fa821e60ef5871b33493ba544683abd7");
-  if (spec.stableId.includes("ae.safetensors@")) return exactSizedFileHash(spec.path, 335_304_388, "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38");
+  if (spec.stableId.startsWith("ae.safetensors@")) return exactSizedFileHash(spec.path, 335_304_388, "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38");
   if (spec.stableId.includes("open_clip:tokenizer.py@")) return exactSizedFileHash(spec.path, 22_680, "90d743e462d051f4c921e652e0aa8af06c40ee7ac38dfdc7bb5ede6381024734");
   if (spec.stableId.includes("flux2_dev.safetensors@")) return exactSizedFileHash(spec.path, 64_446_596_128, "6159a3f19f829c8e84ba6e9996b7afaf7c0a5f3428677f5b37445778a320d275");
   if (spec.stableId.includes("flux2-vae.safetensors@")) return exactSizedFileHash(spec.path, 336_213_556, "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5");
@@ -267,7 +280,7 @@ function hfSnapshot(stableId: string): string {
 }
 
 function runtimeMissingReason(variant: ImageComponentManifest["modelVariant"]): string | null {
-  if (variant === "krea2") return "Krea 2 has no complete app-supported native runtime adapter.";
+  if (variant === "krea2-raw") return existsSync(KREA2_ROOT) ? null : "Official KREA 2 runtime is missing.";
   const runtimeRoot = variant === "flux1-dev" ? FLUX_ROOT : FLUX2_ROOT;
   if (!existsSync(runtimeRoot)) return `Native runtime repository is not installed: ${runtimeRoot}`;
   if (variant === "flux1-dev" && !existsSync(join(runtimeRoot, "src", "flux"))) return "Official black-forest-labs/flux runtime package is incomplete.";
@@ -284,10 +297,21 @@ function placementFor(components: ImageRuntimeComponent[]): PlacementPlan {
   return planPlacement(pipeline, { vramBytes: gpuTotalBytes() ?? 72 * 1024 ** 3 });
 }
 
-function memoryRiskReason(components: ImageRuntimeComponent[]): string | null {
+export function nativeCudaWeightBytes(components: Pick<ImageRuntimeComponent, "required" | "role" | "sizeBytes">[], variant: ImageComponentManifest["modelVariant"]): number {
+  if (variant === "krea2-raw") return Math.max(
+    components.filter((item) => item.required && ["transformer", "vae"].includes(item.role)).reduce((sum, item) => sum + item.sizeBytes, 0),
+    components.filter((item) => item.required && item.role === "text_encoder").reduce((sum, item) => sum + item.sizeBytes, 0),
+  );
+  // Matches flux2_jsonl_worker.py: Mistral and its inputs stay on CPU;
+  // only the encoded conditioning tensor is transferred to CUDA.
+  const cudaRoles = variant === "flux2-dev" ? ["transformer", "vae"] : ["transformer", "text_encoder", "vae"];
+  return components.filter((item) => item.required && cudaRoles.includes(item.role)).reduce((sum, item) => sum + item.sizeBytes, 0);
+}
+
+function memoryRiskReason(components: ImageRuntimeComponent[], variant: ImageComponentManifest["modelVariant"]): string | null {
   const total = gpuTotalBytes();
   if (!total) return null;
-  const requiredCuda = components.filter((item) => item.required && ["transformer", "text_encoder", "vae"].includes(item.role)).reduce((sum, item) => sum + item.sizeBytes, 0);
+  const requiredCuda = nativeCudaWeightBytes(components, variant);
   return requiredCuda + 2 * 1024 ** 3 > total ? `MEMORY RISK: native CUDA lower-bound ${formatGib(requiredCuda)} GiB exceeds installed GPU budget with activation headroom.` : null;
 }
 

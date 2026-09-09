@@ -81,8 +81,8 @@ function compileShot(picture: Picture, shot: Shot, image: string, video: string)
   const pkgVideo = compileEnginePromptPackage({ picture, shot, target: "video" });
   return {
     ...shot,
-    t2iPrompt: pkgStill.enginePrompt,
-    i2vPrompt: pkgVideo.enginePrompt,
+    t2iPrompt: (picture.nativeFilm?.writer ? picture.nativeFilm.imagePrompts?.[shot.id] : undefined) ?? pkgStill.enginePrompt,
+    i2vPrompt: (picture.nativeFilm?.writer ? picture.nativeFilm.prompts?.[shot.id] : undefined) ?? pkgVideo.enginePrompt,
     t2voicePrompt: shot.type === "closeup" ? `${shot.emotion}, close-mic, dry room, ${shot.expression}` : shot.t2voicePrompt,
   };
 }

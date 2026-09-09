@@ -48,12 +48,12 @@ function engine(adapterId: EngineConfig["adapterId"] = "flux2"): EngineConfig {
 
 describe("native engine capability schemas", () => {
   it("exposes only worker-backed controls in the normal visible set", () => {
-    assert.ok(!visibleControls(flux2, "basic").some((control) => control.id === "references"));
+    assert.ok(visibleControls(flux2, "basic").some((control) => control.id === "references"));
     assert.ok(!visibleControls(flux1, "basic").some((control) => control.id === "references"));
     assert.equal(flux1.controls.references.supported, false);
-    assert.equal(flux2.controls.references.supported, false);
+    assert.equal(flux2.controls.references.supported, true);
     assert.match(flux1.controls.references.disabledReason!, /current native adapter/);
-    assert.match(flux2.controls.references.disabledReason!, /T2I-only/i);
+    assert.match(flux2.controls.references.help, /sealed asset/);
     assert.equal(flux2.controls.loras.supported, false);
     assert.equal(flux2.controls.negativePrompt.supported, false);
   });
@@ -84,6 +84,22 @@ describe("native engine capability schemas", () => {
 });
 
 describe("native still worker boundary", () => {
+  it("honors 1024px KREA RAW sheets and truthful text-only conditioning without changing FLUX.1", () => {
+    const capabilities = nativeAdapterCapabilities("krea-2")!;
+    const request = toNativeStillWorkerRequest({ capabilities, values: { width: 1024, height: 1024, seed: 7 }, prompt: "Exact sheet prompt", engineId: "krea-2", engineName: "KREA 2 RAW", out: "sheet.png", referencePaths: [] });
+    assert.equal(capabilities.controls.references.supported, false);
+    assert.equal(request.width, 1024);
+    assert.equal(request.height, 1024);
+    assert.equal(request.references, undefined);
+    const actual = executedNativeStillSettings(capabilities, request, { ok: true, seed: 7 });
+    assert.equal(actual.steps, 52);
+    assert.equal(actual.guidance, 3.5);
+    assert.equal(actual.width, 1024);
+    const landscape = toNativeStillWorkerRequest({ capabilities, values: { width: 1536, height: 1024, seed: 7 }, prompt: "Turnaround sheet", engineId: "krea-2", engineName: "RAW", out: "sheet.png", referencePaths: [] });
+    assert.equal(landscape.width, 1536);
+    assert.equal(landscape.height, 1024);
+    for (const values of [{ width: 1024, height: 512 }, { width: 768, height: 768 }, { width: "1024", height: 1024 }]) assert.throws(() => toNativeStillWorkerRequest({ capabilities, values, prompt: "p", engineId: "krea-2", engineName: "RAW", out: "p.png", referencePaths: [] }), /dimensions|integer/);
+  });
   it("serializes only worker-backed settings and strips FLUX.1 references", () => {
     const request = toNativeStillWorkerRequest({
       capabilities: flux1,

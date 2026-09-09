@@ -1,0 +1,738 @@
+# PREMIERE316 V3 — WAVES 5–8 CONTROLLED IMPLEMENTATION PROMPT
+
+You are the implementation captain for:
+
+Repo: tj1784/Premiere316_AI_Director_Prototype_v2.0.0
+Branch: premiere316-v3
+
+Your job is to implement Waves 5–8 of Premiere316 V3 without disturbing the accepted Waves 0–4 foundation.
+
+Current accepted state:
+- Waves 0–4 are GREEN/checkpointed.
+- Wave 4 includes the packaged Electron desktop app, 14 stages, secure authority chain, durable ledger, prepared asset generation, FLUX.1 local still runtime, image iteration review, rejection, canonical approval, and release.
+- Wave 5 was deliberately closed.
+- Waves 5–8 are not started and must not be marked GREEN until they are genuinely implemented, tested, packaged, visually verified, and runtime verified.
+
+ABSOLUTE RULES:
+1. Do not rewrite the whole app.
+2. Do not break Waves 0–4.
+3. Do not mutate accepted Wave 4 evidence except by appending new Wave 5–8 evidence.
+4. Do not silently mark work complete.
+5. Do not claim FLUX.2, Klein, Krea, MiniMax H3, LTX 2.5, Qwen3-TTS, VoxCPM2, MiniMax Music3, editor export, or Pi lifecycle integration is complete unless it actually runs and has evidence.
+6. No ComfyUI integration.
+7. No request to port 8188.
+8. No cloud inference fallback.
+9. No automatic model loading.
+10. No fake one-pixel references.
+11. No renderer-owned privileged production approval.
+12. All privileged production decisions must remain main-owned, nonce-bound, sender-bound, and ledger-recorded.
+13. Every generated asset must have provenance, receipt, content hash, visible review state, and canonical/rejected/approved decision support.
+14. Preserve local user data, The Last Reel, existing approved projects, existing ledgers, model roots, LM Studio processes, and any operator-owned processes.
+15. Use explicit fail-closed status for unsupported engines. Fail-closed configuration is acceptable. Calling that runtime “implemented” is not acceptable unless an actual job ran.
+
+ORCHESTRATION BUDGET:
+- Do not run an unbounded agent swarm.
+- Max 6 active mutating workers.
+- Max 12 read-only audit workers.
+- Max 90 minutes per wave before checkpoint/report.
+- Stop after each wave gate and report status.
+- Do not continue to the next wave if the current wave is RED.
+- If a task needs more time, write a blocker report instead of looping.
+- Use file leases for mutating work.
+- Do not let multiple agents edit the same file family at the same time.
+
+REQUIRED WAVE ORDER:
+Implement Wave 5 first, then Wave 6, then Wave 7, then Wave 8.
+Each wave needs its own:
+- implementation commits
+- tests
+- visual/runtime evidence
+- docs/release/waveX-gate.md
+- docs/orchestration/wave-status.json update
+- docs/orchestration/task-status.json update
+- screenshots/evidence folder
+- final PASS/FAIL summary
+
+Do not collapse all waves into one giant commit.
+
+================================================================================
+WAVE 5 — VIDEO, PROMPT COMPILER, CROSS-MEDIA RUNTIME SCHEDULING
+================================================================================
+
+Goal:
+Turn the Wave 4 image foundation into a real video-generation production pipeline.
+
+Primary deliverables:
+1. Prompt Compiler v1
+2. MiniMax H3 video adapter
+3. LTX 2.5 video adapter
+4. Cross-media runtime scheduler
+5. Production video queues
+6. Take QC and review workflow
+7. Contextual “generate missing asset” actions across stages
+8. Runtime evidence for at least one real local video path
+
+Implement Prompt Compiler v1:
+- Input must include:
+  - Creative Intent
+  - Research/canon ledger context
+  - Screenplay scene/beat/dialogue
+  - CanonicalShotSpec
+  - Approved asset refs
+  - Character locks
+  - Costume/identity locks
+  - Location/environment locks
+  - Camera/lens/blocking
+  - Duration
+  - FPS
+  - Aspect ratio
+  - Resolution
+  - Engine target
+  - Negative prompt
+  - Motion intensity
+  - Continuity state
+  - Prior/next shot continuity
+- Output must include:
+  - enginePrompt
+  - negativePrompt
+  - shotSummary
+  - cameraTimeline
+  - actionTimeline
+  - continuityLocks
+  - referenceAssets
+  - seed policy
+  - duration/fps/resolution
+  - engine-specific settings
+  - validation warnings
+  - provenance metadata
+
+Prompt compiler architecture:
+Creative Intent → Canonical Spec → Prompt Compiler → Engine Prompt
+
+Add/extend likely files:
+- src/lib/studio/prompt-compiler.ts
+- src/lib/studio/generation-config.ts
+- src/lib/studio/generation-validation.ts
+- src/lib/studio/native-still-contract.ts
+- src/lib/studio/types.ts
+- src/components/studio/stage-views.tsx
+- src/components/performance/shot-workspace.tsx
+- src/components/production/asset-inspector.tsx
+- src/lib/production/image-iterations.ts
+- Add video-specific modules under src/lib/production and src/lib/studio as needed.
+
+Video adapters:
+Implement local, fail-closed adapters for:
+- MiniMax H3
+- LTX 2.5
+
+Suggested files:
+- desktop/workers/minimax_h3_jsonl_worker.py
+- desktop/workers/ltx25_jsonl_worker.py
+- src/lib/studio/video-runtime.server.ts
+- src/lib/studio/video-generation-validation.ts
+- src/lib/studio/video-provenance.ts
+- src/lib/studio/video-jobs.server.ts
+- src/lib/production/video-iterations.ts
+- src/lib/production/video-types.ts
+
+Adapter requirements:
+- JSONL worker protocol, matching the Wave 4 FLUX.1 worker pattern.
+- App-owned worker.
+- No network sockets unless explicitly required by a local engine and documented.
+- No cloud fallback.
+- No ComfyUI.
+- No silent fallback to FLUX.1/image generation.
+- No pretending still images are video.
+- If model files are missing, surface a clear fail-closed UI message.
+- If a runtime is present, run at least one actual video generation job and capture evidence.
+- Generated video must have duration, fps, frame count, codec metadata, SHA-256, seed/config, source shot, and engine provenance.
+
+Cross-media scheduler:
+Implement a local scheduler that coordinates:
+- LLM/screenplay jobs
+- image generation
+- video generation
+- audio generation readiness hooks
+- GPU/VRAM/RAM budget
+- model residency
+- worker lifecycle
+- job queue priority
+- cancellation
+- recovery after restart
+
+Scheduler rules:
+- Do not kill operator-owned LM Studio processes.
+- Do not kill operator-owned ComfyUI process.
+- Do not auto-load huge models on app startup.
+- User-triggered generation only.
+- Prepared asset generation must remain explicitly approved.
+- Runtime must be transparent: user sees engine, status, ETA if known, output path, and failure reason.
+- Maintain same-process residency where practical.
+- Record cold/warm timing and memory telemetry when available.
+
+Production video queues:
+Add video queue support from:
+- Shots
+- Generate
+- Review
+- Stitch
+- Inventory/Character/Asset views where a missing required video/visual asset is detected
+
+User must be able to:
+- generate missing video assets directly from the relevant page
+- generate selected shot/take
+- queue multiple shots
+- cancel queued/running jobs
+- see status
+- open output folder
+- review takes
+- reject takes
+- approve a canonical take
+- delete noncanonical iterations safely
+- keep rejected/noncanonical records in the ledger/history
+- compare iterations side-by-side
+
+Take QC:
+Implement take-level quality checks:
+- correct shot binding
+- correct source canonical spec
+- expected duration
+- expected frame count
+- expected aspect/resolution
+- nonzero file size
+- valid media probe
+- no missing provenance
+- no stale authority token
+- no replayed generation token
+- no forged root
+- no mismatched receipt/output hash
+
+UI acceptance:
+- Generate stage must clearly support video generation.
+- Review stage must show video takes, not just stills.
+- Stitch stage must be able to use approved canonical video takes.
+- Shots stage must show video readiness per shot.
+- Inventory/Asset/Character context must expose “generate missing asset” where appropriate.
+- No blank columns.
+- No horizontal overflow.
+- Timeline remains restricted to Stitch unless intentionally changed and tested.
+- Keep premium cohesive V3 UI, smooth transitions, and no heavy border grid look.
+
+Wave 5 tests:
+- Unit tests for Prompt Compiler.
+- Unit tests for engine prompt validation.
+- Unit tests for video job schema.
+- Unit tests for scheduler priority/cancel/recovery.
+- Unit tests for video provenance.
+- Unit tests for take review/reject/canonical approval.
+- Backend authority tests for video generation.
+- Visual smoke for all 14 stages.
+- Packaged Electron smoke.
+- Native runtime test for at least one video path if available.
+
+Wave 5 cannot be GREEN unless:
+- Prompt Compiler works.
+- At least one video runtime path is either truly verified or honestly fail-closed with user-facing reason.
+- Production video queue exists.
+- Review/approve/reject/canonical flow exists for video.
+- Scheduler exists and does not destroy existing local processes.
+- Evidence is written.
+- Tests pass.
+- Wave 5 gate doc is updated.
+
+================================================================================
+WAVE 6 — VOICE, ADR, FOLEY, AMBIENCE, MUSIC, AUDIO QA
+================================================================================
+
+Goal:
+Make Premiere316 able to produce and review audio assets for the movie pipeline.
+
+Primary deliverables:
+1. Qwen3-TTS adapter
+2. VoxCPM2 adapter
+3. Voice registry and voice design
+4. Character voice generation from Inventory/Character/Screenplay
+5. ADR/dialogue segmentation
+6. Foley and ambience generation/import workflow
+7. MiniMax Music3 score adapter/configuration
+8. Audio QA
+9. Score stage becomes real, not placeholder
+
+Rules:
+- Qwen3-TTS is the preferred new voice path.
+- VoxCPM2 may be available as explicit selectable engine.
+- Do not make IndexTTS the default.
+- Do not silently substitute another voice engine.
+- Do not claim cloned/designed voice success unless a real audio file exists.
+- Audio assets need provenance, hash, timing, engine, voice identity, and review state.
+
+Implement voice registry:
+Suggested files:
+- src/lib/audio/voice-registry.ts
+- src/lib/audio/voice-types.ts
+- src/lib/audio/dialogue-segmentation.ts
+- src/lib/audio/audio-provenance.ts
+- src/lib/audio/audio-qa.ts
+- src/lib/studio/audio-jobs.server.ts
+- desktop/workers/qwen3_tts_jsonl_worker.py
+- desktop/workers/vox_cpm2_jsonl_worker.py
+
+Voice registry must support:
+- character ID
+- voice ID
+- actor/voice reference metadata
+- local reference audio path
+- engine
+- language/accent/tone
+- age/texture/delivery notes
+- approval status
+- generated samples
+- canonical voice selection
+- rejected samples
+- version history
+- usage restrictions
+- missing-voice detection
+
+Dialogue segmentation:
+- Split long dialogue into generation-safe chunks.
+- Default max chunk duration target: 20 seconds.
+- Preserve screenplay line ownership.
+- Preserve character identity.
+- Track scene/shot/segment binding.
+- Provide delivery notes.
+- Support regeneration per line, per segment, per character, and per scene.
+- Support user review and canonical approval.
+
+UI requirements:
+- From Screenplay: user can generate voice for selected dialogue.
+- From Inventory/Character: user can generate missing voice.
+- From Score: user can generate/review voice, ambience, foley, and music.
+- From Review: user can approve/reject audio iterations.
+- From Stitch: approved audio can be attached to timeline.
+- Missing voices must be obvious and fixable without leaving the context.
+
+Foley/ambience:
+Implement asset types:
+- foley
+- ambience
+- room tone
+- impact
+- creature/vocal FX
+- environment bed
+- transition hit
+- silence/gap marker
+
+Support:
+- import existing audio
+- generate if engine available
+- review waveform/player
+- approve/reject/canonical
+- cue sheet binding to shot/scene/timeline
+- duration alignment
+- looping/trim/fade metadata
+
+Music/score:
+Implement MiniMax Music3 as explicit configured score engine if locally/externally available.
+- No silent cloud fallback.
+- Fail closed if unavailable.
+- Score cue must bind to scene/sequence/timeline.
+- Store prompt, style, duration, BPM if available, emotional intent, and provenance.
+- User can approve/reject/canonical score cues.
+
+Audio QA:
+Implement checks:
+- media probe success
+- duration expected vs actual
+- sample rate
+- channels
+- loudness estimate if available
+- clipping detection if practical
+- silence detection
+- missing dialogue
+- missing voice identity
+- timeline sync warnings
+- orphaned audio assets
+- hash/provenance validation
+
+Wave 6 tests:
+- voice registry tests
+- dialogue segmentation tests
+- Qwen3-TTS fail-closed and success-path tests where possible
+- VoxCPM2 fail-closed and success-path tests where possible
+- audio provenance tests
+- audio approval/rejection tests
+- audio QA tests
+- Score stage visual test
+- packaged Electron smoke
+- ledger/authority tests for audio production decisions
+
+Wave 6 cannot be GREEN unless:
+- Missing character voice workflow exists.
+- Dialogue generation workflow exists.
+- At least one voice/audio runtime path is verified or honestly fail-closed with visible reason.
+- Audio review/reject/approve/canonical flow exists.
+- Score stage is functional.
+- Audio QA exists.
+- Evidence is written.
+- Tests pass.
+- Wave 6 gate doc is updated.
+
+================================================================================
+WAVE 7 — REAL EDITOR, CONFORM, MASTERING, EXPORT, FINAL-FILM ACCEPTANCE
+================================================================================
+
+Goal:
+Turn approved video and audio assets into an actual exportable film package.
+
+Primary deliverables:
+1. Real project graph persistence/migration
+2. Timeline/conform engine
+3. Stitch stage becomes real editor/conform workspace
+4. FFmpeg mastering/export
+5. Export profiles
+6. Final movie acceptance workflow
+7. 30-second final acceptance artifact
+
+Implement project graph:
+- Add SQLite project graph migration if not already implemented.
+- Preserve existing JSON/project data.
+- Provide safe migration, backup, rollback, and verification.
+- Do not corrupt The Last Reel or approved history.
+- Store scenes, shots, takes, audio, score, approvals, canonical assets, timeline clips, export jobs, and provenance.
+
+Suggested files:
+- src/lib/project-graph/sqlite.ts
+- src/lib/project-graph/migration.ts
+- src/lib/project-graph/types.ts
+- src/lib/editor/timeline.ts
+- src/lib/editor/conform.ts
+- src/lib/editor/export-profile.ts
+- src/lib/editor/ffmpeg-mastering.ts
+- src/lib/editor/final-acceptance.ts
+- desktop/backend.mjs extensions for export jobs
+- desktop/workers/ffmpeg_export_worker.py or Node equivalent
+
+Timeline/conform:
+Support:
+- canonical video takes
+- canonical dialogue
+- foley
+- ambience
+- music
+- scene ordering
+- shot ordering
+- handles
+- trims
+- fades
+- transitions
+- audio offset
+- volume metadata
+- aspect ratio
+- fps
+- resolution
+- subtitles/captions metadata if present
+- missing-media warnings
+- offline media warnings
+- duration totals
+
+Stitch stage:
+Must allow:
+- assemble scenes/shots
+- preview sequence
+- see missing canonical assets
+- drag/order if existing UI supports it
+- set trim in/out where practical
+- attach audio to shot/scene/timeline
+- approve conform plan
+- send to export
+
+FFmpeg mastering/export:
+Implement:
+- MP4/H.264 export profile
+- MP4/H.265 optional if available
+- ProRes or mezzanine optional if available
+- WAV stem export
+- final mixed audio
+- 24 fps support
+- 16:9 support
+- 2.39:1 support
+- 9:16 support if already supported by project settings
+- deterministic export manifest
+- media probe validation
+- output SHA-256
+- error logs
+- cancellation
+- safe temp/pending output handling
+- atomic final promotion where possible
+
+Export stage:
+Must show:
+- selected project
+- readiness status
+- missing blockers
+- export profile
+- estimated duration if known
+- export queue
+- current progress if available
+- output path
+- final hash/provenance
+- open output folder
+- final acceptance button
+
+Final-film acceptance:
+Implement “Movie Readiness / Final Acceptance” checks:
+- all required shots have canonical video or explicit placeholder waiver
+- all required dialogue has canonical audio or explicit waiver
+- score/ambience/foley either canonical or waived
+- no stale generation tokens
+- no orphaned required assets
+- no unresolved rejected canonical conflict
+- export media probe passes
+- duration matches expected tolerance
+- frame count matches fps/duration tolerance
+- audio track exists if expected
+- final output hash exists
+- package manifest exists
+
+Minimum Wave 7 runtime evidence:
+- Create a real 30-second final acceptance artifact using the app pipeline.
+- It may use short/simple generated assets if needed, but must be real media, not a mock.
+- Must include video and audio if Wave 6 produced audio.
+- Must export through the app’s FFmpeg/export path.
+- Must have manifest, hash, probe report, and final acceptance record.
+
+Wave 7 tests:
+- SQLite migration tests
+- project graph tests
+- conform tests
+- timeline validation tests
+- FFmpeg command construction tests
+- export manifest tests
+- final acceptance tests
+- packaged Electron export smoke
+- 14-stage visual matrix
+- no cloud/no ComfyUI/no port 8188 checks
+
+Wave 7 cannot be GREEN unless:
+- real conform/timeline exists
+- real export exists
+- Export stage works
+- final acceptance workflow exists
+- 30-second final artifact exists or a clear hard blocker is documented and Wave 7 remains not GREEN
+- evidence is written
+- tests pass
+- Wave 7 gate doc is updated
+
+================================================================================
+WAVE 8 — FINAL PI MOVIE CREW LIFECYCLE INTEGRATION
+================================================================================
+
+Goal:
+Integrate the Pi Movie Crew lifecycle so the app can coordinate the full production process without uncontrolled orchestration.
+
+Primary deliverables:
+1. Final Pi Movie Crew lifecycle
+2. Controlled agent/task orchestration
+3. Movie Readiness dashboard
+4. End-to-end guided workflow
+5. Checkpoint/resume
+6. Final release gate
+
+Use existing .pi and docs/orchestration foundations. Do not replace them blindly.
+
+Implement lifecycle:
+- Intake → Research → Screenplay → Inventory → Visual Development → Cinematography → Performance → Shots → Prompt Lab → Generate → Review → Stitch → Score → Export
+- Each stage should know:
+  - required inputs
+  - generated outputs
+  - missing blockers
+  - responsible crew role
+  - allowed engines
+  - approval state
+  - next action
+  - readiness score
+  - evidence links
+
+Pi Movie Crew:
+- Keep captain/oracle/final QA concepts.
+- Add or finalize role routing for:
+  - research
+  - screenplay
+  - story QA
+  - visual development
+  - cinematography
+  - prompt compiler
+  - video generation
+  - voice/ADR
+  - foley/ambience
+  - score
+  - editor/conform
+  - export/mastering
+  - final QA
+- Each crew role must have:
+  - explicit scope
+  - allowed file families
+  - blocked file families
+  - input contract
+  - output contract
+  - success criteria
+  - failure criteria
+  - max runtime budget
+  - handoff format
+
+Controlled orchestration:
+- No unbounded swarm.
+- No background 20-hour run.
+- Manual wave gate required.
+- Stop after checkpoint.
+- Long run requires user approval.
+- Write all orchestration state to docs/orchestration.
+- Respect file leases.
+- Do not have multiple mutating workers in the same file family.
+- Use read-only auditors for final review.
+
+Movie Readiness dashboard:
+Implement app-visible dashboard showing:
+- project readiness
+- scene readiness
+- shot readiness
+- video readiness
+- image readiness
+- voice readiness
+- audio readiness
+- score readiness
+- conform readiness
+- export readiness
+- missing assets
+- stale approvals
+- failed runtimes
+- blocked engines
+- next recommended action
+- direct generate/fix buttons
+
+End-to-end workflow:
+Add a guided “finish the movie” path:
+- choose project
+- identify missing assets
+- generate missing images/video/audio
+- review iterations
+- approve canonical
+- stitch
+- score
+- export
+- final acceptance
+- release package
+
+Checkpoint/resume:
+- app can recover from restart
+- scheduler state is durable
+- queued/completed/failed jobs are visible
+- ledger tail verifies
+- canonical decisions persist
+- no duplicate job execution after restart unless user explicitly retries
+- cancelled jobs stay cancelled
+
+Wave 8 final audits:
+Run independent audits equivalent to:
+- product UX audit
+- security/authority audit
+- runtime/provenance audit
+- final movie acceptance audit
+
+Wave 8 tests:
+- crew lifecycle tests
+- readiness dashboard tests
+- file lease/orchestration tests
+- checkpoint/resume tests
+- full guided workflow smoke
+- 14-stage visual matrix
+- packaged Electron smoke
+- final evidence validator
+- final release gate
+
+Wave 8 cannot be GREEN unless:
+- Pi Movie Crew lifecycle is app-visible and usable
+- Movie Readiness dashboard exists
+- guided end-to-end workflow exists
+- checkpoint/resume works
+- orchestration budget controls are enforced
+- no unbounded agents
+- final audit passes
+- evidence is written
+- tests pass
+- Wave 8 gate doc is updated
+
+================================================================================
+GLOBAL ACCEPTANCE GATES FOR WAVES 5–8
+================================================================================
+
+Before marking any wave GREEN, run:
+
+- npm test
+- TypeScript typecheck
+- production build
+- Electron package build
+- packaged Electron smoke
+- relevant runtime smoke
+- 14-stage visual matrix at 100%
+- 14-stage visual matrix at 150%
+- no console/page errors
+- no horizontal overflow
+- no blank columns
+- no unauthorized network
+- no request to port 8188
+- no cloud inference fallback
+- no ComfyUI dependency
+- ledger validation
+- durable media validation
+- authority/nonce/replay/stale-token rejection tests
+- evidence validator
+
+Update or create:
+- docs/release/wave5-gate.md
+- docs/release/wave6-gate.md
+- docs/release/wave7-gate.md
+- docs/release/wave8-gate.md
+- docs/orchestration/wave-status.json
+- docs/orchestration/task-status.json
+- screenshots/wave5-*
+- screenshots/wave6-*
+- screenshots/wave7-*
+- screenshots/wave8-*
+
+Commit strategy:
+- Commit Wave 5 separately.
+- Commit Wave 6 separately.
+- Commit Wave 7 separately.
+- Commit Wave 8 separately.
+- Tag each accepted wave:
+  - wave5-p316-<build-id>
+  - wave6-p316-<build-id>
+  - wave7-p316-<build-id>
+  - wave8-p316-<build-id>
+
+Final response required:
+Return a compact but complete report with:
+
+1. Branch and commit SHA
+2. Wave status table
+3. Implemented files
+4. Tests run and results
+5. Runtime evidence paths
+6. Generated asset evidence
+7. Security/authority evidence
+8. Known fail-closed engines
+9. Remaining blockers
+10. Whether the app is now complete or only complete through a specific wave
+
+Do not say “complete” unless the app can actually:
+- take screenplay/project input
+- produce required video/image/audio assets
+- review/reject/approve canonical takes
+- stitch/conform
+- score
+- export a final movie file
+- pass final acceptance
+- recover after restart
+- preserve provenance and ledger integrity

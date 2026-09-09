@@ -13,6 +13,7 @@ import {
   mergeInventoryAssets,
   removeAssetVariant,
   setPreferredReference,
+  replaceAssetImage,
   splitInventoryAsset,
   type ProductionAsset,
   type ProductionBreakdown,
@@ -21,9 +22,11 @@ import {
 import { uid } from "@/lib/utils";
 import { PRODUCTION_CATEGORY_LABELS } from "./inventory-constants";
 import { ReadinessBadge } from "./inventory-primitives";
+import { AssetReferenceUpload } from "./asset-reference-upload";
 
 export function AssetInspector({ record, asset, onChange, onClose }: { record: ProductionBreakdown; asset: ProductionAsset; onChange: (record: ProductionBreakdown) => void; onClose: () => void }) {
   const [name, setName] = useState(asset.name);
+  const [extraScenes, setExtraScenes] = useState<string[]>([]);
   const [category, setCategory] = useState(asset.category);
   const [description, setDescription] = useState(asset.canonicalSpec.visualDescription);
   const [identity, setIdentity] = useState(asset.canonicalSpec.identity);
@@ -98,6 +101,7 @@ export function AssetInspector({ record, asset, onChange, onClose }: { record: P
     applyRecord(editInventoryAsset(currentRecordRef.current, asset.id, {
       name,
       category,
+      additionalSceneIds: extraScenes,
       canonicalSpec: specPatch(),
     }));
   };
@@ -141,15 +145,16 @@ export function AssetInspector({ record, asset, onChange, onClose }: { record: P
           <Divider />
           <section>
             <SectionHeading title="Required scenes" detail={`${sceneLabels.length} screenplay links`} />
+            <fieldset className="mt-2 grid gap-2"><legend className="text-xs text-muted">Add missing scene links, then Save changes</legend>{record.scenes.map(scene => <label key={scene.id} className="flex items-start gap-2 text-xs"><input type="checkbox" aria-label={`Link ${scene.id}`} checked={asset.requiredSceneIds.includes(scene.id) || extraScenes.includes(scene.id)} disabled={asset.requiredSceneIds.includes(scene.id)} onChange={e => setExtraScenes(current => e.target.checked ? [...current, scene.id] : current.filter(id => id !== scene.id))} />{scene.slugline}</label>)}</fieldset>
             <ul className="mt-2 grid gap-1">{sceneLabels.map((label) => <li key={label} className="break-words rounded-sm bg-inset px-3 py-2 text-xs text-muted">{label}</li>)}</ul>
           </section>
 
           <Divider />
           <section>
             <SectionHeading title="References" detail={asset.referenceRequired ? "At least one reference required" : "Optional"} />
+            <AssetReferenceUpload record={record} assetId={asset.id} onChange={applyRecord} />
             <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-2">
-              {asset.references.map((reference) => <div key={reference.id} className="min-w-0 rounded-md bg-inset p-2 shadow-[var(--shadow-border)]"><img src={reference.uri} alt="" className="aspect-square w-full rounded-sm object-cover" /><p className="mt-1 truncate text-[10px] text-muted" title={reference.name}>{reference.name}</p><button type="button" className="mt-1 inline-flex h-9 w-full items-center justify-center gap-1 rounded-sm text-[10px] text-muted hover:bg-elevated hover:text-fg" onClick={() => applyRecord(setPreferredReference(currentRecordRef.current, asset.id, reference.id))}><Star className="size-3" /> {reference.preferred ? "Preferred" : "Prefer"}</button></div>)}
-              <label className="grid min-h-32 cursor-pointer place-items-center rounded-md bg-inset p-3 text-center text-xs text-muted shadow-[var(--shadow-border)] hover:text-fg"><span><ImagePlus className="mx-auto size-4" /><span className="mt-1 block">Upload reference</span></span><input className="sr-only" type="file" accept="image/*" onChange={(event) => { void upload(event.target.files); event.target.value = ""; }} /></label>
+              {asset.references.map((reference) => <div key={reference.id} className="min-w-0 rounded-md bg-inset p-2 shadow-[var(--shadow-border)]"><img src={reference.uri} alt="" className="aspect-square w-full rounded-sm object-cover" /><p className="mt-1 truncate text-[10px] text-muted" title={reference.name}>{reference.name}</p><button type="button" className="mt-1 inline-flex h-9 w-full items-center justify-center gap-1 rounded-sm text-[10px] text-muted hover:bg-elevated hover:text-fg" onClick={() => applyRecord(setPreferredReference(currentRecordRef.current, asset.id, reference.id))}><Star className="size-3" /> {reference.preferred ? "Preferred" : "Prefer"}</button><Button className="mt-2 w-full" onClick={() => applyRecord(replaceAssetImage(currentRecordRef.current, asset.id, { uri: reference.uri, name: reference.name }))}>Use as asset image</Button></div>)}
             </div>
           </section>
 

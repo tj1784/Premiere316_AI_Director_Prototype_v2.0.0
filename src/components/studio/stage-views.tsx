@@ -1,3 +1,6 @@
+import { storyDoctorRuns } from "@/lib/studio/story-doctor-runs";
+import { exactLocalWriterBlock } from "@/lib/studio/exact-local-writer";
+import { explicitMoviePlanServedId } from "@/lib/studio/movie-plan-model";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -18,6 +21,9 @@ import { ENGINES, KIND_LABEL, engineById } from "@/lib/studio/engines";
 import { MODEL_ROOT, type Picture } from "@/lib/studio/types";
 import { AdvancedDepartmentsDashboard, AdvancedDepartmentsRail } from "./advanced-departments";
 import { MoviePlanActivity } from "./movie-plan-activity";
+import { GeneratedAssetsReview } from "./generated-assets-review";
+import { generateAssetDrafts } from "@/lib/studio/asset-generation-client";
+import { NativeFilmPanel } from "./native-film-panel";
 import type { MoviePlanProgress } from "@/lib/studio/movie-plan-stream.ts";
 import { isAdvancedDashboard } from "@/lib/studio/advanced-departments.ts";
 import { DEFAULT_NAV_STEPS, INTERNAL_PHASES, PHASE_LABELS, PHASE_STAGE, allPhaseReviewsOn, hydrateProductFlow, pausedInternalPhase, PHASE_REVIEW_DEFAULTS, type InternalPhase } from "@/lib/studio/product-flow.ts";
@@ -32,6 +38,8 @@ import { runtimeDefaults } from "@/lib/studio/engine-controls.ts";
 import { cn, copyText, formatTimecode, saveReadyFile, uid, type ReadyFile } from "@/lib/utils";
 import type { LocalLLMProviderDiscovery } from "@/lib/studio/local-llm-provider";
 import type { PictureIntake } from "@/lib/studio/picture-intake";
+import { LocalWriterSelect } from "./local-writer-select";
+import { VisualDirectionField } from "./visual-direction-field";
 import { SOURCE_TYPE_LABELS } from "@/lib/studio/picture-intake";
 import type { ScreenplayModelRef } from "@/lib/studio/screenplay";
 import { addManualScreenplayVersion, approveCurrentScreenplay, restoreScreenplayVersion } from "@/lib/studio/screenplay";
@@ -142,6 +150,8 @@ function IntakeStage({ picture }: { picture: Picture }) {
   const [reviewInternal, setReviewInternal] = useState(flow.reviewInternalPhases);
   const [reviewPhases, setReviewPhases] = useState(flow.reviewPhases);
   const [building, setBuilding] = useState(false);
+  const [directionBusy, setDirectionBusy] = useState(false);
+  const [assetActivity, setAssetActivity] = useState("");
   const [activity, setActivity] = useState<MoviePlanProgress[]>([]);
   const [activityStartedAt, setActivityStartedAt] = useState<number | null>(null);
   const patchIntake = <K extends keyof PictureIntake>(key: K, value: PictureIntake[K]) => {
@@ -158,6 +168,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
   };
 
   async function buildPlan() {
+    if (directionBusy) return;
     setBuilding(true);
     setActivity([]);
     setActivityStartedAt(Date.now());
@@ -174,8 +185,9 @@ function IntakeStage({ picture }: { picture: Picture }) {
       } else if (!result.providerCalled || result.flow.manualFallback || result.flow.steps.some((step) => step.status === "failed")) {
         toast.error(result.flow.steps.find((step) => step.status === "failed")?.message ?? CONFIGURED_MODEL_UNAVAILABLE);
       } else if (result.flow.nextTouchpoint === "asset-approval") {
+        await generateAssetDrafts(result.picture, replaceActive, setAssetActivity);
         setGenerateFocus("assets");
-        toast.success("Movie plan generated. Next: Approve Assets.");
+        toast.success("Asset images generated. Review images, edit prompts, regenerate or approve.");
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : CONFIGURED_MODEL_UNAVAILABLE);
@@ -189,6 +201,13 @@ function IntakeStage({ picture }: { picture: Picture }) {
           <Label htmlFor="movie-idea">What are we making?</Label>
           <Textarea id="movie-idea" className="mt-1.5 min-h-32 text-base" value={picture.intake.concept || picture.intake.premise || picture.intake.logline} onChange={(event) => patchIntake("concept", event.target.value)} placeholder="2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal…" />
         </div>
+        <LocalWriterSelect picture={picture} disabled={building} label="Intake local text model" />
+        <VisualDirectionField value={picture.intake.visualDirection} onChange={value => patchIntake("visualDirection", value)} disabled={building} onBusy={setDirectionBusy} writerId={picture.screenplay.pinnedWriterServedId ?? undefined} />
+        <label className="grid gap-2 text-sm">Asset image model
+          <select aria-label="Intake asset image model" className="min-h-11 w-full rounded-md border border-edge bg-inset px-3 text-fg" disabled={building} value={picture.selectedEngine.image} onChange={(event) => patchActive({ selectedEngine: { ...picture.selectedEngine, image: event.target.value } })}>
+            <option value="krea-2">KREA2 RAW</option><option value="flux2">FLUX.2 Dev</option><option value="flux">FLUX.1 Dev</option>
+          </select>
+        </label>
         <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
           <label className="flex min-h-11 items-start gap-2 text-sm">
             <input className="mt-1" type="checkbox" checked={reviewInternal} onChange={(event) => {
@@ -210,8 +229,9 @@ function IntakeStage({ picture }: { picture: Picture }) {
             </div>
           ) : null}
         </div>
-        <Button className="h-12 text-base" onClick={() => void buildPlan()} disabled={building}>{building ? "Building…" : "Build Movie Plan"}</Button>
+        <Button className="h-12 text-base" onClick={() => void buildPlan()} disabled={building || directionBusy}>{building ? "Building…" : "Build Movie Plan"}</Button>
         {activityStartedAt !== null ? <MoviePlanActivity events={activity} startedAt={activityStartedAt} running={building} /> : null}
+        {assetActivity ? <p role="status" className="text-sm text-muted">{assetActivity}</p> : null}
         {flow.manualFallback || flow.steps.some((step) => step.status === "failed") ? (
           <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" data-movie-plan-blocked="true">
             <p className="text-sm">{flow.steps.find((step) => step.status === "failed")?.message ?? CONFIGURED_MODEL_UNAVAILABLE}</p>
@@ -335,7 +355,7 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
   const [models, setModels] = useState<ScreenplayModelRef[]>([]);
   const [provider, setProvider] = useState<LocalLLMProviderDiscovery | null>(null);
   const [job, setJob] = useState<ScreenplayJobSnapshot | null>(null);
-  const [jobId, setJobId] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(picture.screenplay.status === "GENERATING" ? picture.screenplay.generation?.runId ?? null : null);
 
   const persistScreenplay = useCallback((screenplay: Picture["screenplay"]) => {
     patchActive({ screenplay, screenplayFountain: screenplay.workingFountain });
@@ -362,7 +382,13 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
     const poll = async () => {
       try {
         const snapshot = await readScreenplayJob(jobId);
-        if (disposed || !snapshot) return;
+        if (disposed) return;
+        if (!snapshot) {
+          setJobId(null);
+          persistScreenplay({ ...picture.screenplay, status: picture.screenplay.approvedVersionId ? "APPROVED" : picture.screenplay.workingFountain.trim() ? "READY_FOR_REVIEW" : "DRAFT", generation: null });
+          toast.message("The previous screenplay job is no longer active. Your saved screenplay is retained.");
+          return;
+        }
         setJob(snapshot);
         persistScreenplay(snapshot.screenplay);
         if (snapshot.status === "queued" || snapshot.status === "running") timer = setTimeout(() => void poll(), 300);
@@ -379,16 +405,17 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
     };
   }, [jobId, persistScreenplay]);
 
-  const start = async (options: { resume?: boolean; stepId?: ScreenplayStep["id"]; target?: ScreenplayRewriteTarget } = {}) => {
+  const start = async (options: { resume?: boolean; stepId?: ScreenplayStep["id"]; target?: ScreenplayRewriteTarget; applyQa?: boolean } = {}) => {
     const research = hydratePictureResearch(picture.research, picture.intake);
     const blockedResearch = researchBlocksScreenplay(research);
     if (blockedResearch) {
       toast.error(blockedResearch);
       return;
     }
-    const modelId = picture.screenplay.selectedModelId ?? picture.intake.screenplayModelId;
+    const writerId = explicitMoviePlanServedId(picture)?.replace(/^lmstudio:/, "") ?? null;
+    const modelId = models.find((model) => model.servedModelId === writerId)?.id ?? null;
     const selected = models.find((model) => model.id === modelId) ?? null;
-    const blockedWriter = qwenWriterBlockReason(selected, Boolean(provider?.available), picture.screenplay.pinnedWriterServedId ?? null);
+    const blockedWriter = exactLocalWriterBlock(selected, Boolean(provider?.available), writerId);
     if (blockedWriter) {
       toast.error(blockedWriter);
       return;
@@ -400,9 +427,10 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
     try {
       const initial = await beginScreenplayJob({
         intake: picture.intake,
-        screenplay: picture.screenplay,
+        screenplay: { ...picture.screenplay, selectedModelId: modelId, pinnedWriterServedId: writerId },
         research,
         modelId,
+        revisionInstructions: options.applyQa ? JSON.stringify(picture.screenplay.lastQaReport?.findings ?? []) : undefined,
         resume: options.resume,
         stepId: options.stepId,
         rewriteScope: options.target?.scope,
@@ -426,6 +454,7 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
 
   return (
     <ScreenplayWorkspace
+      picture={picture}
       intake={picture.intake}
       screenplay={picture.screenplay}
       models={models}
@@ -435,9 +464,18 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
       onSaveRevision={() => persistScreenplay(addManualScreenplayVersion(picture.screenplay, picture.screenplay.workingFountain, uid("spv")))}
       onGenerate={(target) => void start({ target })}
       onContinue={(target) => void start({ resume: true, target })}
+      onApplyQaRecommendations={(target) => void start({ target, applyQa: true })}
       onRegeneratePass={(stepId, target) => void start({ stepId, target })}
       researchApproved={isResearchApproved(hydratePictureResearch(picture.research, picture.intake))}
-      onStop={() => { if (jobId) void stopScreenplayJob(jobId).then((snapshot) => { if (snapshot) { setJob(snapshot); persistScreenplay(snapshot.screenplay); } }); }}
+      onStop={() => {
+        const activeJobId = jobId ?? picture.screenplay.generation?.runId;
+        if (!activeJobId) return;
+        void stopScreenplayJob(activeJobId).then((snapshot) => {
+          setJob(snapshot);
+          setJobId(null);
+          persistScreenplay(snapshot?.screenplay ?? { ...picture.screenplay, status: picture.screenplay.approvedVersionId ? "APPROVED" : "READY_FOR_REVIEW", generation: null });
+        }).catch((error) => toast.error(error instanceof Error ? error.message : "Could not stop generation."));
+      }}
       onRestore={(versionId) => persistScreenplay(restoreScreenplayVersion(picture.screenplay, versionId, uid("spv")))}
       onApprove={() => persistScreenplay(approveCurrentScreenplay(picture.screenplay, uid("spv")))}
       onRescan={() => void scan()}
@@ -462,13 +500,13 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
         toast.success("Scoped revision appended. Prior approved Fountain is preserved.");
       }}
       onStoryDoctor={(modelId, target, secondOpinion) => {
-        const writerPin = picture.screenplay.pinnedWriterServedId ?? null;
+        const writerPin = explicitMoviePlanServedId(picture)?.replace(/^lmstudio:/, "") ?? null;
         const writer = models.find((model) => model.id === picture.screenplay.selectedModelId) ?? null;
-        void beginScreenplayQa({
+        void storyDoctorRuns.run(picture.id, modelId.replace(/^lmstudio:/, ""), (progress) => beginScreenplayQa({
           fountain: picture.screenplay.workingFountain,
           modelId,
           writerId: writerPin ?? picture.screenplay.selectedModelId,
-          pinnedQaServedId: picture.screenplay.pinnedQaServedId ?? (writer && isLlamaFamily(writer) ? writerPin : null),
+          pinnedQaServedId: picture.screenplay.pinnedQaServedId ?? writerPin,
           secondOpinion,
           goal: picture.intake.logline || picture.intake.premise || picture.title,
           revisionTarget: target.scope,
@@ -477,8 +515,9 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
           selectedNodeIds: target.nodeIds,
           selection: target.selection,
           characterState: picture.characters.map((item) => item.name).join(", "),
+          directorNotes: picture.intake.directorNotes,
           research: hydratePictureResearch(picture.research, picture.intake),
-        }).then((report) => {
+        }, progress)).then((report) => {
           persistScreenplay({
             ...picture.screenplay,
             lastQaReport: {
@@ -494,7 +533,7 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
           });
           toast.message(report.findings[0]?.summary || "Story Doctor critique ready. Fountain was not changed.");
         }).catch((error) => {
-          toast.error(error instanceof Error ? error.message : "Story Doctor failed closed.");
+          if (storyDoctorRuns.get(picture.id)?.status !== "stopped") toast.error(error instanceof Error ? error.message : "Story Doctor failed closed.");
         });
       }}
     />
@@ -720,7 +759,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
   const unlockedNativeShots = picture.shots.filter((shot) => !nativeVideoLockedForShot(picture, shot.id));
   return (
     <Pane title="Generate" kicker="10 · Three-gate cohesion">
-      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">Assets first, first/last frames second, video third. Prompts are compiled output, not project truth. Native H3/LTX stays fail-closed; imported video remains allowed and labeled imported.</p>
+      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">Generate assets, prepare keyframes, or render motion from your shot prompts. Review the actual outputs in this picture.</p>
       <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; generation fails closed."}</div>
       <div className="mb-4 grid gap-2 sm:grid-cols-3" aria-label="Generate gate readiness">
         {gateReadiness.map((item) => (
@@ -736,7 +775,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
           <Button key={gate} size="sm" variant={generateGate === gate ? "secondary" : "ghost"} onClick={() => setGenerateFocus(gate)}>{gate === "assets" ? "Asset Pass" : gate === "keyframes" ? "Keyframe Pass" : "Video Pass"}</Button>
         ))}
       </div>
-      {generateGate === "assets" ? <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
+      {generateGate === "assets" ? <><GeneratedAssetsReview picture={picture} /><details className="mt-6"><summary className="cursor-pointer text-sm text-muted">Advanced preparation details</summary><div className="mt-3 grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
         <section className="grid min-w-0 gap-3" aria-label="Prepared assets">
           {(() => {
             const plan = hydrateProductFlow(picture.productFlow);
@@ -852,7 +891,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
           </div>
           <Button className="mt-4" variant="ghost" onClick={() => void import("@/lib/desktop/client").then((api) => api.desktopUnloadEngine()).then(() => toast.success("Local image model released."), (error) => toast.error(error instanceof Error ? error.message : "Release failed."))}>Release local image model</Button>
         </aside>
-      </div> : null}
+      </div></details></> : null}
       {generateGate === "keyframes" ? (
         <section className="grid min-w-0 gap-3" aria-label="First last frames">
           <p className="text-sm text-muted">First/Last frames lock video generate until each shot has an approved pair or is waived for imported video. Native keyframe generate stays fail-closed; import/waive is allowed.</p>
@@ -888,8 +927,9 @@ function GenerateStage({ picture }: { picture: Picture }) {
           })}
         </section>
       ) : null}
+      {generateGate === "video" ? <NativeFilmPanel picture={picture} /> : null}
       {generateGate === "video" ? <section className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Video generation queue">
-        <p className="text-[11px] tracking-wide text-subtle uppercase">Wave 5 · Video queue</p>
+        <p className="text-[11px] tracking-wide text-subtle uppercase">Keyframe-conditioned generation / imports</p>
         <h3 className="mt-1 font-display text-xl">Motion / {engineById(picture.selectedEngine.video)?.name ?? "video"}</h3>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{videoRuntimeBlock(videoEngineFromSelection(picture.selectedEngine.video))}</p>
         <div className="mt-3 flex flex-wrap gap-2">

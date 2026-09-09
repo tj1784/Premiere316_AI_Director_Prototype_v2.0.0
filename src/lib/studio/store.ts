@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { SAMPLE_ID, makeSamplePicture } from "./sample.ts";
+import { RED_SEA_THUMBNAIL_URL, SAMPLE_ID, makeSamplePicture } from "./sample.ts";
 import type { IdleUnloadOption } from "./residency.ts";
 import { DEFAULT_ENGINES, type Picture, type SelectedEngines, type StageId, USAGE_CAPS } from "./types.ts";
 import { makePreparationForIntake, migratePicturePreparation, type LegacyPicture } from "./picture-preparation.ts";
@@ -114,7 +114,7 @@ export const useStudio = create<StudioState>()(
       binTab: "assets",
       generateGate: "assets",
       generateFilterId: null,
-      uiMode: "default",
+      uiMode: "advanced",
       advancedSurface: "dashboard",
       lastDefaultTouchpoint: "intake",
       leftPanelCollapsed: false,
@@ -138,7 +138,7 @@ export const useStudio = create<StudioState>()(
             stageOverride: null,
             selectedShotId: null,
             stillBayShotId: null,
-            uiMode: "default",
+            uiMode: "advanced",
             advancedSurface: "dashboard",
           };
         });
@@ -150,8 +150,8 @@ export const useStudio = create<StudioState>()(
           activeId: picture.id,
           stageOverride: "intake",
           selectedShotId: null,
-          uiMode: "default",
-          advancedSurface: "dashboard",
+          uiMode: "advanced",
+          advancedSurface: "intake",
         }));
         return picture.id;
       },
@@ -163,9 +163,9 @@ export const useStudio = create<StudioState>()(
         }
         if (!exists) return;
         const picture = get().pictures.find((item) => item.id === id)!;
-        set({ activeId: id, stageOverride: picture.lastOpenedStage, selectedShotId: null, uiMode: "default", advancedSurface: "dashboard" });
+        set({ activeId: id, stageOverride: picture.lastOpenedStage, selectedShotId: null, uiMode: "advanced", advancedSurface: picture.lastOpenedStage ?? "intake" });
       },
-      closePicture: () => set({ activeId: null, selectedShotId: null, stillBayShotId: null, uiMode: "default", advancedSurface: "dashboard" }),
+      closePicture: () => set({ activeId: null, selectedShotId: null, stillBayShotId: null, uiMode: "advanced", advancedSurface: "dashboard" }),
       deletePicture: (id) =>
         set((s) => ({
           pictures: s.pictures.filter((p) => p.id !== id),
@@ -225,7 +225,7 @@ export const useStudio = create<StudioState>()(
           const fromStage = normalizeStage(current.stageOverride ?? picture?.stage) ?? "intake";
           set({ lastDefaultTouchpoint: lastDefaultTouchpointFor(fromStage, current.generateGate) });
         }
-        set({ uiMode: "advanced", advancedSurface: isAdvancedDepartmentId(stage) ? stage : "dashboard" });
+        set({ uiMode: "advanced", advancedSurface: stage });
         get().setStage(stage);
       },
       returnToDefaultMode: () => {
@@ -247,10 +247,8 @@ export const useStudio = create<StudioState>()(
         return true;
       },
       replaceActive: (picture) => {
-        const { activeId } = get();
-        if (!activeId) return;
         set((s) => ({
-          pictures: s.pictures.map((p) => (p.id === activeId ? { ...picture, id: activeId } : p)),
+          pictures: s.pictures.map((p) => (p.id === picture.id ? picture : p)),
         }));
       },
     }),
@@ -269,6 +267,8 @@ export const useStudio = create<StudioState>()(
         })),
         activeId: s.activeId,
         stageOverride: s.stageOverride,
+        uiMode: s.uiMode,
+        advancedSurface: s.advancedSurface,
         residency: s.residency,
         binTab: s.binTab,
         leftPanelCollapsed: s.leftPanelCollapsed,
@@ -285,6 +285,8 @@ export const useStudio = create<StudioState>()(
         return {
           ...current,
           ...p,
+          uiMode: p.uiMode ?? "advanced",
+          advancedSurface: p.advancedSurface ?? normalizeStage(current.stageOverride ?? p.stageOverride) ?? "dashboard",
           pictures: pics,
           activeId: pickId(liveId) ?? pickId(persistedId),
           stageOverride: normalizeStage(current.stageOverride ?? p.stageOverride),
@@ -305,7 +307,29 @@ function migratePicture(picture: LegacyPicture): Picture {
   const withResearch = { ...withPerformance, research: hydratePictureResearch(withPerformance.research, withPerformance.intake), promptLab: hydratePromptLabState(withPerformance.promptLab), video: hydrateVideoWorkspace(withPerformance.video), audio: restoreAudioWorkspace(withPerformance.audio) };
   const withVisual = { ...withResearch, visualDevelopment: hydrateVisualDevelopmentState(withResearch.visualDevelopment, withResearch) };
   const withCinema = { ...withVisual, cinematography: hydrateCinematographyState(withVisual.cinematography, withVisual) };
-  return { ...withCinema, generateGates: hydrateGenerateGates(withCinema.generateGates, withCinema), productFlow: hydrateProductFlow(withCinema.productFlow) };
+  const migrated = { ...withCinema, generateGates: hydrateGenerateGates(withCinema.generateGates, withCinema), productFlow: hydrateProductFlow(withCinema.productFlow) };
+  return withRedSeaThumbnail(migrated);
+}
+
+function withRedSeaThumbnail(picture: Picture): Picture {
+  if (picture.thumbnailUrl) return picture;
+  const searchable = [
+    picture.id,
+    picture.title,
+    picture.logline,
+    picture.genre,
+    picture.tone,
+    picture.intake?.title,
+    picture.intake?.concept,
+    picture.intake?.premise,
+    picture.intake?.logline,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return searchable.includes("john 3:16") || searchable.includes("red sea")
+    ? { ...picture, thumbnailUrl: RED_SEA_THUMBNAIL_URL }
+    : picture;
 }
 
 export function useActivePicture(): Picture | null {

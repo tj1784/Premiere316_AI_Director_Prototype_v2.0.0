@@ -3,5 +3,5 @@
   "qwenOnlyBlockedUnlessExplicit": true,
   "deepSeekBlocked": true,
   "ready0FallbackRemoved": true,
-  "llamaNotServedMessage": "Configured AI model unavailable. Start LM Studio Local API Server and serve the configured Llama model, then Rescan."
+  "llamaNotServedMessage": "Configured AI model unavailable. Start LM Studio Local API Server and serve the selected local writer model, then Rescan."
 }

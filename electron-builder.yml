@@ -6,6 +6,8 @@ npmRebuild: false
 directories:
   output: dist-desktop
 files:
+  - desktop/web-references.mjs
+  - desktop/native-film.mjs
   - desktop/main.mjs
   - desktop/ffmpeg-tool.mjs
   - desktop/preload.cjs
@@ -19,6 +21,14 @@ files:
   - package.json
   - "!**/node_modules/**"
 extraResources:
+  - from: desktop/workers/native_h3_film.py
+    to: workers/native_h3_film.py
+  - from: desktop/workers/native_h3_runtime.py
+    to: workers/native_h3_runtime.py
+  - from: desktop/workers/native_h3_weights.py
+    to: workers/native_h3_weights.py
+  - from: desktop/workers/minimax_h3_config
+    to: workers/minimax_h3_config
   - from: desktop/dist/backend.mjs
     to: backend.mjs
   - from: desktop/build-info.json
@@ -27,6 +37,8 @@ extraResources:
     to: workers/flux1_jsonl_worker.py
   - from: desktop/workers/flux2_jsonl_worker.py
     to: workers/flux2_jsonl_worker.py
+  - from: desktop/workers/krea2_jsonl_worker.py
+    to: workers/krea2_jsonl_worker.py
   - from: desktop/workers/minimax_h3_jsonl_worker.py
     to: workers/minimax_h3_jsonl_worker.py
   - from: desktop/workers/ltx25_jsonl_worker.py

@@ -1,3 +1,4 @@
+import { GLOBAL_PRODUCTION_INSTRUCTIONS } from "./production-instructions.ts";
 import { appendScreenplayVersion, type PictureScreenplay, type ScreenplayModelRef } from "./screenplay.ts";
 import { spliceScopedFountain, type ScreenplayScope, type ScreenplaySelection } from "./screenplay-scope.ts";
 import type { ScreenplayHierarchy } from "./screenplay-hierarchy.ts";
@@ -121,6 +122,6 @@ export function applyExplicitQaRewrite(
   });
 }
 
-export const STORY_DOCTOR_SYSTEM = `You are movie-screenplay-qa, an independent Story Doctor. You do not continue the writer's hidden context. Critique first. Return ONLY JSON {"findings":[{"category":"SOURCE DRIFT|HISTORICAL DRIFT|CHARACTER DRIFT|SOCIAL-WORLD MISREADING|THEMATIC DRIFT|DIALOGUE ISSUE|PACING ISSUE|CONTINUITY ISSUE|CINEMATOGRAPHY OPPORTUNITY","severity":"note|warning|blocker","summary":"...","exactScope":"SCENE-017 or similar","recommendation":"...","revisionRequired":false,"rewriteSuggested":null}]}. Never output Fountain. rewriteSuggested stays null unless a surgical alternative is necessary. Do not mutate the screenplay.`;
+export const STORY_DOCTOR_SYSTEM = GLOBAL_PRODUCTION_INSTRUCTIONS + `\n\nYou are movie-screenplay-qa, an independent Story Doctor. You do not continue the writer's hidden context. Critique first. Return ONLY JSON {"findings":[{"category":"SOURCE DRIFT|HISTORICAL DRIFT|CHARACTER DRIFT|SOCIAL-WORLD MISREADING|THEMATIC DRIFT|DIALOGUE ISSUE|PACING ISSUE|CONTINUITY ISSUE|CINEMATOGRAPHY OPPORTUNITY","severity":"note|warning|blocker","summary":"...","exactScope":"SCENE-017 or similar","recommendation":"...","revisionRequired":false,"rewriteSuggested":null}]}. Never output Fountain. rewriteSuggested stays null unless a surgical alternative is necessary. Do not mutate the screenplay.`;
 
-export const SECOND_OPINION_SYSTEM = `You are movie-screenplay-qa-qwen, an optional second-opinion critic. You do not automatically rewrite. Return ONLY the same critique JSON schema as the primary Story Doctor. Never output Fountain.`;
+export const SECOND_OPINION_SYSTEM = GLOBAL_PRODUCTION_INSTRUCTIONS + `\n\nYou are movie-screenplay-qa-qwen, an optional second-opinion critic. You do not automatically rewrite. Return ONLY the same critique JSON schema as the primary Story Doctor. Never output Fountain.`;

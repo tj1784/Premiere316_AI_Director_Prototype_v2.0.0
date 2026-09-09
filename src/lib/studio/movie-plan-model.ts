@@ -1,6 +1,6 @@
 import { classifyLocalWriterFamily } from "./model-routing.ts";
 
-export const DEFAULT_MOVIE_PLAN_MODEL = "qwen3.6-40b-claude-4.6-opus-deckard-heretic-uncensored-thinking-neo-code-di-imatrix-max";
+export const DEFAULT_MOVIE_PLAN_MODEL = "gptoss-120b-uncensored-hauhaucs-aggressive";
 
 export const LLAMA_NOT_SERVED =
   "Configured AI model unavailable. Start LM Studio Local API Server and serve the selected local writer model, then Rescan.";
@@ -13,7 +13,7 @@ export type MoviePlanModelCandidate = {
 };
 
 export type MoviePlanModelSelection =
-  | { allowed: true; servedModelId: string; displayName: string; family: "llama" | "qwen"; reason: null }
+  | { allowed: true; servedModelId: string; displayName: string; family: "llama" | "qwen" | "other"; reason: null }
   | { allowed: false; servedModelId: null; displayName: null; family: "none"; reason: string };
 
 function asCrew(model: MoviePlanModelCandidate) {
@@ -26,16 +26,23 @@ function asCrew(model: MoviePlanModelCandidate) {
 }
 
 export function normalizeMoviePlanModelKey(value: string | null | undefined): string {
-  return (value ?? "").trim().toLowerCase().replace(/^lmstudio:/, "");
+  return (value ?? "").trim().replace(/^lmstudio:/, "");
+}
+
+export function requireMoviePlanModelId(value: unknown): string {
+  if (typeof value !== "string") throw new Error("Select an exact local writer model ID. No substitute is used.");
+  const id = normalizeMoviePlanModelKey(value);
+  if (!id || id.length > 1000 || /[\u0000-\u001f\u007f]/.test(id)) throw new Error("Select an exact local writer model ID. No substitute is used.");
+  return id;
 }
 
 function matchesExplicit(model: MoviePlanModelCandidate, explicitId: string): boolean {
   const want = normalizeMoviePlanModelKey(explicitId);
   if (!want) return false;
-  return normalizeMoviePlanModelKey(model.servedModelId) === want || normalizeMoviePlanModelKey(model.id) === want;
+  return model.servedModelId === want;
 }
 
-function allow(model: MoviePlanModelCandidate, family: "llama" | "qwen"): MoviePlanModelSelection {
+function allow(model: MoviePlanModelCandidate, family: "llama" | "qwen" | "other"): MoviePlanModelSelection {
   return {
     allowed: true,
     servedModelId: model.servedModelId,
@@ -63,10 +70,13 @@ export function selectMoviePlanModel(
   const usable = ready.filter((model) => model.status === "ready");
   const explicitId = input.explicitServedId?.trim() || "";
   if (explicitId) {
-    const match = usable.find((model) => matchesExplicit(model, explicitId));
+    const matches = usable.filter((model) => matchesExplicit(model, explicitId));
+    const match = matches.length === 1 ? matches[0] : undefined;
     const family = match ? classifyLocalWriterFamily(asCrew(match)) : "other";
-    if (match && (family === "llama" || family === "qwen")) return allow(match, family);
-    return deny();
+    // Candidates already come from loaded LM Studio language models. An exact,
+    // explicit user selection can choose another family without changing defaults.
+    if (match) return allow(match, family);
+    return deny(`The selected local writer ${normalizeMoviePlanModelKey(explicitId)} is unavailable or ambiguous. No substitute is used.`);
   }
   const llama = usable.find((model) => classifyLocalWriterFamily(asCrew(model)) === "llama");
   if (llama) return allow(llama, "llama");

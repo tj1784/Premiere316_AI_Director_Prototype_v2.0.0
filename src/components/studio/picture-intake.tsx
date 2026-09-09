@@ -17,6 +17,7 @@ import { screenplayModelDetail } from "@/lib/studio/screenplay-models";
 import type { ScreenplayModelRef } from "@/lib/studio/screenplay";
 import type { LocalLLMProviderDiscovery } from "@/lib/studio/local-llm-provider";
 import { uid } from "@/lib/utils";
+import { VisualDirectionField } from "./visual-direction-field";
 
 const sourceDescriptions: Record<IntakeSourceType, string> = {
   concept: "Build from an idea, premise, or logline.",
@@ -50,6 +51,7 @@ export function PictureIntakeForm({
   const [intake, setIntake] = useState(() => makePictureIntake());
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [directionBusy, setDirectionBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const validation = useMemo(() => validatePictureIntake(intake), [intake]);
   const readyModels = models.filter((model) => model.status === "ready");
@@ -74,7 +76,7 @@ export function PictureIntakeForm({
       <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-bg px-5 py-3 sm:px-8">
         <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
         <div className="text-center"><p className="text-[10px] tracking-[0.2em] text-subtle uppercase">01 · Intake</p><p className="font-display text-sm">New Picture</p></div>
-        <Button type="submit" form="picture-intake" size="sm" disabled={saving}>{saving ? "Creating…" : "Create Picture"}</Button>
+        <Button type="submit" form="picture-intake" size="sm" disabled={saving || directionBusy}>{saving ? "Creating…" : "Create Picture"}</Button>
       </header>
       <main className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-10">
         <section>
@@ -90,7 +92,7 @@ export function PictureIntakeForm({
           </div>
         </section>
 
-        <form id="picture-intake" className="mt-8 grid gap-8" onSubmit={async (event) => { event.preventDefault(); setSubmitted(true); if (!validation.valid) return; setSaving(true); try { await onCreate(intake); } finally { setSaving(false); } }}>
+        <form id="picture-intake" className="mt-8 grid gap-8" onSubmit={async (event) => { event.preventDefault(); setSubmitted(true); if (!validation.valid || directionBusy) return; setSaving(true); try { await onCreate(intake); } finally { setSaving(false); } }}>
           <section className="rounded-lg bg-elevated p-5 shadow-[var(--shadow-border)]">
             <div className="grid gap-4">
               {intake.sourceType === "concept" ? <><TextField label="Concept" value={intake.concept} onChange={(value) => patch("concept", value)} /><TextField label="Premise" value={intake.premise} onChange={(value) => patch("premise", value)} required /><TextField label="Logline" value={intake.logline} onChange={(value) => patch("logline", value)} /><TextField label="Story notes" value={intake.storyNotes} onChange={(value) => patch("storyNotes", value)} /></> : null}
@@ -106,6 +108,7 @@ export function PictureIntakeForm({
             </div>
           </section>
 
+          <VisualDirectionField value={intake.visualDirection} onChange={value => patch("visualDirection", value)} disabled={saving || directionBusy} onBusy={setDirectionBusy} />
           <section>
             <p className="text-[11px] tracking-[0.2em] text-subtle uppercase">Picture settings</p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -130,7 +133,7 @@ export function PictureIntakeForm({
 
           {submitted && !validation.valid ? <div role="alert" className="rounded-md bg-elevated px-4 py-3 text-sm text-rec shadow-[var(--shadow-border)]">{Object.values(validation.fields)[0]}</div> : null}
           {!readyModels.length && provider ? <p className="text-sm text-muted">Screenplay generation is unavailable until LM Studio’s local API is running with a text model loaded. Your Picture Intake remains available.</p> : null}
-          <div className="flex justify-end gap-2"><Button variant="ghost" onClick={onCancel}>Cancel</Button><Button type="submit" disabled={saving}>{saving ? "Creating…" : "Create Picture"}</Button></div>
+          <div className="flex justify-end gap-2"><Button variant="ghost" onClick={onCancel}>Cancel</Button><Button type="submit" disabled={saving || directionBusy}>{saving ? "Creating…" : "Create Picture"}</Button></div>
         </form>
       </main>
     </div>

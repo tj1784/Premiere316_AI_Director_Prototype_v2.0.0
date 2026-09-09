@@ -133,6 +133,10 @@ export type VoiceTake = {
 };
 
 export type Picture = {
+  assetPromptSources?: Record<string, import("./asset-prompt-context.ts").AssetPromptSource>;
+  assetPromptHistory?: Array<{ createdAt: number; prompts: Record<string, string>; sources: Record<string, import("./asset-prompt-context.ts").AssetPromptSource>; modelId: string; rawResponse: string }>;
+  assetImagePrompts?: Record<string, string>;
+  nativeFilm?: import("./native-film.ts").NativeFilmDraft;
   id: string;
   title: string;
   logline: string;

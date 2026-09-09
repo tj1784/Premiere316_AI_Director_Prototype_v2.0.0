@@ -4,10 +4,19 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
-import { componentHasRequiredPayload, resolveImageComponentManifest, resolveImageComponentManifests } from "./image-component-resolver.server.ts";
+import { componentHasRequiredPayload, nativeCudaWeightBytes, resolveImageComponentManifest, resolveImageComponentManifests } from "./image-component-resolver.server.ts";
 import { nativeModelPath } from "./native-model-paths.server.ts";
 
 describe("Wave 4 image component resolver", () => {
+  it("counts FLUX.2's CPU Mistral encoder against RAM, never against CUDA", () => {
+    const components = [
+      { required: true, role: "transformer", sizeBytes: 64_446_596_128 },
+      { required: true, role: "vae", sizeBytes: 336_213_556 },
+      { required: true, role: "text_encoder", sizeBytes: 48_376_375_728 },
+    ];
+    assert.equal(nativeCudaWeightBytes(components, "flux2-dev"), 64_782_809_684);
+    assert.equal(nativeCudaWeightBytes(components, "flux1-dev"), 113_159_185_412);
+  });
   it("finds organized model files while preserving an existing flat vault path", async () => {
     const root = await mkdtemp(join(tmpdir(), "p316-model-path-"));
     const family = join(root, "vae", "Flux.1");
@@ -52,8 +61,12 @@ describe("Wave 4 image component resolver", () => {
     assert.notEqual(klein.status, "READY");
     assert.match(klein.disabledReason ?? "", /Missing exact|disabled|Labs/i);
     const krea = resolveImageComponentManifest("krea-2", "", 1800);
-    assert.equal(krea.status, "ADAPTER_UNAVAILABLE");
-    assert.match(krea.disabledReason ?? "", /not a complete app-supported native adapter/i);
+    assert.equal(krea.modelVariant, "krea2-raw");
+    assert.equal(krea.runtimeImplementation, "krea-ai/krea-2");
+    assert.equal(krea.controls?.controls.references.supported, false);
+    assert.ok(krea.components.some((component) => component.stableId.includes("qwen3vl_4b_bf16.safetensors@36f3ff44")));
+    assert.ok(krea.components.some((component) => component.stableId.includes("krea2_raw_bf16.safetensors@f99bb0ff")));
+    if (krea.status !== "READY") assert.match(krea.disabledReason ?? "", /Missing exact|MEMORY RISK/);
   });
 
   it("distinguishes sampled fingerprints from full SHA identity", () => {

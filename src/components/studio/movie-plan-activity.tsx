@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import type { MoviePlanProgress } from "@/lib/studio/movie-plan-stream.ts";
 import type { InternalPhase } from "@/lib/studio/product-flow.ts";
 
-const PHASES: Record<InternalPhase, { label: string; purpose: string }> = {
+const PHASES: Record<MoviePlanProgress["phase"], { label: string; purpose: string }> = {
+  assetPrompts: { label: "Asset prompts", purpose: "Writing asset reference prompts from the screenplay, cinematography and visual development." },
+  assetReferences: { label: "Visual reference search", purpose: "Choosing web searches for hard-to-describe visual details." },
+  assetReferenceChoice: { label: "Reference selection", purpose: "Selecting relevant visual sources from actual search results." },
   research: { label: "Research Bible", purpose: "Developing the story world, characters, source context, and visual direction from your idea." },
   screenplay: { label: "Screenplay", purpose: "Writing scenes and dialogue from the idea and Research Bible." },
   screenplayQa: { label: "Screenplay QA", purpose: "Reviewing the screenplay in a separate context for continuity, pacing, and source drift." },
@@ -45,6 +48,7 @@ export function MoviePlanActivity({ events, startedAt, running }: { events: Movi
     </label> : null}
     <p className="text-xs text-muted">Live draft output from the local model. Its format is validated before saving. Story QA runs only when enabled.</p>
     <pre ref={output} className="max-h-72 min-h-24 overflow-auto whitespace-pre-wrap break-words rounded-md bg-inset p-3 font-mono text-xs leading-relaxed text-fg" data-model-output="true">{active?.text || (running ? "Waiting for the first output text…" : "No output text.")}</pre>
+    {active?.reasoning ? <details open><summary className="text-xs">Local model reasoning reported by LM Studio</summary><pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-md bg-inset p-3 text-xs">{active.reasoning}</pre></details> : null}
     <label className="flex min-h-11 items-center gap-2 text-xs text-muted"><input type="checkbox" checked={follow} onChange={(event) => setFollow(event.target.checked)} />Follow new output</label>
     {active?.message ? <p role="alert" className="text-sm text-rec">{active.message}</p> : null}
   </section>;

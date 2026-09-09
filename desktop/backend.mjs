@@ -3,11 +3,12 @@
  * Talks JSON-lines over stdin/stdout. Renderer never imports this file.
  */
 import { randomBytes, createHash, createHmac, timingSafeEqual } from "node:crypto";
-import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, writeFileSync } from "node:fs";
+import { dirname, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { loadCatalog } from "../src/lib/studio/model-scan.server.ts";
-import { exposeLocalStill, setLocalStillMediaRoot, stopLocalEngine, verifyLocalStillOutput } from "../src/lib/studio/local-still.server.ts";
+import { exposeLocalStill, encodeLocalStillPrompts, setLocalStillMediaRoot, stopLocalEngine, verifyLocalStillOutput } from "../src/lib/studio/local-still.server.ts";
+import { nativeStillDimensions } from "../src/lib/studio/native-still-contract.ts";
 import { resolveImageComponentManifest, resolveImageComponentManifests } from "../src/lib/studio/image-component-resolver.server.ts";
 import { MODEL_ROOT, sanitizeModelCatalog } from "../src/lib/studio/model-catalog.ts";
 import { sourceFingerprint } from "../src/lib/production/dependency-graph.ts";
@@ -27,12 +28,14 @@ const ALLOWED = new Set([
   "image.proposeCanonicalRejection",
   "image.confirmCanonicalRejection",
   "image.generatePrepared",
+  "image.recoverDrafts",
+  "image.encodeDraftPrompts",
   "image.confirmCanonicalApproval",
   "engines.stop",
   "app.modelRoot",
 ]);
 const TOKEN_TTL_MS = 5 * 60_000;
-const MAX_PROMPT = 4000;
+const MAX_PROMPT = 20000;
 const MAX_REF_COUNT = 3;
 const pendingAuthorityProposals = new Map();
 const pendingApprovalProposals = new Map();
@@ -115,8 +118,11 @@ function validateTailCheckpoint(tail) {
     return;
   }
   const checkpoint = JSON.parse(readFileSync(file, "utf8"));
-  const expected = signedTailCheckpoint(tail);
-  if (checkpoint.schemaVersion !== expected.schemaVersion || checkpoint.count !== expected.count || checkpoint.headMac !== expected.headMac || checkpoint.ledgerPath !== expected.ledgerPath || !timingSafeHexEqual(checkpoint.mac, expected.mac)) {
+  // Verify the originally signed checkpoint, including its original path.
+  // A user may relocate a profile with its encrypted key and intact ledger;
+  // relocation changes the current path, not the authenticated chain head.
+  const { mac, ...signedPayload } = checkpoint;
+  if (checkpoint.schemaVersion !== 1 || checkpoint.count !== (tail?.seq ?? 0) || checkpoint.headMac !== (tail?.mac ?? null) || typeof checkpoint.ledgerPath !== "string" || !checkpoint.ledgerPath || !timingSafeHexEqual(mac, macPayload(signedPayload))) {
     throw new Error("Prepared security ledger tail checkpoint verification failed.");
   }
 }
@@ -449,11 +455,14 @@ function verifyPreparedSnapshot(params, manifest) {
   const approval = preparedApprovals.get(approvalRootId);
   if (!approval) throw new Error("Prepared generation requires a backend-signed prepared approval root.");
   if (approval.authorityId !== authority.authorityId || approval.authorityDigest !== authority.projectionDigest || approval.preparedAssetId !== prepared.id || approval.assetId !== asset.id) throw new Error("Prepared approval ledger root is not bound to the current authority.");
-  const references = Array.isArray(params.references) ? params.references.filter((uri) => typeof uri === "string" && uri.startsWith("data:image/") && uri.length < 8 * 1024 * 1024).slice(0, MAX_REF_COUNT) : [];
-  if (references.length) throw new Error("Prepared T2I generation does not accept renderer-supplied reference bytes.");
+  if (Array.isArray(params.references) && params.references.length) throw new Error("References must come from the sealed asset, not renderer-supplied bytes.");
+  const references = asset.references.filter((reference) => prepared.referenceIds.includes(reference.id)).map((reference) => reference.uri);
+  if (references.length > MAX_REF_COUNT || references.some((uri) => !/^media:\/\/stills\/[a-zA-Z0-9._-]+\.png$/.test(uri))) throw new Error("Attach local reference images before generating this asset.");
   const adapter = preparedT2iAdapter(String(params.engineId ?? ""));
-  if (!adapter) throw new Error("Only FLUX.2 Dev (default T2I) or FLUX.1 prepared generation is enabled.");
-  const fixedValues = { ...mediaSettings(params.values), ...adapter.values };
+  if (!adapter) throw new Error("Selected image engine has no prepared generation adapter.");
+  const fixedValues = { ...mediaSettings(params.values), ...adapter.values, ...nativeStillDimensions(adapter.engineId, params.values ?? {}) };
+  const prompt = params.promptOverride === undefined ? prepared.prompt : String(params.promptOverride).trim();
+  if (!prompt || prompt.length > MAX_PROMPT) throw new Error("Image prompt must contain 1–20000 characters.");
   return {
     authorityId: authority.authorityId,
     authorityDigest: authority.projectionDigest,
@@ -474,22 +483,28 @@ function verifyPreparedSnapshot(params, manifest) {
     engineId: adapter.engineId,
     engineName: adapter.engineName,
     selectedBasePath: adapter.selectedBasePath,
-    prompt: prepared.prompt,
-    references,
+    prompt,
+    references: adapter.engineId === "krea-2" ? [] : references,
+    ...(adapter.engineId === "krea-2" ? { promptReferences: references, conditioningMode: "text-only" } : {}),
     values: fixedValues,
-    configDigest: domainDigest("p316.preparedGeneration.config.v1", { engineId: adapter.engineId, selectedBasePath: adapter.selectedBasePath, promptDigest: prepared.promptDigest, values: fixedValues, adapter: adapter.adapter }),
+    configDigest: domainDigest("p316.preparedGeneration.config.v1", { engineId: adapter.engineId, selectedBasePath: adapter.selectedBasePath, promptDigest: domainDigest("p316.prepared.prompt.v1", { prompt }), values: fixedValues, adapter: adapter.adapter }),
     manifestDigest: stableManifestDigest(manifest),
   };
 }
 
 function preparedT2iAdapter(engineId) {
+  if (engineId === "krea-2") return {
+    engineId: "krea-2", engineName: "KREA 2 RAW", selectedBasePath: "diffusion_models/Krea 2/krea2_raw_bf16.safetensors", adapter: "krea-2/krea2-raw",
+    summary: "KREA 2 RAW · official 52 steps · CFG 3.5 · text-only · 512px draft / 1024px sheet",
+    values: { width: 512, height: 512, steps: 52, guidance: 3.5, scheduler: "krea2-raw-resolution-aware-euler", precision: "BF16", outputFormat: "PNG", outputBitDepth: 8 },
+  };
   if (engineId === "flux2") {
     return {
       engineId: "flux2",
       engineName: "FLUX.2 Dev",
       selectedBasePath: "diffusion_models/flux2_dev.safetensors",
       adapter: "flux2/flux2-dev",
-      summary: "FLUX.2 Dev · official 50 steps · guidance 4.0 · 512×512 PNG",
+      summary: "FLUX.2 Dev · official 50 steps · guidance 4.0 · 512px draft / 1024px sheet",
       values: { width: 512, height: 512, steps: 50, guidance: 4, scheduler: "flux2-empirical-snr", precision: "BF16", outputFormat: "PNG", outputBitDepth: 8 },
     };
   }
@@ -533,7 +548,7 @@ function proposePrepared(params) {
   const adapter = preparedT2iAdapter(String(params?.engineId ?? "flux2"));
   if (!adapter) {
     const manifest = resolveImageComponentManifest(String(params?.engineId ?? ""), "");
-    return { ok: false, error: "Only FLUX.2 Dev (default T2I) or FLUX.1 prepared generation is enabled.", manifest };
+    return { ok: false, error: "Selected image engine has no prepared generation adapter.", manifest };
   }
   const manifest = resolveImageComponentManifest(adapter.engineId, adapter.selectedBasePath);
   params = { ...(params ?? {}), engineId: adapter.engineId, selectedBasePath: adapter.selectedBasePath, engineName: adapter.engineName };
@@ -566,6 +581,31 @@ function confirmPrepared(params) {
   return { ok: true, token, expiresAt, manifest };
 }
 
+function verifyDraftPromptBatch(params, manifest) {
+  if (params?.engineId !== "krea-2") throw new Error("This engine does not expose staged GPU prompt encoding.");
+  if (!Array.isArray(params.prompts) || !params.prompts.length || params.prompts.length > 100) throw new Error("Prompt batch must contain 1–100 prepared assets.");
+  if (manifest.adapterId !== params.engineId || manifest.modelVariant !== "krea2-raw" || manifest.status !== "READY") throw new Error(manifest.disabledReason || "Prompt batch image adapter is unavailable.");
+  const ids = new Set();
+  return params.prompts.map((entry) => {
+    if (typeof entry?.prompt !== "string" || !entry.prompt || entry.prompt !== entry.prompt.trim()) throw new Error("Prompt batch requires exact nonempty saved prompt strings.");
+    const job = verifyPreparedSnapshot({ ...entry, authorityId: params.authorityId, engineId: params.engineId, promptOverride: entry.prompt }, manifest);
+    if (job.pictureId !== params.pictureId) throw new Error("Prompt batch authority belongs to a different picture.");
+    if (ids.has(job.preparedAssetId)) throw new Error("Prompt batch contains a duplicate prepared asset.");
+    ids.add(job.preparedAssetId);
+    return job;
+  });
+}
+
+async function encodeDraftPrompts(params) {
+  try {
+    const adapter = preparedT2iAdapter(params?.engineId);
+    if (!adapter) throw new Error("Selected image engine has no native prompt encoder.");
+    const manifest = resolveImageComponentManifest(adapter.engineId, adapter.selectedBasePath);
+    const jobs = verifyDraftPromptBatch(params, manifest);
+    return await encodeLocalStillPrompts({ engineId: adapter.engineId, prompts: jobs.map((job) => job.prompt) }, (message) => process.stdout.write(`${JSON.stringify({ event: "imageProgress", pictureId: params.pictureId, assetId: "prompt-batch", preparedAssetId: "prompt-batch", message, at: Date.now() })}\n`));
+  } catch (error) { return { ok: false, error: error instanceof Error ? error.message : "Prompt batch encoding failed." }; }
+}
+
 async function generatePrepared(params) {
   const token = String(params?.token ?? "");
   const job = pendingPrepared.get(token);
@@ -580,13 +620,14 @@ async function generatePrepared(params) {
     prompt: job.prompt,
     engineId: job.engineId,
     engineName: job.engineName,
-    references: [],
+    references: job.references,
+    promptReferences: job.promptReferences,
     selectedBasePath: job.selectedBasePath,
     values: job.values,
     assetId: job.assetId,
     pictureId: job.pictureId,
     preparedAssetId: job.preparedAssetId,
-  });
+  }, (message) => process.stdout.write(`${JSON.stringify({ event: "imageProgress", pictureId: job.pictureId, assetId: job.assetId, preparedAssetId: job.preparedAssetId, message, at: Date.now() })}\n`));
   if (!result.ok) return result;
   const receiptId = `receipt:${randomBytes(16).toString("hex")}`;
   const iterationId = `iteration:${job.assetId}:${randomBytes(8).toString("hex")}`;
@@ -632,6 +673,66 @@ function verifyOutput(params) {
   const verified = verifyLocalStillOutput(expected);
   if (!verified.ok) return verified;
   return { ok: true, output: { ...verified.output, receiptId } };
+}
+
+function recoverDrafts(params) {
+  try {
+    const authority = requireCurrentAuthority(params?.authorityId);
+    if (authority.pictureId !== params?.pictureId) throw new Error("Recovery picture does not match the current authority.");
+    // Appending/reviewing an image updates asset.updatedAt without changing its
+    // creative inputs. Compare every sealed field using only that timestamp
+    // from the authority; never mutate the renderer's stored asset or review data.
+    const raw = params?.rawCanonical;
+    const candidateRaw = raw && { ...raw, assets: Array.isArray(raw.assets) ? raw.assets.map((asset) => ({ ...asset, updatedAt: authority.boundedProjection.assets.find((sealed) => sealed.id === asset?.id)?.updatedAt ?? asset?.updatedAt })) : raw.assets };
+    const candidate = productionAuthorityProjection(candidateRaw, authority.pictureId);
+    if (candidate.projectionDigest !== authority.projectionDigest) return { ok: true, results: [] };
+    const requests = params?.requests;
+    if (!Array.isArray(requests) || requests.length > 100) throw new Error("Recovery requires at most 100 prepared assets.");
+    const entries = loadLedger().filter((entry) => entry.kind === "generationReceipt").reverse();
+    const results = [];
+    setLocalStillMediaRoot(receiptMediaRoot);
+    for (const request of requests) {
+      const { asset, prepared } = requireAuthorityPrepared(authority, request.preparedAssetId);
+      const approval = preparedApprovals.get(request.preparedApprovalRootId);
+      if (!approval || approval.authorityId !== authority.authorityId || approval.preparedAssetId !== prepared.id) throw new Error("Recovery prepared approval is not bound to the current authority.");
+      const referenceUris = asset.references.filter((reference) => prepared.referenceIds.includes(reference.id)).map((reference) => reference.uri);
+      if (stableString(referenceUris) !== stableString(request.referenceUris)) continue;
+      const known = new Set(Array.isArray(request.knownIterationIds) ? request.knownIterationIds : []);
+      for (const entry of entries) {
+        const receipt = entry.payload;
+        if (receipt.pictureId !== authority.pictureId || receipt.authorityId !== authority.authorityId || receipt.authorityDigest !== authority.projectionDigest || receipt.preparedAssetId !== prepared.id || receipt.assetId !== asset.id || receipt.specVersionId !== prepared.specVersionId || receipt.preparedApprovalRootId !== request.preparedApprovalRootId || receipt.preparedApprovalDigest !== approval.approvalDigest || rejectedReceiptIds.has(receipt.receiptId)) continue;
+        const seal = preparedSeals.get(receipt.sealId);
+        if (!seal || digest(seal) !== receipt.sealDigest || receipt.preparedSealDigest !== receipt.sealDigest || seal.authorityId !== authority.authorityId || seal.preparedAssetId !== prepared.id || seal.preparedApprovalRootId !== request.preparedApprovalRootId) throw new Error("Saved image generation seal could not be verified.");
+        if (seal.promptDigest !== domainDigest("p316.prepared.prompt.v1", { prompt: request.prompt })) continue;
+        if (domainDigest("p316.canonical.output.v1", receipt.output) !== receipt.outputDigest) throw new Error("Saved image receipt output digest mismatch.");
+        const verified = verifyLocalStillOutput(receipt.output);
+        if (!verified.ok) throw new Error(verified.error);
+        const provenance = JSON.parse(Buffer.from(verified.output.sidecarBytes).toString("utf8"));
+        if (digest(provenance) !== receipt.provenanceDigest || provenance.assetId !== asset.id) throw new Error("Saved image provenance does not match its signed receipt.");
+        if (provenance.prompt !== request.prompt || provenance.engineId !== request.engineId || provenance.runtimeAdapter !== request.engineId) continue;
+        const sourceReferences = request.engineId === "krea-2" ? provenance.promptReferences : provenance.references;
+        if (request.engineId === "krea-2" && (provenance.conditioningMode !== "text-only" || provenance.references?.length !== 0)) continue;
+        if (!Array.isArray(sourceReferences) || sourceReferences.length !== referenceUris.length) continue;
+        let referencesMatch = true;
+        for (const uri of referenceUris) {
+          if (!/^media:\/\/stills\/[a-zA-Z0-9._-]+\.png$/.test(uri)) throw new Error("Saved image reference URI is invalid.");
+          const root = realpathSync(join(receiptMediaRoot, "stills"));
+          const path = realpathSync(join(root, uri.slice("media://stills/".length)));
+          const rel = relative(root, path);
+          if (!rel || rel.startsWith("..") || /[/\\]/.test(rel)) throw new Error("Saved image reference escapes the media root.");
+          const fingerprint = createHash("sha256").update(readFileSync(path)).digest("hex");
+          if (!sourceReferences.some((reference) => reference.id === uri && reference.fingerprint === fingerprint)) referencesMatch = false;
+        }
+        if (!referencesMatch) continue;
+        if (!known.has(receipt.iterationId)) results.push({ ok: true, url: verified.output.mediaUri, provenance, output: { ...verified.output, receiptId: receipt.receiptId }, receiptId: receipt.receiptId, receiptDigest: domainDigest("p316.generationReceipt.v1", receipt), receiptMac: entry.mac, iterationId: receipt.iterationId, continuityFindings: receipt.continuityFindings ?? [], workerIdentityDigest: receipt.workerIdentityDigest, componentDigest: receipt.componentDigest, preparedAssetId: prepared.id });
+        break;
+      }
+    }
+    const approvals = [...preparedApprovals.values()].filter((approval) => approval.authorityId === authority.authorityId && approval.authorityDigest === authority.projectionDigest).map((approval) => ({ preparedAssetId: approval.preparedAssetId, rootId: approval.approvalRootId, digest: approval.approvalDigest, approvedAt: approval.approvedAt }));
+    return { ok: true, results, authority: { authorityId: authority.authorityId, digest: authority.projectionDigest, createdAt: authority.sealedAt }, approvals };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Saved image recovery failed." };
+  }
 }
 
 function normalizedFindingConfirmations(params) {
@@ -779,6 +880,12 @@ async function dispatch(method, params) {
     case "image.generatePrepared":
       if (params?.mediaRoot) { setLocalStillMediaRoot(String(params.mediaRoot)); setReceiptMediaRoot(String(params.mediaRoot)); }
       return generatePrepared(params);
+    case "image.recoverDrafts":
+      if (params?.mediaRoot) { setLocalStillMediaRoot(String(params.mediaRoot)); setReceiptMediaRoot(String(params.mediaRoot)); }
+      return recoverDrafts(params);
+    case "image.encodeDraftPrompts":
+      if (params?.mediaRoot) { setLocalStillMediaRoot(String(params.mediaRoot)); setReceiptMediaRoot(String(params.mediaRoot)); }
+      return encodeDraftPrompts(params);
     case "image.proposeCanonicalRejection":
       if (params?.mediaRoot) { setLocalStillMediaRoot(String(params.mediaRoot)); setReceiptMediaRoot(String(params.mediaRoot)); }
       return proposeCanonicalRejection(params);
@@ -800,7 +907,7 @@ async function dispatch(method, params) {
   }
 }
 
-export const __testing = { setReceiptMediaRoot, loadLedger, appendLedger, validateSignedRecord, signedLedgerRecord, digest, domainDigest, productionAuthorityProjection, proposeProductionAuthority, confirmProductionAuthority, productionAuthorityStatus, verifyPreparedSnapshot, proposePreparedApproval, confirmPreparedApproval, proposeCanonicalApproval, confirmCanonicalApproval, proposeCanonicalRejection, confirmCanonicalRejection };
+export const __testing = { setReceiptMediaRoot, loadLedger, appendLedger, validateSignedRecord, signedLedgerRecord, digest, domainDigest, productionAuthorityProjection, proposeProductionAuthority, confirmProductionAuthority, productionAuthorityStatus, verifyPreparedSnapshot, verifyDraftPromptBatch, proposePreparedApproval, confirmPreparedApproval, proposeCanonicalApproval, confirmCanonicalApproval, proposeCanonicalRejection, confirmCanonicalRejection, recoverDrafts };
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const rl = createInterface({ input: process.stdin, crlfDelay: Infinity });

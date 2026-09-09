@@ -7,6 +7,7 @@ import {
   approveKeyframeIteration,
   cohesionChain,
   compileVideoPromptFromKeyframes,
+  compileKeyframePrompt,
   failClosedKeyframe,
   generateGateReadiness,
   hydrateGenerateGates,
@@ -38,11 +39,21 @@ function picture(): Picture {
 }
 
 describe("Generate three-gate cohesion", () => {
-  it("unlocks keyframes after visual assets exist and keeps native video locked until a pair is approved or waived", () => {
+  it("carries analyzed visual design into both frame prompts without copying board identities", () => {
+    const pic = picture();
+    pic.intake.visualDirection = { sources: [{ id: "ref", name: "board.jpg" }], boardId: "b", analyzedBoardId: "b", guide: "Warm amber light and tactile linen.", notes: "" };
+    for (const kind of ["first", "last"] as const) {
+      const prompt = compileKeyframePrompt(pic, pic.shots[0], kind, []);
+      assert.match(prompt, /Warm amber light/);
+      assert.match(prompt, /Do not copy any depicted person's identity/);
+    }
+  });
+  it("keeps keyframes locked when only asset descriptions exist", () => {
     const pic = picture();
     const readiness = generateGateReadiness(pic);
-    assert.equal(readiness[0].status, "READY");
-    assert.equal(keyframeGateLocked(pic), false);
+    assert.equal(readiness[0].status, "LOCKED");
+    assert.equal(readiness[0].approved, 0);
+    assert.equal(keyframeGateLocked(pic), true);
     assert.equal(nativeVideoLockedForShot(pic, "shot-1"), true);
   });
 

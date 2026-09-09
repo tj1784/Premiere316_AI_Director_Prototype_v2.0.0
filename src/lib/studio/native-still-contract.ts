@@ -7,6 +7,7 @@ export type NativeStillWorkerRequest = {
   width: number;
   height: number;
   seed: number;
+  references?: string[];
 };
 
 export type NativeStillWorkerResult = {
@@ -41,14 +42,27 @@ export function toNativeStillWorkerRequest(input: {
   referencePaths: string[];
 }): NativeStillWorkerRequest {
   const { capabilities, values } = input;
+  if (capabilities.adapterId === "krea-2" && input.referencePaths.length) throw new Error("KREA 2 RAW is text-only; image conditioning is unsupported.");
+  const dimensions = capabilities.adapterId === "klein-demo" ? { width: integer(values.width, capabilities.controls.width.runtimeDefault), height: integer(values.height, capabilities.controls.height.runtimeDefault) } : nativeStillDimensions(capabilities.adapterId, values);
   return {
     method: "generate",
     prompt: input.prompt.trim(),
     out: input.out,
-    width: capabilities.adapterId === "flux" || capabilities.adapterId === "flux2" ? 512 : integer(values.width, capabilities.controls.width.runtimeDefault),
-    height: capabilities.adapterId === "flux" || capabilities.adapterId === "flux2" ? 512 : integer(values.height, capabilities.controls.height.runtimeDefault),
+    ...dimensions,
     seed: integer(values.seed, capabilities.controls.seed.runtimeDefault),
+    ...(capabilities.adapterId === "flux2" && input.referencePaths.length ? { references: input.referencePaths } : {}),
   };
+}
+
+/** Prepared stills support legacy drafts and KREA landscape turnaround sheets. */
+export function nativeStillDimensions(adapterId: string, values: NativeGenerationValues): { width: number; height: number } {
+  if (adapterId === "flux") return { width: 512, height: 512 };
+  const width = values.width === undefined ? 512 : integer(values.width, undefined);
+  const height = values.height === undefined ? 512 : integer(values.height, undefined);
+  const square = width === height && [512, 1024].includes(width);
+  const turnaround = adapterId === "krea-2" && width === 1536 && height === 1024;
+  if (!square && !turnaround) throw new Error("Native still dimensions must be 512×512 or 1024×1024; KREA also supports 1536×1024 turnaround sheets.");
+  return { width, height };
 }
 
 /** Current worker reports seed/model identity; fixed settings come from its audited adapter schema. */

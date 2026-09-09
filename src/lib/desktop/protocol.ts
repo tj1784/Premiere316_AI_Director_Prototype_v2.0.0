@@ -74,6 +74,12 @@ export type StillExposeResult =
   | { ok: true; url: string; provenance: GenerationProvenance; output: PreparedImageOutputProof; receiptId?: string; receiptDigest?: string; iterationId?: string; continuityFindings?: import("@/lib/production/types.ts").IterationContinuityFinding[] }
   | { ok: false; error: string; manifest?: ImageComponentManifest };
 
+export type ImageGenerationProgress = { pictureId: string; assetId: string; preparedAssetId: string; message: string; at: number };
+export type EncodeAssetDraftPromptsInput = { pictureId: string; authorityId: string; engineId: string; prompts: Array<{ preparedAssetId: string; preparedApprovalRootId: string; prompt: string; values: NativeGenerationValues }> };
+export type EncodeAssetDraftPromptsResult = { ok: true; promptCount: number; cachedPromptCount: number; encoderReleased: true; textEncoderDevice: "cuda"; encodeMs: number } | { ok: false; error: string };
+export type RecoverAssetDraftsInput = { pictureId: string; authorityId: string; rawCanonical: ProductionBreakdown; requests: Array<{ preparedAssetId: string; preparedApprovalRootId: string; engineId: string; prompt: string; referenceUris: string[]; knownIterationIds: string[] }> };
+export type RecoverAssetDraftsResult = { ok: true; results: Array<Extract<StillExposeResult, { ok: true }> & { preparedAssetId: string; iterationId: string }>; authority?: { authorityId: string; digest: string; createdAt: number }; approvals?: Array<{ preparedAssetId: string; rootId: string; digest: string; approvedAt: number }> } | { ok: false; error: string };
+
 export type OpenImage = {
   name: string;
   mime: string;
@@ -189,6 +195,11 @@ export type DesktopBuildInfo = {
 /** Typed desktop bridge. No filesystem, spawn, model-root, free wake, free expose, or benchmark primitive. */
 export type Premiere316Desktop = {
   isDesktop: true;
+  film: {
+    start: (input: import("../studio/native-film.ts").NativeFilmRequest) => Promise<import("../studio/native-film.ts").NativeFilmStatus>;
+    status: (jobId: string) => Promise<import("../studio/native-film.ts").NativeFilmStatus>;
+    stop: () => Promise<{ ok: boolean }>;
+  };
   catalog: {
     get: (query?: CatalogQuery) => Promise<ModelCatalog>;
   };
@@ -196,6 +207,13 @@ export type Premiere316Desktop = {
     unload: () => Promise<{ ok: true; stopped: boolean }>;
   };
   image: {
+    searchReferences: (query: string) => Promise<Array<{ title: string; sourceUrl: string; imageUrl: string; description: string }>>;
+    importWebReference: (input: { imageUrl: string; sourceUrl: string }) => Promise<{ uri: string; sha256: string; sourceUrl: string; imageUrl: string }>;
+    prepareDrafts: (input: ProductionAuthoritySealInput) => Promise<{ ok: true; authority: Extract<ProductionAuthoritySealResult, { ok: true }>; approvals: Array<Extract<PreparedApprovalResult, { ok: true }> & { preparedAssetId: string }> } | { ok: false; error: string }>;
+    generateDraft: (input: PreparedGenerationAuthorizationInput & { promptOverride?: string }) => Promise<StillExposeResult>;
+    recoverDrafts: (input: RecoverAssetDraftsInput) => Promise<RecoverAssetDraftsResult>;
+    encodeDraftPrompts: (input: EncodeAssetDraftPromptsInput) => Promise<EncodeAssetDraftPromptsResult>;
+    onProgress: (callback: (progress: ImageGenerationProgress) => void) => () => void;
     manifests: () => Promise<ImageComponentManifest[]>;
     sealAuthority: (input: ProductionAuthoritySealInput) => Promise<ProductionAuthoritySealResult>;
     authorityStatus: (input: ProductionAuthorityStatusInput) => Promise<ProductionAuthorityStatusResult>;
@@ -248,6 +266,9 @@ declare global {
 }
 
 export const DESKTOP_CHANNELS = {
+  filmStart: "p316:film:start",
+  filmStatus: "p316:film:status",
+  filmStop: "p316:film:stop",
   catalogGet: "p316:catalog:get",
   enginesStop: "p316:engines:stop",
   dialogOpenImages: "p316:dialog:openImages",
@@ -261,6 +282,13 @@ export const DESKTOP_CHANNELS = {
   appVersion: "p316:app:version",
   appBuildInfo: "p316:app:buildInfo",
   imageManifests: "p316:image:manifests",
+  imageSearchReferences: "p316:image:searchReferences",
+  imageImportWebReference: "p316:image:importWebReference",
+  imagePrepareDrafts: "p316:image:prepareDrafts",
+  imageGenerateDraft: "p316:image:generateDraft",
+  imageRecoverDrafts: "p316:image:recoverDrafts",
+  imageEncodeDraftPrompts: "p316:image:encodeDraftPrompts",
+  imageProgress: "p316:image:progress",
   imageSealAuthority: "p316:image:sealAuthority",
   imageAuthorityStatus: "p316:image:authorityStatus",
   imageAuthorizePrepared: "p316:image:authorizePrepared",

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Check, Circle, GitCompareArrows, LoaderCircle, RotateCcw, Save, Square } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,13 @@ import { screenplaySteps, type ScreenplayStep } from "@/lib/studio/screenplay-pr
 import { screenplayModelDetail } from "@/lib/studio/screenplay-models";
 import { screenplayScenes, type PictureScreenplay, type ScreenplayModelRef } from "@/lib/studio/screenplay";
 import { isLlamaQaCandidate as isLlamaFamily, isPinnedExactServedReady, isQwenWriterCandidate as isQwenFamily, llamaQaBlockReason, qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
-import { DEFAULT_CREW_WRITER_DISPLAY, OPTIONAL_CREW_WRITER_DISPLAY } from "@/lib/studio/model-routing.ts";
+import { explicitMoviePlanServedId } from "@/lib/studio/movie-plan-model";
+import { LocalWriterSelect } from "./local-writer-select";
+import type { Picture } from "@/lib/studio/types";
+import { exactLocalWriterBlock } from "@/lib/studio/exact-local-writer";
+import { AssetRunActivity } from "./generated-assets-review";
+import { StoryDoctorActivity } from "./story-doctor-activity";
+import { storyDoctorRuns } from "@/lib/studio/story-doctor-runs";
 import { applyExplicitQaRewrite } from "@/lib/studio/screenplay-qa.ts";
 import { defaultScreenplayScope, SCREENPLAY_SCOPES, type ScreenplayRewriteTarget, type ScreenplayScope, type ScreenplaySelection } from "@/lib/studio/screenplay-scope.ts";
 import { parseScreenplayHierarchy } from "@/lib/studio/screenplay-hierarchy.ts";
@@ -22,6 +28,7 @@ function statusLabel(status: PictureScreenplay["status"]): string {
 }
 
 export function ScreenplayWorkspace({
+  picture,
   intake,
   screenplay,
   models,
@@ -39,10 +46,12 @@ export function ScreenplayWorkspace({
   onModelChange,
   onStoryDoctor,
   onApplyQaRevision,
+  onApplyQaRecommendations,
   onQaPin,
   onReleaseResident,
   researchApproved,
 }: {
+  picture: Picture;
   intake: PictureIntake;
   screenplay: PictureScreenplay;
   models: ScreenplayModelRef[];
@@ -60,6 +69,7 @@ export function ScreenplayWorkspace({
   onModelChange: (modelId: string | null) => void;
   onStoryDoctor?: (modelId: string, target: ScreenplayRewriteTarget, secondOpinion: boolean) => void;
   onApplyQaRevision?: (next: PictureScreenplay) => void;
+  onApplyQaRecommendations?: (target: ScreenplayRewriteTarget) => void;
   onQaPin?: (servedModelId: string | null) => void;
   onReleaseResident?: () => void;
   researchApproved: boolean;
@@ -74,36 +84,38 @@ export function ScreenplayWorkspace({
   const [selection, setSelection] = useState<ScreenplaySelection>(null);
   const generation = job?.screenplay.generation ?? screenplay.generation;
   const running = job?.status === "queued" || job?.status === "running" || screenplay.status === "GENERATING";
+  const qaRunning = useSyncExternalStore(storyDoctorRuns.subscribe, () => storyDoctorRuns.get(picture.id)?.status === "running", () => false);
   const stopped = job?.status === "canceled";
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    if (!running) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [running]);
   const shownText = running && job?.partialFountain ? job.partialFountain : screenplay.workingFountain;
   const scenes = useMemo(() => screenplayScenes(shownText), [shownText]);
-  const selected = models.find((model) => model.id === screenplay.selectedModelId) ?? null;
+  const selected = models.find((model) => model.servedModelId === explicitMoviePlanServedId(picture)?.replace(/^lmstudio:/, "")) ?? null;
   const compared = screenplay.versions.find((version) => version.id === compareId) ?? null;
   const steps = screenplaySteps(screenplay.workflow);
   const passSteps = steps.filter((step) => step.pass !== null);
-  const writerPin = screenplay.pinnedWriterServedId ?? null;
+  const writerPin = explicitMoviePlanServedId(picture)?.replace(/^lmstudio:/, "") ?? null;
   const qaPin = screenplay.pinnedQaServedId ?? null;
-  const selectedReady = Boolean(selected && isPinnedExactServedReady(selected, writerPin) && (isLlamaFamily(selected) || isQwenFamily(selected)) && provider?.available);
-  const writerBlock = qwenWriterBlockReason(selected, Boolean(provider?.available), writerPin);
-  const generateEnabled = researchApproved && selectedReady && !writerBlock;
+  const selectedReady = Boolean(selected && isPinnedExactServedReady(selected, writerPin) && provider?.available);
+  const writerBlock = exactLocalWriterBlock(selected, Boolean(provider?.available), writerPin);
+  const generateEnabled = researchApproved && selectedReady && !writerBlock && !qaRunning;
   const generateBlock = !researchApproved ? "Approve Picture Research before generating a screenplay." : writerBlock;
   const hierarchy = useMemo(() => parseScreenplayHierarchy(shownText, screenplay.hierarchy), [shownText, screenplay.hierarchy]);
-  const defaultQaModel = models.find((model) => model.servedModelId === (qaPin || (selected && isLlamaFamily(selected) && writerPin === selected.servedModelId ? writerPin : null))) ?? null;
+  const defaultQaModel = models.find((model) => model.servedModelId === (qaPin || writerPin)) ?? null;
   const effectiveQaModelId = qaModelId || defaultQaModel?.id || "";
   const qaModel = models.find((model) => model.id === effectiveQaModelId) ?? null;
-  const effectiveQaPin = qaPin || (selected && isLlamaFamily(selected) ? writerPin : null);
-  const qaBlock = llamaQaBlockReason(qaModel, writerPin, Boolean(provider?.available), effectiveQaPin, secondOpinion);
+  const effectiveQaPin = qaPin || writerPin;
+  const qaBlock = exactLocalWriterBlock(qaModel, Boolean(provider?.available), effectiveQaPin);
   const rewriteTarget: ScreenplayRewriteTarget = {
     scope: rewriteScope,
     nodeId: selectedNodeId,
     nodeIds: selectedNodeIds.length ? selectedNodeIds : (selectedNodeId ? [selectedNodeId] : null),
     selection,
   };
-  useEffect(() => {
-    if (qaPin || !selected || !writerPin || !isLlamaFamily(selected) || selected.servedModelId !== writerPin) return;
-    setQaModelId((current) => current || selected.id);
-    onQaPin?.(writerPin);
-  }, [qaPin, selected, writerPin, onQaPin]);
   const qaReport = screenplay.lastQaReport ?? null;
   const applyableIndex = qaReport?.findings.findIndex((finding) => Boolean(finding.rewriteSuggested?.trim())) ?? -1;
   const completed = new Set(generation?.completedLabels ?? screenplay.versions.map((version) => version.label === "Draft 1" ? "Draft" : version.label));
@@ -141,6 +153,14 @@ export function ScreenplayWorkspace({
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+          <StoryDoctorActivity picture={picture} />
+          <AssetRunActivity pictureId={picture.id} />
+          {job || running ? <section aria-label="Live screenplay activity" className="mb-4 grid gap-2 rounded-md border border-accent bg-inset p-3">
+            <p className="text-sm" role="status">{job?.activeLabel ?? generation?.activeLabel ?? "Connecting to current generation"} · {writerPin}</p>
+            <p className="text-xs text-muted">{Math.max(0, Math.floor(((running ? now : job?.updatedAt ?? now) - (job?.startedAt ?? generation?.startedAt ?? now)) / 1000))}s elapsed · {job?.partialFountain.length ?? 0} output characters · Last update {Math.max(0, Math.floor((now - (job?.updatedAt ?? now)) / 1000))}s ago</p>
+            {job?.reasoning ? <details open><summary className="text-xs">Local model reasoning reported by LM Studio · {job.reasoning.length.toLocaleString()} characters</summary><pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-xs">{job.reasoning}</pre></details> : <p className="text-xs text-muted">{running ? "Waiting for model output. Any reasoning supplied by LM Studio will appear here." : "LM Studio did not supply reasoning for this run."}</p>}
+            {job?.partialFountain ? <details open><summary className="text-xs">Live screenplay output</summary><pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-xs">{job.partialFountain}</pre></details> : null}
+          </section> : null}
           {compared ? <div className="mb-4 grid gap-3 xl:grid-cols-2"><section className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]"><p className="mb-2 text-[10px] tracking-wide text-subtle uppercase">Current</p><pre className="max-h-80 overflow-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-muted">{screenplay.workingFountain}</pre></section><section className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]"><p className="mb-2 text-[10px] tracking-wide text-subtle uppercase">{compared.label}</p><pre className="max-h-80 overflow-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-muted">{compared.fountain}</pre></section></div> : null}
           <Textarea aria-label="Fountain screenplay" className="screenplay min-h-[36rem] resize-y bg-inset font-mono leading-relaxed" value={shownText} readOnly={running} onChange={(event) => onTextChange(event.target.value)} onSelect={(event) => {
             const start = event.currentTarget.selectionStart ?? 0;
@@ -168,49 +188,29 @@ export function ScreenplayWorkspace({
 
       <aside className="hidden min-h-0 overflow-y-auto border-l border-border p-4 lg:block">
         <div className="flex items-center justify-between gap-2"><p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Writer</p><button type="button" onClick={onRescan} className="text-[11px] text-muted hover:text-fg">Rescan</button></div>
-        <select aria-label="Writer" className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={screenplay.selectedModelId ?? ""} onChange={(event) => onModelChange(event.target.value || null)}><option value="">Default writer · {DEFAULT_CREW_WRITER_DISPLAY}</option>{models.map((model) => <option key={model.id} value={model.id} disabled={model.status !== "ready" || !(isLlamaFamily(model) || isQwenFamily(model))}>{isLlamaFamily(model) ? `${model.displayName} · Llama default` : isQwenFamily(model) ? `${model.displayName} · Optional Qwen` : model.displayName}</option>)}</select>
-        {writerPin ? <p className="mt-2 truncate text-[11px] text-subtle" title={writerPin}>Pinned writer ID: {writerPin}</p> : <p className="mt-2 text-[11px] text-subtle">No writer ID pinned. Premiere316 will not load a model.</p>}
-        {selected ? <><p className="mt-3 text-sm">{selected.displayName}</p><p className="mt-1 text-xs leading-relaxed text-muted">{screenplayModelDetail(selected)}</p><p className="mt-2 text-[11px] text-subtle">{generateBlock ?? selected.statusReason}</p></> : <p className="mt-3 text-xs leading-relaxed text-muted">{generateBlock ?? provider?.reason ?? "Checking LM Studio local API…"}</p>}
-        <p className="mt-2 text-[11px] leading-relaxed text-muted">Workflow: Write → QA → Revise. Same resident Llama may serve both roles sequentially.</p>
+        <LocalWriterSelect picture={picture} disabled={running || qaRunning} label="Writer" />
+        {generateBlock ? <p className="mt-2 text-xs text-muted">{generateBlock}</p> : null}
+        <p className="mt-2 text-xs text-muted">QA is optional and runs only when requested.</p>
         <div className="my-5 border-t border-border" />
         <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Scope</p>
         <select aria-label="Rewrite scope" className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={rewriteScope} onChange={(event) => setRewriteScope(event.target.value as ScreenplayScope)}>{SCREENPLAY_SCOPES.map((scope) => <option key={scope} value={scope}>{scope}</option>)}</select>
         <p className="mt-2 text-[11px] leading-relaxed text-muted">Default is the smallest selection ({defaultScreenplayScope(hierarchy.nodes.find((node) => node.kind === "scene") ?? null)}). Unrelated IDs stay byte-identical.</p>
         <div className="my-5 border-t border-border" />
         <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">QA</p>
-        <select aria-label="Story Doctor model" className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={effectiveQaModelId} onChange={(event) => {
+        <select aria-label="Story Doctor model" disabled={running || qaRunning} className="mt-3 h-9 w-full rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={effectiveQaModelId} onChange={(event) => {
           const id = event.target.value;
           setQaModelId(id);
           onQaPin?.(models.find((model) => model.id === id)?.servedModelId ?? null);
-        }}><option value="">Default QA · {DEFAULT_CREW_WRITER_DISPLAY}</option>{models.map((model) => <option key={model.id} value={model.id} disabled={model.status !== "ready" || !(isLlamaFamily(model) || isQwenFamily(model))}>{isLlamaFamily(model) ? `${model.displayName} · Llama default` : isQwenFamily(model) ? `${model.displayName} · Optional ${OPTIONAL_CREW_WRITER_DISPLAY}` : model.displayName}</option>)}</select>
-        {qaPin ? <p className="mt-2 truncate text-[11px] text-subtle" title={qaPin}>Pinned Story Doctor ID: {qaPin}</p> : <p className="mt-2 text-[11px] text-subtle">No Story Doctor ID pinned.</p>}
-        <label className="mt-3 flex items-center gap-2 text-[11px] text-muted"><input type="checkbox" checked={secondOpinion} onChange={(event) => setSecondOpinion(event.target.checked)} />Second opinion · Qwen (explicit, never automatic)</label>
+        }}><option value="">Same as selected writer · {writerPin}</option>{models.map((model) => <option key={model.id} value={model.id} disabled={model.status !== "ready"}>{model.displayName}</option>)}</select>
+        {qaPin ? <p className="mt-2 truncate text-[11px] text-subtle" title={qaPin}>Pinned Story Doctor ID: {qaPin}</p> : <p className="mt-2 text-[11px] text-subtle">QA uses the selected writer unless you choose another model.</p>}
+        <label className="mt-3 flex items-center gap-2 text-[11px] text-muted"><input type="checkbox" checked={secondOpinion} onChange={(event) => setSecondOpinion(event.target.checked)} />Use a separate QA model (optional)</label>
         <p className="mt-2 text-[11px] leading-relaxed text-muted">{qaBlock ?? "Critique first. Fountain does not change until you apply a scoped revision."}</p>
-        <Button className="mt-3 w-full" size="sm" variant="secondary" disabled={Boolean(qaBlock) || running || !effectiveQaModelId} onClick={() => onStoryDoctor?.(effectiveQaModelId, rewriteTarget, secondOpinion)}>Run story doctor</Button>
+        {qaRunning ? <Button className="mt-3 w-full" size="sm" variant="rec" onClick={() => storyDoctorRuns.stop(picture.id)}>Stop Story Doctor</Button> : <Button className="mt-3 w-full" size="sm" variant="secondary" disabled={Boolean(qaBlock) || running || !effectiveQaModelId} onClick={() => onStoryDoctor?.(effectiveQaModelId, rewriteTarget, secondOpinion)}>Run story doctor</Button>}
         {qaReport ? <div className="mt-3 grid gap-2" aria-label="Story Doctor critique">{qaReport.findings.map((finding, index) => <article key={`${qaReport.id}-${index}`} className="rounded-md bg-elevated p-3 shadow-[var(--shadow-border)]"><p className="text-[10px] tracking-wide text-subtle uppercase">{finding.category} · {finding.severity}</p><p className="mt-1 text-xs leading-relaxed">{finding.summary}</p></article>)}</div> : null}
-        <Button className="mt-3 w-full" size="sm" disabled={running || applyableIndex < 0 || !qaReport || !qaModel} onClick={() => {
-          if (!qaReport || !qaModel || applyableIndex < 0) return;
-          const applied = applyExplicitQaRewrite(screenplay, {
-            id: qaReport.id,
-            createdAt: qaReport.createdAt,
-            model: qaModel,
-            fountainUnchanged: true,
-            role: "qa-critic",
-            findings: qaReport.findings.map((finding) => ({
-              category: finding.category as import("@/lib/studio/screenplay-qa.ts").ScreenplayQaCategory,
-              severity: finding.severity === "blocker" || finding.severity === "warning" ? finding.severity : "note" as const,
-              summary: finding.summary,
-              exactScope: finding.exactScope ?? null,
-              recommendation: finding.recommendation ?? null,
-              revisionRequired: Boolean(finding.revisionRequired),
-              rewriteSuggested: finding.rewriteSuggested,
-            })),
-          }, applyableIndex, rewriteScope, selectedNodeId, `spv-qa-${Date.now()}`, Date.now(), { nodeIds: rewriteTarget.nodeIds, selection, previous: hierarchy });
-          if ("error" in applied) return;
-          onApplyQaRevision?.(applied);
-        }}>Apply scoped revision</Button>
-        <Button className="mt-3 w-full" size="sm" variant="ghost" disabled={running} onClick={() => onReleaseResident?.()}>Release local model</Button>
-        <p className="mt-2 text-[11px] leading-relaxed text-muted">Prompt compiler default: {DEFAULT_CREW_WRITER_DISPLAY} (inactive until Prompt Lab / Wave 5).</p>
+        <Button className="mt-3 w-full h-auto whitespace-normal" size="sm" disabled={running || qaRunning || !generateEnabled || !qaReport?.findings.length} onClick={() => onApplyQaRecommendations?.(selectedNodeId || selection ? rewriteTarget : { scope: "full", nodeId: null, nodeIds: null, selection: null })}>Apply Story Doctor recommendations</Button>
+        <p className="mt-2 text-xs text-muted">The selected writer revises {selectedNodeId || selection ? "the selected scope" : "the screenplay"} using the saved findings and saves a new version. Previous versions remain available.</p>
+        <Button className="mt-3 w-full" size="sm" variant="ghost" disabled={running || qaRunning} onClick={() => onReleaseResident?.()}>Release local model</Button>
+        <p className="mt-2 text-[11px] leading-relaxed text-muted">Asset prompt writer: {writerPin}.</p>
         <div className="my-5 border-t border-border" />
         <div className="flex items-center justify-between gap-2"><p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Versions</p><span className="text-[10px] tabular-nums text-subtle">{screenplay.versions.length}</span></div>
         <ol className="mt-3 grid gap-2">{[...screenplay.versions].reverse().map((version) => <li key={version.id} className="rounded-md bg-elevated p-3 shadow-[var(--shadow-border)]"><div className="flex items-center justify-between gap-2"><p className="truncate text-xs" title={version.label}>{version.label}</p>{version.id === screenplay.currentVersionId ? <span className="text-[9px] tracking-wide text-accent uppercase">Current</span> : null}</div><p className="mt-1 text-[10px] text-subtle">{new Date(version.createdAt).toLocaleString()}</p><div className="mt-2 flex gap-1"><Button size="sm" variant="ghost" onClick={() => setCompareId(compareId === version.id ? "" : version.id)}><GitCompareArrows />Compare</Button><Button size="sm" variant="ghost" disabled={running || version.id === screenplay.currentVersionId} onClick={() => onRestore(version.id)}>Restore</Button></div></li>)}</ol>
