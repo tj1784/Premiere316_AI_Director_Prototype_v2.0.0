@@ -1,0 +1,27 @@
+{
+  "assets": 129,
+  "scenes": 23,
+  "links": 539,
+  "continuity": 29,
+  "seconds": 1800,
+  "categories": {
+    "Character": 11,
+    "Featured extra": 8,
+    "Extras": 10,
+    "Animal": 5,
+    "Location": 20,
+    "Location state": 2,
+    "Wardrobe": 11,
+    "Wardrobe kit": 2,
+    "Grooming": 5,
+    "Prop": 24,
+    "Prop / dressing": 3,
+    "Prop kit": 7,
+    "Set dressing": 9,
+    "Food": 6,
+    "Food / dressing": 1,
+    "Food / prop": 1,
+    "Insert": 2,
+    "Graphic": 2
+  }
+}

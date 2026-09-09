@@ -1,6 +1,8 @@
 import type { Picture, Shot } from "../studio/types.ts";
 import { hydrateVideoWorkspace } from "./video-types.ts";
 import { visualDirectionText } from "../studio/visual-direction.ts";
+import { approvedAssetMedia } from "./asset-canonical-reference.ts";
+import { isVisualAsset } from "../studio/asset-prompt-context.ts";
 
 export type GenerateGateId = "assets" | "keyframes" | "video";
 export type GateItemStatus =
@@ -55,6 +57,8 @@ export type KeyframePair = {
   status: GateItemStatus;
   staleReasons: string[];
   assetRefIds: string[];
+  /** Canonical image revisions used when these frame prompts were prepared. */
+  assetReferenceVersions?: Record<string, string>;
   waived: boolean;
 };
 
@@ -81,7 +85,18 @@ export function emptyGenerateGates(): GenerateGateWorkspace {
 
 export function hydrateGenerateGates(state: GenerateGateWorkspace | null | undefined, picture: Picture): GenerateGateWorkspace {
   const base = !state || state.schemaVersion !== 1 ? emptyGenerateGates() : state;
-  const pairs = picture.shots.map((shot) => base.pairs.find((pair) => pair.shotId === shot.id) ?? seedPair(picture, shot));
+  const pairs = picture.shots.map((shot) => {
+    const pair = base.pairs.find((item) => item.shotId === shot.id);
+    if (!pair) return seedPair(picture, shot);
+    // Refresh untouched planning placeholders as canon becomes available. Saved
+    // prompt versions and explicitly waived/imported frame choices remain intact.
+    if (!pair.waived && !pair.firstPromptVersionId && !pair.lastPromptVersionId && !pair.firstApprovedId && !pair.lastApprovedId) return seedPair(picture, shot);
+    const validRefs = approvedVisualAssetIds(picture, shot.sceneId);
+    if (!pair.waived && pair.assetRefIds.some((id) => !validRefs.includes(id))) return { ...pair, status: "STALE" as const, staleReasons: [...new Set([...pair.staleReasons, "A referenced canonical asset is missing, changed, or belongs to another scene."])] };
+    const currentVersions = canonicalReferenceVersions(picture, pair.assetRefIds);
+    if (!pair.waived && pair.assetReferenceVersions && pair.assetRefIds.some((id) => pair.assetReferenceVersions![id] !== currentVersions[id])) return { ...pair, assetReferenceVersions: currentVersions, status: "STALE" as const, staleReasons: [...new Set([...pair.staleReasons, "A canonical image revision changed. Review frame prompts and re-approve first/last frames."])] };
+    return pair;
+  });
   return {
     schemaVersion: 1,
     activeGate: base.activeGate,
@@ -93,7 +108,7 @@ export function hydrateGenerateGates(state: GenerateGateWorkspace | null | undef
 }
 
 function seedPair(picture: Picture, shot: Shot): KeyframePair {
-  const refs = approvedVisualAssetIds(picture);
+  const refs = approvedVisualAssetIds(picture, shot.sceneId);
   return {
     shotId: shot.id,
     firstPrompt: compileKeyframePrompt(picture, shot, "first", refs),
@@ -105,21 +120,30 @@ function seedPair(picture: Picture, shot: Shot): KeyframePair {
     status: "PROMPT_READY",
     staleReasons: [],
     assetRefIds: refs,
+    assetReferenceVersions: canonicalReferenceVersions(picture, refs),
     waived: false,
   };
 }
 
-export function approvedVisualAssetIds(picture: Picture): string[] {
+function canonicalReferenceVersions(picture: Picture, ids: string[]): Record<string, string> {
+  return Object.fromEntries(ids.flatMap((id) => {
+    const asset = picture.production?.assets.find((item) => item.id === id);
+    const media = asset ? approvedAssetMedia(asset) : null;
+    return media ? [[id, `${media.id}|${media.specVersionId ?? asset?.approvedSpecVersionId ?? ""}|${media.mediaSha256 ?? media.mediaUri}`]] : [];
+  }));
+}
+
+export function approvedVisualAssetIds(picture: Picture, sceneId?: string): string[] {
   const fromProduction = (picture.production?.assets ?? [])
-    .filter((asset) => !asset.tombstone && !["voice", "sound", "music", "continuity", "other"].includes(asset.category) && asset.canonicalApproved && Boolean(asset.approvedIterationId))
+    .filter((asset) => isVisualAsset(asset) && (!sceneId || asset.requiredSceneIds.includes(sceneId)) && approvedAssetMedia(asset))
     .map((asset) => asset.id);
   return fromProduction;
 }
 
 export function requiredVisualAssetCount(picture: Picture): { required: number; approved: number } {
-  const assets = (picture.production?.assets ?? []).filter((asset) => !asset.tombstone && !["voice", "sound", "music", "continuity", "other"].includes(asset.category));
+  const assets = (picture.production?.assets ?? []).filter(isVisualAsset);
   if (assets.length) {
-    const approved = assets.filter((asset) => asset.canonicalApproved && Boolean(asset.approvedIterationId)).length;
+    const approved = assets.filter((asset) => approvedAssetMedia(asset)).length;
     return { required: assets.length, approved };
   }
   const required = picture.characters.length + picture.locations.length;
@@ -130,11 +154,11 @@ export function generateGateReadiness(picture: Picture): GateReadiness[] {
   const gates = hydrateGenerateGates(picture.generateGates, picture);
   const assets = requiredVisualAssetCount(picture);
   const assetStatus = assets.required === 0 || assets.approved >= assets.required ? "READY" : assets.approved > 0 ? "PARTIAL" : "LOCKED";
-  const pairsReady = gates.pairs.filter((pair) => pair.waived || (pair.firstApprovedId && pair.lastApprovedId && pair.status !== "STALE")).length;
+  const pairsReady = gates.pairs.filter((pair) => pair.waived || approvedKeyframePair(gates, pair)).length;
   const keyframeStatus = assetStatus !== "READY" ? "LOCKED" : pairsReady === gates.pairs.length && gates.pairs.length > 0 ? "READY" : pairsReady > 0 ? "PARTIAL" : "LOCKED";
   const video = hydrateVideoWorkspace(picture.video);
   const canonicalVideo = picture.shots.filter((shot) => video.takes.some((take) => take.shotId === shot.id && take.canonical)).length;
-  const nativeUnlocked = gates.pairs.some((pair) => pair.waived || (pair.firstApprovedId && pair.lastApprovedId));
+  const nativeUnlocked = gates.pairs.some((pair) => pair.waived || approvedKeyframePair(gates, pair));
   const videoStatus = canonicalVideo > 0 ? "READY" : nativeUnlocked ? "PARTIAL" : "LOCKED";
   return [
     { gate: "assets", status: assetStatus, approved: assets.approved, required: assets.required || assets.approved, reason: assetStatus === "READY" ? "Visual assets approved or none required." : `${assets.approved}/${assets.required} visual assets approved.` },
@@ -148,14 +172,28 @@ export function keyframeGateLocked(picture: Picture): boolean {
 }
 
 export function nativeVideoLockedForShot(picture: Picture, shotId: string): boolean {
-  const pair = hydrateGenerateGates(picture.generateGates, picture).pairs.find((item) => item.shotId === shotId);
+  const workspace = hydrateGenerateGates(picture.generateGates, picture);
+  const pair = workspace.pairs.find((item) => item.shotId === shotId);
   if (!pair) return true;
   if (pair.waived) return false;
-  return !(pair.firstApprovedId && pair.lastApprovedId) || pair.status === "STALE";
+  return !approvedKeyframePair(workspace, pair);
+}
+
+function approvedKeyframePair(workspace: GenerateGateWorkspace, pair: KeyframePair): boolean {
+  if (pair.status === "STALE") return false;
+  return (["first", "last"] as const).every((kind) => {
+    const id = kind === "first" ? pair.firstApprovedId : pair.lastApprovedId;
+    return workspace.iterations.some((item) => item.id === id && item.shotId === pair.shotId && item.kind === kind && item.canonical && item.status === "APPROVED" && item.origin !== "fail-closed" && Boolean(item.mediaUri?.trim()) && /^[a-f0-9]{64}$/i.test(item.mediaSha256 ?? ""));
+  });
 }
 
 export function compileKeyframePrompt(picture: Picture, shot: Shot, kind: KeyframeKind, assetRefIds: string[]): string {
-  const refs = assetRefIds.join(", ") || "no approved asset refs";
+  const allowed = approvedVisualAssetIds(picture, shot.sceneId);
+  const refs = [...new Set(assetRefIds)].filter((id) => allowed.includes(id)).map((id) => {
+    const asset = picture.production!.assets.find((item) => item.id === id)!;
+    const media = approvedAssetMedia(asset)!;
+    return `${asset.name} [asset ${id}; iteration ${media.id}${media.specVersionId ?? asset.approvedSpecVersionId ? `; spec ${media.specVersionId ?? asset.approvedSpecVersionId}` : ""}]`;
+  }).join(", ") || "pending canonical media";
   const beat = kind === "first" ? "opening frame / continuity IN" : "closing frame / continuity OUT";
   const direction = picture.intake.visualDirection;
   const style = direction?.guide && direction.analyzedBoardId === direction.boardId ? visualDirectionText(direction) : "";
@@ -163,6 +201,10 @@ export function compileKeyframePrompt(picture: Picture, shot: Shot, kind: Keyfra
 }
 
 export function compileVideoPromptFromKeyframes(picture: Picture, shot: Shot, pair: KeyframePair): PromptVersion {
+  const workspace = hydrateGenerateGates(picture.generateGates, picture);
+  const currentPair = workspace.pairs.find((item) => item.shotId === pair.shotId);
+  if (!currentPair || currentPair.shotId !== shot.id || (!currentPair.waived && !approvedKeyframePair(workspace, currentPair))) throw new Error("Approve current first and last frames before writing the video prompt, or explicitly waive the pair for an imported video.");
+  pair = currentPair;
   const now = Date.now();
   return {
     id: `vp:${shot.id}:${now}`,
@@ -170,7 +212,7 @@ export function compileVideoPromptFromKeyframes(picture: Picture, shot: Shot, pa
     shotId: shot.id,
     assetId: null,
     kind: "video",
-    text: `Animate from approved first frame ${pair.firstApprovedId ?? "missing"} to last frame ${pair.lastApprovedId ?? "missing"}. Action: ${shot.description}. Camera: ${shot.cameraMove}. Hold identity of ${pair.assetRefIds.join(", ") || "approved refs"}. Duration ${shot.durationSec}s.`,
+    text: `${pair.waived ? "Explicit frame-pair waiver for imported video; no frame approval is implied." : `Animate from approved first frame ${pair.firstApprovedId} to approved last frame ${pair.lastApprovedId}.`} Action: ${shot.description}. Camera: ${shot.cameraMove}. Hold identity of ${pair.assetRefIds.join(", ") || "the established scene subjects"}. Duration ${shot.durationSec}s.`,
     createdAt: now,
     assetRefIds: pair.assetRefIds,
     firstFrameId: pair.firstApprovedId,
@@ -184,7 +226,7 @@ export function savePromptVersion(workspace: GenerateGateWorkspace, input: Omit<
   let pairs = workspace.pairs;
   if (input.kind === "first" || input.kind === "last") {
     pairs = pairs.map((pair) => pair.shotId === input.shotId
-      ? { ...pair, firstPrompt: input.kind === "first" ? input.text : pair.firstPrompt, lastPrompt: input.kind === "last" ? input.text : pair.lastPrompt, firstPromptVersionId: input.kind === "first" ? prompt.id : pair.firstPromptVersionId, lastPromptVersionId: input.kind === "last" ? prompt.id : pair.lastPromptVersionId, status: pair.status === "APPROVED" ? "STALE" : pair.status, staleReasons: input.kind === "video" ? pair.staleReasons : pair.staleReasons }
+      ? { ...pair, firstPrompt: input.kind === "first" ? input.text : pair.firstPrompt, lastPrompt: input.kind === "last" ? input.text : pair.lastPrompt, firstPromptVersionId: input.kind === "first" ? prompt.id : pair.firstPromptVersionId, lastPromptVersionId: input.kind === "last" ? prompt.id : pair.lastPromptVersionId, assetRefIds: [...new Set(input.assetRefIds)], status: pair.status === "APPROVED" ? "STALE" : pair.status, staleReasons: pair.staleReasons }
       : pair);
   }
   return { ...workspace, prompts: [...workspace.prompts, prompt], pairs };
@@ -230,7 +272,7 @@ export function approveKeyframeIteration(workspace: GenerateGateWorkspace, itera
   const iteration = workspace.iterations.find((item) => item.id === iterationId);
   if (!iteration) throw new Error("Keyframe iteration not found.");
   if (iteration.origin === "fail-closed") throw new Error("Fail-closed keyframes cannot become canonical.");
-  if (!iteration.mediaSha256) throw new Error("Canonical keyframe requires durable media.");
+  if (!iteration.mediaUri?.trim() || !/^[a-f0-9]{64}$/i.test(iteration.mediaSha256 ?? "")) throw new Error("Canonical keyframe requires durable media.");
   const iterations = workspace.iterations.map((item) => item.shotId === iteration.shotId && item.kind === iteration.kind
     ? { ...item, canonical: item.id === iterationId, status: item.id === iterationId ? "APPROVED" as const : item.canonical ? "NEEDS_REVIEW" as const : item.status }
     : item);

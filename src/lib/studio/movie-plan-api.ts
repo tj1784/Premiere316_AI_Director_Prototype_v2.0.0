@@ -81,7 +81,14 @@ export const moviePlanGenerate = createServerFn({ method: "POST" })
     const discovery = await provider.discover();
     if (!discovery.available) throw new Error(discovery.reason || CONFIGURED_MODEL_UNAVAILABLE);
     await provider.load({ servedModelId: data.servedModelId, settings: DEFAULT_SCREENPLAY_SETTINGS });
-    const generationSettings = ["breakdown", "shots", "promptLab", "assetPrompts"].includes(data.stepId) ? { ...DEFAULT_SCREENPLAY_SETTINGS, maxTokens: 12000 } : DEFAULT_SCREENPLAY_SETTINGS;
+    // A full narrative cannot fit the former 4k-token short-answer budget.
+    // Output remains bounded; a truncated/untimed draft is rejected by the pipeline.
+    const maxTokens = data.stepId === "screenplay"
+      ? Math.min(20000, Math.max(8192, Math.ceil((data.runtimeSeconds ?? 120) / 60 * 550)))
+      : data.stepId === "research" ? 8192
+      : ["breakdown", "shots", "promptLab", "assetPrompts"].includes(data.stepId) ? 12000
+      : DEFAULT_SCREENPLAY_SETTINGS.maxTokens;
+    const generationSettings = { ...DEFAULT_SCREENPLAY_SETTINGS, maxTokens };
     return moviePlanStreamResponse(
       (onToken, onReasoning) => provider.generate(
         { runId: "movie-plan", stepId: data.stepId, system: data.system, prompt: data.prompt, thinkingEnabled: data.thinkingEnabled, responseFormat: moviePlanResponseFormat(data.stepId, data.sceneCount, data.runtimeSeconds, data.assetIds, data.sourceQuotes), onToken, onReasoning },

@@ -1,0 +1,209 @@
+[
+  {
+    "id": "PS-S01",
+    "slugline": "EXT. JUDEAN HILLSIDE — DAY",
+    "duration_seconds": 45,
+    "story_time": "Prologue",
+    "title": "A man had two sons",
+    "action": "Listeners share bread; scribe objects quietly; Jesus introduces two sons.",
+    "continuity": "Living Jesus, no wounds; hillside is an invented telling location."
+  },
+  {
+    "id": "PS-S02",
+    "slugline": "EXT. FAMILY FARM — UPPER TERRACE — LATE AFTERNOON",
+    "duration_seconds": 90,
+    "story_time": "Day 1 late spring",
+    "title": "The work between them",
+    "action": "Brothers set wall stone; basket repair; father and pack party arrive.",
+    "continuity": "Long damaged wall. Younger repairs basket handle; elder exchanges sound basket."
+  },
+  {
+    "id": "PS-S03",
+    "slugline": "EXT. FAMILY FARM — COURTYARD — LATE AFTERNOON",
+    "duration_seconds": 85,
+    "story_time": "Day 1",
+    "title": "Two gifts",
+    "action": "Father greets both sons, gives equal-quality mantles, washes elder’s cut.",
+    "continuity": "Russet younger, olive elder. Split left palm; clean cloth dressing."
+  },
+  {
+    "id": "PS-S04",
+    "slugline": "INT. FAMILY HOUSE — SUPPER ROOM — EVENING",
+    "duration_seconds": 135,
+    "story_time": "Day 1",
+    "title": "The request",
+    "action": "Shared supper breaks under inheritance request; father agrees to divide between both sons.",
+    "continuity": "Bread crumbles; meal untouched. Both sons receive bread."
+  },
+  {
+    "id": "PS-S05",
+    "slugline": "EXT. FAMILY FARM — COURTYARD ENTRANCE — NIGHT",
+    "duration_seconds": 90,
+    "story_time": "Day 1",
+    "title": "Brothers at the gate",
+    "action": "Brothers sit apart at threshold; elder gives repaired waterskin; father remains inside.",
+    "continuity": "Russet worn; waterskin seam established; one lamp out."
+  },
+  {
+    "id": "PS-S06",
+    "slugline": "INT. FAMILY HOUSE — STORE ROOM — DAY",
+    "duration_seconds": 70,
+    "story_time": "Day 2 and following days",
+    "title": "The division",
+    "action": "Document and silver division, packing, basket sorting and father/elder boundary walk.",
+    "continuity": "No new valuation; both shares visible; portable bundles transferred over days."
+  },
+  {
+    "id": "PS-S07",
+    "slugline": "EXT. FAMILY FARM — ROAD — DAWN",
+    "duration_seconds": 60,
+    "story_time": "Day 5",
+    "title": "Leaving",
+    "action": "Departure packing and embrace; younger leaves with carriers; father and elder stand together.",
+    "continuity": "Bread cloth, bedding, money and repaired waterskin depart with younger."
+  },
+  {
+    "id": "PS-S08",
+    "slugline": "EXT. ROADS BEYOND JUDEA — DAYS",
+    "duration_seconds": 45,
+    "story_time": "Journey over several days",
+    "title": "The wider world",
+    "action": "Road, cistern, fork; carrier receives generous coin; title over landscape.",
+    "continuity": "Same donkey/carriers; broad road toward town; russet still worn."
+  },
+  {
+    "id": "PS-S09",
+    "slugline": "EXT. FOREIGN TOWN — MARKET STREET — DAY",
+    "duration_seconds": 75,
+    "story_time": "First week abroad",
+    "title": "A place at the table",
+    "action": "Damon advises garment, bread bought generously, companions make a place.",
+    "continuity": "Blue-border mantle selected; russet still on younger at arrival."
+  },
+  {
+    "id": "PS-S10",
+    "slugline": "INT. FOREIGN TOWN — RENTED ROOM AND BANQUET COURT — NIGHT",
+    "duration_seconds": 80,
+    "story_time": "Following weeks",
+    "title": "The cost of being welcomed",
+    "action": "Paid banquet and dance; wine spills; younger retrieves waterskin alone.",
+    "continuity": "Russet on room peg; blue worn and wine-stained; waterskin recovered."
+  },
+  {
+    "id": "PS-S11",
+    "slugline": "EXT. FAMILY FARM — COURTYARD AND TERRACE — EVENING",
+    "duration_seconds": 75,
+    "story_time": "Some weeks after departure",
+    "title": "The son who remains",
+    "action": "Father follows elder to wall with meal and olive mantle.",
+    "continuity": "Partly repaired wall, healing left palm, traveler passes entrance."
+  },
+  {
+    "id": "PS-S12",
+    "slugline": "INT. FOREIGN TOWN — LODGING AND STREET — DAYS",
+    "duration_seconds": 70,
+    "story_time": "Later weeks",
+    "title": "The last silver",
+    "action": "Coins dwindle; russet sold; host refuses more bread; younger takes bedding away.",
+    "continuity": "Two small final coins; blue mantle retained and worn; russet exits permanently."
+  },
+  {
+    "id": "PS-S13",
+    "slugline": "EXT. FOREIGN TOWN — MARKET AND OUTSKIRTS — DAYS",
+    "duration_seconds": 75,
+    "story_time": "Subsequent weeks of regional famine",
+    "title": "Hunger",
+    "action": "Depleted market, failed field, displacement and denied work; farmer offers pig-feed labor.",
+    "continuity": "Famine after spending; Damon also hungry; blue returned by bread seller."
+  },
+  {
+    "id": "PS-S14",
+    "slugline": "EXT. FAMILY FARM — CISTERN AND STORE — DAY",
+    "duration_seconds": 70,
+    "story_time": "Same period at home",
+    "title": "What duty has become",
+    "action": "Cistern load reopens palm; father washes hand; basket failure prompts rebuke and apology.",
+    "continuity": "Left-hand blood; old basket knot loosens; elder gathers grain and offers to mend."
+  },
+  {
+    "id": "PS-S15",
+    "slugline": "EXT. FOREIGN FARM — PIG ENCLOSURE — DAY INTO NIGHT",
+    "duration_seconds": 105,
+    "story_time": "Several days in service abroad",
+    "title": "Coming to himself",
+    "action": "Pigs eat pods; younger fails to take feed, finds empty bread cloth, remembers home, rehearses confession and leaves.",
+    "continuity": "Memory reuses S2/S4 exactly; blue mantle and waterskin retrieved; feed basket left at gate; personal bundle retained."
+  },
+  {
+    "id": "PS-S16",
+    "slugline": "EXT. FAMILY FARM — UPPER TERRACE — MID-AFTERNOON",
+    "duration_seconds": 75,
+    "story_time": "Homecoming day before the return",
+    "title": "The unfinished course",
+    "action": "Father brings food and olive mantle to nearly complete wall; elder resumes work. Later he collects small stones on far side of terrace, beyond ordinary path sightline.",
+    "continuity": "Short unfinished run. Left-palm scar; pale cuff mend."
+  },
+  {
+    "id": "PS-S17",
+    "slugline": "EXT. ROAD TOWARD THE FAMILY FARM — DAY",
+    "duration_seconds": 80,
+    "story_time": "Return journey ending on homecoming day",
+    "title": "The way back",
+    "action": "Blue mantle traded for food; sandals fail and are left; younger retraces fork and approaches home.",
+    "continuity": "Repaired waterskin and empty bread cloth retained. Bare feet after discard."
+  },
+  {
+    "id": "PS-S18",
+    "slugline": "EXT. FAMILY FARM — COURTYARD ENTRANCE AND ROAD — MID-AFTERNOON",
+    "duration_seconds": 120,
+    "story_time": "Homecoming day",
+    "title": "The father runs",
+    "action": "Father recognizes, runs, embraces and kisses; confession; robe/ring/sandals requested.",
+    "continuity": "Younger barefoot/ragged. Bundle set down. Dust transfers to father."
+  },
+  {
+    "id": "PS-S19",
+    "slugline": "EXT. FAMILY FARM — COURTYARD — MID-AFTERNOON INTO DUSK",
+    "duration_seconds": 90,
+    "story_time": "Homecoming day with several hours compressed",
+    "title": "Restored to the house",
+    "action": "Feet washed; robe/ring/sandals fitted; several hours of jointed calf preparation compressed; neighbors arrive; Levi sent near start of meal.",
+    "continuity": "Right-hand ring, new sandals, worn tunic under robe. Preparation time compressed."
+  },
+  {
+    "id": "PS-S20",
+    "slugline": "EXT. FAMILY FARM — FIELD PATH AND COURTYARD ENTRANCE — DUSK",
+    "duration_seconds": 65,
+    "story_time": "Homecoming evening",
+    "title": "Outside the feast",
+    "action": "Elder returns with empty bowl and olive mantle; Levi tells him; he stops outside feast.",
+    "continuity": "Olive carried; left scar pressed; bowl set beside threshold; feast continuous."
+  },
+  {
+    "id": "PS-S21",
+    "slugline": "INT./EXT. FAMILY FARM — COURTYARD AND ENTRANCE — NIGHT",
+    "duration_seconds": 145,
+    "story_time": "Homecoming evening continuous",
+    "title": "The father comes out",
+    "action": "Father leaves courtyard and hears elder’s grievance; affirms him and renews invitation.",
+    "continuity": "Father dusty; elder retains mantle; empty bowl at threshold; younger still wasted."
+  },
+  {
+    "id": "PS-S22",
+    "slugline": "EXT. FAMILY FARM — THRESHOLD — NIGHT",
+    "duration_seconds": 25,
+    "story_time": "Homecoming evening continuous",
+    "title": "The invitation remains",
+    "action": "Younger starts to stand; elder’s grip loosens; father leaves doorway clear.",
+    "continuity": "No crossing shown; invitation unresolved; positions continue from S21."
+  },
+  {
+    "id": "PS-S23",
+    "slugline": "END CREDITS OVER BLACK",
+    "duration_seconds": 30,
+    "story_time": "Credits",
+    "title": "End credits",
+    "action": "Readable credits over black with final audio coda.",
+    "continuity": "Typography composited in finishing; no images generated for credits."
+  }
+]

@@ -22,6 +22,12 @@ import { writeGroundedAssetPrompts } from "./asset-prompt-pipeline.ts";
 import { isVisualAsset } from "./asset-prompt-context.ts";
 import { extractJsonObject } from "./movie-plan-pipeline.ts";
 import { researchAssetReference } from "./asset-reference-search.ts";
+import { collectPictureResearchEvidence } from "./research-evidence-api.ts";
+import {
+  appendResearchEvidence, explicitResearchRequest, forbidsWebResearch, hasReusableApprovedEvidence,
+  hasSubstantiveSuppliedEvidence, RESEARCH_EVIDENCE_REQUIRED,
+  requiresHistoricalEvidence, suppliedResearchUrls,
+} from "./research-evidence.ts";
 
 export async function findAssetReferencesOnServer(picture: Picture, onProgress: (message: string) => void, onPicture: (picture: Picture) => void, onModelProgress?: (event: MoviePlanProgress) => void): Promise<Picture> {
   const image = window.premiere316?.image;
@@ -139,12 +145,42 @@ async function runtimeFromStatus(picture: Picture, onProgress?: (event: MoviePla
   };
 }
 
-export async function executeMoviePlanOnServer(picture: Picture, onProgress?: (event: MoviePlanProgress) => void, fromCompletedScreenplay = false) {
-  picture = { ...picture, intake: await prepareVisualDirection(picture.intake, explicitMoviePlanServedId(picture) ?? undefined, message => onProgress?.({ phase: "research", model: "Local vision model", status: "generating", text: "", reasoning: "", message })) };
-  return executeMoviePlan(picture, { runtime: await runtimeFromStatus(picture, onProgress), fromCompletedScreenplay });
+export async function prepareResearchEvidenceOnServer(picture: Picture, onProgress?: (event: MoviePlanProgress) => void): Promise<Picture> {
+  if (hasReusableApprovedEvidence(picture)) return picture;
+  const report = (status: MoviePlanProgress["status"], message: string) => onProgress?.({ phase: "research", model: "Source research", status, text: "", reasoning: "", message });
+  const allowSearch = !forbidsWebResearch(picture.intake) && (picture.research?.content.mode === "web-assisted-opt-in" || explicitResearchRequest(picture.intake));
+  const suppliedUrls = forbidsWebResearch(picture.intake) ? [] : suppliedResearchUrls(picture.intake);
+  if (!allowSearch && !suppliedUrls.length) {
+    if (requiresHistoricalEvidence(picture.intake) && !hasSubstantiveSuppliedEvidence(picture.intake)) {
+      report("failed", RESEARCH_EVIDENCE_REQUIRED);
+      throw new Error(RESEARCH_EVIDENCE_REQUIRED);
+    }
+    report("completed", "Using supplied source text. No public sources have been retrieved or independently verified.");
+    return picture;
+  }
+  report("generating", "Collecting source text and provenance before screenplay drafting…");
+  const result = await collectPictureResearchEvidence({ data: { intake: picture.intake, allowSearch } });
+  const intake = appendResearchEvidence(picture.intake, result.documents);
+  if (requiresHistoricalEvidence(intake) && !hasSubstantiveSuppliedEvidence(intake)) {
+    const detail = result.warnings.slice(0, 2).join(" ");
+    const message = `${RESEARCH_EVIDENCE_REQUIRED}${detail ? ` Source retrieval: ${detail}` : ""}`;
+    report("failed", message);
+    throw new Error(message);
+  }
+  const warnings = result.warnings.length ? ` ${result.warnings.length} source request(s) could not supply readable text; those pages are not evidence.` : "";
+  report("completed", `${result.documents.length} public source page(s) retrieved with URLs and retrieval dates. Supplied text remains identified as supplied evidence.${warnings}`);
+  return { ...picture, intake };
 }
 
-export async function executeResearchDraftOnServer(picture: Picture) {
+export async function executeMoviePlanOnServer(picture: Picture, onProgress?: (event: MoviePlanProgress) => void, fromCompletedScreenplay = false, onPicture?: (picture: Picture) => void) {
+  if (!fromCompletedScreenplay) picture = await prepareResearchEvidenceOnServer(picture, onProgress);
+  onPicture?.(picture);
+  return executeMoviePlan(picture, { runtime: await runtimeFromStatus(picture, onProgress), fromCompletedScreenplay, onPicture });
+}
+
+export async function executeResearchDraftOnServer(picture: Picture, onPicture?: (picture: Picture) => void) {
+  picture = await prepareResearchEvidenceOnServer(picture);
+  onPicture?.(picture);
   return executeResearchDraft(picture, { runtime: await runtimeFromStatus(picture) });
 }
 

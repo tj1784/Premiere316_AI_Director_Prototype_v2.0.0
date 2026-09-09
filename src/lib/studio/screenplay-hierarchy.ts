@@ -49,7 +49,14 @@ function nextHumanId(kind: ScreenplayNodeKind, used: Set<string>, sceneNumber?: 
 }
 
 function isSceneHeading(line: string): boolean {
-  return /^(INT\.|EXT\.|INT\.\/EXT\.|I\/E\.)/i.test(line);
+  // Fountain also permits forced headings such as .END CREDITS OVER BLACK.
+  // An ellipsis is action, not a forced heading.
+  return /^(INT\.|EXT\.|INT\.\/EXT\.|INT\/EXT\.|I\/E\.|EST\.)/i.test(line) || /^\.[^\s.]/.test(line);
+}
+
+function explicitSceneId(line: string): string | null {
+  const label = line.match(/\s+#([A-Za-z0-9][A-Za-z0-9_.-]*)#\s*$/)?.[1];
+  return label ? (/^\d+$/.test(label) ? `SCENE-${pad(Number(label), 3)}` : label) : null;
 }
 
 function isActHeading(line: string): boolean {
@@ -141,6 +148,12 @@ export function parseScreenplayHierarchy(fountain: string, previous?: Screenplay
   const lines = splitLinesWithOffsets(fountain);
   const nodes: ScreenplayNode[] = [];
   const used = new Set((previous?.nodes ?? []).map((node) => node.id));
+  // Reserve author-supplied IDs so unnumbered scenes cannot consume them first.
+  for (const line of lines) {
+    if (!isSceneHeading(line.text.trim())) continue;
+    const declared = explicitSceneId(line.text.trim());
+    if (declared) used.add(declared);
+  }
   let actOrder = -1;
   let sequenceOrder = -1;
   let sceneOrder = -1;
@@ -222,7 +235,9 @@ export function parseScreenplayHierarchy(fountain: string, previous?: Screenplay
       sceneOrder += 1;
       const parent = sequenceId ?? ensureAct(lineInfo.start);
       const reused = matchPrevious(previous, "scene", sceneOrder, parent) ?? matchPrevious(previous, "scene", sceneOrder, previous?.nodes.find((node) => node.kind === "scene" && node.order === sceneOrder)?.parentId ?? parent);
-      const sceneId = reused?.id ?? nextHumanId("scene", used);
+      const declared = explicitSceneId(line);
+      const available = (id: string | undefined | null) => id && !nodes.some((node) => node.id === id);
+      const sceneId = (available(declared) ? declared : available(reused?.id) ? reused!.id : nextHumanId("scene", used))!;
       used.add(sceneId);
       currentScene = makeNode({ id: sceneId, kind: "scene", parentId: parent, title: line, slugline: line, fountain: "", order: sceneOrder, sourceStart: lineInfo.start, sourceEnd: fountain.length });
       nodes.push(currentScene);

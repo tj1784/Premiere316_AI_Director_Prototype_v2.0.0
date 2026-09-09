@@ -1,16 +1,18 @@
 import { RESEARCH_BIBLE_SECTION_KEYS } from "../research/bible.ts";
+import { PRODUCTION_CATEGORIES } from "../production/types.ts";
 
 type Schema = Record<string, unknown>;
 const string: Schema = { type: "string" };
 const object = (properties: Record<string, Schema>): Schema => ({ type: "object", properties, required: Object.keys(properties), additionalProperties: false });
 const rows = (properties: Record<string, Schema>): Schema => ({ type: "array", items: object(properties) });
 const strings: Schema = { type: "array", items: string };
+const assetFields = { category: { type: "string", enum: [...PRODUCTION_CATEGORIES] }, name: string, description: string, sceneNumbers: { type: "array", items: { type: "integer" }, minItems: 1 }, variantLabel: string, continuityLocks: strings, referenceRequirements: strings, hero: { type: "boolean" }, referenceRequired: { type: "boolean" }, confidence: { type: "string", enum: ["A", "B", "C", "D"] }, evidenceNote: string };
 const shot = { sceneNumber: { type: "integer" }, description: string, type: string, durationSec: { type: "number" }, camera: string, lens: string, cameraMove: string, emotion: string, expression: string };
 const schemas: Record<string, Schema> = {
-  research: object({ title: string, sections: object(Object.fromEntries(RESEARCH_BIBLE_SECTION_KEYS.map((key) => [key, string]))), characters: rows({ name: string, role: string, age: string, look: string, arc: string }), locations: rows({ name: string, description: string, lighting: string }), sources: rows({ title: string, locator: string, quote: string }) }),
+  research: object({ title: string, sections: object(Object.fromEntries(RESEARCH_BIBLE_SECTION_KEYS.map((key) => [key, string]))), characters: rows({ name: string, role: string, age: string, look: string, arc: string }), locations: rows({ name: string, description: string, lighting: string }), sources: rows({ title: string, locator: string, quote: string, confidence: { type: "string", enum: ["A", "B", "C", "D"] } }) }),
   screenplay: object({ title: string, fountain: string }),
   screenplayQa: object({ findings: rows({ category: string, severity: { type: "string", enum: ["note", "warning", "blocker"] }, summary: string, recommendation: string, revisionRequired: { type: "boolean" } }) }),
-  breakdown: object({ assets: rows({ category: string, name: string, description: string, sceneNumbers: { type: "array", items: { type: "integer" }, minItems: 1 } }) }),
+  breakdown: object({ assets: rows(assetFields) }),
   visualDevelopment: object({ intent: string, palette: strings, motifs: strings }),
   cinematography: object({ thesis: string, lensLanguage: string, lighting: string, movement: string }),
   performance: object({ notes: string, shots: rows(shot) }),
@@ -35,7 +37,7 @@ export function moviePlanResponseFormat(phase: string, sceneCount?: number, runt
     if (!Number.isInteger(sceneCount) || sceneCount < 1 || sceneCount > 1000) throw new Error("Invalid screenplay scene count.");
     const sceneNumber = { type: "integer", enum: Array.from({ length: sceneCount }, (_, index) => index + 1) };
     if (phase === "promptLab") schema = object({ visualContinuity: string, shots: { ...rows({ shotNumber: sceneNumber, videoPrompt: string, imagePrompt: string }), minItems: sceneCount, maxItems: sceneCount } });
-    if (phase === "breakdown") schema = object({ assets: { ...rows({ category: { type: "string", enum: ["character", "location", "wardrobe", "prop", "vehicle", "creature", "vfx", "voice", "sound", "music"] }, name: { type: "string", maxLength: 100 }, description: { type: "string", maxLength: 320 }, sceneNumbers: { type: "array", items: sceneNumber, minItems: 1, maxItems: sceneCount } }), minItems: 1, maxItems: 60 } });
+    if (phase === "breakdown") schema = object({ assets: { ...rows({ ...assetFields, sceneNumbers: { type: "array", items: sceneNumber, minItems: 1, maxItems: sceneCount } }), minItems: 1 } });
     if (phase === "performance") schema = object({ notes: string, shots: rows({ ...shot, sceneNumber }) });
     if (phase === "shots") {
       const count = runtimeSeconds && runtimeSeconds > 0 ? Math.max(sceneCount, Math.ceil(runtimeSeconds / 10)) : undefined;
@@ -43,7 +45,7 @@ export function moviePlanResponseFormat(phase: string, sceneCount?: number, runt
       // spending the entire runtime on the opening and omitting the ending.
       schema = count ? object({ shots: object(Object.fromEntries(Array.from({ length: count }, (_, index) => [
         `shot_${String(index + 1).padStart(2, "0")}`,
-        object({ ...shot, sceneNumber: { type: "integer", const: Math.floor(index * sceneCount / count) + 1 }, durationSec: { type: "number", const: runtimeSeconds! / count } }),
+        object({ ...shot, sceneNumber: { type: "integer", const: Math.floor(index * sceneCount / count) + 1 }, durationSec: { type: "number", exclusiveMinimum: 0 } }),
       ]))) }) : object({ shots: rows({ ...shot, sceneNumber }) });
     }
   }

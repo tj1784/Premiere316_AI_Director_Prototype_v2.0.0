@@ -23,6 +23,28 @@ test("slugline rewrite keeps the persisted scene id", () => {
   assert.equal(second.nodes.find((node) => node.kind === "scene")?.id, scene.id);
 });
 
+test("numbered imported scenes and forced credits retain IDs, offsets and scoped edits", () => {
+  const imported = "Title: Prodigal Son\r\n\r\nEXT. ROAD - DAY #PS-S01#\r\n\r\n[[Duration: 90]]\r\n\r\nHe waits.\r\n\r\n.END CREDITS OVER BLACK #PS-S23#\r\n\r\n[[Duration: 30]]\r\n\r\nCredits.\r\n";
+  const hierarchy = parseScreenplayHierarchy(imported);
+  const scenes = hierarchy.nodes.filter((node) => node.kind === "scene");
+  assert.deepEqual(scenes.map((node) => node.id), ["PS-S01", "PS-S23"]);
+  for (const scene of scenes) assert.equal(imported.slice(scene.sourceStart, scene.sourceEnd), scene.fountain);
+  const edited = spliceScopedFountain(imported, "scene", "PS-S01", scenes[0].fountain.replace("He waits.", "He turns."), { previous: hierarchy });
+  assert.equal(otherScenesByteIdentical(imported, edited.fountain, "PS-S01", hierarchy), true);
+  assert.deepEqual(parseScreenplayHierarchy(edited.fountain, hierarchy).nodes.filter((node) => node.kind === "scene" && !node.tombstoned).map((node) => node.id), ["PS-S01", "PS-S23"]);
+});
+
+test("explicit IDs survive scene reordering and duplicates do not create duplicate nodes", () => {
+  const first = "EXT. ROAD - DAY #PS-S01#\n\nWait.\n\nEXT. FIELD - DAY #PS-S02#\n\nWork.";
+  const hierarchy = parseScreenplayHierarchy(first);
+  const reordered = parseScreenplayHierarchy("EXT. FIELD - DAY #PS-S02#\n\nWork.\n\nEXT. ROAD - DAY #PS-S01#\n\nWait.", hierarchy);
+  assert.deepEqual(reordered.nodes.filter((node) => node.kind === "scene" && !node.tombstoned).map((node) => node.id), ["PS-S02", "PS-S01"]);
+  const duplicates = parseScreenplayHierarchy("EXT. ROAD - DAY #1#\n\n...he waits.\n\nEXT. FIELD - DAY #1#\n\nWork.");
+  const ids = duplicates.nodes.map((node) => node.id);
+  assert.equal(ids.length, new Set(ids).size);
+  assert.equal(duplicates.nodes.filter((node) => node.kind === "scene").length, 2);
+});
+
 test("sequence headings parse without rewriting fountain", () => {
   const withSeq = `ACT I\n\nSEQUENCE 03 THE PIER\n\n${fountain}`;
   const hierarchy = parseScreenplayHierarchy(withSeq);

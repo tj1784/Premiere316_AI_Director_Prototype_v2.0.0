@@ -5,9 +5,12 @@ import { makePictureIntake } from "./picture-intake.ts";
 import { makePictureScreenplay } from "./screenplay.ts";
 import { createProductionBreakdown } from "../production/breakdown.ts";
 import { writeGroundedAssetPrompts } from "./asset-prompt-pipeline.ts";
-import { assetPromptContext, assertCharacterSheetPrompt, requireGroundedAssetPrompt } from "./asset-prompt-context.ts";
+import { assetPromptContext, assertAssetDevelopmentReady, assertCharacterSheetPrompt, requireGroundedAssetPrompt } from "./asset-prompt-context.ts";
 import { stableHash } from "../production/dependency-graph.ts";
 import type { MoviePlanRuntime } from "./movie-plan-pipeline.ts";
+import { makeProdigalSonPicture } from "./prodigal-son.ts";
+import { seedVisualDevelopmentFromPicture } from "../visual-development.ts";
+import { seedCinematographyFromPicture } from "../cinematography.ts";
 
 const MODEL_PROMPT = 'Model-written character sheet collage on a plain grey background, with an upper row of full-body front, three-quarter, profile and rear views and a lower row of large front face close-up and profile close-up portraits of the same person.';
 
@@ -16,7 +19,7 @@ function fixture() {
   const intake = { ...makePictureIntake(1), concept: 'Biblical-era ancient Egypt', sourcePassages: 'Exodus 14', suppliedSourceText: 'The wheels were stuck in mud.', fidelityRequirements: 'Bright pillar of fire at night; no modern clothing.' };
   const screenplay = { ...makePictureScreenplay(intake.workflow, null, 1), currentVersionId: 'v1', workingFountain: fountain };
   const production = createProductionBreakdown({ pictureId: 'p', versionId: 'v1', status: 'APPROVED', fountain, scenes: [{ id: 'SCENE-001', slugline: 'EXT. RED SEA - NIGHT' }], socialWorld: [] }, [{ id: 'req', name: 'Egyptian soldier', category: 'character', description: 'Egyptian soldier', sceneIds: ['SCENE-001'] }], 1);
-  return { id: 'p', intake, screenplay, production, nativeFilm: { visualContinuity: 'Warm orange practical firelight and maroon wardrobe.' }, cinematography: { manifestoVersions: [{ thesis: '35mm lens, readable warm firelight, soft shadow detail.' }], shotPlans: [{ sceneId: 'SCENE-001', lens: '35mm', lighting: 'Pillar of fire', framing: 'Medium full figure' }] } } as unknown as Picture;
+  return { id: 'p', intake, screenplay, production, nativeFilm: { visualContinuity: 'Warm orange practical firelight and maroon wardrobe.' }, visualDevelopment: { boards: [{ id: 'look', title: 'Firelit crossing', intent: 'Warm fire reaches faces and linen; black robe panels remain readable.', palette: ['maroon', 'charcoal', 'amber'], motifs: ['light on linen'], status: 'DRAFT' }], characterBibles: [], wardrobeStates: [], locationBibles: [], propBibles: [], versions: [] }, cinematography: { manifestoVersions: [{ thesis: '35mm lens, readable warm firelight, soft shadow detail.' }], shotPlans: [{ sceneId: 'SCENE-001', lens: '35mm', lighting: 'Pillar of fire', framing: 'Medium full figure' }] } } as unknown as Picture;
 }
 function runtime(picture: Picture, quote = 'The Egyptian soldier carries a torch.'): MoviePlanRuntime {
   return { available: true, reason: '', servedModelId: 'local-qwen', generate: async (input) => {
@@ -100,11 +103,12 @@ test('forced regeneration replaces an already-current prompt and preserves its p
 
 test('resuming a partial queue preserves the current prompt and writes only the missing asset', async () => {
   const p = fixture();
-  const saved = await writeGroundedAssetPrompts(p, runtime(p), async () => 1500);
+  const initial = p.production!.assets[0];
+  const other = { ...initial, id: initial.id + '-second', name: 'Second character' };
+  p.production!.assets.push(other);
+  const saved = await writeGroundedAssetPrompts(p, runtime(p), async () => 1500, false, undefined, undefined, initial.id);
   const first = saved.production!.assets[0];
   saved.assetImagePrompts![first.id] = MODEL_PROMPT + ' Saved user adjustment.';
-  const other = { ...first, id: first.id + '-second', name: 'Second character' };
-  saved.production!.assets.push(other);
   const seen: string[] = [];
   const r = runtime(saved); const generate = r.generate!;
   r.generate = async (input) => {
@@ -118,6 +122,86 @@ test('resuming a partial queue preserves the current prompt and writes only the 
   assert.deepEqual(seen, [other.id]);
   assert.equal(resumed.assetImagePrompts![first.id], MODEL_PROMPT + ' Saved user adjustment.');
   assert.ok(resumed.assetPromptSources![other.id]);
+});
+
+test('imported asset context retains exact scene identities, states, reference packages and sourced uncertainty', () => {
+  const p = makeProdigalSonPicture();
+  const child = p.production!.assets.find((asset) => p.importedPackage!.sourceAssets.find((item) => item.id === asset.id)?.parent)!;
+  const { context } = assetPromptContext(p, child);
+  assert.deepEqual(context.scenes.map((scene) => scene.id), child.requiredSceneIds);
+  assert.ok(context.scenes.every((scene) => /^PS-S\d+$/.test(scene.id)));
+  assert.ok(context.asset.importedSpecification!.reference);
+  assert.equal(context.asset.sceneUses.length, p.importedPackage!.sceneAssetLinks.filter((item) => item.asset_id === child.id).length);
+  assert.ok(context.research!.sources.length > 0);
+  assert.ok(context.canonicalParents.length > 0);
+  assert.ok(context.canonicalParents.every((parent) => parent.approvedMedia === null));
+  assert.equal(context.asset.approvedMedia, null, 'Imported specifications must not imply generated media');
+  assert.ok(context.scenes.every((scene) => scene.durationSeconds! > 0));
+});
+
+test('asset prompt writing waits for actual visual and camera development, without demanding canonical media approval', async () => {
+  const p = makeProdigalSonPicture();
+  let calls = 0;
+  const model = { available: true, servedModelId: 'test', reason: '', generate: async () => { calls++; return { text: '{}' }; } };
+  await assert.rejects(writeGroundedAssetPrompts(p, model, async () => 1500), /Complete visual development/);
+  p.visualDevelopment = seedVisualDevelopmentFromPicture(p, 1);
+  p.cinematography = seedCinematographyFromPicture(p, 1);
+  assert.throws(() => assertAssetDevelopmentReady(p), /Complete visual development/);
+  const developed = fixture();
+  p.visualDevelopment = developed.visualDevelopment;
+  assert.throws(() => assertAssetDevelopmentReady(p), /Develop cinematography/);
+  p.cinematography = developed.cinematography;
+  assert.doesNotThrow(() => assertAssetDevelopmentReady(p));
+  assert.equal(calls, 0);
+  assert.ok(p.production!.assets.every((asset) => asset.approvedIterationId === null));
+});
+
+test('largest imported character request keeps all scene evidence and related assets inside a bounded text envelope', async () => {
+  const p = makeProdigalSonPicture();
+  const developed = fixture();
+  p.visualDevelopment = developed.visualDevelopment;
+  p.cinematography = developed.cinematography;
+  const asset = p.production!.assets.find((item) => item.id === 'PS-CHR-YOUNGER')!;
+  const full = assetPromptContext(p, asset).context;
+  let checked = false;
+  const model: MoviePlanRuntime = { available: true, servedModelId: 'test', reason: '', generate: async (input) => {
+    const payload = JSON.parse(input.prompt);
+    assert.ok(input.system.length + input.prompt.length < 100_000, 'Character envelope leaves room for a full image prompt in the selected 32K context; exact tokens are model-specific');
+    assert.deepEqual(payload.sceneIndex.map((scene: { id: string }) => scene.id), full.scenes.map((scene) => scene.id));
+    assert.ok(payload.sceneIndex.every((scene: Record<string, unknown>) => !('text' in scene)), 'Do not duplicate the screenplay in every scene-index entry');
+    assert.deepEqual(payload.relatedAssets.map((row: unknown[]) => row[0]), full.relatedAssets.map((item) => item.id));
+    assert.deepEqual(payload.targetAsset.specification, asset.canonicalSpec);
+    assert.deepEqual(payload.targetAsset.sceneUses, full.asset.sceneUses);
+    assert.ok(full.scenes.every((scene) => payload.screenplay.includes(scene.text.trimEnd())));
+    checked = true;
+    throw new Error('Request measured; no generation');
+  } };
+  await assert.rejects(writeGroundedAssetPrompts(p, model, async () => 1500, false, undefined, undefined, asset.id), /Request measured/);
+  assert.equal(checked, true);
+});
+
+test('a partially broken scene link cannot silently omit required continuity context', () => {
+  const p = fixture();
+  const asset = p.production!.assets[0];
+  asset.requiredSceneIds.push('SCENE-999');
+  assert.throws(() => assetPromptContext(p, asset), /linked screenplay scenes are missing \(SCENE-999\)/);
+});
+
+test('related asset changes invalidate prompts, while unrelated scenes stay outside the target context', async () => {
+  const p = fixture();
+  const parent = { ...structuredClone(p.production!.assets[0]), id: 'parent', name: 'Canonical parent', requiredSceneIds: ['ELSEWHERE'] };
+  const unrelated = { ...structuredClone(parent), id: 'unrelated', name: 'Unrelated scene asset' };
+  p.production!.assets.push(parent, unrelated);
+  p.production!.dependencies.push({ fromType: 'asset', fromId: parent.id, toType: 'asset', toId: p.production!.assets[0].id });
+  const saved = await writeGroundedAssetPrompts(p, runtime(p), async () => 1500, false, undefined, undefined, p.production!.assets[0].id);
+  const asset = saved.production!.assets[0];
+  const context = assetPromptContext(saved, asset).context;
+  assert.deepEqual(context.canonicalParents.map((item) => item.id), ['parent']);
+  assert.ok(!context.relatedAssets.some((item) => item.id === 'unrelated'));
+  saved.production!.assets.find((item) => item.id === 'unrelated')!.canonicalSpec.visualDescription = 'Unrelated change';
+  assert.equal(requireGroundedAssetPrompt(saved, asset), MODEL_PROMPT);
+  saved.production!.assets.find((item) => item.id === 'parent')!.canonicalSpec.visualDescription = 'Changed canonical construction';
+  assert.throws(() => requireGroundedAssetPrompt(saved, asset), /missing or stale/);
 });
 
 test('model-written paragraphs are joined verbatim and a short retry receives its previous draft', async () => {

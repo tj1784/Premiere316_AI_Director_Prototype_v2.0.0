@@ -9,6 +9,9 @@ import { planLiteImportedExport, planPictureExport, planPlusImportedExport } fro
 import { buildTimelinePlan, importedCanonicalFilm } from "./timeline-plan.ts";
 import { emptyVideoWorkspace } from "../production/video-types.ts";
 import { recordImportedVideoTake, reviewVideoTake } from "../production/video-iterations.ts";
+import { makeVisualDevelopmentState, seedVisualDevelopmentFromPicture } from "../visual-development.ts";
+import { makeCinematographyState, seedCinematographyFromPicture } from "../cinematography.ts";
+import { migratePicturePerformance } from "../performance/persistence.ts";
 
 function picture(): Picture {
   const intake = makePictureIntake(1);
@@ -27,6 +30,30 @@ function picture(): Picture {
 }
 
 describe("Wave 7-8 readiness, import, export, lifecycle", () => {
+  it("empty hydrated department workspaces do not imply creative work exists", () => {
+    const pic = picture();
+    pic.visualDevelopment = makeVisualDevelopmentState(1);
+    pic.cinematography = makeCinematographyState(1);
+    const performance = migratePicturePerformance(pic)!;
+    pic.performance = { ...performance, beats: [], shots: [], performance: {}, queue: {} };
+    const items = movieReadiness(pic);
+    for (const id of ["visual-development", "cinematography", "performance"]) {
+      assert.equal(items.find((item) => item.id === id)?.status, "placeholder", id);
+      assert.match(items.find((item) => item.id === id)!.reason, /not started/);
+    }
+  });
+
+  it("actual department content retains readiness without implying generated media", () => {
+    const pic = picture();
+    pic.visualDevelopment = seedVisualDevelopmentFromPicture(pic, 1);
+    pic.cinematography = seedCinematographyFromPicture(pic, 1);
+    pic.performance = migratePicturePerformance(pic);
+    const items = movieReadiness(pic);
+    for (const id of ["visual-development", "cinematography", "performance"]) assert.equal(items.find((item) => item.id === id)?.status, "ready", id);
+    assert.equal(items.find((item) => item.id === "images")?.status, "placeholder");
+    assert.equal(items.find((item) => item.id === "video")?.status, "blocked");
+  });
+
   it("builds a clickable readiness list and lifecycle without claiming native video", () => {
     const items = movieReadiness(picture());
     assert.equal(items.length, 16);

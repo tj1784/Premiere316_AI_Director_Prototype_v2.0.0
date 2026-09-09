@@ -1,0 +1,2218 @@
+[
+  {
+    "id": "PS-CHR-JESUS",
+    "category": "Character",
+    "name": "Jesus",
+    "parent": "",
+    "requirement": "Living Jesus with consistent Mediterranean appearance, natural human scale and clean first-century clothing. Final face and age appearance require casting approval.",
+    "state": "Clean prologue only. No wounds, blood, burial linen or supernatural effects.",
+    "scenes": [
+      "PS-S01"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-CHR-FATHER",
+    "category": "Character",
+    "name": "Father",
+    "parent": "",
+    "requirement": "Late fifties. Stable face, hair, beard, height and build across travel, grief and reunion. Natural age and capability to run.",
+    "state": "Same identity. S15 uses remembered S4 action. Dirt from S18 remains in the continuous homecoming evening.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S11",
+      "PS-S14",
+      "PS-S15",
+      "PS-S16",
+      "PS-S18",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-CHR-ELDER",
+    "category": "Character",
+    "name": "Elder son",
+    "parent": "",
+    "requirement": "Twenty-nine, brown hair, sun-darkened skin, composed mature face. Match face, body and left-hand anatomy across every state.",
+    "state": "Left palm split S3; dressed S3 onward; healing S11; reopened S14; scar by S16. S15 memory reuses S2 state.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S11",
+      "PS-S14",
+      "PS-S15",
+      "PS-S16",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-CHR-YOUNGER",
+    "category": "Character",
+    "name": "Younger son",
+    "parent": "",
+    "requirement": "Twenty-two, handsome, brown hair. One stable identity across well-fed home life, purchased welcome, hunger and homecoming.",
+    "state": "Progressive wasting, dirt, hair disorder and fatigue. Restored clothing does not instantly restore health.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13",
+      "PS-S15",
+      "PS-S17",
+      "PS-S18",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-CHR-MATTAN",
+    "category": "Character",
+    "name": "Mattan, steward",
+    "parent": "",
+    "requirement": "Adult Judean household steward, consistent face and practical working appearance. No uniform or official insignia.",
+    "state": "Travel dust S2–3; estate handling S6; same home clothing family through reunion.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S06",
+      "PS-S07",
+      "PS-S18",
+      "PS-S19"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-CHR-HANNAH",
+    "category": "Character",
+    "name": "Hannah, kitchen manager",
+    "parent": "",
+    "requirement": "Adult Judean woman who manages the household kitchen. Stable face, hands, work clothes and practical hair arrangement.",
+    "state": "S15 memory reuses S4 carrying workers’ bowl. Gift response and homecoming remain restrained.",
+    "scenes": [
+      "PS-S03",
+      "PS-S04",
+      "PS-S07",
+      "PS-S11",
+      "PS-S15",
+      "PS-S19"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-CHR-LEVI",
+    "category": "Character",
+    "name": "Levi, hired field hand",
+    "parent": "",
+    "requirement": "Adult hired field worker with stable face, work-worn hands and practical clothing. Distinguishable from Mattan.",
+    "state": "Use the same actor for basket exchange, rebuke/apology and reunion message. S15 recalls S2. S19 father sends him after preparation, as meal begins; S16 elder has gone to far side of terrace for small stones.",
+    "scenes": [
+      "PS-S02",
+      "PS-S04",
+      "PS-S11",
+      "PS-S14",
+      "PS-S15",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-CHR-DAMON",
+    "category": "Character",
+    "name": "Damon",
+    "parent": "",
+    "requirement": "Young adult about younger son’s age. Recognizable across confident welcome and famine hardship.",
+    "state": "S9–10 adequately fed. S13 hungry and threadbare; no evil caricature.",
+    "scenes": [
+      "PS-S09",
+      "PS-S10",
+      "PS-S13"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-CHR-BREADSELLER",
+    "category": "Character",
+    "name": "Bread seller",
+    "parent": "",
+    "requirement": "Adult woman running a bread stall. Same face, scale, sleeves and hands across plentiful and famine market.",
+    "state": "S9 has bread and must make change. S13 portions scarcity and gently refuses garment.",
+    "scenes": [
+      "PS-S09",
+      "PS-S13"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-CHR-HOST",
+    "category": "Character",
+    "name": "Host",
+    "parent": "",
+    "requirement": "Adult host associated with lodging and banquet court. Same identity during warmth, debt collection and eviction.",
+    "state": "Appearance remains practical; reactions change with payment, not a monstrous makeover.",
+    "scenes": [
+      "PS-S10",
+      "PS-S12",
+      "PS-S13"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-CHR-FARMER",
+    "category": "Character",
+    "name": "Foreign farmer",
+    "parent": "",
+    "requirement": "Adult farmer employing younger to carry pig feed. Stable identity and working clothing.",
+    "state": "No luxury or cruel theatricality required. Household meal beyond enclosure remains ordinary.",
+    "scenes": [
+      "PS-S13",
+      "PS-S15"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-CHR-SCRIBE",
+    "category": "Featured extra",
+    "name": "Scribe",
+    "parent": "",
+    "requirement": "Adult Jewish scribe, observant and watchful. Avoid later rabbinic costume shorthand or a generalized villain design.",
+    "state": "Standing at edge of listening group; face and clothing stable.",
+    "scenes": [
+      "PS-S01"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-CHR-TAXCOLLECTOR",
+    "category": "Featured extra",
+    "name": "Tax collector",
+    "parent": "",
+    "requirement": "Plainly dressed adult Jewish listener with a recognizable face. No modern occupational labels or badges.",
+    "state": "Seated, hospitable, shares bread.",
+    "scenes": [
+      "PS-S01"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-LISTENERS",
+    "category": "Extras",
+    "name": "Hillside listeners and travelers",
+    "parent": "",
+    "requirement": "Mixed-age Judean gathering, including elderly woman, scribe’s companion and passing travelers. Practical varied garments.",
+    "state": "Natural crowd spacing in olive shade; do not repeat identical faces.",
+    "scenes": [
+      "PS-S01"
+    ],
+    "reference": "Ensemble face mix, full-body costume mix and role grouping; recurring individual references where reused.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-CARRIERS",
+    "category": "Extras",
+    "name": "Two hired carriers",
+    "parent": "",
+    "requirement": "Two recurring adults accompanying pack donkey. Keep each face and travel kit recognizable.",
+    "state": "Same carriers from father’s arrival to departure and road fork.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S07",
+      "PS-S08"
+    ],
+    "reference": "Ensemble face mix, full-body costume mix and role grouping; recurring individual references where reused.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-HOMEWORKERS",
+    "category": "Extras",
+    "name": "Household workers and second servant",
+    "parent": "",
+    "requirement": "Small stable home workforce. Includes two laborers eating/washing with Levi and one servant helping robe younger.",
+    "state": "Work clothes and recurring faces match between ordinary meals and feast prep.",
+    "scenes": [
+      "PS-S04",
+      "PS-S06",
+      "PS-S11",
+      "PS-S14",
+      "PS-S19"
+    ],
+    "reference": "Ensemble face mix, full-body costume mix and role grouping; recurring individual references where reused.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-NEIGHBORWOMAN",
+    "category": "Featured extra",
+    "name": "Neighbor drawing water",
+    "parent": "",
+    "requirement": "Adult neighboring woman with water vessel. Distinct from Hannah and bread seller.",
+    "state": "Stops, watches departure and resumes without greeting.",
+    "scenes": [
+      "PS-S07"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-OLDTRAVELER",
+    "category": "Featured extra",
+    "name": "Old traveler at cistern",
+    "parent": "",
+    "requirement": "Older traveler in ordinary travel clothing; no new narrative subplot.",
+    "state": "Dusty but able to drink and continue journey.",
+    "scenes": [
+      "PS-S08"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-MARKET",
+    "category": "Extras",
+    "name": "Foreign market workers and buyers",
+    "parent": "",
+    "requirement": "Mixed local urban adults, sack carriers, cloth seller, cloth trader and jar merchant. Distinct occupations without caricature.",
+    "state": "Crowded trade S9; quieter transaction S12; depleted market S13.",
+    "scenes": [
+      "PS-S09",
+      "PS-S12",
+      "PS-S13"
+    ],
+    "reference": "Ensemble face mix, full-body costume mix and role grouping; recurring individual references where reused.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-CHILD",
+    "category": "Featured extra",
+    "name": "Child at bread stall",
+    "parent": "",
+    "requirement": "Same child at bread stall for visual continuity. Natural age and scale; clothing becomes more worn through famine.",
+    "state": "S9 waits for reserved heel. S13 thin, receives part of Damon’s bread.",
+    "scenes": [
+      "PS-S09",
+      "PS-S13"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-GUESTS",
+    "category": "Extras",
+    "name": "Foreign companions and serving woman",
+    "parent": "",
+    "requirement": "Small recurring social group and working serving woman, fully clothed in plausible local dress.",
+    "state": "Larger welcome S9–10; smaller group S12. Avoid confirming elder’s later accusation with invented sex scenes.",
+    "scenes": [
+      "PS-S09",
+      "PS-S10",
+      "PS-S12"
+    ],
+    "reference": "Ensemble face mix, full-body costume mix and role grouping; recurring individual references where reused.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-FOREIGNMUS",
+    "category": "Extras",
+    "name": "Foreign pipe player and drummer",
+    "parent": "",
+    "requirement": "Two modest working musicians with period-plausible costume and performance posture.",
+    "state": "One pipe player and one hand drummer; no modern instruments.",
+    "scenes": [
+      "PS-S10"
+    ],
+    "reference": "Ensemble face mix, full-body costume mix and role grouping; recurring individual references where reused.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-FAMINEFAMILY",
+    "category": "Extras",
+    "name": "Famine-displaced family",
+    "parent": "",
+    "requirement": "Family loading household bundles onto a hand-dragged sledge. Practical regional clothes and belongings.",
+    "state": "Visible fatigue and scarcity without sensational staging.",
+    "scenes": [
+      "PS-S13"
+    ],
+    "reference": "Ensemble face mix, full-body costume mix and role grouping; recurring individual references where reused.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-FARMHOUSE",
+    "category": "Extras",
+    "name": "Foreign farmer’s household",
+    "parent": "",
+    "requirement": "Small household visible receiving food beyond enclosure boundary. Ordinary people, no cruelty pageant.",
+    "state": "Food bowls pass hand to hand before door closes.",
+    "scenes": [
+      "PS-S15"
+    ],
+    "reference": "Ensemble face mix, full-body costume mix and role grouping; recurring individual references where reused.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-ROADTRADE",
+    "category": "Featured extra",
+    "name": "Roadside food trader",
+    "parent": "",
+    "requirement": "Traveler or shelter occupant accepting a worn mantle in exchange for a little food. Unnamed role.",
+    "state": "Short exchange only; no invented merchant backstory.",
+    "scenes": [
+      "PS-S17"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-DONKEYDRIVER",
+    "category": "Featured extra",
+    "name": "Passing donkey driver",
+    "parent": "",
+    "requirement": "Ordinary driver on homeward road; distinguish from the two recurring carriers.",
+    "state": "Looks at younger and keeps moving.",
+    "scenes": [
+      "PS-S17"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-FEAST",
+    "category": "Extras",
+    "name": "Neighbors at homecoming feast",
+    "parent": "",
+    "requirement": "Local neighbors bring bowls and seating; varied age, build and appropriate Judean attire.",
+    "state": "Natural dancing, eating and reactions continue across homecoming evening.",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Ensemble face mix, full-body costume mix and role grouping; recurring individual references where reused.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-HOMEMUS",
+    "category": "Extras",
+    "name": "Home feast pipe player and drummer",
+    "parent": "",
+    "requirement": "Two local musicians with modest clothes and natural performance posture.",
+    "state": "Same pair and instrument placement across continuous feast scenes.",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Ensemble face mix, full-body costume mix and role grouping; recurring individual references where reused.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-ANM-PACKDONKEY",
+    "category": "Animal",
+    "name": "Carriers’ pack donkey",
+    "parent": "",
+    "requirement": "One recurring domestic donkey with stable coat pattern, proportions and plain pack tack.",
+    "state": "Same animal and tack from arrival through outgoing road journey.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S07",
+      "PS-S08"
+    ],
+    "reference": "Animal front and side; coat-marking detail; human scale comparison; tack where applicable.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-ANM-CATTLE",
+    "category": "Animal",
+    "name": "Household cattle",
+    "parent": "",
+    "requirement": "Small domestic cattle group in farm pen. Distinguish cattle from separately identified fattened calf.",
+    "state": "Only cattle at observant home farm; animals settle at night.",
+    "scenes": [
+      "PS-S03",
+      "PS-S05",
+      "PS-S14",
+      "PS-S19"
+    ],
+    "reference": "Animal front and side; coat-marking detail; human scale comparison; tack where applicable.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-ANM-CALF",
+    "category": "Animal",
+    "name": "Fattened calf",
+    "parent": "",
+    "requirement": "Domestic calf prepared for special celebration. Stable coat markings while alive.",
+    "state": "Alive when led out; slaughter offscreen; no live calf later in feast continuity.",
+    "scenes": [
+      "PS-S19"
+    ],
+    "reference": "Animal front and side; coat-marking detail; human scale comparison; tack where applicable.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-ANM-PIGS",
+    "category": "Animal",
+    "name": "Foreign farm domestic pigs",
+    "parent": "",
+    "requirement": "Several domestic pigs of realistic preindustrial type, with stable size and markings.",
+    "state": "Only at foreign farm; dust/mud appropriate to feed enclosure.",
+    "scenes": [
+      "PS-S15"
+    ],
+    "reference": "Animal front and side; coat-marking detail; human scale comparison; tack where applicable.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-ANM-PASSDONKEY",
+    "category": "Animal",
+    "name": "Passing road donkey",
+    "parent": "",
+    "requirement": "Ordinary donkey with simple driver tack. Distinct continuity from carriers’ animal.",
+    "state": "Passes once during return journey.",
+    "scenes": [
+      "PS-S17"
+    ],
+    "reference": "Animal front and side; coat-marking detail; human scale comparison; tack where applicable.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-HILLSIDE",
+    "category": "Location",
+    "name": "Judean teaching hillside",
+    "parent": "",
+    "requirement": "Pale sky, broad slope, olive shade and passing road. Conservative fictional geography.",
+    "state": "Day. Never label it the Sermon on the Mount as historical fact.",
+    "scenes": [
+      "PS-S01"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-HOMESTEAD",
+    "category": "Location",
+    "name": "Family farm geography",
+    "parent": "",
+    "requirement": "Coherent prosperous rural layout: barley stubble below olive slope, upper retaining wall, road, courtyard, kitchen/store and livestock pen.",
+    "state": "Late-spring stubble and subsequent dry-season passage; no simultaneous incompatible harvests.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S06",
+      "PS-S07",
+      "PS-S11",
+      "PS-S14",
+      "PS-S16",
+      "PS-S17",
+      "PS-S18",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-TERRACE",
+    "category": "Location",
+    "name": "Upper terrace and retaining wall",
+    "parent": "PS-LOC-HOMESTEAD",
+    "requirement": "Fieldstone retaining wall above barley stubble and olive slope. Continuous route down to courtyard.",
+    "state": "S2 long slump; S6 repair; S11 partly complete; S16 short unfinished run. S15 repeats S2.",
+    "scenes": [
+      "PS-S02",
+      "PS-S06",
+      "PS-S11",
+      "PS-S15",
+      "PS-S16",
+      "PS-S19",
+      "PS-S20"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-HOMESTEAD.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-COURTYARD",
+    "category": "Location",
+    "name": "Working family courtyard",
+    "parent": "PS-LOC-HOMESTEAD",
+    "requirement": "Stone/plaster working yard, awning, grain storage, water vessels, adjacent cattle pen and visible entrance road.",
+    "state": "Ordinary working layout before feast. Same doors, surfaces and proportions.",
+    "scenes": [
+      "PS-S03",
+      "PS-S04",
+      "PS-S06",
+      "PS-S07",
+      "PS-S11",
+      "PS-S14",
+      "PS-S18",
+      "PS-S19"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-HOMESTEAD.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-ENTRANCE",
+    "category": "Location",
+    "name": "Courtyard threshold and road entrance",
+    "parent": "PS-LOC-HOMESTEAD",
+    "requirement": "Stable doorway, doorpost and stone threshold connecting courtyard to road; table sightline from outside.",
+    "state": "Night and dusk states retain geography. Doorway clear for unresolved invitation.",
+    "scenes": [
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S07",
+      "PS-S11",
+      "PS-S18",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-HOMESTEAD.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-SUPPER",
+    "category": "Location",
+    "name": "Family supper room",
+    "parent": "PS-LOC-HOMESTEAD",
+    "requirement": "Modest room adjoining working courtyard. Low wooden table and localized oil-lamp illumination.",
+    "state": "S4 full supper; S5 father remains, one lamp out; S15 memory matches S4.",
+    "scenes": [
+      "PS-S04",
+      "PS-S05",
+      "PS-S15"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-HOMESTEAD.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-STORE",
+    "category": "Location",
+    "name": "Family store room",
+    "parent": "PS-LOC-HOMESTEAD",
+    "requirement": "Practical dry storage, jars, baskets and small table for written division. No palace treasury.",
+    "state": "S6 accounting arrangement; S14 work and grain-spill configuration.",
+    "scenes": [
+      "PS-S06",
+      "PS-S14"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-HOMESTEAD.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-CISTERN",
+    "category": "Location",
+    "name": "Farm cistern and washing point",
+    "parent": "PS-LOC-HOMESTEAD",
+    "requirement": "Farm water-storage point, rope, raised jar and washing bowl positioned plausibly.",
+    "state": "Same dry-season stone and household geography.",
+    "scenes": [
+      "PS-S14"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-HOMESTEAD.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-PEN",
+    "category": "Location",
+    "name": "Home cattle pen",
+    "parent": "PS-LOC-HOMESTEAD",
+    "requirement": "Practical pen adjacent to courtyard, sized for real domestic cattle and calf.",
+    "state": "Calf leaves during S19. No pigs.",
+    "scenes": [
+      "PS-S03",
+      "PS-S05",
+      "PS-S14",
+      "PS-S19"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-HOMESTEAD.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-FEAST",
+    "category": "Location state",
+    "name": "Courtyard dressed for feast",
+    "parent": "PS-LOC-COURTYARD",
+    "requirement": "Same yard with cooking work, low tables/benches, neighbors’ seating, oil lamps and modest musician positions.",
+    "state": "S19 mid-afternoon to dusk with several hours of preparation compressed; S20 dusk; S21–22 night. Keep entrance, elder’s empty place and table sightline fixed.",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-COURTYARD.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-HOMEROAD",
+    "category": "Location",
+    "name": "Home road and field approach",
+    "parent": "PS-LOC-HOMESTEAD",
+    "requirement": "Road bend and approach allowing farm to be seen at a distance, including stubble fields and ordinary entrance.",
+    "state": "S7 dawn departure; S17 day approach; S18 mid-afternoon recognition and embrace.",
+    "scenes": [
+      "PS-S02",
+      "PS-S07",
+      "PS-S17",
+      "PS-S18"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-HOMESTEAD.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-JOURNEY",
+    "category": "Location",
+    "name": "Escarpment, ridge and road fork",
+    "parent": "",
+    "requirement": "Dry ravine, exposed ridge and fork: narrow road to home, broader road toward distant unnamed town.",
+    "state": "Match outgoing and return geography; signs or modern roads absent.",
+    "scenes": [
+      "PS-S08",
+      "PS-S17"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-ROADCISTERN",
+    "category": "Location",
+    "name": "Roadside cistern and resting place",
+    "parent": "PS-LOC-JOURNEY",
+    "requirement": "A practical stopping place with water access and rough resting surface; no inn complex invented.",
+    "state": "S8 old traveler drinks. S17 return water, sandal discard and brief shelter exchange may use distinct nearby areas.",
+    "scenes": [
+      "PS-S08",
+      "PS-S17"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-JOURNEY.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-TOWN",
+    "category": "Location",
+    "name": "Unnamed foreign town",
+    "parent": "",
+    "requirement": "Modest Hellenized settlement with mixed stone/plaster buildings, timber stalls and limited colonnade. No later imperial monuments.",
+    "state": "Distant town S8; lived-in trade S9–12; famine state S13.",
+    "scenes": [
+      "PS-S08",
+      "PS-S09",
+      "PS-S12",
+      "PS-S13"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-MARKET",
+    "category": "Location",
+    "name": "Foreign market street",
+    "parent": "PS-LOC-TOWN",
+    "requirement": "Shade cloth, pottery, bread scale, cloth display, sacks and people moving between modest stalls.",
+    "state": "Full stock S9; garment sale S12; emptying awnings and small bread portions S13.",
+    "scenes": [
+      "PS-S09",
+      "PS-S12",
+      "PS-S13"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-TOWN.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-RENTEDROOM",
+    "category": "Location",
+    "name": "Younger’s rented room",
+    "parent": "PS-LOC-TOWN",
+    "requirement": "Plain mirrorless room with garment peg and place for bedding/coins.",
+    "state": "Russet mantle hangs S10 through removal S12. Room empties as younger leaves.",
+    "scenes": [
+      "PS-S10",
+      "PS-S12"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-TOWN.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-BANQUET",
+    "category": "Location",
+    "name": "Tavern and banquet court",
+    "parent": "PS-LOC-TOWN",
+    "requirement": "Small working hospitality court, benches, serving table, entrance and space for natural dance and musicians.",
+    "state": "S9 welcome; S10 evening fullness then deserted dishes; S12 smaller gathering and debt denial.",
+    "scenes": [
+      "PS-S09",
+      "PS-S10",
+      "PS-S12"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-TOWN.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-STAIR",
+    "category": "Location",
+    "name": "Street stair sleeping place",
+    "parent": "PS-LOC-TOWN",
+    "requirement": "Low exterior stair shelter associated with host’s lodging access, with plain street beyond.",
+    "state": "Night through predawn eviction.",
+    "scenes": [
+      "PS-S13"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-TOWN.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-FAMINE",
+    "category": "Location state",
+    "name": "Foreign market in famine",
+    "parent": "PS-LOC-MARKET",
+    "requirement": "Existing market architecture with depleted sacks, closed grain store, empty cloth and carefully measured flour.",
+    "state": "Scarcity follows spending; no instant destruction or ruined civilization.",
+    "scenes": [
+      "PS-S13"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-MARKET.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-OUTSKIRTS",
+    "category": "Location",
+    "name": "Foreign dry fields and outskirts",
+    "parent": "PS-LOC-TOWN",
+    "requirement": "Failed field, road edge, closed grain store/queue and family’s sledge nearby; route to animal holding.",
+    "state": "Regional famine does not visually turn entire world into desert overnight.",
+    "scenes": [
+      "PS-S13"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-TOWN.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-PIGFARM",
+    "category": "Location",
+    "name": "Foreign pig enclosure and lean-to",
+    "parent": "",
+    "requirement": "Rough timber pen, low boundary, trough, feed gate, basic lean-to and nearby household doorway.",
+    "state": "Day dust and sweat; night localized practical darkness; first-light departure.",
+    "scenes": [
+      "PS-S15"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-WAR-JESUS",
+    "category": "Wardrobe",
+    "name": "Jesus’ living garments",
+    "parent": "PS-CHR-JESUS",
+    "requirement": "Plain clean tunic, mantle and simple sandals of plausible first-century construction.",
+    "state": "No burial shroud, crucifixion wounds, crown or fantasy glow.",
+    "scenes": [
+      "PS-S01"
+    ],
+    "reference": "Worn front/back; fabric, edge and fastening details; clean and each specified wear state. Match approved PS-CHR-JESUS.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-WAR-FATHER",
+    "category": "Wardrobe",
+    "name": "Father’s everyday clothes and mantle",
+    "parent": "PS-CHR-FATHER",
+    "requirement": "Prosperous working household clothes; woven tunic, mantle and simple leather sandals, with restrained quality.",
+    "state": "Stable cut and palette. Road dust added during S18 and retained that evening. S15 uses original S4 sleeve state, with no homecoming road dirt.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S11",
+      "PS-S14",
+      "PS-S15",
+      "PS-S16",
+      "PS-S18",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Worn front/back; fabric, edge and fastening details; clean and each specified wear state. Match approved PS-CHR-FATHER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-WAR-FATHERTRAVEL",
+    "category": "Wardrobe",
+    "name": "Father’s traveling mantle",
+    "parent": "PS-CHR-FATHER",
+    "requirement": "Mantle suited to ordinary travel, with realistic folds and worn edges.",
+    "state": "Travel dust retained through courtyard arrival; not confused with either son’s gift.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03"
+    ],
+    "reference": "Worn front/back; fabric, edge and fastening details; clean and each specified wear state. Match approved PS-CHR-FATHER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-WAR-ELDER",
+    "category": "Wardrobe",
+    "name": "Elder’s work tunic and sandals",
+    "parent": "PS-CHR-ELDER",
+    "requirement": "Practical tunic and leather sandals matching repeated field labor. Stable sleeves, belt and hem.",
+    "state": "S14 left-hand blood contact. Pale cuff mend established by S16. S15 reuses clean earlier S2 state.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S11",
+      "PS-S14",
+      "PS-S15",
+      "PS-S16",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Worn front/back; fabric, edge and fastening details; clean and each specified wear state. Match approved PS-CHR-ELDER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-WAR-OLIVE",
+    "category": "Wardrobe",
+    "name": "Elder’s olive gift mantle",
+    "parent": "PS-CHR-ELDER",
+    "requirement": "Deep weathered-olive fine wool mantle equal in workmanship to russet gift.",
+    "state": "Folded S3; around shoulders S11; delivered S16; carried on arm S20, unused/held S21–22. Same garment.",
+    "scenes": [
+      "PS-S03",
+      "PS-S11",
+      "PS-S16",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Worn front/back; fabric, edge and fastening details; clean and each specified wear state. Match approved PS-CHR-ELDER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-WAR-YOUNGERTUNIC",
+    "category": "Wardrobe",
+    "name": "Younger’s plain tunic",
+    "parent": "PS-CHR-YOUNGER",
+    "requirement": "Plain woven tunic with stable construction identifiable beneath changing mantles and final robe.",
+    "state": "Progressive wear; dirty and worn by famine, retained beneath best robe S19–22.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13",
+      "PS-S15",
+      "PS-S17",
+      "PS-S18",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Worn front/back; fabric, edge and fastening details; clean and each specified wear state. Match approved PS-CHR-YOUNGER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-WAR-RUSSET",
+    "category": "Wardrobe",
+    "name": "Younger’s russet gift mantle",
+    "parent": "PS-CHR-YOUNGER",
+    "requirement": "Muted-russet fine wool mantle equal to olive gift in quality. Lock unique edge/weave as father’s gift.",
+    "state": "Gift S3; worn through S9; hangs on room peg S10; sold S12; never restored or reappears on younger.",
+    "scenes": [
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12"
+    ],
+    "reference": "Worn front/back; fabric, edge and fastening details; clean and each specified wear state. Match approved PS-CHR-YOUNGER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-WAR-BLUE",
+    "category": "Wardrobe",
+    "name": "Purchased blue-bordered mantle",
+    "parent": "PS-CHR-YOUNGER",
+    "requirement": "Lighter mantle with narrow blue border; modest foreign fashion rather than royal costume.",
+    "state": "Chosen S9; worn S10; wine-stained edge S10 onward; increasingly limp/worn S12–15; exchanged for food in early S17.",
+    "scenes": [
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13",
+      "PS-S15",
+      "PS-S17"
+    ],
+    "reference": "Worn front/back; fabric, edge and fastening details; clean and each specified wear state. Match approved PS-CHR-YOUNGER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-WAR-YOUNGERSANDAL",
+    "category": "Wardrobe",
+    "name": "Younger’s original sandals",
+    "parent": "PS-CHR-YOUNGER",
+    "requirement": "Simple layered leather soles and binding straps, matched left/right pair.",
+    "state": "Worn progressively; strap breaks, retied, sole tears S17; both sandals left at roadside. Barefoot afterward until S19.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13",
+      "PS-S15",
+      "PS-S17"
+    ],
+    "reference": "Worn front/back; fabric, edge and fastening details; clean and each specified wear state. Match approved PS-CHR-YOUNGER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-WAR-BESTROBE",
+    "category": "Wardrobe",
+    "name": "Best robe at restoration",
+    "parent": "PS-CHR-YOUNGER",
+    "requirement": "Household’s best robe, visibly well made but historically restrained. Distinct from sold russet mantle and blue garment.",
+    "state": "Placed over wasted body and worn tunic S19. Same fit/folds through evening.",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Worn front/back; fabric, edge and fastening details; clean and each specified wear state. Match approved PS-CHR-YOUNGER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-WAR-NEWSANDALS",
+    "category": "Wardrobe",
+    "name": "New sandals at restoration",
+    "parent": "PS-CHR-YOUNGER",
+    "requirement": "New practical leather sandals, approved as distinct pair from discarded traveling sandals.",
+    "state": "Placed beneath washed feet S19. Establish donning before showing footwear during continuous feast evening; exact donning moment is not written.",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Worn front/back; fabric, edge and fastening details; clean and each specified wear state. Match approved PS-CHR-YOUNGER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-WAR-HOMEKIT",
+    "category": "Wardrobe kit",
+    "name": "Home workers and neighbors’ clothing",
+    "parent": "",
+    "requirement": "Coherent local wardrobe kit for Mattan, Hannah, Levi, workers and neighbors. Specific identity-linked costumes retained.",
+    "state": "S15 reuses S2/S4 clothing. Work sweat/dust varies; feast does not give everyone modern formal wear.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S06",
+      "PS-S07",
+      "PS-S11",
+      "PS-S14",
+      "PS-S15",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Worn front/back; fabric, edge and fastening details; clean and each specified wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-WAR-FOREIGNKIT",
+    "category": "Wardrobe kit",
+    "name": "Foreign town and farm clothing",
+    "parent": "",
+    "requirement": "Coherent foreign regional garments for market, guests, host, Damon, bread seller and farmer, with practical variation.",
+    "state": "Scarcity worsens wear for poor people; no ethnic moral coding.",
+    "scenes": [
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13",
+      "PS-S15",
+      "PS-S17"
+    ],
+    "reference": "Worn front/back; fabric, edge and fastening details; clean and each specified wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-GRM-YOUNGERHOME",
+    "category": "Grooming",
+    "name": "Younger at home and early abroad",
+    "parent": "PS-CHR-YOUNGER",
+    "requirement": "Healthy face and body, brown hair, natural skin texture and ordinary grooming.",
+    "state": "Travel dust is transient; physical deterioration begins gradually as silver ends.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12"
+    ],
+    "reference": "Matched baseline and changed-state face/body/hand references; wound or dirt placement detail. Match approved PS-CHR-YOUNGER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-GRM-YOUNGERHUNGER",
+    "category": "Grooming",
+    "name": "Younger during hunger and pig labor",
+    "parent": "PS-CHR-YOUNGER",
+    "requirement": "Same identity with progressive weight loss, sunken cheeks, tangled brown hair, dust, sweat and dry lips.",
+    "state": "No sudden change of face/age. S17 face wash partial; feet dusty after sandals abandoned; S18 still exhausted.",
+    "scenes": [
+      "PS-S13",
+      "PS-S15",
+      "PS-S17",
+      "PS-S18"
+    ],
+    "reference": "Matched baseline and changed-state face/body/hand references; wound or dirt placement detail. Match approved PS-CHR-YOUNGER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-GRM-YOUNGERRESTORE",
+    "category": "Grooming",
+    "name": "Younger restored but still wasted",
+    "parent": "PS-CHR-YOUNGER",
+    "requirement": "Retain sunken face, thin neck, weakness and unsteady hands beneath clean ceremonial clothing.",
+    "state": "Feet washed S19; clean clothing does not heal hunger instantly.",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Matched baseline and changed-state face/body/hand references; wound or dirt placement detail. Match approved PS-CHR-YOUNGER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-GRM-ELDERPALM",
+    "category": "Grooming",
+    "name": "Elder’s left palm wound and scar",
+    "parent": "PS-CHR-ELDER",
+    "requirement": "One localized split on left palm; same position and orientation in every phase.",
+    "state": "Open split S3; cloth dressing; healing S11; reopened/blood S14; stable scar S16 and S20–22.",
+    "scenes": [
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S11",
+      "PS-S14",
+      "PS-S16",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Matched baseline and changed-state face/body/hand references; wound or dirt placement detail. Match approved PS-CHR-ELDER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-GRM-FATHERDUST",
+    "category": "Grooming",
+    "name": "Father’s reunion road dust",
+    "parent": "PS-CHR-FATHER",
+    "requirement": "Natural road dust on hands, knees and clothing after kneeling with younger.",
+    "state": "Dust transferred by embrace; younger tries to brush it off but father keeps his hand. Retain through feast.",
+    "scenes": [
+      "PS-S18",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Matched baseline and changed-state face/body/hand references; wound or dirt placement detail. Match approved PS-CHR-FATHER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-WATERSKIN",
+    "category": "Prop",
+    "name": "Elder’s repaired waterskin",
+    "parent": "",
+    "requirement": "Leather waterskin with clear neat repaired seam beneath; ordinary strap and closure.",
+    "state": "Given S5; wine stain S10; recovered same night; retained through famine and return. Seam holds; never discarded/sold. Keep with younger during/after embrace; any later stow must preserve its seam and stain.",
+    "scenes": [
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13",
+      "PS-S15",
+      "PS-S17",
+      "PS-S18",
+      "PS-S19"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-BASKETMENDED",
+    "category": "Prop",
+    "name": "Damaged basket and younger’s repair",
+    "parent": "",
+    "requirement": "Palm/rush basket with visibly broken handle repaired in S2 using loose cord.",
+    "state": "S2 broken then repaired by younger; S6 sorted; S14 old knot loosens and elder remends. S15 recall must match S2.",
+    "scenes": [
+      "PS-S02",
+      "PS-S06",
+      "PS-S14",
+      "PS-S15"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-BASKETSOUND",
+    "category": "Prop",
+    "name": "Elder’s sound basket for Levi",
+    "parent": "",
+    "requirement": "Sound working basket distinct from broken-handle hero basket.",
+    "state": "Transferred elder to Levi in S2; S15 repeats original exchange. S14 another sound basket replaces failure.",
+    "scenes": [
+      "PS-S02",
+      "PS-S07",
+      "PS-S14",
+      "PS-S15"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-WALLCORD",
+    "category": "Prop",
+    "name": "Wall setting line and cord",
+    "parent": "",
+    "requirement": "Simple working cord establishing straight retaining-wall course.",
+    "state": "Line anchored to actual repair; no modern nylon or construction level.",
+    "scenes": [
+      "PS-S02",
+      "PS-S06",
+      "PS-S16"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-FIELDSTONES",
+    "category": "Prop / dressing",
+    "name": "Retaining-wall loose fieldstones",
+    "parent": "PS-LOC-TERRACE",
+    "requirement": "Safe-to-stage natural stones of consistent geological color and plausible lifting weight. Include hero heavy stone and supporting stones.",
+    "state": "Heavy stone seated/repositioned S2; completed sections grow; short run left S16.",
+    "scenes": [
+      "PS-S02",
+      "PS-S06",
+      "PS-S11",
+      "PS-S16"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state. Match approved PS-LOC-TERRACE.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-PALMCLOTH",
+    "category": "Prop",
+    "name": "Elder’s hand dressing cloth",
+    "parent": "PS-GRM-ELDERPALM",
+    "requirement": "Small clean woven strip and used matching bandage states.",
+    "state": "Applied left palm S3; dressed S4; loosened/healing later; removed before scar state. No pristine bandage after S16.",
+    "scenes": [
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S11",
+      "PS-S14"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state. Match approved PS-GRM-ELDERPALM.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-WASHBOWL",
+    "category": "Prop",
+    "name": "Home washing bowl and water",
+    "parent": "",
+    "requirement": "Practical shallow pottery or wood bowl for hand/foot care, with separate food-use vessels.",
+    "state": "Clean water for dressing S3; household washing S4/11; blood wash S14; foot dust S19.",
+    "scenes": [
+      "PS-S03",
+      "PS-S04",
+      "PS-S11",
+      "PS-S14",
+      "PS-S19"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-REFLECTIONBOWL",
+    "category": "Prop",
+    "name": "Younger’s shallow reflection bowl",
+    "parent": "",
+    "requirement": "Shallow water bowl allowing imperfect natural reflection at courtyard.",
+    "state": "Water surface and angle consistent; no modern mirror.",
+    "scenes": [
+      "PS-S03"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-ESTATEDOC",
+    "category": "Prop",
+    "name": "Written estate division",
+    "parent": "",
+    "requirement": "Rolled papyrus document with era-appropriate writing. Exact transfer mechanics are adaptation. Show both shares without inventing a valuation or a modern ledger.",
+    "state": "Both sons’ shares indicated. Text composited/researched if legible; no modern ledger or invented numerical valuation.",
+    "scenes": [
+      "PS-S06"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-WRITING",
+    "category": "Prop kit",
+    "name": "Inkwell, reed pen and document ties",
+    "parent": "",
+    "requirement": "Small pottery inkwell, reed pen and practical ties, informed by dated Judean evidence.",
+    "state": "Dry end of division table. No metal-nib fountain pen or bound modern account book.",
+    "scenes": [
+      "PS-S06"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-BALANCE",
+    "category": "Prop",
+    "name": "Shallow silver balance",
+    "parent": "",
+    "requirement": "Period-plausible small balance with matched pans and plausible weights.",
+    "state": "Level settling balance above plain coin cloth.",
+    "scenes": [
+      "PS-S06"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-COINS",
+    "category": "Prop",
+    "name": "Silver and copper money",
+    "parent": "",
+    "requirement": "Plausible locally circulating silver and small copper coins; avoid an exact inheritance sum or modern stamped currency.",
+    "state": "Bundles S6; generous silver S8–10; two small coins S12; Damon’s few copper pieces S13.",
+    "scenes": [
+      "PS-S06",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-COINCLOTH",
+    "category": "Prop",
+    "name": "Coin-counting cloth and bundles",
+    "parent": "",
+    "requirement": "Plain textile cloth with tied silver bundles, distinct from bread cloth.",
+    "state": "Ordered division S6; diminishing coin piles and two final small coins S12.",
+    "scenes": [
+      "PS-S06",
+      "PS-S12"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-MONEYPOUCH",
+    "category": "Prop",
+    "name": "Younger’s money pouch",
+    "parent": "",
+    "requirement": "Leather pouch carried concealed under departure mantle then displayed on tavern table.",
+    "state": "Full/heavy S6–9; diminished S10–12; empty after S12. S15 searches bedding, not a newly full pouch.",
+    "scenes": [
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S15"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-BEDDING",
+    "category": "Prop",
+    "name": "Younger’s bedding and clothing bundle",
+    "parent": "",
+    "requirement": "Rolled cloth bedding and tied travel clothes, transportable on donkey and by younger.",
+    "state": "Prepared S6, carried by donkey S7, taken at eviction S12–13, searched S15, roadside S18, retained on arrival S19. S18 pickup is not scripted; resolve retrieval/stow at frame planning before showing the bundle at the house.",
+    "scenes": [
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13",
+      "PS-S15",
+      "PS-S17",
+      "PS-S18",
+      "PS-S19"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-BREADCLOTH",
+    "category": "Prop",
+    "name": "Hannah’s bread wrapping cloth",
+    "parent": "",
+    "requirement": "Distinct modest cloth used around departure bread, recognizable when empty later.",
+    "state": "Bread-filled S7; empty scrap discovered S15, folded inside bundle; checked and replaced S17; kept with belongings home.",
+    "scenes": [
+      "PS-S07",
+      "PS-S15",
+      "PS-S17",
+      "PS-S18",
+      "PS-S19"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-PACKTACK",
+    "category": "Prop kit",
+    "name": "Donkey pack saddles and tied baggage",
+    "parent": "PS-ANM-PACKDONKEY",
+    "requirement": "Simple pack saddle, woven pads, cord ties and trade bundles proportionate to donkey.",
+    "state": "Trade goods arrive S2–3; younger’s bedding loaded S7. No modern buckles/luggage.",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S07",
+      "PS-S08"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state. Match approved PS-ANM-PACKDONKEY.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-RING",
+    "category": "Prop",
+    "name": "Restoration ring",
+    "parent": "",
+    "requirement": "Plain period-plausible ring scaled to younger’s hand. No unresearched crest, legal authority claim or modern stone setting.",
+    "state": "Placed on right hand S19; same hand/finger orientation in all later views. Final finger to be fixed at asset approval.",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-ELDERBOWL",
+    "category": "Prop",
+    "name": "Elder’s food bowl",
+    "parent": "",
+    "requirement": "Simple durable food bowl distinguishable from washing bowl.",
+    "state": "Filled wall meals S11/S16; elder brings same S16 bowl back empty S20; sets it beside threshold; remains S21.",
+    "scenes": [
+      "PS-S11",
+      "PS-S16",
+      "PS-S20",
+      "PS-S21"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-SERVINGBOWL",
+    "category": "Prop",
+    "name": "Fuller bowl for hired workers",
+    "parent": "",
+    "requirement": "Practical shared serving bowl carried from family meal to workers.",
+    "state": "S4 full; S15 memory uses same S4 bowl/action. Routine meal S11 consistent.",
+    "scenes": [
+      "PS-S04",
+      "PS-S11",
+      "PS-S15"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-MARKETSCALE",
+    "category": "Prop",
+    "name": "Bread seller’s scale and flour measure",
+    "parent": "",
+    "requirement": "Practical small food balance and dry flour measure; materials match market stalls.",
+    "state": "Bread weighing S9; careful flour leveling/portioning S13.",
+    "scenes": [
+      "PS-S09",
+      "PS-S13"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-CLOTHDISPLAY",
+    "category": "Prop / dressing",
+    "name": "Cloth seller’s bolts and display",
+    "parent": "",
+    "requirement": "Textile bolts/lengths on timber stall, including selectable blue-bordered mantle and trader surface for russet sale.",
+    "state": "Abundant S9; russet unfolded S12. No printed modern fabric or retail tags.",
+    "scenes": [
+      "PS-S09",
+      "PS-S12"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-TAVERNWARE",
+    "category": "Prop kit",
+    "name": "Foreign banquet dishes, cups and jug",
+    "parent": "",
+    "requirement": "Ordinary ceramic tableware with serving dishes and wine jug.",
+    "state": "Filled welcome S9; wine spill, barely eaten dishes and last wine S10; blocked bread dish S12.",
+    "scenes": [
+      "PS-S09",
+      "PS-S10",
+      "PS-S12"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-PIPEDRUMFOREIGN",
+    "category": "Prop kit",
+    "name": "Foreign pipe and hand drum",
+    "parent": "",
+    "requirement": "Small period-plausible pipe and hand drum; exact construction awaits historical visual-development check.",
+    "state": "Musicians hold and play naturally; no modern instrument fittings.",
+    "scenes": [
+      "PS-S10"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-PIPEDRUMHOME",
+    "category": "Prop kit",
+    "name": "Home feast pipe and hand drum",
+    "parent": "",
+    "requirement": "Small local pipe and hand drum, historically plausible and clearly distinct from modern orchestral instruments.",
+    "state": "Stable positions during continuous evening; same instruments across scenes.",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-MERCHANTJAR",
+    "category": "Prop",
+    "name": "Heavy jar carried for merchant",
+    "parent": "",
+    "requirement": "Heavy practical storage jar that younger can barely carry, separate from home water jar.",
+    "state": "Merchant receives it and shuts door without paying.",
+    "scenes": [
+      "PS-S13"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-SLEDGE",
+    "category": "Prop",
+    "name": "Family’s hand-dragged sledge",
+    "parent": "",
+    "requirement": "Simple wooden drag sledge with modest household bundles.",
+    "state": "Last belongings loaded; no wheeled modern cart.",
+    "scenes": [
+      "PS-S13"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-CISTERNROPE",
+    "category": "Prop kit",
+    "name": "Cistern rope and raised water jar",
+    "parent": "",
+    "requirement": "Plant-fiber rope and robust water vessel with credible attachment.",
+    "state": "Load opens left palm; father takes rope and steadies jar before washing hand.",
+    "scenes": [
+      "PS-S14"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-PIGFEEDBASKET",
+    "category": "Prop",
+    "name": "Foreign farm feed basket",
+    "parent": "",
+    "requirement": "Large practical feed basket distinguishable from home’s repaired basket.",
+    "state": "Carries dry pods, empties into trough, left at gate at departure.",
+    "scenes": [
+      "PS-S15"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-TROUGH",
+    "category": "Prop / dressing",
+    "name": "Pig trough and rails",
+    "parent": "PS-LOC-PIGFARM",
+    "requirement": "Rough timber/stone feeding trough and rails enabling realistic domestic pigs to feed.",
+    "state": "Damp refuse and pods at feed surface; pod accessible before pig takes it.",
+    "scenes": [
+      "PS-S15"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state. Match approved PS-LOC-PIGFARM.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-RESTORATIONSTOOL",
+    "category": "Prop",
+    "name": "Low restoration stool",
+    "parent": "",
+    "requirement": "Plain low wooden stool suitable for seated foot washing and robe dressing.",
+    "state": "Placed in courtyard care area; no ceremonial throne.",
+    "scenes": [
+      "PS-S19"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-TWOCUPS",
+    "category": "Prop",
+    "name": "Two cups younger carries",
+    "parent": "",
+    "requirement": "Two ordinary household cups recognizable in hand-to-table action.",
+    "state": "Given instead of heavy jar S19; both deposited carefully and remain in table arrangement.",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-SET-HOMEVESSELS",
+    "category": "Set dressing",
+    "name": "Home jars, cups and storage vessels",
+    "parent": "",
+    "requirement": "Ceramic storage/cooking vessels with restrained limestone cups, baskets and practical lids. Dated early Roman Judean forms.",
+    "state": "Grain jars under awning, water at kitchen; emptied vessels sorted S18; coherent re-use at feast.",
+    "scenes": [
+      "PS-S03",
+      "PS-S04",
+      "PS-S06",
+      "PS-S11",
+      "PS-S14",
+      "PS-S18",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Overall grouped dressing reference, material/construction details and installed placement in canonical location.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-SET-HOMETABLE",
+    "category": "Set dressing",
+    "name": "Home low table and seating",
+    "parent": "",
+    "requirement": "Low wooden family/work tables, stools and benches suited to modest rural rooms/courtyard.",
+    "state": "S4 family layout, S5 abandoned supper, S15 exact memory; feast arrangement keeps elder’s empty place and sightline.",
+    "scenes": [
+      "PS-S04",
+      "PS-S05",
+      "PS-S11",
+      "PS-S15",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Overall grouped dressing reference, material/construction details and installed placement in canonical location.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-SET-HOMELAMPS",
+    "category": "Set dressing",
+    "name": "Home oil lamps and oil",
+    "parent": "",
+    "requirement": "Herodian-type terracotta oil lamps with localized practical flame. No glass hurricane lamps or medieval candles as primary source.",
+    "state": "S4 lit; S5 one extinguished and one forgotten; S19 filled at dusk; stable night light positions.",
+    "scenes": [
+      "PS-S04",
+      "PS-S05",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Overall grouped dressing reference, material/construction details and installed placement in canonical location.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-SET-COOKING",
+    "category": "Set dressing",
+    "name": "Household cooking hearth and equipment",
+    "parent": "",
+    "requirement": "Working cooking area, clay pots, utensils, fuel and fire surface.",
+    "state": "Routine food before departure; S19 fire settles to cooking heat for calf meal.",
+    "scenes": [
+      "PS-S03",
+      "PS-S04",
+      "PS-S19"
+    ],
+    "reference": "Overall grouped dressing reference, material/construction details and installed placement in canonical location.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-SET-HOMEAWNING",
+    "category": "Set dressing",
+    "name": "Home awning and textile coverings",
+    "parent": "PS-LOC-COURTYARD",
+    "requirement": "Practical shade cloth, jar/meal coverings, repaired cordage and storage textiles.",
+    "state": "Consistent placement; workers’ meal covering lifted S11.",
+    "scenes": [
+      "PS-S03",
+      "PS-S06",
+      "PS-S11",
+      "PS-S14",
+      "PS-S19"
+    ],
+    "reference": "Overall grouped dressing reference, material/construction details and installed placement in canonical location. Match approved PS-LOC-COURTYARD.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-SET-TOWNSTOCK",
+    "category": "Set dressing",
+    "name": "Market sacks, awnings and stalls",
+    "parent": "PS-LOC-MARKET",
+    "requirement": "Timber stalls, textile awnings, pottery and grain sacks with believable handwritten-free trade display.",
+    "state": "S9 full trade; S13 empty gaps beneath same awnings and closed grain store.",
+    "scenes": [
+      "PS-S09",
+      "PS-S12",
+      "PS-S13"
+    ],
+    "reference": "Overall grouped dressing reference, material/construction details and installed placement in canonical location. Match approved PS-LOC-MARKET.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-SET-ROOMPEG",
+    "category": "Set dressing",
+    "name": "Room garment peg",
+    "parent": "PS-LOC-RENTEDROOM",
+    "requirement": "Plain wall/wood peg at fixed position in mirrorless room.",
+    "state": "Russet mantle hangs S10 and removed from same peg S12.",
+    "scenes": [
+      "PS-S10",
+      "PS-S12"
+    ],
+    "reference": "Overall grouped dressing reference, material/construction details and installed placement in canonical location. Match approved PS-LOC-RENTEDROOM.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-SET-FEASTSEATING",
+    "category": "Set dressing",
+    "name": "Neighbors’ additional feast seating",
+    "parent": "PS-LOC-FEAST",
+    "requirement": "Assorted ordinary stools and benches carried in by neighbors, consistent scale and worn construction.",
+    "state": "Added during S19 prep; keep final arrangement and entrance passage clear.",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Overall grouped dressing reference, material/construction details and installed placement in canonical location. Match approved PS-LOC-FEAST.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-SET-FOREIGNMEAL",
+    "category": "Set dressing",
+    "name": "Foreign household meal dishes",
+    "parent": "PS-LOC-PIGFARM",
+    "requirement": "A few bowls and food vessels beyond pig enclosure boundary.",
+    "state": "Bowl passes person to person before door closes; do not turn meal into luxury feast.",
+    "scenes": [
+      "PS-S15"
+    ],
+    "reference": "Overall grouped dressing reference, material/construction details and installed placement in canonical location. Match approved PS-LOC-PIGFARM.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-FOD-HOMEBREAD",
+    "category": "Food",
+    "name": "Home bread",
+    "parent": "",
+    "requirement": "Plausible barley/wheat bread with natural crust and hand-torn portions; no modern sliced loaf.",
+    "state": "S1 shared piece; S4 father divides/crushes piece; S7 wrapped bread; S15 empty cloth and exact S4 memory; feast fresh bread.",
+    "scenes": [
+      "PS-S01",
+      "PS-S04",
+      "PS-S07",
+      "PS-S11",
+      "PS-S15",
+      "PS-S16",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Ingredient/portion reference, serving context and required fresh/depleted/cooked states; hero food detail.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-FOD-HOMEMEALS",
+    "category": "Food",
+    "name": "Lentils, olives and household meals",
+    "parent": "",
+    "requirement": "Bread, pulses, olives, water and modest wine as appropriate. Dried fruit only if used in approved set dressing.",
+    "state": "S4 supper stops untouched; S11 and S16 wall bowls; S15 original workers’ meal memory; S19 feast accompaniments.",
+    "scenes": [
+      "PS-S04",
+      "PS-S11",
+      "PS-S15",
+      "PS-S16",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Ingredient/portion reference, serving context and required fresh/depleted/cooked states; hero food detail.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-FOD-GRAIN",
+    "category": "Food / dressing",
+    "name": "Stored grain and spill",
+    "parent": "",
+    "requirement": "Barley/wheat grain in jars/baskets, matching stubble season.",
+    "state": "S14 small spill from loosened handle, gathered by elder. No maize kernels or cobs.",
+    "scenes": [
+      "PS-S03",
+      "PS-S06",
+      "PS-S14"
+    ],
+    "reference": "Ingredient/portion reference, serving context and required fresh/depleted/cooked states; hero food detail.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-FOD-TRAVEL",
+    "category": "Food",
+    "name": "Departure and roadside food portions",
+    "parent": "",
+    "requirement": "Modest wrapped provisions and small roadside food exchange.",
+    "state": "Departure adequate; mantle trades for little food early S17. Avoid invented full meal restoring health.",
+    "scenes": [
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S17"
+    ],
+    "reference": "Ingredient/portion reference, serving context and required fresh/depleted/cooked states; hero food detail.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-FOD-FOREIGNBANQUET",
+    "category": "Food",
+    "name": "Foreign meals and wine",
+    "parent": "",
+    "requirement": "Plausible regional bread, ordinary dishes and wine, with excessive quantity expressed by waste rather than anachronistic luxury foods.",
+    "state": "S10 barely eaten food, wine spill, last wine; S12 food held back until new payment.",
+    "scenes": [
+      "PS-S09",
+      "PS-S10",
+      "PS-S12"
+    ],
+    "reference": "Ingredient/portion reference, serving context and required fresh/depleted/cooked states; hero food detail.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-FOD-MARKETBREAD",
+    "category": "Food",
+    "name": "Market bread and flour portions",
+    "parent": "",
+    "requirement": "Small bread portions, reserved heel and measured flour, with recurring stall presentation.",
+    "state": "Plenty S9; yesterday’s loaf subdivided S13; Damon shares half; seller finally has none.",
+    "scenes": [
+      "PS-S09",
+      "PS-S13"
+    ],
+    "reference": "Ingredient/portion reference, serving context and required fresh/depleted/cooked states; hero food detail.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-FOD-PODS",
+    "category": "Food / prop",
+    "name": "Dry feed pods and dropped hero pod",
+    "parent": "",
+    "requirement": "Dry carob-like feed pods as plausible interpretation of Luke’s pods. Distinct hero pod with damp refuse surface.",
+    "state": "Basket to trough; younger rubs one pod, raises it, drops it; pig takes it. He does not visibly eat it.",
+    "scenes": [
+      "PS-S15"
+    ],
+    "reference": "Ingredient/portion reference, serving context and required fresh/depleted/cooked states; hero food detail.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-FOD-CALFMEAT",
+    "category": "Food",
+    "name": "Cooked calf feast portions",
+    "parent": "PS-ANM-CALF",
+    "requirement": "Jointed calf portions cooking and served at feast, with ordinary preparation equipment. No whole-animal roast or instant finished feast.",
+    "state": "Animal led out first; slaughter offscreen; allow compressed preparation time before cooked food appears. No live calf during feast.",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "reference": "Ingredient/portion reference, serving context and required fresh/depleted/cooked states; hero food detail. Match approved PS-ANM-CALF.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-INS-SUPPERMEMORY",
+    "category": "Insert",
+    "name": "Silent supper memory from S4",
+    "parent": "PS-LOC-SUPPER",
+    "requirement": "Reuse approved S4 action/reference: father’s hand divides bread and Hannah carries fuller bowl to workers.",
+    "state": "Match original actors, clothes, dishes and lighting. No new idealized memory set.",
+    "scenes": [
+      "PS-S15"
+    ],
+    "reference": "Reuse approved PS-S04 references: PS-CHR-FATHER, PS-WAR-FATHER, PS-CHR-HANNAH, PS-PRP-SERVINGBOWL, PS-FOD-HOMEBREAD, PS-LOC-SUPPER.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-INS-BASKETMEMORY",
+    "category": "Insert",
+    "name": "Silent basket memory from S2",
+    "parent": "PS-LOC-TERRACE",
+    "requirement": "Reuse approved S2 action/reference: elder sets down sound basket for Levi.",
+    "state": "Exact S2 wardrobe and wall state; no scar from later S16 inserted into memory.",
+    "scenes": [
+      "PS-S15"
+    ],
+    "reference": "Reuse approved PS-S02 references: PS-CHR-ELDER, PS-WAR-ELDER, PS-CHR-LEVI, PS-PRP-BASKETSOUND, PS-LOC-TERRACE.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-GFX-TITLE",
+    "category": "Graphic",
+    "name": "Film title typography",
+    "parent": "",
+    "requirement": "Readable composited title: THE PRODIGAL SON. Typeface and placement require later graphic approval.",
+    "state": "Appears over journey landscape and clears before town scene. Never generated as text inside scenery.",
+    "scenes": [
+      "PS-S08"
+    ],
+    "reference": "Editable typography master, transparent title layer or black credit master, and readable timing proof; no generated lettering.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-GFX-CREDITS",
+    "category": "Graphic",
+    "name": "End credits over black",
+    "parent": "",
+    "requirement": "Readable composited credits on black with accurate final cast/crew fields supplied at finishing.",
+    "state": "30 seconds allocated. Credit names and typography pending; no invented production credits.",
+    "scenes": [
+      "PS-S23"
+    ],
+    "reference": "Editable typography master, transparent title layer or black credit master, and readable timing proof; no generated lettering.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-EXT-PASSTRAVELER",
+    "category": "Featured extra",
+    "name": "Traveler passing home entrance",
+    "parent": "",
+    "requirement": "Ordinary passing traveler seen from terrace; distinguish from younger and avoid an accidental false homecoming identity.",
+    "state": "Continues without entering farm.",
+    "scenes": [
+      "PS-S11"
+    ],
+    "reference": "Face front, three-quarter and profile; full body front/back; stable identity details.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-HOMEWATERJAR",
+    "category": "Prop",
+    "name": "Home water jar younger tries to lift",
+    "parent": "",
+    "requirement": "Full practical water jar with plausible weight, distinguishable from two lightweight cups and from foreign merchant’s jar.",
+    "state": "Younger cannot lift steadily; Hannah redirects him to cups.",
+    "scenes": [
+      "PS-S19"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-LOC-RETURNSHELTER",
+    "category": "Location",
+    "name": "Return-road barter shelter",
+    "parent": "PS-LOC-JOURNEY",
+    "requirement": "Simple roadside shelter with a place to exchange worn garment for little food. Same dry regional route as return; no invented inn.",
+    "state": "Earlier-return-journey insert within S17. Blue mantle appears only during exchange, then is absent.",
+    "scenes": [
+      "PS-S17"
+    ],
+    "reference": "Establishing reference, reverse direction and simple spatial layout; each required dressing/daylight state. Match approved PS-LOC-JOURNEY.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  },
+  {
+    "id": "PS-PRP-DAMAGEDBASKETS",
+    "category": "Prop kit",
+    "name": "Other damaged baskets being sorted",
+    "parent": "",
+    "requirement": "Small assortment of repairable work baskets distinct from both sound basket and younger’s hero handle repair.",
+    "state": "Elder takes over younger’s abandoned sorting work.",
+    "scenes": [
+      "PS-S06"
+    ],
+    "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
+  }
+]

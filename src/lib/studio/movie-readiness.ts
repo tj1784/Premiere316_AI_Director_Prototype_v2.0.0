@@ -19,6 +19,10 @@ export function movieReadiness(picture: Picture): ReadinessItem[] {
   const audio = hydrateAudioWorkspace(picture.audio);
   const researchOk = isResearchApproved(picture.research);
   const screenplayOk = picture.screenplay.status === "APPROVED" || Boolean(picture.screenplayFountain.trim());
+  const visualContentPresent = [picture.visualDevelopment?.boards, picture.visualDevelopment?.characterBibles, picture.visualDevelopment?.wardrobeStates, picture.visualDevelopment?.locationBibles, picture.visualDevelopment?.propBibles].some((items) => Boolean(items?.length));
+  const cinematographyContentPresent = [picture.cinematography?.manifestoVersions, picture.cinematography?.sequenceArcs, picture.cinematography?.shotPlans].some((items) => Boolean(items?.length));
+  const performanceContentPresent = Boolean(picture.performance?.beats.length || picture.performance?.shots.length)
+    || Object.values(picture.performance?.performance ?? {}).some((directions) => Object.keys(directions).length > 0);
   const hasCanonicalVideo = video.takes.some((take) => take.canonical && take.origin === "imported");
   const hasFailClosedVideo = video.takes.some((take) => take.origin === "fail-closed" || take.status === "FAILED");
   const hasCanonicalAudio = audio.takes.some((take) => take.canonical && take.origin === "imported");
@@ -27,9 +31,9 @@ export function movieReadiness(picture: Picture): ReadinessItem[] {
     { id: "research", stage: "research", label: "Research", status: researchOk ? "ready" : "blocked", reason: researchOk ? "Research approved." : "Research bible is not approved.", nextAction: "Open Research and approve." },
     { id: "screenplay", stage: "screenplay", label: "Screenplay", status: screenplayOk ? "ready" : "blocked", reason: screenplayOk ? "Screenplay present." : "No approved or drafted screenplay.", nextAction: "Open Screenplay." },
     { id: "inventory", stage: "inventory", label: "Inventory", status: picture.characters.length ? "ready" : "blocked", reason: picture.characters.length ? `${picture.characters.length} characters.` : "No characters.", nextAction: "Open Inventory." },
-    { id: "visual-development", stage: "visual-development", label: "Visual Development", status: picture.visualDevelopment ? "ready" : "placeholder", reason: picture.visualDevelopment ? "Boards present." : "Visual development not started.", nextAction: "Open Visual Dev." },
-    { id: "cinematography", stage: "cinematography", label: "Cinematography", status: picture.cinematography ? "ready" : "placeholder", reason: picture.cinematography ? "Cinematography present." : "Cinematography not started.", nextAction: "Open Cinematography." },
-    { id: "performance", stage: "performance", label: "Performance", status: picture.performance ? "ready" : "placeholder", reason: picture.performance ? "Performance specs present." : "Performance not started.", nextAction: "Open Performance." },
+    { id: "visual-development", stage: "visual-development", label: "Visual Development", status: visualContentPresent ? "ready" : "placeholder", reason: visualContentPresent ? "Visual development content present." : "Visual development not started.", nextAction: "Open Visual Dev." },
+    { id: "cinematography", stage: "cinematography", label: "Cinematography", status: cinematographyContentPresent ? "ready" : "placeholder", reason: cinematographyContentPresent ? "Cinematography content present." : "Cinematography not started.", nextAction: "Open Cinematography." },
+    { id: "performance", stage: "performance", label: "Performance", status: performanceContentPresent ? "ready" : "placeholder", reason: performanceContentPresent ? "Performance specs present." : "Performance not started.", nextAction: "Open Performance." },
     { id: "shots", stage: "shots", label: "Shots", status: picture.shots.length ? "ready" : "blocked", reason: picture.shots.length ? `${picture.shots.length} shots.` : "No shots.", nextAction: "Open Shots." },
     { id: "prompts", stage: "prompts", label: "Prompts", status: picture.shots.some((shot) => shot.t2iPrompt) ? "ready" : "placeholder", reason: "Prompt compiler can draft still/motion packages.", nextAction: "Open Prompt Lab and compile drafts." },
     { id: "images", stage: "generate", label: "Images", status: picture.production?.assets?.some((asset) => Boolean(asset.approvedIterationId)) ? "ready" : "placeholder", reason: "Canonical stills require the native FLUX path.", nextAction: "Open Generate." },

@@ -1,0 +1,464 @@
+[
+  {
+    "id": "PS-CONT-01",
+    "asset": "PS-CHR-YOUNGER",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13",
+      "PS-S15",
+      "PS-S17",
+      "PS-S18",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "state": "Same twenty-two-year-old man; healthy through early abroad, increasingly wasted through famine.",
+    "transition": "S19 changes clothing and washes feet only; thin neck, weakness and restlessness remain.",
+    "constant": "Face, brown hair identity, skeletal proportions, height and defining features."
+  },
+  {
+    "id": "PS-CONT-02",
+    "asset": "PS-CHR-ELDER",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S11",
+      "PS-S14",
+      "PS-S15",
+      "PS-S16",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "state": "Same composed brown-haired twenty-nine-year-old, with growing strain.",
+    "transition": "S15 memory returns to S2 physical/wardrobe state.",
+    "constant": "Identity, physique, left-hand wound side, work manner."
+  },
+  {
+    "id": "PS-CONT-03",
+    "asset": "PS-WAR-RUSSET",
+    "scenes": [
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12"
+    ],
+    "state": "Russet fine wool gift, worn then hung at lodging.",
+    "transition": "Removed from peg and sold S12; never returns with younger.",
+    "constant": "Same edge, weave, color and equal quality to olive mantle."
+  },
+  {
+    "id": "PS-CONT-04",
+    "asset": "PS-WAR-OLIVE",
+    "scenes": [
+      "PS-S03",
+      "PS-S11",
+      "PS-S16",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "state": "Olive mantle folded at gift, worn at S11 meal, delivered again S16 and held at homecoming.",
+    "transition": "S20 over arm; S21 pressed to mouth then held; S22 grip loosens.",
+    "constant": "Same mantle, color and quality throughout; no substitute robe."
+  },
+  {
+    "id": "PS-CONT-05",
+    "asset": "PS-WAR-BLUE",
+    "scenes": [
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13",
+      "PS-S15",
+      "PS-S17"
+    ],
+    "state": "Light purchased mantle with narrow blue border.",
+    "transition": "Selected S9; wine-stained S10; deteriorates; bread seller refuses S13; hangs at lean-to S15; exchanged for food early S17.",
+    "constant": "Never present after exchange or under best robe."
+  },
+  {
+    "id": "PS-CONT-06",
+    "asset": "PS-WAR-YOUNGERSANDAL",
+    "scenes": [
+      "PS-S02",
+      "PS-S07",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13",
+      "PS-S15",
+      "PS-S17",
+      "PS-S18",
+      "PS-S19"
+    ],
+    "state": "Original pair wears progressively.",
+    "transition": "S17 strap breaks/reties, sole tears, both discarded. Barefoot to S19, then new pair.",
+    "constant": "No old sandal reappears with retained bundle."
+  },
+  {
+    "id": "PS-CONT-07",
+    "asset": "PS-WAR-BESTROBE / PS-PRP-RING / PS-WAR-NEWSANDALS",
+    "scenes": [
+      "PS-S18",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "state": "Requested at end S18; applied S19; retained in feast.",
+    "transition": "New best robe over old dirty tunic. Plain ring on right hand. Feet washed then new sandals.",
+    "constant": "No transformation into healthy groomed younger; no second inheritance imagery."
+  },
+  {
+    "id": "PS-CONT-08",
+    "asset": "PS-GRM-ELDERPALM",
+    "scenes": [
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S11",
+      "PS-S14",
+      "PS-S16",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "state": "Split left palm receives cloth dressing; healing by S11.",
+    "transition": "Cistern strain reopens S14; scar by S16 and pressed by thumb S20.",
+    "constant": "Exact side/location/orientation; no fresh bleeding at feast."
+  },
+  {
+    "id": "PS-CONT-09",
+    "asset": "PS-WAR-ELDER",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S11",
+      "PS-S14",
+      "PS-S15",
+      "PS-S16",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "state": "Ordinary work tunic and sandals.",
+    "transition": "S14 hides blood against tunic. S16 permanent pale cuff mend. S15 memory uses earlier costume state.",
+    "constant": "Stable hem, sleeves, belt and working wear."
+  },
+  {
+    "id": "PS-CONT-10",
+    "asset": "PS-PRP-WATERSKIN",
+    "scenes": [
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13",
+      "PS-S15",
+      "PS-S17",
+      "PS-S18",
+      "PS-S19"
+    ],
+    "state": "Neatly repaired seam underneath.",
+    "transition": "S10 wine spill; retrieved under bench; carried through famine and return, kept with arrival belongings.",
+    "constant": "Same seam, stain and strap; repair holds; no sale/discard."
+  },
+  {
+    "id": "PS-CONT-11",
+    "asset": "PS-PRP-BASKETMENDED",
+    "scenes": [
+      "PS-S02",
+      "PS-S06",
+      "PS-S14",
+      "PS-S15"
+    ],
+    "state": "Broken handle repaired quickly by younger S2.",
+    "transition": "S14 same knot loosens; elder gathers spilled grain and remends. S15 S2 memory predates failure.",
+    "constant": "Same basket dimensions, handle break and cord material."
+  },
+  {
+    "id": "PS-CONT-12",
+    "asset": "PS-PRP-BREADCLOTH",
+    "scenes": [
+      "PS-S07",
+      "PS-S15",
+      "PS-S17",
+      "PS-S18",
+      "PS-S19"
+    ],
+    "state": "Hannah’s modest bread wrapping cloth.",
+    "transition": "Bread-filled departure; empty scrap found S15, folded into bundle; checked/repacked S17; retained on arrival.",
+    "constant": "Same textile pattern/weave and fold damage; no food magically returns."
+  },
+  {
+    "id": "PS-CONT-13",
+    "asset": "PS-PRP-BEDDING / PS-PRP-MONEYPOUCH",
+    "scenes": [
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13",
+      "PS-S15",
+      "PS-S17",
+      "PS-S18",
+      "PS-S19"
+    ],
+    "state": "Travel bedding/clothes bundle and pouch start adequately supplied.",
+    "transition": "Pouch empty after last coins; bedding survives lodging eviction, stair eviction, pig lean-to and return. Bundle set down S18.",
+    "constant": "No invented forgotten silver found S15; no new luggage."
+  },
+  {
+    "id": "PS-CONT-14",
+    "asset": "PS-PRP-COINS / PS-PRP-ESTATEDOC",
+    "scenes": [
+      "PS-S06",
+      "PS-S08",
+      "PS-S09",
+      "PS-S10",
+      "PS-S12",
+      "PS-S13"
+    ],
+    "state": "Visible division between both sons; money values unspecified.",
+    "transition": "Bundles → excess payments → two small coins → no spendable money. Damon’s copper S13 belongs to Damon.",
+    "constant": "No second inheritance at restoration; no modern currency or invented numerical wealth."
+  },
+  {
+    "id": "PS-CONT-15",
+    "asset": "PS-LOC-TERRACE / PS-PRP-FIELDSTONES",
+    "scenes": [
+      "PS-S02",
+      "PS-S06",
+      "PS-S11",
+      "PS-S15",
+      "PS-S16",
+      "PS-S19",
+      "PS-S20"
+    ],
+    "state": "One retaining-wall repair, with meaningful visible progress.",
+    "transition": "S2 long slump; S6 work in progress; S11 completed seating section; S16 only short upper run remains. S15 exact S2 memory.",
+    "constant": "Same geology, ground, line and route to house; never reset to collapsed wall late."
+  },
+  {
+    "id": "PS-CONT-16",
+    "asset": "PS-LOC-HOMESTEAD",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S04",
+      "PS-S05",
+      "PS-S06",
+      "PS-S07",
+      "PS-S11",
+      "PS-S14",
+      "PS-S16",
+      "PS-S17",
+      "PS-S18",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "state": "Road visible from entrance, upper terrace above courtyard, connected cistern/store/pen.",
+    "transition": "Day/night and working/feast dressing change without moving architecture.",
+    "constant": "Doorpost, threshold, courtyard access, field path and table sightline."
+  },
+  {
+    "id": "PS-CONT-17",
+    "asset": "PS-LOC-JOURNEY",
+    "scenes": [
+      "PS-S08",
+      "PS-S17"
+    ],
+    "state": "Identical exposed ridge, ravine and road fork.",
+    "transition": "Outward chooses broader road; return selects narrow home road.",
+    "constant": "Geography, travel direction and distant town/home relationships."
+  },
+  {
+    "id": "PS-CONT-18",
+    "asset": "PS-LOC-MARKET / PS-LOC-FAMINE",
+    "scenes": [
+      "PS-S09",
+      "PS-S12",
+      "PS-S13"
+    ],
+    "state": "One recognizable foreign market.",
+    "transition": "Stocks deplete, portions shrink, grain store remains shut; architecture survives.",
+    "constant": "Same awnings, bread stall and colonnade; no modern or later monumental city."
+  },
+  {
+    "id": "PS-CONT-19",
+    "asset": "PS-ANM-PACKDONKEY / PS-EXT-CARRIERS",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S07",
+      "PS-S08"
+    ],
+    "state": "Same two carriers and pack donkey.",
+    "transition": "Incoming trade bundles replaced/added with younger’s bedding at departure; separate at fork.",
+    "constant": "Faces, coat marking, pack tack and number of carriers."
+  },
+  {
+    "id": "PS-CONT-20",
+    "asset": "PS-ANM-PIGS / PS-FOD-PODS",
+    "scenes": [
+      "PS-S15"
+    ],
+    "state": "Pigs confined to foreign employer’s enclosure.",
+    "transition": "Pod lifted toward mouth, dropped, taken by pig; basket left at gate at departure.",
+    "constant": "No pigs on home farm; younger does not visibly consume pod."
+  },
+  {
+    "id": "PS-CONT-21",
+    "asset": "PS-ANM-CALF / PS-FOD-CALFMEAT",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "state": "Calf alive in pen at beginning of prep; cooked meat at feast.",
+    "transition": "Led out; slaughter offscreen; time compressed through cooking work before meal.",
+    "constant": "No live calf in continuing feast backgrounds; no instantaneous raw-to-plated cut implying zero time."
+  },
+  {
+    "id": "PS-CONT-22",
+    "asset": "PS-PRP-ELDERBOWL",
+    "scenes": [
+      "PS-S16",
+      "PS-S20",
+      "PS-S21"
+    ],
+    "state": "Father brings food bowl to wall; elder finishes meal.",
+    "transition": "Same bowl carried empty down path, set beside threshold S20 and seen S21.",
+    "constant": "Object shape/finish, empty state, position beside threshold."
+  },
+  {
+    "id": "PS-CONT-23",
+    "asset": "PS-GRM-FATHERDUST / PS-WAR-FATHER",
+    "scenes": [
+      "PS-S18",
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "state": "Father kneels in road dust with younger and carries transferred dirt.",
+    "transition": "Younger’s attempted brushing stops; same dusty clothes at restoration and personal appeal to elder.",
+    "constant": "Dust locations and intensity, mantle and sleeves."
+  },
+  {
+    "id": "PS-CONT-24",
+    "asset": "PS-LOC-FEAST / PS-SET-HOMELAMPS",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "state": "Preparation begins mid-afternoon; several hours compressed before dusk feast. Lamps filled at dusk; local music/dance continues into night.",
+    "transition": "Elder’s place remains empty; father leaves table and crosses courtyard to him.",
+    "constant": "Table seats, musician positions, doorway visibility, lamp positions and cooking chronology."
+  },
+  {
+    "id": "PS-CONT-25",
+    "asset": "PS-INS-SUPPERMEMORY / PS-INS-BASKETMEMORY",
+    "scenes": [
+      "PS-S02",
+      "PS-S04",
+      "PS-S15"
+    ],
+    "state": "Ordinary silent memory fragments only.",
+    "transition": "Reuse S2/S4 actors, actions, costumes, props and light.",
+    "constant": "No new house, new child actors, voiceover, golden idealization or later wound/scar state."
+  },
+  {
+    "id": "PS-CONT-26",
+    "asset": "PS-LOC-ENTRANCE",
+    "scenes": [
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "state": "Elder outside, father beside him; younger visible inside.",
+    "transition": "Younger starts to rise, elder’s grip loosens; cut before any crossing or verbal decision.",
+    "constant": "Doorway stays clear; no ending asset depicting elder inside celebration."
+  },
+  {
+    "id": "PS-CONT-27",
+    "asset": "Season / food continuity",
+    "scenes": [
+      "PS-S02",
+      "PS-S03",
+      "PS-S06",
+      "PS-S07",
+      "PS-S08",
+      "PS-S11",
+      "PS-S13",
+      "PS-S14",
+      "PS-S16",
+      "PS-S17",
+      "PS-S19"
+    ],
+    "state": "Late-spring stubble at opening, weeks of growing dryness and regional famine abroad.",
+    "transition": "Do not show different fruit harvests ripening in one week; home remains functioning while foreign region suffers famine.",
+    "constant": "No maize, tomatoes, potatoes, modern food packaging or incompatible seasonal abundance."
+  },
+  {
+    "id": "PS-CONT-28",
+    "asset": "PS-PRP-BEDDING / PS-PRP-BREADCLOTH",
+    "scenes": [
+      "PS-S18",
+      "PS-S19"
+    ],
+    "state": "Bundle set down beside reunion on road. Subsequent pickup is not explicitly scripted.",
+    "transition": "At frame planning, establish retrieval and stow before showing belongings back in courtyard.",
+    "constant": "Retain bread cloth and personal belongings; do not let bundle teleport between adjacent frames."
+  },
+  {
+    "id": "PS-CONT-29",
+    "asset": "PS-WAR-NEWSANDALS",
+    "scenes": [
+      "PS-S19",
+      "PS-S20",
+      "PS-S21",
+      "PS-S22"
+    ],
+    "state": "New pair rests beneath washed feet during S19 restoration.",
+    "transition": "At frame planning, establish sandals being put on before sustained standing/feast views.",
+    "constant": "New pair only; discarded original sandals never return."
+  }
+]

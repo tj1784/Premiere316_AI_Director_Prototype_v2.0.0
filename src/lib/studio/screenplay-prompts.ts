@@ -3,6 +3,7 @@ import { visualDirectionText } from "./visual-direction.ts";
 import { SOURCE_TYPE_LABELS, sourceTextForIntake, type PictureIntake, type ScreenplayWorkflow } from "./picture-intake.ts";
 import type { ResearchContent } from "../research/bible.ts";
 import { RESEARCH_CONFIDENCE_LEGEND } from "../research/confidence.ts";
+import { AUTHORING_WORKFLOW_CONTRACT, COMPLETE_SCREENPLAY_CONTRACT, packAuthoringIntake } from "./authoring-contract.ts";
 
 export type ScreenplayStep = {
   id: "draft" | `pass-${1 | 2 | 3 | 4 | 5 | 6 | 7}`;
@@ -85,7 +86,9 @@ function systemDirection(intake: PictureIntake): string {
     "You are movie-screenwriter, the principal screenwriter inside Premiere316, a professional local movie-production application.",
     "Return only Fountain-compatible screenplay text. Do not add markdown fences, commentary, a change log, or analysis.",
     "Write a filmable screenplay: visible behavior, playable action, disciplined scene headings, lean description, and character-specific dialogue.",
-    `Aim for the requested ${intake.targetRuntimeMinutes}-minute runtime while prioritizing a coherent complete draft within the output limit.`,
+    AUTHORING_WORKFLOW_CONTRACT,
+    COMPLETE_SCREENPLAY_CONTRACT,
+    `Plan and write the complete requested ${intake.targetRuntimeMinutes}-minute film. Do not shorten the story to accommodate a response limit.`,
     historical
       ? "Maintain an internal evidence distinction: A = explicit source/Scripture, B = strong historical or social evidence, C = reasonable reconstruction, D = disputed tradition or interpretation. Never present C or D as established fact."
       : "Preserve the supplied premise, constraints, and story logic.",
@@ -115,6 +118,7 @@ function packApprovedResearch(research: ResearchContent | null | undefined): str
   const camera = research.cinematographyManifesto;
   return [
     labeled("APPROVED RESEARCH BIBLE (immutable snapshot)", "Do not use later working research notes."),
+    labeled("Approved research findings", JSON.stringify(research.sections, null, 2)),
     labeled("Approved sources / locators / confidence", sources),
     labeled("Approved social-world cinematic expression", social),
     labeled("Approved cinematography research thesis", camera.thesis),
@@ -148,6 +152,7 @@ export function buildScreenplayPrompt(input: {
   const { intake, step, previousFountain } = input;
   const source = sourceTextForIntake(intake);
   const common = [
+    labeled("COMPLETE PICTURE INTAKE", packAuthoringIntake(intake, false)),
     `TITLE: ${intake.title.trim()}`,
     `SOURCE MODE: ${SOURCE_TYPE_LABELS[intake.sourceType]}`,
     labeled("Logline", intake.logline || intake.premise),
@@ -199,6 +204,7 @@ export function buildStoryDoctorUser(input: {
     labeled("Revision target", input.revisionTarget),
     labeled("Screenplay output to critique", input.fountain),
     "Do not receive or continue writer hidden reasoning. Critique only.",
+    "Audit source fidelity and character psychology separately from material culture, chronology, geography, wardrobe, prop and runtime continuity. Distinguish an actual source contradiction from permitted dramatic invention. Preserve intentional ambiguity and the director's emotional priorities. Identify the exact affected scene and a concrete correction; do not invent a defect to fill a quota.",
   ].filter(Boolean).join("\n\n");
 }
 

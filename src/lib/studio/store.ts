@@ -16,6 +16,7 @@ import { hydrateGenerateGates } from "../production/generate-gates.ts";
 import { hydrateProductFlow, type ProductTouchpoint } from "./product-flow.ts";
 import { hydrateVisualDevelopmentState } from "../visual-development.ts";
 import { hydrateCinematographyState } from "../cinematography.ts";
+import { mergeBundledPictures } from "./prodigal-son.ts";
 import {
   isAdvancedDepartmentId,
   lastDefaultTouchpointFor,
@@ -24,6 +25,7 @@ import {
 
 interface StudioState {
   pictures: Picture[];
+  installedBundledPictureIds: string[];
   activeId: string | null;
   stageOverride: StageId | null;
   selectedShotId: string | null;
@@ -106,7 +108,7 @@ function blankPicture(intake: PictureIntake): Picture {
 export const useStudio = create<StudioState>()(
   persist(
     (set, get) => ({
-      pictures: [makeSamplePicture()],
+      ...mergeBundledPictures([makeSamplePicture()]),
       activeId: null,
       stageOverride: null,
       selectedShotId: null,
@@ -256,6 +258,7 @@ export const useStudio = create<StudioState>()(
       name: "premiere316-v302-c",
       skipHydration: true,
       partialize: (s) => ({
+        installedBundledPictureIds: s.installedBundledPictureIds,
         pictures: s.pictures.map((p) => ({
           ...p,
           shots: p.shots.map((sh) => ({
@@ -276,7 +279,8 @@ export const useStudio = create<StudioState>()(
       }),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<StudioState>;
-        const pictures = (p.pictures ?? current.pictures).map((picture) => migratePicture(picture as LegacyPicture));
+        const bundled = mergeBundledPictures(p.pictures ?? current.pictures, p.installedBundledPictureIds ?? []);
+        const pictures = bundled.pictures.map((picture) => migratePicture(picture as LegacyPicture));
         const hasSample = pictures.some((x) => x.sample || x.id === SAMPLE_ID);
         const pics = hasSample ? pictures : [migratePicture(makeSamplePicture()), ...pictures];
         const liveId = current.activeId;
@@ -288,6 +292,7 @@ export const useStudio = create<StudioState>()(
           uiMode: p.uiMode ?? "advanced",
           advancedSurface: p.advancedSurface ?? normalizeStage(current.stageOverride ?? p.stageOverride) ?? "dashboard",
           pictures: pics,
+          installedBundledPictureIds: bundled.installedBundledPictureIds,
           activeId: pickId(liveId) ?? pickId(persistedId),
           stageOverride: normalizeStage(current.stageOverride ?? p.stageOverride),
           residency: p.residency ?? current.residency,

@@ -16,6 +16,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { LocalWriterSelect } from "./local-writer-select";
 import { AssetReferenceUpload } from "../production/asset-reference-upload";
 import { hydrateProductFlow } from "@/lib/studio/product-flow";
+import { ImportedPackageResources } from "./imported-package-resources";
 
 const PHASE_LABELS: Record<AssetGenerationPhase, string> = {
   references: "Finding visual references",
@@ -109,7 +110,11 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
     if (!id) return null;
     const originalImages = new Set(assets.flatMap((asset) => asset.iterations.map((iteration) => iteration.id)));
     const originalReferences = new Set(assets.flatMap((asset) => asset.references.map((reference) => reference.id)));
-    const update = (message: string, phase?: AssetGenerationPhase) => assetGenerationRuns.update(picture.id, id, { message, ...(phase ? { phase } : {}) });
+    let latestMessage = message;
+    const update = (message: string, phase?: AssetGenerationPhase) => {
+      latestMessage = message;
+      assetGenerationRuns.update(picture.id, id, { message, ...(phase ? { phase } : {}) });
+    };
     const publish = (next: Picture) => {
       replaceActive(next);
       const currentAssets = next.production?.assets.filter(isVisualAsset) ?? [];
@@ -129,7 +134,7 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
         message: event.message || `${event.phase.replace(/([A-Z])/g, " $1")} · ${event.status}${event.reasoning && !event.text ? " · local model is reporting reasoning before its answer" : ""}`,
       }, true);
     };
-    const finish = (message: string) => assetGenerationRuns.finish(picture.id, id, "completed", message);
+    const finish = (message = latestMessage) => assetGenerationRuns.finish(picture.id, id, "completed", message);
     const fail = (error: unknown) => {
       const message = error instanceof Error ? error.message : String(error);
       assetGenerationRuns.finish(picture.id, id, "failed", message);
@@ -161,7 +166,7 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
         updatedAt: Date.now(),
       };
       run.publish(fresh);
-      const rebuilt = await executeMoviePlanOnServer(fresh, run.modelProgress, true);
+      const rebuilt = await executeMoviePlanOnServer(fresh, run.modelProgress, true, run.publish);
       run.publish(rebuilt.picture);
       const failure = rebuilt.flow.steps.find((step) => step.status === "failed");
       if (failure) throw new Error(failure.message);
@@ -172,7 +177,7 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
       run.publish(next);
       run.update(`All fresh prompts saved. Generating images with ${imageModelName}…`, "images");
       await generateAssetDrafts(next, run.publish, run.update, undefined, true);
-      run.finish("Fresh asset prompts and images generated. Review the new results below.");
+      run.finish();
     } catch (error) { run.fail(error); }
   };
   const generate = async (assetId?: string) => {
@@ -180,7 +185,7 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
     if (!run) return;
     try {
       await generateAssetDrafts(picture, run.publish, run.update, assetId, !assetId);
-      run.finish(assetId ? `${assets.find((asset) => asset.id === assetId)?.name ?? "Selected asset"} image generated. Review it below; other assets are unchanged.` : "Asset images generated. Review the images and prompts below.");
+      run.finish();
     } catch (error) { run.fail(error); }
   };
   const resumeRemaining = async () => {
@@ -195,7 +200,7 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
       run.publish(next);
       run.update("Prompts are ready. Generating remaining images from saved prompts…", "images");
       await generateAssetDrafts(next, run.publish, run.update, undefined, true);
-      run.finish("All current visual asset images generated. Review the images and prompts below.");
+      run.finish();
     } catch (error) { run.fail(error); }
   };
   const regenerateCharacterSheet = async (assetId: string) => {
@@ -209,11 +214,12 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
       run.publish(next);
       run.update(`Generating ${asset.name}'s ${description} with ${imageModelName}…`, "images");
       await generateAssetDrafts(next, run.publish, run.update, assetId);
-      run.finish(`${asset.name}'s ${description} is ready to review. Open the image to inspect it.`);
+      run.finish();
     } catch (error) { run.fail(error); }
   };
   return <section aria-label="Generated asset review" className="grid gap-4">
     <AssetRunSummary pictureId={picture.id} />
+    <ImportedPackageResources importedPackage={picture.importedPackage} />
     <details className="rounded-md bg-elevated p-3 text-sm"><summary>Global generation instructions · all pictures</summary>
       <label className="mt-3 grid gap-2">Instructions for every picture and local model
         <textarea aria-label="Global generation instructions" className="min-h-64 w-full rounded-md bg-inset p-3 text-fg" disabled={busy} value={globalInstructions} onChange={(event) => setGlobalProductionInstructions(event.target.value)} />

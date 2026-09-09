@@ -9,6 +9,7 @@ import { makePictureScreenplay } from "../src/lib/studio/screenplay.ts";
 import { makeVisualDevelopmentState, approveVisualRecord } from "../src/lib/visual-development.ts";
 import { makeCinematographyState, approveCinematographyPlan } from "../src/lib/cinematography.ts";
 import { sanitizeProductionBreakdown } from "../src/lib/production/persistence.ts";
+import { assetGenerationReferences } from "../src/lib/production/asset-canonical-reference.ts";
 
 // Exercise the actual browser orchestration with only the network/model boundary replaced.
 const bundle = await build({
@@ -179,4 +180,45 @@ test("internal visual and camera approvals preserve the model prompt's creative 
   assert.equal(p.cinematography.shotPlans[0].status, "APPROVED");
   assert.equal(p.visualDevelopment.boards[0].status, "APPROVED");
   assert.equal(assetPromptContext(p, asset).hash, before);
+});
+
+test("pending state parents do not stop root canon generation or pretend the state was generated", async () => {
+  const p = fixture();
+  const [parent, state] = p.production.assets;
+  p.production.dependencies.push({ fromType: 'asset', fromId: parent.id, toType: 'asset', toId: state.id });
+  addPrompts(p);
+  const h = harness(p); const messages = [];
+  await assert.rejects(generateAssetDrafts(p, h.publish, (message) => messages.push(message)), /Test stop at GPU boundary/);
+  assert.equal(h.events.filter((event) => event.startsWith('count:')).length, 1);
+  assert.ok(h.events.includes(`generate:prepared:${parent.id}`));
+  assert.ok(!h.events.includes(`generate:prepared:${state.id}`));
+  assert.ok(messages.some((message) => /1 dependent asset\(s\) remain pending/.test(message)));
+  const selected = harness(p); const selectedMessages = [];
+  const next = await generateAssetDrafts(p, selected.publish, (message) => selectedMessages.push(message), state.id);
+  assert.ok(!selected.events.some((event) => /^(count|generate|release):/.test(event)));
+  assert.equal(next.production.assets.find((asset) => asset.id === state.id).iterations.length, 0);
+  assert.match(selectedMessages.at(-1), /await canonical parent approval/);
+});
+
+test("dependent states seal the actual approved parent media and invalidate image reuse when that revision changes", async () => {
+  const p = fixture();
+  const [parent, state] = p.production.assets;
+  p.production.dependencies.push({ fromType: 'asset', fromId: parent.id, toType: 'asset', toId: state.id });
+  parent.approvedIterationId = 'parent-iteration-1';
+  parent.canonicalApproved = true;
+  parent.iterations.push({ id: parent.approvedIterationId, variantId: null, mediaUri: 'media://stills/parent-1.png', mediaSha256: 'a'.repeat(64), createdAt: 12, status: 'APPROVED', provenance: parent.provenance[0] });
+  addPrompts(p);
+  const h = harness(p);
+  await assert.rejects(generateAssetDrafts(p, h.publish, () => {}, state.id), /Test stop at GPU boundary/);
+  const sealed = h.proposal.assets.find((asset) => asset.id === state.id);
+  assert.equal(sealed.references[0].uri, 'media://stills/parent-1.png');
+  assert.match(sealed.references[0].provenance.evidenceNote, /parent-iteration-1/);
+  assert.ok(h.proposal.preparedAssets.find((item) => item.assetId === state.id).referenceIds.includes(`canonical-parent:${parent.id}`));
+  state.references = assetGenerationReferences(p.production, state);
+  state.iterations.push({ id: 'state-1', mediaUri: 'state.png', ...assetImageDimensions(state, 'flux2'), status: 'GENERATED', execution: { engineId: 'flux2', prompt: 'state prompt', references: [{ id: parent.iterations[0].mediaUri, fingerprint: 'a'.repeat(64) }] } });
+  assert.equal(hasCurrentImage(state, 'flux2', 'state prompt'), true);
+  parent.iterations[0] = { ...parent.iterations[0], id: 'parent-iteration-2', mediaUri: 'media://stills/parent-2.png', mediaSha256: 'b'.repeat(64) };
+  parent.approvedIterationId = 'parent-iteration-2';
+  state.references = assetGenerationReferences(p.production, state);
+  assert.equal(hasCurrentImage(state, 'flux2', 'state prompt'), false);
 });

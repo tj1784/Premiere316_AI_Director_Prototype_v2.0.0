@@ -127,6 +127,8 @@ export type CanonicalAssetSpec = {
   soundCharacter?: string;
   performanceNotes?: string;
   continuityLocks: string[];
+  /** Required review views or reference packages; these are specifications, not generated media. */
+  referenceRequirements?: string[];
   negativeRequirements: string[];
 };
 

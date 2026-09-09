@@ -47,6 +47,7 @@ import type { ScreenplayStep } from "@/lib/studio/screenplay-prompts";
 import type { ScreenplayJobSnapshot } from "@/lib/studio/screenplay-jobs.server";
 import { beginScreenplayJob, beginScreenplayQa, localLLMStatus, readScreenplayJob, releaseLocalScreenplayModel, stopScreenplayJob } from "@/lib/studio/screenplay-client";
 import { ScreenplayWorkspace } from "./screenplay-workspace";
+import { ImportedPackageResources } from "./imported-package-resources";
 import { ResearchWorkspace } from "@/components/research/research-workspace";
 import { hydratePictureResearch, isResearchApproved, researchBlocksScreenplay } from "@/lib/research/bible.ts";
 import { qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
@@ -176,7 +177,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
       const result = await executeMoviePlanOnServer({
         ...picture,
         productFlow: { ...flow, reviewInternalPhases: reviewInternal, reviewPhases },
-      }, (event) => setActivity((current) => [...current.filter((item) => item.phase !== event.phase), event]));
+      }, (event) => setActivity((current) => [...current.filter((item) => item.phase !== event.phase), event]), false, replaceActive);
       replaceActive(result.picture);
       const paused = pausedInternalPhase(result.flow);
       if (paused) {
@@ -187,7 +188,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
       } else if (result.flow.nextTouchpoint === "asset-approval") {
         await generateAssetDrafts(result.picture, replaceActive, setAssetActivity);
         setGenerateFocus("assets");
-        toast.success("Asset images generated. Review images, edit prompts, regenerate or approve.");
+        toast.success("Asset pass complete. Review available images and any pending states.");
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : CONFIGURED_MODEL_UNAVAILABLE);
@@ -200,6 +201,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
         <div>
           <Label htmlFor="movie-idea">What are we making?</Label>
           <Textarea id="movie-idea" className="mt-1.5 min-h-32 text-base" value={picture.intake.concept || picture.intake.premise || picture.intake.logline} onChange={(event) => patchIntake("concept", event.target.value)} placeholder="2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal…" />
+          <p className="mt-2 text-xs leading-relaxed text-muted">Research comes before writing. For a historical adaptation, include source text or links, or request web research and name the source and period.</p>
         </div>
         <LocalWriterSelect picture={picture} disabled={building} label="Intake local text model" />
         <VisualDirectionField value={picture.intake.visualDirection} onChange={value => patchIntake("visualDirection", value)} disabled={building} onBusy={setDirectionBusy} writerId={picture.screenplay.pinnedWriterServedId ?? undefined} />
@@ -255,6 +257,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
               <input type="checkbox" checked={flow.qaEnabled === true} disabled={building} onChange={(event) => patchActive({ productFlow: { ...flow, qaEnabled: event.target.checked } })} />
               <span>Run screenplay QA and corrections (slower)</span>
             </label>
+            <p className="text-xs text-muted">QA reviews source fidelity and character psychology, then material culture and continuity, before the inventory is built.</p>
             <div>
               <Label htmlFor="intake-source-mode">Source mode</Label>
               <select id="intake-source-mode" className="mt-1.5 h-11 w-full rounded-md bg-inset px-3 text-sm text-fg shadow-[var(--shadow-border)]" value={picture.intake.sourceType} onChange={(event) => {
@@ -275,6 +278,11 @@ function IntakeStage({ picture }: { picture: Picture }) {
             {picture.intake.sourceType === "existing-screenplay" ? <div><Label>Existing screenplay</Label><Textarea className="screenplay mt-1.5 min-h-[30rem]" value={picture.intake.existingScreenplay} onChange={(event) => patchIntake("existingScreenplay", event.target.value)} /></div> : null}
             {picture.intake.sourceType === "source-material" ? <div><Label>Source material</Label><Textarea className="mt-1.5 min-h-80" value={picture.intake.sourceMaterial} onChange={(event) => patchIntake("sourceMaterial", event.target.value)} /></div> : null}
             {picture.intake.sourceType === "biblical-historical" ? <><div><Label>Source passages / references</Label><Textarea className="mt-1.5" value={picture.intake.sourcePassages} onChange={(event) => patchIntake("sourcePassages", event.target.value)} /></div><div><Label>Supplied Scripture / source text</Label><Textarea className="mt-1.5 min-h-80" value={picture.intake.suppliedSourceText} onChange={(event) => patchIntake("suppliedSourceText", event.target.value)} /></div><div><Label>Fidelity requirements</Label><Textarea className="mt-1.5" value={picture.intake.fidelityRequirements} onChange={(event) => patchIntake("fidelityRequirements", event.target.value)} /></div></> : null}
+            {picture.intake.sourceType === "biblical-historical" ? <>
+              <Field label="Historical period" value={picture.intake.historicalPeriod} onChange={(value) => patchIntake("historicalPeriod", value)} />
+              <div><Label>Cultural and social world</Label><Textarea className="mt-1.5" value={picture.intake.culturalSocialWorld} onChange={(event) => patchIntake("culturalSocialWorld", event.target.value)} /></div>
+              <div><Label>Permitted dramatization</Label><Textarea className="mt-1.5" value={picture.intake.materialMayDramatize} onChange={(event) => patchIntake("materialMayDramatize", event.target.value)} /></div>
+            </> : null}
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Genre" value={picture.intake.genre} onChange={(value) => patchIntake("genre", value)} />
               <Field label="Runtime (min)" value={String(picture.intake.targetRuntimeMinutes)} onChange={(value) => patchIntake("targetRuntimeMinutes", Number(value) || 1)} type="number" />
@@ -333,7 +341,7 @@ function ResearchStage({ picture }: { picture: Picture }) {
         setBuilding(true);
         try {
           await scan();
-          const result = await executeResearchDraftOnServer(picture);
+          const result = await executeResearchDraftOnServer(picture, replaceActive);
           replaceActive(result.picture);
           if (!result.providerCalled) {
             toast.error(result.flow.steps.find((step) => step.status === "failed")?.message ?? CONFIGURED_MODEL_UNAVAILABLE);
@@ -453,7 +461,9 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
   };
 
   return (
-    <ScreenplayWorkspace
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto sm:overflow-hidden">
+    {picture.importedPackage ? <div className="shrink-0 px-4 pt-3"><ImportedPackageResources importedPackage={picture.importedPackage} /></div> : null}
+    <div className="min-h-[40rem] flex-1 overflow-hidden sm:min-h-0"><ScreenplayWorkspace
       picture={picture}
       intake={picture.intake}
       screenplay={picture.screenplay}
@@ -536,7 +546,7 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
           if (storyDoctorRuns.get(picture.id)?.status !== "stopped") toast.error(error instanceof Error ? error.message : "Story Doctor failed closed.");
         });
       }}
-    />
+    /></div></div>
   );
 }
 
@@ -546,9 +556,10 @@ function InventoryStage({ picture }: { picture: Picture }) {
   const [busy, setBusy] = useState(false);
   const boundary = approvedScreenplayBoundary(picture.id, picture.intake, picture.screenplay);
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto sm:overflow-hidden">
+    {picture.importedPackage ? <div className="shrink-0 px-4 pt-3"><ImportedPackageResources importedPackage={picture.importedPackage} /></div> : null}
     <div className="shrink-0 px-4 pt-3"><Button size="sm" variant="secondary" onClick={() => setGenerateFocus("assets")}>Open Generate / Assets</Button></div>
-    <div className="min-h-0 flex-1 overflow-hidden">
+    <div className="min-h-[40rem] flex-1 overflow-hidden sm:min-h-0">
     <InventoryWorkspace
       boundary={boundary}
       record={picture.production ?? null}

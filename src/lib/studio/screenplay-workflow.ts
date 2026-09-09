@@ -1,4 +1,5 @@
 import { withProductionInstructions } from "./production-instructions.ts";
+import { screenplayOutputBudget } from "./authoring-contract.ts";
 import type { PictureIntake } from "./picture-intake.ts";
 import type { ResearchContent } from "../research/bible.ts";
 import { extractScopedFountain, spliceScopedFountain, type ScreenplayScope, type ScreenplaySelection } from "./screenplay-scope.ts";
@@ -81,7 +82,9 @@ export class ScreenplayGenerationCanceled extends Error {
 
 export async function runScreenplayWorkflow(runtime: ScreenplayRuntimePort, input: WorkflowRunInput): Promise<PictureScreenplay> {
   if (input.model.status !== "ready") throw new Error(input.model.statusReason || "Selected screenplay model is not runnable.");
-  const settings = { ...DEFAULT_SCREENPLAY_SETTINGS, ...input.settings };
+  const settings = { ...DEFAULT_SCREENPLAY_SETTINGS,
+    ...(!input.rewriteScope || input.rewriteScope === "full" ? { maxTokens: screenplayOutputBudget(input.intake.targetRuntimeMinutes) } : {}),
+    ...input.settings };
   const config: ScreenplayRuntimeConfig = {
     modelId: input.model.id,
     servedModelId: input.model.servedModelId,

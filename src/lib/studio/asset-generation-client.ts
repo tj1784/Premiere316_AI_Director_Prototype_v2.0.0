@@ -9,6 +9,7 @@ import { isVisualAsset, requireGroundedAssetPrompt } from "./asset-prompt-contex
 import { countAssetPromptTokens } from "./movie-plan-api.ts";
 import { stableHash } from "../production/dependency-graph.ts";
 import type { PreparedAssetRecord, ProductionAsset } from "../production/types.ts";
+import { assetGenerationReferences, canonicalParents } from "../production/asset-canonical-reference.ts";
 
 export { isVisualAsset } from "./asset-prompt-context.ts";
 
@@ -19,15 +20,16 @@ function samePreparedInputs(left: PreparedAssetRecord, right: PreparedAssetRecor
 }
 
 export function hasCurrentImage(asset: ProductionAsset, engineId: string, prompt: string) {
-  if (asset.iterations.some(iteration => iteration.uploadedFileName && iteration.mediaUri && iteration.status !== "REJECTED")) return true;
+  if (asset.stale) return false;
+  if (!asset.references.some((reference) => reference.id.startsWith("canonical-parent:")) && asset.iterations.some(iteration => iteration.uploadedFileName && iteration.mediaUri && !["REJECTED", "STALE"].includes(iteration.status))) return true;
   const dimensions = assetImageDimensions(asset, engineId);
   return asset.iterations.some((iteration) => {
-    if (!iteration.mediaUri || iteration.status === "REJECTED" || iteration.execution?.engineId !== engineId || iteration.execution.prompt !== prompt) return false;
+    if (!iteration.mediaUri || ["REJECTED", "STALE"].includes(iteration.status) || iteration.execution?.engineId !== engineId || iteration.execution.prompt !== prompt) return false;
     if (iteration.width !== dimensions.width || iteration.height !== dimensions.height) return false;
     if (engineId === "krea-2" && (iteration.execution.conditioningMode !== "text-only" || iteration.execution.references.length)) return false;
     const references = engineId === "krea-2" ? iteration.execution.promptReferences ?? [] : iteration.execution.references ?? [];
     return references.length === asset.references.length && asset.references.every((reference) => references.some((executed) => {
-      const expectedHash = reference.uri.match(/(?:reference-([a-f0-9]{64})|\.([a-f0-9]{24}))\.png$/)?.slice(1).find(Boolean);
+      const expectedHash = reference.provenance?.evidenceNote?.match(/SHA-256: ([a-f0-9]{64})/i)?.[1] ?? reference.uri.match(/(?:reference-([a-f0-9]{64})|\.([a-f0-9]{24}))\.png$/)?.slice(1).find(Boolean);
       return executed.id === reference.uri && Boolean(expectedHash && executed.fingerprint?.startsWith(expectedHash));
     }));
   });
@@ -50,6 +52,13 @@ export async function generateAssetDrafts(picture: Picture, onPicture: (picture:
   }
   let next = picture;
   let record = picture.production!;
+  const pendingParents = new Map(record.assets.filter((asset) => isVisualAsset(asset) && (!onlyAssetId || asset.id === onlyAssetId)).map((asset) => [asset.id, canonicalParents(record, asset.id).filter((parent) => !parent.media).map((parent) => parent.asset?.name ?? parent.id)] as const).filter(([, parents]) => parents.length));
+  if (pendingParents.size) onProgress(`${pendingParents.size} dependent asset(s) remain pending their canonical parent image approvals. Available root assets can proceed.`);
+  // Add only verified canonical parent media to the worker's sealed reference
+  // inputs. The prompt context derives this same list, so attachment alone does
+  // not invalidate the prompt or pretend that any image has been approved here.
+  record = { ...record, assets: record.assets.map((asset) => ({ ...asset, references: assetGenerationReferences(record, asset) })) };
+  next = { ...next, production: record };
   if (!picture.productFlow?.reviewInternalPhases) {
     let visual = picture.visualDevelopment;
     if (visual) {
@@ -66,6 +75,7 @@ export async function generateAssetDrafts(picture: Picture, onPicture: (picture:
     const live = await api.authorityStatus({ pictureId: picture.id });
     if (live.ok && live.status === "CURRENT" && live.authorityId === record.productionAuthority.authorityId && live.digest === record.productionAuthority.digest) {
       const requests = record.assets.filter((asset) => isVisualAsset(asset) && (!onlyAssetId || asset.id === onlyAssetId)).flatMap((asset) => {
+        if (pendingParents.has(asset.id)) return [];
         const prepared = record.preparedAssets?.find((item) => item.assetId === asset.id && item.status === "APPROVED_PREPARED" && item.preparedApprovalRootId);
         if (!prepared) return [];
         return [{ preparedAssetId: prepared.id, preparedApprovalRootId: prepared.preparedApprovalRootId!, engineId: picture.selectedEngine.image, prompt: requireGroundedAssetPrompt(next, asset), referenceUris: asset.references.map((reference) => reference.uri), knownIterationIds: asset.iterations.map((iteration) => iteration.id) }];
@@ -88,12 +98,12 @@ export async function generateAssetDrafts(picture: Picture, onPicture: (picture:
     }
   }
   const assets = record.assets.filter((asset) => {
-    if (!isVisualAsset(asset) || onlyAssetId && asset.id !== onlyAssetId) return false;
+    if (!isVisualAsset(asset) || pendingParents.has(asset.id) || onlyAssetId && asset.id !== onlyAssetId) return false;
     const prompt = requireGroundedAssetPrompt(next, asset);
     return onlyAssetId || (regenerateOutdated ? !hasCurrentImage(asset, picture.selectedEngine.image, prompt) : !asset.iterations.some((iteration) => iteration.mediaUri));
   });
   if (!assets.length) {
-    onProgress("All selected asset images are current. Review the images or regenerate an individual asset.");
+    onProgress(pendingParents.size ? `${pendingParents.size} dependent asset(s) await canonical parent approval. Review the available parent images, then continue their states.` : "All selected asset images are current. Review the images or regenerate an individual asset.");
     return next;
   }
   // Validate the entire saved queue before releasing its writer or beginning GPU work.
@@ -176,6 +186,6 @@ export async function generateAssetDrafts(picture: Picture, onPicture: (picture:
     record = appendGeneratedIteration(record, { preparedAssetId: prepared.id, iterationId: result.iterationId!, output: { ...result.output, mediaBytes: new Uint8Array(result.output.mediaBytes), sidecarBytes: new Uint8Array(result.output.sidecarBytes) }, provenance: result.provenance, continuityFindings: result.continuityFindings, receiptDigest: result.receiptDigest });
     publish();
   }
-  onProgress("Asset images generated. Review the images, edit prompts or regenerate, then approve.");
+  onProgress(`Asset images generated. Review the images, edit prompts or regenerate, then approve.${pendingParents.size ? ` ${pendingParents.size} dependent asset(s) remain pending canonical parent approval.` : ""}`);
   return next;
 }

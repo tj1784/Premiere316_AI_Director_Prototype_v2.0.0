@@ -1,0 +1,2697 @@
+[
+  {
+    "scene_id": "PS-S01",
+    "asset_id": "PS-CHR-JESUS",
+    "use": "Teacher seated among listeners; face revealed after the scribe speaks."
+  },
+  {
+    "scene_id": "PS-S01",
+    "asset_id": "PS-CHR-SCRIBE",
+    "use": "Speaks quietly to companion and remains listening."
+  },
+  {
+    "scene_id": "PS-S01",
+    "asset_id": "PS-CHR-TAXCOLLECTOR",
+    "use": "Makes room for elderly woman and gives bread to Jesus."
+  },
+  {
+    "scene_id": "PS-S01",
+    "asset_id": "PS-EXT-LISTENERS",
+    "use": "Listeners share bread and road travelers slow."
+  },
+  {
+    "scene_id": "PS-S01",
+    "asset_id": "PS-FOD-HOMEBREAD",
+    "use": "Bread shared, withheld from oneself, remembered and served."
+  },
+  {
+    "scene_id": "PS-S01",
+    "asset_id": "PS-LOC-HILLSIDE",
+    "use": "Sets teaching frame and mixed listeners."
+  },
+  {
+    "scene_id": "PS-S01",
+    "asset_id": "PS-WAR-JESUS",
+    "use": "Living teacher’s clean prologue appearance."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-ANM-PACKDONKEY",
+    "use": "Carries travel bundles and bedding."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-CHR-ELDER",
+    "use": "Elder present in family and field action."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Returns with Mattan and carriers."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-CHR-LEVI",
+    "use": "Hired hand present in household/field work."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-CHR-MATTAN",
+    "use": "Steward, carrier liaison and trusted household helper."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-EXT-CARRIERS",
+    "use": "Carry bundles, wait on road, then part company with younger."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-GRM-YOUNGERHOME",
+    "use": "Canonical younger identity before severe hunger."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-LOC-HOMEROAD",
+    "use": "Father arrives/departure and younger’s return."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-LOC-HOMESTEAD",
+    "use": "Master relationship of road, courtyard entrance, fields and wall."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-LOC-TERRACE",
+    "use": "Field work and elder/father meals."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-PRP-BASKETMENDED",
+    "use": "Visual connection between brothers through practical care."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-PRP-BASKETSOUND",
+    "use": "Work basket exchange and home labor."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-PRP-FIELDSTONES",
+    "use": "Wall labor and progress."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-PRP-PACKTACK",
+    "use": "Carriers’ transport kit."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-PRP-WALLCORD",
+    "use": "Brothers hold alignment; repair continues."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-WAR-ELDER",
+    "use": "Elder’s ordinary clothing through unresolved ending."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s ordinary tunic and sandals beneath traveling mantle."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-WAR-FATHERTRAVEL",
+    "use": "Father returns from trade."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-WAR-HOMEKIT",
+    "use": "Levi, Mattan and hired carriers wear their identity-linked practical garments."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-WAR-YOUNGERSANDAL",
+    "use": "Original footwear and return-journey failure."
+  },
+  {
+    "scene_id": "PS-S02",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-ANM-CATTLE",
+    "use": "Adjacent pen and Levi’s animal-care context."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-ANM-PACKDONKEY",
+    "use": "Carries travel bundles and bedding."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-CHR-ELDER",
+    "use": "Elder present in family and field action."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Greets both sons equally and presents two mantles."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-CHR-HANNAH",
+    "use": "Household food and care work."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-CHR-MATTAN",
+    "use": "Steward, carrier liaison and trusted household helper."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-EXT-CARRIERS",
+    "use": "Carry bundles, wait on road, then part company with younger."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-FOD-GRAIN",
+    "use": "Farm stores and elder’s apology."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-GRM-ELDERPALM",
+    "use": "Hand care, concealed overwork and thumb pressing scar."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-GRM-YOUNGERHOME",
+    "use": "Canonical younger identity before severe hunger."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-LOC-COURTYARD",
+    "use": "Household arrival, meals, work, care and restoration."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-LOC-ENTRANCE",
+    "use": "Departure, brother conversation, father’s recognition and final refusal/invitation."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-LOC-HOMESTEAD",
+    "use": "Master relationship of road, courtyard entrance, fields and wall."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-LOC-PEN",
+    "use": "Home livestock and preparation of celebration."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-PRP-PACKTACK",
+    "use": "Carriers’ transport kit."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-PRP-PALMCLOTH",
+    "use": "Father’s hand care continuity."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-PRP-REFLECTIONBOWL",
+    "use": "Younger admires new russet mantle while father tends elder."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-PRP-WASHBOWL",
+    "use": "Care actions and everyday washing."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-SET-COOKING",
+    "use": "Kitchen work and preparation-time compression."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-SET-HOMEAWNING",
+    "use": "Working-yard continuity."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-SET-HOMEVESSELS",
+    "use": "Prosperous working household background and handling."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-WAR-ELDER",
+    "use": "Elder’s ordinary clothing through unresolved ending."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s home scenes and continuous reunion."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-WAR-FATHERTRAVEL",
+    "use": "Father returns from trade."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-WAR-HOMEKIT",
+    "use": "Home supporting cast and feast costume consistency."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-WAR-OLIVE",
+    "use": "Physical continuity of father’s attentive love for elder."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-WAR-RUSSET",
+    "use": "Gift, threshold talk, travel, display and sale."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-WAR-YOUNGERSANDAL",
+    "use": "Original footwear and return-journey failure."
+  },
+  {
+    "scene_id": "PS-S03",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-CHR-ELDER",
+    "use": "Elder present in family and field action."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Family supper, request and consent."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-CHR-HANNAH",
+    "use": "Household food and care work."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-CHR-LEVI",
+    "use": "Worker receiving food in adjoining courtyard."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-CHR-MATTAN",
+    "use": "Receives fuller workers’ bowl in neighboring courtyard."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-EXT-HOMEWORKERS",
+    "use": "Work, eat and prepare household celebration."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-FOD-HOMEBREAD",
+    "use": "Bread shared, withheld from oneself, remembered and served."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-FOD-HOMEMEALS",
+    "use": "Ordinary nourishment and feast accompaniments."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-GRM-ELDERPALM",
+    "use": "Hand care, concealed overwork and thumb pressing scar."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-GRM-YOUNGERHOME",
+    "use": "Canonical younger identity before severe hunger."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-LOC-COURTYARD",
+    "use": "Household arrival, meals, work, care and restoration."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-LOC-ENTRANCE",
+    "use": "Departure, brother conversation, father’s recognition and final refusal/invitation."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-LOC-SUPPER",
+    "use": "Inheritance request and silent memory fragments."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-PRP-PALMCLOTH",
+    "use": "Father’s hand care continuity."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-PRP-SERVINGBOWL",
+    "use": "Everyone in father’s household has enough to eat."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-PRP-WASHBOWL",
+    "use": "Care actions and everyday washing."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-SET-COOKING",
+    "use": "Kitchen work and preparation-time compression."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-SET-HOMELAMPS",
+    "use": "Practical interior and feast illumination."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-SET-HOMETABLE",
+    "use": "Meals, request and feast."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-SET-HOMEVESSELS",
+    "use": "Prosperous working household background and handling."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-WAR-ELDER",
+    "use": "Elder’s ordinary clothing through unresolved ending."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s home scenes and continuous reunion."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-WAR-HOMEKIT",
+    "use": "Home supporting cast and feast costume consistency."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-WAR-RUSSET",
+    "use": "Gift, threshold talk, travel, display and sale."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-WAR-YOUNGERSANDAL",
+    "use": "Original footwear and return-journey failure."
+  },
+  {
+    "scene_id": "PS-S04",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-ANM-CATTLE",
+    "use": "Adjacent pen and Levi’s animal-care context."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-CHR-ELDER",
+    "use": "Elder present in family and field action."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Visible inside beside the supper table."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-GRM-ELDERPALM",
+    "use": "Hand care, concealed overwork and thumb pressing scar."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-GRM-YOUNGERHOME",
+    "use": "Canonical younger identity before severe hunger."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-LOC-ENTRANCE",
+    "use": "Departure, brother conversation, father’s recognition and final refusal/invitation."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-LOC-PEN",
+    "use": "Home livestock and preparation of celebration."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-LOC-SUPPER",
+    "use": "Inheritance request and silent memory fragments."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-PRP-PALMCLOTH",
+    "use": "Father’s hand care continuity."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-PRP-WATERSKIN",
+    "use": "Travel support and brotherly care object."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-SET-HOMELAMPS",
+    "use": "Practical interior and feast illumination."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-SET-HOMETABLE",
+    "use": "Meals, request and feast."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-WAR-ELDER",
+    "use": "Elder’s ordinary clothing through unresolved ending."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s home scenes and continuous reunion."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-WAR-RUSSET",
+    "use": "Gift, threshold talk, travel, display and sale."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-WAR-YOUNGERSANDAL",
+    "use": "Original footwear and return-journey failure."
+  },
+  {
+    "scene_id": "PS-S05",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-CHR-ELDER",
+    "use": "Elder present in family and field action."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Divides property between both sons; walks boundary with elder."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-CHR-MATTAN",
+    "use": "Steward, carrier liaison and trusted household helper."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-EXT-HOMEWORKERS",
+    "use": "Work, eat and prepare household celebration."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-FOD-GRAIN",
+    "use": "Farm stores and elder’s apology."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-FOD-TRAVEL",
+    "use": "Provisions and last sale of garment."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-GRM-ELDERPALM",
+    "use": "Hand care, concealed overwork and thumb pressing scar."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-GRM-YOUNGERHOME",
+    "use": "Canonical younger identity before severe hunger."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-LOC-COURTYARD",
+    "use": "Household arrival, meals, work, care and restoration."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-LOC-HOMESTEAD",
+    "use": "Master relationship of road, courtyard entrance, fields and wall."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-LOC-STORE",
+    "use": "Property division and elder’s apology after basket failure."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-LOC-TERRACE",
+    "use": "Field work and elder/father meals."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-PRP-BALANCE",
+    "use": "Silver division insert and store table."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-PRP-BASKETMENDED",
+    "use": "Visual connection between brothers through practical care."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-PRP-BEDDING",
+    "use": "Travel belongings and shelter."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-PRP-COINCLOTH",
+    "use": "Portable wealth layout."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-PRP-COINS",
+    "use": "Inheritance, excess payments, debt and scarcity."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-PRP-DAMAGEDBASKETS",
+    "use": "Division montage shows redistributed practical duty."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-PRP-ESTATEDOC",
+    "use": "Father and Mattan examine division and bundles."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-PRP-FIELDSTONES",
+    "use": "Wall labor and progress."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-PRP-MONEYPOUCH",
+    "use": "Money and status object."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-PRP-PALMCLOTH",
+    "use": "Father’s hand care continuity."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-PRP-WALLCORD",
+    "use": "Brothers hold alignment; repair continues."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-PRP-WATERSKIN",
+    "use": "Travel support and brotherly care object."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-PRP-WRITING",
+    "use": "Estate documentation setup."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-SET-HOMEAWNING",
+    "use": "Working-yard continuity."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-SET-HOMEVESSELS",
+    "use": "Prosperous working household background and handling."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-WAR-ELDER",
+    "use": "Elder’s ordinary clothing through unresolved ending."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s home scenes and continuous reunion."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-WAR-HOMEKIT",
+    "use": "Home supporting cast and feast costume consistency."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-WAR-RUSSET",
+    "use": "Gift, threshold talk, travel, display and sale."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-WAR-YOUNGERSANDAL",
+    "use": "Original footwear and return-journey failure."
+  },
+  {
+    "scene_id": "PS-S06",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-ANM-PACKDONKEY",
+    "use": "Carries travel bundles and bedding."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-CHR-ELDER",
+    "use": "Elder present in family and field action."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Departure embrace; remains on road with elder."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-CHR-HANNAH",
+    "use": "Household food and care work."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-CHR-MATTAN",
+    "use": "Steward, carrier liaison and trusted household helper."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-EXT-CARRIERS",
+    "use": "Carry bundles, wait on road, then part company with younger."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-EXT-NEIGHBORWOMAN",
+    "use": "Quiet social response at home road."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-FOD-HOMEBREAD",
+    "use": "Bread shared, withheld from oneself, remembered and served."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-FOD-TRAVEL",
+    "use": "Provisions and last sale of garment."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-GRM-ELDERPALM",
+    "use": "Hand care, concealed overwork and thumb pressing scar."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-GRM-YOUNGERHOME",
+    "use": "Canonical younger identity before severe hunger."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-LOC-COURTYARD",
+    "use": "Household arrival, meals, work, care and restoration."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-LOC-ENTRANCE",
+    "use": "Departure, brother conversation, father’s recognition and final refusal/invitation."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-LOC-HOMEROAD",
+    "use": "Father arrives/departure and younger’s return."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-LOC-HOMESTEAD",
+    "use": "Master relationship of road, courtyard entrance, fields and wall."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-PRP-BASKETSOUND",
+    "use": "Work basket exchange and home labor."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-PRP-BEDDING",
+    "use": "Travel belongings and shelter."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-PRP-BREADCLOTH",
+    "use": "Memory object prompting hunger/home realization."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-PRP-MONEYPOUCH",
+    "use": "Money and status object."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-PRP-PACKTACK",
+    "use": "Carriers’ transport kit."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-PRP-PALMCLOTH",
+    "use": "Father’s hand care continuity."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-PRP-WATERSKIN",
+    "use": "Travel support and brotherly care object."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-WAR-ELDER",
+    "use": "Elder’s ordinary clothing through unresolved ending."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s home scenes and continuous reunion."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-WAR-HOMEKIT",
+    "use": "Home supporting cast and feast costume consistency."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-WAR-RUSSET",
+    "use": "Gift, threshold talk, travel, display and sale."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-WAR-YOUNGERSANDAL",
+    "use": "Original footwear and return-journey failure."
+  },
+  {
+    "scene_id": "PS-S07",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-ANM-PACKDONKEY",
+    "use": "Carries travel bundles and bedding."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-EXT-CARRIERS",
+    "use": "Carry bundles, wait on road, then part company with younger."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-EXT-OLDTRAVELER",
+    "use": "Drinks before younger at roadside cistern."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-FOD-TRAVEL",
+    "use": "Provisions and last sale of garment."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-GFX-TITLE",
+    "use": "Film title over landscape."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-GRM-YOUNGERHOME",
+    "use": "Canonical younger identity before severe hunger."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-LOC-JOURNEY",
+    "use": "Departure expansiveness and difficult return."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-LOC-ROADCISTERN",
+    "use": "Rest, water and travel object transitions."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-LOC-TOWN",
+    "use": "Foreign destination and urban setting."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-PRP-BEDDING",
+    "use": "Travel belongings and shelter."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-PRP-COINS",
+    "use": "Inheritance, excess payments, debt and scarcity."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-PRP-MONEYPOUCH",
+    "use": "Money and status object."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-PRP-PACKTACK",
+    "use": "Carriers’ transport kit."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-PRP-WATERSKIN",
+    "use": "Travel support and brotherly care object."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-WAR-RUSSET",
+    "use": "Gift, threshold talk, travel, display and sale."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-WAR-YOUNGERSANDAL",
+    "use": "Original footwear and return-journey failure."
+  },
+  {
+    "scene_id": "PS-S08",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-CHR-BREADSELLER",
+    "use": "Visible market seller with careful portioning and practical demeanor."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-CHR-DAMON",
+    "use": "Offers friendship, dances, later shares scarce bread with a child."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-EXT-CHILD",
+    "use": "Child provides everyday market continuity."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-EXT-GUESTS",
+    "use": "Bench welcome, uneven laughter, dance, food service and thinning gatherings."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-EXT-MARKET",
+    "use": "Markets, garment sale, jar-carrying work and grain-store queue."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-FOD-FOREIGNBANQUET",
+    "use": "Spending to remain welcome."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-FOD-MARKETBREAD",
+    "use": "Scarcity and mutual humanity."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-GRM-YOUNGERHOME",
+    "use": "Canonical younger identity before severe hunger."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-LOC-BANQUET",
+    "use": "Social spending and rejection."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-LOC-MARKET",
+    "use": "Arrival purchases, russet sale and hunger."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-LOC-TOWN",
+    "use": "Foreign destination and urban setting."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-PRP-CLOTHDISPLAY",
+    "use": "Damon steadies cloth and younger later sells gift."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-PRP-COINS",
+    "use": "Inheritance, excess payments, debt and scarcity."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-PRP-MARKETSCALE",
+    "use": "Market generosity and scarcity inserts."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-PRP-MONEYPOUCH",
+    "use": "Money and status object."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-PRP-TAVERNWARE",
+    "use": "Food service, cup spill and debt denial."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-PRP-WATERSKIN",
+    "use": "Travel support and brotherly care object."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-SET-TOWNSTOCK",
+    "use": "Market continuity and famine visible without exposition."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-WAR-BLUE",
+    "use": "Purchased welcome and later remaining saleable garment."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-WAR-FOREIGNKIT",
+    "use": "Foreign supporting cast costume continuity."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-WAR-RUSSET",
+    "use": "Gift, threshold talk, travel, display and sale."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-WAR-YOUNGERSANDAL",
+    "use": "Original footwear and return-journey failure."
+  },
+  {
+    "scene_id": "PS-S09",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-CHR-DAMON",
+    "use": "Offers friendship, dances, later shares scarce bread with a child."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-CHR-HOST",
+    "use": "Collects payments and controls access to food/lodging."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-EXT-FOREIGNMUS",
+    "use": "Play for paid banquet gathering."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-EXT-GUESTS",
+    "use": "Bench welcome, uneven laughter, dance, food service and thinning gatherings."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-FOD-FOREIGNBANQUET",
+    "use": "Spending to remain welcome."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-GRM-YOUNGERHOME",
+    "use": "Canonical younger identity before severe hunger."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-LOC-BANQUET",
+    "use": "Social spending and rejection."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-LOC-RENTEDROOM",
+    "use": "Purchased life and sale of father’s gift."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-PRP-BEDDING",
+    "use": "Travel belongings and shelter."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-PRP-COINS",
+    "use": "Inheritance, excess payments, debt and scarcity."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-PRP-MONEYPOUCH",
+    "use": "Money and status object."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-PRP-PIPEDRUMFOREIGN",
+    "use": "Banquet music and dance."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-PRP-TAVERNWARE",
+    "use": "Food service, cup spill and debt denial."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-PRP-WATERSKIN",
+    "use": "Travel support and brotherly care object."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-SET-ROOMPEG",
+    "use": "Sale of father’s gift."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-WAR-BLUE",
+    "use": "Purchased welcome and later remaining saleable garment."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-WAR-FOREIGNKIT",
+    "use": "Foreign supporting cast costume continuity."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-WAR-RUSSET",
+    "use": "Gift, threshold talk, travel, display and sale."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-WAR-YOUNGERSANDAL",
+    "use": "Original footwear and return-journey failure."
+  },
+  {
+    "scene_id": "PS-S10",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-CHR-ELDER",
+    "use": "Elder present in family and field action."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Shares meal and olive mantle with elder on wall."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-CHR-HANNAH",
+    "use": "Household food and care work."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-CHR-LEVI",
+    "use": "Hired hand present in household/field work."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-EXT-HOMEWORKERS",
+    "use": "Work, eat and prepare household celebration."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-EXT-PASSTRAVELER",
+    "use": "Father hopes briefly as traveler passes entrance; elder notices."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-FOD-HOMEBREAD",
+    "use": "Bread shared, withheld from oneself, remembered and served."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-FOD-HOMEMEALS",
+    "use": "Ordinary nourishment and feast accompaniments."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-GRM-ELDERPALM",
+    "use": "Hand care, concealed overwork and thumb pressing scar."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-LOC-COURTYARD",
+    "use": "Household arrival, meals, work, care and restoration."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-LOC-ENTRANCE",
+    "use": "Departure, brother conversation, father’s recognition and final refusal/invitation."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-LOC-HOMESTEAD",
+    "use": "Master relationship of road, courtyard entrance, fields and wall."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-LOC-TERRACE",
+    "use": "Field work and elder/father meals."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-PRP-ELDERBOWL",
+    "use": "Food and unpaid emotional need motif."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-PRP-FIELDSTONES",
+    "use": "Wall labor and progress."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-PRP-PALMCLOTH",
+    "use": "Father’s hand care continuity."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-PRP-SERVINGBOWL",
+    "use": "Everyone in father’s household has enough to eat."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-PRP-WASHBOWL",
+    "use": "Care actions and everyday washing."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-SET-HOMEAWNING",
+    "use": "Working-yard continuity."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-SET-HOMETABLE",
+    "use": "Meals, request and feast."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-SET-HOMEVESSELS",
+    "use": "Prosperous working household background and handling."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-WAR-ELDER",
+    "use": "Elder’s ordinary clothing through unresolved ending."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s home scenes and continuous reunion."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-WAR-HOMEKIT",
+    "use": "Home supporting cast and feast costume consistency."
+  },
+  {
+    "scene_id": "PS-S11",
+    "asset_id": "PS-WAR-OLIVE",
+    "use": "Physical continuity of father’s attentive love for elder."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-CHR-HOST",
+    "use": "Collects payments and controls access to food/lodging."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-EXT-GUESTS",
+    "use": "Bench welcome, uneven laughter, dance, food service and thinning gatherings."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-EXT-MARKET",
+    "use": "Markets, garment sale, jar-carrying work and grain-store queue."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-FOD-FOREIGNBANQUET",
+    "use": "Spending to remain welcome."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-GRM-YOUNGERHOME",
+    "use": "Canonical younger identity before severe hunger."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-LOC-BANQUET",
+    "use": "Social spending and rejection."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-LOC-MARKET",
+    "use": "Arrival purchases, russet sale and hunger."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-LOC-RENTEDROOM",
+    "use": "Purchased life and sale of father’s gift."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-LOC-TOWN",
+    "use": "Foreign destination and urban setting."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-PRP-BEDDING",
+    "use": "Travel belongings and shelter."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-PRP-CLOTHDISPLAY",
+    "use": "Damon steadies cloth and younger later sells gift."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-PRP-COINCLOTH",
+    "use": "Portable wealth layout."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-PRP-COINS",
+    "use": "Inheritance, excess payments, debt and scarcity."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-PRP-MONEYPOUCH",
+    "use": "Money and status object."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-PRP-TAVERNWARE",
+    "use": "Food service, cup spill and debt denial."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-PRP-WATERSKIN",
+    "use": "Travel support and brotherly care object."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-SET-ROOMPEG",
+    "use": "Sale of father’s gift."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-SET-TOWNSTOCK",
+    "use": "Market continuity and famine visible without exposition."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-WAR-BLUE",
+    "use": "Purchased welcome and later remaining saleable garment."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-WAR-FOREIGNKIT",
+    "use": "Foreign supporting cast costume continuity."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-WAR-RUSSET",
+    "use": "Gift, threshold talk, travel, display and sale."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-WAR-YOUNGERSANDAL",
+    "use": "Original footwear and return-journey failure."
+  },
+  {
+    "scene_id": "PS-S12",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-CHR-BREADSELLER",
+    "use": "Visible market seller with careful portioning and practical demeanor."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-CHR-DAMON",
+    "use": "Offers friendship, dances, later shares scarce bread with a child."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-CHR-FARMER",
+    "use": "Offers feed-carrying work; associated household beyond pig enclosure."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-CHR-HOST",
+    "use": "Wakes younger beneath stair and sends him into street."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-EXT-CHILD",
+    "use": "Child provides everyday market continuity."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-EXT-FAMINEFAMILY",
+    "use": "Loads last belongings beyond town."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-EXT-MARKET",
+    "use": "Markets, garment sale, jar-carrying work and grain-store queue."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-FOD-MARKETBREAD",
+    "use": "Scarcity and mutual humanity."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-GRM-YOUNGERHUNGER",
+    "use": "Famine, labor and return condition."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-LOC-FAMINE",
+    "use": "Famine market and waiting people."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-LOC-MARKET",
+    "use": "Arrival purchases, russet sale and hunger."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-LOC-OUTSKIRTS",
+    "use": "Search for work and first meeting with farmer."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-LOC-STAIR",
+    "use": "Younger sleeps with bedding and is moved on."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-LOC-TOWN",
+    "use": "Foreign destination and urban setting."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-PRP-BEDDING",
+    "use": "Travel belongings and shelter."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-PRP-COINS",
+    "use": "Inheritance, excess payments, debt and scarcity."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-PRP-MARKETSCALE",
+    "use": "Market generosity and scarcity inserts."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-PRP-MERCHANTJAR",
+    "use": "Failed work-for-food effort."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-PRP-SLEDGE",
+    "use": "Displacement in failed-field outskirts."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-PRP-WATERSKIN",
+    "use": "Travel support and brotherly care object."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-SET-TOWNSTOCK",
+    "use": "Market continuity and famine visible without exposition."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-WAR-BLUE",
+    "use": "Purchased welcome and later remaining saleable garment."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-WAR-FOREIGNKIT",
+    "use": "Foreign supporting cast costume continuity."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-WAR-YOUNGERSANDAL",
+    "use": "Original footwear and return-journey failure."
+  },
+  {
+    "scene_id": "PS-S13",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-ANM-CATTLE",
+    "use": "Adjacent pen and Levi’s animal-care context."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-CHR-ELDER",
+    "use": "Elder present in family and field action."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Cares for elder’s hand; observes store-room exchange."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-CHR-LEVI",
+    "use": "Hired hand present in household/field work."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-EXT-HOMEWORKERS",
+    "use": "Work, eat and prepare household celebration."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-FOD-GRAIN",
+    "use": "Farm stores and elder’s apology."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-GRM-ELDERPALM",
+    "use": "Hand care, concealed overwork and thumb pressing scar."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-LOC-CISTERN",
+    "use": "Father takes rope and washes elder’s reopened palm."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-LOC-COURTYARD",
+    "use": "Household arrival, meals, work, care and restoration."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-LOC-HOMESTEAD",
+    "use": "Master relationship of road, courtyard entrance, fields and wall."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-LOC-PEN",
+    "use": "Home livestock and preparation of celebration."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-LOC-STORE",
+    "use": "Property division and elder’s apology after basket failure."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-PRP-BASKETMENDED",
+    "use": "Visual connection between brothers through practical care."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-PRP-BASKETSOUND",
+    "use": "Work basket exchange and home labor."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-PRP-CISTERNROPE",
+    "use": "Father caring for elder at water point."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-PRP-PALMCLOTH",
+    "use": "Father’s hand care continuity."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-PRP-WASHBOWL",
+    "use": "Care actions and everyday washing."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-SET-HOMEAWNING",
+    "use": "Working-yard continuity."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-SET-HOMEVESSELS",
+    "use": "Prosperous working household background and handling."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-WAR-ELDER",
+    "use": "Elder’s ordinary clothing through unresolved ending."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s home scenes and continuous reunion."
+  },
+  {
+    "scene_id": "PS-S14",
+    "asset_id": "PS-WAR-HOMEKIT",
+    "use": "Home supporting cast and feast costume consistency."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-ANM-PIGS",
+    "use": "Press rails, feed at trough, shoulder past younger and take dropped pod."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-CHR-ELDER",
+    "use": "Silent memory of S2 basket exchange with Levi; use original S2 appearance."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-CHR-FARMER",
+    "use": "Offers feed-carrying work; associated household beyond pig enclosure."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Silent memory insert from S4: father divides bread."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-CHR-HANNAH",
+    "use": "Household food and care work."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-CHR-LEVI",
+    "use": "Silent memory of S2: takes sound basket from elder."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-EXT-FARMHOUSE",
+    "use": "Meal observed by hungry younger."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-FOD-HOMEBREAD",
+    "use": "Bread shared, withheld from oneself, remembered and served."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-FOD-HOMEMEALS",
+    "use": "Ordinary nourishment and feast accompaniments."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-FOD-PODS",
+    "use": "Pig-feed hunger beat."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-GRM-YOUNGERHUNGER",
+    "use": "Famine, labor and return condition."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-INS-BASKETMEMORY",
+    "use": "Brief silent remembered practical kindness."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-INS-SUPPERMEMORY",
+    "use": "Brief silent remembered fragments at coming-to-himself beat."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-LOC-PIGFARM",
+    "use": "Pig labor, withheld meal, feed pod and coming to himself."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-LOC-SUPPER",
+    "use": "Inheritance request and silent memory fragments."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-LOC-TERRACE",
+    "use": "Field work and elder/father meals."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-PRP-BASKETMENDED",
+    "use": "Visual connection between brothers through practical care."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-PRP-BASKETSOUND",
+    "use": "Work basket exchange and home labor."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-PRP-BEDDING",
+    "use": "Travel belongings and shelter."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-PRP-BREADCLOTH",
+    "use": "Memory object prompting hunger/home realization."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-PRP-MONEYPOUCH",
+    "use": "Money and status object."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-PRP-PIGFEEDBASKET",
+    "use": "Pig labor and leaving service."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-PRP-SERVINGBOWL",
+    "use": "Everyone in father’s household has enough to eat."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-PRP-TROUGH",
+    "use": "Hunger, failed attempt at feed and night pig sounds."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-PRP-WATERSKIN",
+    "use": "Travel support and brotherly care object."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-SET-FOREIGNMEAL",
+    "use": "Younger waits to be remembered."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-SET-HOMETABLE",
+    "use": "Meals, request and feast."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-WAR-BLUE",
+    "use": "Purchased welcome and later remaining saleable garment."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-WAR-ELDER",
+    "use": "Elder’s ordinary clothing through unresolved ending."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Exact S4 father’s sleeve and hand appearance in bread-sharing memory. No S18 reunion dirt."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-WAR-FOREIGNKIT",
+    "use": "Foreign supporting cast costume continuity."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-WAR-HOMEKIT",
+    "use": "Home supporting cast and feast costume consistency."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-WAR-YOUNGERSANDAL",
+    "use": "Original footwear and return-journey failure."
+  },
+  {
+    "scene_id": "PS-S15",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S16",
+    "asset_id": "PS-CHR-ELDER",
+    "use": "Elder present in family and field action."
+  },
+  {
+    "scene_id": "PS-S16",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Brings food and mantle; praises elder’s work."
+  },
+  {
+    "scene_id": "PS-S16",
+    "asset_id": "PS-FOD-HOMEBREAD",
+    "use": "Bread shared, withheld from oneself, remembered and served."
+  },
+  {
+    "scene_id": "PS-S16",
+    "asset_id": "PS-FOD-HOMEMEALS",
+    "use": "Ordinary nourishment and feast accompaniments."
+  },
+  {
+    "scene_id": "PS-S16",
+    "asset_id": "PS-GRM-ELDERPALM",
+    "use": "Hand care, concealed overwork and thumb pressing scar."
+  },
+  {
+    "scene_id": "PS-S16",
+    "asset_id": "PS-LOC-HOMESTEAD",
+    "use": "Master relationship of road, courtyard entrance, fields and wall."
+  },
+  {
+    "scene_id": "PS-S16",
+    "asset_id": "PS-LOC-TERRACE",
+    "use": "Field work and elder/father meals."
+  },
+  {
+    "scene_id": "PS-S16",
+    "asset_id": "PS-PRP-ELDERBOWL",
+    "use": "Food and unpaid emotional need motif."
+  },
+  {
+    "scene_id": "PS-S16",
+    "asset_id": "PS-PRP-FIELDSTONES",
+    "use": "Wall labor and progress."
+  },
+  {
+    "scene_id": "PS-S16",
+    "asset_id": "PS-PRP-WALLCORD",
+    "use": "Brothers hold alignment; repair continues."
+  },
+  {
+    "scene_id": "PS-S16",
+    "asset_id": "PS-WAR-ELDER",
+    "use": "Elder’s ordinary clothing through unresolved ending."
+  },
+  {
+    "scene_id": "PS-S16",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s home scenes and continuous reunion."
+  },
+  {
+    "scene_id": "PS-S16",
+    "asset_id": "PS-WAR-OLIVE",
+    "use": "Physical continuity of father’s attentive love for elder."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-ANM-PASSDONKEY",
+    "use": "Causes younger to step aside near home."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-EXT-DONKEYDRIVER",
+    "use": "Passes younger near home."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-EXT-ROADTRADE",
+    "use": "Accepts blue-bordered mantle before younger continues home."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-FOD-TRAVEL",
+    "use": "Provisions and last sale of garment."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-GRM-YOUNGERHUNGER",
+    "use": "Famine, labor and return condition."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-LOC-HOMEROAD",
+    "use": "Father arrives/departure and younger’s return."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-LOC-HOMESTEAD",
+    "use": "Master relationship of road, courtyard entrance, fields and wall."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-LOC-JOURNEY",
+    "use": "Departure expansiveness and difficult return."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-LOC-RETURNSHELTER",
+    "use": "Shelter and unnamed food recipient for last garment exchange."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-LOC-ROADCISTERN",
+    "use": "Rest, water and travel object transitions."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-PRP-BEDDING",
+    "use": "Travel belongings and shelter."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-PRP-BREADCLOTH",
+    "use": "Memory object prompting hunger/home realization."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-PRP-WATERSKIN",
+    "use": "Travel support and brotherly care object."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-WAR-BLUE",
+    "use": "Purchased welcome and later remaining saleable garment."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-WAR-FOREIGNKIT",
+    "use": "Foreign supporting cast costume continuity."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-WAR-YOUNGERSANDAL",
+    "use": "Original footwear and return-journey failure."
+  },
+  {
+    "scene_id": "PS-S17",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Recognizes, runs, embraces and kisses returning son before confession."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-CHR-MATTAN",
+    "use": "Steward, carrier liaison and trusted household helper."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-GRM-FATHERDUST",
+    "use": "Grounded cost of reunion without instant cleanup."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-GRM-YOUNGERHUNGER",
+    "use": "Famine, labor and return condition."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-LOC-COURTYARD",
+    "use": "Household arrival, meals, work, care and restoration."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-LOC-ENTRANCE",
+    "use": "Departure, brother conversation, father’s recognition and final refusal/invitation."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-LOC-HOMEROAD",
+    "use": "Father arrives/departure and younger’s return."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-LOC-HOMESTEAD",
+    "use": "Master relationship of road, courtyard entrance, fields and wall."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-PRP-BEDDING",
+    "use": "Travel belongings and shelter."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-PRP-BREADCLOTH",
+    "use": "Memory object prompting hunger/home realization."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-PRP-WATERSKIN",
+    "use": "Travel support and brotherly care object."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-SET-HOMEVESSELS",
+    "use": "Prosperous working household background and handling."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s home scenes and continuous reunion."
+  },
+  {
+    "scene_id": "PS-S18",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-ANM-CALF",
+    "use": "Led out of pen during preparation passage."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-ANM-CATTLE",
+    "use": "Adjacent pen and Levi’s animal-care context."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Restores son, sends Levi to elder, begins feast."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-CHR-HANNAH",
+    "use": "Household food and care work."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-CHR-LEVI",
+    "use": "Father sends him for elder as household gathers to eat, after preparation montage."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-CHR-MATTAN",
+    "use": "Helps fit robe and ring, with another servant."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-EXT-FEAST",
+    "use": "Prepare, attend and respond to celebration near entrance."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-EXT-HOMEMUS",
+    "use": "Provide visible local feast music."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-EXT-HOMEWORKERS",
+    "use": "Work, eat and prepare household celebration."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-FOD-CALFMEAT",
+    "use": "Homecoming celebration meal."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-FOD-HOMEBREAD",
+    "use": "Bread shared, withheld from oneself, remembered and served."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-FOD-HOMEMEALS",
+    "use": "Ordinary nourishment and feast accompaniments."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-GRM-FATHERDUST",
+    "use": "Grounded cost of reunion without instant cleanup."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-GRM-YOUNGERRESTORE",
+    "use": "Continuity during feast and elder’s recognition."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-LOC-COURTYARD",
+    "use": "Household arrival, meals, work, care and restoration."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-LOC-ENTRANCE",
+    "use": "Departure, brother conversation, father’s recognition and final refusal/invitation."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-LOC-FEAST",
+    "use": "Continuous homecoming celebration."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-LOC-HOMESTEAD",
+    "use": "Master relationship of road, courtyard entrance, fields and wall."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-LOC-PEN",
+    "use": "Home livestock and preparation of celebration."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-LOC-TERRACE",
+    "use": "Levi passes beyond wall while going to find elder."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-PRP-BEDDING",
+    "use": "Travel belongings and shelter."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-PRP-BREADCLOTH",
+    "use": "Memory object prompting hunger/home realization."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-PRP-HOMEWATERJAR",
+    "use": "Restoration sequence reveals remaining physical weakness."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-PRP-PIPEDRUMHOME",
+    "use": "Diegetic feast ensemble."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-PRP-RESTORATIONSTOOL",
+    "use": "Younger sits during restoration."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-PRP-RING",
+    "use": "Scriptural restoration object."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-PRP-TWOCUPS",
+    "use": "Younger’s first small useful task on returning."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-PRP-WASHBOWL",
+    "use": "Care actions and everyday washing."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-PRP-WATERSKIN",
+    "use": "Arrives with returning son’s belongings; keep accessible with bundle, not vanished or replaced."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-SET-COOKING",
+    "use": "Kitchen work and preparation-time compression."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-SET-FEASTSEATING",
+    "use": "Homecoming crowd support."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-SET-HOMEAWNING",
+    "use": "Working-yard continuity."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-SET-HOMELAMPS",
+    "use": "Practical interior and feast illumination."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-SET-HOMETABLE",
+    "use": "Meals, request and feast."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-SET-HOMEVESSELS",
+    "use": "Prosperous working household background and handling."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-WAR-BESTROBE",
+    "use": "Father’s welcome and elder’s view of restored brother."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s home scenes and continuous reunion."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-WAR-HOMEKIT",
+    "use": "Home supporting cast and feast costume consistency."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-WAR-NEWSANDALS",
+    "use": "Restoration footwear."
+  },
+  {
+    "scene_id": "PS-S19",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-CHR-ELDER",
+    "use": "Elder present in family and field action."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Seen inside bending to hear younger."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-CHR-LEVI",
+    "use": "Returns from searching work plots and tells elder brother has come."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-EXT-FEAST",
+    "use": "Prepare, attend and respond to celebration near entrance."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-EXT-HOMEMUS",
+    "use": "Provide visible local feast music."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-FOD-CALFMEAT",
+    "use": "Homecoming celebration meal."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-FOD-HOMEBREAD",
+    "use": "Bread shared, withheld from oneself, remembered and served."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-FOD-HOMEMEALS",
+    "use": "Ordinary nourishment and feast accompaniments."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-GRM-ELDERPALM",
+    "use": "Hand care, concealed overwork and thumb pressing scar."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-GRM-FATHERDUST",
+    "use": "Grounded cost of reunion without instant cleanup."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-GRM-YOUNGERRESTORE",
+    "use": "Continuity during feast and elder’s recognition."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-LOC-ENTRANCE",
+    "use": "Departure, brother conversation, father’s recognition and final refusal/invitation."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-LOC-FEAST",
+    "use": "Continuous homecoming celebration."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-LOC-HOMESTEAD",
+    "use": "Master relationship of road, courtyard entrance, fields and wall."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-LOC-TERRACE",
+    "use": "Levi returns by upper field path."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-PRP-ELDERBOWL",
+    "use": "Food and unpaid emotional need motif."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-PRP-PIPEDRUMHOME",
+    "use": "Diegetic feast ensemble."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-PRP-RING",
+    "use": "Scriptural restoration object."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-PRP-TWOCUPS",
+    "use": "Younger’s first small useful task on returning."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-SET-FEASTSEATING",
+    "use": "Homecoming crowd support."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-SET-HOMELAMPS",
+    "use": "Practical interior and feast illumination."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-SET-HOMETABLE",
+    "use": "Meals, request and feast."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-SET-HOMEVESSELS",
+    "use": "Prosperous working household background and handling."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-WAR-BESTROBE",
+    "use": "Father’s welcome and elder’s view of restored brother."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-WAR-ELDER",
+    "use": "Elder’s ordinary clothing through unresolved ending."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s home scenes and continuous reunion."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-WAR-HOMEKIT",
+    "use": "Home supporting cast and feast costume consistency."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-WAR-NEWSANDALS",
+    "use": "Restoration footwear."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-WAR-OLIVE",
+    "use": "Physical continuity of father’s attentive love for elder."
+  },
+  {
+    "scene_id": "PS-S20",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-CHR-ELDER",
+    "use": "Elder present in family and field action."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Crosses courtyard and appeals personally to elder."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-CHR-LEVI",
+    "use": "Brings elder’s message to father."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-EXT-FEAST",
+    "use": "Prepare, attend and respond to celebration near entrance."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-EXT-HOMEMUS",
+    "use": "Provide visible local feast music."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-FOD-CALFMEAT",
+    "use": "Homecoming celebration meal."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-FOD-HOMEBREAD",
+    "use": "Bread shared, withheld from oneself, remembered and served."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-FOD-HOMEMEALS",
+    "use": "Ordinary nourishment and feast accompaniments."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-GRM-ELDERPALM",
+    "use": "Hand care, concealed overwork and thumb pressing scar."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-GRM-FATHERDUST",
+    "use": "Grounded cost of reunion without instant cleanup."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-GRM-YOUNGERRESTORE",
+    "use": "Continuity during feast and elder’s recognition."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-LOC-ENTRANCE",
+    "use": "Departure, brother conversation, father’s recognition and final refusal/invitation."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-LOC-FEAST",
+    "use": "Continuous homecoming celebration."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-LOC-HOMESTEAD",
+    "use": "Master relationship of road, courtyard entrance, fields and wall."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-PRP-ELDERBOWL",
+    "use": "Food and unpaid emotional need motif."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-PRP-PIPEDRUMHOME",
+    "use": "Diegetic feast ensemble."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-PRP-RING",
+    "use": "Scriptural restoration object."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-PRP-TWOCUPS",
+    "use": "Younger’s first small useful task on returning."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-SET-FEASTSEATING",
+    "use": "Homecoming crowd support."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-SET-HOMELAMPS",
+    "use": "Practical interior and feast illumination."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-SET-HOMETABLE",
+    "use": "Meals, request and feast."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-SET-HOMEVESSELS",
+    "use": "Prosperous working household background and handling."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-WAR-BESTROBE",
+    "use": "Father’s welcome and elder’s view of restored brother."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-WAR-ELDER",
+    "use": "Elder’s ordinary clothing through unresolved ending."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s home scenes and continuous reunion."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-WAR-HOMEKIT",
+    "use": "Home supporting cast and feast costume consistency."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-WAR-NEWSANDALS",
+    "use": "Restoration footwear."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-WAR-OLIVE",
+    "use": "Physical continuity of father’s attentive love for elder."
+  },
+  {
+    "scene_id": "PS-S21",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-CHR-ELDER",
+    "use": "Elder present in family and field action."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-CHR-FATHER",
+    "use": "Stays beside elder and leaves doorway clear."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-CHR-YOUNGER",
+    "use": "Younger son present in action."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-EXT-FEAST",
+    "use": "Prepare, attend and respond to celebration near entrance."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-EXT-HOMEMUS",
+    "use": "Provide visible local feast music."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-FOD-CALFMEAT",
+    "use": "Homecoming celebration meal."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-FOD-HOMEBREAD",
+    "use": "Bread shared, withheld from oneself, remembered and served."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-FOD-HOMEMEALS",
+    "use": "Ordinary nourishment and feast accompaniments."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-GRM-ELDERPALM",
+    "use": "Hand care, concealed overwork and thumb pressing scar."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-GRM-FATHERDUST",
+    "use": "Grounded cost of reunion without instant cleanup."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-GRM-YOUNGERRESTORE",
+    "use": "Continuity during feast and elder’s recognition."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-LOC-ENTRANCE",
+    "use": "Departure, brother conversation, father’s recognition and final refusal/invitation."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-LOC-FEAST",
+    "use": "Continuous homecoming celebration."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-LOC-HOMESTEAD",
+    "use": "Master relationship of road, courtyard entrance, fields and wall."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-PRP-PIPEDRUMHOME",
+    "use": "Diegetic feast ensemble."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-PRP-RING",
+    "use": "Scriptural restoration object."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-PRP-TWOCUPS",
+    "use": "Younger’s first small useful task on returning."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-SET-FEASTSEATING",
+    "use": "Homecoming crowd support."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-SET-HOMELAMPS",
+    "use": "Practical interior and feast illumination."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-SET-HOMETABLE",
+    "use": "Meals, request and feast."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-SET-HOMEVESSELS",
+    "use": "Prosperous working household background and handling."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-WAR-BESTROBE",
+    "use": "Father’s welcome and elder’s view of restored brother."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-WAR-ELDER",
+    "use": "Elder’s ordinary clothing through unresolved ending."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-WAR-FATHER",
+    "use": "Father’s home scenes and continuous reunion."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-WAR-HOMEKIT",
+    "use": "Home supporting cast and feast costume consistency."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-WAR-NEWSANDALS",
+    "use": "Restoration footwear."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-WAR-OLIVE",
+    "use": "Physical continuity of father’s attentive love for elder."
+  },
+  {
+    "scene_id": "PS-S22",
+    "asset_id": "PS-WAR-YOUNGERTUNIC",
+    "use": "Core garment through entire younger-son story."
+  },
+  {
+    "scene_id": "PS-S23",
+    "asset_id": "PS-GFX-CREDITS",
+    "use": "End-credit typography; no new visual location."
+  }
+]

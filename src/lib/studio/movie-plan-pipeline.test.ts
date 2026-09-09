@@ -5,12 +5,13 @@ import { resolve } from "node:path";
 import { makePictureIntake } from "./picture-intake.ts";
 import { makePictureScreenplay } from "./screenplay.ts";
 import type { Picture } from "./types.ts";
-import { emptyProductFlow, PHASE_REVIEW_DEFAULTS, buildMoviePlan } from "./product-flow.ts";
+import { emptyProductFlow, hydrateProductFlow, PHASE_REVIEW_DEFAULTS, buildMoviePlan } from "./product-flow.ts";
 import { moviePlanResponseFormat } from "./movie-plan-schema.ts";
 import {
   CONFIGURED_MODEL_UNAVAILABLE,
   executeMoviePlan,
   executeResearchDraft,
+  screenplaySceneTiming,
   extractJsonObject,
   type MoviePlanGenerate,
   type MoviePlanRuntime,
@@ -55,10 +56,12 @@ const FOUNTAIN = `Title: Xenogears Live-Action Trailer
 Credit: Fan work
 
 INT. LAHAN STUDIO - DUSK
+[[Duration: 60 | Story time: Dusk | Title: The canvas]]
 
 FEI FONG WONG paints. The canvas is already burning. He does not speak.
 
 EXT. IGNAS PLAIN - NIGHT
+[[Duration: 60s | Story time: Night | Title: The machine]]
 
 WELTALL steps through smoke. ELLY looks back at Fei, then at the machine.`;
 
@@ -103,9 +106,15 @@ const RESPONSES: Record<string, string> = {
   }),
 };
 
+function responseFor(request: Parameters<MoviePlanGenerate>[0]): string {
+  if (request.stepId !== "screenplay" || !request.runtimeSeconds) return RESPONSES[request.stepId];
+  return JSON.stringify({ fountain: FOUNTAIN.replace(/Duration: 60/g, `Duration: ${request.runtimeSeconds / 2}`) });
+}
+
 function mockRuntime(): MoviePlanRuntime {
-  const generate: MoviePlanGenerate = async ({ stepId }) => {
-    const text = RESPONSES[stepId];
+  const generate: MoviePlanGenerate = async (request) => {
+    const { stepId } = request;
+    const text = responseFor(request);
     if (!text) throw new Error(`unexpected step ${stepId}`);
     return { text };
   };
@@ -116,6 +125,118 @@ function ids(prefix: string) {
   let n = 0;
   return () => `${prefix}-${n++}`;
 }
+
+describe("Research-first complete screenplay and asset handoffs", () => {
+  it("defaults new pictures to independent QA and preserves explicit opt-outs", () => {
+    assert.equal(emptyProductFlow().qaEnabled, true);
+    assert.equal(hydrateProductFlow({ ...emptyProductFlow(), qaEnabled: false }).qaEnabled, false);
+  });
+
+  it("blocks historical drafting when only a locator is supplied", async () => {
+    const draft = picture(BRIEF);
+    draft.intake.sourceType = "biblical-historical";
+    draft.intake.sourcePassages = "Luke 15:11–32";
+    let calls = 0;
+    const result = await executeMoviePlan(draft, { runtime: { ...mockRuntime(), generate: async () => { calls++; throw new Error("must not call writer without evidence"); } } });
+    assert.equal(calls, 0);
+    assert.equal(result.flow.steps.find((step) => step.id === "research")?.status, "failed");
+    assert.equal(result.picture.screenplay.workingFountain, "");
+  });
+
+  it("carries creative intake and source evidence once into the completed screenplay request", async () => {
+    const draft = picture(BRIEF);
+    draft.intake.materialMayDramatize = "Private conversations within the stated events";
+    draft.intake.directorNotes = "Observe the brothers in silence";
+    draft.intake.mustAvoid = "Favoritism";
+    draft.intake.suppliedSourceText = "Unique supplied source sentence whose wording must appear exactly once.";
+    let screenplayRequest = "";
+    const runtime = { ...mockRuntime(), generate: async (request: Parameters<MoviePlanGenerate>[0]) => {
+      if (request.stepId === "screenplay") screenplayRequest = request.prompt;
+      return { text: responseFor(request) };
+    } };
+    const result = await executeMoviePlan(draft, { runtime });
+    assert.equal(result.flow.nextTouchpoint, "asset-approval");
+    assert.match(screenplayRequest, /Private conversations/);
+    assert.match(screenplayRequest, /Observe the brothers/);
+    assert.match(screenplayRequest, /Favoritism/);
+    assert.equal(screenplayRequest.split(draft.intake.suppliedSourceText).length - 1, 1);
+  });
+
+  it("runs two fresh review lenses and accepts a clean draft without inventing findings", async () => {
+    const reviews: Parameters<MoviePlanGenerate>[0][] = [];
+    const result = await executeMoviePlan(picture(BRIEF), { runtime: { ...mockRuntime(), generate: async (request) => {
+      if (request.stepId === "screenplayQa") { reviews.push(request); return { text: '{"findings":[]}' }; }
+      return { text: responseFor(request) };
+    } } });
+    assert.equal(reviews.length, 2);
+    assert.match(reviews[0].system, /SOURCE \/ CHARACTER/);
+    assert.match(reviews[1].system, /MATERIAL CULTURE \/ CONTINUITY/);
+    assert.equal(result.picture.screenplay.lastQaReport?.findings.length, 0);
+    assert.ok(result.picture.screenplay.approvedVersionId);
+    assert.equal(result.flow.nextTouchpoint, "asset-approval");
+  });
+
+  it("preserves nonuniform scene timing through shot planning and rejects a false runtime", async () => {
+    const timed = FOUNTAIN.replace("Duration: 60 |", "Duration: 20 |").replace("Duration: 60s", "Duration: 100s");
+    const result = await executeMoviePlan(picture(BRIEF), { runtime: { ...mockRuntime(), generate: async (request) => ({ text: request.stepId === "screenplay" ? JSON.stringify({ fountain: timed }) : responseFor(request) }) } });
+    assert.deepEqual(result.picture.scenes.map((scene) => scene.durationSec), [20, 100]);
+    for (const scene of result.picture.scenes) assert.equal(result.picture.shots.filter((shot) => shot.sceneId === scene.id).reduce((total, shot) => total + shot.durationSec, 0), scene.durationSec);
+    assert.throws(() => screenplaySceneTiming(timed, 180), /totals 120 seconds/);
+    assert.throws(() => screenplaySceneTiming(timed.replace(/\[\[Duration:[^\]]+\]\]/g, ""), 120), /Duration note/);
+    const invalid = await executeMoviePlan(picture(BRIEF), { runtime: { ...mockRuntime(), generate: async (request) => ({ text: request.stepId === "screenplay" ? JSON.stringify({ fountain: timed.replace("100s", "90s") }) : responseFor(request) }) } });
+    assert.match(invalid.picture.screenplay.workingFountain, /Duration: 90s/);
+    assert.equal(invalid.picture.production, undefined);
+    assert.equal(invalid.flow.steps.find((step) => step.id === "screenplay")?.status, "failed");
+  });
+
+  it("extracts more than sixty assets with state/reference details and no canonical media claims", async () => {
+    const assets = Array.from({ length: 129 }, (_, index) => ({ category: index === 0 ? "hair_makeup" : "prop", name: `Screenplay asset ${index + 1}`, description: `Required material item ${index + 1}`, sceneNumbers: [index % 2 + 1], variantLabel: index === 0 ? "After the dust storm" : "", continuityLocks: ["Preserve the same construction"], referenceRequirements: ["Front and profile detail"], confidence: "C", evidenceNote: "Screenplay requirement", hero: index === 0, referenceRequired: false }));
+    const draft = picture(BRIEF);
+    draft.productFlow = { ...emptyProductFlow(), reviewInternalPhases: true, reviewPhases: { ...PHASE_REVIEW_DEFAULTS, breakdown: true } };
+    const result = await executeMoviePlan(draft, { runtime: { ...mockRuntime(), generate: async (request) => ({ text: request.stepId === "breakdown" ? JSON.stringify({ assets }) : responseFor(request) }) } });
+    assert.equal(result.picture.production?.assets.length, 129);
+    const state = result.picture.production!.assets[0];
+    assert.equal(state.category, "hair_makeup");
+    assert.deepEqual(state.variants[0].specPatch.continuityLocks, ["After the dust storm", "Preserve the same construction"]);
+    assert.deepEqual(state.canonicalSpec.referenceRequirements, ["Front and profile detail"]);
+    assert.ok(result.picture.production!.assets.every((asset) => !asset.canonicalApproved && asset.approvedIterationId === null && asset.iterations.length === 0));
+    const schema = moviePlanResponseFormat("breakdown", 2).json_schema.schema as any;
+    assert.equal(schema.properties.assets.maxItems, undefined);
+    for (const category of ["hair_makeup", "set_dressing", "signage", "continuity", "practical_effect"]) assert.ok(schema.properties.assets.items.properties.category.enum.includes(category));
+  });
+
+  it("batches complete long-script inventory by scene and merges shared assets across batches", async () => {
+    const draft = picture("70-second picture");
+    draft.intake.runtimeSource = "manual";
+    draft.intake.targetRuntimeMinutes = 70 / 60;
+    draft.screenplay.workingFountain = Array.from({ length: 7 }, (_, index) => `EXT. FIELD ${index + 1} - DAY #SCENE-${String(index + 1).padStart(3, "0")}#\n[[Duration: 10]]\nA traveler carries the same clay jar.`).join("\n\n");
+    draft.productFlow = { ...emptyProductFlow(), reviewInternalPhases: true, reviewPhases: { ...PHASE_REVIEW_DEFAULTS, breakdown: true } };
+    const batches: number[][] = [];
+    const result = await executeMoviePlan(draft, { fromCompletedScreenplay: true, runtime: { ...mockRuntime(), generate: async (request) => {
+      assert.equal(request.stepId, "breakdown");
+      const numbers = request.prompt.match(/Extract only assigned scene numbers ([\d, ]+)\./)![1].split(",").map(Number);
+      batches.push(numbers);
+      return { text: JSON.stringify({ assets: [{ category: "prop", name: "Clay jar", description: "One clay jar with a chipped rim", sceneNumbers: numbers, continuityLocks: ["Keep the rim chip"], referenceRequirements: ["Rim detail"] }] }) };
+    } } });
+    assert.deepEqual(batches, [[1, 2, 3, 4, 5, 6], [7]]);
+    assert.equal(result.picture.production?.assets.length, 1);
+    assert.equal(result.picture.production?.assets[0].requiredSceneIds.length, 7);
+    assert.deepEqual(result.picture.production?.assets[0].canonicalSpec.continuityLocks, ["Keep the rim chip"]);
+  });
+
+  it("checkpoints finished departments and links only each shot's actual visual assets", async () => {
+    const checkpoints: Picture[] = [];
+    const result = await executeMoviePlan(picture(BRIEF), { runtime: mockRuntime(), onPicture: (current) => checkpoints.push(current) });
+    assert.ok(checkpoints.some((current) => current.research?.approvedVersionId && !current.screenplay.workingFountain));
+    assert.ok(checkpoints.some((current) => current.screenplay.workingFountain && !current.production));
+    assert.ok(checkpoints.some((current) => current.production && !current.visualDevelopment));
+    for (const prompt of result.picture.generateGates!.prompts.filter((item) => item.kind === "asset")) {
+      const shot = result.picture.shots.find((item) => item.id === prompt.shotId)!;
+      const expected = result.picture.production!.assets.filter((asset) => !["voice", "sound", "music", "continuity", "other"].includes(asset.category) && asset.requiredSceneIds.includes(shot.sceneId)).map((asset) => asset.id);
+      assert.deepEqual(prompt.assetRefIds, expected);
+    }
+  });
+});
 
 describe("Build Movie Plan executes the configured model", () => {
   it("retries truncated breakdown output while preserving the completed screenplay and continuing to assets", async () => {
@@ -152,13 +273,13 @@ describe("Build Movie Plan executes the configured model", () => {
   });
   it("skips QA completely when disabled and carries source evidence into the screenplay", async () => {
     const draft = picture("3-minute Moses crossing the Red Sea");
-    draft.productFlow = emptyProductFlow();
+    draft.productFlow = { ...emptyProductFlow(), qaEnabled: false };
     draft.intake.suppliedSourceText = "The waters were a wall unto them on their right hand, and on their left.";
     let screenplayAsk = "";
     const runtime = { ...mockRuntime(), generate: async (request: Parameters<MoviePlanGenerate>[0]) => {
       assert.notEqual(request.stepId, "screenplayQa");
       if (request.stepId === "screenplay") screenplayAsk = request.prompt;
-      return { text: RESPONSES[request.stepId] };
+      return { text: responseFor(request) };
     } };
     const result = await executeMoviePlan(draft, { runtime });
     assert.equal(result.flow.nextTouchpoint, "asset-approval");
@@ -169,7 +290,7 @@ describe("Build Movie Plan executes the configured model", () => {
   });
   it("honors the sentence runtime, but preserves an explicit manual override", async () => {
     let seen = "";
-    const runtime = { ...mockRuntime(), generate: async (request: Parameters<MoviePlanGenerate>[0]) => { if (request.stepId === "research") seen = request.prompt; return { text: RESPONSES[request.stepId] }; } };
+    const runtime = { ...mockRuntime(), generate: async (request: Parameters<MoviePlanGenerate>[0]) => { if (request.stepId === "research") seen = request.prompt; return { text: responseFor(request) }; } };
     const first = await executeMoviePlan(picture("two-minute trailer for Xenogears"), { runtime });
     assert.equal(first.picture.runtimeMinutes, 2);
     assert.equal(first.picture.shots.reduce((sum, shot) => sum + Math.round(shot.durationSec * first.picture.fps), 0), 120 * first.picture.fps);
@@ -189,7 +310,7 @@ describe("Build Movie Plan executes the configured model", () => {
     assert.equal(timed.required.length, 18);
     assert.equal(timed.properties.shot_01.properties.sceneNumber.const, 1);
     assert.equal(timed.properties.shot_18.properties.sceneNumber.const, 6);
-    assert.equal(timed.properties.shot_18.properties.durationSec.const, 10);
+    assert.equal(timed.properties.shot_18.properties.durationSec.exclusiveMinimum, 0);
     assert.deepEqual([...new Set(Object.values(timed.properties).map((row: any) => row.properties.sceneNumber.const))], [1, 2, 3, 4, 5, 6]);
     const runtime = { ...mockRuntime(), generate: async ({ stepId }: Parameters<MoviePlanGenerate>[0]) => ({ text: stepId === "screenplay" ? '{"fountain":"INT. ROOM - DAY\nUnescaped"}' : RESPONSES[stepId] }) };
     const result = await executeMoviePlan(picture(BRIEF), { runtime });
@@ -220,13 +341,13 @@ describe("Build Movie Plan executes the configured model", () => {
     const runtime = { ...mockRuntime(), generate: async ({ stepId }: Parameters<MoviePlanGenerate>[0]) => ({ text: stepId === "screenplayQa" && ++qaCalls === 1 ? blocker : RESPONSES[stepId] }) };
     const corrected = await executeMoviePlan(picture(BRIEF), { runtime });
     assert.equal(corrected.flow.nextTouchpoint, "asset-approval");
-    assert.equal(corrected.calls.filter((phase) => phase === "screenplayQa").length, 2);
+    assert.equal(corrected.calls.filter((phase) => phase === "screenplayQa").length, 4);
     assert.ok(corrected.picture.screenplay.versions.some((version) => version.label === "QA-revised screenplay"));
     assert.equal(corrected.picture.cinematography?.shotPlans.length, corrected.picture.shots.length);
     const unresolved = await executeMoviePlan(picture(BRIEF), { runtime: { ...mockRuntime(), generate: async ({ stepId }) => ({ text: stepId === "screenplayQa" ? blocker : RESPONSES[stepId] }) } });
     assert.equal(unresolved.flow.steps.find((phase) => phase.id === "screenplayQa")?.status, "failed");
     assert.equal(unresolved.picture.screenplay.approvedVersionId, null);
-    assert.equal(unresolved.calls.filter((phase) => phase === "screenplayQa").length, 2);
+    assert.equal(unresolved.calls.filter((phase) => phase === "screenplayQa").length, 4);
     assert.ok(unresolved.picture.screenplay.lastQaReport?.findings.length);
     let writerCalls = 0;
     const malformedRevision = await executeMoviePlan(picture(BRIEF), { runtime: { ...mockRuntime(), generate: async ({ stepId }) => ({ text: stepId === "screenplayQa" ? blocker : stepId === "screenplay" && ++writerCalls > 1 ? "truncated" : RESPONSES[stepId] }) } });

@@ -82,7 +82,7 @@ export type ProductFlowState = {
 export function emptyProductFlow(): ProductFlowState {
   return {
     schemaVersion: 1,
-    qaEnabled: false,
+    qaEnabled: true,
     thinkingEnabled: false,
     reviewInternalPhases: false,
     reviewPhases: { ...PHASE_REVIEW_DEFAULTS },
@@ -101,6 +101,7 @@ export function hydrateProductFlow(state: ProductFlowState | null | undefined): 
   return {
     ...emptyProductFlow(),
     ...state,
+    qaEnabled: state.qaEnabled !== false,
     reviewInternalPhases: state.reviewInternalPhases === true,
     reviewPhases: { ...PHASE_REVIEW_DEFAULTS, ...state.reviewPhases },
     steps: Array.isArray(state.steps) ? state.steps : [],

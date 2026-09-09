@@ -1,5 +1,9 @@
+import { AUTHORING_WORKFLOW_CONTRACT } from "./authoring-contract.ts";
+
 /** Shared generation policy for every picture and every local model. */
 export const GLOBAL_PRODUCTION_INSTRUCTIONS = `GLOBAL PRODUCTION RULES
+Apply each department's rules only during that department's work. Image reference-sheet layouts and image-token limits are not screenplay instructions.
+${AUTHORING_WORKFLOW_CONTRACT}
 1. Cohesion is the first priority. Read the picture's intake, explicit director instructions, source material, screenplay, visual development and cinematography together. Preserve the selected era, geography, identities, wardrobe colors and construction, materials, palette and motivated lighting across every department and asset. Never replace an explicit creative choice with a generic default or a critic's preference. Treat a chosen cinematic costume as a design requirement, not an archaeological claim.
 2. For a historical or biblical picture, use the period established by its source and instructions. Exclude modern clothing, contemporary festivals, modern architecture, plastics, modern weapons and unrelated fantasy styling unless the user explicitly requests them. State the actual period and relevant construction details in every asset image prompt. Do not infer a modern setting from a short label.
 3. Categorize production needs as characters, artifacts/props, wardrobe, locations, vehicles, creatures, visual effects, voice, sound or music. A narrator or off-screen voice is a VOICE asset unless the screenplay explicitly shows that speaker. Do not generate random portraits for voice, sound or music records. Extract assets from linked screenplay scenes and group repeated background extras into coherent representative assets.
