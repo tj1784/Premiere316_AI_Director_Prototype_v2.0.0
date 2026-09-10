@@ -17,3 +17,7 @@ checkpoints
 .grok/app-startup.log
 *.log
 /tmp
+
+# Local picture navigation and unidentified recovery material
+/Pictures/**/*.lnk
+/Pictures/Unassigned/Recovered Upload Candidates/
