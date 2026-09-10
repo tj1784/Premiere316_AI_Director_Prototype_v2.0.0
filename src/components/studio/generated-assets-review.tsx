@@ -257,11 +257,10 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
       {group.id === "characters" ? <p className="text-sm text-muted">Character turnaround sheets: five full-body angles across the upper row, five large facial close-ups in a separate lower row, on plain grey. Open a sheet to inspect it at full size.</p> : null}
       {group.id === "characters" ? <details className="rounded-md bg-elevated p-3 text-sm"><summary className="cursor-pointer font-medium">Instructions for the prompt writer</summary><div className="mt-3 grid gap-3"><p>{CHARACTER_IDENTITY_SHEET_CONTRACT.layout}</p><p>{CHARACTER_IDENTITY_SHEET_CONTRACT.background}</p><p>{CHARACTER_IDENTITY_SHEET_CONTRACT.continuity}</p><p>{CHARACTER_IDENTITY_SHEET_CONTRACT.referenceRoles}</p></div></details> : null}
       {!allAssets.some((asset) => assetReviewGroup(asset.category).id === group.id) ? <p className="text-sm text-muted">No {group.label.toLowerCase()} assets in the current screenplay breakdown.</p> : null}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="flex flex-wrap items-start gap-3">
       {assetReviews.filter(({ asset }) => assetReviewGroup(asset.category).id === group.id).map(({ asset, source, prompt, sourceCurrent, current, latest }) => {
-        return <article key={asset.id} className="grid gap-3 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+        return <article key={asset.id} className="grid w-full min-w-0 flex-[1_1_16rem] gap-3 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)] sm:max-w-[22rem]">
           <h4 className="font-display text-xl">{asset.name}</h4>
-          <AssetReferenceUpload record={picture.production!} assetId={asset.id} disabled={busy} onChange={production => replaceActive({ ...useStudio.getState().pictures.find(p => p.id === picture.id)!, production, updatedAt: Date.now() })} />
           {asset.references.length ? <div className="flex flex-wrap gap-2">{asset.references.map(ref => <button type="button" key={ref.id} aria-label={`Open reference ${ref.name}`} onClick={() => setPreview({ name: ref.name, uri: ref.uri })}><img src={ref.uri} alt={ref.name} className="size-20 rounded-md object-contain" /></button>)}</div> : null}
           <p className="text-xs uppercase tracking-wide text-muted">{asset.category.replaceAll("_", " ")}</p>
           {latest && !current ? <p className="text-sm text-accent">{asset.category === "character" ? "Previous image · New character sheet not generated yet" : "Previous image · Current generation pending"}</p> : null}

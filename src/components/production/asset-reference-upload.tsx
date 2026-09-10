@@ -14,13 +14,14 @@ export function AssetReferenceUpload({ record, assetId, onChange, disabled = fal
         const url = URL.createObjectURL(file);
         try {
           const image = await new Promise<HTMLImageElement>((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error("Could not read uploaded image.")); img.src = url; });
-          const scale = Math.min(1, 1200 / Math.max(image.width, image.height));
+          const scale = Math.min(1, 720 / Math.max(image.width, image.height));
           const canvas = document.createElement("canvas"); canvas.width = Math.round(image.width * scale); canvas.height = Math.round(image.height * scale);
           canvas.getContext("2d")!.drawImage(image, 0, 0, canvas.width, canvas.height);
           const asset = latest.current.assets.find(a => a.id === assetId);
           if (!asset) throw new Error("This asset no longer exists.");
           const now = Date.now();
-          const next = mode === "asset" ? replaceAssetImage(latest.current, assetId, { uri: canvas.toDataURL("image/jpeg", .95), name: file.name, width: canvas.width, height: canvas.height }, now) : linkAssetReference(latest.current, assetId, { id: crypto.randomUUID(), name: file.name, uri: canvas.toDataURL("image/jpeg", .9), mediaType: "image/jpeg", preferred: !asset.references.length, uploadedAt: now, provenance: { sourceType: "user", screenplayVersionId: latest.current.screenplayVersionId, sceneIds: asset.requiredSceneIds, createdAt: now } });
+          const dataUrl = canvas.toDataURL("image/jpeg", .82);
+          const next = mode === "asset" ? replaceAssetImage(latest.current, assetId, { uri: dataUrl, name: file.name, width: canvas.width, height: canvas.height }, now) : linkAssetReference(latest.current, assetId, { id: crypto.randomUUID(), name: file.name, uri: dataUrl, mediaType: "image/jpeg", preferred: !asset.references.length, uploadedAt: now, provenance: { sourceType: "user", screenplayVersionId: latest.current.screenplayVersionId, sceneIds: asset.requiredSceneIds, createdAt: now } });
           latest.current = next; onChange(next);
         } finally { URL.revokeObjectURL(url); }
       }
