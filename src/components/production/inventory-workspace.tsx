@@ -199,9 +199,23 @@ function AssetCard({ asset, sceneLabels, previewUri, selected, onClick }: { asse
 
 function PreflightSummary({ record, total, ready, review, blocked, onCategory, onReadiness }: { record: ProductionBreakdown; total: number; ready: number; review: number; blocked: number; onCategory: (category: "all" | ProductionCategory) => void; onReadiness: (state: PreflightFilter) => void }) {
   const major: ProductionCategory[] = ["character", "location", "prop", "wardrobe", "vfx"];
+  const characterAssets = record.assets.filter((asset) => asset.category === "character");
+  const characterAssetsWithImages = characterAssets.filter((asset) => asset.iterations.some((iteration) => iteration.mediaUri && iteration.status !== "REJECTED"));
+  const missingCharacterImages = characterAssets.filter((asset) => !characterAssetsWithImages.includes(asset));
   return (
     <section className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]" aria-label="Breakdown preflight">
       <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="text-[11px] tracking-wide text-subtle uppercase">Breakdown preflight</p><p className="mt-0.5 text-sm"><span className="font-display text-xl tabular-nums">{total}</span> production elements</p></div><div className="flex flex-wrap gap-1.5"><SummaryButton label="Ready" count={ready} onClick={() => onReadiness("ready")} /><SummaryButton label="Need review" count={review} onClick={() => onReadiness("review")} /><SummaryButton label="Blocked" count={blocked} onClick={() => onReadiness("blocked")} /></div></div>
+      <div className="mt-3 rounded-md bg-inset px-3 py-2 text-xs shadow-[var(--shadow-border)]">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p><span className="text-fg tabular-nums">{characterAssetsWithImages.length}/{characterAssets.length}</span> character images attached</p>
+          <button type="button" className="min-h-9 rounded-sm px-2 text-muted hover:bg-elevated hover:text-fg" onClick={() => onCategory("character")}>View characters</button>
+        </div>
+        {missingCharacterImages.length ? (
+          <p className="mt-1 text-rec">Missing: {missingCharacterImages.map((asset) => `${asset.name} (${asset.id})`).join(", ")}</p>
+        ) : (
+          <p className="mt-1 text-muted">No character image is missing in the current workbook import.</p>
+        )}
+      </div>
       <div className="mt-3 flex gap-1 overflow-x-auto border-t border-border pt-2">{major.map((item) => <button key={item} type="button" className="min-h-11 shrink-0 rounded-sm px-3 py-2 text-[11px] text-muted hover:bg-inset hover:text-fg" onClick={() => onCategory(item)}><span className="text-fg tabular-nums">{record.assets.filter((asset) => asset.category === item).length}</span> {PRODUCTION_CATEGORY_LABELS[item]}</button>)}</div>
     </section>
   );

@@ -18,6 +18,119 @@ export const PRODIGAL_SON_PACKAGE_ID = "prodigal-son-2026-09-09-v1";
 export const PRODIGAL_SON_IMPORTED_AT = Date.UTC(2026, 8, 9, 12);
 const SCREENPLAY_VERSION_ID = `${PRODIGAL_SON_PICTURE_ID}:user-accepted-import:v1`;
 const RESOURCE_ROOT = "/pictures/prodigal-son";
+const VISUAL_REFERENCE_FILE = "visual-development-reference.png";
+const VISUAL_REFERENCE_URI = `${RESOURCE_ROOT}/${VISUAL_REFERENCE_FILE}`;
+const CHARACTER_ASSET_ROOT = `${RESOURCE_ROOT}/character-assets`;
+const GENERATED_ASSET_ROOT = `${RESOURCE_ROOT}/generated-assets`;
+export const PRODIGAL_SON_VISUAL_REFERENCE_URI = VISUAL_REFERENCE_URI;
+
+const CHARACTER_ASSET_IMAGE_FILES: Record<string, string> = {
+  "PS-CHR-JESUS": "PS-CHR-JESUS.png",
+  "PS-CHR-FATHER": "PS-CHR-FATHER.png",
+  "PS-CHR-ELDER": "PS-CHR-ELDER.png",
+  "PS-CHR-YOUNGER": "PS-CHR-YOUNGER.png",
+  "PS-CHR-MATTAN": "PS-CHR-MATTAN.png",
+  "PS-CHR-HANNAH": "PS-CHR-HANNAH.png",
+  "PS-CHR-LEVI": "PS-CHR-LEVI.png",
+  "PS-CHR-DAMON": "PS-CHR-DAMON.png",
+  "PS-CHR-BREADSELLER": "PS-CHR-BREADSELLER.png",
+  "PS-CHR-HOST": "PS-CHR-HOST.png",
+  "PS-CHR-FARMER": "PS-CHR-FARMER.png",
+  "PS-CHR-SCRIBE": "PS-CHR-SCRIBE.png",
+  "PS-CHR-TAXCOLLECTOR": "PS-CHR-TAXCOLLECTOR.png",
+  "PS-EXT-LISTENERS": "PS-EXT-LISTENERS.png",
+  "PS-EXT-CARRIERS": "PS-EXT-CARRIERS.png",
+  "PS-EXT-HOMEWORKERS": "PS-EXT-HOMEWORKERS.png",
+  "PS-EXT-NEIGHBORWOMAN": "PS-EXT-NEIGHBORWOMAN.png",
+  "PS-EXT-OLDTRAVELER": "PS-EXT-OLDTRAVELER.png",
+  "PS-EXT-MARKET": "PS-EXT-MARKET.png",
+  "PS-EXT-CHILD": "PS-EXT-CHILD.png",
+  "PS-EXT-GUESTS": "PS-EXT-GUESTS.png",
+  "PS-EXT-FOREIGNMUS": "PS-EXT-FOREIGNMUS.png",
+  "PS-EXT-FAMINEFAMILY": "PS-EXT-FAMINEFAMILY.png",
+  "PS-EXT-FARMHOUSE": "PS-EXT-FARMHOUSE.png",
+  "PS-EXT-ROADTRADE": "PS-EXT-ROADTRADE.png",
+  "PS-EXT-DONKEYDRIVER": "PS-EXT-DONKEYDRIVER.png",
+  "PS-EXT-FEAST": "PS-EXT-FEAST.png",
+  "PS-EXT-HOMEMUS": "PS-EXT-HOMEMUS.png",
+  "PS-EXT-PASSTRAVELER": "PS-EXT-PASSTRAVELER.png",
+};
+
+const GENERATED_ASSET_IMAGE_FILES: Record<string, string> = {
+  "PS-FOD-CALFMEAT": "PS-FOD-CALFMEAT.png",
+  "PS-FOD-FOREIGNBANQUET": "PS-FOD-FOREIGNBANQUET.png",
+  "PS-FOD-GRAIN": "PS-FOD-GRAIN.png",
+  "PS-FOD-HOMEBREAD": "PS-FOD-HOMEBREAD.png",
+  "PS-FOD-HOMEMEALS": "PS-FOD-HOMEMEALS.png",
+  "PS-FOD-MARKETBREAD": "PS-FOD-MARKETBREAD.png",
+  "PS-FOD-PODS": "PS-FOD-PODS.png",
+  "PS-FOD-TRAVEL": "PS-FOD-TRAVEL.png",
+  "PS-GFX-CREDITS": "PS-GFX-CREDITS.png",
+  "PS-GFX-TITLE": "PS-GFX-TITLE.png",
+  "PS-GRM-ELDERPALM": "PS-GRM-ELDERPALM.png",
+  "PS-GRM-FATHERDUST": "PS-GRM-FATHERDUST.png",
+  "PS-GRM-YOUNGERHOME": "PS-GRM-YOUNGERHOME.png",
+  "PS-GRM-YOUNGERHUNGER": "PS-GRM-YOUNGERHUNGER.png",
+  "PS-GRM-YOUNGERRESTORE": "PS-GRM-YOUNGERRESTORE.png",
+  "PS-INS-BASKETMEMORY": "PS-INS-BASKETMEMORY.png",
+  "PS-INS-SUPPERMEMORY": "PS-INS-SUPPERMEMORY.png",
+  "PS-PRP-BALANCE": "PS-PRP-BALANCE.png",
+  "PS-PRP-BASKETMENDED": "PS-PRP-BASKETMENDED.png",
+  "PS-PRP-BASKETSOUND": "PS-PRP-BASKETSOUND.png",
+  "PS-PRP-BEDDING": "PS-PRP-BEDDING.png",
+  "PS-PRP-BREADCLOTH": "PS-PRP-BREADCLOTH.png",
+  "PS-PRP-CISTERNROPE": "PS-PRP-CISTERNROPE.png",
+  "PS-PRP-CLOTHDISPLAY": "PS-PRP-CLOTHDISPLAY.png",
+  "PS-PRP-COINCLOTH": "PS-PRP-COINCLOTH.png",
+  "PS-PRP-COINS": "PS-PRP-COINS.png",
+  "PS-PRP-DAMAGEDBASKETS": "PS-PRP-DAMAGEDBASKETS.png",
+  "PS-PRP-ELDERBOWL": "PS-PRP-ELDERBOWL.png",
+  "PS-PRP-ESTATEDOC": "PS-PRP-ESTATEDOC.png",
+  "PS-PRP-FIELDSTONES": "PS-PRP-FIELDSTONES.png",
+  "PS-PRP-HOMEWATERJAR": "PS-PRP-HOMEWATERJAR.png",
+  "PS-PRP-MARKETSCALE": "PS-PRP-MARKETSCALE.png",
+  "PS-PRP-MERCHANTJAR": "PS-PRP-MERCHANTJAR.png",
+  "PS-PRP-MONEYPOUCH": "PS-PRP-MONEYPOUCH.png",
+  "PS-PRP-PACKTACK": "PS-PRP-PACKTACK.png",
+  "PS-PRP-PALMCLOTH": "PS-PRP-PALMCLOTH.png",
+  "PS-PRP-PIGFEEDBASKET": "PS-PRP-PIGFEEDBASKET.png",
+  "PS-PRP-PIPEDRUMFOREIGN": "PS-PRP-PIPEDRUMFOREIGN.png",
+  "PS-PRP-PIPEDRUMHOME": "PS-PRP-PIPEDRUMHOME.png",
+  "PS-PRP-REFLECTIONBOWL": "PS-PRP-REFLECTIONBOWL.png",
+  "PS-PRP-RESTORATIONSTOOL": "PS-PRP-RESTORATIONSTOOL.png",
+  "PS-PRP-RING": "PS-PRP-RING.png",
+  "PS-PRP-SERVINGBOWL": "PS-PRP-SERVINGBOWL.png",
+  "PS-PRP-SLEDGE": "PS-PRP-SLEDGE.png",
+  "PS-PRP-TAVERNWARE": "PS-PRP-TAVERNWARE.png",
+  "PS-PRP-TROUGH": "PS-PRP-TROUGH.png",
+  "PS-PRP-TWOCUPS": "PS-PRP-TWOCUPS.png",
+  "PS-PRP-WALLCORD": "PS-PRP-WALLCORD.png",
+  "PS-PRP-WASHBOWL": "PS-PRP-WASHBOWL.png",
+  "PS-PRP-WATERSKIN": "PS-PRP-WATERSKIN.png",
+  "PS-PRP-WRITING": "PS-PRP-WRITING.png",
+  "PS-SET-COOKING": "PS-SET-COOKING.png",
+  "PS-SET-FEASTSEATING": "PS-SET-FEASTSEATING.png",
+  "PS-SET-FOREIGNMEAL": "PS-SET-FOREIGNMEAL.png",
+  "PS-SET-HOMEAWNING": "PS-SET-HOMEAWNING.png",
+  "PS-SET-HOMELAMPS": "PS-SET-HOMELAMPS.png",
+  "PS-SET-HOMETABLE": "PS-SET-HOMETABLE.png",
+  "PS-SET-HOMEVESSELS": "PS-SET-HOMEVESSELS.png",
+  "PS-SET-ROOMPEG": "PS-SET-ROOMPEG.png",
+  "PS-SET-TOWNSTOCK": "PS-SET-TOWNSTOCK.png",
+  "PS-WAR-BESTROBE": "PS-WAR-BESTROBE.png",
+  "PS-WAR-BLUE": "PS-WAR-BLUE.png",
+  "PS-WAR-ELDER": "PS-WAR-ELDER.png",
+  "PS-WAR-FATHER": "PS-WAR-FATHER.png",
+  "PS-WAR-FATHERTRAVEL": "PS-WAR-FATHERTRAVEL.png",
+  "PS-WAR-FOREIGNKIT": "PS-WAR-FOREIGNKIT.png",
+  "PS-WAR-HOMEKIT": "PS-WAR-HOMEKIT.png",
+  "PS-WAR-JESUS": "PS-WAR-JESUS.png",
+  "PS-WAR-NEWSANDALS": "PS-WAR-NEWSANDALS.png",
+  "PS-WAR-OLIVE": "PS-WAR-OLIVE.png",
+  "PS-WAR-RUSSET": "PS-WAR-RUSSET.png",
+  "PS-WAR-YOUNGERSANDAL": "PS-WAR-YOUNGERSANDAL.png",
+  "PS-WAR-YOUNGERTUNIC": "PS-WAR-YOUNGERTUNIC.png",
+};
 
 const CATEGORY_MAP: Record<string, ProductionCategory> = {
   Character: "character", "Featured extra": "character", Extras: "character",
@@ -57,6 +170,10 @@ export function prodigalSonHierarchy(): ScreenplayHierarchy {
 }
 
 function importedPackage(): ImportedPicturePackage {
+  const sourceAssets = PRODIGAL_SON_SOURCE.assets.map(({ generation_prompt: _generationPrompt, workbook: _workbook, ...asset }) => structuredClone(asset));
+  const timingPlan = PRODIGAL_SON_SOURCE.scenes.map(({ workbook: _workbook, ...scene }) => structuredClone(scene));
+  const sceneAssetLinks = PRODIGAL_SON_SOURCE.sceneAssetLinks.map(({ workbook: _workbook, ...link }) => structuredClone(link));
+  const continuity = PRODIGAL_SON_SOURCE.continuity.map(({ workbook: _workbook, ...rule }) => structuredClone(rule));
   return {
     schemaVersion: 1,
     packageId: PRODIGAL_SON_PACKAGE_ID,
@@ -66,10 +183,10 @@ function importedPackage(): ImportedPicturePackage {
     screenplayAcceptance: "User accepted the delivered screenplay and explicitly requested adding it and its full inventory as a new picture. This is editorial acceptance of the imported text; visual specifications, media, and backend production approvals remain pending.",
     researchStatus: "completed-source-import-pending-app-review",
     researchNotes: PRODIGAL_SON_SOURCE.researchNotes,
-    sourceAssets: structuredClone(PRODIGAL_SON_SOURCE.assets),
-    timingPlan: structuredClone(PRODIGAL_SON_SOURCE.scenes),
-    sceneAssetLinks: structuredClone(PRODIGAL_SON_SOURCE.sceneAssetLinks),
-    continuity: structuredClone(PRODIGAL_SON_SOURCE.continuity),
+    sourceAssets,
+    timingPlan,
+    sceneAssetLinks,
+    continuity,
     sourceSha256: { ...PRODIGAL_SON_SOURCE.sourceSha256 },
     resources: [
       { label: "Complete package", fileName: "Prodigal_Son_Complete_Package.zip" },
@@ -144,6 +261,58 @@ function assetSpec(source: ImportedVisualAsset): CanonicalAssetSpec {
   };
 }
 
+function characterAssetImageIteration(source: Pick<ImportedVisualAsset, "id" | "name" | "scenes">) {
+  const fileName = CHARACTER_ASSET_IMAGE_FILES[source.id];
+  if (!fileName) return null;
+  return {
+    id: `${source.id}:uploaded-character-image:v1`,
+    assetId: source.id,
+    variantId: null,
+    specVersionId: `${source.id}:imported-spec:v1`,
+    mediaUri: `${CHARACTER_ASSET_ROOT}/${fileName}`,
+    createdAt: PRODIGAL_SON_IMPORTED_AT,
+    status: "NEEDS_REVIEW" as const,
+    provenance: {
+      sourceType: "user" as const,
+      screenplayVersionId: SCREENPLAY_VERSION_ID,
+      sceneIds: [...source.scenes],
+      evidenceNote: "User-supplied character asset image imported for review.",
+      createdAt: PRODIGAL_SON_IMPORTED_AT,
+    },
+    uploadedFileName: fileName,
+  };
+}
+
+function generatedAssetImageIteration(source: Pick<ImportedVisualAsset, "id" | "name" | "scenes">) {
+  const fileName = GENERATED_ASSET_IMAGE_FILES[source.id];
+  if (!fileName) return null;
+  return {
+    id: `${source.id}:comfy-generated-asset:v1`,
+    assetId: source.id,
+    variantId: null,
+    specVersionId: `${source.id}:imported-spec:v1`,
+    mediaUri: `${GENERATED_ASSET_ROOT}/${fileName}`,
+    createdAt: PRODIGAL_SON_IMPORTED_AT,
+    status: "NEEDS_REVIEW" as const,
+    provenance: {
+      sourceType: "user" as const,
+      screenplayVersionId: SCREENPLAY_VERSION_ID,
+      sceneIds: [...source.scenes],
+      evidenceNote: "ComfyUI-generated asset image imported for review from the user-requested batch.",
+      createdAt: PRODIGAL_SON_IMPORTED_AT,
+    },
+    uploadedFileName: fileName,
+  };
+}
+
+function importedAssetIterations(source: Pick<ImportedVisualAsset, "id" | "name" | "scenes">) {
+  return [characterAssetImageIteration(source), generatedAssetImageIteration(source)].filter((iteration) => iteration !== null);
+}
+
+function prodigalSonAssetImagePrompts(): Record<string, string> {
+  return Object.fromEntries(PRODIGAL_SON_SOURCE.assets.map((asset) => [asset.id, asset.generation_prompt ?? ""]).filter(([, prompt]) => prompt.trim()));
+}
+
 function importedProduction(picture: Picture): ProductionBreakdown {
   const boundary = approvedScreenplayBoundary(picture.id, picture.intake, picture.screenplay);
   if (!boundary) throw new Error("Imported picture is missing its accepted screenplay snapshot.");
@@ -163,7 +332,7 @@ function importedProduction(picture: Picture): ProductionBreakdown {
       aliases: [], category: requirement.category, hero: Boolean(requirement.hero),
       requirementIds: [requirement.id], requiredSceneIds: [...source.scenes], socialWorldIds: [],
       canonicalSpec: spec, canonicalApproved: false, references: [], referenceRequired: false,
-      variants: [], iterations: [], approvedIterationId: null, rejectedIterationIds: [],
+      variants: [], iterations: importedAssetIterations(source), approvedIterationId: null, rejectedIterationIds: [],
       specVersions: [{ id: `${source.id}:imported-spec:v1`, assetId: source.id, createdAt: PRODIGAL_SON_IMPORTED_AT, sourceVersionId: null, spec: structuredClone(spec), approved: false, provenance }],
       approvedSpecVersionId: null, aliasesOf: [], tombstone: false, lineage: [], conflicts: [],
       stale: false, staleReasons: [], blockedReasons: [], provenance,
@@ -230,7 +399,7 @@ export function makeProdigalSonPicture(): Picture {
     genre: intake.genre, tone: intake.tone, format: intake.aspectRatio, fps: intake.frameRate,
     runtimeMinutes: 30, createdAt: now, updatedAt: now, stage: "inventory", lastOpenedStage: "inventory",
     intake, screenplay, screenplayFountain: PRODIGAL_SON_SOURCE.fountain, research: importedResearch(),
-    importedPackage: importedPackage(), thumbnailUrl: null, selectedEngine: { ...DEFAULT_ENGINES },
+    importedPackage: importedPackage(), thumbnailUrl: VISUAL_REFERENCE_URI, selectedEngine: { ...DEFAULT_ENGINES },
     production: null, visualDevelopment: makeVisualDevelopmentState(now), cinematography: makeCinematographyState(now), performance: null,
     acts: [{ number: 1, name: "The Prodigal Son" }],
     scenes: PRODIGAL_SON_SOURCE.scenes.map((scene) => ({ id: scene.id, act: 1, slugline: scene.slugline, summary: scene.action, emotionalBeat: scene.title, durationSec: scene.duration_seconds })),
@@ -238,6 +407,7 @@ export function makeProdigalSonPicture(): Picture {
     directorNotes: intake.directorNotes, usage: { llm: 0, stills: 0, clips: 0, tts: 0 },
   };
   picture.production = importedProduction(picture);
+  picture.assetImagePrompts = prodigalSonAssetImagePrompts();
   // An explicit empty workspace prevents legacy hydration from inventing default
   // shots, camera choices, or performance beats before these departments begin.
   picture.performance = {
@@ -256,14 +426,44 @@ export function makeProdigalSonPicture(): Picture {
   return picture;
 }
 
-/** An installed ID is also a deletion tombstone: never recreate a deleted bundle. */
+/** Keep bundled source packages visible when the app updates an existing library. */
 export function mergeBundledPictures(pictures: Picture[], installedIds: readonly string[] = []): { pictures: Picture[]; installedBundledPictureIds: string[] } {
   const installed = new Set(installedIds.filter((id) => typeof id === "string"));
   const exists = pictures.some((picture) => picture.id === PRODIGAL_SON_PICTURE_ID);
-  const shouldAdd = !exists && !installed.has(PRODIGAL_SON_PICTURE_ID);
+  const shouldAdd = !exists;
   installed.add(PRODIGAL_SON_PICTURE_ID);
   return {
     pictures: shouldAdd ? [...pictures, makeProdigalSonPicture()] : pictures,
     installedBundledPictureIds: [...installed],
   };
+}
+
+export function hydrateProdigalSonVisualReference(picture: Picture): Picture {
+  if (picture.id !== PRODIGAL_SON_PICTURE_ID) return picture;
+  const production = picture.production;
+  const sourceById = new Map(PRODIGAL_SON_SOURCE.assets.map((asset) => [asset.id, asset]));
+  const nextProduction = production ? {
+    ...production,
+    assets: production.assets.map((asset) => {
+      const source = sourceById.get(asset.id);
+      const importedIterations = source ? importedAssetIterations(source) : [];
+      const importedIds = new Set(importedIterations.map((iteration) => iteration.id));
+      const iterations = importedIterations.length
+        ? [...importedIterations, ...asset.iterations.filter((iteration) => !importedIds.has(iteration.id))]
+        : asset.iterations;
+      return {
+        ...asset,
+        references: asset.references.filter((reference) => reference.uri !== VISUAL_REFERENCE_URI),
+        iterations,
+      };
+    }),
+  } : production;
+  const nextPicture = {
+    ...picture,
+    thumbnailUrl: picture.thumbnailUrl || VISUAL_REFERENCE_URI,
+    production: nextProduction,
+    assetImagePrompts: { ...picture.assetImagePrompts, ...prodigalSonAssetImagePrompts() },
+    assetPromptSources: Object.fromEntries(Object.entries(picture.assetPromptSources ?? {}).filter(([, source]) => source.modelId !== "workbook-import")),
+  };
+  return nextPicture;
 }

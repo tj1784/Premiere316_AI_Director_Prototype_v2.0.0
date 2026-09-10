@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { PRODIGAL_SON_SOURCE } from "./bundled-pictures/prodigal-son/source.ts";
-import { makeProdigalSonPicture, mergeBundledPictures, PRODIGAL_SON_PICTURE_ID } from "./prodigal-son.ts";
+import { hydrateProdigalSonVisualReference, makeProdigalSonPicture, mergeBundledPictures, PRODIGAL_SON_PICTURE_ID, PRODIGAL_SON_VISUAL_REFERENCE_URI } from "./prodigal-son.ts";
 import { approvedScreenplayBoundary } from "./screenplay.ts";
 import { sceneNodes } from "./screenplay-hierarchy.ts";
 import { migratePicturePreparation } from "./picture-preparation.ts";
@@ -21,6 +21,10 @@ test("the imported picture retains the complete original text, timing plan and i
   const picture = makeProdigalSonPicture();
   const bundle = picture.importedPackage!;
   const production = picture.production!;
+  const sourceAssetsForPersistence = PRODIGAL_SON_SOURCE.assets.map(({ generation_prompt: _generationPrompt, workbook: _workbook, ...asset }) => asset);
+  const sourceScenesForPersistence = PRODIGAL_SON_SOURCE.scenes.map(({ workbook: _workbook, ...scene }) => scene);
+  const sourceLinksForPersistence = PRODIGAL_SON_SOURCE.sceneAssetLinks.map(({ workbook: _workbook, ...link }) => link);
+  const sourceContinuityForPersistence = PRODIGAL_SON_SOURCE.continuity.map(({ workbook: _workbook, ...rule }) => rule);
   assert.equal(picture.screenplayFountain, PRODIGAL_SON_SOURCE.fountain);
   assert.equal(picture.screenplay.workingFountain, PRODIGAL_SON_SOURCE.fountain);
   assert.equal(picture.screenplay.status, "APPROVED");
@@ -32,10 +36,12 @@ test("the imported picture retains the complete original text, timing plan and i
   assert.equal(picture.scenes.slice(0, 22).reduce((sum, scene) => sum + scene.durationSec, 0), 1770);
   assert.equal(picture.scenes[22].id, "PS-S23");
   assert.equal(picture.scenes[22].durationSec, 30);
-  assert.deepEqual(bundle.sourceAssets, PRODIGAL_SON_SOURCE.assets);
-  assert.deepEqual(bundle.sceneAssetLinks, PRODIGAL_SON_SOURCE.sceneAssetLinks);
-  assert.deepEqual(bundle.continuity, PRODIGAL_SON_SOURCE.continuity);
-  assert.deepEqual(bundle.timingPlan, PRODIGAL_SON_SOURCE.scenes);
+  assert.deepEqual(bundle.sourceAssets, sourceAssetsForPersistence);
+  assert.deepEqual(bundle.sceneAssetLinks, sourceLinksForPersistence);
+  assert.deepEqual(bundle.continuity, sourceContinuityForPersistence);
+  assert.deepEqual(bundle.timingPlan, sourceScenesForPersistence);
+  assert.equal(Object.keys(picture.assetImagePrompts ?? {}).length, 129);
+  assert.equal(picture.assetImagePrompts?.["PS-CHR-JESUS"], PRODIGAL_SON_SOURCE.assets.find((asset) => asset.id === "PS-CHR-JESUS")?.generation_prompt);
   const assetIds = new Set(production.assets.map((asset) => asset.id));
   const sceneIds = new Set(picture.scenes.map((scene) => scene.id));
   assert.equal(assetIds.size, 129);
@@ -87,7 +93,7 @@ test("an accepted text import does not invent visual approvals, generated media 
   assert.equal(picture.screenplay.lastTelemetry, null);
   assert.equal(picture.screenplay.versions.at(-1)!.model, null);
   assert.equal(picture.sample, undefined);
-  assert.equal(picture.thumbnailUrl, null);
+  assert.equal(picture.thumbnailUrl, PRODIGAL_SON_VISUAL_REFERENCE_URI);
   assert.equal(picture.production!.sourceBoundary, null);
   assert.equal(picture.production!.productionAuthority, null);
   assert.deepEqual(picture.production!.preparedAssets, []);
@@ -97,7 +103,17 @@ test("an accepted text import does not invent visual approvals, generated media 
     assert.equal(asset.approvedIterationId, null);
     assert.equal(asset.approvedSpecVersionId, null);
     assert.ok(asset.specVersions!.every((spec) => !spec.approved));
-    assert.deepEqual(asset.iterations, []);
+    if (asset.category === "character") {
+      assert.equal(asset.iterations.length, 1);
+      assert.equal(asset.iterations[0].mediaUri, `/pictures/prodigal-son/character-assets/${asset.id}.png`);
+      assert.equal(asset.iterations[0].status, "NEEDS_REVIEW");
+    } else if (asset.iterations.length) {
+      assert.equal(asset.iterations.length, 1);
+      assert.equal(asset.iterations[0].mediaUri, `/pictures/prodigal-son/generated-assets/${asset.id}.png`);
+      assert.equal(asset.iterations[0].status, "NEEDS_REVIEW");
+    } else {
+      assert.deepEqual(asset.iterations, []);
+    }
     assert.deepEqual(asset.references, []);
     assert.equal(asset.readiness, "READY_FOR_REVIEW");
   }
@@ -108,6 +124,27 @@ test("an accepted text import does not invent visual approvals, generated media 
   assert.deepEqual(picture.voices, []);
   assert.deepEqual(picture.usage, { llm: 0, stills: 0, clips: 0, tts: 0 });
   assert.ok(picture.production!.assets.find((asset) => asset.id === "PS-PRP-RING")!.canonicalSpec.continuityLocks.some((lock) => lock.includes("PS-CONT-07")));
+});
+
+test("visual development board backfills only the Prodigal Son thumbnail and is removed from asset references", () => {
+  const picture = makeProdigalSonPicture();
+  const legacy = {
+    ...picture,
+    thumbnailUrl: null,
+    production: {
+      ...picture.production!,
+      assets: picture.production!.assets.map((asset) => ({
+        ...asset,
+        references: [{ id: "bad-board-ref", name: "Do not use as asset reference", uri: PRODIGAL_SON_VISUAL_REFERENCE_URI, mediaType: "image/png", preferred: true, uploadedAt: 1, provenance: { sourceType: "user" as const, screenplayVersionId: picture.production!.screenplayVersionId, sceneIds: asset.requiredSceneIds, createdAt: 1 } }],
+      })),
+    },
+  };
+  const hydrated = hydrateProdigalSonVisualReference(legacy);
+  assert.equal(hydrated.thumbnailUrl, PRODIGAL_SON_VISUAL_REFERENCE_URI);
+  assert.equal(hydrated.production!.assets.length, 129);
+  assert.equal(hydrated.production!.assets.every((asset) => !asset.references.some((reference) => reference.uri === PRODIGAL_SON_VISUAL_REFERENCE_URI)), true);
+  assert.equal(hydrated.production!.assets.filter((asset) => asset.category === "character" && asset.iterations.some((iteration) => iteration.mediaUri === `/pictures/prodigal-son/character-assets/${asset.id}.png`)).length, 29);
+  assert.equal(hydrated.production!.assets.filter((asset) => asset.iterations.some((iteration) => iteration.mediaUri === `/pictures/prodigal-son/generated-assets/${asset.id}.png`)).length, 73);
 });
 
 test("native hydration leaves downstream creative work empty and every media gate locked", () => {
@@ -145,7 +182,7 @@ test("native hydration leaves downstream creative work empty and every media gat
   assert.equal(picture.production!.screenplayVersionId, approvedScreenplayBoundary(picture.id, picture.intake, picture.screenplay)!.screenplayVersionId);
 });
 
-test("bundle installation is duplicate-free, preserves edits and respects deletion across reloads", () => {
+test("bundle installation is duplicate-free, preserves edits and restores missing bundles across reloads", () => {
   const oldPicture = { ...makeProdigalSonPicture(), id: "existing-user-picture", title: "Existing picture" };
   const first = mergeBundledPictures([oldPicture]);
   assert.equal(first.pictures.length, 2);
@@ -158,8 +195,9 @@ test("bundle installation is duplicate-free, preserves edits and respects deleti
   assert.equal(afterEdit.pictures[1], edited);
   const persistedAfterDelete = JSON.parse(JSON.stringify({ ...afterEdit, pictures: [oldPicture] }));
   const afterDelete = mergeBundledPictures(persistedAfterDelete.pictures, persistedAfterDelete.installedBundledPictureIds);
-  assert.equal(afterDelete.pictures.length, 1);
+  assert.equal(afterDelete.pictures.length, 2);
   assert.equal(afterDelete.pictures[0].title, "Existing picture");
+  assert.equal(afterDelete.pictures.filter((picture) => picture.id === PRODIGAL_SON_PICTURE_ID).length, 1);
   assert.deepEqual(afterDelete.installedBundledPictureIds, [PRODIGAL_SON_PICTURE_ID]);
 });
 
@@ -175,7 +213,12 @@ test("each factory result is independent and complete metadata survives serializ
   assert.deepEqual(restored.importedPackage, second.importedPackage);
   assert.deepEqual(restored.production!.assets.map((asset) => asset.id), second.production!.assets.map((asset) => asset.id));
   assert.equal(restored.production!.assets.length, 129);
-  assert.ok(JSON.stringify(second).length < 2_000_000, "Text metadata should stay within a reasonable localStorage footprint.");
+  assert.equal(Object.keys(restored.assetImagePrompts ?? {}).length, 129);
+  assert.equal(restored.importedPackage!.sourceAssets.filter((asset) => asset.scene_count !== undefined).length, 129);
+  assert.equal(restored.importedPackage!.timingPlan.length, 23);
+  assert.equal(restored.importedPackage!.sceneAssetLinks.length, 539);
+  assert.equal(restored.importedPackage!.continuity.length, 29);
+  assert.ok(JSON.stringify(second).length < 2_250_000, "Text metadata should stay within a reasonable localStorage footprint.");
 });
 
 test("all supplied download files exactly match their source SHA-256 and text payloads", () => {
