@@ -1,4 +1,5 @@
 import type { Picture, Shot } from "./types.ts";
+import { DIALOGUE_FACE_FRAMING } from "./dialogue-framing.ts";
 import {
   INTERNAL_PHASES,
   hydrateProductFlow,
@@ -331,7 +332,7 @@ ${JSON.stringify(picture.production?.assets.map(({ id, name, category, canonical
 
 function cinemaPrompt(picture: Picture): { system: string; prompt: string } {
   return {
-    system: AUTHORING_WORKFLOW_CONTRACT + "\nYou are Premiere316 cinematography. Return JSON { thesis, lensLanguage, lighting, movement }. Use the completed visual-development handoff and scene requirements. Define motivated natural lighting, observable performance, geography, wide compositions and intimate holds as appropriate to the intake. Do not override explicit director constraints with generic spectacle.",
+    system: AUTHORING_WORKFLOW_CONTRACT + "\nYou are Premiere316 cinematography. Return JSON { thesis, lensLanguage, lighting, movement }. Use the completed visual-development handoff and scene requirements. Define motivated natural lighting, observable performance, geography, wide compositions and intimate holds as appropriate to the intake. Do not override explicit director constraints with generic spectacle. " + DIALOGUE_FACE_FRAMING,
     prompt: `Complete intake:
 ${packAuthoringIntake(picture.intake, false)}
 Research:
@@ -349,14 +350,14 @@ ${JSON.stringify(picture.production?.assets.map(({ id, name, canonicalSpec, requ
 
 function performancePrompt(picture: Picture): { system: string; prompt: string } {
   return {
-    system: "You are Premiere316 performance. Return JSON { notes, shots: [{ sceneNumber, description, type, durationSec, camera, lens, cameraMove, emotion, expression }] }. Use 1-based scene numbers. Give concise playable acting direction with specific gestures, gaze and emotion, one representative shot per scene.",
+    system: "You are Premiere316 performance. Return JSON { notes, shots: [{ sceneNumber, description, type, durationSec, camera, lens, cameraMove, emotion, expression }] }. Use 1-based scene numbers. Give concise playable acting direction with specific gestures, gaze and emotion, one representative shot per scene. " + DIALOGUE_FACE_FRAMING,
     prompt: `Performance and shot plan for ${picture.title}. Fountain:\n${picture.screenplay.workingFountain}`,
   };
 }
 
 function shotsPrompt(picture: Picture): { system: string; prompt: string } {
   return {
-    system: "You are Premiere316 shot director. Return JSON { shots: { shot_01: { sceneNumber, description, type, durationSec, camera, lens, cameraMove, emotion, expression }, shot_02: {...} } }. Follow the schema's fixed 1-based scene assignments in chronological order. Each assigned scene must show its actual screenplay events, including the final scene's ending. Keep descriptions concise.",
+    system: "You are Premiere316 shot director. Return JSON { shots: { shot_01: { sceneNumber, description, type, durationSec, camera, lens, cameraMove, emotion, expression }, shot_02: {...} } }. Follow the schema's fixed 1-based scene assignments in chronological order. Each assigned scene must show its actual screenplay events, including the final scene's ending. Keep descriptions concise. " + DIALOGUE_FACE_FRAMING + " Describe any artistic exception explicitly in the shot description.",
     prompt: `Shot list for ${picture.title}. Target ${picture.intake.targetRuntimeMinutes * 60} seconds total. Use exactly ${Math.max(picture.scenes.length, Math.ceil(picture.intake.targetRuntimeMinutes * 6))} shots with durations appropriate to the action, silence and performances, covering all story events. Preserve each scene's timing allocation: ${JSON.stringify(picture.scenes.map(({ id, slugline, durationSec }) => ({ id, slugline, durationSec })))}. Describe playable visual action rather than a summary. Cinematography: ${JSON.stringify(picture.cinematography?.manifestoVersions.at(-1))}. Fountain:\n${picture.screenplay.workingFountain}`,
   };
 }

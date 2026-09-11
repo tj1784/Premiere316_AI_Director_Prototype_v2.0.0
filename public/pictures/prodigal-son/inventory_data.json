@@ -1,5 +1,5 @@
 {
-  "revision": "Final screenplay dated 9 September 2026; all visual assets planned and approval pending.",
+  "revision": "11 September 2026 user-directed update: explicitly include a Pharisee alongside the scribe in PS-S01; retain the complete accepted screenplay and timing otherwise.",
   "assets": [
     {
       "id": "PS-CHR-JESUS",
@@ -2216,6 +2216,20 @@
       "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
       "approval_status": "Pending",
       "approved_asset_path": ""
+    },
+    {
+      "id": "PS-CHR-PHARISEE",
+      "category": "Featured extra",
+      "name": "Pharisee",
+      "parent": "PS-EXT-LISTENERS",
+      "requirement": "A distinct Pharisee standing beside the scribe in PS-S01. Use member B from the existing hillside listener reference sheet for identity; preserve that individual face, hair and first-century clothing. Do not infer a caricature, villain expression or distinctive religious costume.",
+      "state": "Clean prologue only; stands at the edge with the scribe, hears his quiet aside and stays. Natural, restrained response.",
+      "scenes": [
+        "PS-S01"
+      ],
+      "reference": "Existing PS-EXT-LISTENERS sheet member B provides identity and clothing. Dedicated dialogue/face reference may be added as a new iteration.",
+      "approval_status": "Pending",
+      "approved_asset_path": ""
     }
   ],
   "scenes": [
@@ -2225,7 +2239,7 @@
       "duration_seconds": 45,
       "story_time": "Prologue",
       "title": "A man had two sons",
-      "action": "Listeners share bread; scribe objects quietly; Jesus introduces two sons.",
+      "action": "Listeners share bread; a scribe speaks quietly to a Pharisee at the edge; Jesus introduces two sons.",
       "continuity": "Living Jesus, no wounds; hillside is an invented telling location."
     },
     {
@@ -5122,6 +5136,11 @@
       "scene_id": "PS-S23",
       "asset_id": "PS-GFX-CREDITS",
       "use": "End-credit typography; no new visual location."
+    },
+    {
+      "scene_id": "PS-S01",
+      "asset_id": "PS-CHR-PHARISEE",
+      "use": "Stand beside the scribe at the edge of the hillside gathering; receive the scribe’s aside with a restrained response; existing listener member B identity."
     }
   ],
   "continuity": [

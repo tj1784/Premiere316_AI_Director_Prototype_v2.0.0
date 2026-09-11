@@ -2693,5 +2693,10 @@
     "scene_id": "PS-S23",
     "asset_id": "PS-GFX-CREDITS",
     "use": "End-credit typography; no new visual location."
+  },
+  {
+    "scene_id": "PS-S01",
+    "asset_id": "PS-CHR-PHARISEE",
+    "use": "Stand beside the scribe at the edge of the hillside gathering; receive the scribe’s aside with a restrained response; existing listener member B identity."
   }
 ]

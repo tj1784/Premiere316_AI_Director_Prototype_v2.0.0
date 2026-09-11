@@ -1,0 +1,707 @@
+{
+  "revision": "3fec45d5c4955e257700122d9809177a233eb3d4af81b32b2ff2664c5b6a0c42",
+  "shots": 134,
+  "importedFrames": 268,
+  "assetCorrections": 15,
+  "requiredFrames": 268,
+  "missingFrames": [],
+  "dimensionWarnings": [
+    {
+      "shotId": "PS-S01-SH001",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1937,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S01-SH002",
+      "first": [
+        1916,
+        821
+      ],
+      "last": [
+        1915,
+        821
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S01-SH003",
+      "first": [
+        1932,
+        814
+      ],
+      "last": [
+        1933,
+        814
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S01-SH004",
+      "first": [
+        1937,
+        812
+      ],
+      "last": [
+        1933,
+        813
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S02-SH001",
+      "first": [
+        1916,
+        821
+      ],
+      "last": [
+        1938,
+        811
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S02-SH003",
+      "first": [
+        1938,
+        811
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S02-SH005",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S02-SH006",
+      "first": [
+        1919,
+        820
+      ],
+      "last": [
+        1918,
+        820
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S03-SH001",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1937,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S03-SH002",
+      "first": [
+        1931,
+        814
+      ],
+      "last": [
+        1932,
+        814
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S03-SH003",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        811
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S03-SH005",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1937,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S04-SH001",
+      "first": [
+        1932,
+        814
+      ],
+      "last": [
+        1931,
+        814
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S04-SH002",
+      "first": [
+        1932,
+        814
+      ],
+      "last": [
+        1933,
+        813
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S04-SH003",
+      "first": [
+        1932,
+        814
+      ],
+      "last": [
+        1933,
+        814
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S05-SH001",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S05-SH002",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S05-SH003",
+      "first": [
+        1937,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S05-SH006",
+      "first": [
+        1937,
+        812
+      ],
+      "last": [
+        1935,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S06-SH003",
+      "first": [
+        1916,
+        821
+      ],
+      "last": [
+        1915,
+        821
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S06-SH004",
+      "first": [
+        1919,
+        820
+      ],
+      "last": [
+        1918,
+        820
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S06-SH005",
+      "first": [
+        1940,
+        810
+      ],
+      "last": [
+        1940,
+        811
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S07-SH001",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S07-SH002",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S07-SH003",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S07-SH005",
+      "first": [
+        1916,
+        821
+      ],
+      "last": [
+        1915,
+        821
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S08-SH002",
+      "first": [
+        1937,
+        812
+      ],
+      "last": [
+        1935,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S08-SH003",
+      "first": [
+        1930,
+        815
+      ],
+      "last": [
+        1928,
+        815
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S08-SH004",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1937,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S09-SH001",
+      "first": [
+        1937,
+        812
+      ],
+      "last": [
+        1935,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S09-SH004",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S10-SH001",
+      "first": [
+        1919,
+        820
+      ],
+      "last": [
+        1918,
+        820
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S11-SH003",
+      "first": [
+        1918,
+        820
+      ],
+      "last": [
+        1919,
+        820
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S13-SH001",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S13-SH002",
+      "first": [
+        1937,
+        812
+      ],
+      "last": [
+        1930,
+        815
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S13-SH004",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S13-SH005",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S14-SH002",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1937,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S14-SH004",
+      "first": [
+        1938,
+        812
+      ],
+      "last": [
+        1937,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S15-SH002",
+      "first": [
+        1937,
+        812
+      ],
+      "last": [
+        1935,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S15-SH005",
+      "first": [
+        1932,
+        814
+      ],
+      "last": [
+        1933,
+        813
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S15-SH006",
+      "first": [
+        1932,
+        814
+      ],
+      "last": [
+        1931,
+        814
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S15-SH007",
+      "first": [
+        1938,
+        811
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S16-SH002",
+      "first": [
+        1938,
+        812
+      ],
+      "last": [
+        1938,
+        811
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S16-SH003",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S16-SH004",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S17-SH001",
+      "first": [
+        1933,
+        814
+      ],
+      "last": [
+        1933,
+        813
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S17-SH002",
+      "first": [
+        1933,
+        814
+      ],
+      "last": [
+        1933,
+        813
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S17-SH003",
+      "first": [
+        1933,
+        813
+      ],
+      "last": [
+        1933,
+        814
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S17-SH004",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1938,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S18-SH003",
+      "first": [
+        1931,
+        814
+      ],
+      "last": [
+        1932,
+        814
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S18-SH008",
+      "first": [
+        1931,
+        814
+      ],
+      "last": [
+        1932,
+        814
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S19-SH002",
+      "first": [
+        1932,
+        814
+      ],
+      "last": [
+        1933,
+        813
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S19-SH004",
+      "first": [
+        1935,
+        812
+      ],
+      "last": [
+        1937,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S19-SH005",
+      "first": [
+        1931,
+        814
+      ],
+      "last": [
+        1932,
+        814
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S20-SH001",
+      "first": [
+        1937,
+        812
+      ],
+      "last": [
+        1935,
+        812
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S20-SH002",
+      "first": [
+        1933,
+        814
+      ],
+      "last": [
+        1933,
+        813
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    },
+    {
+      "shotId": "PS-S20-SH003",
+      "first": [
+        1937,
+        812
+      ],
+      "last": [
+        1933,
+        813
+      ],
+      "note": "Original pixels preserved; video preparation must normalize canvas dimensions."
+    }
+  ],
+  "complete": true
+}

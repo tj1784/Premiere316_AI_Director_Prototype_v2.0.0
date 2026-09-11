@@ -27,7 +27,7 @@
     "electron:pack:dir": "node desktop/pack.mjs --dir",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test:authoring": "node --experimental-strip-types --test src/lib/studio/authoring-contract.test.ts src/lib/studio/prodigal-son.test.ts src/lib/studio/research-evidence.test.ts src/lib/studio/asset-prompt-pipeline.test.ts"
+    "test:authoring": "node --experimental-strip-types --test src/lib/studio/authoring-contract.test.ts src/lib/studio/prodigal-son.test.ts src/lib/studio/research-evidence.test.ts src/lib/studio/asset-prompt-pipeline.test.ts src/lib/studio/prodigal-frames.test.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",

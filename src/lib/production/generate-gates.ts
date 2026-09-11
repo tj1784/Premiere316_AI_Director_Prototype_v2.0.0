@@ -3,6 +3,7 @@ import { hydrateVideoWorkspace } from "./video-types.ts";
 import { visualDirectionText } from "../studio/visual-direction.ts";
 import { approvedAssetMedia } from "./asset-canonical-reference.ts";
 import { isVisualAsset } from "../studio/asset-prompt-context.ts";
+import { dialogueFramingDirection } from "../studio/dialogue-framing.ts";
 
 export type GenerateGateId = "assets" | "keyframes" | "video";
 export type GateItemStatus =
@@ -59,6 +60,8 @@ export type KeyframePair = {
   assetRefIds: string[];
   /** Canonical image revisions used when these frame prompts were prepared. */
   assetReferenceVersions?: Record<string, string>;
+  /** Explicit user direction permits these imported references without changing asset approvals. */
+  referenceAuthorization?: { source: "user"; packageId: string };
   waived: boolean;
 };
 
@@ -91,9 +94,12 @@ export function hydrateGenerateGates(state: GenerateGateWorkspace | null | undef
     // Refresh untouched planning placeholders as canon becomes available. Saved
     // prompt versions and explicitly waived/imported frame choices remain intact.
     if (!pair.waived && !pair.firstPromptVersionId && !pair.lastPromptVersionId && !pair.firstApprovedId && !pair.lastApprovedId) return seedPair(picture, shot);
-    const validRefs = approvedVisualAssetIds(picture, shot.sceneId);
+    const directed = pair.referenceAuthorization?.source === "user" && pair.referenceAuthorization.packageId === picture.frameBundle?.packageId && picture.frameBundle?.approvalBypass.source === "user" && picture.frameBundle.importedShotIds.includes(shot.id);
+    const validRefs = directed
+      ? (picture.production?.assets ?? []).filter((asset) => isVisualAsset(asset) && !asset.tombstone && !asset.stale).map((asset) => asset.id)
+      : approvedVisualAssetIds(picture, shot.sceneId);
     if (!pair.waived && pair.assetRefIds.some((id) => !validRefs.includes(id))) return { ...pair, status: "STALE" as const, staleReasons: [...new Set([...pair.staleReasons, "A referenced canonical asset is missing, changed, or belongs to another scene."])] };
-    const currentVersions = canonicalReferenceVersions(picture, pair.assetRefIds);
+    const currentVersions = directed ? directedReferenceVersions(picture, pair.assetRefIds) : canonicalReferenceVersions(picture, pair.assetRefIds);
     if (!pair.waived && pair.assetReferenceVersions && pair.assetRefIds.some((id) => pair.assetReferenceVersions![id] !== currentVersions[id])) return { ...pair, assetReferenceVersions: currentVersions, status: "STALE" as const, staleReasons: [...new Set([...pair.staleReasons, "A canonical image revision changed. Review frame prompts and re-approve first/last frames."])] };
     return pair;
   });
@@ -133,6 +139,18 @@ function canonicalReferenceVersions(picture: Picture, ids: string[]): Record<str
   }));
 }
 
+/** Record the actual chosen/reference media without asserting that its asset was approved. */
+export function directedReferenceVersions(picture: Picture, ids: string[]): Record<string, string> {
+  return Object.fromEntries(ids.flatMap((id) => {
+    const asset = picture.production?.assets.find((item) => item.id === id);
+    if (!asset || asset.tombstone || asset.stale) return [];
+    const selected = approvedAssetMedia(asset) ?? asset.iterations.find((item) => item.status !== "REJECTED" && item.mediaUri?.trim());
+    if (selected) return [[id, `${selected.id}|${selected.specVersionId ?? asset.approvedSpecVersionId ?? ""}|${selected.mediaSha256 ?? selected.mediaUri}`]];
+    const reference = asset.references.find((item) => item.preferred && item.uri?.trim()) ?? asset.references.find((item) => item.uri?.trim());
+    return reference ? [[id, `reference:${reference.id}|${reference.uri}`]] : [];
+  }));
+}
+
 export function approvedVisualAssetIds(picture: Picture, sceneId?: string): string[] {
   const fromProduction = (picture.production?.assets ?? [])
     .filter((asset) => isVisualAsset(asset) && (!sceneId || asset.requiredSceneIds.includes(sceneId)) && approvedAssetMedia(asset))
@@ -153,7 +171,8 @@ export function requiredVisualAssetCount(picture: Picture): { required: number; 
 export function generateGateReadiness(picture: Picture): GateReadiness[] {
   const gates = hydrateGenerateGates(picture.generateGates, picture);
   const assets = requiredVisualAssetCount(picture);
-  const assetStatus = assets.required === 0 || assets.approved >= assets.required ? "READY" : assets.approved > 0 ? "PARTIAL" : "LOCKED";
+  const frameImportAuthorized = picture.frameBundle?.approvalBypass.source === "user" && picture.frameBundle.approvalBypass.scope === "first-last-frame-assets";
+  const assetStatus = assets.required === 0 || assets.approved >= assets.required || frameImportAuthorized ? "READY" : assets.approved > 0 ? "PARTIAL" : "LOCKED";
   const pairsReady = gates.pairs.filter((pair) => pair.waived || approvedKeyframePair(gates, pair)).length;
   const keyframeStatus = assetStatus !== "READY" ? "LOCKED" : pairsReady === gates.pairs.length && gates.pairs.length > 0 ? "READY" : pairsReady > 0 ? "PARTIAL" : "LOCKED";
   const video = hydrateVideoWorkspace(picture.video);
@@ -161,7 +180,7 @@ export function generateGateReadiness(picture: Picture): GateReadiness[] {
   const nativeUnlocked = gates.pairs.some((pair) => pair.waived || approvedKeyframePair(gates, pair));
   const videoStatus = canonicalVideo > 0 ? "READY" : nativeUnlocked ? "PARTIAL" : "LOCKED";
   return [
-    { gate: "assets", status: assetStatus, approved: assets.approved, required: assets.required || assets.approved, reason: assetStatus === "READY" ? "Visual assets approved or none required." : `${assets.approved}/${assets.required} visual assets approved.` },
+    { gate: "assets", status: assetStatus, approved: assets.approved, required: assets.required || assets.approved, reason: frameImportAuthorized ? "Asset approval pause waived by the user for this first/last-frame package." : assetStatus === "READY" ? "Visual assets approved or none required." : `${assets.approved}/${assets.required} visual assets approved.` },
     { gate: "keyframes", status: keyframeStatus, approved: pairsReady, required: gates.pairs.length, reason: assetStatus !== "READY" ? "First/Last locked until required visual assets are approved or waived." : `${pairsReady}/${gates.pairs.length} keyframe pairs approved or waived.` },
     { gate: "video", status: videoStatus, approved: canonicalVideo, required: picture.shots.length, reason: nativeUnlocked || canonicalVideo ? `${canonicalVideo} canonical video take(s). Native generate stays fail-closed; import remains allowed.` : "Video generate locked until a keyframe pair is approved or waived. Import remains allowed." },
   ];
@@ -197,7 +216,7 @@ export function compileKeyframePrompt(picture: Picture, shot: Shot, kind: Keyfra
   const beat = kind === "first" ? "opening frame / continuity IN" : "closing frame / continuity OUT";
   const direction = picture.intake.visualDirection;
   const style = direction?.guide && direction.analyzedBoardId === direction.boardId ? visualDirectionText(direction) : "";
-  return `${shot.type} ${beat}. ${shot.description}. ${shot.camera} ${shot.lens}, ${shot.cameraMove}. Emotion: ${shot.emotion}. Approved refs: ${refs}. ${picture.tone}.${style ? `\n\n${style}` : ""}`;
+  return `${shot.type} ${beat}. ${shot.description}. ${shot.camera} ${shot.lens}, ${shot.cameraMove}. ${dialogueFramingDirection(shot)} Emotion: ${shot.emotion}. Approved refs: ${refs}. ${picture.tone}.${style ? `\n\n${style}` : ""}`;
 }
 
 export function compileVideoPromptFromKeyframes(picture: Picture, shot: Shot, pair: KeyframePair): PromptVersion {
@@ -212,7 +231,7 @@ export function compileVideoPromptFromKeyframes(picture: Picture, shot: Shot, pa
     shotId: shot.id,
     assetId: null,
     kind: "video",
-    text: `${pair.waived ? "Explicit frame-pair waiver for imported video; no frame approval is implied." : `Animate from approved first frame ${pair.firstApprovedId} to approved last frame ${pair.lastApprovedId}.`} Action: ${shot.description}. Camera: ${shot.cameraMove}. Hold identity of ${pair.assetRefIds.join(", ") || "the established scene subjects"}. Duration ${shot.durationSec}s.`,
+    text: `${pair.waived ? "Explicit frame-pair waiver for imported video; no frame approval is implied." : `Animate from approved first frame ${pair.firstApprovedId} to approved last frame ${pair.lastApprovedId}.`} Action: ${shot.description}. Camera: ${shot.cameraMove}. ${dialogueFramingDirection(shot)} Hold identity of ${pair.assetRefIds.join(", ") || "the established scene subjects"}. Duration ${shot.durationSec}s.`,
     createdAt: now,
     assetRefIds: pair.assetRefIds,
     firstFrameId: pair.firstApprovedId,

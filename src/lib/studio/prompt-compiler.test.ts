@@ -88,6 +88,20 @@ describe("Wave 5 prompt compiler", () => {
     assert.ok(next.shots[0].i2vPrompt.length > 20);
   });
 
+  it("keeps dialogue faces close and sharp, preserves explicit exceptions and existing voice text", () => {
+    const pic = picture();
+    pic.shots[0].t2voicePrompt = "MARA: I have brought the reel.";
+    pic.shots[0].dialogueFraming = "artistic_exception";
+    pic.shots[0].dialogueFramingException = "Hold the listener's close reaction while Mara speaks offscreen.";
+    const next = compilePicture(pic);
+    for (const prompt of [next.shots[0].t2iPrompt, next.shots[0].i2vPrompt]) {
+      assert.match(prompt, /When a character speaks, use a close-up/);
+      assert.match(prompt, /eyes, mouth and facial texture sharply resolved/);
+      assert.match(prompt, /Mara speaks offscreen/);
+    }
+    assert.equal(next.shots[0].t2voicePrompt, pic.shots[0].t2voicePrompt);
+  });
+
   it("does not crash when screenplay is not yet hydrated", () => {
     const pic = picture();
     Reflect.deleteProperty(pic, "screenplay");

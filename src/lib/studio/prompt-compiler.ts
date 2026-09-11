@@ -1,4 +1,5 @@
 import { engineById } from "./engines.ts";
+import { dialogueFramingDirection } from "./dialogue-framing.ts";
 import type { Picture, Shot } from "./types";
 export { defaultPromptCompilerRouting } from "./model-routing.ts";
 import type { CanonicalShotSpec } from "../performance/types.ts";
@@ -83,7 +84,7 @@ function compileShot(picture: Picture, shot: Shot, image: string, video: string)
     ...shot,
     t2iPrompt: (picture.nativeFilm?.writer ? picture.nativeFilm.imagePrompts?.[shot.id] : undefined) ?? pkgStill.enginePrompt,
     i2vPrompt: (picture.nativeFilm?.writer ? picture.nativeFilm.prompts?.[shot.id] : undefined) ?? pkgVideo.enginePrompt,
-    t2voicePrompt: shot.type === "closeup" ? `${shot.emotion}, close-mic, dry room, ${shot.expression}` : shot.t2voicePrompt,
+    t2voicePrompt: shot.t2voicePrompt || (shot.type === "closeup" ? `${shot.emotion}, close-mic, dry room, ${shot.expression}` : ""),
   };
 }
 
@@ -129,6 +130,7 @@ export function compileEnginePromptPackage(input: CompilePromptInput): EnginePro
     `${engineById(picture.selectedEngine.image)?.name ?? "FLUX"} still, photoreal 35mm, ${picture.tone}.`,
     action,
     `Camera: ${camera}.`,
+    dialogueFramingDirection(shot),
     `Face / emotion: ${shot.emotion}. ${shot.expression}.`,
     who ? `Cast: ${who}.` : "",
     place ? `Place: ${place}. ${scene?.slugline ?? ""}.` : scene?.slugline ?? "",
@@ -140,6 +142,7 @@ export function compileEnginePromptPackage(input: CompilePromptInput): EnginePro
     `${engineById(picture.selectedEngine.video)?.name ?? "LTX-2"} ${shot.stillUrl ? "image-to-video" : "text-to-video"}, ${settings.durationSec}s, ${settings.fps}fps, photoreal.`,
     `Human performance: ${shot.expression}. Emotion: ${shot.emotion}.`,
     `Camera timeline: ${camera}.`,
+    dialogueFramingDirection(shot),
     `Action timeline: ${action}.`,
     dialogue ? `Dialogue/intent: ${dialogue}.` : "",
     locks.length ? `Hold identity/continuity: ${locks.join("; ")}.` : "",

@@ -184,7 +184,7 @@ function AssetCard({ asset, sceneLabels, previewUri, selected, onClick }: { asse
   return (
     <button type="button" className={cn("min-w-0 overflow-hidden rounded-lg bg-elevated text-left shadow-[var(--shadow-border)] transition-[box-shadow,transform] hover:shadow-[var(--shadow-border-hover)] active:scale-[0.99]", selected && "ring-1 ring-accent/60")} onClick={onClick}>
       <div className="aspect-video bg-inset">
-        {previewUri ? <img src={previewUri} alt="" className="size-full object-cover" /> : <div className="grid size-full place-items-center"><ImageOff className="size-5 text-subtle" /></div>}
+        {previewUri ? <img src={previewUri} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <div className="grid size-full place-items-center"><ImageOff className="size-5 text-subtle" /></div>}
       </div>
       <div className="p-3">
         <div className="flex min-w-0 items-start justify-between gap-2"><h3 className="min-w-0 truncate text-sm" title={asset.name}>{asset.name}</h3><ReadinessBadge readiness={asset.readiness} /></div>

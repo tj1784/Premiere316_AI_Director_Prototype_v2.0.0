@@ -13,7 +13,7 @@ export function ImportedPackageResources({ importedPackage }: { importedPackage?
           <p className="mt-1 text-sm leading-relaxed text-muted">
             {seconds / 60} minute timing plan · {importedPackage.sourceAssets.length} asset records · {importedPackage.sceneAssetLinks.length} scene links · {importedPackage.continuity.length} continuity rules
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-muted">Accepted screenplay imported. Visual assets await development and approval.</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted">Accepted screenplay and linked inventory imported. Asset and frame views show the current images and selections.</p>
         </div>
       </div>
       <details className="mt-2">

@@ -1,12 +1,12 @@
 {
-  "assets": 129,
+  "assets": 130,
   "scenes": 23,
-  "links": 539,
+  "links": 540,
   "continuity": 29,
   "seconds": 1800,
   "categories": {
     "Character": 11,
-    "Featured extra": 8,
+    "Featured extra": 9,
     "Extras": 10,
     "Animal": 5,
     "Location": 20,

@@ -97,6 +97,8 @@ export type Character = {
 };
 export type Asset = { id: string; name: string; description: string; lighting?: string };
 export type Shot = {
+  dialogueFraming?: "close_up" | "no_dialogue" | "artistic_exception";
+  dialogueFramingException?: string;
   id: string;
   sceneId: string;
   index: number;
@@ -133,6 +135,7 @@ export type VoiceTake = {
 };
 
 export type Picture = {
+  frameBundle?: import("./prodigal-frame-types.ts").ProdigalFrameImportState;
   importedPackage?: import("./imported-picture-package.ts").ImportedPicturePackage;
   assetPromptSources?: Record<string, import("./asset-prompt-context.ts").AssetPromptSource>;
   assetPromptHistory?: Array<{ createdAt: number; prompts: Record<string, string>; sources: Record<string, import("./asset-prompt-context.ts").AssetPromptSource>; modelId: string; rawResponse: string }>;

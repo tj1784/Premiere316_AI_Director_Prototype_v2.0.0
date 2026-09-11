@@ -28,8 +28,8 @@ test("the imported picture retains the complete original text, timing plan and i
   assert.equal(picture.screenplayFountain, PRODIGAL_SON_SOURCE.fountain);
   assert.equal(picture.screenplay.workingFountain, PRODIGAL_SON_SOURCE.fountain);
   assert.equal(picture.screenplay.status, "APPROVED");
-  assert.equal(production.assets.length, 129);
-  assert.equal(bundle.sceneAssetLinks.length, 539);
+  assert.equal(production.assets.length, 130);
+  assert.equal(bundle.sceneAssetLinks.length, 540);
   assert.equal(bundle.continuity.length, 29);
   assert.equal(picture.scenes.length, 23);
   assert.equal(picture.scenes.reduce((sum, scene) => sum + scene.durationSec, 0), 1800);
@@ -40,12 +40,12 @@ test("the imported picture retains the complete original text, timing plan and i
   assert.deepEqual(bundle.sceneAssetLinks, sourceLinksForPersistence);
   assert.deepEqual(bundle.continuity, sourceContinuityForPersistence);
   assert.deepEqual(bundle.timingPlan, sourceScenesForPersistence);
-  assert.equal(Object.keys(picture.assetImagePrompts ?? {}).length, 129);
+  assert.equal(Object.keys(picture.assetImagePrompts ?? {}).length, 130);
   assert.equal(picture.assetImagePrompts?.["PS-CHR-JESUS"], PRODIGAL_SON_SOURCE.assets.find((asset) => asset.id === "PS-CHR-JESUS")?.generation_prompt);
   const assetIds = new Set(production.assets.map((asset) => asset.id));
   const sceneIds = new Set(picture.scenes.map((scene) => scene.id));
-  assert.equal(assetIds.size, 129);
-  assert.equal(new Set(bundle.sceneAssetLinks.map((link) => `${link.scene_id}:${link.asset_id}`)).size, 539);
+  assert.equal(assetIds.size, 130);
+  assert.equal(new Set(bundle.sceneAssetLinks.map((link) => `${link.scene_id}:${link.asset_id}`)).size, 540);
   for (const link of bundle.sceneAssetLinks) {
     assert.ok(assetIds.has(link.asset_id), link.asset_id);
     assert.ok(sceneIds.has(link.scene_id), link.scene_id);
@@ -105,7 +105,7 @@ test("an accepted text import does not invent visual approvals, generated media 
     assert.ok(asset.specVersions!.every((spec) => !spec.approved));
     if (asset.category === "character") {
       assert.equal(asset.iterations.length, 1);
-      assert.equal(asset.iterations[0].mediaUri, `/pictures/prodigal-son/character-assets/${asset.id}.png`);
+      assert.equal(asset.iterations[0].mediaUri, `/pictures/prodigal-son/character-assets/${asset.id === "PS-CHR-PHARISEE" ? "PS-EXT-LISTENERS" : asset.id}.png`);
       assert.equal(asset.iterations[0].status, "NEEDS_REVIEW");
     } else if (asset.iterations.length) {
       assert.equal(asset.iterations.length, 1);
@@ -141,10 +141,10 @@ test("visual development board backfills only the Prodigal Son thumbnail and is 
   };
   const hydrated = hydrateProdigalSonVisualReference(legacy);
   assert.equal(hydrated.thumbnailUrl, PRODIGAL_SON_VISUAL_REFERENCE_URI);
-  assert.equal(hydrated.production!.assets.length, 129);
+  assert.equal(hydrated.production!.assets.length, 130);
   assert.equal(hydrated.production!.assets.every((asset) => !asset.references.some((reference) => reference.uri === PRODIGAL_SON_VISUAL_REFERENCE_URI)), true);
   assert.equal(hydrated.production!.assets.filter((asset) => asset.category === "character" && asset.iterations.some((iteration) => iteration.mediaUri === `/pictures/prodigal-son/character-assets/${asset.id}.png`)).length, 29);
-  assert.equal(hydrated.production!.assets.filter((asset) => asset.iterations.some((iteration) => iteration.mediaUri === `/pictures/prodigal-son/generated-assets/${asset.id}.png`)).length, 73);
+  assert.equal(hydrated.production!.assets.filter((asset) => asset.iterations.some((iteration) => iteration.mediaUri === `/pictures/prodigal-son/generated-assets/${asset.id}.png`)).length, 100);
 });
 
 test("native hydration leaves downstream creative work empty and every media gate locked", () => {
@@ -171,14 +171,14 @@ test("native hydration leaves downstream creative work empty and every media gat
   assert.deepEqual(picture.generateGates.prompts, []);
   assert.deepEqual(picture.generateGates.iterations, []);
   const gates = generateGateReadiness(picture);
-  assert.equal(gates[0].required, 125, "Graphics and existing-scene inserts use manual/reuse fulfillment.");
+  assert.equal(gates[0].required, 126, "Graphics and existing-scene inserts use manual/reuse fulfillment.");
   assert.ok(gates.every((gate) => gate.status === "LOCKED" && gate.approved === 0));
   const readiness = movieReadiness(picture);
   for (const id of ["visual-development", "cinematography", "performance"]) assert.equal(readiness.find((item) => item.id === id)!.status, "placeholder", id);
   assert.equal(readiness.find((item) => item.id === "images")!.status, "placeholder");
   assert.equal(picture.performance!.scenes.at(-1)!.id, "PS-S23");
   assert.equal(picture.performance!.scenes.at(-1)!.durationSec, 30);
-  assert.equal(picture.production!.assets.length, 129);
+  assert.equal(picture.production!.assets.length, 130);
   assert.equal(picture.production!.screenplayVersionId, approvedScreenplayBoundary(picture.id, picture.intake, picture.screenplay)!.screenplayVersionId);
 });
 
@@ -212,11 +212,11 @@ test("each factory result is independent and complete metadata survives serializ
   restored.production = sanitizeProductionBreakdown(restored.production);
   assert.deepEqual(restored.importedPackage, second.importedPackage);
   assert.deepEqual(restored.production!.assets.map((asset) => asset.id), second.production!.assets.map((asset) => asset.id));
-  assert.equal(restored.production!.assets.length, 129);
-  assert.equal(Object.keys(restored.assetImagePrompts ?? {}).length, 129);
-  assert.equal(restored.importedPackage!.sourceAssets.filter((asset) => asset.scene_count !== undefined).length, 129);
+  assert.equal(restored.production!.assets.length, 130);
+  assert.equal(Object.keys(restored.assetImagePrompts ?? {}).length, 130);
+  assert.equal(restored.importedPackage!.sourceAssets.filter((asset) => asset.scene_count !== undefined).length, 130);
   assert.equal(restored.importedPackage!.timingPlan.length, 23);
-  assert.equal(restored.importedPackage!.sceneAssetLinks.length, 539);
+  assert.equal(restored.importedPackage!.sceneAssetLinks.length, 540);
   assert.equal(restored.importedPackage!.continuity.length, 29);
   assert.ok(JSON.stringify(second).length < 2_250_000, "Text metadata should stay within a reasonable localStorage footprint.");
 });

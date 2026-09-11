@@ -88,6 +88,8 @@ import { approvedScreenplayBoundary } from "@/lib/studio/screenplay";
 import { PerformanceWorkspaceView } from "@/components/performance/performance-workspace";
 import { ShotPreparationWorkspace } from "@/components/performance/shot-workspace";
 import { canonicalShotsToLegacy, migratePicturePerformance } from "@/lib/performance/persistence";
+import { KeyframeImages } from "./keyframe-images";
+import { approveKeyframeIteration } from "@/lib/production/generate-gates";
 
 export function StageView() {
   const stage = useStage();
@@ -669,6 +671,7 @@ function ShotsStage({ picture }: { picture: Picture }) {
     <div className="min-h-0 flex-1 overflow-hidden">
     <ShotPreparationWorkspace
       workspace={workspace}
+      frameWorkspace={picture.generateGates}
       assets={picture.production?.assets ?? []}
       onChange={(performance) => patchActive({ performance, shots: canonicalShotsToLegacy(performance.shots, picture.shots) })}
       onBack={() => setStage("performance")}
@@ -913,6 +916,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
                 <p className="text-[11px] tracking-wide text-subtle uppercase">{pair.status}{pair.waived ? " · waived" : ""}</p>
                 <h3 className="mt-1 font-display text-xl">{shot ? `${String(shot.index).padStart(2, "0")} ${shot.description}` : pair.shotId}</h3>
                 <p className="mt-1 text-xs text-muted">Refs: {pair.assetRefIds.join(", ") || "none"}{pair.staleReasons.length ? ` · ${pair.staleReasons[0]}` : ""}</p>
+                <KeyframeImages workspace={gateWorkspace} shotId={pair.shotId} onSelect={(iterationId) => replaceActive({ ...picture, generateGates: approveKeyframeIteration(gateWorkspace, iterationId) })} />
                 <label className="mt-3 block text-[11px] tracking-wide text-subtle uppercase">First frame prompt
                   <textarea className="mt-1 min-h-20 w-full rounded-sm bg-inset p-2 text-sm" defaultValue={pair.firstPrompt} onBlur={(event) => replaceActive({ ...picture, generateGates: savePromptVersion(gateWorkspace, { gate: "keyframes", shotId: pair.shotId, assetId: null, kind: "first", text: event.target.value, assetRefIds: pair.assetRefIds, firstFrameId: pair.firstApprovedId, lastFrameId: pair.lastApprovedId }) })} />
                 </label>

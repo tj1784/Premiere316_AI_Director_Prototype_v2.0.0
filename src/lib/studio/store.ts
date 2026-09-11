@@ -17,6 +17,7 @@ import { hydrateProductFlow, type ProductTouchpoint } from "./product-flow.ts";
 import { hydrateVisualDevelopmentState } from "../visual-development.ts";
 import { hydrateCinematographyState } from "../cinematography.ts";
 import { hydrateProdigalSonVisualReference, mergeBundledPictures } from "./prodigal-son.ts";
+import { hydrateProdigalSonFrames } from "./prodigal-frames.ts";
 import {
   isAdvancedDepartmentId,
   lastDefaultTouchpointFor,
@@ -313,7 +314,7 @@ function migratePicture(picture: LegacyPicture): Picture {
   const withVisual = { ...withResearch, visualDevelopment: hydrateVisualDevelopmentState(withResearch.visualDevelopment, withResearch) };
   const withCinema = { ...withVisual, cinematography: hydrateCinematographyState(withVisual.cinematography, withVisual) };
   const migrated = hydrateProdigalSonVisualReference({ ...withCinema, generateGates: hydrateGenerateGates(withCinema.generateGates, withCinema), productFlow: hydrateProductFlow(withCinema.productFlow) });
-  return withRedSeaThumbnail(migrated);
+  return withRedSeaThumbnail(hydrateProdigalSonFrames(migrated));
 }
 
 function withRedSeaThumbnail(picture: Picture): Picture {

@@ -16,7 +16,7 @@ import { DEFAULT_ENGINES, type Picture } from "./types.ts";
 export const PRODIGAL_SON_PICTURE_ID = "pic_prodigal_son_20260909";
 export const PRODIGAL_SON_PACKAGE_ID = "prodigal-son-2026-09-09-v1";
 export const PRODIGAL_SON_IMPORTED_AT = Date.UTC(2026, 8, 9, 12);
-const SCREENPLAY_VERSION_ID = `${PRODIGAL_SON_PICTURE_ID}:user-accepted-import:v1`;
+const SCREENPLAY_VERSION_ID = `${PRODIGAL_SON_PICTURE_ID}:user-directed-opening:v2`;
 const RESOURCE_ROOT = "/pictures/prodigal-son";
 const VISUAL_REFERENCE_FILE = "visual-development-reference.png";
 const VISUAL_REFERENCE_URI = `${RESOURCE_ROOT}/${VISUAL_REFERENCE_FILE}`;
@@ -25,6 +25,7 @@ const GENERATED_ASSET_ROOT = `${RESOURCE_ROOT}/generated-assets`;
 export const PRODIGAL_SON_VISUAL_REFERENCE_URI = VISUAL_REFERENCE_URI;
 
 const CHARACTER_ASSET_IMAGE_FILES: Record<string, string> = {
+  "PS-CHR-PHARISEE": "PS-EXT-LISTENERS.png",
   "PS-CHR-JESUS": "PS-CHR-JESUS.png",
   "PS-CHR-FATHER": "PS-CHR-FATHER.png",
   "PS-CHR-ELDER": "PS-CHR-ELDER.png",
@@ -206,7 +207,7 @@ function importedPackage(): ImportedPicturePackage {
     packageId: PRODIGAL_SON_PACKAGE_ID,
     revision: PRODIGAL_SON_SOURCE.revision,
     importedAt: PRODIGAL_SON_IMPORTED_AT,
-    provenance: "Imported without rewriting from the complete screenplay and visual inventory delivered on 9 September 2026. Original source files and SHA-256 checksums are retained. No local model generation or QA telemetry is claimed.",
+    provenance: "Original 9 September screenplay and inventory, with the user's 11 September direction explicitly adding a Pharisee beside the scribe in the opening. Current Fountain and JSON reflect that change; original Word, Excel and ZIP downloads are preserved. No local model generation or QA telemetry is claimed.",
     screenplayAcceptance: "User accepted the delivered screenplay and explicitly requested adding it and its full inventory as a new picture. This is editorial acceptance of the imported text; visual specifications, media, and backend production approvals remain pending.",
     researchStatus: "completed-source-import-pending-app-review",
     researchNotes: PRODIGAL_SON_SOURCE.researchNotes,
@@ -216,9 +217,9 @@ function importedPackage(): ImportedPicturePackage {
     continuity,
     sourceSha256: { ...PRODIGAL_SON_SOURCE.sourceSha256 },
     resources: [
-      { label: "Complete package", fileName: "Prodigal_Son_Complete_Package.zip" },
-      { label: "Screenplay · Word", fileName: "Prodigal_Son_Complete_Screenplay.docx" },
-      { label: "Asset inventory · Excel", fileName: "Prodigal_Son_Visual_Asset_Inventory.xlsx" },
+      { label: "Original source package · 9 September", fileName: "Prodigal_Son_Complete_Package.zip" },
+      { label: "Original screenplay · Word", fileName: "Prodigal_Son_Complete_Screenplay.docx" },
+      { label: "Original asset inventory · Excel", fileName: "Prodigal_Son_Visual_Asset_Inventory.xlsx" },
       { label: "Screenplay · Fountain", fileName: "Prodigal_Son.fountain" },
       { label: "Research and adaptation notes", fileName: "Research_and_Adaptation_Notes.md" },
       { label: "Complete inventory · JSON", fileName: "inventory_data.json" },
@@ -415,7 +416,7 @@ export function makeProdigalSonPicture(): Picture {
   const preparation = makePreparationForIntake(intake, PRODIGAL_SON_PICTURE_ID, now);
   const hierarchy = prodigalSonHierarchy();
   const screenplay = appendScreenplayVersion(preparation.screenplay, {
-    id: SCREENPLAY_VERSION_ID, label: "User-accepted imported screenplay · 9 September 2026",
+    id: SCREENPLAY_VERSION_ID, label: "User-directed opening update · 11 September 2026",
     kind: "approved", fountain: PRODIGAL_SON_SOURCE.fountain, createdAt: now,
     model: null, workflow: intake.workflow, pass: null,
     sourceVersionId: preparation.screenplay.currentVersionId, settings: null,
@@ -467,6 +468,7 @@ export function mergeBundledPictures(pictures: Picture[], installedIds: readonly
 
 export function hydrateProdigalSonVisualReference(picture: Picture): Picture {
   if (picture.id !== PRODIGAL_SON_PICTURE_ID) return picture;
+  picture = hydrateProdigalSonOpeningRevision(picture);
   const production = picture.production;
   const sourceById = new Map(PRODIGAL_SON_SOURCE.assets.map((asset) => [asset.id, asset]));
   const nextProduction = production ? {
@@ -476,7 +478,7 @@ export function hydrateProdigalSonVisualReference(picture: Picture): Picture {
       const importedIterations = source ? importedAssetIterations(source) : [];
       const importedIds = new Set(importedIterations.map((iteration) => iteration.id));
       const iterations = importedIterations.length
-        ? [...importedIterations, ...asset.iterations.filter((iteration) => !importedIds.has(iteration.id))]
+        ? [...importedIterations.map((iteration) => asset.iterations.find((saved) => saved.id === iteration.id) ?? iteration), ...asset.iterations.filter((iteration) => !importedIds.has(iteration.id))]
         : asset.iterations;
       return {
         ...asset,
@@ -493,4 +495,41 @@ export function hydrateProdigalSonVisualReference(picture: Picture): Picture {
     assetPromptSources: Object.fromEntries(Object.entries(picture.assetPromptSources ?? {}).filter(([, source]) => source.modelId !== "workbook-import")),
   };
   return nextPicture;
+}
+
+/** Apply the explicitly requested opening update while keeping original versions and user drafts. */
+export function hydrateProdigalSonOpeningRevision(picture: Picture): Picture {
+  if (picture.id !== PRODIGAL_SON_PICTURE_ID) return picture;
+  const oldId = `${PRODIGAL_SON_PICTURE_ID}:user-accepted-import:v1`;
+  const oldVersion = picture.screenplay.versions.find((version) => version.id === oldId);
+  const original = PRODIGAL_SON_SOURCE.fountain
+    .replace("A SCRIBE and a PHARISEE remain standing at the edge. Neither man will quite meet the tax collector's eyes.", "A SCRIBE remains standing at the edge. Neither will quite meet the other's eyes.")
+    .replace("(low, to the Pharisee)", "(low, to his companion)");
+  let next = picture;
+  if (picture.screenplay.approvedVersionId === oldId && oldVersion?.fountain.trim() === original.trim()) {
+    const screenplay = appendScreenplayVersion(picture.screenplay, {
+      ...oldVersion, id: SCREENPLAY_VERSION_ID, label: "User-directed opening update · 11 September 2026", fountain: PRODIGAL_SON_SOURCE.fountain,
+      createdAt: 1789084800000, sourceVersionId: oldId, kind: "approved", logicalRole: "approve", hierarchy: prodigalSonHierarchy(),
+    });
+    const hasWorkingEdits = picture.screenplay.workingFountain.trim() !== original.trim();
+    next = {
+      ...picture,
+      screenplay: hasWorkingEdits ? { ...screenplay, workingFountain: picture.screenplay.workingFountain, currentVersionId: picture.screenplay.currentVersionId, hierarchy: picture.screenplay.hierarchy } : screenplay,
+      screenplayFountain: picture.screenplayFountain.trim() === original.trim() ? PRODIGAL_SON_SOURCE.fountain : picture.screenplayFountain,
+      intake: { ...picture.intake, existingScreenplay: picture.intake.existingScreenplay?.trim() === original.trim() ? PRODIGAL_SON_SOURCE.fountain : picture.intake.existingScreenplay },
+      performance: picture.performance ? { ...picture.performance, approvedScreenplay: { ...picture.performance.approvedScreenplay, screenplayVersionId: SCREENPLAY_VERSION_ID }, shots: picture.performance.shots.map((shot) => shot.sceneId === "PS-S01" ? { ...shot, status: "STALE" as const, compilerState: "PLANNED" as const } : shot) } : picture.performance,
+      production: picture.production ? { ...picture.production, screenplayVersionId: SCREENPLAY_VERSION_ID } : picture.production,
+    };
+  }
+  if (!next.production || next.production.assets.some((asset) => asset.id === "PS-CHR-PHARISEE")) return next;
+  const baseline = makeProdigalSonPicture();
+  const addition = baseline.production!.assets.find((asset) => asset.id === "PS-CHR-PHARISEE")!;
+  const source = baseline.importedPackage!.sourceAssets.find((asset) => asset.id === addition.id)!;
+  const character = baseline.characters.find((item) => item.id === addition.id)!;
+  return {
+    ...next,
+    characters: next.characters.some((item) => item.id === addition.id) ? next.characters : [...next.characters, character],
+    production: { ...next.production, assets: [...next.production.assets, addition], requirements: [...next.production.requirements, ...baseline.production!.requirements.filter((item) => addition.requirementIds.includes(item.id))], dependencies: [...next.production.dependencies, { fromType: "asset", fromId: "PS-EXT-LISTENERS", toType: "asset", toId: addition.id, reason: "User-directed Pharisee identity from listener member B" }] },
+    importedPackage: next.importedPackage ? { ...next.importedPackage, revision: PRODIGAL_SON_SOURCE.revision, sourceAssets: [...next.importedPackage.sourceAssets, source], sceneAssetLinks: [...next.importedPackage.sceneAssetLinks, ...baseline.importedPackage!.sceneAssetLinks.filter((link) => link.asset_id === addition.id)] } : next.importedPackage,
+  };
 }

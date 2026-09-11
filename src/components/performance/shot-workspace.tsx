@@ -42,15 +42,19 @@ import type {
 } from "@/lib/performance/types";
 import type { ProductionAsset } from "@/lib/production/types";
 import { cn, uid } from "@/lib/utils";
+import { KeyframeImages } from "@/components/studio/keyframe-images";
+import type { GenerateGateWorkspace } from "@/lib/production/generate-gates";
 
 export function ShotPreparationWorkspace({
   workspace,
+  frameWorkspace,
   assets,
   onChange,
   onBack,
   onOpenPromptLab,
 }: {
   workspace: PerformanceWorkspace;
+  frameWorkspace?: GenerateGateWorkspace | null;
   assets: ProductionAsset[];
   onChange: (workspace: PerformanceWorkspace) => void;
   onBack: () => void;
@@ -201,6 +205,7 @@ export function ShotPreparationWorkspace({
                 onMerge={() => commit(mergeShots(workspace, selected.canonicalShotId, sortedShots[selectedIndex + 1].canonicalShotId))}
                 onRemove={() => commit(removeShot(workspace, selected.canonicalShotId), sortedShots[selectedIndex + 1]?.canonicalShotId ?? sortedShots[selectedIndex - 1]?.canonicalShotId)}
               />
+              <KeyframeImages workspace={frameWorkspace} shotId={selected.shotId} firstUri={selected.references.firstFrame?.[0]} lastUri={selected.references.lastFrame?.[0]} />
               <ShotInspector key={`${selected.canonicalShotId}:${selected.version}`} shot={selected} assets={assets} readiness={calculateShotReadiness(workspace, selected)} onSave={(shot) => commit(insertOrReplaceShot(workspace, shot), shot.canonicalShotId)} onApprove={approveShot} onPropagate={propagateOut} />
             </>
           ) : <EmptyShots onAdd={addShot} />}

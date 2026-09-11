@@ -2214,5 +2214,19 @@
     "reference": "Overall object or kit, hand-scale reference and distinguishing detail; each required damage/fill/wear state.",
     "approval_status": "Pending",
     "approved_asset_path": ""
+  },
+  {
+    "id": "PS-CHR-PHARISEE",
+    "category": "Featured extra",
+    "name": "Pharisee",
+    "parent": "PS-EXT-LISTENERS",
+    "requirement": "A distinct Pharisee standing beside the scribe in PS-S01. Use member B from the existing hillside listener reference sheet for identity; preserve that individual face, hair and first-century clothing. Do not infer a caricature, villain expression or distinctive religious costume.",
+    "state": "Clean prologue only; stands at the edge with the scribe, hears his quiet aside and stays. Natural, restrained response.",
+    "scenes": [
+      "PS-S01"
+    ],
+    "reference": "Existing PS-EXT-LISTENERS sheet member B provides identity and clothing. Dedicated dialogue/face reference may be added as a new iteration.",
+    "approval_status": "Pending",
+    "approved_asset_path": ""
   }
 ]
