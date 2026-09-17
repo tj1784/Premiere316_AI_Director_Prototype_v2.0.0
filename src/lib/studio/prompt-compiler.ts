@@ -83,7 +83,9 @@ function compileShot(picture: Picture, shot: Shot, image: string, video: string)
   return {
     ...shot,
     t2iPrompt: (picture.nativeFilm?.writer ? picture.nativeFilm.imagePrompts?.[shot.id] : undefined) ?? pkgStill.enginePrompt,
-    i2vPrompt: (picture.nativeFilm?.writer ? picture.nativeFilm.prompts?.[shot.id] : undefined) ?? pkgVideo.enginePrompt,
+    i2vPrompt: picture.directorBundle?.importedShotIds.includes(shot.id)
+      ? shot.i2vPrompt
+      : (picture.nativeFilm?.writer ? picture.nativeFilm.prompts?.[shot.id] : undefined) ?? pkgVideo.enginePrompt,
     t2voicePrompt: shot.t2voicePrompt || (shot.type === "closeup" ? `${shot.emotion}, close-mic, dry room, ${shot.expression}` : ""),
   };
 }
@@ -96,7 +98,7 @@ export function compileEnginePromptPackage(input: CompilePromptInput): EnginePro
   const research = input.research ?? picture.research ?? null;
   const videoEngine = videoEngineFromSelection(picture.selectedEngine.video);
   const stillTarget: CompiledMediaTarget = /flux2/i.test(picture.selectedEngine.image) ? "flux2-dev" : "flux1-dev";
-  const target = input.target === "video" ? (videoEngine === "minimax-h3" ? "minimax-h3" : "ltx-2.5") : stillTarget;
+  const target = input.target === "video" ? (videoEngine === "ltx-2" ? "ltx-2.5" : videoEngine) : stillTarget;
   const settings = defaultVideoSettings(videoEngine, shot.durationSec);
   const locks = unique([
     ...(canonical?.continuity.hardLocks ?? []),

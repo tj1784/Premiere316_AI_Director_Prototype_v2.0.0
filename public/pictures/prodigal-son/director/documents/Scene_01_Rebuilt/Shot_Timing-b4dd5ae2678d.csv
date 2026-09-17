@@ -1,0 +1,23 @@
+Shot,Title,Start seconds,Duration seconds,End seconds,Reference image,Speaker
+1,The Temple assembly,0.0,10.0,10.0,01_Temple_Assembly.png,
+2,An unsettled young man,10.0,8.0,18.0,02_Youth_Temple.png,
+3,The silver coin,18.0,10.0,28.0,03_Youth_Coin_Gateway.png,
+4,Into the city,28.0,10.0,38.0,04_Youth_Leaves.png,
+5,The hillside gathering,38.0,8.0,46.0,05_Hillside_Assembly_Seated.png,
+6,At ease in his company,46.0,8.0,54.0,05_Hillside_Assembly_Seated.png,
+7,He welcomes them,54.0,9.0,63.0,06_Leaders_Close.png,PHARISEE
+8,He eats with them,63.0,15.0,78.0,06_Leaders_Close.png,SCRIBE
+9,The gathering grows quiet,78.0,8.0,86.0,05_Hillside_Assembly_Seated.png,
+10,The young listener attends,86.0,6.0,92.0,07_Youth_Listening.png,
+11,Jesus rises,92.0,10.0,102.0,05_Hillside_Assembly_Seated.png,
+12,The lost sheep,102.0,19.0,121.0,09_Jesus_Close.png,JESUS
+13,The question remains,121.0,6.0,127.0,06_Leaders_Close.png,
+14,Found and carried,127.0,12.0,139.0,09_Jesus_Close.png,JESUS
+15,Rejoice with me,139.0,20.0,159.0,09_Jesus_Close.png,JESUS
+16,Joy in heaven,159.0,23.0,182.0,09_Jesus_Close.png,JESUS
+17,Those who listen,182.0,8.0,190.0,08_Hillside_Assembly_Standing.png,
+18,The lost coin,190.0,23.0,213.0,09_Jesus_Close.png,JESUS
+19,The neighbors share her joy,213.0,20.0,233.0,09_Jesus_Close.png,JESUS
+20,One sinner who repents,233.0,16.0,249.0,09_Jesus_Close.png,JESUS
+21,Room for another story,249.0,7.0,256.0,08_Hillside_Assembly_Standing.png,
+22,A certain man had two sons,256.0,24.0,280.0,09_Jesus_Close.png,JESUS

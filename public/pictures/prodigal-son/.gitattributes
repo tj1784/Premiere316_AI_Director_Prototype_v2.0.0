@@ -1,0 +1,6 @@
+# Source manifests record hashes of these LF text files on every platform.
+*.fountain text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+# Imported Director files retain the exact original archive bytes (including CSV line endings).
+director/** -text

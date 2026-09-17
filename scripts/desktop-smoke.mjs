@@ -185,7 +185,7 @@ try {
   await page.getByRole("button", { name: "Video Pass" }).click();
   await page.getByText(/Wave 5 · Video queue/i).waitFor();
   await page.getByText(/Video generation stays fail-closed/i).waitFor();
-  await page.getByRole("button", { name: "Queue missing video" }).waitFor();
+  assert.equal(await page.getByRole("button", { name: "In-app video rendering unavailable" }).isDisabled(), true);
   await page.getByRole("button", { name: "Import video" }).waitFor();
   await page.getByRole("button", { name: "Asset Pass" }).click();
   assert.equal(await page.getByRole("button", { name: "Generate local still", exact: true }).count(), 0, "legacy shot StillBay generation must not be reachable");

@@ -35,6 +35,26 @@ export function isDesktopApp(): boolean {
   return typeof window !== "undefined" && window.premiere316?.isDesktop === true;
 }
 
+export async function desktopOpenDirectorWorkflow(input: import("../studio/director-execution.ts").DirectorReviewInput): Promise<import("../studio/director-execution.ts").DirectorOpenResult> {
+  if (!isDesktopApp() || !window.premiere316?.director?.open) return { ok: false, error: "Open the updated Premiere316 desktop app to edit this scene in ComfyUI." };
+  return window.premiere316.director.open(input);
+}
+
+export async function desktopReviewDirectorWorkflow(input: import("../studio/director-execution.ts").DirectorReviewInput): Promise<import("../studio/director-execution.ts").DirectorReviewResult> {
+  if (!isDesktopApp() || !window.premiere316?.director) return { ok: false, error: "Workflow approval and rendering are available in the updated Premiere316 desktop app." };
+  return window.premiere316.director.review(input);
+}
+
+export async function desktopRunDirectorWorkflow(reviewId: string): Promise<import("../studio/director-execution.ts").DirectorRunResult> {
+  if (!isDesktopApp() || !window.premiere316?.director) return { ok: false, error: "Open the updated Premiere316 desktop app to run LTX Director." };
+  return window.premiere316.director.run(reviewId);
+}
+
+export async function desktopDirectorJobStatus(promptId: string): Promise<import("../studio/director-execution.ts").DirectorJobStatusResult> {
+  if (!isDesktopApp() || !window.premiere316?.director) return { ok: false, error: "LTX Director job status requires the updated desktop app." };
+  return window.premiere316.director.status(promptId);
+}
+
 export async function desktopCatalog(query: CatalogQuery = {}): Promise<ModelCatalog> {
   if (isDesktopApp()) return window.premiere316!.catalog.get(query);
   const { getModelCatalog } = await import("@/lib/studio/model-registry.ts");

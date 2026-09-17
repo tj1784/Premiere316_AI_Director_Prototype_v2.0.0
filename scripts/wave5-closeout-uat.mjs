@@ -92,17 +92,16 @@ try {
   report.ltxFailClosedVisible = /LTX 2\.5[\s\S]*fail-closed/i.test(generateText) || /Video generation stays fail-closed/i.test(generateText);
   report.h3FailClosedInPage = /MiniMax H3[\s\S]*fail-closed|no app-owned official native H3 runtime/i.test(generateText);
   assert.equal(report.ltxFailClosedVisible, true, "LTX fail-closed copy missing on Generate");
-  assert.equal(/Queue missing video/.test(generateText), true, "video queue control missing");
-  await page.getByRole("button", { name: "Queue missing video" }).click();
-  await page.getByText(/Video jobs were queued and fail-closed/i).waitFor({ timeout: 15000 });
+  assert.equal(await page.getByRole("button", { name: "In-app video rendering unavailable" }).isDisabled(), true);
+  assert.equal(await page.getByRole("heading", { name: "Generate", exact: true }).isVisible(), true);
 
   await selectStage(page, "review", "11 Review");
   await page.getByText(/Video takes/i).waitFor();
   report.reviewVideoTakesVisible = true;
   const reviewText = await page.locator("body").innerText();
-  assert.match(reviewText, /No durable video media|FAILED|fail-closed|No genuine video/i);
+  assert.match(reviewText, /No durable video media|FAILED|fail-closed|No genuine video|No video takes/i);
   assert.doesNotMatch(reviewText, /canonical video approved/i);
-  report.queuedWithoutMedia = /No durable video media/.test(reviewText);
+  report.queuedWithoutMedia = false;
   report.stillNotPresentedAsVideo = !/this still is the video take/i.test(reviewText);
 
   await selectStage(page, "timeline", "12 Stitch");

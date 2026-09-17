@@ -185,7 +185,7 @@ export default defineConfig(({ command, isPreview }) => ({
     port: 8080,
     strictPort: true,
     watch: {
-      ignored: ["**/artifacts/**", "**/public/stills/**"],
+      ignored: ["**/artifacts/**", "**/public/stills/**", "**/projects/**", "**/dist-desktop/**", "**/.output/**", "**/.vercel/**"],
     },
   },
   preview: {

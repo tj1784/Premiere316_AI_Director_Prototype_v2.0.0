@@ -1,30 +1,32 @@
-export type VoiceEngineId = "qwen3-tts" | "voxcpm2" | "index-tts";
-export type MusicEngineId = "minimax-music3";
+import { AUDIO_GENERATION_OPTIONS, audioGenerationOption } from "./audio-generation-catalog.ts";
+
+export type VoiceEngineId = "qwen3-tts" | "qwen3-tts-base" | "voxcpm2" | "index-tts";
+export type MusicEngineId = "minimax-music3" | "yue2" | "stable-audio-3" | "ace-step-1.5";
 
 export function voiceEngineFromSelection(value: string | null | undefined): VoiceEngineId {
   if (value === "voxcpm" || value === "voxcpm2") return "voxcpm2";
-  if (value === "index-tts") return "index-tts";
+  if (value === "index-tts" || value === "qwen3-tts-base") return value;
   return "qwen3-tts";
 }
 
-export function voiceRuntimeBlock(engineId: VoiceEngineId): string {
-  if (engineId === "voxcpm2") {
-    return "VoxCPM2 may exist as local weights, but Premiere316 has no app-owned official VoxCPM2 runtime. Cloud TTS, ElevenLabs, OpenAI audio, and IndexTTS substitution are forbidden. Voice generation stays fail-closed.";
-  }
-  if (engineId === "index-tts") {
-    return "IndexTTS is catalogued only. It is not an accepted Wave 6 Generate path and is never a silent substitute for Qwen3-TTS. Voice generation stays fail-closed.";
-  }
-  return "Qwen3-TTS is the preferred local voice engine, but no app-owned official native Qwen3-TTS worker is verified. No cloud TTS fallback. Voice generation stays fail-closed.";
+export function musicEngineFromSelection(value: string | null | undefined): MusicEngineId {
+  if (value === "yue2" || value === "stable-audio-3" || value === "ace-step-1.5") return value;
+  return "minimax-music3";
 }
 
-export function musicRuntimeBlock(_engineId: MusicEngineId = "minimax-music3"): string {
-  return "MiniMax Music3 is not a verified local Premiere316 runtime. Score generation stays fail-closed. Import or write cue metadata instead. No cloud music fallback.";
+export function voiceRuntimeBlock(engineId: VoiceEngineId): string {
+  return `${audioGenerationOption(engineId)?.name ?? engineId} is selected. Premiere316 has no verified local worker for this engine. Generate speech with its local workflow and import the audio. Direct generation stays fail-closed; no engine is substituted.`;
+}
+
+export function musicRuntimeBlock(engineId: MusicEngineId = "minimax-music3"): string {
+  return `${audioGenerationOption(engineId)?.name ?? engineId} is selected. Premiere316 has no verified local worker for this engine. Generate with its local workflow and import the audio. Direct generation stays fail-closed; no engine is substituted.`;
 }
 
 export function audioEngineStatuses(): Array<{ id: string; role: "preferred-voice" | "alternate-voice" | "score"; status: "fail-closed"; detail: string }> {
-  return [
-    { id: "qwen3-tts", role: "preferred-voice", status: "fail-closed", detail: voiceRuntimeBlock("qwen3-tts") },
-    { id: "voxcpm2", role: "alternate-voice", status: "fail-closed", detail: voiceRuntimeBlock("voxcpm2") },
-    { id: "minimax-music3", role: "score", status: "fail-closed", detail: musicRuntimeBlock() },
-  ];
+  return AUDIO_GENERATION_OPTIONS.map((option) => ({
+    id: option.id,
+    role: option.slot === "music" ? "score" : option.id === "qwen3-tts" ? "preferred-voice" : "alternate-voice",
+    status: "fail-closed",
+    detail: option.slot === "music" ? musicRuntimeBlock(option.id as MusicEngineId) : voiceRuntimeBlock(option.id as VoiceEngineId),
+  }));
 }

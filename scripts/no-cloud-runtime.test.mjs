@@ -86,7 +86,9 @@ test("studio actions cannot invoke removed hosted director operations", () => {
   ].join("\n");
   assert.doesNotMatch(surfaces, /writePicture|polishPrompts|startClip|pollClip|speakLine|writeScore|askDirector/);
   assert.doesNotMatch(surfaces, /<Button[^>]*>\s*(Rewrite|Animate 10–15s|Ask|Spot the picture|Rewrite cue sheet|I2V)\s*<\/Button>/);
-  assert.match(surfaces, /no cloud fallback/i);
+  // Runtime descriptions are engine-specific; enforce the absence of hosted
+  // inference endpoints rather than requiring a particular UI disclaimer.
+  assert.doesNotMatch(surfaces, /api\.x\.ai|api\.openai\.com|api\.elevenlabs\.io|videos\/generations/);
 });
 
 test("Stitch owns dedicated media and clip panels", () => {

@@ -17,6 +17,7 @@ import { LocalWriterSelect } from "./local-writer-select";
 import { AssetReferenceUpload } from "../production/asset-reference-upload";
 import { hydrateProductFlow } from "@/lib/studio/product-flow";
 import { ImportedPackageResources } from "./imported-package-resources";
+import { CharacterVoiceSamples } from "./character-voice-samples";
 
 const PHASE_LABELS: Record<AssetGenerationPhase, string> = {
   references: "Finding visual references",
@@ -266,6 +267,7 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
           {latest && !current ? <p className="text-sm text-accent">{asset.category === "character" ? "Previous image · New character sheet not generated yet" : "Previous image · Current generation pending"}</p> : null}
           {latest?.mediaUri ? <button className="grid gap-2 text-left" aria-label={`Enlarge ${asset.name} image`} onClick={() => setPreview({ name: asset.name, uri: latest.mediaUri! })}><img src={latest.mediaUri} alt={asset.name} className="aspect-square w-full rounded-md object-contain" /><span className="text-sm text-accent">Open image · {latest.width} × {latest.height}</span></button> : <p className="py-8 text-sm text-muted">Image generation pending.</p>}
           {latest?.uploadedFileName ? <p className="text-sm text-accent">Uploaded asset · {latest.uploadedFileName}</p> : null}
+          {asset.category === "character" ? <CharacterVoiceSamples pictureId={picture.id} characterId={asset.id} /> : null}
           {latest?.execution ? <p className="text-sm text-muted">Generated with {latest.execution.engineName}{latest.execution.engineId !== picture.selectedEngine.image ? " · Different from selected model" : ""}</p> : null}
           {asset.references.length ? <details className="text-sm"><summary className="cursor-pointer">Attached visual references ({asset.references.length})</summary><div className="mt-2 grid grid-cols-2 gap-2">{asset.references.map((reference) => <figure key={reference.id}><img src={reference.uri} alt={reference.name} className="aspect-square w-full object-contain" /><figcaption className="mt-1 text-xs text-muted">{reference.name}</figcaption></figure>)}</div></details> : null}
           <details className="text-sm text-muted"><summary>Screenplay asset description</summary><p className="mt-2">{asset.canonicalSpec.visualDescription}</p></details>

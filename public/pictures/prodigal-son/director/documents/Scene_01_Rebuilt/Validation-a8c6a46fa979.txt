@@ -1,0 +1,1 @@
+Static validation passed: 22 segments; 6720 timeline frames; 280 seconds at 24 fps; 9 distinct 1920x800 image references; all files present; serialized timeline and prompt copies agree. Model settings, sampler subgraphs, seeds and links unchanged from supplied baseline. Output prefix updated to this scene. No video generation or ComfyUI runtime verification performed.

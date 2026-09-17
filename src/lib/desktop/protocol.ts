@@ -195,6 +195,12 @@ export type DesktopBuildInfo = {
 /** Typed desktop bridge. No filesystem, spawn, model-root, free wake, free expose, or benchmark primitive. */
 export type Premiere316Desktop = {
   isDesktop: true;
+  director: {
+    open: (input: import("../studio/director-execution.ts").DirectorReviewInput) => Promise<import("../studio/director-execution.ts").DirectorOpenResult>;
+    review: (input: import("../studio/director-execution.ts").DirectorReviewInput) => Promise<import("../studio/director-execution.ts").DirectorReviewResult>;
+    run: (reviewId: string) => Promise<import("../studio/director-execution.ts").DirectorRunResult>;
+    status: (promptId: string) => Promise<import("../studio/director-execution.ts").DirectorJobStatusResult>;
+  };
   film: {
     start: (input: import("../studio/native-film.ts").NativeFilmRequest) => Promise<import("../studio/native-film.ts").NativeFilmStatus>;
     status: (jobId: string) => Promise<import("../studio/native-film.ts").NativeFilmStatus>;
@@ -266,6 +272,10 @@ declare global {
 }
 
 export const DESKTOP_CHANNELS = {
+  directorOpen: "p316:director:open",
+  directorReview: "p316:director:review",
+  directorRun: "p316:director:run",
+  directorStatus: "p316:director:status",
   filmStart: "p316:film:start",
   filmStatus: "p316:film:status",
   filmStop: "p316:film:stop",

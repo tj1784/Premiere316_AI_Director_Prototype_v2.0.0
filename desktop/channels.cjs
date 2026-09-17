@@ -1,6 +1,10 @@
 "use strict";
 
 module.exports = {
+  directorOpen: "p316:director:open",
+  directorReview: "p316:director:review",
+  directorRun: "p316:director:run",
+  directorStatus: "p316:director:status",
   imageSearchReferences: "p316:image:searchReferences",
   imageImportWebReference: "p316:image:importWebReference",
   imagePrepareDrafts: "p316:image:prepareDrafts",

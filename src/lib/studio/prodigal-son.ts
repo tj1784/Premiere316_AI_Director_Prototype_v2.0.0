@@ -12,6 +12,9 @@ import { makePreparationForIntake } from "./picture-preparation.ts";
 import { appendScreenplayVersion, approvedScreenplayBoundary } from "./screenplay.ts";
 import { parseScreenplayHierarchy, type ScreenplayHierarchy, type ScreenplayNode } from "./screenplay-hierarchy.ts";
 import { DEFAULT_ENGINES, type Picture } from "./types.ts";
+import { hydrateProdigalSonFrames } from "./prodigal-frames.ts";
+import { hydrateProdigalSceneReplacements } from "./prodigal-scene-replacement.ts";
+import { hydrateProdigalSonDirector } from "./prodigal-director.ts";
 
 export const PRODIGAL_SON_PICTURE_ID = "pic_prodigal_son_20260909";
 export const PRODIGAL_SON_PACKAGE_ID = "prodigal-son-2026-09-09-v1";
@@ -461,7 +464,7 @@ export function mergeBundledPictures(pictures: Picture[], installedIds: readonly
   const shouldAdd = !exists;
   installed.add(PRODIGAL_SON_PICTURE_ID);
   return {
-    pictures: shouldAdd ? [...pictures, makeProdigalSonPicture()] : pictures,
+    pictures: shouldAdd ? [...pictures, hydrateProdigalSonDirector(hydrateProdigalSceneReplacements(hydrateProdigalSonFrames(makeProdigalSonPicture())))] : pictures,
     installedBundledPictureIds: [...installed],
   };
 }

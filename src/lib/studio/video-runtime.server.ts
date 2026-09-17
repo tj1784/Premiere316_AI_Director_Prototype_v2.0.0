@@ -32,7 +32,7 @@ export function inspectVideoAdapter(engineId: VideoEngineId): VideoAdapterStatus
     ].filter((item): item is string => Boolean(item));
   return {
     engineId,
-    displayName: engineId === "minimax-h3" ? "MiniMax H3" : "LTX 2.5",
+    displayName: engineId === "ltx-director" ? "LTX Director" : engineId === "minimax-h3" ? "MiniMax H3" : "LTX 2.5",
     status: "ADAPTER_UNAVAILABLE",
     disabledReason: videoRuntimeBlock(engineId),
     presentWeights,
@@ -41,5 +41,5 @@ export function inspectVideoAdapter(engineId: VideoEngineId): VideoAdapterStatus
 }
 
 export function inspectVideoAdapters(): VideoAdapterStatus[] {
-  return [inspectVideoAdapter("ltx-2"), inspectVideoAdapter("minimax-h3")];
+  return [inspectVideoAdapter("ltx-director"), inspectVideoAdapter("ltx-2"), inspectVideoAdapter("minimax-h3")];
 }

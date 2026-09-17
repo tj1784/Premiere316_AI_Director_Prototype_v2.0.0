@@ -1,5 +1,11 @@
 import { app, BrowserWindow, Menu, dialog, ipcMain, nativeImage, protocol as electronProtocol, safeStorage, session, shell } from "electron";
 import { assertPublicUrl, fetchPublicReference, searchVisualReferences } from "./web-references.mjs";
+import { openReferenceWindow, referenceWindowTarget } from "./reference-window.mjs";
+import { createDirectorExecutionService } from "./director-execution.mjs";
+import { createDirectorProgress } from "./director-progress.mjs";
+import { createDirectorHost } from "./director-host.mjs";
+import { projectWorkspaceRoot } from './project-location.mjs';
+import { createProjectLibrary } from './project-library.mjs';
 import { spawn } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { createHash, randomBytes } from "node:crypto";
@@ -14,6 +20,8 @@ import { createNativeFilmService } from "./native-film.mjs";
 
 const require = createRequire(import.meta.url);
 let nativeFilmService = null;
+let directorHost = null;
+let directorProgress = null;
 const channels = require("./channels.cjs");
 const {
   DEFAULT_ZOOM,
@@ -393,11 +401,11 @@ async function importVideoFromDisk() {
 async function exportLiteMp4(input) {
   const tools = await discoverFfmpegTools();
   if (!tools.ok) return { ok: false, error: tools.reason };
-  const source = String(input?.mediaUri || "");
+  const source = resolveProjectMedia(String(input?.mediaUri || ""));
   if (!source || !existsSync(source)) return { ok: false, error: "Canonical imported media is missing on disk." };
   if (isUnderModelRoot(source) || isUnderProtectedRuntimeRoot(source)) throw new Error("Cannot export from model, runtime, or cache roots.");
   const userData = app.getPath("userData");
-  if (!isUnderRoot(source, userData)) throw new Error("Export source must be inside the app profile imported store.");
+  if (!isUnderRoot(source, userData) && !String(input?.mediaUri).startsWith('/api/project-media?')) throw new Error("Export source must be inside the app profile imported store or its registered project folder.");
   const outDir = join(userData, "exports");
   mkdirSync(outDir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
@@ -488,8 +496,8 @@ async function importAudioFromDisk() {
 async function exportPlusMp4(input) {
   const tools = await discoverFfmpegTools();
   if (!tools.ok) return { ok: false, error: tools.reason };
-  const videos = Array.isArray(input?.videos) ? input.videos : [];
-  const audioPath = String(input?.audioUri || "");
+  const videos = Array.isArray(input?.videos) ? input.videos.map(clip => ({ ...clip, mediaUri: resolveProjectMedia(String(clip.mediaUri || '')), projectRegistered: String(clip.mediaUri).startsWith('/api/project-media?') })) : [];
+  const audioPath = resolveProjectMedia(String(input?.audioUri || ""));
   const userData = app.getPath("userData");
   try {
     assertPlusExportReady({ videos, audioPath });
@@ -499,11 +507,11 @@ async function exportPlusMp4(input) {
   for (const clip of videos) {
     const source = String(clip?.mediaUri || "");
     if (!source || !existsSync(source)) return { ok: false, error: "Canonical imported video is missing on disk." };
-    if (isUnderModelRoot(source) || isUnderProtectedRuntimeRoot(source) || !isUnderRoot(source, userData)) {
+    if (isUnderModelRoot(source) || isUnderProtectedRuntimeRoot(source) || (!clip.projectRegistered && !isUnderRoot(source, userData))) {
       throw new Error("Export source must be inside the app profile imported store.");
     }
   }
-  if (!existsSync(audioPath) || !isUnderRoot(audioPath, userData)) return { ok: false, error: "Canonical imported audio is missing on disk." };
+  if (!existsSync(audioPath) || (!String(input?.audioUri).startsWith('/api/project-media?') && !isUnderRoot(audioPath, userData))) return { ok: false, error: "Canonical imported audio is missing on disk." };
   const durationSec = plusExportDurationSec(timelineDurationSec(videos));
   const outDir = join(userData, "exports");
   mkdirSync(outDir, { recursive: true });
@@ -590,6 +598,16 @@ function callBackend(method, params) {
       reject(error);
     }
   });
+}
+
+function projectRoot() {
+  return projectWorkspaceRoot({ override: process.env.PREMIERE316_PROJECT_ROOT, developmentRoot: ROOT, packaged: app.isPackaged, executable: app.getPath('exe'), userData: app.getPath('userData'), documents: app.getPath('documents') });
+}
+
+function resolveProjectMedia(value) {
+  if (!String(value).startsWith('/api/project-media?')) return value;
+  const url = new URL(value, 'http://localhost');
+  return createProjectLibrary({ root: projectRoot() }).mediaFile(url.searchParams.get('project'), url.searchParams.get('file'));
 }
 
 function assertTrustedSender(event) {
@@ -874,6 +892,18 @@ function registerIpc() {
     assertTrustedSender(event);
     return handler(event, ...args);
   };
+  const directorDirectory = join(app.getPath("userData"), "director-runs");
+  directorHost = createDirectorHost({ logDirectory: directorDirectory });
+  directorProgress = createDirectorProgress();
+  const directorService = createDirectorExecutionService({
+    directory: directorDirectory,
+    ensureHost: () => directorHost.ensure(),
+    getProgress: (promptId) => directorProgress.getProgress(promptId),
+  });
+  ipcMain.handle(channels.directorOpen, wrap(() => ({ ok: false, error: "Edit the workflow in Premiere, then approve generation through the API." })));
+  ipcMain.handle(channels.directorReview, wrap((_event, input) => directorService.review(input)));
+  ipcMain.handle(channels.directorRun, wrap((_event, reviewId) => directorService.run(reviewId)));
+  ipcMain.handle(channels.directorStatus, wrap((_event, promptId) => directorService.status(promptId)));
   ipcMain.handle("p316:authorityReview:get", (event, input) => {
     const state = assertAuthorityReviewSender(event, input?.nonce);
     return { reviewDocument: state.reviewDocument };
@@ -1155,6 +1185,11 @@ function attachWindowGuards(win) {
   });
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith(uiOrigin)) return { action: "allow" };
+    const target = referenceWindowTarget(url);
+    if (target?.kind === "director" && new URL(target.url).pathname === "/") {
+      return { action: "deny" };
+    }
+    if (openReferenceWindow({ BrowserWindow, parent: win, url, onError: (error) => console.error("Reference window:", error.message) })) return { action: "deny" };
     // Production never hands the product off to Chrome/Edge. Dev may open docs.
     if (!isPackaged() && /^https?:\/\//i.test(url) && !url.startsWith("http://127.0.0.1") && !url.startsWith("http://localhost")) {
       void shell.openExternal(url);
@@ -1206,6 +1241,10 @@ function startPackagedUiServer() {
       NITRO_HOST: "127.0.0.1",
       NITRO_PORT: port,
       PREMIERE316_DESKTOP: "1",
+      PREMIERE316_PROJECT_ROOT: projectRoot(),
+      PREMIERE316_PUBLIC_ROOT: join(process.resourcesPath, 'ui', 'public'),
+      PREMIERE316_MEDIA_ROOT: imageMediaRoot(),
+      PREMIERE316_IMPORT_ROOT: app.getPath('userData'),
     }),
   });
   child.stdout?.on("data", (d) => process.stdout.write(d));
@@ -1278,6 +1317,8 @@ function createWindow() {
 }
 
 async function stopSupervised() {
+  directorHost?.stop();
+  directorProgress?.stop();
   nativeFilmService?.stop();
   try {
     await Promise.race([callBackend("engines.stop"), new Promise((r) => setTimeout(r, 4000))]);

@@ -23,6 +23,7 @@ import { uid } from "@/lib/utils";
 import { PRODUCTION_CATEGORY_LABELS } from "./inventory-constants";
 import { ReadinessBadge } from "./inventory-primitives";
 import { AssetReferenceUpload } from "./asset-reference-upload";
+import { CharacterVoiceSamples } from "../studio/character-voice-samples";
 
 export function AssetInspector({ record, asset, onChange, onClose }: { record: ProductionBreakdown; asset: ProductionAsset; onChange: (record: ProductionBreakdown) => void; onClose: () => void }) {
   const [name, setName] = useState(asset.name);
@@ -128,6 +129,7 @@ export function AssetInspector({ record, asset, onChange, onClose }: { record: P
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-4 sm:px-5">
+          {asset.category === "character" ? <div className="mb-5"><CharacterVoiceSamples pictureId={record.pictureId} characterId={asset.id} expanded /></div> : null}
           <section>
             <SectionHeading title="Canonical specification" detail="Engine-independent source of truth" />
             <div className="mt-3 grid gap-3 sm:grid-cols-2">

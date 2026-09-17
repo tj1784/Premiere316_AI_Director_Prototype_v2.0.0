@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { createProjectStorage } from "./project-storage.ts";
 import { RED_SEA_THUMBNAIL_URL, SAMPLE_ID, makeSamplePicture } from "./sample.ts";
 import type { IdleUnloadOption } from "./residency.ts";
 import { DEFAULT_ENGINES, type Picture, type SelectedEngines, type StageId, USAGE_CAPS } from "./types.ts";
@@ -18,13 +19,18 @@ import { hydrateVisualDevelopmentState } from "../visual-development.ts";
 import { hydrateCinematographyState } from "../cinematography.ts";
 import { hydrateProdigalSonVisualReference, mergeBundledPictures } from "./prodigal-son.ts";
 import { hydrateProdigalSonFrames } from "./prodigal-frames.ts";
+import { hydrateProdigalSceneReplacements } from "./prodigal-scene-replacement.ts";
+import { hydrateProdigalSonDirector } from "./prodigal-director.ts";
+import { hydrateVideoDefaults } from "./video-defaults.ts";
+import { hydrateProdigalCharacterVoices } from "./character-voice-designs.ts";
 import {
-  isAdvancedDepartmentId,
+  stageNavigationPatch,
   lastDefaultTouchpointFor,
   type AdvancedSurface,
 } from "./advanced-departments.ts";
 
 interface StudioState {
+  voiceDesignAssets: import("./voice-design-library.ts").VoiceDesignAsset[];
   pictures: Picture[];
   installedBundledPictureIds: string[];
   activeId: string | null;
@@ -86,6 +92,7 @@ function blankPicture(intake: PictureIntake): Picture {
     visualDevelopment: null,
     cinematography: null,
     selectedEngine: { ...DEFAULT_ENGINES },
+    videoDefaultsVersion: 1,
     screenplayFountain: "",
     production: null,
     performance: null,
@@ -109,6 +116,7 @@ function blankPicture(intake: PictureIntake): Picture {
 export const useStudio = create<StudioState>()(
   persist(
     (set, get) => ({
+      voiceDesignAssets: [],
       ...mergeBundledPictures([makeSamplePicture()]),
       activeId: null,
       stageOverride: null,
@@ -183,28 +191,21 @@ export const useStudio = create<StudioState>()(
           ),
         }));
       },
-      setStage: (stage) => {
-        const uiMode = get().uiMode;
-        set({
-          stageOverride: stage,
-          advancedSurface: uiMode === "advanced" && isAdvancedDepartmentId(stage) ? stage : get().advancedSurface,
-        });
-        const { activeId } = get();
-        if (!activeId) return;
-        set((s) => ({
-          pictures: s.pictures.map((p) => (p.id === activeId ? { ...p, stage, lastOpenedStage: stage, updatedAt: Date.now() } : p)),
-        }));
-      },
+      setStage: (stage) => set((state) => stageNavigationPatch(state, stage)),
       setEngines: (patch) => {
         const pic = get().pictures.find((p) => p.id === get().activeId);
         if (!pic) return;
-        get().patchActive({ selectedEngine: { ...pic.selectedEngine, ...patch } });
+        get().patchActive({ selectedEngine: { ...pic.selectedEngine, ...patch }, videoDefaultsVersion: 1 });
       },
       selectShot: (id) => set({ selectedShotId: id }),
       openStillBay: (shotId) => set({ stillBayShotId: shotId, selectedShotId: shotId }),
       closeStillBay: () => set({ stillBayShotId: null }),
       setBinTab: (tab) => set({ binTab: tab }),
-      setGenerateFocus: (gate, filterId = null) => set({ generateGate: gate, generateFilterId: filterId, stageOverride: "generate" }),
+      setGenerateFocus: (gate, filterId = null) => set((state) => ({
+        ...stageNavigationPatch(state, "generate"),
+        generateGate: gate,
+        generateFilterId: filterId,
+      })),
       setUiMode: (mode) => {
         if (mode === "advanced") get().enterAdvancedDepartments();
         else get().returnToDefaultMode();
@@ -257,20 +258,24 @@ export const useStudio = create<StudioState>()(
     }),
     {
       name: "premiere316-v302-c",
+      storage: createJSONStorage(() => createProjectStorage()),
       skipHydration: true,
       partialize: (s) => ({
+        voiceDesignAssets: s.voiceDesignAssets,
         installedBundledPictureIds: s.installedBundledPictureIds,
         pictures: s.pictures.map((p) => ({
           ...p,
           shots: p.shots.map((sh) => ({
             ...sh,
-            stillUrl: sh.stillUrl?.startsWith("data:") ? undefined : sh.stillUrl,
-            videoUrl: sh.videoUrl?.startsWith("data:") ? undefined : sh.videoUrl,
+            stillUrl: sh.stillUrl,
+            videoUrl: sh.videoUrl,
           })),
-          voices: p.voices.map((v) => ({ ...v, audioDataUrl: undefined })),
+          voices: p.voices,
         })),
         activeId: s.activeId,
         stageOverride: s.stageOverride,
+        generateGate: s.generateGate,
+        generateFilterId: s.generateFilterId,
         uiMode: s.uiMode,
         advancedSurface: s.advancedSurface,
         residency: s.residency,
@@ -301,20 +306,21 @@ export const useStudio = create<StudioState>()(
       },
       onRehydrateStorage: () => (state) => {
         state?.hydrateSample();
+        if (state) queueMicrotask(() => useStudio.setState({ pictures: useStudio.getState().pictures }));
       },
     },
   ),
 );
 
 function migratePicture(picture: LegacyPicture): Picture {
-  const prepared = migratePicturePreparation(picture);
+  const prepared = hydrateVideoDefaults(migratePicturePreparation({ ...picture, selectedEngine: { ...DEFAULT_ENGINES, ...picture.selectedEngine } }));
   const productionReady = { ...prepared, production: sanitizeProductionBreakdown(prepared.production) };
   const withPerformance = { ...productionReady, performance: migratePicturePerformance(productionReady) };
   const withResearch = { ...withPerformance, research: hydratePictureResearch(withPerformance.research, withPerformance.intake), promptLab: hydratePromptLabState(withPerformance.promptLab), video: hydrateVideoWorkspace(withPerformance.video), audio: restoreAudioWorkspace(withPerformance.audio) };
   const withVisual = { ...withResearch, visualDevelopment: hydrateVisualDevelopmentState(withResearch.visualDevelopment, withResearch) };
   const withCinema = { ...withVisual, cinematography: hydrateCinematographyState(withVisual.cinematography, withVisual) };
   const migrated = hydrateProdigalSonVisualReference({ ...withCinema, generateGates: hydrateGenerateGates(withCinema.generateGates, withCinema), productFlow: hydrateProductFlow(withCinema.productFlow) });
-  return withRedSeaThumbnail(hydrateProdigalSonFrames(migrated));
+  return withRedSeaThumbnail(hydrateProdigalCharacterVoices(hydrateProdigalSonDirector(hydrateProdigalSceneReplacements(hydrateProdigalSonFrames(migrated)))));
 }
 
 function withRedSeaThumbnail(picture: Picture): Picture {

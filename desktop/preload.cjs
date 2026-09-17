@@ -7,6 +7,10 @@
 const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 const channels = {
+  directorOpen: "p316:director:open",
+  directorReview: "p316:director:review",
+  directorRun: "p316:director:run",
+  directorStatus: "p316:director:status",
   imageSearchReferences: "p316:image:searchReferences",
   imageImportWebReference: "p316:image:importWebReference",
   filmStart: "p316:film:start",
@@ -61,6 +65,12 @@ function invoke(channel, ...args) {
 
 contextBridge.exposeInMainWorld("premiere316", {
   isDesktop: true,
+  director: {
+    open: (input) => invoke(channels.directorOpen, input),
+    review: (input) => invoke(channels.directorReview, input),
+    run: (reviewId) => invoke(channels.directorRun, reviewId),
+    status: (promptId) => invoke(channels.directorStatus, promptId),
+  },
   film: { start: (input) => invoke(channels.filmStart, input), status: (jobId) => invoke(channels.filmStatus, jobId), stop: () => invoke(channels.filmStop) },
   catalog: {
     get: (query) => invoke(channels.catalogGet, query ?? {}),

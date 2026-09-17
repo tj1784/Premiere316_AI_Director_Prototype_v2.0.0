@@ -13,6 +13,7 @@ export type AdvancedDepartmentId =
   | "performance"
   | "shots"
   | "prompts"
+  | "generate"
   | "review"
   | "timeline"
   | "score"
@@ -38,6 +39,7 @@ export const ADVANCED_DEPARTMENTS: AdvancedDepartmentDefinition[] = [
   { id: "performance", label: "Performance", shortLabel: "Performance", controls: "Optional performance direction and blocking notes.", requiredInDefault: false, group: "planning" },
   { id: "shots", label: "Shots", shortLabel: "Shots", controls: "Optional shot list inspection and overrides.", requiredInDefault: false, group: "planning" },
   { id: "prompts", label: "Prompt Lab", shortLabel: "Prompt Lab", controls: "Optional prompt compilation inspection.", requiredInDefault: false, group: "planning" },
+  { id: "generate", label: "Generate", shortLabel: "Generate", controls: "Prepare asset images, first and last frames, and video workflows with the selected engines.", requiredInDefault: false, group: "production-review" },
   { id: "review", label: "Review", shortLabel: "Review", controls: "Optional take review and iteration notes.", requiredInDefault: false, group: "production-review" },
   { id: "timeline", label: "Stitch", shortLabel: "Stitch", controls: "Optional timeline assembly inspection.", requiredInDefault: false, group: "production-review" },
   { id: "score", label: "Score", shortLabel: "Score", controls: "Optional score and cue inspection.", requiredInDefault: false, group: "production-review" },
@@ -47,7 +49,7 @@ export const ADVANCED_DEPARTMENTS: AdvancedDepartmentDefinition[] = [
 export const ADVANCED_DEPARTMENT_GROUPS: { id: AdvancedDepartmentGroupId; label: string; departments: AdvancedDepartmentId[] }[] = [
   { id: "research-story", label: "Research & Story", departments: ["research", "screenplay"] },
   { id: "planning", label: "Planning", departments: ["inventory", "visual-development", "cinematography", "performance", "shots", "prompts"] },
-  { id: "production-review", label: "Production Review", departments: ["review", "timeline", "score", "export"] },
+  { id: "production-review", label: "Production Review", departments: ["generate", "review", "timeline", "score", "export"] },
 ];
 
 const DEPARTMENT_IDS = new Set<string>(ADVANCED_DEPARTMENTS.map((item) => item.id));
@@ -58,6 +60,26 @@ export function isAdvancedDepartmentId(value: string | null | undefined): value 
 
 export function isAdvancedDashboard(uiMode: "default" | "advanced", surface: AdvancedSurface): boolean {
   return uiMode === "advanced" && surface === "dashboard";
+}
+
+/** Keep workspace, rail, and the picture's reopen destination in one state update. */
+export function stageNavigationPatch(state: {
+  uiMode: "default" | "advanced";
+  advancedSurface: AdvancedSurface;
+  activeId: string | null;
+  pictures: Picture[];
+}, stage: StageId, now = Date.now()): {
+  stageOverride: StageId;
+  advancedSurface: AdvancedSurface;
+  pictures: Picture[];
+} {
+  return {
+    stageOverride: stage,
+    advancedSurface: state.uiMode === "advanced" ? stage : state.advancedSurface,
+    pictures: state.pictures.map((picture) => picture.id === state.activeId
+      ? { ...picture, stage, lastOpenedStage: stage, updatedAt: now }
+      : picture),
+  };
 }
 
 export function departmentById(id: AdvancedDepartmentId): AdvancedDepartmentDefinition {
@@ -113,6 +135,8 @@ export function departmentCardStatus(picture: Picture, id: AdvancedDepartmentId)
         status: picture.shots.some((shot) => shot.t2iPrompt) ? "Draft exists" : "Not generated",
         lastUpdated: picture.updatedAt,
       };
+    case "generate":
+      return { status: "Assets · keyframes · video", lastUpdated: picture.updatedAt };
     case "review":
       return { status: "Optional inspection", lastUpdated: picture.updatedAt };
     case "timeline":

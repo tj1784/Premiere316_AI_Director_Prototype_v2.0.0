@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiProjectMediaRouteImport } from './routes/api/project-media'
+import { Route as ApiProjectStorageRouteImport } from './routes/api/project-storage'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiProjectMediaRoute = ApiProjectMediaRouteImport.update({
+  id: '/api/project-media',
+  path: '/api/project-media',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiProjectStorageRoute = ApiProjectStorageRouteImport.update({
+  id: '/api/project-storage',
+  path: '/api/project-storage',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/project-media': typeof ApiProjectMediaRoute
+  '/api/project-storage': typeof ApiProjectStorageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/project-media': typeof ApiProjectMediaRoute
+  '/api/project-storage': typeof ApiProjectStorageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/project-media': typeof ApiProjectMediaRoute
+  '/api/project-storage': typeof ApiProjectStorageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/project-media' | '/api/project-storage'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/project-media' | '/api/project-storage'
+  id: '__root__' | '/' | '/api/project-media' | '/api/project-storage'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiProjectMediaRoute: typeof ApiProjectMediaRoute
+  ApiProjectStorageRoute: typeof ApiProjectStorageRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/project-media': {
+      id: '/api/project-media'
+      path: '/api/project-media'
+      fullPath: '/api/project-media'
+      preLoaderRoute: typeof ApiProjectMediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/project-storage': {
+      id: '/api/project-storage'
+      path: '/api/project-storage'
+      fullPath: '/api/project-storage'
+      preLoaderRoute: typeof ApiProjectStorageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiProjectMediaRoute: ApiProjectMediaRoute,
+  ApiProjectStorageRoute: ApiProjectStorageRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

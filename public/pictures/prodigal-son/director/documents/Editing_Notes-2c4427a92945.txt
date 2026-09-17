@@ -1,0 +1,6 @@
+PS-S15-SH005: insert 8 seconds from PS-S04-SH002, without dialogue. Select the exact action excerpt after source clips are rendered. Father's hand divides bread at the ordinary family supper..
+PS-S15-SH006: insert 8 seconds from PS-S04-SH001, without dialogue. Select the exact action excerpt after source clips are rendered. Hannah carries fuller serving bowl to hired workers..
+PS-S15-SH007: insert 8 seconds from PS-S02-SH003, without dialogue. Select the exact action excerpt after source clips are rendered. Elder sets down a sound basket for Levi before his palm injury..
+
+Insert all three memory clips after PS-S15-SH004 and before PS-S15-SH008. Scene 15 workflow generates 81 seconds; the three 8-second inserts bring it to 105 seconds.
+Scene 23: 30 seconds of credits over black, composed during editing; no AI video workflow needed.

@@ -125,8 +125,8 @@ function sameValue(a: unknown, b: unknown): boolean {
     : Object.is(a, b);
 }
 
-export type VideoEngineId = "ltx-2" | "minimax-h3";
-export type CompiledMediaTarget = "flux1-dev" | "flux2-dev" | "ltx-2.5" | "minimax-h3";
+export type VideoEngineId = "ltx-director" | "ltx-2" | "minimax-h3";
+export type CompiledMediaTarget = "flux1-dev" | "flux2-dev" | "ltx-director" | "ltx-2.5" | "minimax-h3";
 export type SeedPolicy = {
   mode: "locked" | "randomize";
   seed: number | null;
@@ -154,5 +154,6 @@ export function defaultVideoSettings(engineId: VideoEngineId, durationSec = 8): 
 }
 
 export function videoEngineFromSelection(selectedVideo: string): VideoEngineId {
+  if (/\blt[xc][\s_-]*director\b/i.test(selectedVideo)) return "ltx-director";
   return /minimax|h3/i.test(selectedVideo) ? "minimax-h3" : "ltx-2";
 }

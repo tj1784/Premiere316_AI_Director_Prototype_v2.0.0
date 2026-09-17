@@ -105,7 +105,7 @@ export function validateEnginePromptPackage(pkg: EnginePromptPackage): EnginePro
   if (pkg.durationSec < 1 || pkg.durationSec > 15) blockers.push("Duration must be between 1 and 15 seconds.");
   if (![24, 25, 30].includes(pkg.fps)) blockers.push("FPS must be 24, 25, or 30.");
   if (pkg.resolution.width < 256 || pkg.resolution.height < 256) blockers.push("Resolution is below the minimum native draft size.");
-  if ((pkg.engineTarget === "minimax-h3" || pkg.engineTarget === "ltx-2.5") && !pkg.actionTimeline.trim()) {
+  if ((pkg.engineTarget === "minimax-h3" || pkg.engineTarget === "ltx-2.5" || pkg.engineTarget === "ltx-director") && !pkg.actionTimeline.trim()) {
     warnings.push("Action timeline is thin; motion may be under-specified.");
   }
   return { ok: blockers.length === 0, warnings, blockers };

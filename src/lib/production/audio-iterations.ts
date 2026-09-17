@@ -1,5 +1,5 @@
 import type { Cue, Picture, VoiceTake } from "../studio/types.ts";
-import { musicRuntimeBlock, voiceEngineFromSelection, voiceRuntimeBlock, type VoiceEngineId } from "../studio/audio-runtime.ts";
+import { musicEngineFromSelection, musicRuntimeBlock, voiceEngineFromSelection, voiceRuntimeBlock, type VoiceEngineId } from "../studio/audio-runtime.ts";
 import type { AudioJob, AudioKind, AudioTake, AudioTakeQC, AudioWorkspace, DialogueLine, SoundCueRecord, VoiceProfile } from "./audio-types.ts";
 import { emptyAudioWorkspace } from "./audio-types.ts";
 
@@ -158,10 +158,11 @@ export function queueMissingDialogue(picture: Picture, now = Date.now()): AudioW
 
 export function queueMissingScore(picture: Picture, now = Date.now()): AudioWorkspace {
   let workspace = hydratePictureAudio(picture);
-  const reason = musicRuntimeBlock();
+  const engineId = musicEngineFromSelection(picture.selectedEngine.music);
+  const reason = musicRuntimeBlock(engineId);
   for (const cue of workspace.cues) {
     if (workspace.takes.some((take) => take.cueId === cue.id && (take.status === "CANONICAL" || take.origin === "imported"))) continue;
-    workspace = enqueueAudioJob(workspace, { pictureId: picture.id, kind: "score", engineId: "minimax-music3", cueId: cue.id, now: now + workspace.jobs.length });
+    workspace = enqueueAudioJob(workspace, { pictureId: picture.id, kind: "score", engineId, cueId: cue.id, now: now + workspace.jobs.length });
     workspace = failClosedAudioJob(workspace, workspace.jobs[workspace.jobs.length - 1].id, reason, now + workspace.jobs.length);
   }
   return workspace;

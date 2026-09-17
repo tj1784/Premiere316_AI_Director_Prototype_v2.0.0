@@ -253,18 +253,18 @@ describe("warm RAM and reference cache", () => {
   });
 });
 
-describe("visibility and no-comfy gate", () => {
+describe("visibility and native still isolation", () => {
   it("19. residency plan exposes component placement", () => {
     const plan = planPlacement(fluxKleinPipeline(), { vramBytes: VRAM_72 });
     assert.ok(plan.placements.transformer);
     assert.ok(plan.placements.textEncoder);
     assert.equal(typeof plan.keepEverythingInVram, "boolean");
   });
-  it("20. No-ComfyUI gate still passes", () => {
+  it("20. native still adapters remain independent of the optional Director workflow", () => {
     const readme = readFileSync(join(process.cwd(), "README.md"), "utf8");
-    assert.match(readme, /No ComfyUI/i);
+    assert.match(readme, /LTX Director is the default video option/i);
     const home = readFileSync(join(process.cwd(), "src/components/studio/home.tsx"), "utf8");
-    assert.match(home, /No Comfy/);
+    assert.match(home, /Standalone picture studio/);
     const stillBay = readFileSync(join(process.cwd(), "src/components/studio/still-bay.tsx"), "utf8");
     assert.doesNotMatch(stillBay, /Comfy graph/i);
     const stills = readFileSync(join(process.cwd(), "src/lib/studio/local-still.server.ts"), "utf8");
@@ -280,7 +280,7 @@ describe("visibility and no-comfy gate", () => {
     assert.doesNotMatch(flux2Worker, /8188|ComfyUI/i);
     assert.doesNotMatch(flux2Worker, /hf_hub_download|snapshot_download/);
     const engines = readFileSync(join(process.cwd(), "src/lib/studio/engines.ts"), "utf8");
-    assert.doesNotMatch(engines, /comfy/i);
+    assert.match(engines, /id: "ltx-director"[^\n]*kind: "video"/);
   });
 });
 

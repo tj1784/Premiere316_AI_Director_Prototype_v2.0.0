@@ -182,7 +182,7 @@ export function generateGateReadiness(picture: Picture): GateReadiness[] {
   return [
     { gate: "assets", status: assetStatus, approved: assets.approved, required: assets.required || assets.approved, reason: frameImportAuthorized ? "Asset approval pause waived by the user for this first/last-frame package." : assetStatus === "READY" ? "Visual assets approved or none required." : `${assets.approved}/${assets.required} visual assets approved.` },
     { gate: "keyframes", status: keyframeStatus, approved: pairsReady, required: gates.pairs.length, reason: assetStatus !== "READY" ? "First/Last locked until required visual assets are approved or waived." : `${pairsReady}/${gates.pairs.length} keyframe pairs approved or waived.` },
-    { gate: "video", status: videoStatus, approved: canonicalVideo, required: picture.shots.length, reason: nativeUnlocked || canonicalVideo ? `${canonicalVideo} canonical video take(s). Native generate stays fail-closed; import remains allowed.` : "Video generate locked until a keyframe pair is approved or waived. Import remains allowed." },
+    { gate: "video", status: videoStatus, approved: canonicalVideo, required: picture.shots.length, reason: picture.selectedEngine.video === "ltx-director" ? `${canonicalVideo} reviewed video take(s). Generate segments below, then import completed clips for take review.` : nativeUnlocked || canonicalVideo ? `${canonicalVideo} canonical video take(s). Native generate stays fail-closed; import remains allowed.` : "Video generate locked until a keyframe pair is approved or waived. Import remains allowed." },
   ];
 }
 

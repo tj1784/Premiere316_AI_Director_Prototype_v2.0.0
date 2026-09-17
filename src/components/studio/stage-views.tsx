@@ -24,6 +24,10 @@ import { MoviePlanActivity } from "./movie-plan-activity";
 import { GeneratedAssetsReview } from "./generated-assets-review";
 import { generateAssetDrafts } from "@/lib/studio/asset-generation-client";
 import { NativeFilmPanel } from "./native-film-panel";
+import { DirectorVideoPanel } from "./director-video-panel";
+import { VideoGenerationOptions } from "./video-generation-options";
+import { AudioGenerationOptions } from "./audio-generation-options";
+import { VoiceDesignWorkspace } from "./voice-design-workspace";
 import type { MoviePlanProgress } from "@/lib/studio/movie-plan-stream.ts";
 import { isAdvancedDashboard } from "@/lib/studio/advanced-departments.ts";
 import { DEFAULT_NAV_STEPS, INTERNAL_PHASES, PHASE_LABELS, PHASE_STAGE, allPhaseReviewsOn, hydrateProductFlow, pausedInternalPhase, PHASE_REVIEW_DEFAULTS, type InternalPhase } from "@/lib/studio/product-flow.ts";
@@ -54,17 +58,16 @@ import { qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
 import { canonicalSpecHash, hydratePromptLabState, promptLabRuntimeBlock } from "@/lib/studio/prompt-lab.ts";
 import { videoEngineFromSelection } from "@/lib/studio/generation-config.ts";
 import { videoRuntimeBlock } from "@/lib/studio/video-runtime.ts";
-import { audioEngineStatuses, musicRuntimeBlock, voiceEngineFromSelection, voiceRuntimeBlock } from "@/lib/studio/audio-runtime.ts";
+import { musicEngineFromSelection, musicRuntimeBlock, voiceEngineFromSelection, voiceRuntimeBlock } from "@/lib/studio/audio-runtime.ts";
 import { movieReadiness } from "@/lib/studio/movie-readiness.ts";
 import { guidedNextStage, movieLifecycle } from "@/lib/studio/movie-lifecycle.ts";
 import { planLiteImportedExport, planPictureExport, planPlusImportedExport } from "@/lib/studio/ffmpeg-export.ts";
 import { buildTimelinePlan, importedCanonicalFilm } from "@/lib/studio/timeline-plan.ts";
-import { enqueueVideoJob, failClosedVideoJob, nextShotForImport, recordImportedVideoTake, reviewVideoTake, shotVideoReadiness } from "@/lib/production/video-iterations.ts";
-import { failClosedKeyframe, generateGateReadiness, hydrateGenerateGates, nativeVideoLockedForShot, savePromptVersion, waiveKeyframePair } from "@/lib/production/generate-gates.ts";
+import { nextShotForImport, recordImportedVideoTake, reviewVideoTake, shotVideoReadiness } from "@/lib/production/video-iterations.ts";
+import { failClosedKeyframe, generateGateReadiness, hydrateGenerateGates, savePromptVersion, waiveKeyframePair } from "@/lib/production/generate-gates.ts";
 import { hydrateVideoWorkspace } from "@/lib/production/video-types.ts";
 import { hydratePictureAudio, queueMissingDialogue, queueMissingScore, recordImportedAudioTake, reviewAudioTake } from "@/lib/production/audio-iterations.ts";
 import { hydrateAudioWorkspace } from "@/lib/production/audio-types.ts";
-import { enqueueSchedulerJob, emptySchedulerSnapshot, recoverSchedulerSnapshot } from "@/lib/studio/cross-media-scheduler.ts";
 import { DEFAULT_CREW_WRITER_DISPLAY, OPTIONAL_CREW_WRITER_DISPLAY } from "@/lib/studio/model-routing.ts";
 import type { ScreenplayRewriteTarget, ScreenplayScope } from "@/lib/studio/screenplay-scope.ts";
 import { isLlamaQaCandidate as isLlamaFamily } from "@/lib/studio/qwen-writer-identity.ts";
@@ -770,10 +773,10 @@ function GenerateStage({ picture }: { picture: Picture }) {
   const canAuthorizeWithBest = Boolean(best && best.status === "READY" && best.controls && picture.production && authorityCurrent);
   const gateReadiness = generateGateReadiness(picture);
   const gateWorkspace = hydrateGenerateGates(picture.generateGates, picture);
-  const unlockedNativeShots = picture.shots.filter((shot) => !nativeVideoLockedForShot(picture, shot.id));
   return (
     <Pane title="Generate" kicker="10 · Three-gate cohesion">
       <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">Generate assets, prepare keyframes, or render motion from your shot prompts. Review the actual outputs in this picture.</p>
+      <VideoGenerationOptions picture={picture} />
       <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; generation fails closed."}</div>
       <div className="mb-4 grid gap-2 sm:grid-cols-3" aria-label="Generate gate readiness">
         {gateReadiness.map((item) => (
@@ -789,6 +792,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
           <Button key={gate} size="sm" variant={generateGate === gate ? "secondary" : "ghost"} onClick={() => setGenerateFocus(gate)}>{gate === "assets" ? "Asset Pass" : gate === "keyframes" ? "Keyframe Pass" : "Video Pass"}</Button>
         ))}
       </div>
+      {generateGate === "assets" ? <div className="mb-6"><AudioGenerationOptions picture={picture} /></div> : null}
       {generateGate === "assets" ? <><GeneratedAssetsReview picture={picture} /><details className="mt-6"><summary className="cursor-pointer text-sm text-muted">Advanced preparation details</summary><div className="mt-3 grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
         <section className="grid min-w-0 gap-3" aria-label="Prepared assets">
           {(() => {
@@ -942,28 +946,14 @@ function GenerateStage({ picture }: { picture: Picture }) {
           })}
         </section>
       ) : null}
-      {generateGate === "video" ? <NativeFilmPanel picture={picture} /> : null}
+      {generateGate === "video" && picture.selectedEngine.video === "ltx-director" ? <DirectorVideoPanel picture={picture} /> : null}
+      {generateGate === "video" && picture.selectedEngine.video === "minimax-h3" ? <NativeFilmPanel picture={picture} /> : null}
       {generateGate === "video" ? <section className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Video generation queue">
         <p className="text-[11px] tracking-wide text-subtle uppercase">Keyframe-conditioned generation / imports</p>
         <h3 className="mt-1 font-display text-xl">Motion / {engineById(picture.selectedEngine.video)?.name ?? "video"}</h3>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{videoRuntimeBlock(videoEngineFromSelection(picture.selectedEngine.video))}</p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" onClick={() => {
-            const now = Date.now();
-            let workspace = hydrateVideoWorkspace(picture.video);
-            let scheduler = recoverSchedulerSnapshot(emptySchedulerSnapshot(), now);
-            for (const shot of unlockedNativeShots) {
-              const pkg = compileEnginePromptPackage({ picture, shot, target: "video", now });
-              workspace = enqueueVideoJob(workspace, { pictureId: picture.id, shotId: shot.id, selectedVideoEngine: picture.selectedEngine.video, promptPackage: pkg, now: now + picture.shots.indexOf(shot) });
-              const job = workspace.jobs.at(-1);
-              if (!job) continue;
-              scheduler = enqueueSchedulerJob(scheduler, { id: job.id, kind: "video", pictureId: picture.id, label: shot.description, engineId: job.engineId, priority: 80, createdAt: now, dependsOn: [], vramHintBytes: 0 });
-              workspace = failClosedVideoJob(workspace, job.id, videoRuntimeBlock(job.engineId), now + 1 + picture.shots.indexOf(shot));
-            }
-            replaceActive({ ...picture, video: { ...workspace, schedulerSnapshot: scheduler }, updatedAt: now });
-            toast.error("Video jobs were queued and fail-closed. No still was substituted as video.");
-            setStage("review");
-          }} disabled={!unlockedNativeShots.length} title={unlockedNativeShots.length ? "Queue unlocked shots and fail closed without invoking Comfy or cloud" : "Approve or waive first/last frames before native video generate. Import remains allowed."}>Queue missing video</Button>
+          {picture.selectedEngine.video !== "ltx-director" ? <Button size="sm" variant="secondary" disabled title={videoRuntimeBlock(videoEngineFromSelection(picture.selectedEngine.video))}>In-app video rendering unavailable</Button> : null}
           <Button size="sm" onClick={() => {
             void (async () => {
               const latest = useStudio.getState().pictures.find((item) => item.id === picture.id) ?? picture;
@@ -1002,14 +992,9 @@ function GenerateStage({ picture }: { picture: Picture }) {
         <p className="mt-3 text-xs text-subtle">Shot readiness: {picture.shots.length ? picture.shots.map((shot) => `${shot.index}:${shotVideoReadiness(hydrateVideoWorkspace(picture.video), shot.id)}`).join(" · ") : "no shots"}</p>
       </section> : null}
       {generateGate === "assets" ? <section className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Voice generation queue">
-        <p className="text-[11px] tracking-wide text-subtle uppercase">Wave 6 · Voice / ADR</p>
+        <p className="text-[11px] tracking-wide text-subtle uppercase">Voice / ADR</p>
         <h3 className="mt-1 font-display text-xl">Dialogue / {engineById(picture.selectedEngine.voice)?.name ?? "Qwen3 TTS"}</h3>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{voiceRuntimeBlock(voiceEngineFromSelection(picture.selectedEngine.voice))}</p>
-        <ul className="mt-3 grid gap-2 text-xs text-muted">
-          {audioEngineStatuses().map((engine) => (
-            <li key={engine.id} className="rounded-sm bg-inset px-3 py-2 shadow-[var(--shadow-border)]"><span className="text-subtle uppercase">{engine.role}</span> · {engine.id} · {engine.status}</li>
-          ))}
-        </ul>
         <div className="mt-3 flex flex-wrap gap-2">
           <Button size="sm" variant="secondary" onClick={() => {
             const audio = queueMissingDialogue(picture);
@@ -1017,7 +1002,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
             toast.error("Dialogue jobs were queued and fail-closed. No cloud TTS ran.");
             setStage("review");
           }}>Queue missing dialogue</Button>
-          <Button size="sm" variant="ghost" onClick={() => setStage("score")}>Open Score</Button>
+          <Button size="sm" variant="ghost" onClick={() => setStage("score")}>Voice design & library</Button>
         </div>
       </section> : null}
       {generateGate === "assets" && ready.length ? <p className="mt-4 text-xs text-subtle">{ready.length} prepared asset(s) are product-ready; generation still requires an exact READY manifest and one-use authorization.</p> : null}
@@ -1048,6 +1033,7 @@ function ReviewStage({ picture }: { picture: Picture }) {
   }
   return (
     <Pane title="Review" kicker="11 · Iteration decisions">
+      <div className="mb-4"><Button size="sm" variant="secondary" onClick={() => setGenerateFocus("video")}>Open Generate / Video Clips</Button></div>
       <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">A/B review is append-only. Rejections, continuity confirmations, and canonical approvals preserve every generated file and sidecar; no output becomes canonical while dependencies, durable media, or identity confirmations are stale.</p>
       <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"} · scoped decisions ${backendCanonicalHistory.length}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; review decisions fail closed."}</div>
       <div className="grid min-w-0 gap-3 lg:grid-cols-2">
@@ -1127,7 +1113,6 @@ function ReviewStage({ picture }: { picture: Picture }) {
         }) : <EmptyCard title="No generated iterations" body="Generate from an approved prepared asset after the native adapter gate passes. Imported or shot-only stills do not satisfy Wave 4." />}
       </div>
       <section className="mt-6" aria-label="Video takes">
-        <div className="mb-3"><Button size="sm" variant="secondary" onClick={() => setGenerateFocus("video")}>Open Generate / Video Clips</Button></div>
         <p className="mb-3 text-[11px] tracking-wide text-subtle uppercase">Video takes</p>
         <div className="grid min-w-0 gap-3 lg:grid-cols-2">
           {hydrateVideoWorkspace(picture.video).takes.length ? hydrateVideoWorkspace(picture.video).takes.map((take) => (
@@ -1157,7 +1142,7 @@ function ReviewStage({ picture }: { picture: Picture }) {
                 }}>Approve canonical</Button>
               </div>
             </article>
-          )) : <EmptyCard title="No video takes" body="Queue missing video from Generate. Wave 5 fail-closes MiniMax H3 and LTX 2.5 until an official non-Comfy native worker exists." />}
+          )) : <EmptyCard title="No video takes" body="Prepare scene workflows in Generate, then import rendered clips for review." />}
         </div>
       </section>
       <section className="mt-6" aria-label="Audio takes">
@@ -1190,7 +1175,7 @@ function ReviewStage({ picture }: { picture: Picture }) {
                 }}>Approve canonical</Button>
               </div>
             </article>
-          )) : <EmptyCard title="No audio takes" body="Queue missing dialogue from Generate or Score. Qwen3-TTS, VoxCPM2, and Music3 stay fail-closed." />}
+          )) : <EmptyCard title="No audio takes" body="Choose your audio tools in Generate, then import recordings or generated audio for review." />}
         </div>
       </section>
     </Pane>
@@ -1242,8 +1227,9 @@ function ScoreStage({ picture }: { picture: Picture }) {
   const audio = hydratePictureAudio(picture);
   return (
     <Pane title="Score" kicker="13 · Voice + Sound + Music">
-      <p className="mb-4 max-w-2xl text-sm text-muted">Cue sheet, voice bible, and fail-closed Music3. Import remains the only canonical audio path until a native TTS or Music runtime exists.</p>
-      <div role="status" className="max-w-2xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]">{musicRuntimeBlock()} Local score adapter unavailable · no cloud fallback.</div>
+      <p className="mb-4 max-w-2xl text-sm text-muted">Plan cues, manage voices, and review imported audio. Choose song, instrumental, sound-effect, and speech tools in Generate.</p>
+      <VoiceDesignWorkspace key={picture.id} picture={picture} />
+      <div role="status" className="max-w-2xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]">{musicRuntimeBlock(musicEngineFromSelection(picture.selectedEngine.music))}</div>
       <div className="mt-4 flex flex-wrap gap-2">
         <Button size="sm" variant="secondary" onClick={() => {
           replaceActive({ ...picture, audio: queueMissingDialogue(picture), updatedAt: Date.now() });
@@ -1251,7 +1237,7 @@ function ScoreStage({ picture }: { picture: Picture }) {
         }}>Queue missing dialogue</Button>
         <Button size="sm" variant="secondary" onClick={() => {
           replaceActive({ ...picture, audio: queueMissingScore(picture), updatedAt: Date.now() });
-          toast.error("Score cues queued fail-closed. Music3 did not generate.");
+          toast.error("Score cues saved. The selected audio runtime is not connected; no audio was generated.");
         }}>Queue missing score</Button>
         <Button size="sm" onClick={() => {
           void (async () => {

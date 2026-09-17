@@ -136,6 +136,10 @@ const asarPath = join(packagedResources, "app.asar");
 const { listPackage } = require("@electron/asar");
 const asarEntries = new Set(listPackage(asarPath, { isPack: false }).map((entry) => entry.replaceAll("\\", "/")));
 const requiredAsarEntries = [
+  "/desktop/director-progress.mjs",
+  "/desktop/director-workspace.mjs",
+  "/desktop/director-workspace.html",
+  "/desktop/director-workspace-preload.cjs",
   "/desktop/main.mjs",
   "/desktop/preload.cjs",
   "/desktop/authority-review-preload.cjs",
@@ -143,6 +147,10 @@ const requiredAsarEntries = [
   "/desktop/confirmation-preload.cjs",
   "/desktop/confirmation.html",
   "/desktop/channels.cjs",
+  "/desktop/reference-window.mjs",
+  "/desktop/director-compiler.mjs",
+  "/desktop/director-execution.mjs",
+  "/desktop/director-host.mjs",
   "/desktop/zoom.cjs",
   "/package.json",
 ];

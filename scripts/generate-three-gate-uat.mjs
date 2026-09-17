@@ -74,7 +74,8 @@ try {
   report.video = true;
   await page.getByRole("button", { name: "Import video" }).waitFor();
   report.importVisible = true;
-  report.queueLocked = await page.getByRole("button", { name: "Queue missing video" }).isEnabled();
+  report.queueLocked = await page.getByRole("button", { name: "In-app video rendering unavailable" }).isDisabled();
+  assert.equal(report.queueLocked, true);
 
   await selectStage(page, "export", "14 Export");
   await page.getByRole("button", { name: /IMPORTED · Video|BLOCKED · Video|READY · Video|Video/i }).first().click().catch(() => {});

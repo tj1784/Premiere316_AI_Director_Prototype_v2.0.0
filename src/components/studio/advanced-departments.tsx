@@ -79,7 +79,7 @@ export function AdvancedDepartmentsRail() {
   const openAdvancedDepartment = useStudio((state) => state.openAdvancedDepartment);
   const returnToDefaultMode = useStudio((state) => state.returnToDefaultMode);
   const onDashboard = advancedSurface === "dashboard";
-  const currentId = onDashboard ? "" : (advancedSurface === stage ? stage : advancedSurface);
+  const currentId = onDashboard ? "" : stage;
 
   return (
     <div className="min-w-0">
@@ -87,7 +87,7 @@ export function AdvancedDepartmentsRail() {
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <p className="text-xs text-muted">Production departments</p>
           <Button size="sm" variant="ghost" onClick={() => openAdvancedDepartment("intake")}>Intake</Button>
-          <Button size="sm" variant="ghost" onClick={() => { useStudio.getState().setGenerateFocus("assets"); openAdvancedDepartment("generate"); }}>Assets</Button>
+          <Button size="sm" variant="ghost" onClick={() => useStudio.getState().setGenerateFocus("assets")}>Assets</Button>
           {onDashboard ? null : (
             <Button size="sm" variant="ghost" onClick={() => enterAdvancedDepartments()}>
               All departments

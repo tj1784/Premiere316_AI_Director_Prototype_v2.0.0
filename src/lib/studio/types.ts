@@ -72,7 +72,7 @@ export type SelectedEngines = {
 export const DEFAULT_ENGINES: SelectedEngines = {
   director: "dramatron",
   image: "flux2",
-  video: "ltx-2",
+  video: "ltx-director",
   voice: "qwen3-tts",
   music: "minimax-music3",
 };
@@ -135,6 +135,14 @@ export type VoiceTake = {
 };
 
 export type Picture = {
+  projectLibrary?: import('./project-library-client.ts').ProjectLibraryLink;
+  characterVoiceDesigns?: import("./character-voice-designs.ts").CharacterVoiceDesignState;
+  directorScenes?: Record<string, import("./director-scene-authoring.ts").DirectorScenePlan>;
+  videoDefaultsVersion?: 1;
+  directorBundle?: import("./prodigal-director-types.ts").ProdigalDirectorImportState;
+  directorSceneRevisions?: Record<string, string>;
+  directorWorkflowDrafts?: Record<string, import("./director-workflow-editor.ts").DirectorWorkflowDraft>;
+  directorRenderJobs?: Record<string, { promptId: string; submittedAt: number; uncertain?: boolean; jobs?: Array<{ promptId: string; label: string; submittedAt: number; uncertain?: boolean }> }>;
   frameBundle?: import("./prodigal-frame-types.ts").ProdigalFrameImportState;
   importedPackage?: import("./imported-picture-package.ts").ImportedPicturePackage;
   assetPromptSources?: Record<string, import("./asset-prompt-context.ts").AssetPromptSource>;

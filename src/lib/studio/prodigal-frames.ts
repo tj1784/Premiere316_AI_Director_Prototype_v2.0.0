@@ -74,6 +74,8 @@ export function hydrateProdigalSonFrames(picture: Picture, manifest = PRODIGAL_S
   const performance: PerformanceWorkspace = structuredClone(picture.performance);
   let nextIndex = Math.max(0, ...shots.map((shot) => shot.index), ...performance.shots.map((shot) => shot.sequenceOrder));
   for (const source of manifest.shots) {
+    // A later supplied scene owns these IDs; its prompts and references replace this older package.
+    if (picture.directorSceneRevisions?.[source.scene_id]) continue;
     if (!validSceneIds.has(source.scene_id) || source.scene_id === "PS-S23" || skipped.has(source.id)) continue;
     if (processed.has(source.id)) continue;
     // A coincident ID belongs to the user unless a previous package import recorded ownership.
@@ -98,6 +100,7 @@ export function hydrateProdigalSonFrames(picture: Picture, manifest = PRODIGAL_S
   }
   let gates = hydrateGenerateGates(picture.generateGates, next);
   for (const source of manifest.shots) {
+    if (picture.directorSceneRevisions?.[source.scene_id]) continue;
     // A user-deleted shot is never reinserted, nor are iterations attached to a colliding user shot.
     if (!processed.has(source.id) || !legacyIds.has(source.id) || !canonicalIds.has(source.id)) continue;
     let pair = gates.pairs.find((item) => item.shotId === source.id);

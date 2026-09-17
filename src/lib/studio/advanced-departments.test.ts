@@ -12,6 +12,7 @@ import {
   isAdvancedDashboard,
   isAdvancedDepartmentId,
   numberedStageRailForbidden,
+  stageNavigationPatch,
 } from "./advanced-departments.ts";
 
 function picture(): Picture {
@@ -35,8 +36,8 @@ describe("advanced departments are optional tools, not the main path", () => {
     assert.equal(DEFAULT_NAV_STEPS.some((step) => step.stage === "research"), false);
   });
 
-  it("groups twelve optional departments and never marks them required", () => {
-    assert.equal(ADVANCED_DEPARTMENTS.length, 12);
+  it("groups thirteen optional departments, including Generate, and never marks them required", () => {
+    assert.equal(ADVANCED_DEPARTMENTS.length, 13);
     assert.equal(ADVANCED_DEPARTMENTS.every((item) => item.requiredInDefault === false), true);
     assert.deepEqual(ADVANCED_DEPARTMENT_GROUPS.map((group) => group.label), [
       "Research & Story",
@@ -45,7 +46,37 @@ describe("advanced departments are optional tools, not the main path", () => {
     ]);
     assert.deepEqual(ADVANCED_DEPARTMENT_GROUPS.flatMap((group) => group.departments), ADVANCED_DEPARTMENTS.map((item) => item.id));
     assert.equal(isAdvancedDepartmentId("research"), true);
-    assert.equal(isAdvancedDepartmentId("generate"), false);
+    assert.equal(isAdvancedDepartmentId("generate"), true);
+  });
+
+  it("opens Generate from Review or the dashboard with matching rail and reopen state", () => {
+    const original = picture();
+    original.stage = "review";
+    original.lastOpenedStage = "review";
+    const other = { ...picture(), id: "other" };
+    for (const surface of ["review", "dashboard"] as const) {
+      const before = { uiMode: "advanced" as const, advancedSurface: surface, activeId: original.id, pictures: [original, other], generateGate: "video", generateFilterId: "selected-shot" };
+      const after = { ...before, ...stageNavigationPatch(before, "generate", 10) };
+      assert.equal(after.stageOverride, "generate");
+      assert.equal(after.advancedSurface, "generate");
+      assert.equal(after.pictures[0].stage, "generate");
+      assert.equal(after.pictures[0].lastOpenedStage, "generate");
+      assert.equal(after.pictures[0].updatedAt, 10);
+      assert.equal(after.generateGate, "video");
+      assert.equal(after.generateFilterId, "selected-shot");
+      assert.equal(after.pictures[0].selectedEngine, original.selectedEngine);
+      assert.equal(after.pictures[1], other);
+    }
+    assert.equal(original.stage, "review");
+  });
+
+  it("keeps default navigation in default mode while persisting its destination", () => {
+    const original = picture();
+    const state = { uiMode: "default" as const, advancedSurface: "dashboard" as const, activeId: original.id, pictures: [original] };
+    const patch = stageNavigationPatch(state, "generate", 20);
+    assert.equal(patch.advancedSurface, "dashboard");
+    assert.equal(patch.stageOverride, "generate");
+    assert.equal(patch.pictures[0].lastOpenedStage, "generate");
   });
 
   it("opens on a dashboard surface rather than a numbered 14-tab rail", () => {

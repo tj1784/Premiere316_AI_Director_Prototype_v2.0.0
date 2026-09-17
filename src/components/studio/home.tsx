@@ -19,7 +19,7 @@ export function HomeBay() {
           </span>
           <div>
             <p className="font-display text-lg leading-tight tracking-tight">Premiere316</p>
-            <p className="text-[11px] tracking-[0.18em] text-muted uppercase">V3.02 · Standalone · No ComfyUI</p>
+            <p className="text-[11px] tracking-[0.18em] text-muted uppercase">V3.02 · Standalone picture studio</p>
           </div>
         </div>
         <div className="flex min-w-0 items-center gap-2">

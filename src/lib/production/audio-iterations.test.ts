@@ -36,6 +36,22 @@ describe("Wave 6 audio architecture", () => {
     assert.equal(workspace.takes.some((take) => take.kind === "score" && take.origin === "fail-closed"), true);
   });
 
+  it("retains the chosen audio engine in jobs and failed takes", () => {
+    for (const engineId of ["minimax-music3", "yue2", "stable-audio-3", "ace-step-1.5"]) {
+      const input = picture();
+      input.selectedEngine.music = engineId;
+      const workspace = queueMissingScore(input, 20);
+      assert.ok(workspace.jobs.length > 0);
+      assert.ok(workspace.jobs.every((job) => job.engineId === engineId));
+      assert.ok(workspace.takes.every((take) => take.engineId === engineId && take.mediaUri === null));
+    }
+    const input = picture();
+    input.selectedEngine.voice = "qwen3-tts-base";
+    const workspace = queueMissingDialogue(input, 30);
+    assert.equal(workspace.profiles[0].engineId, "qwen3-tts-base");
+    assert.ok(workspace.jobs.every((job) => job.engineId === "qwen3-tts-base"));
+  });
+
   it("allows imported audio to become canonical and rejects fail-closed canonical", () => {
     let workspace = queueMissingDialogue(picture(), 10);
     assert.throws(() => reviewAudioTake(workspace, workspace.takes[0].id, "canonical", "no"), /imported durable media/);

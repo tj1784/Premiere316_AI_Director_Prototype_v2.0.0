@@ -1,0 +1,439 @@
+{
+  "schemaVersion": 1,
+  "status": "completed",
+  "startedAt": "2026-09-14T21:21:17.788371+00:00",
+  "sourceSha256": "b44704444023df54cc940ad2a619ecda68ee6b35eec650284ef509da2c6f3b32",
+  "modelId": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+  "modelRevision": "5ecdb67327fd37bb2e042aab12ff7391903235d3",
+  "modelPath": "D:\\AI\\Models\\TTS\\qwen3_tts\\Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+  "modelFiles": {
+    "model.safetensors": {
+      "bytes": 3833402552,
+      "sha256": "391e8db219f292c515297cdceeb43e4eae67cdde35fa57e79a6a8a532fca0522"
+    },
+    "speech_tokenizer/model.safetensors": {
+      "bytes": 682293092,
+      "sha256": "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"
+    },
+    "config.json": {
+      "bytes": 4421,
+      "sha256": "aecd2cc4c1fe9edef1cb7ca7c401685a43879ad43f3f9e883f1c6760b61731e0"
+    }
+  },
+  "runtime": {
+    "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "executable": "D:\\AI\\ComfyUI\\Instances\\Qwen3-TTS\\.venv\\Scripts\\python.exe",
+    "torch": "2.8.0+cu128",
+    "qwenTts": "0.1.1",
+    "transformers": "4.57.3"
+  },
+  "precision": "bfloat16",
+  "attentionImplementation": "sdpa",
+  "reviewStatus": "PENDING_USER_REVIEW",
+  "results": [
+    {
+      "profileId": "PS-CHR-MATTAN:main",
+      "text": "I have counted the jars; the smaller ones can wait here until the others return.",
+      "voiceDesign": "One man's voice, approximately 50; proposed voice age, source specifies an older adult than Levi. A steady middle-low baritone with a fine sandy texture and little pitch fluctuation; narrower and more matter-of-fact than the father. Balanced, deliberate clauses with small practical pauses and complete consonants. Quiet competence and attention, a household colleague speaking at normal distance. No servile caricature. Speak natural, clear English with lightly non-rhotic, unshowy neutral vowels and no conspicuous regional accent. Use grounded conversational film acting, natural breaths and clean intelligible consonants. One human voice only, dry close recording, no music, reverb or other speakers. Do not imitate a celebrity, use an announcer voice or add a theatrical biblical cadence. Accent is a cohesive creative casting choice, not a claim of historical reconstruction.",
+      "language": "English",
+      "seed": 912872004,
+      "settings": {
+        "do_sample": true,
+        "temperature": 0.9,
+        "top_p": 1.0,
+        "top_k": 50,
+        "repetition_penalty": 1.05,
+        "subtalker_dosample": true,
+        "subtalker_temperature": 0.9,
+        "subtalker_top_p": 1.0,
+        "subtalker_top_k": 50,
+        "max_new_tokens": 512
+      },
+      "modelId": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "modelRevision": "5ecdb67327fd37bb2e042aab12ff7391903235d3",
+      "modelFiles": {
+        "model.safetensors": {
+          "bytes": 3833402552,
+          "sha256": "391e8db219f292c515297cdceeb43e4eae67cdde35fa57e79a6a8a532fca0522"
+        },
+        "speech_tokenizer/model.safetensors": {
+          "bytes": 682293092,
+          "sha256": "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"
+        },
+        "config.json": {
+          "bytes": 4421,
+          "sha256": "aecd2cc4c1fe9edef1cb7ca7c401685a43879ad43f3f9e883f1c6760b61731e0"
+        }
+      },
+      "sourceSha256": "b44704444023df54cc940ad2a619ecda68ee6b35eec650284ef509da2c6f3b32",
+      "precision": "bfloat16",
+      "attentionImplementation": "sdpa",
+      "outputFormat": "WAV PCM_16",
+      "generatorVersion": 1,
+      "inputSha256": "0050fda47c29c02c3592000936d492c922298bbad3c7c162ac3a4987fae3f74d",
+      "name": "Mattan, steward",
+      "assetId": "PS-CHR-MATTAN",
+      "memberId": "main",
+      "textKind": "audition",
+      "cueRefs": [],
+      "startedAt": "2026-09-14T21:21:21.332000+00:00",
+      "status": "completed",
+      "fileName": "ps-chr-mattan_main_0050fda47c29.wav",
+      "url": "/pictures/prodigal-son/voice-designs/ps-chr-mattan_main_0050fda47c29.wav",
+      "sha256": "1ebb07bbe98ff5261c20b06eeb25f349107182149cfe468b3a1bcbab0dc4e156",
+      "bytes": 188204,
+      "durationSeconds": 3.92,
+      "sampleRate": 24000,
+      "channels": 1,
+      "frames": 94080,
+      "format": "WAV",
+      "subtype": "PCM_16",
+      "quality": {
+        "passed": true,
+        "checks": [
+          "finite-mono",
+          "native-24khz",
+          "duration",
+          "non-silent",
+          "not-clipped"
+        ],
+        "peak": 0.67578125,
+        "rms": 0.11069898875321928,
+        "rmsDbfs": -19.117126928568755,
+        "clippedSamples": 0,
+        "activeSeconds": 3.3945833333333333,
+        "tailRms": 1.6528398446931887e-05,
+        "transcriptVerification": "not_run",
+        "castingReview": "pending",
+        "sourcePeak": 0.67578125
+      },
+      "generationSeconds": 8.297,
+      "finishedAt": "2026-09-14T21:21:29.631188+00:00"
+    },
+    {
+      "profileId": "PS-EXT-MARKET:member-d",
+      "text": "Let me see the edge in the light; the cloth is worn, but the stitching has held.",
+      "voiceDesign": "One man's voice, 36, specified by the ensemble design. A smooth narrow tenor-baritone with a slightly dry upper edge and restrained resonance. Measured appraising pauses, crisp beginnings and economical even endings. A neutral, thoughtful exchange about cloth; no villainous bargaining voice. Speak natural, clear English with lightly non-rhotic, unshowy neutral vowels and no conspicuous regional accent. Use grounded conversational film acting, natural breaths and clean intelligible consonants. One human voice only, dry close recording, no music, reverb or other speakers. Do not imitate a celebrity, use an announcer voice or add a theatrical biblical cadence. Accent is a cohesive creative casting choice, not a claim of historical reconstruction.",
+      "language": "English",
+      "seed": 1623876092,
+      "settings": {
+        "do_sample": true,
+        "temperature": 0.9,
+        "top_p": 1.0,
+        "top_k": 50,
+        "repetition_penalty": 1.05,
+        "subtalker_dosample": true,
+        "subtalker_temperature": 0.9,
+        "subtalker_top_p": 1.0,
+        "subtalker_top_k": 50,
+        "max_new_tokens": 512
+      },
+      "modelId": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "modelRevision": "5ecdb67327fd37bb2e042aab12ff7391903235d3",
+      "modelFiles": {
+        "model.safetensors": {
+          "bytes": 3833402552,
+          "sha256": "391e8db219f292c515297cdceeb43e4eae67cdde35fa57e79a6a8a532fca0522"
+        },
+        "speech_tokenizer/model.safetensors": {
+          "bytes": 682293092,
+          "sha256": "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"
+        },
+        "config.json": {
+          "bytes": 4421,
+          "sha256": "aecd2cc4c1fe9edef1cb7ca7c401685a43879ad43f3f9e883f1c6760b61731e0"
+        }
+      },
+      "sourceSha256": "b44704444023df54cc940ad2a619ecda68ee6b35eec650284ef509da2c6f3b32",
+      "precision": "bfloat16",
+      "attentionImplementation": "sdpa",
+      "outputFormat": "WAV PCM_16",
+      "generatorVersion": 1,
+      "inputSha256": "323385af2d28aa6bf137c1013d6987151374ed649e4cce5f7ea24162c7b705ee",
+      "name": "Market worker D — male cloth trader and buyer",
+      "assetId": "PS-EXT-MARKET",
+      "memberId": "member-d",
+      "textKind": "audition",
+      "cueRefs": [],
+      "startedAt": "2026-09-14T21:21:29.637189+00:00",
+      "status": "completed",
+      "fileName": "ps-ext-market_member-d_323385af2d28.wav",
+      "url": "/pictures/prodigal-son/voice-designs/ps-ext-market_member-d_323385af2d28.wav",
+      "sha256": "2b4610a80fef9307d3d5c14898e3623bc5a08835962656a91f251d0737f1bd80",
+      "bytes": 249644,
+      "durationSeconds": 5.2,
+      "sampleRate": 24000,
+      "channels": 1,
+      "frames": 124800,
+      "format": "WAV",
+      "subtype": "PCM_16",
+      "quality": {
+        "passed": true,
+        "checks": [
+          "finite-mono",
+          "native-24khz",
+          "duration",
+          "non-silent",
+          "not-clipped"
+        ],
+        "peak": 0.498046875,
+        "rms": 0.08577647976384248,
+        "rmsDbfs": -21.332635620439465,
+        "clippedSamples": 0,
+        "activeSeconds": 3.58825,
+        "tailRms": 1.6363228294011854e-05,
+        "transcriptVerification": "not_run",
+        "castingReview": "pending",
+        "sourcePeak": 0.498046875
+      },
+      "generationSeconds": 9.172,
+      "finishedAt": "2026-09-14T21:21:38.806520+00:00"
+    },
+    {
+      "profileId": "PS-EXT-GUESTS:member-a",
+      "text": "There is another place beside us; bring your cup over and sit where you can hear.",
+      "voiceDesign": "One man's voice, 24, specified by the ensemble design. A light high tenor with a warm breathy smile and flexible, slightly uneven pitch. Easy quick social phrasing, soft consonants and a playful but understated lift. A natural friendly invitation between companions, neither seductive nor intoxicated. Speak natural, clear English with lightly non-rhotic, unshowy neutral vowels and no conspicuous regional accent. Use grounded conversational film acting, natural breaths and clean intelligible consonants. One human voice only, dry close recording, no music, reverb or other speakers. Do not imitate a celebrity, use an announcer voice or add a theatrical biblical cadence. Accent is a cohesive creative casting choice, not a claim of historical reconstruction.",
+      "language": "English",
+      "seed": 590528257,
+      "settings": {
+        "do_sample": true,
+        "temperature": 0.9,
+        "top_p": 1.0,
+        "top_k": 50,
+        "repetition_penalty": 1.05,
+        "subtalker_dosample": true,
+        "subtalker_temperature": 0.9,
+        "subtalker_top_p": 1.0,
+        "subtalker_top_k": 50,
+        "max_new_tokens": 512
+      },
+      "modelId": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "modelRevision": "5ecdb67327fd37bb2e042aab12ff7391903235d3",
+      "modelFiles": {
+        "model.safetensors": {
+          "bytes": 3833402552,
+          "sha256": "391e8db219f292c515297cdceeb43e4eae67cdde35fa57e79a6a8a532fca0522"
+        },
+        "speech_tokenizer/model.safetensors": {
+          "bytes": 682293092,
+          "sha256": "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"
+        },
+        "config.json": {
+          "bytes": 4421,
+          "sha256": "aecd2cc4c1fe9edef1cb7ca7c401685a43879ad43f3f9e883f1c6760b61731e0"
+        }
+      },
+      "sourceSha256": "b44704444023df54cc940ad2a619ecda68ee6b35eec650284ef509da2c6f3b32",
+      "precision": "bfloat16",
+      "attentionImplementation": "sdpa",
+      "outputFormat": "WAV PCM_16",
+      "generatorVersion": 1,
+      "inputSha256": "c30f35e7c5ee39b3661942706d18531077a4e56188e3494de3098a503d29eb36",
+      "name": "Foreign companion A — younger man",
+      "assetId": "PS-EXT-GUESTS",
+      "memberId": "member-a",
+      "textKind": "audition",
+      "cueRefs": [],
+      "startedAt": "2026-09-14T21:21:38.811024+00:00",
+      "status": "completed",
+      "fileName": "ps-ext-guests_member-a_c30f35e7c5ee.wav",
+      "url": "/pictures/prodigal-son/voice-designs/ps-ext-guests_member-a_c30f35e7c5ee.wav",
+      "sha256": "9b9242c2c0c4f9e5ca6e1bb90e274ac3b9635c352424d2e657ced50189c608b3",
+      "bytes": 326444,
+      "durationSeconds": 6.8,
+      "sampleRate": 24000,
+      "channels": 1,
+      "frames": 163200,
+      "format": "WAV",
+      "subtype": "PCM_16",
+      "quality": {
+        "passed": true,
+        "checks": [
+          "finite-mono",
+          "native-24khz",
+          "duration",
+          "non-silent",
+          "not-clipped"
+        ],
+        "peak": 0.4453125,
+        "rms": 0.07346836284086469,
+        "rmsDbfs": -22.677992756154637,
+        "clippedSamples": 0,
+        "activeSeconds": 5.299333333333333,
+        "tailRms": 2.899169921875e-05,
+        "transcriptVerification": "not_run",
+        "castingReview": "pending",
+        "sourcePeak": 0.4453125
+      },
+      "generationSeconds": 11.656,
+      "finishedAt": "2026-09-14T21:21:50.465498+00:00"
+    },
+    {
+      "profileId": "PS-EXT-FEAST:member-d",
+      "text": "There is room for this bowl at the end; I will keep the path to the table clear.",
+      "voiceDesign": "One woman's voice, 30, specified by the ensemble design. A smooth light mezzo with a warm rounded center and a fine silvery edge on higher words. Fluid friendly clauses with relaxed consonants and a small inviting rise. Natural local warmth and practical attention, without breathy glamour or sentimental emphasis. Speak natural, clear English with lightly non-rhotic, unshowy neutral vowels and no conspicuous regional accent. Use grounded conversational film acting, natural breaths and clean intelligible consonants. One human voice only, dry close recording, no music, reverb or other speakers. Do not imitate a celebrity, use an announcer voice or add a theatrical biblical cadence. Accent is a cohesive creative casting choice, not a claim of historical reconstruction.",
+      "language": "English",
+      "seed": 1127202205,
+      "settings": {
+        "do_sample": true,
+        "temperature": 0.9,
+        "top_p": 1.0,
+        "top_k": 50,
+        "repetition_penalty": 1.05,
+        "subtalker_dosample": true,
+        "subtalker_temperature": 0.9,
+        "subtalker_top_p": 1.0,
+        "subtalker_top_k": 50,
+        "max_new_tokens": 512
+      },
+      "modelId": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "modelRevision": "5ecdb67327fd37bb2e042aab12ff7391903235d3",
+      "modelFiles": {
+        "model.safetensors": {
+          "bytes": 3833402552,
+          "sha256": "391e8db219f292c515297cdceeb43e4eae67cdde35fa57e79a6a8a532fca0522"
+        },
+        "speech_tokenizer/model.safetensors": {
+          "bytes": 682293092,
+          "sha256": "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"
+        },
+        "config.json": {
+          "bytes": 4421,
+          "sha256": "aecd2cc4c1fe9edef1cb7ca7c401685a43879ad43f3f9e883f1c6760b61731e0"
+        }
+      },
+      "sourceSha256": "b44704444023df54cc940ad2a619ecda68ee6b35eec650284ef509da2c6f3b32",
+      "precision": "bfloat16",
+      "attentionImplementation": "sdpa",
+      "outputFormat": "WAV PCM_16",
+      "generatorVersion": 1,
+      "inputSha256": "cc1549f327f578c10db4cf7290bd202f1bf730e77e152dcdbd557b9d1654c4b4",
+      "name": "Homecoming neighbor D — adult woman",
+      "assetId": "PS-EXT-FEAST",
+      "memberId": "member-d",
+      "textKind": "audition",
+      "cueRefs": [],
+      "startedAt": "2026-09-14T21:21:50.469505+00:00",
+      "status": "completed",
+      "fileName": "ps-ext-feast_member-d_cc1549f327f5.wav",
+      "url": "/pictures/prodigal-son/voice-designs/ps-ext-feast_member-d_cc1549f327f5.wav",
+      "sha256": "713a99e6c27f484afbd5e5f49e5622ac74962984309886e16e5dc6ebb357cd03",
+      "bytes": 195884,
+      "durationSeconds": 4.08,
+      "sampleRate": 24000,
+      "channels": 1,
+      "frames": 97920,
+      "format": "WAV",
+      "subtype": "PCM_16",
+      "quality": {
+        "passed": true,
+        "checks": [
+          "finite-mono",
+          "native-24khz",
+          "duration",
+          "non-silent",
+          "not-clipped"
+        ],
+        "peak": 0.51953125,
+        "rms": 0.10639423691116208,
+        "rmsDbfs": -19.461637919290627,
+        "clippedSamples": 0,
+        "activeSeconds": 3.211333333333333,
+        "tailRms": 1.837401516539352e-05,
+        "transcriptVerification": "not_run",
+        "castingReview": "pending",
+        "sourcePeak": 0.51953125
+      },
+      "generationSeconds": 6.75,
+      "finishedAt": "2026-09-14T21:21:57.214424+00:00"
+    },
+    {
+      "profileId": "PS-EXT-HOMEMUS:member-b",
+      "text": "I will keep the first beats soft and listen for your breath before the rhythm grows stronger.",
+      "voiceDesign": "One man's voice, 26, specified by the ensemble design. A lively mid tenor with a focused slightly husky center and light open resonance. Crisp rhythmic phrasing, soft unstressed words and an easy forward momentum. Attentive young professional readiness, warm but restrained; plain speech without drumming or singing. Speak natural, clear English with lightly non-rhotic, unshowy neutral vowels and no conspicuous regional accent. Use grounded conversational film acting, natural breaths and clean intelligible consonants. One human voice only, dry close recording, no music, reverb or other speakers. Do not imitate a celebrity, use an announcer voice or add a theatrical biblical cadence. Accent is a cohesive creative casting choice, not a claim of historical reconstruction.",
+      "language": "English",
+      "seed": 880523206,
+      "settings": {
+        "do_sample": true,
+        "temperature": 0.9,
+        "top_p": 1.0,
+        "top_k": 50,
+        "repetition_penalty": 1.05,
+        "subtalker_dosample": true,
+        "subtalker_temperature": 0.9,
+        "subtalker_top_p": 1.0,
+        "subtalker_top_k": 50,
+        "max_new_tokens": 512
+      },
+      "modelId": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "modelRevision": "5ecdb67327fd37bb2e042aab12ff7391903235d3",
+      "modelFiles": {
+        "model.safetensors": {
+          "bytes": 3833402552,
+          "sha256": "391e8db219f292c515297cdceeb43e4eae67cdde35fa57e79a6a8a532fca0522"
+        },
+        "speech_tokenizer/model.safetensors": {
+          "bytes": 682293092,
+          "sha256": "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"
+        },
+        "config.json": {
+          "bytes": 4421,
+          "sha256": "aecd2cc4c1fe9edef1cb7ca7c401685a43879ad43f3f9e883f1c6760b61731e0"
+        }
+      },
+      "sourceSha256": "b44704444023df54cc940ad2a619ecda68ee6b35eec650284ef509da2c6f3b32",
+      "precision": "bfloat16",
+      "attentionImplementation": "sdpa",
+      "outputFormat": "WAV PCM_16",
+      "generatorVersion": 1,
+      "inputSha256": "aadfae44c363e8703040ced944298032edb6254b0b5a29988f4be216decb1389",
+      "name": "Home musician B — younger male hand drummer",
+      "assetId": "PS-EXT-HOMEMUS",
+      "memberId": "member-b",
+      "textKind": "audition",
+      "cueRefs": [],
+      "startedAt": "2026-09-14T21:21:57.220430+00:00",
+      "status": "completed",
+      "fileName": "ps-ext-homemus_member-b_aadfae44c363.wav",
+      "url": "/pictures/prodigal-son/voice-designs/ps-ext-homemus_member-b_aadfae44c363.wav",
+      "sha256": "e8605ba4e1792ebd897b8630aba00f253ea0307c83aa9dd339df6e034b139eb3",
+      "bytes": 211244,
+      "durationSeconds": 4.4,
+      "sampleRate": 24000,
+      "channels": 1,
+      "frames": 105600,
+      "format": "WAV",
+      "subtype": "PCM_16",
+      "quality": {
+        "passed": true,
+        "checks": [
+          "finite-mono",
+          "native-24khz",
+          "duration",
+          "non-silent",
+          "not-clipped"
+        ],
+        "peak": 0.953125,
+        "rms": 0.08221453996014458,
+        "rmsDbfs": -21.701027380089002,
+        "clippedSamples": 0,
+        "activeSeconds": 3.52725,
+        "tailRms": 1.6481375880960746e-05,
+        "transcriptVerification": "not_run",
+        "castingReview": "pending",
+        "sourcePeak": 0.953125
+      },
+      "generationSeconds": 7.938,
+      "finishedAt": "2026-09-14T21:22:05.155329+00:00"
+    }
+  ],
+  "seedVariation": 1,
+  "draftComplete": true,
+  "draftProfileCount": 5,
+  "modelLoadSeconds": 3.532,
+  "currentProfileId": "PS-EXT-HOMEMUS:member-b",
+  "updatedAt": "2026-09-14T21:22:05.158833+00:00",
+  "completedCount": 5,
+  "failedCount": 0,
+  "finishedAt": "2026-09-14T21:22:05.158833+00:00"
+}

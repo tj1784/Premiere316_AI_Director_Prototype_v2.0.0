@@ -6,7 +6,17 @@ npmRebuild: false
 directories:
   output: dist-desktop
 files:
+  - desktop/project-location.mjs
+  - desktop/project-library.mjs
+  - desktop/director-progress.mjs
+  - desktop/director-workspace.mjs
+  - desktop/director-workspace.html
+  - desktop/director-workspace-preload.cjs
+  - desktop/director-execution.mjs
+  - desktop/director-compiler.mjs
+  - desktop/director-host.mjs
   - desktop/web-references.mjs
+  - desktop/reference-window.mjs
   - desktop/native-film.mjs
   - desktop/main.mjs
   - desktop/ffmpeg-tool.mjs

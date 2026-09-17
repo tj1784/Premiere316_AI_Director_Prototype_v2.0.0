@@ -82,6 +82,17 @@ describe("Wave 5 prompt compiler", () => {
     assert.equal(pkg.resolution.width, 512);
   });
 
+  it("retains the Director target and imported or edited prompts during recompilation", () => {
+    const pic = picture();
+    pic.selectedEngine.video = "ltx-director";
+    pic.directorBundle = { packageId: "scene-package", revision: "one", importedShotIds: [pic.shots[0].id], skippedShotIds: [], importedPromptIds: [], importedIterationIds: [] };
+    pic.shots[0].i2vPrompt = "Keep this directly edited timeline prompt, including its exact dialogue.";
+    const pkg = compileEnginePromptPackage({ picture: pic, shot: pic.shots[0], target: "video" });
+    assert.equal(pkg.engineTarget, "ltx-director");
+    assert.equal(validateEnginePromptPackage(pkg).ok, true);
+    assert.equal(compilePicture(pic).shots[0].i2vPrompt, pic.shots[0].i2vPrompt);
+  });
+
   it("compilePicture fills t2i and i2v without claiming a runtime ran", () => {
     const next = compilePicture(picture());
     assert.ok(next.shots[0].t2iPrompt.includes("Mara") || next.shots[0].t2iPrompt.includes("rain"));

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowLeft, PanelLeft, PanelRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ProjectFiles } from './project-files';
 import { Bin } from "./bin";
 import { Inspector } from "./inspector";
 import { InterfaceScale } from "./interface-scale";
@@ -165,10 +166,11 @@ export function StudioShell() {
         {leftKind ? <Button variant="ghost" size="icon-sm" aria-label={layout.left ? `Collapse ${leftTitle}` : `Open ${leftTitle}`} title={layout.left ? `Collapse ${leftTitle}` : `Open ${leftTitle}`} onClick={toggleLeft}><PanelLeft /></Button> : null}
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-base leading-tight tracking-tight sm:text-lg" title={picture.title}>{picture.title}</p>
-          <p className="hidden truncate text-[10px] font-light text-subtle xl:block">Local model vault · V3.02 · no ComfyUI</p>
+          <p className="hidden truncate text-[10px] font-light text-subtle xl:block">Local model vault · V3.02</p>
         </div>
         {leftKind && !layout.left && leftCollapsed && layout.mode !== "narrow" ? <Button className="hidden xl:inline-flex" size="sm" variant="ghost" onClick={() => setLeftCollapsed(false)}>{leftTitle}</Button> : null}
         {rightKind && !layout.right && rightCollapsed && layout.mode === "wide" ? <Button className="hidden xl:inline-flex" size="sm" variant="ghost" onClick={() => setRightCollapsed(false)}>{rightTitle}</Button> : null}
+        <ProjectFiles picture={picture} />
         <InterfaceScale />
         {rightKind ? <Button variant="ghost" size="icon-sm" aria-label={layout.right ? `Collapse ${rightTitle}` : `Open ${rightTitle}`} title={layout.right ? `Collapse ${rightTitle}` : `Open ${rightTitle}`} onClick={toggleRight}><PanelRight /></Button> : null}
       </header>

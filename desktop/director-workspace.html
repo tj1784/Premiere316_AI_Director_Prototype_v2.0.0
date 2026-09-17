@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src 'none'; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'" />
+  <title>LTX Director · Premiere316</title>
+  <style>
+    :root { color-scheme: dark; --color-surface: #121214; --color-elevated: #1a1a1e; --color-fg: #efe8dc; --color-muted: #9a9186; --color-accent: #c4a574; --color-border: rgba(239, 232, 220, .1); --font-sans: "Segoe UI Variable Text", "Segoe UI", sans-serif; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --toolbar-height: 48px; --radius-sm: 4px; }
+    * { box-sizing: border-box; }
+    body { margin: 0; height: var(--toolbar-height); overflow: hidden; color: var(--color-fg); background: var(--color-surface); font: 13px/1.5 var(--font-sans); }
+    header { height: 100%; display: flex; align-items: center; gap: var(--space-4); padding: 0 var(--space-3); border-bottom: 1px solid var(--color-border); }
+    button { flex: 0 0 auto; min-height: 44px; padding: 0 var(--space-2); border: 0; border-radius: var(--radius-sm); color: var(--color-fg); background: transparent; font: inherit; cursor: pointer; }
+    button:hover { background: var(--color-elevated); }
+    button:focus-visible { outline: 1px solid var(--color-accent); outline-offset: -2px; }
+    h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0; font: inherit; font-weight: 500; }
+    #status { flex: 0 0 auto; margin-left: auto; color: var(--color-muted); }
+    @media (max-width: 520px) { header { gap: var(--space-2); } #status { display: none; } }
+  </style>
+</head>
+<body>
+  <header aria-label="Director workspace">
+    <button id="back-to-premiere" type="button" aria-keyshortcuts="Escape">Back to Premiere</button>
+    <h1 id="scene-title">LTX Director</h1>
+    <span id="status" role="status"></span>
+  </header>
+</body>
+</html>
