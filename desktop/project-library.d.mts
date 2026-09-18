@@ -7,4 +7,5 @@ export function createProjectLibrary(options: { root: string; publicRoot?: strin
   mediaFile(slug: string | null, file: string | null): string;
   library(slug: string): ProjectLibrary;
   libraryForPicture(id: string): ProjectLibrary;
+  saveGeneratedMedia(id:string,filename:string,bytes:Uint8Array):ProjectLibrary['entries'][number];
 };

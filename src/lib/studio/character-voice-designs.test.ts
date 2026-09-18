@@ -111,7 +111,7 @@ test("approving an imported iteration replaces the character's previous generate
   const original = allCharacterVoiceIterations(picture)[0];
   picture = reviewCharacterVoiceDesign(picture, original.id, "APPROVED", 10);
   const asset = createVoiceDesignAsset(BIBLICAL_VOICE_DESIGN, "library-1", picture.id, {
-    mediaUri: "data:audio/wav;base64,YWJj", filename: "audition.wav", bytes: 3,
+    mediaUri: "data:audio/wav;base64,YWJj", filename: "audition.wav", bytes: 3, sha256: createHash('sha256').update('abc').digest('hex'),
     referenceText: BIBLICAL_VOICE_DESIGN.referenceText, origin: "imported",
   });
   picture = attachVoiceDesignAsset(picture, original.characterId, asset, "imported-1");
@@ -173,4 +173,20 @@ test("a character with no samples can save designs, but design-only drafts canno
   assert.throws(() => attachVoiceDesignAsset(next, "missing", asset, "bad"), /character profile/);
   assert.throws(() => copyCharacterVoiceIteration(next, characterId, next, "missing", "bad"), /no longer available/);
   assert.equal(allCharacterVoiceIterations(deleteCharacterVoiceIteration(next, "draft-iteration")).length, 0);
+});
+
+test("ensemble members keep independent approvals and changed media invalidates selection", () => {
+ const manifest=fixture(), first=manifest.profiles[0];
+ manifest.profiles=[{...first,id:'member-a',memberLabel:'A'},{...first,id:'member-b',memberLabel:'B',sample:{...first.sample,sha256:'b'.repeat(64)}}];
+ let p=hydrateProdigalCharacterVoices(makeProdigalSonPicture(),manifest);
+ const [a,b]=allCharacterVoiceIterations(p);
+ p=reviewCharacterVoiceDesign(p,a.id,'APPROVED',100);
+ p=reviewCharacterVoiceDesign(p,b.id,'APPROVED',101);
+ assert.equal(selectedCharacterVoice(p,a.characterId,'member:A')?.id,a.id);
+ assert.equal(selectedCharacterVoice(p,b.characterId,'member:B')?.id,b.id);
+ assert.equal(selectedCharacterVoice(p,a.characterId),undefined);
+ p=JSON.parse(JSON.stringify(p));
+ p.characterVoiceDesigns!.profiles[0].sample.sha256='c'.repeat(64);
+ assert.equal(selectedCharacterVoice(p,a.characterId,'member:A'),undefined);
+ assert.equal(selectedCharacterVoice(p,b.characterId,'member:B')?.id,b.id);
 });

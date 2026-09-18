@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import {mkdtempSync,mkdirSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {createProjectLibrary} from '../../../desktop/project-library.mjs';
 import { describe, it } from "node:test";
 import { appendGeneratedIteration, approveCanonicalIteration, reviewGeneratedIteration, validatePngSignature } from "./image-iterations.ts";
 import { applyPreparedApproval, applyProductionAuthority, approveInventoryAssetSpec, editInventoryAsset, prepareAssetRecords } from "./inventory.ts";
@@ -106,6 +110,17 @@ function canonicalProof(start: ReturnType<typeof record>, reason: string, output
 }
 
 describe("Wave 4 image iterations", () => {
+  it('project localization preserves canonical proof digests and uses a separate playable preview',()=>{
+    const start=record(),reason='Visible wool coat and silver glasses match.';
+    const withIteration=appendGeneratedIteration(start.record,{preparedAssetId:start.preparedId,iterationId:'iter-1',output,provenance:provenance(start.assetId),now:1400,receiptDigest});
+    const root=mkdtempSync(join(tmpdir(),'p316-canonical-'));mkdirSync(join(root,'artifacts/stills'),{recursive:true});writeFileSync(join(root,'artifacts/stills',output.mediaUri.split('/').at(-1)!),pngBytes);
+    const library=createProjectLibrary({root});const saved=JSON.parse(library.writeState(JSON.stringify({state:{pictures:[{id:'p',title:'Proof test',updatedAt:1,production:withIteration}]},version:0})));
+    const restored=saved.state.pictures[0].production;
+    assert.equal(restored.assets[0].iterations[0].mediaUri,output.mediaUri);assert.match(restored.assets[0].iterations[0].previewUri,/^\/api\/project-media/);
+    assert.doesNotThrow(()=>approveCanonicalIteration(restored,{iterationId:'iter-1',reviewer:'user',reason,canonicalProof:canonicalProof(start,reason),now:1500}));
+    const altered=structuredClone(restored);altered.assets[0].iterations[0].mediaUri=altered.assets[0].iterations[0].previewUri;
+    assert.throws(()=>approveCanonicalIteration(altered,{iterationId:'iter-1',reviewer:'user',reason,canonicalProof:canonicalProof(start,reason),now:1500}),/proof|output|match|durable/i);
+  });
   it("appends generated output only through an approved prepared asset and preserves append-only review", () => {
     const start = record();
     const withIteration = appendGeneratedIteration(start.record, { preparedAssetId: start.preparedId, iterationId: "iter-1", output, provenance: provenance(start.assetId), now: 1400, receiptDigest });

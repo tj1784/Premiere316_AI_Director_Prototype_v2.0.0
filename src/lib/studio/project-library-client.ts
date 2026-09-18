@@ -26,6 +26,7 @@ export function withProjectFolders(browser: ProjectStorageBackend): ProjectStora
     async setItem(key, value) {
       const saved = await enabled() ? await exchange('write', value) : value;
       await browser.setItem(key, saved);
+      if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('premiere316:project-reconciled',{detail:saved}));
     },
     // Browser-state removal must never delete a project's files.
     removeItem: key => browser.removeItem(key),

@@ -1,3 +1,4 @@
+import { EmotionPerformancePanel } from "@/components/performance/emotion-performance-panel";
 import { storyDoctorRuns } from "@/lib/studio/story-doctor-runs";
 import { exactLocalWriterBlock } from "@/lib/studio/exact-local-writer";
 import { explicitMoviePlanServedId } from "@/lib/studio/movie-plan-model";
@@ -641,12 +642,12 @@ function PerformanceStage({ picture }: { picture: Picture }) {
     ?? picture.characters.map((character) => ({ id: character.id, name: character.name, detail: character.role }));
 
   return (
-    <PerformanceWorkspaceView
+    <div className="flex h-full min-h-0 flex-col"><EmotionPerformancePanel picture={picture}/><div className="min-h-0 flex-1"><PerformanceWorkspaceView
       workspace={workspace}
       characters={characters}
       onChange={(performance) => patchActive({ performance, shots: canonicalShotsToLegacy(performance.shots, picture.shots) })}
       onOpenShots={() => setStage("shots")}
-    />
+    /></div></div>
   );
 }
 
@@ -1057,7 +1058,7 @@ function ReviewStage({ picture }: { picture: Picture }) {
                   <div className="flex min-h-11 items-center justify-between px-3 py-2 text-xs text-muted"><span>Approved reference/spec</span><span>A</span></div>
                   <div className="p-3 text-xs leading-relaxed text-muted">{asset.canonicalSpec.visualDescription || asset.canonicalSpec.distinguishingFeatures.join(" · ") || "No approved visual description recorded."}</div>
                 </div>
-                {iteration.mediaUri ? <div className="overflow-hidden rounded-md bg-inset shadow-[var(--shadow-border)]"><div className="flex min-h-11 items-center justify-between px-3 py-2 text-xs text-muted"><span>Generated candidate</span><span>B</span></div><img src={iteration.mediaUri} alt={`Generated iteration for ${asset.name}`} className="aspect-square w-full object-contain" /></div> : null}
+                {iteration.mediaUri ? <div className="overflow-hidden rounded-md bg-inset shadow-[var(--shadow-border)]"><div className="flex min-h-11 items-center justify-between px-3 py-2 text-xs text-muted"><span>Generated candidate</span><span>B</span></div><img src={iteration.previewUri ?? iteration.mediaUri} alt={`Generated iteration for ${asset.name}`} className="aspect-square w-full object-contain" /></div> : null}
               </div>
               <p className="mt-2 truncate text-xs text-muted" title={iteration.mediaUri}>{iteration.mediaUri}</p>
               <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">

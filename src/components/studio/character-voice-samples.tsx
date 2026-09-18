@@ -1,8 +1,9 @@
+import { verifyVoiceReference } from "@/lib/studio/voice-reference";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/field";
 import { useStudio } from "@/lib/studio/store";
-import { allCharacterVoiceIterations, attachVoiceDesignAsset, copyCharacterVoiceIteration, deleteCharacterVoiceIteration, reviewCharacterVoiceDesign, selectedCharacterVoice } from "@/lib/studio/character-voice-designs";
+import { allCharacterVoiceIterations, attachVoiceDesignAsset, copyCharacterVoiceIteration, deleteCharacterVoiceIteration, reviewCharacterVoiceDesign, selectedCharacterVoice, resolveCharacterVoice } from "@/lib/studio/character-voice-designs";
 import type { VoiceDesign } from "@/lib/studio/voice-design-library";
 import type { Picture } from "@/lib/studio/types";
 import { uid } from "@/lib/utils";
@@ -23,7 +24,8 @@ export function CharacterVoiceSamples({ pictureId, characterId, expanded = false
   const character = picture.production?.assets.find((asset) => asset.id === characterId && asset.category === "character" && !asset.tombstone);
   if (!character) return null;
   const iterations = allCharacterVoiceIterations(picture).filter((item) => item.characterId === characterId);
-  const approved = selectedCharacterVoice(picture, characterId);
+  const approved = selectedCharacterVoice(picture, characterId, iterations.find(v=>v.id===selectedId)?.memberId);
+  const selectionIssue = resolveCharacterVoice(picture, characterId, iterations.find(v=>v.id===selectedId)?.memberId).issue;
   const selected = iterations.find((item) => item.id === selectedId) ?? approved ?? iterations[0];
   const update = (operation: (latest: Picture) => Picture, notice: string) => {
     try {
@@ -38,6 +40,7 @@ export function CharacterVoiceSamples({ pictureId, characterId, expanded = false
     <details open={expanded}>
       <summary className="min-h-11 cursor-pointer font-medium">Voice design & iterations · {iterations.length}<span className="mt-1 block text-xs font-normal text-muted">{approved ? `Approved selection: ${approved.name}` : "No approved voice selected"}</span></summary>
       <div className="mt-3 grid min-w-0 gap-4">
+        <p role="status" className="text-xs text-muted">{selectionIssue}</p>
         <p className="text-xs leading-relaxed text-muted">Keep every audition on this character profile. Select and approve one voice; approving another replaces the previous selection.</p>
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => setEditor({ key: uid("editor") })}>Design a new voice</Button>
@@ -50,14 +53,16 @@ export function CharacterVoiceSamples({ pictureId, characterId, expanded = false
         </div>}
         {selected && <div className="grid gap-2 rounded-md bg-elevated p-3">
           <p className="break-words text-sm">Selected for review: <strong>{selected.name}</strong></p>
-          <Button disabled={!selected.audio || failedMedia[selected.id] || approved?.id === selected.id} onClick={() => update((latest) => reviewCharacterVoiceDesign(latest, selected.id, "APPROVED"), "This is now the character’s approved voice.")}>Approve selected voice</Button>
+          <Button disabled={!selected.audio || failedMedia[selected.id] || approved?.id === selected.id} onClick={async () => { try { const verified=await verifyVoiceReference(picture,selected.id); const latest=useStudio.getState().pictures.find(p=>p.id===pictureId); if(latest!==picture)throw new Error("Profile changed during verification. Review again."); update(()=>reviewCharacterVoiceDesign(verified,selected.id,"APPROVED"),"Voice reference verified and approved."); } catch(e){toast.error(e instanceof Error?e.message:String(e));} }}>Approve selected voice</Button>
           {!selected.audio && <p className="text-xs text-muted">This iteration has no audio yet. Open its design and import an audition first.</p>}
         </div>}
         {!iterations.length && <p className="text-sm text-muted">No voice iterations yet. Design a voice or choose an iteration from another character or the library.</p>}
         {iterations.map((iteration, index) => <article key={iteration.id} aria-label={`Voice iteration ${index + 1}: ${iteration.name}`} className={`grid min-w-0 gap-3 rounded-md border p-3 ${approved?.id === iteration.id ? "border-accent bg-elevated" : "border-border bg-inset"}`}>
           <div><h5 className="break-words font-medium">{index + 1}. {iteration.name}</h5><p className="mt-1 text-xs text-muted">{approved?.id === iteration.id ? "Approved selection for this character" : iteration.status === "APPROVED" ? "Previous approval · not selected" : STATUS_LABELS[iteration.status]}</p></div>
           {iteration.source?.characterId && <p className="text-xs text-muted">Copied from another character’s iteration. This copy has its own review decision.</p>}
-          {iteration.audio && <audio controls preload="none" src={iteration.audio.mediaUri} aria-label={`Listen to voice iteration ${index + 1}`} className="h-11 w-full min-w-0" onError={() => setFailedMedia((current) => ({ ...current, [iteration.id]: true }))} onCanPlay={() => setFailedMedia((current) => ({ ...current, [iteration.id]: false }))} />}
+          {iteration.reviewNote && <p role="note" className="text-sm text-rec">{iteration.reviewNote}</p>}
+          <p className="text-xs text-muted">{iteration.textKind ?? "Legacy text purpose unknown"} · {iteration.memberLabel ?? iteration.memberId ?? "Individual speaker"} · revision {iteration.revision ?? 0}</p>
+          {iteration.audio && <audio controls preload="none" src={iteration.audio.previewUri ?? iteration.audio.mediaUri} aria-label={`Listen to voice iteration ${index + 1}`} className="h-11 w-full min-w-0" onError={() => setFailedMedia((current) => ({ ...current, [iteration.id]: true }))} onCanPlay={() => setFailedMedia((current) => ({ ...current, [iteration.id]: false }))} />}
           {failedMedia[iteration.id] && <p role="alert" className="text-sm text-rec">This audition could not be played.</p>}
           <details><summary className="min-h-11 cursor-pointer text-sm leading-loose">Voice description & spoken text</summary><p className="whitespace-pre-wrap break-words text-sm text-muted">{iteration.description}</p><blockquote className="mt-3 whitespace-pre-wrap break-words text-sm">{iteration.referenceText}</blockquote></details>
           <div className="flex flex-wrap gap-2">
@@ -75,7 +80,7 @@ export function CharacterVoiceSamples({ pictureId, characterId, expanded = false
 
 function VoiceIterationPicker({ pictureId, characterId, onAttached }: { pictureId: string; characterId: string; onAttached: (id: string) => void }) {
   const pictures = useStudio((state) => state.pictures);
-  const library = useStudio((state) => state.voiceDesignAssets);
+  const library = useStudio((state) => state.voiceDesignAssets).filter(a=>!a.deletedAt);
   const sources = pictures.flatMap((picture) => {
     const iterations = allCharacterVoiceIterations(picture);
     return (picture.production?.assets ?? []).filter((asset) => asset.category === "character" && !asset.tombstone && !(picture.id === pictureId && asset.id === characterId))

@@ -1,3 +1,4 @@
+import { mergeVoiceRecords as mergeVoiceAssets, mergePictureVoices } from '../src/lib/studio/voice-reconciliation.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, copyFileSync, readdirSync, statSync, realpathSync } from 'node:fs';
 import { resolve, join, relative, dirname, basename, extname, isAbsolute } from 'node:path';
@@ -70,7 +71,7 @@ export function createProjectLibrary({ root, publicRoot = join(root, 'public'), 
     let candidates = [];
     if (value.startsWith('/pictures/') || value.startsWith('/stills/')) candidates.push(join(publicRoot, value.slice(1)));
     if (value.startsWith('/stills/')) candidates.push(...mediaRoots.map(r => join(r, 'stills', basename(value))), join(root, 'artifacts/stills', basename(value)));
-    if (value.startsWith('media://stills/')) candidates.push(...mediaRoots.map(r => join(r, 'stills', basename(value))));
+    if (value.startsWith('media://stills/')) candidates.push(...mediaRoots.map(r => join(r, 'stills', basename(value))),join(root,'artifacts/stills',basename(value)),join(root,'media/stills',basename(value)));
     if (/^media\//.test(value)) candidates.push(resolve(dir, value));
     if (isAbsolute(value) && !value.startsWith('/api/')) candidates.push(value);
     return candidates.find(candidate => existsSync(candidate) && statSync(candidate).isFile() && allowed.some(base => existsSync(base) && inside(realpathSync(base), realpathSync(candidate))));
@@ -101,14 +102,17 @@ export function createProjectLibrary({ root, publicRoot = join(root, 'public'), 
     if (value && typeof value === 'object') {
       const category = typeof value.category === 'string' ? value.category : hint;
       // Signed backend receipts remain verbatim; only the editable media references move.
-      return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, ['projectLibrary', 'canonicalProof', 'receipt', 'authoritySeal'].includes(k) ? v : localize(v, dir, slug, entries, missing, category)]));
+      const protectedMedia = typeof value.mediaUri === 'string' && (value.mediaUri.startsWith('media://') || value.canonicalProof || value.generationReceiptId || value.execution);
+      const result = Object.fromEntries(Object.entries(value).map(([k, v]) => [k, ['projectLibrary', 'canonicalProof', 'receipt', 'authoritySeal', 'provenance', 'execution', 'source', 'reviewDecisions', 'conflicts'].includes(k) || protectedMedia && k === 'mediaUri' ? v : localize(v, dir, slug, entries, missing, category)]));
+      if (protectedMedia) result.previewUri = localize(value.previewUri ?? value.mediaUri, dir, slug, entries, missing, category);
+      return result;
     }
     if (typeof value !== 'string') return value;
-    const inline = /^data:(image\/(?:png|jpeg|webp)|audio\/(?:wav|mpeg|ogg)|video\/(?:mp4|webm));base64,([A-Za-z0-9+/=\r\n]+)$/.exec(value);
+    const inline = /^data:(image\/(?:png|jpeg|webp)|audio\/(?:wav|x-wav|flac|mpeg|ogg|mp4)|video\/(?:mp4|webm));base64,([A-Za-z0-9+/=\r\n]+)$/.exec(value);
     if (inline) {
       const bytes = Buffer.from(inline[2], 'base64');
       const digest = hash(bytes);
-      const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'audio/wav': 'wav', 'audio/mpeg': 'mp3', 'audio/ogg': 'ogg', 'video/mp4': 'mp4', 'video/webm': 'webm' }[inline[1]];
+      const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'audio/wav': 'wav', 'audio/x-wav':'wav','audio/flac':'flac','audio/mp4':'m4a', 'audio/mpeg': 'mp3', 'audio/ogg': 'ogg', 'video/mp4': 'mp4', 'video/webm': 'webm' }[inline[1]];
       const category = mediaCategory(`inline.${ext}`, hint);
       const file = `media/assets/${category}/${digest}.${ext}`;
       const target = checked(dir, file);
@@ -171,7 +175,7 @@ export function createProjectLibrary({ root, publicRoot = join(root, 'public'), 
     for (const picture of browser?.state?.pictures ?? []) {
       if (disk?.deletedPictureIds?.includes(picture.id)) continue;
       const saved = pictures.get(picture.id);
-      if (!saved || picture.updatedAt >= saved.updatedAt) pictures.set(picture.id, picture);
+      pictures.set(picture.id, mergePictureVoices(saved, picture));
     }
     const folders = catalog();
     for (const picture of pictures.values()) {
@@ -184,12 +188,13 @@ export function createProjectLibrary({ root, publicRoot = join(root, 'public'), 
       if (existing) existing.projectLibrary = { slug: item.slug, fileCount: item.manifest?.entries.length ?? 0, missingCount: item.manifest?.missing.length ?? 0 };
       else if (!disk || !item.manifest?.pictureId) { const p = item.picture ?? legacyPicture(item); if (p) pictures.set(p.id, p); }
     }
-    return JSON.stringify({ ...base, state: { ...base.state, pictures: [...pictures.values()] } });
+    return JSON.stringify({ ...base, state: { ...base.state, voiceDesignAssets: mergeVoiceAssets(disk?.state?.voiceDesignAssets, browser?.state?.voiceDesignAssets), pictures: [...pictures.values()] } });
   }
   function writeState(raw, knownIds) {
     const data = JSON.parse(raw);
     if (!Array.isArray(data?.state?.pictures)) throw new Error('Invalid picture state.');
     const previous = existsSync(stateFile) ? json(stateFile) : null;
+    data.state.voiceDesignAssets = mergeVoiceAssets(previous?.state?.voiceDesignAssets, data.state.voiceDesignAssets);
     const submitted = new Set(data.state.pictures.map(p => p.id));
     const deleted = new Set(previous?.deletedPictureIds ?? []);
     for (const older of previous?.state?.pictures ?? []) {
@@ -198,7 +203,7 @@ export function createProjectLibrary({ root, publicRoot = join(root, 'public'), 
         else deleted.add(older.id);
       } else {
         const index = data.state.pictures.findIndex(p => p.id === older.id);
-        if (older.updatedAt > data.state.pictures[index].updatedAt) data.state.pictures[index] = older;
+        data.state.pictures[index] = mergePictureVoices(older, data.state.pictures[index]);
       }
     }
     data.state.pictures = data.state.pictures.filter(p => !deleted.has(p.id));
@@ -221,6 +226,7 @@ export function createProjectLibrary({ root, publicRoot = join(root, 'public'), 
       const old = existsSync(join(dir, 'asset-library.json')) ? json(join(dir, 'asset-library.json')) : null;
       const entries = old?.entries ?? [], missing = [...(old?.missing ?? [])];
       const localized = localize(picture, dir, slug, entries, missing);
+      for (const asset of data.state.voiceDesignAssets.filter(asset => asset.sourcePictureId === picture.id)) Object.assign(asset, localize(asset, dir, slug, entries, missing));
       localized.projectLibrary = { slug, fileCount: entries.length, missingCount: missing.length };
       for (const category of ['characters', 'locations', 'props', 'wardrobe', 'audio', 'video', 'frames', 'documents']) mkdirSync(join(dir, 'media/assets', category), { recursive: true });
       atomic(join(dir, 'asset-library.json'), { schemaVersion: 1, slug, pictureId: picture.id, title: picture.title, entries, missing });
@@ -251,5 +257,15 @@ export function createProjectLibrary({ root, publicRoot = join(root, 'public'), 
     if (!item) throw new Error('This picture has not been saved to its project folder yet.');
     return library(item.slug);
   }
-  return { organizeLegacy, readState, writeState, mediaFile, library, libraryForPicture };
+  function saveGeneratedMedia(id, filename, bytes) {
+    if(typeof filename!=='string'||!/^[a-zA-Z0-9_.-]+\.(mp4|webm|mov|mkv)$/i.test(filename)||!bytes?.length)throw new Error('Invalid generated video.');
+    const item=catalog().find(i=>i.manifest?.pictureId===id);if(!item)throw new Error('Save the picture before archiving generated media.');
+    const digest=hash(bytes),file=`media/assets/video/${digest}-${filename}`,target=checked(item.dir,file);
+    mkdirSync(dirname(target),{recursive:true});if(!existsSync(target))writeFileSync(target,bytes);
+    if(hash(readFileSync(target))!==digest)throw new Error('Generated project media failed verification.');
+    const uri=url(item.slug,file),entry={file,category:'video',name:filename,bytes:bytes.length,sha256:digest,uri,source:'joint-video-generation'};
+    if(!item.manifest.entries.some(e=>e.file===file))atomic(join(item.dir,'asset-library.json'),{...item.manifest,entries:[...item.manifest.entries,entry]});
+    return entry;
+  }
+  return { organizeLegacy, readState, writeState, mediaFile, library, libraryForPicture, saveGeneratedMedia };
 }

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import {mergeVoiceRecords,mergePictureVoices,stableVoiceJson} from './voice-reconciliation.mjs';
 import { createJSONStorage, persist } from "zustand/middleware";
 import { createProjectStorage } from "./project-storage.ts";
 import { RED_SEA_THUMBNAIL_URL, SAMPLE_ID, makeSamplePicture } from "./sample.ts";
@@ -359,4 +360,26 @@ function normalizeStage(stage: unknown): StageId | null {
   return typeof stage === "string" && ["intake", "research", "screenplay", "inventory", "visual-development", "cinematography", "performance", "shots", "prompts", "generate", "review", "timeline", "score", "export"].includes(stage)
     ? stage as StageId
     : null;
+}
+
+// Surface disk reconciliation in the open editor without replacing unsaved screenplay/visual work.
+if(typeof window!=='undefined'){
+ const reconcile=(event:Event)=>{
+  try{
+   const saved=JSON.parse((event as CustomEvent<string>).detail).state;
+   const current=useStudio.getState();
+   const voiceDesignAssets=mergeVoiceRecords(current.voiceDesignAssets,saved.voiceDesignAssets);
+   let changed=stableVoiceJson(voiceDesignAssets)!==stableVoiceJson(current.voiceDesignAssets);
+   const pictures=current.pictures.map(p=>{
+    const disk=(saved.pictures as Picture[]).find(item=>item.id===p.id);if(!disk)return p;
+    const merged=mergePictureVoices(p,disk) as Picture;
+    const fields={characterVoiceDesigns:merged.characterVoiceDesigns,emotionPerformance:merged.emotionPerformance};
+    if(stableVoiceJson(fields)===stableVoiceJson({characterVoiceDesigns:p.characterVoiceDesigns,emotionPerformance:p.emotionPerformance}))return p;
+    changed=true;return {...p,...fields};
+   });
+   if(changed)useStudio.setState({voiceDesignAssets,pictures});
+  }catch{/* Invalid persistence responses are handled by the storage error channel. */}
+ };
+ window.addEventListener('premiere316:project-reconciled',reconcile);
+ import.meta.hot?.dispose(()=>window.removeEventListener('premiere316:project-reconciled',reconcile));
 }

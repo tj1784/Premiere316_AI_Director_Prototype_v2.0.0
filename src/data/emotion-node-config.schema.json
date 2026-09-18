@@ -1,0 +1,4688 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:cinema-emotion:emotion-node-configuration:1.0.0",
+  "title": "Emotion node configuration",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "catalog_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scene_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "character_baselines": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "voice_reference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "visual_reference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "voice_baseline": {
+            "type": "object",
+            "properties": {
+              "register": {
+                "type": "string"
+              },
+              "timbre": {
+                "type": "string"
+              },
+              "accent": {
+                "type": "string"
+              },
+              "language": {
+                "type": "string"
+              },
+              "habitual_pace": {
+                "type": "string"
+              },
+              "expressivity": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "physical_baseline": {
+            "type": "string"
+          },
+          "mobility_constraints": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          },
+          "identity_locked": {
+            "const": true
+          }
+        },
+        "required": [
+          "label",
+          "voice_reference",
+          "identity_locked"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "scene_defaults": {
+      "$ref": "#/$defs/settings"
+    },
+    "character_overrides": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/settings"
+      }
+    },
+    "lines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "line_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "character_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "spoken_text": {
+            "type": "string"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "overrides": {
+            "$ref": "#/$defs/settings"
+          },
+          "beats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "beat_id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$"
+                },
+                "timing": {
+                  "type": "object",
+                  "properties": {
+                    "coordinate": {
+                      "type": "string",
+                      "enum": [
+                        "seconds",
+                        "normalized",
+                        "text_codepoints"
+                      ]
+                    },
+                    "start": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "end": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "anchor_text": {
+                      "type": "string"
+                    },
+                    "anchor_occurrence": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "required": [
+                    "coordinate",
+                    "start",
+                    "end"
+                  ],
+                  "additionalProperties": false,
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "coordinate": {
+                            "const": "normalized"
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "start": {
+                            "maximum": 1
+                          },
+                          "end": {
+                            "maximum": 1
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "coordinate": {
+                            "const": "text_codepoints"
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "start": {
+                            "type": "integer"
+                          },
+                          "end": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "overrides": {
+                  "$ref": "#/$defs/beat_settings"
+                }
+              },
+              "required": [
+                "beat_id",
+                "timing",
+                "overrides"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          },
+          "authored_sound_events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "laugh",
+                    "sob",
+                    "gasp",
+                    "sigh",
+                    "groan",
+                    "hum",
+                    "other_authored"
+                  ]
+                },
+                "start_seconds": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "duration_seconds": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "direction": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "start_seconds",
+                "duration_seconds",
+                "direction"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "line_id",
+          "character_id",
+          "spoken_text",
+          "duration_seconds",
+          "overrides",
+          "beats",
+          "authored_sound_events"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "adapter": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "visual_direction": {
+              "type": "string",
+              "enum": [
+                "supported",
+                "native",
+                "text_only",
+                "postprocess",
+                "unsupported",
+                "unverified"
+              ]
+            },
+            "delivery_instruction": {
+              "type": "string",
+              "enum": [
+                "supported",
+                "native",
+                "text_only",
+                "postprocess",
+                "unsupported",
+                "unverified"
+              ]
+            },
+            "separate_speech": {
+              "type": "string",
+              "enum": [
+                "supported",
+                "native",
+                "text_only",
+                "postprocess",
+                "unsupported",
+                "unverified"
+              ]
+            },
+            "timed_beats": {
+              "type": "string",
+              "enum": [
+                "supported",
+                "native",
+                "text_only",
+                "postprocess",
+                "unsupported",
+                "unverified"
+              ]
+            },
+            "numeric_pitch_rate_gain": {
+              "type": "string",
+              "enum": [
+                "supported",
+                "native",
+                "text_only",
+                "postprocess",
+                "unsupported",
+                "unverified"
+              ]
+            },
+            "facial_regions": {
+              "type": "string",
+              "enum": [
+                "supported",
+                "native",
+                "text_only",
+                "postprocess",
+                "unsupported",
+                "unverified"
+              ]
+            },
+            "voice_reference": {
+              "type": "string",
+              "enum": [
+                "supported",
+                "native",
+                "text_only",
+                "postprocess",
+                "unsupported",
+                "unverified"
+              ]
+            },
+            "nonverbal_vocals": {
+              "type": "string",
+              "enum": [
+                "supported",
+                "native",
+                "text_only",
+                "postprocess",
+                "unsupported",
+                "unverified"
+              ]
+            }
+          },
+          "required": [
+            "visual_direction",
+            "delivery_instruction",
+            "separate_speech",
+            "timed_beats",
+            "numeric_pitch_rate_gain",
+            "facial_regions",
+            "voice_reference",
+            "nonverbal_vocals"
+          ],
+          "additionalProperties": false
+        },
+        "unsupported_policy": {
+          "type": "string",
+          "enum": [
+            "warn_export_text",
+            "reject"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "capabilities",
+        "unsupported_policy"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "catalog_version",
+    "scene_id",
+    "character_baselines",
+    "scene_defaults",
+    "character_overrides",
+    "lines",
+    "adapter"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "settings": {
+      "type": "object",
+      "properties": {
+        "felt_layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": [
+                  "dominant",
+                  "secondary"
+                ]
+              },
+              "selection": {
+                "type": "object",
+                "properties": {
+                  "emotion_id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "variant_id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "intensity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 7
+                  }
+                },
+                "required": [
+                  "emotion_id",
+                  "variant_id",
+                  "intensity"
+                ],
+                "additionalProperties": false
+              },
+              "layer_weight": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "role",
+              "selection",
+              "layer_weight"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 3
+        },
+        "displayed_selection": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "emotion_id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$"
+                },
+                "variant_id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$"
+                },
+                "intensity": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 7
+                }
+              },
+              "required": [
+                "emotion_id",
+                "variant_id",
+                "intensity"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "regulation": {
+          "type": "string",
+          "enum": [
+            "open",
+            "restrained",
+            "suppressed",
+            "masked",
+            "performed",
+            "conflicted"
+          ]
+        },
+        "display_allowance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "arousal_override": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "objective": {
+          "type": "string"
+        },
+        "appraisal": {
+          "type": "string"
+        },
+        "relationship_context": {
+          "type": "string"
+        },
+        "physical_context": {
+          "type": "string"
+        },
+        "framing": {
+          "type": "string",
+          "enum": [
+            "extreme_close_up",
+            "close_up",
+            "medium",
+            "wide",
+            "audio_only",
+            "silent_reaction"
+          ]
+        },
+        "cue_selection_mode": {
+          "type": "string",
+          "enum": [
+            "stable",
+            "seeded"
+          ]
+        },
+        "cue_selection_seed": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cue_budget": {
+          "type": "object",
+          "properties": {
+            "face": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "voice": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "body": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "region_filters": {
+          "type": "object",
+          "properties": {
+            "face": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "brows_forehead",
+                  "eyelids",
+                  "gaze",
+                  "blink",
+                  "cheeks",
+                  "nose_nostrils",
+                  "lips_mouth",
+                  "jaw_chin",
+                  "head_neck",
+                  "complexion"
+                ]
+              },
+              "minItems": 0
+            },
+            "voice": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "pitch_register",
+                  "pitch_range_contour",
+                  "loudness",
+                  "tempo_rhythm",
+                  "stress",
+                  "articulation",
+                  "resonance",
+                  "texture",
+                  "breath_phrasing",
+                  "pauses",
+                  "nonverbal_vocalizations"
+                ]
+              },
+              "minItems": 0
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "head_neck",
+                  "shoulders",
+                  "chest_torso",
+                  "arms_elbows",
+                  "hands_fingers",
+                  "pelvis_weight",
+                  "legs_feet",
+                  "gait",
+                  "proxemics",
+                  "touch_props",
+                  "stillness"
+                ]
+              },
+              "minItems": 0
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "face_overrides": {
+          "type": "object",
+          "properties": {
+            "brows_forehead": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "eyelids": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "gaze": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "blink": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "cheeks": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "nose_nostrils": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "lips_mouth": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "jaw_chin": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "head_neck": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "complexion": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "voice_overrides": {
+          "type": "object",
+          "properties": {
+            "pitch_register": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "pitch_range_contour": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "loudness": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "tempo_rhythm": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "stress": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "articulation": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "resonance": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "texture": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "breath_phrasing": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "pauses": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "nonverbal_vocalizations": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "body_overrides": {
+          "type": "object",
+          "properties": {
+            "head_neck": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "shoulders": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "chest_torso": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "arms_elbows": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "hands_fingers": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "pelvis_weight": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "legs_feet": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "gait": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "proxemics": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "touch_props": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "stillness": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "explicit_cue_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*:L[1-7]:(face|voice|body):[0-2]$"
+          },
+          "minItems": 0
+        },
+        "allow_narration": {
+          "type": "boolean"
+        },
+        "allow_extra_dialogue": {
+          "const": false
+        },
+        "allow_nonverbal_vocalizations": {
+          "type": "boolean"
+        },
+        "allowed_sound_events": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "laugh",
+              "sob",
+              "gasp",
+              "sigh",
+              "groan",
+              "hum",
+              "other_authored"
+            ]
+          },
+          "minItems": 0
+        },
+        "continuity": {
+          "type": "object",
+          "properties": {
+            "from_line_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "restart_onset": {
+              "type": "boolean"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "beat_settings": {
+      "type": "object",
+      "properties": {
+        "felt_layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": [
+                  "dominant",
+                  "secondary"
+                ]
+              },
+              "selection": {
+                "type": "object",
+                "properties": {
+                  "emotion_id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "variant_id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "intensity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 7
+                  }
+                },
+                "required": [
+                  "emotion_id",
+                  "variant_id",
+                  "intensity"
+                ],
+                "additionalProperties": false
+              },
+              "layer_weight": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "role",
+              "selection",
+              "layer_weight"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 3
+        },
+        "displayed_selection": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "emotion_id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$"
+                },
+                "variant_id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$"
+                },
+                "intensity": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 7
+                }
+              },
+              "required": [
+                "emotion_id",
+                "variant_id",
+                "intensity"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "regulation": {
+          "type": "string",
+          "enum": [
+            "open",
+            "restrained",
+            "suppressed",
+            "masked",
+            "performed",
+            "conflicted"
+          ]
+        },
+        "display_allowance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "arousal_override": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "objective": {
+          "type": "string"
+        },
+        "appraisal": {
+          "type": "string"
+        },
+        "relationship_context": {
+          "type": "string"
+        },
+        "physical_context": {
+          "type": "string"
+        },
+        "framing": {
+          "type": "string",
+          "enum": [
+            "extreme_close_up",
+            "close_up",
+            "medium",
+            "wide",
+            "audio_only",
+            "silent_reaction"
+          ]
+        },
+        "cue_selection_mode": {
+          "type": "string",
+          "enum": [
+            "stable",
+            "seeded"
+          ]
+        },
+        "cue_selection_seed": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cue_budget": {
+          "type": "object",
+          "properties": {
+            "face": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "voice": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "body": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "region_filters": {
+          "type": "object",
+          "properties": {
+            "face": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "brows_forehead",
+                  "eyelids",
+                  "gaze",
+                  "blink",
+                  "cheeks",
+                  "nose_nostrils",
+                  "lips_mouth",
+                  "jaw_chin",
+                  "head_neck",
+                  "complexion"
+                ]
+              },
+              "minItems": 0
+            },
+            "voice": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "pitch_register",
+                  "pitch_range_contour",
+                  "loudness",
+                  "tempo_rhythm",
+                  "stress",
+                  "articulation",
+                  "resonance",
+                  "texture",
+                  "breath_phrasing",
+                  "pauses",
+                  "nonverbal_vocalizations"
+                ]
+              },
+              "minItems": 0
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "head_neck",
+                  "shoulders",
+                  "chest_torso",
+                  "arms_elbows",
+                  "hands_fingers",
+                  "pelvis_weight",
+                  "legs_feet",
+                  "gait",
+                  "proxemics",
+                  "touch_props",
+                  "stillness"
+                ]
+              },
+              "minItems": 0
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "face_overrides": {
+          "type": "object",
+          "properties": {
+            "brows_forehead": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "eyelids": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "gaze": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "blink": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "cheeks": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "nose_nostrils": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "lips_mouth": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "jaw_chin": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "head_neck": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "complexion": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "voice_overrides": {
+          "type": "object",
+          "properties": {
+            "pitch_register": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "pitch_range_contour": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "loudness": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "tempo_rhythm": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "stress": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "articulation": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "resonance": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "texture": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "breath_phrasing": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "pauses": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "nonverbal_vocalizations": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "body_overrides": {
+          "type": "object",
+          "properties": {
+            "head_neck": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "shoulders": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "chest_torso": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "arms_elbows": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "hands_fingers": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "pelvis_weight": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "legs_feet": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "gait": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "proxemics": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "touch_props": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "stillness": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "inherit",
+                    "omit",
+                    "replace"
+                  ]
+                },
+                "instruction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "replace"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "instruction"
+                    ],
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "instruction": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "explicit_cue_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*:L[1-7]:(face|voice|body):[0-2]$"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  }
+}

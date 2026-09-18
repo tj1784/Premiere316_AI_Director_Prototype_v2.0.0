@@ -4,6 +4,8 @@ import { PRODIGAL_SON_SOURCE } from "./bundled-pictures/prodigal-son/source.ts";
 import type { VoiceDesign, VoiceDesignAsset } from "./voice-design-library.ts";
 
 export type CharacterVoiceSample = {
+  previewUri?: string;
+  channels?: number;
   id: string;
   mediaUri: string;
   sha256: string;
@@ -39,7 +41,9 @@ export type CharacterVoiceDesignManifest = {
 };
 
 export type CharacterVoiceReviewStatus = "NEEDS_REVIEW" | "APPROVED" | "REJECTED";
-export type CharacterVoiceDesign = CharacterVoiceProfile & {
+export type VoiceReviewMetadata = { revision?: number; updatedAt?: number; memberId?: string; conflicts?: unknown[]; reviewHistory?: Array<{ status: string; at: number; revision: number }> };
+export type VoiceSelection = { iterationId: string; mediaSha256?: string; iterationRevision: number; revision: number; updatedAt: number; deletedAt?: number; conflicts?: unknown[] };
+export type CharacterVoiceDesign = CharacterVoiceProfile & VoiceReviewMetadata & {
   attachmentId: string;
   manifestId: string;
   modelId: string;
@@ -47,17 +51,19 @@ export type CharacterVoiceDesign = CharacterVoiceProfile & {
   status: CharacterVoiceReviewStatus;
   reviewedAt: number | null;
 };
-export type CharacterVoiceIteration = {
+export type CharacterVoiceIteration = VoiceReviewMetadata & {
+  memberLabel?: string; reviewNote?: string; textKind?: "screenplay" | "audition"; provenance?: { modelId?: string; manifestId?: string; screenplaySha256?: string; sourceProfileId?: string };
   id: string; characterId: string; name: string; description: string; referenceText: string;
   createdAt: number; status: "DRAFT" | CharacterVoiceReviewStatus; reviewedAt: number | null;
   design?: VoiceDesign;
-  audio?: { mediaUri: string; filename: string; bytes: number; origin: "imported" | "generated"; durationSec?: number; sampleRate?: number };
+  audio?: { mediaUri: string; previewUri?: string; sha256?: string; channels?: number; filename: string; bytes: number; origin: "imported" | "generated"; durationSec?: number; sampleRate?: number };
   source?: { pictureId: string; characterId?: string; iterationId: string };
 };
 export type CharacterVoiceDesignState = {
   schemaVersion: 1; profiles: CharacterVoiceDesign[];
   iterations?: CharacterVoiceIteration[];
   selectedByCharacter?: Record<string, string>;
+  selections?: Record<string, VoiceSelection>;
   deletedAttachmentIds?: string[];
 };
 
@@ -125,19 +131,26 @@ export function reviewCharacterVoiceDesign(picture: Picture, attachmentId: strin
   if (!["NEEDS_REVIEW", "APPROVED", "REJECTED"].includes(status)) throw new Error("Unknown voice review decision.");
   if (!profile.audio) throw new Error("Import an audio audition before approving or reviewing this design.");
   const selectedByCharacter = { ...state.selectedByCharacter };
-  if (status === "APPROVED") selectedByCharacter[profile.characterId] = attachmentId;
-  else if (selectedByCharacter[profile.characterId] === attachmentId) delete selectedByCharacter[profile.characterId];
-  const decision = (id: string, characterId: string, currentStatus: string) => id === attachmentId
-    ? { status, reviewedAt: status === "NEEDS_REVIEW" ? null : now }
-    : status === "APPROVED" && characterId === profile.characterId && currentStatus === "APPROVED"
-      ? { status: "NEEDS_REVIEW" as const, reviewedAt: null } : {};
+  const binding = voiceBindingKey(profile.characterId, profile.memberId);
+  const selections = { ...state.selections };
+  const nextRevision = (profile.revision ?? 0) + 1;
+  if (status === "APPROVED") {
+    if (!profile.audio.sha256) throw new Error("Verify this recording's bytes before approving its reference.");
+    selections[binding] = { iterationId: attachmentId, mediaSha256: profile.audio.sha256, iterationRevision: nextRevision, revision: (selections[binding]?.revision ?? 0) + 1, updatedAt: now };
+    selectedByCharacter[binding] = attachmentId;
+  }
+  else if (selectedByCharacter[binding] === attachmentId || selections[binding]?.iterationId === attachmentId) { delete selectedByCharacter[binding]; if (selections[binding]) selections[binding] = { ...selections[binding], deletedAt: now, updatedAt: now, revision: selections[binding].revision + 1 }; }
+  const decision = (id: string, characterId: string, currentStatus: string, metadata: VoiceReviewMetadata) => id === attachmentId
+    ? { status, reviewedAt: status === "NEEDS_REVIEW" ? null : now, revision: nextRevision, updatedAt: now, conflicts: [], reviewHistory: [...(metadata.reviewHistory ?? []), { status, at: now, revision: nextRevision }] }
+    : status === "APPROVED" && voiceBindingKey(characterId, metadata.memberId) === binding && currentStatus === "APPROVED"
+      ? { status: "NEEDS_REVIEW" as const, reviewedAt: null, revision: (metadata.revision ?? 0) + 1, updatedAt: now } : {};
   return { ...picture, updatedAt: now,
-    characters: picture.characters.map((character) => character.id !== profile.characterId ? character : {
+    characters: picture.characters.map((character) => character.id !== profile.characterId || profile.memberId ? character : {
       ...character, voiceId: status === "APPROVED" ? attachmentId : character.voiceId === attachmentId ? "" : character.voiceId,
     }),
-    characterVoiceDesigns: { ...state, selectedByCharacter,
-      profiles: state.profiles.map((item) => ({ ...item, ...decision(item.attachmentId, item.characterId, item.status) })),
-      iterations: state.iterations?.map((item) => ({ ...item, ...decision(item.id, item.characterId, item.status) })),
+    characterVoiceDesigns: { ...state, selectedByCharacter, selections,
+      profiles: state.profiles.map((item) => ({ ...item, ...decision(item.attachmentId, item.characterId, item.status, {...item,memberId:item.memberId??(item.memberLabel?`member:${item.memberLabel}`:undefined)}) })),
+      iterations: state.iterations?.map((item) => ({ ...item, ...decision(item.id, item.characterId, item.status, item) })),
     },
   };
 }
@@ -147,20 +160,34 @@ export function allCharacterVoiceIterations(picture: Picture): CharacterVoiceIte
   const live = new Set(picture.production?.assets.filter((asset) => asset.category === "character" && !asset.tombstone).map((asset) => asset.id) ?? []);
   return [
     ...(state?.profiles ?? []).map((profile): CharacterVoiceIteration => ({
-      id: profile.attachmentId, characterId: profile.characterId, name: profile.memberLabel ? `${profile.name} · ${profile.memberLabel}` : profile.name,
+      id: profile.attachmentId, characterId: profile.characterId,
+      memberId: profile.memberId ?? (profile.memberLabel ? `member:${profile.memberLabel}` : undefined), memberLabel: profile.memberLabel, textKind: profile.textKind, reviewNote: profile.reviewNote, revision: profile.revision, updatedAt: profile.updatedAt, reviewHistory: profile.reviewHistory, conflicts: profile.conflicts,
+      provenance: { modelId: profile.modelId, manifestId: profile.manifestId, screenplaySha256: profile.screenplaySha256, sourceProfileId: profile.id }, name: profile.memberLabel ? `${profile.name} · ${profile.memberLabel}` : profile.name,
       description: profile.designPrompt, referenceText: profile.sampleText, createdAt: profile.sample.generatedAt,
       status: profile.status, reviewedAt: profile.reviewedAt,
-      audio: { mediaUri: profile.sample.mediaUri, filename: profile.sample.mediaUri.split("/").pop()!, bytes: profile.sample.bytes,
+      audio: { mediaUri: profile.sample.mediaUri, previewUri: profile.sample.previewUri, channels: profile.sample.channels, sha256: profile.sample.sha256, filename: profile.sample.mediaUri.split("/").pop()!, bytes: profile.sample.bytes,
         origin: "generated", durationSec: profile.sample.durationSec, sampleRate: profile.sample.sampleRate },
     })),
     ...(state?.iterations ?? []),
-  ].filter((item) => live.has(item.characterId));
+  ].filter((item) => live.has(item.characterId) && !state?.deletedAttachmentIds?.includes(item.id));
 }
 
-export function selectedCharacterVoice(picture: Picture, characterId: string): CharacterVoiceIteration | undefined {
-  const approved = allCharacterVoiceIterations(picture).filter((item) => item.characterId === characterId && item.status === "APPROVED");
-  return approved.find((item) => item.id === picture.characterVoiceDesigns?.selectedByCharacter?.[characterId])
-    ?? approved.sort((a, b) => (b.reviewedAt ?? 0) - (a.reviewedAt ?? 0))[0];
+export function voiceBindingKey(characterId: string, memberId?: string): string { return memberId ? `${characterId}::${memberId}` : characterId; }
+export function resolveCharacterVoice(picture: Picture, characterId: string, memberId?: string): { voice?: CharacterVoiceIteration; issue?: string } {
+  const binding = voiceBindingKey(characterId, memberId);
+  const state = picture.characterVoiceDesigns;
+  const selection = state?.selections?.[binding];
+  const legacy = state?.selectedByCharacter?.[binding];
+  if (!selection) return { issue: legacy ? "Legacy selection needs verification and explicit reapproval." : "Choose and approve a voice reference." };
+  if (selection.deletedAt) return { issue: "Selected reference was cleared or rejected. Choose and approve another recording." };
+  const voice = allCharacterVoiceIterations(picture).find(v => v.id === selection.iterationId);
+  if (!voice || voice.characterId !== characterId || voice.memberId !== memberId) return { issue: "Selected reference is missing or belongs to a different speaker." };
+  if (selection.conflicts?.length || voice.conflicts?.length) return { issue: "Conflicting saved voice decisions need review and reapproval." };
+  if (voice.status !== "APPROVED" || !voice.audio?.sha256 || voice.audio.sha256 !== selection.mediaSha256 || (voice.revision ?? 0) !== selection.iterationRevision) return { issue: "Selected reference changed or is no longer approved. Verify and reapprove it." };
+  return { voice };
+}
+export function selectedCharacterVoice(picture: Picture, characterId: string, memberId?: string): CharacterVoiceIteration | undefined {
+  return resolveCharacterVoice(picture, characterId, memberId).voice;
 }
 
 function requireCharacter(picture: Picture, characterId: string) {
@@ -174,7 +201,7 @@ export function attachVoiceDesignAsset(picture: Picture, characterId: string, as
   const iteration: CharacterVoiceIteration = {
     id, characterId, name: asset.design.name,
     description: asset.design.enhancer ? `Image-guided casting · ${asset.design.enhancer.image}` : asset.design.description,
-    referenceText: asset.design.referenceText, design: structuredClone(asset.design), createdAt: Date.now(),
+    referenceText: asset.design.referenceText, textKind: asset.textKind ?? "audition", reviewNote: asset.reviewNote, provenance: asset.provenance, revision: 1, design: structuredClone(asset.design), createdAt: Date.now(),
     status: asset.audio ? "NEEDS_REVIEW" : "DRAFT", reviewedAt: null,
     ...(asset.audio ? { audio: structuredClone(asset.audio) } : {}),
     source: { pictureId: asset.sourcePictureId ?? picture.id, iterationId: asset.id },
@@ -188,7 +215,7 @@ export function copyCharacterVoiceIteration(picture: Picture, characterId: strin
   if (!source) throw new Error("The source voice iteration is no longer available.");
   if (allCharacterVoiceIterations(picture).some((item) => item.id === id)) throw new Error("This iteration already exists.");
   const state = picture.characterVoiceDesigns ?? { schemaVersion: 1 as const, profiles: [] };
-  const iteration: CharacterVoiceIteration = { ...structuredClone(source), id, characterId, createdAt: Date.now(),
+  const iteration: CharacterVoiceIteration = { ...structuredClone(source), id, characterId, revision: 1, conflicts: [], reviewHistory: [], createdAt: Date.now(),
     status: source.audio ? "NEEDS_REVIEW" : "DRAFT", reviewedAt: null,
     source: { pictureId: sourcePicture.id, characterId: source.characterId, iterationId: source.id },
   };
@@ -201,10 +228,13 @@ export function deleteCharacterVoiceIteration(picture: Picture, id: string): Pic
   if (!iteration) throw new Error("The voice iteration is no longer available.");
   const state = picture.characterVoiceDesigns!;
   const selectedByCharacter = { ...state.selectedByCharacter };
-  if (selectedByCharacter[iteration.characterId] === id) delete selectedByCharacter[iteration.characterId];
+  const binding=voiceBindingKey(iteration.characterId,iteration.memberId);
+  const selections={...state.selections};
+  if (selectedByCharacter[binding] === id) delete selectedByCharacter[binding];
+  if(selections[binding]?.iterationId===id) selections[binding]={...selections[binding],revision:selections[binding].revision+1,deletedAt:Date.now(),updatedAt:Date.now()};
   return { ...picture, updatedAt: Date.now(),
     characters: picture.characters.map((character) => character.id === iteration.characterId && character.voiceId === id ? { ...character, voiceId: "" } : character),
-    characterVoiceDesigns: { ...state, selectedByCharacter,
+    characterVoiceDesigns: { ...state, selectedByCharacter, selections,
       profiles: state.profiles.filter((item) => item.attachmentId !== id),
       iterations: state.iterations?.filter((item) => item.id !== id),
       deletedAttachmentIds: [...new Set([...(state.deletedAttachmentIds ?? []), id])],

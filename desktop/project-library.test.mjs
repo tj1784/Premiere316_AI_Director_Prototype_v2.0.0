@@ -84,3 +84,33 @@ test('stale tabs cannot overwrite newer pictures or delete pictures they have ne
   const reopened = JSON.parse(service.readState(payload([{ id: 'one', title: 'old', updatedAt: 1 }])));
   assert.equal(reopened.state.pictures.length, 0);
 });
+
+test('voice library survives stale tabs and stores auditions in their source project', () => {
+  const { service } = fixture();
+  const picture = { id: 'one', title: 'one', updatedAt: 1 };
+  const state = assets => JSON.stringify({ state: { pictures: [picture], voiceDesignAssets: assets }, version: 0 });
+  const voice = { id: 'voice-one', sourcePictureId: 'one', createdAt: 2, status: 'NEEDS_REVIEW', audio: { mediaUri: 'data:audio/wav;base64,YXVkaW8=', filename: 'voice.wav' } };
+  const saved = JSON.parse(service.writeState(state([voice])));
+  assert.match(saved.state.voiceDesignAssets[0].audio.mediaUri, /^\/api\/project-media/);
+  assert.equal(service.library('one').entries.length, 1);
+  assert.equal(JSON.parse(service.readState(state([]))).state.voiceDesignAssets.length, 1);
+  assert.equal(JSON.parse(service.writeState(state([]), ['one'])).state.voiceDesignAssets.length, 1);
+  const approved = { ...saved.state.voiceDesignAssets[0], status: 'APPROVED', updatedAt: 3 };
+  service.writeState(state([approved]));
+  const stale = JSON.parse(service.writeState(state(saved.state.voiceDesignAssets)));
+  assert.equal(stale.state.voiceDesignAssets[0].status, 'APPROVED');
+  const rejected = { ...approved, status: 'REJECTED', updatedAt: 4 };
+  assert.equal(JSON.parse(service.writeState(state([rejected]))).state.voiceDesignAssets[0].status, 'REJECTED');
+});
+
+test('generated clips are registered in the owning project and archive idempotently',()=>{
+ const {service}=fixture();service.writeState(payload([{id:'one',title:'one',updatedAt:1}]));
+ const bytes=Buffer.from('generated clip fixture');
+ const entry=service.saveGeneratedMedia('one','job-output.mp4',bytes);
+ assert.deepEqual(readFileSync(service.mediaFile('one',entry.file)),bytes);
+ assert.equal(service.saveGeneratedMedia('one','job-output.mp4',bytes).uri,entry.uri);
+ assert.equal(service.library('one').entries.length,1);
+ assert.throws(()=>service.saveGeneratedMedia('missing','out.mp4',bytes),/Save the picture/);
+ assert.throws(()=>service.saveGeneratedMedia('one','../out.mp4',bytes),/Invalid/);
+ assert.throws(()=>service.saveGeneratedMedia('one','out.wav',bytes),/Invalid/);
+});

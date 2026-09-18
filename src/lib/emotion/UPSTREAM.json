@@ -1,0 +1,50 @@
+{
+  "source": "Cueboard_Emotion_Node_Fixed(1).zip",
+  "files": [
+    {
+      "path": "src/lib/emotion/compiler.ts",
+      "sha256": "ff7f73f60259e844f938ed3770a2171d6753aa8d6648f35cbfd3face1bb71d25"
+    },
+    {
+      "path": "src/lib/emotion/compiler.test.ts",
+      "sha256": "eac44ae44b4086c069778b30f6c81592900e8cfba64d1d31973d0c1be33a1a80"
+    },
+    {
+      "path": "src/lib/emotion/constants.ts",
+      "sha256": "a088649298a478c5ae5232941c4ddfa484f7656ff0ba354eb3fcf262cf9b79f6"
+    },
+    {
+      "path": "src/lib/emotion/cue-policy.ts",
+      "sha256": "972121df5d5b410567f703bec50f098da8926810b8b5a5dabb849c6d244ebba6"
+    },
+    {
+      "path": "src/lib/emotion/merge.ts",
+      "sha256": "5ae97862c2cb4233d92582c132c07f14ca2bc07eb722fa3f2ac5469e91983c90"
+    },
+    {
+      "path": "src/lib/emotion/types.ts",
+      "sha256": "19eaad1f71e42f509dd7af22bd44f96c3fd87a605c9d4485d8b4ec0b1000ae2e"
+    },
+    {
+      "path": "src/lib/emotion/validation.ts",
+      "sha256": "59528f2cd7f105c70da73945f6d940a8bd6dda41f529e198dd4cd505eef950b3"
+    },
+    {
+      "path": "src/lib/emotion/validation.test.ts",
+      "sha256": "fa7ea6db3fe31a1b52fe3a5c782745413377ecde537a7b0a250c302b50d47bf7"
+    },
+    {
+      "path": "src/data/emotion-node-config.schema.json",
+      "sha256": "a0f10ea80d46cc3336f59bda27781f4268a0ab15c7edb2f59be44b1b09d81695"
+    },
+    {
+      "path": "src/data/examples.json",
+      "sha256": "11cb7ed6a02ed542534b93fb380f2a24d359de79b75e636eb8150f8bd4d3711f"
+    },
+    {
+      "path": "public/data/emotion_catalog.json",
+      "sha256": "2d9e0e23ce9cf6e3a3de685363cd063badf49da88181dbc0dc1e7f9aea85c29f"
+    }
+  ],
+  "note": "Compiler, schema, catalogue and focused tests reused; standalone shell/store not imported."
+}

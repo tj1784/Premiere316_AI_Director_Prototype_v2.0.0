@@ -13,11 +13,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 export function createDirectorExecutionService({
   directory, ensureHost, openWorkflow, getProgress, fetchImpl = fetch,
   compile = compileDirectorWorkflow, now = Date.now, uuid = randomUUID, journalImpl,
+  endpoint = DIRECTOR_ENDPOINT, prepareWorkflow,
 }) {
   const reviews = new Map();
   const jobs = new Map();
   const inFlight = new Map();
-  const fetchLocal = (path, options = {}) => fetchImpl(`${DIRECTOR_ENDPOINT}${path}`, { signal: AbortSignal.timeout(30_000), redirect: "error", ...options });
+  const fetchLocal = (path, options = {}) => fetchImpl(`${endpoint}${path}`, { signal: AbortSignal.timeout(30_000), redirect: "error", ...options });
   async function checkResponse(response) {
     if (response.ok) return response;
     let value;
@@ -63,6 +64,7 @@ export function createDirectorExecutionService({
     return record;
   };
   async function operationalWorkflow(workflow, compiled) {
+    if (prepareWorkflow) return prepareWorkflow(structuredClone(workflow), fetchLocal);
     const graph = structuredClone(workflow);
     const uploaded = new Map();
     async function verifiedInput(segment) {
@@ -120,7 +122,7 @@ export function createDirectorExecutionService({
         const failed = item.status?.status_str === "error";
         const cancelled = (item.status?.messages ?? []).some((message) => message?.[0] === "execution_interrupted");
         const executionError = (item.status?.messages ?? []).find((message) => message?.[0] === "execution_error")?.[1];
-        const outputs = videoOutputs(item.outputs);
+        const outputs = videoOutputs(item.outputs, endpoint);
         return { ok: true, promptId, status: cancelled ? "cancelled" : failed ? "failed" : item.status?.completed ? "completed" : "running",
           message: cancelled ? "Generation was cancelled before a video was saved." : failed ? String(executionError?.exception_message || "LTX Director reported a rendering error.").slice(0, 2000)
             : item.status?.completed ? `Render completed. ${outputs.length} video output(s) available.` : "Rendering in LTX Director…", outputs };
@@ -175,7 +177,7 @@ export function createDirectorExecutionService({
       for (const [id, previous] of reviews) if (!previous.operation && previous.pictureId === input.pictureId && previous.sceneId === input.sceneId && previous.renderSlot === input.renderSlot) reviews.delete(id);
       if ([...reviews.values()].filter((entry) => !entry.operation).length >= 64) throw new Error("Up to 64 workflows can be reviewed at once. Generate the reviewed batch before reviewing more.");
       const result = { ok: true, reviewId, workflowSha256, nodeCount: compiled?.nodeCount ?? workflow.nodes.length,
-        issues: compiled?.issues ?? [], runtimeAvailable: Boolean(objectInfo), endpoint: DIRECTOR_ENDPOINT };
+        issues: compiled?.issues ?? [], runtimeAvailable: Boolean(objectInfo), endpoint };
       reviews.set(reviewId, { ...input, workflow, workflowSha256, result, reviewedAt: now(), operation: null });
       return result;
     } catch (error) { return { ok: false, error: error.message }; }
@@ -195,7 +197,7 @@ export function createDirectorExecutionService({
         if (recovered.ok && recovered.status !== "unknown") {
           unresolved.state = recovered.status;
           const warning = journalAfterAttempt(unresolved);
-          return { ok: true, reviewId, promptId: unresolved.promptId, workflowSha256: entry.workflowSha256, endpoint: DIRECTOR_ENDPOINT, workflowOpened: false, warning };
+          return { ok: true, reviewId, promptId: unresolved.promptId, workflowSha256: entry.workflowSha256, endpoint, workflowOpened: false, warning };
         }
         return { ok: false, uncertain: true, promptId: unresolved.promptId, error: `An earlier submission of this workflow is still unconfirmed. Check job ${unresolved.promptId} in LTX Director before submitting again.` };
       }
@@ -235,7 +237,7 @@ export function createDirectorExecutionService({
       }
       record.state = "queued";
       const warning = journalAfterAttempt(record);
-      return { ok: true, reviewId, promptId: record.promptId, workflowSha256: entry.workflowSha256, endpoint: DIRECTOR_ENDPOINT, workflowOpened, warning };
+      return { ok: true, reviewId, promptId: record.promptId, workflowSha256: entry.workflowSha256, endpoint, workflowOpened, warning };
     } catch (error) {
       if (record && postAttempted) {
         if (error.httpStatus >= 400 && error.httpStatus < 500) {
@@ -248,7 +250,7 @@ export function createDirectorExecutionService({
         if (recovered.ok && recovered.status !== "unknown") {
           record.state = recovered.status;
           const warning = journalAfterAttempt(record);
-          return { ok: true, reviewId, promptId: record.promptId, workflowSha256: entry.workflowSha256, endpoint: DIRECTOR_ENDPOINT, workflowOpened, warning };
+          return { ok: true, reviewId, promptId: record.promptId, workflowSha256: entry.workflowSha256, endpoint, workflowOpened, warning };
         }
         record.state = "uncertain";
         record.error = error.message;
@@ -319,14 +321,14 @@ function errorMessage(value) {
   return [typeof value?.error === "string" ? value.error : value?.error?.message, ...details].filter(Boolean).join("; ").slice(0, 4000);
 }
 
-function videoOutputs(outputs = {}) {
+function videoOutputs(outputs = {}, endpoint = DIRECTOR_ENDPOINT) {
   const found = new Map();
   for (const node of Object.values(outputs)) for (const collection of [node.videos, node.gifs, node.images]) {
     for (const file of Array.isArray(collection) ? collection : []) {
       if (typeof file.filename !== "string" || !/\.(mp4|webm|mov|mkv)$/i.test(file.filename) || /[\\/]/.test(file.filename)) continue;
       const type = file.type === "temp" ? "temp" : "output";
       const query = new URLSearchParams({ filename: file.filename, subfolder: String(file.subfolder ?? ""), type });
-      const url = `${DIRECTOR_ENDPOINT}/view?${query}`;
+      const url = `${endpoint}/view?${query}`;
       found.set(url, { filename: file.filename, url, type });
     }
   }

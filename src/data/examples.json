@@ -1,0 +1,442 @@
+{
+  "examples": [
+    {
+      "schema_version": "1.0.0",
+      "catalog_version": "1.0.0",
+      "scene_id": "confession",
+      "character_baselines": {
+        "younger_son": {
+          "label": "Younger Son",
+          "voice_reference": "project_reference:approved_younger_son_voice",
+          "voice_baseline": {
+            "register": "Established youthful adult register",
+            "timbre": "Preserve the approved voice",
+            "accent": "Preserve project accent",
+            "language": "English",
+            "habitual_pace": "Conversational",
+            "expressivity": "Quietly expressive"
+          },
+          "physical_baseline": "Seated or standing waist-up, tired but capable of speaking.",
+          "mobility_constraints": [],
+          "identity_locked": true
+        }
+      },
+      "scene_defaults": {
+        "felt_layers": [
+          {
+            "role": "dominant",
+            "selection": {
+              "emotion_id": "neutral",
+              "variant_id": "neutral__task_ready",
+              "intensity": 3
+            },
+            "layer_weight": 1.0
+          }
+        ],
+        "displayed_selection": null,
+        "regulation": "open",
+        "display_allowance": 0.6,
+        "arousal_override": null,
+        "objective": "",
+        "appraisal": "",
+        "relationship_context": "",
+        "physical_context": "",
+        "framing": "close_up",
+        "cue_budget": {
+          "face": 2,
+          "voice": 2,
+          "body": 1
+        },
+        "cue_selection_mode": "stable",
+        "cue_selection_seed": null,
+        "allow_narration": false,
+        "allow_extra_dialogue": false,
+        "allow_nonverbal_vocalizations": false,
+        "allowed_sound_events": [],
+        "continuity": {
+          "from_line_id": null,
+          "restart_onset": false
+        }
+      },
+      "character_overrides": {
+        "younger_son": {
+          "relationship_context": "Speaking to his father after wrongdoing; he wants to be heard and expects rejection."
+        }
+      },
+      "lines": [
+        {
+          "line_id": "confession_line",
+          "character_id": "younger_son",
+          "spoken_text": "Father, I have sinned against heaven and before you, and am no longer worthy to be called your son,",
+          "duration_seconds": 18,
+          "overrides": {
+            "felt_layers": [
+              {
+                "role": "dominant",
+                "selection": {
+                  "emotion_id": "remorse",
+                  "variant_id": "remorse__confession",
+                  "intensity": 6
+                },
+                "layer_weight": 1.0
+              },
+              {
+                "role": "secondary",
+                "selection": {
+                  "emotion_id": "shame",
+                  "variant_id": "shame__public_exposure",
+                  "intensity": 4
+                },
+                "layer_weight": 0.35
+              }
+            ],
+            "regulation": "restrained",
+            "display_allowance": 0.3,
+            "objective": "Own the harm and finish the apology without asking to be excused.",
+            "voice_overrides": {
+              "loudness": {
+                "mode": "replace",
+                "instruction": "Soft but intelligible; preserve words through pauses rather than shouting."
+              },
+              "texture": {
+                "mode": "replace",
+                "instruction": "One contained instability at the admission, then a deliberate return to the established voice."
+              }
+            },
+            "body_overrides": {
+              "gait": {
+                "mode": "omit"
+              },
+              "legs_feet": {
+                "mode": "omit"
+              }
+            }
+          },
+          "beats": [
+            {
+              "beat_id": "confession_beat_1",
+              "timing": {
+                "coordinate": "text_codepoints",
+                "start": 0,
+                "end": 7,
+                "anchor_text": "Father,",
+                "anchor_occurrence": 1
+              },
+              "overrides": {
+                "felt_layers": [
+                  {
+                    "role": "dominant",
+                    "selection": {
+                      "emotion_id": "remorse",
+                      "variant_id": "remorse__confession",
+                      "intensity": 4
+                    },
+                    "layer_weight": 1.0
+                  }
+                ],
+                "objective": "Ask permission to be heard."
+              }
+            },
+            {
+              "beat_id": "confession_beat_2",
+              "timing": {
+                "coordinate": "text_codepoints",
+                "start": 8,
+                "end": 52,
+                "anchor_text": "I have sinned against heaven and before you,",
+                "anchor_occurrence": 1
+              },
+              "overrides": {
+                "felt_layers": [
+                  {
+                    "role": "dominant",
+                    "selection": {
+                      "emotion_id": "remorse",
+                      "variant_id": "remorse__confession",
+                      "intensity": 6
+                    },
+                    "layer_weight": 1.0
+                  }
+                ],
+                "objective": "Take responsibility without an excuse."
+              }
+            },
+            {
+              "beat_id": "confession_beat_3",
+              "timing": {
+                "coordinate": "text_codepoints",
+                "start": 53,
+                "end": 99,
+                "anchor_text": "and am no longer worthy to be called your son,",
+                "anchor_occurrence": 1
+              },
+              "overrides": {
+                "felt_layers": [
+                  {
+                    "role": "dominant",
+                    "selection": {
+                      "emotion_id": "remorse",
+                      "variant_id": "remorse__confession",
+                      "intensity": 6
+                    },
+                    "layer_weight": 1.0
+                  }
+                ],
+                "objective": "Admit feared unworthiness while still completing the thought."
+              }
+            }
+          ],
+          "authored_sound_events": []
+        }
+      ],
+      "adapter": {
+        "id": "project_adapter",
+        "version": "unconfigured",
+        "capabilities": {
+          "visual_direction": "unverified",
+          "delivery_instruction": "unverified",
+          "separate_speech": "unverified",
+          "timed_beats": "unverified",
+          "numeric_pitch_rate_gain": "unverified",
+          "facial_regions": "unverified",
+          "voice_reference": "unverified",
+          "nonverbal_vocals": "unverified"
+        },
+        "unsupported_policy": "warn_export_text"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "catalog_version": "1.0.0",
+      "scene_id": "concealed_fear",
+      "character_baselines": {
+        "witness": {
+          "label": "Witness",
+          "voice_reference": null,
+          "identity_locked": true
+        }
+      },
+      "scene_defaults": {
+        "felt_layers": [
+          {
+            "role": "dominant",
+            "selection": {
+              "emotion_id": "neutral",
+              "variant_id": "neutral__task_ready",
+              "intensity": 3
+            },
+            "layer_weight": 1.0
+          }
+        ],
+        "displayed_selection": null,
+        "regulation": "open",
+        "display_allowance": 0.6,
+        "arousal_override": null,
+        "objective": "",
+        "appraisal": "",
+        "relationship_context": "",
+        "physical_context": "",
+        "framing": "silent_reaction",
+        "cue_budget": {
+          "face": 2,
+          "voice": 0,
+          "body": 1
+        },
+        "cue_selection_mode": "stable",
+        "cue_selection_seed": null,
+        "allow_narration": false,
+        "allow_extra_dialogue": false,
+        "allow_nonverbal_vocalizations": false,
+        "allowed_sound_events": [],
+        "continuity": {
+          "from_line_id": null,
+          "restart_onset": false
+        }
+      },
+      "character_overrides": {},
+      "lines": [
+        {
+          "line_id": "silent_witness",
+          "character_id": "witness",
+          "spoken_text": "",
+          "duration_seconds": 6,
+          "overrides": {
+            "felt_layers": [
+              {
+                "role": "dominant",
+                "selection": {
+                  "emotion_id": "fear",
+                  "variant_id": "fear__concealed_escape",
+                  "intensity": 7
+                },
+                "layer_weight": 1.0
+              }
+            ],
+            "displayed_selection": {
+              "emotion_id": "calm",
+              "variant_id": "calm__restorative_quiet",
+              "intensity": 4
+            },
+            "regulation": "masked",
+            "display_allowance": 0.15,
+            "objective": "Keep the group steady without revealing the urge to escape."
+          },
+          "beats": [
+            {
+              "beat_id": "listen_and_settle",
+              "timing": {
+                "coordinate": "seconds",
+                "start": 0,
+                "end": 6
+              },
+              "overrides": {}
+            }
+          ],
+          "authored_sound_events": []
+        }
+      ],
+      "adapter": {
+        "id": "project_adapter",
+        "version": "unconfigured",
+        "capabilities": {
+          "visual_direction": "unverified",
+          "delivery_instruction": "unverified",
+          "separate_speech": "unverified",
+          "timed_beats": "unverified",
+          "numeric_pitch_rate_gain": "unverified",
+          "facial_regions": "unverified",
+          "voice_reference": "unverified",
+          "nonverbal_vocals": "unverified"
+        },
+        "unsupported_policy": "warn_export_text"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "catalog_version": "1.0.0",
+      "scene_id": "restrained_reunion",
+      "character_baselines": {
+        "friend": {
+          "label": "Friend",
+          "voice_reference": "project_reference:approved_friend_voice",
+          "identity_locked": true
+        }
+      },
+      "scene_defaults": {
+        "felt_layers": [
+          {
+            "role": "dominant",
+            "selection": {
+              "emotion_id": "neutral",
+              "variant_id": "neutral__task_ready",
+              "intensity": 3
+            },
+            "layer_weight": 1.0
+          }
+        ],
+        "displayed_selection": null,
+        "regulation": "open",
+        "display_allowance": 0.6,
+        "arousal_override": null,
+        "objective": "",
+        "appraisal": "",
+        "relationship_context": "",
+        "physical_context": "",
+        "framing": "close_up",
+        "cue_budget": {
+          "face": 2,
+          "voice": 2,
+          "body": 1
+        },
+        "cue_selection_mode": "stable",
+        "cue_selection_seed": null,
+        "allow_narration": false,
+        "allow_extra_dialogue": false,
+        "allow_nonverbal_vocalizations": false,
+        "allowed_sound_events": [],
+        "continuity": {
+          "from_line_id": null,
+          "restart_onset": false
+        }
+      },
+      "character_overrides": {},
+      "lines": [
+        {
+          "line_id": "reunion_line",
+          "character_id": "friend",
+          "spoken_text": "I thought you would be here.",
+          "duration_seconds": 7,
+          "overrides": {
+            "felt_layers": [
+              {
+                "role": "dominant",
+                "selection": {
+                  "emotion_id": "joy",
+                  "variant_id": "joy__shared_good_news",
+                  "intensity": 6
+                },
+                "layer_weight": 1.0
+              },
+              {
+                "role": "secondary",
+                "selection": {
+                  "emotion_id": "relief",
+                  "variant_id": "relief__danger_averted",
+                  "intensity": 4
+                },
+                "layer_weight": 0.3
+              }
+            ],
+            "regulation": "restrained",
+            "display_allowance": 0.35,
+            "objective": "Welcome the person while remaining composed in public.",
+            "voice_overrides": {
+              "loudness": {
+                "mode": "replace",
+                "instruction": "Keep conversational volume; let a breath release and warmer contour carry the feeling."
+              }
+            }
+          },
+          "beats": [
+            {
+              "beat_id": "recognition_before_words",
+              "timing": {
+                "coordinate": "normalized",
+                "start": 0,
+                "end": 0.35
+              },
+              "overrides": {}
+            },
+            {
+              "beat_id": "warmth_after_line",
+              "timing": {
+                "coordinate": "normalized",
+                "start": 0.35,
+                "end": 1
+              },
+              "overrides": {
+                "display_allowance": 0.45
+              }
+            }
+          ],
+          "authored_sound_events": []
+        }
+      ],
+      "adapter": {
+        "id": "project_adapter",
+        "version": "unconfigured",
+        "capabilities": {
+          "visual_direction": "unverified",
+          "delivery_instruction": "unverified",
+          "separate_speech": "unverified",
+          "timed_beats": "unverified",
+          "numeric_pitch_rate_gain": "unverified",
+          "facial_regions": "unverified",
+          "voice_reference": "unverified",
+          "nonverbal_vocals": "unverified"
+        },
+        "unsupported_policy": "warn_export_text"
+      }
+    }
+  ]
+}

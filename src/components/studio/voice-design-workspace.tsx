@@ -1,3 +1,4 @@
+import { inspectVoiceBytes, exportVoiceReferences } from "@/lib/studio/voice-reference";
 import { useId, useRef, useState } from "react";
 import { Download, Library, Mic2, Save, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -83,17 +84,19 @@ export function VoiceDesignWorkspace({ picture, characterId, initialDesign }: { 
         reader.readAsDataURL(new Blob([file], { type: mime }));
       });
       await verifyAudio(mediaUri);
-      save(snapshot, { mediaUri, filename: file.name, referenceText: snapshot.referenceText, bytes: file.size, origin: "imported" });
+      const metadata = await inspectVoiceBytes(await file.arrayBuffer());
+      save(snapshot, { ...metadata, mediaUri, filename: file.name, referenceText: snapshot.referenceText, bytes: file.size, origin: "imported" });
     } catch (cause) { report(cause); }
     finally { setBusy(false); }
   };
-  const visible = assets.filter((asset) => (filter === "all" || (filter === "audio" ? Boolean(asset.audio) : asset.status === filter))
+  const visible = assets.filter((asset) => !asset.deletedAt && (filter === "all" || (filter === "audio" ? Boolean(asset.audio) : asset.status === filter))
     && `${asset.design.name} ${asset.design.description} ${asset.design.enhancer?.image ?? ""} ${asset.design.enhancer?.prompt ?? ""} ${asset.design.referenceText}`.toLowerCase().includes(search.toLowerCase()));
 
   return <section aria-label="Voice design" className="my-5 grid min-w-0 gap-5 text-fg">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div><h3 className="flex items-center gap-2 font-display text-2xl"><Mic2 className="size-5" aria-hidden="true" />Voice design</h3>
         <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">Describe a voice, keep its exact audition text, and build a reusable asset library.</p></div>
+      <Button variant="outline" onClick={async () => { const f=readyTextFile("voice-references.json",JSON.stringify(exportVoiceReferences(picture),null,2),"application/json"); await saveReadyFile(f); }}>Export approved references</Button>
       <Button variant="outline" onClick={() => workflowInput.current?.click()} disabled={busy}><Upload />Import workflow</Button>
     </div>
     <input ref={workflowInput} type="file" accept=".json,application/json" className="hidden" aria-label="Import voice workflow JSON" onChange={(event) => { void importWorkflow(event.target.files?.[0]); event.target.value = ""; }} />
@@ -154,15 +157,19 @@ export function VoiceDesignWorkspace({ picture, characterId, initialDesign }: { 
 function VoiceAssetCard({ asset, onUse }: { asset: VoiceDesignAsset; onUse: () => void }) {
   const [failed, setFailed] = useState(false);
   const review = (status: VoiceDesignAsset["status"]) => {
-    useStudio.setState((state) => ({ voiceDesignAssets: state.voiceDesignAssets.map((entry) => entry.id === asset.id ? { ...entry, status } : entry) }));
+    if(status==='APPROVED'&&!asset.audio?.sha256){toast.error('Reimport and verify this legacy audio before approving it.');return;}
+    useStudio.setState((state) => ({ voiceDesignAssets: state.voiceDesignAssets.map((entry) => entry.id === asset.id ? { ...entry, status, conflicts: [], reviewHistory: [...(entry.reviewHistory??[]),{status,at:Date.now(),revision:(entry.revision??0)+1}], updatedAt: Date.now(), reviewedAt: Date.now(), revision: (entry.revision ?? 0) + 1 } : entry) }));
     toast.success("Audition review saved.");
   };
   return <article aria-label={asset.design.name} className="grid min-w-0 content-start gap-3 rounded-lg border border-border bg-elevated p-4">
     <div><h5 className="break-words font-medium">{asset.design.name}</h5><p className="mt-1 text-xs text-muted">{statusLabels[asset.status]} · {new Date(asset.createdAt).toLocaleDateString()} · Seed {asset.design.seed}</p></div>
     <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-muted">{asset.design.enhancer ? `Image-guided voice · ${asset.design.enhancer.image}` : asset.design.description}</p>
     <details><summary className="min-h-11 cursor-pointer text-sm leading-loose">Spoken reference text</summary><p className="whitespace-pre-wrap break-words text-sm text-muted">{asset.audio?.referenceText ?? asset.design.referenceText}</p></details>
-    {asset.audio && <><audio controls preload="none" className="h-11 w-full min-w-0" src={asset.audio.mediaUri} aria-label={`Listen to ${asset.design.name}`} onError={() => setFailed(true)} onCanPlay={() => setFailed(false)} /><p className="break-words text-xs text-subtle">Imported audio · {asset.audio.filename}</p>{failed && <p role="alert" className="text-sm text-rec">This audio could not be played. Its review has not changed.</p>}</>}
+    {asset.reviewNote&&<p className="text-sm text-accent">{asset.reviewNote}</p>}
+    {!!asset.conflicts?.length&&<p role="alert" className="text-sm text-rec">Conflicting saved reviews. Review this audition again.</p>}
+    {asset.audio && <><audio controls preload="none" className="h-11 w-full min-w-0" src={asset.audio.previewUri??asset.audio.mediaUri} aria-label={`Listen to ${asset.design.name}`} onError={() => setFailed(true)} onCanPlay={() => setFailed(false)} /><p className="break-words text-xs text-subtle">{asset.textKind??'audition'} · {asset.audio.filename}</p>{failed && <p role="alert" className="text-sm text-rec">This audio could not be played. Its review has not changed.</p>}</>}
     <div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={onUse}>Use design</Button>
+      <Button variant="ghost" onClick={()=>{useStudio.setState(state=>({voiceDesignAssets:state.voiceDesignAssets.map(entry=>entry.id===asset.id?{...entry,deletedAt:Date.now(),updatedAt:Date.now(),revision:(entry.revision??0)+1}:entry)}));toast.success('Removed from the library. Existing character attachments and media files are retained.');}}>Remove from library</Button>
       {asset.audio && <a className="inline-flex min-h-11 items-center rounded-md border border-border px-3 text-sm text-fg hover:bg-inset" href={asset.audio.mediaUri} download={asset.audio.filename}>Download audio</a>}
       {asset.audio && <><Button variant="outline" disabled={failed || asset.status === "APPROVED"} onClick={() => review("APPROVED")}>Approve audition</Button><Button variant="ghost" disabled={asset.status === "REJECTED"} onClick={() => review("REJECTED")}>Reject audition</Button>{asset.status !== "NEEDS_REVIEW" && <Button variant="ghost" onClick={() => review("NEEDS_REVIEW")}>Review again</Button>}</>}
     </div>

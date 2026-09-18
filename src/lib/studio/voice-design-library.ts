@@ -11,14 +11,18 @@ export type VoiceDesign = {
   enhancer?: VoiceDesignEnhancer;
 };
 export type VoiceDesignAsset = {
-  id: string; design: VoiceDesign; createdAt: number;
+  reviewHistory?: Array<{status:string;at:number;revision:number}>;
+  id: string; design: VoiceDesign; createdAt: number; updatedAt?: number; revision?: number; deletedAt?: number; reviewedAt?: number; conflicts?: unknown[];
+  textKind?: "audition" | "screenplay"; reviewNote?: string; provenance?: { modelId?: string; manifestId?: string; screenplaySha256?: string; sourceProfileId?: string };
   sourcePictureId?: string; status: "DRAFT" | "NEEDS_REVIEW" | "APPROVED" | "REJECTED";
-  audio?: { mediaUri: string; filename: string; referenceText: string; bytes: number; origin: "imported" };
+  audio?: { mediaUri: string; previewUri?: string; sha256?: string; durationSec?: number; sampleRate?: number; channels?: number; filename: string; referenceText: string; bytes: number; origin: "imported" };
 };
 
 const ENGINE_FIELDS = ["model_variant", "device", "voice_preset", "language", "instruct", "top_k", "top_p", "temperature", "repetition_penalty", "max_new_tokens"];
 const DESIGN_FIELDS = ["reference_text", "seed", "control_after_generate", "voice_instruction"];
 function field(node: VoiceWorkflow["nodes"][number], names: string[], name: string): unknown {
+  const named=node.widgets_values_named?.[name], positional=node.widgets_values?.[names.indexOf(name)];
+  if(named!==undefined&&positional!==undefined&&JSON.stringify(named)!==JSON.stringify(positional))throw new Error(`Conflicting named and positional ${name}; review both workflow values.`);
   return node.widgets_values_named?.[name] ?? node.widgets_values?.[names.indexOf(name)];
 }
 
@@ -48,6 +52,40 @@ function readEnhancer(workflow: VoiceWorkflow, designer: VoiceWorkflow["nodes"][
   };
 }
 
+export function validateVoiceGraph(workflow: VoiceWorkflow): void {
+  const nodes=workflow.nodes;
+  for(const type of ['Qwen3TTSEngineNode','UnifiedVoiceDesignerNode','SaveAudioAdvanced'])if(nodes.filter(n=>n.type===type).length!==1)throw new Error(`Expected exactly one ${type}.`);
+  if(new Set(nodes.map(n=>n.id)).size!==nodes.length || nodes.some(n=>!Number.isSafeInteger(n.id))) throw new Error("Duplicate or invalid workflow node ID.");
+  if(!Array.isArray(workflow.links)) throw new Error("Workflow links are missing.");
+  const links=workflow.links as unknown[][];
+  if(new Set(links.map(l=>l[0])).size!==links.length) throw new Error("Duplicate workflow link ID.");
+  for(const link of links) {
+    if(!Array.isArray(link)||link.length<6)throw new Error("Invalid workflow link.");
+    const from=nodes.find(n=>n.id===link[1]), to=nodes.find(n=>n.id===link[3]);
+    const output=(from?.outputs as Array<{links?: number[];type?:string}>|undefined)?.[Number(link[2])];
+    if(!from||!to||!output||!output.links?.includes(Number(link[0]))||to.inputs?.[Number(link[4])]?.link!==link[0])throw new Error("Workflow link endpoints do not match.");
+  }
+  for(const node of nodes) for(const input of node.inputs??[]) {
+    if(input.link!=null&&!links.some(l=>l[0]===input.link))throw new Error("Missing workflow input connection.");
+    const allowed:Record<string,string[]>={Qwen3TTSEngineNode:[],UnifiedVoiceDesignerNode:['TTS_engine','voice_instruction'],SaveAudioAdvanced:['audio'],SulphurPromptEnhancer:['image'],LoadImage:[]};
+    if(input.link!=null&&allowed[node.type]&&!allowed[node.type].includes(input.name))throw new Error(`Connected editable input ${input.name} is unsupported; disconnect it before editing/export.`);
+  }
+  const engine=nodes.find(n=>n.type==='Qwen3TTSEngineNode'), designer=nodes.find(n=>n.type==='UnifiedVoiceDesignerNode'), saver=nodes.find(n=>n.type==='SaveAudioAdvanced');
+  if(!engine||!designer||!saver||inputSource(workflow,designer,'TTS_engine')?.id!==engine.id)throw new Error("Engine must connect to the voice designer.");
+  let target=saver, seen=new Set<number>();
+  while(true) {
+    if(seen.has(target.id))throw new Error("Cyclic audio output graph.");seen.add(target.id);
+    const slot=target.inputs?.findIndex(i=>i.name==='audio')??-1;
+    const link=links.find(l=>l[0]===target.inputs?.[slot]?.link&&l[3]===target.id&&l[4]===slot);
+    const source=link&&nodes.find(n=>n.id===link[1]);
+    if(!source)throw new Error("Disconnected audio-save graph.");
+    if(source.id===designer.id&&link![2]===1)break;
+    if(source.type!=='PreviewAudio'||link![2]!==0)throw new Error("Unsupported audio-save path.");
+    target=source;
+  }
+  if([engine,designer,saver,...nodes.filter(n=>n.type==='PreviewAudio'||n.type==='SulphurPromptEnhancer'||n.type==='LoadImage')].some(n=>n.mode!==undefined&&n.mode!==0))throw new Error("Required workflow nodes must be enabled.");
+}
+
 /** Reads workflow data only. Notes, URLs, and extra metadata never execute. */
 export function importVoiceDesign(value: unknown, name: string): VoiceDesign {
   if (!value || typeof value !== "object" || !Array.isArray((value as VoiceWorkflow).nodes)) throw new Error("Choose a ComfyUI VoiceDesign workflow JSON.");
@@ -57,6 +95,7 @@ export function importVoiceDesign(value: unknown, name: string): VoiceDesign {
   const designers = workflow.nodes.filter((node) => node.type === "UnifiedVoiceDesignerNode");
   const savers = workflow.nodes.filter((node) => node.type === "SaveAudioAdvanced");
   if (engines.length !== 1 || designers.length !== 1 || savers.length !== 1) throw new Error("Expected one Qwen3TTSEngineNode, UnifiedVoiceDesignerNode, and SaveAudioAdvanced node.");
+  validateVoiceGraph(workflow);
   const [engine] = engines, [designer] = designers, [saver] = savers;
   if (field(engine, ENGINE_FIELDS, "model_variant") !== "local:Qwen3-TTS-12Hz-1.7B-VoiceDesign") throw new Error("This component requires the local Qwen3-TTS 1.7B VoiceDesign model.");
   const enhancer = readEnhancer(workflow, designer);
@@ -79,6 +118,7 @@ export function importVoiceDesign(value: unknown, name: string): VoiceDesign {
 }
 
 export function validateVoiceDesign(design: VoiceDesign): void {
+  validateVoiceGraph(design.workflow);
   const required = [["Name", design.name], ["Spoken reference text", design.referenceText], ["Language", design.language]];
   const designer = design.workflow.nodes.find((node) => node.type === "UnifiedVoiceDesignerNode");
   const linked = designer && readEnhancer(design.workflow, designer);
@@ -132,5 +172,5 @@ export function voiceDesignFilename(name: string): string {
 export function createVoiceDesignAsset(design: VoiceDesign, id: string, sourcePictureId: string, audio?: VoiceDesignAsset["audio"], now = Date.now()): VoiceDesignAsset {
   validateVoiceDesign(design);
   if (audio && (audio.referenceText !== design.referenceText || !audio.bytes || !audio.mediaUri.startsWith("data:audio/"))) throw new Error("Audio must include its exact spoken reference text and a playable audio file.");
-  return { id, design: structuredClone(design), sourcePictureId, createdAt: now, status: audio ? "NEEDS_REVIEW" : "DRAFT", ...(audio ? { audio: structuredClone(audio) } : {}) };
+  return { id, design: structuredClone(design), sourcePictureId, createdAt: now, revision: 1, textKind: "audition", status: audio ? "NEEDS_REVIEW" : "DRAFT", ...(audio ? { audio: structuredClone(audio) } : {}) };
 }

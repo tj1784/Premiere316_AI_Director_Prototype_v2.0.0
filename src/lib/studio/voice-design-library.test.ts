@@ -39,7 +39,7 @@ test("reject malformed workflows and invalid controls instead of silently coerci
   }
   const wrongModel = structuredClone(MASCULINE_VOICE_DESIGN.workflow);
   wrongModel.nodes.find((node) => node.type === "Qwen3TTSEngineNode")!.widgets_values_named!.model_variant = "remote:other";
-  assert.throws(() => importVoiceDesign(wrongModel, "bad"), /local Qwen/);
+  assert.throws(() => importVoiceDesign(wrongModel, "bad"), /Conflicting named and positional/);
 });
 
 test("saving snapshots keeps exact reference text and imported provenance, without auto-approval", () => {
@@ -107,4 +107,18 @@ test("missing enhancer connections or empty casting inputs cannot silently becom
   const empty = structuredClone(BIBLICAL_VOICE_DESIGN);
   empty.enhancer!.prompt = " ";
   assert.throws(() => validateVoiceDesign(empty), /Casting instructions/);
+});
+
+test("effective workflow rejects duplicate IDs, connected editable controls and wrong preview output",()=>{
+ const duplicate=structuredClone(MASCULINE_VOICE_DESIGN.workflow);
+ duplicate.nodes.push(structuredClone(duplicate.nodes[0]));
+ assert.throws(()=>importVoiceDesign(duplicate,'duplicate'));
+ const connected=structuredClone(MASCULINE_VOICE_DESIGN.workflow);
+ const engine=connected.nodes.find(n=>n.type==='Qwen3TTSEngineNode')!;
+ engine.inputs!.push({name:'seed',type:'INT',link:999});
+ assert.throws(()=>importVoiceDesign(connected,'connected'));
+ const wrong=structuredClone(MASCULINE_VOICE_DESIGN.workflow);
+ const designer=wrong.nodes.find(n=>n.type==='UnifiedVoiceDesignerNode')!;
+ const link=(wrong.links as Array<Array<string|number>>).find(l=>l[1]===designer.id)!;link[2]=0;
+ assert.throws(()=>importVoiceDesign(wrong,'wrong output'));
 });
