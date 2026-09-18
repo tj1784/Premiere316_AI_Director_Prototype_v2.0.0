@@ -139,3 +139,83 @@ test("joint path reuses immutable review and idempotent job infrastructure, usin
   assert.equal(preparation, 1);
   assert.ok(requests.every((url) => url.startsWith("http://127.0.0.1:8191/")));
 });
+
+test("latent-only Ref2VA ancestry never proves positive conditioning", () => {
+  const { workflow, info } = fixture(),
+    p = workflow.joint.prompt;
+  info.OtherConditioning = { input: { required: {} }, output: ["CONDITIONING"] };
+  p.other = node("OtherConditioning", {});
+  p.sample.inputs.positive = ["other", 0];
+  assert.match(compileJointWorkflow(workflow, info).issues.join(" "), /positive conditioning/);
+  p.sample.inputs.positive = ["ref", 1];
+  assert.match(compileJointWorkflow(workflow, info).issues.join(" "), /positive conditioning/);
+});
+test("custom sampling validates the guider positive path, not negative or latent ancestry", () => {
+  const { workflow, info } = fixture(),
+    p = workflow.joint.prompt;
+  info.CFGGuider = {
+    input: {
+      required: { model: ["MODEL"], positive: ["CONDITIONING"], negative: ["CONDITIONING"] },
+    },
+    output: ["GUIDER"],
+  };
+  info.SamplerCustomAdvanced = {
+    input: { required: { guider: ["GUIDER"], latent_image: ["LATENT"] } },
+    output: ["LATENT"],
+  };
+  info.OtherConditioning = { input: { required: {} }, output: ["CONDITIONING"] };
+  p.other = node("OtherConditioning", {});
+  p.guider = node("CFGGuider", {
+    model: ["model", 0],
+    positive: ["ref", 0],
+    negative: ["other", 0],
+  });
+  p.sample = node("SamplerCustomAdvanced", { guider: ["guider", 0], latent_image: ["ref", 1] });
+  assert.deepEqual(compileJointWorkflow(workflow, info).issues, []);
+  p.guider.inputs.positive = ["other", 0];
+  p.guider.inputs.negative = ["ref", 0];
+  assert.match(compileJointWorkflow(workflow, info).issues.join(" "), /positive conditioning/);
+});
+test("VHS encoder widgets belong only to the selected advertised format", () => {
+  const { workflow, info } = fixture(),
+    p = workflow.joint.prompt;
+  delete p.video;
+  delete p.save;
+  info.VHS_VideoCombine = {
+    input: {
+      required: {
+        images: ["IMAGE"],
+        audio: ["AUDIO"],
+        save_output: ["BOOLEAN"],
+        format: [
+          ["video/h264-mp4", "video/other"],
+          {
+            formats: {
+              "video/h264-mp4": [
+                ["crf", "INT", { min: 0, max: 100 }],
+                ["pix_fmt", ["yuv420p", "yuv420p10le"]],
+                ["save_metadata", "BOOLEAN", {}],
+              ],
+            },
+          },
+        ],
+      },
+    },
+    output: [],
+  };
+  p.save = node("VHS_VideoCombine", {
+    images: ["decode", 0],
+    audio: ["decode", 1],
+    save_output: true,
+    format: "video/h264-mp4",
+    crf: 19,
+    pix_fmt: "yuv420p",
+    save_metadata: true,
+  });
+  assert.deepEqual(compileJointWorkflow(workflow, info).issues, []);
+  p.save.inputs.crf = 101;
+  assert.match(compileJointWorkflow(workflow, info).issues.join(" "), /Invalid number/);
+  p.save.inputs.crf = 19;
+  p.save.inputs.format = "video/other";
+  assert.match(compileJointWorkflow(workflow, info).issues.join(" "), /Unsupported input/);
+});

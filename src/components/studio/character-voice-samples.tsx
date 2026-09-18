@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/field";
 import { useStudio } from "@/lib/studio/store";
-import { allCharacterVoiceIterations, attachVoiceDesignAsset, copyCharacterVoiceIteration, deleteCharacterVoiceIteration, reviewCharacterVoiceDesign, selectedCharacterVoice, resolveCharacterVoice } from "@/lib/studio/character-voice-designs";
+import { allCharacterVoiceIterations, attachVoiceDesignAsset, copyCharacterVoiceIteration, deleteCharacterVoiceIteration, reviewCharacterVoiceDesign, displayedCharacterVoice } from "@/lib/studio/character-voice-designs";
 import type { VoiceDesign } from "@/lib/studio/voice-design-library";
 import type { Picture } from "@/lib/studio/types";
 import { uid } from "@/lib/utils";
@@ -24,9 +24,7 @@ export function CharacterVoiceSamples({ pictureId, characterId, expanded = false
   const character = picture.production?.assets.find((asset) => asset.id === characterId && asset.category === "character" && !asset.tombstone);
   if (!character) return null;
   const iterations = allCharacterVoiceIterations(picture).filter((item) => item.characterId === characterId);
-  const approved = selectedCharacterVoice(picture, characterId, iterations.find(v=>v.id===selectedId)?.memberId);
-  const selectionIssue = resolveCharacterVoice(picture, characterId, iterations.find(v=>v.id===selectedId)?.memberId).issue;
-  const selected = iterations.find((item) => item.id === selectedId) ?? approved ?? iterations[0];
+  const { selected, approved, selectionIssue } = displayedCharacterVoice(picture, characterId, selectedId);
   const update = (operation: (latest: Picture) => Picture, notice: string) => {
     try {
       const store = useStudio.getState();

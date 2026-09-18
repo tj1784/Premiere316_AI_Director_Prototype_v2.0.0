@@ -93,12 +93,21 @@ export function stableHash(value: unknown): string {
   return hash.toString(16).padStart(8, "0");
 }
 
+/** Asset reference playback relocation must not invalidate approved dependencies. */
+export function referenceIdentity(value: unknown): unknown {
+  if (value && typeof value === "object" && "uri" in value && "mediaType" in value) {
+    const { previewUri, ...identity } = value as Record<string, unknown>;
+    return identity;
+  }
+  return value;
+}
+
 export function sourceFingerprint(input: Omit<SourceFingerprint, "hash"> & { content: unknown }): SourceFingerprint {
   return {
     sourceKind: input.sourceKind,
     sourceId: input.sourceId,
     versionId: input.versionId,
-    hash: stableHash(input.content),
+    hash: stableHash(referenceIdentity(input.content)),
     approvedAt: input.approvedAt,
     immutableBoundary: input.immutableBoundary,
   };

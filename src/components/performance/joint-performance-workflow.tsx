@@ -1,4 +1,9 @@
-import { useState } from "react";
+import {
+  createReviewGuard,
+  jointReviewFingerprint,
+  type ReviewTicket,
+} from "@/lib/emotion/review-guard";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Picture } from "@/lib/studio/types";
 import { useStudio } from "@/lib/studio/store";
@@ -50,11 +55,29 @@ export function JointPerformanceWorkflow({
   const current =
     picture.emotionPerformance?.applied[draft.sceneId] === draft.id &&
     !isPerformanceDraftStale(picture, draft);
+  const guard = useRef(createReviewGuard());
+  const accepted = useRef<ReviewTicket | null>(null);
+  const readFingerprint = useRef<() => string>(() => "");
+  readFingerprint.current = () => {
+    const latest = useStudio.getState().pictures.find((p) => p.id === picture.id);
+    if (!latest) return "missing-picture";
+    try {
+      return jointReviewFingerprint({ picture: latest, draft, workflow, lines, bindings });
+    } catch {
+      return "invalid-source";
+    }
+  };
+  useEffect(() => () => guard.current.invalidate(), []);
+  const reviewCurrent = guard.current.matches(accepted.current, readFingerprint.current());
   const invalidate = () => {
+    guard.current.invalidate();
+    accepted.current = null;
     setReview(null);
     setJob(null);
   };
   async function inspect() {
+    const ticket = guard.current.begin(readFingerprint.current());
+    accepted.current = null;
     setBusy(true);
     setMessage("");
     setReview(null);
@@ -120,6 +143,7 @@ export function JointPerformanceWorkflow({
           audioData,
         });
       }
+      if (!guard.current.matches(ticket, readFingerprint.current())) return;
       const result = await reviewJointWorkflow({
         data: {
           pictureId: picture.id,
@@ -131,6 +155,8 @@ export function JointPerformanceWorkflow({
           references,
         },
       });
+      if (!guard.current.matches(ticket, readFingerprint.current())) return;
+      accepted.current = ticket;
       setReview(result);
       setMessage(
         result.ok
@@ -142,13 +168,24 @@ export function JointPerformanceWorkflow({
           : result.error,
       );
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : String(e));
+      if (guard.current.matches(ticket, readFingerprint.current()))
+        setMessage(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
   }
   async function generate() {
-    if (!review?.ok) return;
+    if (
+      !current ||
+      !review?.ok ||
+      !review.runtimeAvailable ||
+      review.issues.length ||
+      !guard.current.matches(accepted.current, readFingerprint.current())
+    ) {
+      invalidate();
+      setMessage("Inputs changed. Review the current workflow again before generation.");
+      return;
+    }
     setBusy(true);
     try {
       const result = await runJointWorkflow({
@@ -197,10 +234,13 @@ export function JointPerformanceWorkflow({
             className="mt-2 block min-h-11 w-full"
             onChange={(e) => {
               const f = e.target.files?.[0];
+              invalidate();
+              const fileTicket = guard.current.begin(readFingerprint.current());
               if (f)
                 void f
                   .text()
                   .then((t) => {
+                    if (!guard.current.matches(fileTicket, readFingerprint.current())) return;
                     setWorkflow(t);
                     invalidate();
                   })
@@ -276,6 +316,7 @@ export function JointPerformanceWorkflow({
               busy ||
               !current ||
               !review?.ok ||
+              !reviewCurrent ||
               !review.runtimeAvailable ||
               !!review.issues.length ||
               !!job

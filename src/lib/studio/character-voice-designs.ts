@@ -190,6 +190,14 @@ export function selectedCharacterVoice(picture: Picture, characterId: string, me
   return resolveCharacterVoice(picture, characterId, memberId).voice;
 }
 
+/** Resolve display first, including initial/stale selections, then its member-bound approval. */
+export function displayedCharacterVoice(picture: Picture, characterId: string, selectedId: string | null) {
+  const iterations = allCharacterVoiceIterations(picture).filter(item => item.characterId === characterId);
+  const selected = iterations.find(item => item.id === selectedId) ?? selectedCharacterVoice(picture, characterId) ?? iterations[0];
+  const resolved = resolveCharacterVoice(picture, characterId, selected?.memberId);
+  return { selected, approved: resolved.voice, selectionIssue: resolved.issue };
+}
+
 function requireCharacter(picture: Picture, characterId: string) {
   if (!picture.production?.assets.some((asset) => asset.id === characterId && asset.category === "character" && !asset.tombstone)) throw new Error("The character profile is no longer available.");
 }
@@ -215,7 +223,7 @@ export function copyCharacterVoiceIteration(picture: Picture, characterId: strin
   if (!source) throw new Error("The source voice iteration is no longer available.");
   if (allCharacterVoiceIterations(picture).some((item) => item.id === id)) throw new Error("This iteration already exists.");
   const state = picture.characterVoiceDesigns ?? { schemaVersion: 1 as const, profiles: [] };
-  const iteration: CharacterVoiceIteration = { ...structuredClone(source), id, characterId, revision: 1, conflicts: [], reviewHistory: [], createdAt: Date.now(),
+  const iteration: CharacterVoiceIteration = { ...structuredClone(source), id, characterId, memberId: undefined, memberLabel: undefined, revision: 1, conflicts: [], reviewHistory: [], createdAt: Date.now(),
     status: source.audio ? "NEEDS_REVIEW" : "DRAFT", reviewedAt: null,
     source: { pictureId: sourcePicture.id, characterId: source.characterId, iterationId: source.id },
   };

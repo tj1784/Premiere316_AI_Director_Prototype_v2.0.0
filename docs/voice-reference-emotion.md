@@ -44,3 +44,15 @@ git -C D:\Projects\Premiere316_v3 worktree add --detach D:\Projects\Premiere316_
 ```
 
 The destination must not already exist. This does not copy production project media. Do not run two app instances against the same project data.
+
+
+## Follow-up to 9cbed05: production review fixes
+
+- Sampling must consume Ref2VA output 0 on its positive-conditioning path. Direct KSampler/KSamplerAdvanced and SamplerCustomAdvanced with CFGGuider/BasicGuider are checked explicitly. Latent-only ancestry, negative-only paths and unknown conditioning transforms cannot authorize generation. Saved AV output must derive from supported samplers.
+- VHS encoder controls are validated from the selected format's live `formats` widget metadata, including enum/range/type checks. Unknown or another format's controls still fail.
+- Cueboard filters tombstoned screenplay nodes and their descendants at the shared extraction boundary. Deleted scenes cannot be selected or compiled; deleted dialogue cannot return in a proposal.
+- Client review tickets bind exact workflow text, line selection, speaker bindings, draft/applied version, source and approved references. Edits/file selection/unmount invalidate pending tickets. Late responses cannot restore approval; submission checks the live fingerprint again.
+- Asset reference `uri` stays canonical; localized playback uses `previewUri`. Dependency fingerprints exclude only this playback field. Existing prepared fingerprints and proof objects remain unchanged. Altering the actual URI still invalidates approval.
+- Cross-character copies clear source ensemble membership and remain pending review. Approval display resolves the actual visible iteration/member first, including initial or stale UI selections.
+
+Regression verification: 125 focused tests, typecheck and build passed. Dev and production desktop/mobile smoke checks passed. No real AI/video inference was performed. Unknown conditioning transforms remain explicitly unsupported rather than assumed safe.

@@ -1,3 +1,5 @@
+import { parseScreenplayHierarchy } from "../studio/screenplay-hierarchy.ts";
+import { approvedPerformanceSource } from "./integration.ts";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -146,4 +148,24 @@ test("AI context projection preserves source fingerprint and configured writer",
   const projected = performanceReviewPicture(p);
   assert.equal(projected.screenplay.selectedModelId, "explicit-writer");
   assert.equal(performanceSourceKey(projected, "s1"), performanceSourceKey(p, "s1"));
+});
+
+test("removed dialogue and scenes cannot return through retained hierarchy tombstones", () => {
+  const p = picture(),
+    old = proposal(p),
+    before = makePerformanceDraft(p, catalog, old, "fixture");
+  const version = p.screenplay.versions[0];
+  version.hierarchy = parseScreenplayHierarchy(
+    version.fountain + "\nEXT. GARDEN - DAY #s2#\n\nSON\nGone.\n",
+  );
+  version.fountain = version.fountain.replace("\n\nSON\nI can’t.\n", "\n");
+  const source = approvedPerformanceSource(p);
+  assert.ok(source.hierarchy.nodes.every((n) => !n.tombstoned));
+  assert.deepEqual(
+    sceneTemplate(p, "s1", catalog).lines.map((l) => l.spoken_text),
+    ["Come home—now.\n"],
+  );
+  assert.throws(() => sceneTemplate(p, "s2", catalog), /Unknown scene/);
+  assert.throws(() => makePerformanceDraft(p, catalog, old, "fixture"), /locked/);
+  assert.equal(isPerformanceDraftStale(p, before), true);
 });

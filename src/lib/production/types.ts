@@ -133,6 +133,8 @@ export type CanonicalAssetSpec = {
 };
 
 export type AssetReference = {
+  /** Physical playback location; excluded from canonical dependency identity. */
+  previewUri?: string;
   id: string;
   name: string;
   uri: string;

@@ -1,3 +1,4 @@
+import {displayedCharacterVoice} from './character-voice-designs.ts';
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -189,4 +190,27 @@ test("ensemble members keep independent approvals and changed media invalidates 
  p.characterVoiceDesigns!.profiles[0].sample.sha256='c'.repeat(64);
  assert.equal(selectedCharacterVoice(p,a.characterId,'member:A'),undefined);
  assert.equal(selectedCharacterVoice(p,b.characterId,'member:B')?.id,b.id);
+});
+
+test('copying an ensemble audition to an individual clears its old membership',()=>{
+ const manifest=fixture();manifest.profiles[0].memberLabel='A';
+ let p=hydrateProdigalCharacterVoices(makeProdigalSonPicture(),manifest);
+ const source=allCharacterVoiceIterations(p)[0], target=p.characters.find(c=>c.id!==source.characterId)!.id;
+ p=copyCharacterVoiceIteration(p,target,p,source.id,'individual-copy');
+ const copied=allCharacterVoiceIterations(p).find(i=>i.id==='individual-copy')!;
+ assert.equal(copied.memberId,undefined);assert.equal(copied.memberLabel,undefined);
+ assert.deepEqual(copied.audio,source.audio);assert.equal(copied.source?.iterationId,source.id);
+ p=reviewCharacterVoiceDesign(p,copied.id,'APPROVED',500);
+ assert.equal(selectedCharacterVoice(p,target)?.id,copied.id);
+ assert.equal(selectedCharacterVoice(p,target,source.memberId),undefined);
+});
+
+test('initial and stale UI selections display the actual member approval',()=>{
+ const manifest=fixture();manifest.profiles[0].memberLabel='A';
+ let p=hydrateProdigalCharacterVoices(makeProdigalSonPicture(),manifest);
+ const first=allCharacterVoiceIterations(p)[0];p=reviewCharacterVoiceDesign(p,first.id,'APPROVED',800);
+ for(const selectedId of [null,'deleted-id',first.id]) {
+  const view=displayedCharacterVoice(p,first.characterId,selectedId);
+  assert.equal(view.selected?.id,first.id);assert.equal(view.approved?.id,first.id);assert.equal(view.selectionIssue,undefined);
+ }
 });

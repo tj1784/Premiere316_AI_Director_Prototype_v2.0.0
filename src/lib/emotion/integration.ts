@@ -66,10 +66,21 @@ export function approvedPerformanceSource(picture: Picture) {
     (v) => v.id === picture.screenplay.approvedVersionId,
   );
   if (!version) throw new Error("Approve a screenplay before reviewing performance.");
-  return {
-    version,
-    hierarchy: parseScreenplayHierarchy(version.fountain, version.hierarchy ?? undefined),
+  const hierarchy = parseScreenplayHierarchy(version.fountain, version.hierarchy ?? undefined);
+  const byId = new Map(hierarchy.nodes.map((node) => [node.id, node]));
+  const live = (node: (typeof hierarchy.nodes)[number]): boolean => {
+    const seen = new Set<string>();
+    for (
+      let current: typeof node | undefined = node;
+      current;
+      current = current.parentId ? byId.get(current.parentId) : undefined
+    ) {
+      if (current.tombstoned || seen.has(current.id)) return false;
+      seen.add(current.id);
+    }
+    return true;
   };
+  return { version, hierarchy: { ...hierarchy, nodes: hierarchy.nodes.filter(live) } };
 }
 export function performanceSourceKey(picture: Picture, sceneId: string) {
   const { version, hierarchy } = approvedPerformanceSource(picture);
@@ -80,6 +91,7 @@ export function performanceSourceKey(picture: Picture, sceneId: string) {
     version: version.id,
     screenplay: version.fountain,
     scene: scene.fountain,
+    liveNodes: hierarchy.nodes.map((n) => [n.id, n.parentId, n.fountain]),
     characters: picture.characters,
     assets: picture.production?.assets.map((a) => ({
       id: a.id,

@@ -10,7 +10,7 @@ import { applyPreparedApproval, applyProductionAuthority, approveInventoryAssetS
 import { createProductionBreakdown } from "./breakdown.ts";
 import type { GenerationProvenance } from "../studio/generation-provenance.ts";
 
-function record() {
+function record(withReference = false) {
   const base = createProductionBreakdown({
     pictureId: "pic-wave4",
     versionId: "screenplay-approved",
@@ -20,6 +20,7 @@ function record() {
     socialWorld: [],
   }, [{ id: "req-1", category: "character", name: "Elias Voss", description: "archivist", sceneIds: ["scene-1"], hero: true }], 1000);
   const assetId = base.assets[0].id;
+  if (withReference) base.assets[0].references.push({id:'reference-1',name:'Casting',uri:'/pictures/reference.png',mediaType:'image/png',preferred:true,uploadedAt:1000,provenance:{sourceType:'user',screenplayVersionId:'screenplay-approved',sceneIds:['scene-1'],createdAt:1000}});
   const edited = editInventoryAsset(base, assetId, { canonicalSpec: { visualDescription: "Elias with a rain-dark wool coat", continuityLocks: ["wool coat", "silver glasses"], distinguishingFeatures: ["silver glasses"] } }, 1100);
   const approved = approveInventoryAssetSpec(edited, assetId, 1200);
   const preparedReady = prepareAssetRecords(approved, ["visual-approved"], ["cine-approved"], 1300);
@@ -111,11 +112,17 @@ function canonicalProof(start: ReturnType<typeof record>, reason: string, output
 
 describe("Wave 4 image iterations", () => {
   it('project localization preserves canonical proof digests and uses a separate playable preview',()=>{
-    const start=record(),reason='Visible wool coat and silver glasses match.';
+    const start=record(true),reason='Visible wool coat and silver glasses match.';
     const withIteration=appendGeneratedIteration(start.record,{preparedAssetId:start.preparedId,iterationId:'iter-1',output,provenance:provenance(start.assetId),now:1400,receiptDigest});
     const root=mkdtempSync(join(tmpdir(),'p316-canonical-'));mkdirSync(join(root,'artifacts/stills'),{recursive:true});writeFileSync(join(root,'artifacts/stills',output.mediaUri.split('/').at(-1)!),pngBytes);
+    mkdirSync(join(root,'public/pictures'),{recursive:true});writeFileSync(join(root,'public/pictures/reference.png'),pngBytes);
     const library=createProjectLibrary({root});const saved=JSON.parse(library.writeState(JSON.stringify({state:{pictures:[{id:'p',title:'Proof test',updatedAt:1,production:withIteration}]},version:0})));
-    const restored=saved.state.pictures[0].production;
+    const restored=JSON.parse(library.readState(JSON.stringify(saved))).state.pictures[0].production;
+    assert.equal(restored.assets[0].references[0].uri,'/pictures/reference.png');
+    assert.match(restored.assets[0].references[0].previewUri,/^\/api\/project-media/);
+    assert.deepEqual(restored.preparedAssets[0].dependencyFingerprints,start.record.preparedAssets![0].dependencyFingerprints);
+    const referenceChanged=structuredClone(restored);referenceChanged.assets[0].references[0].uri='/pictures/other.png';
+    assert.throws(()=>approveCanonicalIteration(referenceChanged,{iterationId:'iter-1',reviewer:'user',reason,canonicalProof:canonicalProof(start,reason),now:1500}),/fingerprints are stale/);
     assert.equal(restored.assets[0].iterations[0].mediaUri,output.mediaUri);assert.match(restored.assets[0].iterations[0].previewUri,/^\/api\/project-media/);
     assert.doesNotThrow(()=>approveCanonicalIteration(restored,{iterationId:'iter-1',reviewer:'user',reason,canonicalProof:canonicalProof(start,reason),now:1500}));
     const altered=structuredClone(restored);altered.assets[0].iterations[0].mediaUri=altered.assets[0].iterations[0].previewUri;

@@ -103,7 +103,9 @@ export function createProjectLibrary({ root, publicRoot = join(root, 'public'), 
       const category = typeof value.category === 'string' ? value.category : hint;
       // Signed backend receipts remain verbatim; only the editable media references move.
       const protectedMedia = typeof value.mediaUri === 'string' && (value.mediaUri.startsWith('media://') || value.canonicalProof || value.generationReceiptId || value.execution);
-      const result = Object.fromEntries(Object.entries(value).map(([k, v]) => [k, ['projectLibrary', 'canonicalProof', 'receipt', 'authoritySeal', 'provenance', 'execution', 'source', 'reviewDecisions', 'conflicts'].includes(k) || protectedMedia && k === 'mediaUri' ? v : localize(v, dir, slug, entries, missing, category)]));
+      const protectedReference = typeof value.uri === 'string' && typeof value.mediaType === 'string' && typeof value.id === 'string';
+      const result = Object.fromEntries(Object.entries(value).map(([k, v]) => [k, ['projectLibrary', 'canonicalProof', 'receipt', 'authoritySeal', 'provenance', 'execution', 'source', 'reviewDecisions', 'conflicts'].includes(k) || protectedMedia && k === 'mediaUri' || protectedReference && k === 'uri' ? v : localize(v, dir, slug, entries, missing, category)]));
+      if (protectedReference) result.previewUri = localize(value.previewUri ?? value.uri, dir, slug, entries, missing, category);
       if (protectedMedia) result.previewUri = localize(value.previewUri ?? value.mediaUri, dir, slug, entries, missing, category);
       return result;
     }

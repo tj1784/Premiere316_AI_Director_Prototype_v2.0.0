@@ -1,0 +1,40 @@
+import type {Picture} from "../studio/types.ts";
+import type {PerformanceDraft} from "./integration.ts";
+import {jointReviewFingerprint} from "./review-guard.ts";
+import test from "node:test";
+import assert from "node:assert/strict";
+import { createReviewGuard } from "./review-guard.ts";
+test("late review response cannot restore approval after edit, even after restoring identical inputs", async () => {
+  const guard = createReviewGuard();
+  let fingerprint = "workflow-A";
+  const old = guard.begin(fingerprint);
+  let finish!: () => void;
+  const pending = new Promise<void>((r) => (finish = r));
+  const result = pending.then(() => guard.matches(old, fingerprint));
+  fingerprint = "workflow-B";
+  guard.invalidate();
+  fingerprint = "workflow-A";
+  finish();
+  assert.equal(await result, false);
+  const latest = guard.begin(fingerprint);
+  assert.equal(guard.matches(latest, fingerprint), true);
+  assert.equal(guard.matches(latest, "changed binding / reference / draft"), false);
+  const replacement = guard.begin(fingerprint);
+  assert.equal(guard.matches(latest, fingerprint), false);
+  assert.equal(guard.matches(replacement, fingerprint), true);
+  guard.invalidate();
+  assert.equal(guard.matches(replacement, fingerprint), false);
+});
+
+test('review fingerprint changes for workflow, dialogue selection, binding, source and applied version',()=>{
+ const picture={id:'p',screenplay:{approvedVersionId:'v',versions:[{id:'v',fountain:'INT. ROOM - DAY #s1#\n\nFATHER\nHello.\n'}]},characters:[],shots:[],emotionPerformance:{applied:{s1:'d'}}} as unknown as Picture;
+ const draft={id:'d',sceneId:'s1',source:'source',compiled:[]} as unknown as PerformanceDraft;
+ const request={picture,draft,workflow:'original workflow',lines:['l1'],bindings:{father:'voice1'}};
+ const before=jointReviewFingerprint(request);
+ for(const changed of [{...request,workflow:'edited workflow'},{...request,lines:['l2']},{...request,bindings:{father:'voice2'}},{...request,draft:{...draft,id:'another'}}]) assert.notEqual(jointReviewFingerprint(changed),before);
+ const edited=structuredClone(picture);edited.emotionPerformance!.applied.s1='other';
+ assert.notEqual(jointReviewFingerprint({...request,picture:edited}),before);
+ edited.emotionPerformance!.applied.s1='d';edited.screenplay.versions[0].fountain+='\nDifferent action.';
+ assert.notEqual(jointReviewFingerprint({...request,picture:edited}),before);
+ assert.equal(jointReviewFingerprint(request),before);
+});

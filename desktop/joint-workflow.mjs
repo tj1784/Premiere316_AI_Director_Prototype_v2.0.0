@@ -22,6 +22,13 @@ export function compileJointWorkflow(workflow, info) {
       continue;
     }
     const fields = { ...schema.input?.required, ...schema.input?.optional };
+    // VHS advertises encoder controls under the selected format, not as top-level inputs.
+    if (node.class_type === "VHS_VideoCombine" && typeof node.inputs.format === "string") {
+      const widgets = fields.format?.[1]?.formats?.[node.inputs.format] ?? [];
+      for (const widget of widgets)
+        if (Array.isArray(widget) && typeof widget[0] === "string")
+          fields[widget[0]] = widget.slice(1);
+    }
     for (const [name, value] of Object.entries(node.inputs)) {
       let rule = fields[name];
       if (!rule && name.includes(".")) {
@@ -110,11 +117,33 @@ export function compileJointWorkflow(workflow, info) {
   );
   if (!audioKeys.length || audioKeys.length > 3 || imageKeys.length !== audioKeys.length)
     issues.push("Connect one image and audio reference per speaker, up to three.");
+  // Prove the positive CONDITIONING socket itself carries our prompt. Latent/model
+  // ancestry cannot establish this. Unknown conditioning transforms fail closed.
+  const carriesPositive = (value) => link(value) && value[0] === refId && value[1] === 0;
+  const samplerPositive = (id) => {
+    const n = prompt[id];
+    if (["KSampler", "KSamplerAdvanced"].includes(n.class_type))
+      return carriesPositive(n.inputs.positive);
+    if (
+      n.class_type !== "SamplerCustomAdvanced" ||
+      !link(n.inputs.guider) ||
+      n.inputs.guider[1] !== 0
+    )
+      return false;
+    const guider = prompt[n.inputs.guider[0]];
+    if (guider?.class_type === "CFGGuider") return carriesPositive(guider.inputs.positive);
+    if (guider?.class_type === "BasicGuider") return carriesPositive(guider.inputs.conditioning);
+    return false;
+  };
   const samplers = Object.keys(prompt).filter(
     (id) =>
       ["KSampler", "KSamplerAdvanced", "SamplerCustomAdvanced"].includes(prompt[id].class_type) &&
-      ancestors(id).has(refId),
+      samplerPositive(id),
   );
+  if (!samplers.length)
+    issues.push(
+      "Sampler positive conditioning must use Ref2VA positive output through a supported path.",
+    );
   const loaders = samplers
     .flatMap((id) => [...ancestors(id)])
     .filter((id) => /UNETLoader|CheckpointLoader/.test(prompt[id].class_type));
@@ -147,7 +176,14 @@ export function compileJointWorkflow(workflow, info) {
     if (video.class_type === "VHS_VideoCombine" && video.inputs.save_output !== true) return false;
     const imageAncestors = ancestors(video.inputs.images[0]),
       audioAncestors = ancestors(video.inputs.audio[0]);
-    return samplers.some((id) => imageAncestors.has(id) && audioAncestors.has(id));
+    const outputSamplers = [...new Set([...imageAncestors, ...audioAncestors])].filter((id) =>
+      ["KSampler", "KSamplerAdvanced", "SamplerCustomAdvanced"].includes(prompt[id].class_type),
+    );
+    return (
+      outputSamplers.length > 0 &&
+      outputSamplers.every(samplerPositive) &&
+      samplers.some((id) => imageAncestors.has(id) && audioAncestors.has(id))
+    );
   });
   if (!av)
     issues.push(
