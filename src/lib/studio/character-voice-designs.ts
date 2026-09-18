@@ -190,6 +190,11 @@ export function selectedCharacterVoice(picture: Picture, characterId: string, me
   return resolveCharacterVoice(picture, characterId, memberId).voice;
 }
 
+/** Card approval belongs to its own speaker binding, independent of the open audition. */
+export function isSelectedCharacterVoice(picture: Picture, iteration: CharacterVoiceIteration): boolean {
+  return selectedCharacterVoice(picture, iteration.characterId, iteration.memberId)?.id === iteration.id;
+}
+
 /** Resolve display first, including initial/stale selections, then its member-bound approval. */
 export function displayedCharacterVoice(picture: Picture, characterId: string, selectedId: string | null) {
   const iterations = allCharacterVoiceIterations(picture).filter(item => item.characterId === characterId);

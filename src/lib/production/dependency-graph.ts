@@ -95,7 +95,7 @@ export function stableHash(value: unknown): string {
 
 /** Asset reference playback relocation must not invalidate approved dependencies. */
 export function referenceIdentity(value: unknown): unknown {
-  if (value && typeof value === "object" && "uri" in value && "mediaType" in value) {
+  if (value && typeof value === "object" && "uri" in value) {
     const { previewUri, ...identity } = value as Record<string, unknown>;
     return identity;
   }

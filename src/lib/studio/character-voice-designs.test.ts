@@ -1,3 +1,4 @@
+import {isSelectedCharacterVoice} from './character-voice-designs.ts';
 import {displayedCharacterVoice} from './character-voice-designs.ts';
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -213,4 +214,19 @@ test('initial and stale UI selections display the actual member approval',()=>{
   const view=displayedCharacterVoice(p,first.characterId,selectedId);
   assert.equal(view.selected?.id,first.id);assert.equal(view.approved?.id,first.id);assert.equal(view.selectionIssue,undefined);
  }
+});
+
+test('each ensemble card resolves its own approved binding regardless of the open member',()=>{
+ const manifest=fixture(),first=manifest.profiles[0];
+ manifest.profiles=[{...first,id:'member-a',memberLabel:'A'},{...first,id:'member-b',memberLabel:'B',sample:{...first.sample,sha256:'b'.repeat(64)}}];
+ let p=hydrateProdigalCharacterVoices(makeProdigalSonPicture(),manifest);
+ const [a,b]=allCharacterVoiceIterations(p);
+ p=reviewCharacterVoiceDesign(p,a.id,'APPROVED',100);p=reviewCharacterVoiceDesign(p,b.id,'APPROVED',101);
+ for(const open of [a.id,b.id,null]) {
+  displayedCharacterVoice(p,a.characterId,open);
+  for(const card of allCharacterVoiceIterations(p))assert.equal(isSelectedCharacterVoice(p,card),true);
+ }
+ p=reviewCharacterVoiceDesign(p,b.id,'REJECTED',102);
+ assert.equal(isSelectedCharacterVoice(p,allCharacterVoiceIterations(p).find(i=>i.id===a.id)!),true);
+ assert.equal(isSelectedCharacterVoice(p,allCharacterVoiceIterations(p).find(i=>i.id===b.id)!),false);
 });

@@ -219,3 +219,69 @@ test("VHS encoder widgets belong only to the selected advertised format", () => 
   p.save.inputs.format = "video/other";
   assert.match(compileJointWorkflow(workflow, info).issues.join(" "), /Unsupported input/);
 });
+
+test("every saved branch must validate, regardless of an earlier valid output", async () => {
+  for (const invalidFirst of [false, true]) {
+    const { workflow, info } = fixture(),
+      p = workflow.joint.prompt;
+    info.OtherConditioning = { input: { required: {} }, output: ["CONDITIONING"] };
+    p.other = node("OtherConditioning", {});
+    p.badSampler = node("KSampler", { ...p.sample.inputs, positive: ["other", 0] });
+    p.badDecode = node("DecodeAV", { samples: ["badSampler", 0] });
+    p.badVideo = node("CreateVideo", { images: ["badDecode", 0], audio: ["badDecode", 1] });
+    p.badSave = node("SaveVideo", { video: ["badVideo", 0] });
+    if (invalidFirst) workflow.joint.prompt = Object.fromEntries(Object.entries(p).reverse());
+    assert.match(compileJointWorkflow(workflow, info).issues.join(" "), /Video output badSave/);
+    let submitted = 0;
+    const service = createDirectorExecutionService({
+      compile: compileJointWorkflow,
+      ensureHost: async () => {},
+      openWorkflow: async () => false,
+      fetchImpl: async (url) => {
+        if (url.endsWith("/object_info")) return Response.json(info);
+        submitted++;
+        throw new Error("Must not submit");
+      },
+    });
+    const review = await service.review({
+      pictureId: "p",
+      sceneId: "s",
+      workflowJson: JSON.stringify(workflow),
+    });
+    assert.equal(review.ok, true);
+    assert.ok(review.issues.length);
+    assert.equal((await service.run(review.reviewId)).ok, false);
+    assert.equal(submitted, 0);
+  }
+  const { workflow, info } = fixture();
+  workflow.joint.prompt.secondSave = node("SaveVideo", { video: ["video", 0] });
+  assert.deepEqual(compileJointWorkflow(workflow, info).issues, []);
+});
+
+test("valid SaveVideo cannot mask invalid VHS or unknown executable outputs", () => {
+  const { workflow, info } = fixture(),
+    p = workflow.joint.prompt;
+  info.VHS_VideoCombine = {
+    input: { required: { images: ["IMAGE"], audio: ["AUDIO"], save_output: ["BOOLEAN"] } },
+    output: [],
+    output_node: true,
+  };
+  p.vhs = node("VHS_VideoCombine", {
+    images: ["decode", 0],
+    audio: ["voice", 0],
+    save_output: true,
+  });
+  assert.match(compileJointWorkflow(workflow, info).issues.join(" "), /Video output vhs/);
+  p.vhs.inputs.audio = ["decode", 1];
+  assert.deepEqual(compileJointWorkflow(workflow, info).issues, []);
+  info.CustomSaveVideo = {
+    input: { required: { video: ["VIDEO"] } },
+    output: [],
+    output_node: true,
+  };
+  p.unknown = node("CustomSaveVideo", { video: ["video", 0] });
+  assert.match(
+    compileJointWorkflow(workflow, info).issues.join(" "),
+    /Unsupported submitted output unknown/,
+  );
+});

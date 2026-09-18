@@ -11,7 +11,7 @@ import { exposeLocalStill, encodeLocalStillPrompts, setLocalStillMediaRoot, stop
 import { nativeStillDimensions } from "../src/lib/studio/native-still-contract.ts";
 import { resolveImageComponentManifest, resolveImageComponentManifests } from "../src/lib/studio/image-component-resolver.server.ts";
 import { MODEL_ROOT, sanitizeModelCatalog } from "../src/lib/studio/model-catalog.ts";
-import { sourceFingerprint } from "../src/lib/production/dependency-graph.ts";
+import { sourceFingerprint, referenceIdentity } from "../src/lib/production/dependency-graph.ts";
 import { createInterface } from "node:readline";
 
 const ALLOWED = new Set([
@@ -297,7 +297,7 @@ function productionAuthorityProjection(raw, pictureId) {
     approvedSpecVersionId: asset.approvedSpecVersionId ?? null,
     canonicalSpec: asset.canonicalSpec ?? {},
     specVersions: (Array.isArray(asset.specVersions) ? asset.specVersions : []).map((version) => ({ id: boundedId(version?.id, "Spec version id"), createdAt: Number(version?.createdAt ?? 0), approvedAt: version?.approvedAt ?? null, sourceVersionId: version?.sourceVersionId ?? null, specDigest: domainDigest("p316.assetSpec.version.v1", version?.spec ?? null), spec: version?.spec ?? null })),
-    references: rawReferences.map((reference) => ({ id: boundedId(reference.id, "Reference id"), name: String(reference.name ?? "").slice(0, 220), uri: String(reference.uri ?? "").slice(0, 2000), mediaType: String(reference.mediaType ?? "").slice(0, 100), preferred: Boolean(reference.preferred), uploadedAt: Number(reference.uploadedAt ?? 0), digest: domainDigest("p316.reference.v1", reference) })),
+    references: rawReferences.map((reference) => ({ id: boundedId(reference.id, "Reference id"), name: String(reference.name ?? "").slice(0, 220), uri: String(reference.uri ?? "").slice(0, 2000), mediaType: String(reference.mediaType ?? "").slice(0, 100), preferred: Boolean(reference.preferred), uploadedAt: Number(reference.uploadedAt ?? 0), digest: domainDigest("p316.reference.v1", referenceIdentity(reference)) })),
     referenceRequired: Boolean(asset.referenceRequired),
     updatedAt: Number(asset.updatedAt ?? 0),
   };

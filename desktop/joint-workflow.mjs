@@ -159,7 +159,10 @@ export function compileJointWorkflow(workflow, info) {
     issues.push(
       "The connected sampler must use an explicitly selected Ref2VA model; FL2VA/hybrid capabilities are not assumed.",
     );
-  const av = Object.entries(prompt).some(([, n]) => {
+  const videoOutputs = Object.entries(prompt).filter(
+    ([, n]) => n.class_type === "SaveVideo" || n.class_type === "VHS_VideoCombine",
+  );
+  const validVideoOutput = (n) => {
     const video =
       n.class_type === "VHS_VideoCombine"
         ? n
@@ -184,10 +187,23 @@ export function compileJointWorkflow(workflow, info) {
       outputSamplers.every(samplerPositive) &&
       samplers.some((id) => imageAncestors.has(id) && audioAncestors.has(id))
     );
-  });
-  if (!av)
-    issues.push(
-      "A saved video must connect both generated images and generated audio from the same Ref2VA sampler.",
-    );
+  };
+  if (!videoOutputs.length) issues.push("A saved video output is required.");
+  for (const [id, output] of videoOutputs) {
+    if (!validVideoOutput(output))
+      issues.push(
+        `Video output ${id}: a saved video must connect both generated images and generated audio from the same Ref2VA sampler.`,
+      );
+  }
+  // Unknown executable output nodes cannot be assumed to produce a reviewed result.
+  for (const [id, n] of Object.entries(prompt)) {
+    if (
+      info[n.class_type]?.output_node &&
+      !["SaveVideo", "VHS_VideoCombine"].includes(n.class_type)
+    )
+      issues.push(
+        `Unsupported submitted output ${id} (${n.class_type}). Remove it or use a verified video output.`,
+      );
+  }
   return { prompt, issues: [...new Set(issues)], nodeCount: Object.keys(prompt).length };
 }

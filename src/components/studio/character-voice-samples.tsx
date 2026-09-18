@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/field";
 import { useStudio } from "@/lib/studio/store";
-import { allCharacterVoiceIterations, attachVoiceDesignAsset, copyCharacterVoiceIteration, deleteCharacterVoiceIteration, reviewCharacterVoiceDesign, displayedCharacterVoice } from "@/lib/studio/character-voice-designs";
+import { allCharacterVoiceIterations, attachVoiceDesignAsset, copyCharacterVoiceIteration, deleteCharacterVoiceIteration, reviewCharacterVoiceDesign, displayedCharacterVoice, isSelectedCharacterVoice } from "@/lib/studio/character-voice-designs";
 import type { VoiceDesign } from "@/lib/studio/voice-design-library";
 import type { Picture } from "@/lib/studio/types";
 import { uid } from "@/lib/utils";
@@ -55,8 +55,8 @@ export function CharacterVoiceSamples({ pictureId, characterId, expanded = false
           {!selected.audio && <p className="text-xs text-muted">This iteration has no audio yet. Open its design and import an audition first.</p>}
         </div>}
         {!iterations.length && <p className="text-sm text-muted">No voice iterations yet. Design a voice or choose an iteration from another character or the library.</p>}
-        {iterations.map((iteration, index) => <article key={iteration.id} aria-label={`Voice iteration ${index + 1}: ${iteration.name}`} className={`grid min-w-0 gap-3 rounded-md border p-3 ${approved?.id === iteration.id ? "border-accent bg-elevated" : "border-border bg-inset"}`}>
-          <div><h5 className="break-words font-medium">{index + 1}. {iteration.name}</h5><p className="mt-1 text-xs text-muted">{approved?.id === iteration.id ? "Approved selection for this character" : iteration.status === "APPROVED" ? "Previous approval · not selected" : STATUS_LABELS[iteration.status]}</p></div>
+        {iterations.map((iteration, index) => { const cardApproved = isSelectedCharacterVoice(picture, iteration); return <article key={iteration.id} aria-label={`Voice iteration ${index + 1}: ${iteration.name}`} className={`grid min-w-0 gap-3 rounded-md border p-3 ${cardApproved ? "border-accent bg-elevated" : "border-border bg-inset"}`}>
+          <div><h5 className="break-words font-medium">{index + 1}. {iteration.name}</h5><p className="mt-1 text-xs text-muted">{cardApproved ? iteration.memberId ? "Approved selection for this ensemble member" : "Approved selection for this character" : iteration.status === "APPROVED" ? "Previous approval · not selected" : STATUS_LABELS[iteration.status]}</p></div>
           {iteration.source?.characterId && <p className="text-xs text-muted">Copied from another character’s iteration. This copy has its own review decision.</p>}
           {iteration.reviewNote && <p role="note" className="text-sm text-rec">{iteration.reviewNote}</p>}
           <p className="text-xs text-muted">{iteration.textKind ?? "Legacy text purpose unknown"} · {iteration.memberLabel ?? iteration.memberId ?? "Individual speaker"} · revision {iteration.revision ?? 0}</p>
@@ -69,8 +69,8 @@ export function CharacterVoiceSamples({ pictureId, characterId, expanded = false
             {iteration.audio && <Button variant="ghost" disabled={iteration.status === "REJECTED"} onClick={() => update((latest) => reviewCharacterVoiceDesign(latest, iteration.id, "REJECTED"), "Voice iteration rejected.")}>Reject</Button>}
             <Button variant="ghost" onClick={() => setPendingDelete(iteration.id)}>Delete iteration {index + 1}</Button>
           </div>
-          {pendingDelete === iteration.id && <div className="grid gap-2 rounded-md border border-border p-3"><p className="text-xs text-muted">Delete this iteration from {character.name}? {approved?.id === iteration.id ? "This will clear the character’s approved voice. " : ""}Other characters’ copies remain available.</p><div className="flex flex-wrap gap-2"><Button onClick={() => { update((latest) => deleteCharacterVoiceIteration(latest, iteration.id), "Voice iteration deleted."); setPendingDelete(null); if (selectedId === iteration.id) setSelectedId(null); }}>Confirm delete iteration</Button><Button variant="ghost" onClick={() => setPendingDelete(null)}>Cancel</Button></div></div>}
-        </article>)}
+          {pendingDelete === iteration.id && <div className="grid gap-2 rounded-md border border-border p-3"><p className="text-xs text-muted">Delete this iteration from {character.name}? {cardApproved ? "This will clear the character’s approved voice. " : ""}Other characters’ copies remain available.</p><div className="flex flex-wrap gap-2"><Button onClick={() => { update((latest) => deleteCharacterVoiceIteration(latest, iteration.id), "Voice iteration deleted."); setPendingDelete(null); if (selectedId === iteration.id) setSelectedId(null); }}>Confirm delete iteration</Button><Button variant="ghost" onClick={() => setPendingDelete(null)}>Cancel</Button></div></div>}
+        </article>; })}
       </div>
     </details>
   </section>;

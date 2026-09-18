@@ -56,3 +56,14 @@ The destination must not already exist. This does not copy production project me
 - Cross-character copies clear source ensemble membership and remain pending review. Approval display resolves the actual visible iteration/member first, including initial or stale UI selections.
 
 Regression verification: 125 focused tests, typecheck and build passed. Dev and production desktop/mobile smoke checks passed. No real AI/video inference was performed. Unknown conditioning transforms remain explicitly unsupported rather than assumed safe.
+
+
+## Follow-up to ab11094: remaining review gaps
+
+Every submitted SaveVideo/VHS output is now validated individually. A valid intermediate save cannot authorize an invalid final branch, regardless of graph order. Unknown executable output nodes are rejected pending a verified adapter. Tests verify that invalid multi-output graphs cannot queue, while multiple valid saves remain supported.
+
+Backend authority projection now uses the same canonical reference identity projection as dependency fingerprints. Physical `previewUri` is excluded from the signed reference digest, including legacy reference records without `mediaType`. The new regression seals a real test authority/approval, records a signed generation receipt, saves and reloads through project storage, and recovers that same receipt. URI/provenance changes still invalidate identity.
+
+Each voice iteration card independently resolves its own character/member binding for its approval label, highlighting and deletion warning. Opening member A no longer relabels independently approved member B.
+
+Verification: 129 focused tests, typecheck and build pass; desktop/mobile dev and production smoke checks pass without console errors or baseline divergence. Real AI/video inference remains unverified. No separate dialogue TTS fallback added.

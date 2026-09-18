@@ -1,3 +1,4 @@
+import { createProjectLibrary } from './project-library.mjs';
 import assert from "node:assert/strict";
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -226,7 +227,7 @@ function recoverableFixture(withReference = false) {
     const bytes = Buffer.from("immutable reference test bytes");
     const name = `reference-${hash(bytes)}.png`;
     writeFileSync(join(mediaRoot, "stills", name), bytes);
-    fixture.asset.references = [{ id: "reference-robe", name: "Robe", uri: `media://stills/${name}` }];
+    fixture.asset.references = [{ id: "reference-robe", name: "Robe", mediaType: "image/png", uri: `media://stills/${name}` }];
     fixture.prepared.referenceIds = ["reference-robe"];
   }
   const authority = sealFixture(fixture);
@@ -416,4 +417,30 @@ describe("Wave 4 prepared approval root lifecycle", () => {
     assert.equal(replay.ok, false);
     assert.match(replay.error, /missing|resolved/);
   });
+});
+
+describe('reference playback locations and backend recovery',()=>{
+ it('recovers the identical signed receipt after project save/reload with a localized reference preview',()=>{
+  const f=recoverableFixture(true);
+  const before=backend.recoverDrafts(f.input);assert.equal(before.results.length,1);
+  const root=mkdtempSync(join(tmpdir(),'p316-recovery-project-'));
+  const library=createProjectLibrary({root,mediaRoots:[f.mediaRoot]});
+  const raw=JSON.stringify({version:0,state:{pictures:[{id:f.input.pictureId,title:'Recovery test',updatedAt:1,production:f.input.rawCanonical}]}});
+  const saved=library.writeState(raw);
+  const reloaded=JSON.parse(library.readState(saved)).state.pictures[0].production;
+  const reference=reloaded.assets[0].references[0];
+  assert.equal(reference.uri,f.request.referenceUris[0]);assert.match(reference.previewUri,/^\/api\/project-media/);
+  const result=backend.recoverDrafts({...f.input,rawCanonical:reloaded});
+  assert.equal(result.ok,true,result.error);assert.equal(result.results.length,1);
+  assert.equal(result.results[0].receiptDigest,before.results[0].receiptDigest);
+  assert.equal(result.results[0].output.receiptId,f.receipt.receiptId);
+  const original=backend.productionAuthorityProjection(reloaded,f.input.pictureId);
+  reference.previewUri='/api/project-media?changed-playback';
+  assert.deepEqual(backend.productionAuthorityProjection(reloaded,f.input.pictureId),original);
+  reference.uri='media://stills/different.png';
+  const changed=backend.recoverDrafts({...f.input,rawCanonical:reloaded});
+  assert.equal(changed.results?.length??0,0);
+  reference.uri=f.request.referenceUris[0];reference.provenance={sourceType:'changed'};
+  assert.notDeepEqual(backend.productionAuthorityProjection(reloaded,f.input.pictureId),original);
+ });
 });
