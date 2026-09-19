@@ -130,12 +130,21 @@ export async function reviewJoint(input: JointReviewInput) {
   };
   const p = picture(input.pictureId),
     draft = p.emotionPerformance!.drafts.find((d) => d.id === input.draftId)!;
-  return service(input.pictureId).review({
+  const result = await service(input.pictureId).review({
     pictureId: input.pictureId,
     sceneId: draft.sceneId,
     renderSlot: `cueboard:${input.draftId}`,
     workflowJson: JSON.stringify(workflow),
   });
+  return result.ok
+    ? {
+        ...result,
+        issues: [
+          ...result.issues,
+          ...mapped.unsupported_controls.map((f) => `${f.control} (${f.status}): ${f.reason}`),
+        ],
+      }
+    : result;
 }
 export async function runJoint(input: { pictureId: string; reviewId: string }) {
   const result = await service(input.pictureId).run(input.reviewId);

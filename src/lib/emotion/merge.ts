@@ -9,7 +9,10 @@ function isRegional(value: unknown): boolean {
   return value.mode === "inherit" || value.mode === "omit" || value.mode === "replace";
 }
 
-export function mergeSettings<T extends Record<string, unknown>>(base: T, overlay: Record<string, unknown>): T {
+export function mergeSettings<T extends Record<string, unknown>>(
+  base: T,
+  overlay: Record<string, unknown>,
+): T {
   const result: Record<string, unknown> = { ...base };
   for (const [key, value] of Object.entries(overlay)) {
     const regional = isRegional(value);
@@ -40,6 +43,17 @@ export function mergeWithTrace(
       result[key] = value;
     }
     trace[key] = scope;
+    if (isPlainObject(value)) {
+      const recordLeaves = (entry: Record<string, unknown>, prefix: string) => {
+        for (const [name, child] of Object.entries(entry)) {
+          if (child === undefined) continue;
+          const path = `${prefix}.${name}`;
+          trace[path] = scope;
+          if (isPlainObject(child) && !isRegional(child)) recordLeaves(child, path);
+        }
+      };
+      recordLeaves(value, key);
+    }
   }
   return result;
 }

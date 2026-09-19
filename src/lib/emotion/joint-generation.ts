@@ -1,4 +1,5 @@
 import type { PerformanceDraft } from "./integration.ts";
+import { serializePerformance } from "./serializers.ts";
 import type { VoiceReferenceManifest } from "../studio/voice-reference.ts";
 
 export type ApiWorkflow = Record<string, { class_type: string; inputs: Record<string, unknown> }>;
@@ -101,14 +102,26 @@ export function mapJointPerformanceRequest(input: {
     throw new Error(
       "H3 Ref2VA supports at most 15 seconds of reference audio in total. Prepare and approve a shorter reference; it will not be trimmed automatically.",
     );
-  const performance = lines
-    .map((l) => {
-      const r = bindings.find((b) => b.speaker === l.character_id)!;
-      return `${input.draft.config.character_baselines[l.character_id].label}: identity ${r.imageTag}, vocal identity ${r.audioTag}. Acting: ${l.video_direction}\nDelivery: ${l.delivery_direction}\nExact dialogue: ${JSON.stringify(l.spoken_text)}`;
-    })
-    .join("\n\n");
-  node.inputs.prompt = `${input.basePrompt}\n\n${performance}\nNo additional dialogue or narration.`;
+  const serialized = serializePerformance({
+    profile: "h3-ref2va-1",
+    lines,
+    basePrompt: input.basePrompt,
+    speakers: Object.fromEntries(
+      bindings.map((r) => [
+        r.speaker,
+        {
+          label: input.draft.config.character_baselines[r.speaker].label,
+          language: input.draft.config.character_baselines[r.speaker].voice_baseline?.language,
+          imageTag: r.imageTag,
+          audioTag: r.audioTag,
+        },
+      ]),
+    ),
+  });
+  node.inputs.prompt = serialized.text;
   return {
+    serializer: serialized.profile,
+    unsupported_controls: serialized.unsupported_controls,
     workflow: graph,
     bindings,
     dialogue: lines.map((l) => ({

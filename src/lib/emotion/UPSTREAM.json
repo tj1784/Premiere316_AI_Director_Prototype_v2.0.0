@@ -46,5 +46,16 @@
       "sha256": "2d9e0e23ce9cf6e3a3de685363cd063badf49da88181dbc0dc1e7f9aea85c29f"
     }
   ],
-  "note": "Compiler, schema, catalogue and focused tests reused; standalone shell/store not imported."
+  "note": "The files/sha256 entries identify original imported source bytes, not current local hashes. Compiler, schema, catalogue and focused tests reused; standalone shell/store not imported.",
+  "localRevisions": [
+    {
+      "revision": "2026-09-19-R4",
+      "source": "Cueboard_Revised_Binder_R4.zip",
+      "sourceSha256": "1318a0cf00c3fa887005d8fbb76edb2b397a6daad5b5a796a00bf979128db8c9",
+      "modifiedImportedModules": ["src/lib/emotion/compiler.ts", "src/lib/emotion/merge.ts", "src/lib/emotion/types.ts"],
+      "changes": "Separate cinematic directions from diagnostics, source-framing support, independent displayed selection, explicit regional action/volume authoring, silent voice budgets, direct beat permission checks and regional scope trace. Existing integration/panel now expose structured authoring and versioned serializers.",
+      "ledger": "docs/cueboard-r4/IMPLEMENTATION.md",
+      "catalogAndSchema": "Unchanged; catalog completeness audited in src/lib/emotion/r4.test.ts. No production-content migration."
+    }
+  ]
 }

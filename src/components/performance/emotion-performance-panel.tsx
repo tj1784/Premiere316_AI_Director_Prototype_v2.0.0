@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useStudio } from "@/lib/studio/store";
 import type { Picture } from "@/lib/studio/types";
-import type { Catalog } from "@/lib/emotion/types";
+import type { Catalog, SceneConfig } from "@/lib/emotion/types";
 import {
   approvedPerformanceSource,
   performanceReviewPicture,
@@ -12,7 +12,11 @@ import {
   applyPerformanceDrafts,
   isPerformanceDraftStale,
   undoPerformanceDraft,
+  sceneTemplate,
+  performanceSourceKey,
 } from "@/lib/emotion/integration";
+import { CueboardSettingsEditor } from "./cueboard-settings-editor";
+import { serializePerformance } from "@/lib/emotion/serializers";
 import { reviewEmotionScene } from "@/lib/emotion/review-api";
 import { BrowserEndpointCache } from "@/lib/studio/local-llm-endpoint";
 import { JointPerformanceWorkflow } from "./joint-performance-workflow";
@@ -24,6 +28,14 @@ export function EmotionPerformancePanel({ picture }: { picture: Picture }) {
     [editing, setEditing] = useState<string | null>(null),
     [text, setText] = useState("");
   const [error, setError] = useState("");
+  const [editSource, setEditSource] = useState("");
+  const [manualScene, setManualScene] = useState("");
+  let editConfig: SceneConfig | null = null;
+  try {
+    if (editing) editConfig = JSON.parse(text);
+  } catch {
+    /* Expert JSON stays editable while incomplete. */
+  }
   useEffect(() => {
     let alive = true;
     fetch("/data/emotion_catalog.json")
@@ -65,6 +77,9 @@ export function EmotionPerformancePanel({ picture }: { picture: Picture }) {
     try {
       for (const sceneId of selected) {
         const captured = latest();
+        const capturedDrafts = JSON.stringify(
+          captured.emotionPerformance ?? emptyEmotionWorkspace(),
+        );
         const draft = await reviewEmotionScene({
           data: {
             picture: performanceReviewPicture(captured),
@@ -73,6 +88,12 @@ export function EmotionPerformancePanel({ picture }: { picture: Picture }) {
           },
         });
         const current = latest();
+        if (
+          JSON.stringify(current.emotionPerformance ?? emptyEmotionWorkspace()) !== capturedDrafts
+        )
+          throw new Error(
+            "Performance versions changed during review. The late proposal was discarded.",
+          );
         if (isPerformanceDraftStale(current, draft))
           throw new Error("Source changed during review. Request a fresh proposal.");
         const existing = current.emotionPerformance ?? emptyEmotionWorkspace();
@@ -110,6 +131,23 @@ export function EmotionPerformancePanel({ picture }: { picture: Picture }) {
           <Button
             size="sm"
             variant="secondary"
+            disabled={!catalog || selected.length !== 1}
+            onClick={() =>
+              execute(() => {
+                const p = latest();
+                const sceneId = selected[0];
+                setManualScene(sceneId);
+                setEditing("new");
+                setEditSource(performanceSourceKey(p, sceneId));
+                setText(JSON.stringify(sceneTemplate(p, sceneId, catalog!), null, 2));
+              })
+            }
+          >
+            Create manual draft for selected scene
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
             onClick={() => setSelected(scenes.map((s) => s.id))}
           >
             Select all scenes
@@ -144,6 +182,40 @@ export function EmotionPerformancePanel({ picture }: { picture: Picture }) {
             Apply latest selected proposals
           </Button>
         </div>
+        {editing === "new" && editConfig && catalog && (
+          <div className="space-y-3 rounded border border-border p-3">
+            <CueboardSettingsEditor
+              config={editConfig}
+              catalog={catalog}
+              picture={picture}
+              sceneId={manualScene}
+              onChange={(value) => setText(JSON.stringify(value, null, 2))}
+            />
+            <Button
+              onClick={() =>
+                execute(() => {
+                  const p = latest();
+                  if (performanceSourceKey(p, manualScene) !== editSource)
+                    throw new Error("Source changed while editing. Reopen a fresh draft.");
+                  const next = makePerformanceDraft(
+                    p,
+                    catalog,
+                    JSON.parse(text),
+                    "manual authoring",
+                  );
+                  const s = p.emotionPerformance ?? emptyEmotionWorkspace();
+                  save({ ...p, emotionPerformance: { ...s, drafts: [...s.drafts, next] } });
+                  setEditing(null);
+                })
+              }
+            >
+              Validate and save manual version
+            </Button>
+            <Button variant="ghost" onClick={() => setEditing(null)}>
+              Cancel
+            </Button>
+          </div>
+        )}
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {scenes.map((scene) => (
             <label
@@ -170,7 +242,8 @@ export function EmotionPerformancePanel({ picture }: { picture: Picture }) {
             <article key={draft.id} className="space-y-2 rounded border border-border p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm">
-                  {draft.sceneId} · {new Date(draft.createdAt).toLocaleString()} ·{" "}
+                  {scenes.find((s) => s.id === draft.sceneId)?.title ?? draft.sceneId} ·{" "}
+                  {new Date(draft.createdAt).toLocaleString()} ·{" "}
                   {isPerformanceDraftStale(picture, draft)
                     ? "Stale — review source changes"
                     : state.applied[draft.sceneId] === draft.id
@@ -181,8 +254,10 @@ export function EmotionPerformancePanel({ picture }: { picture: Picture }) {
                   <Button
                     size="sm"
                     variant="secondary"
+                    disabled={isPerformanceDraftStale(picture, draft)}
                     onClick={() => {
                       setEditing(draft.id);
+                      setEditSource(draft.source);
                       setText(JSON.stringify(draft.config, null, 2));
                     }}
                   >
@@ -224,9 +299,78 @@ export function EmotionPerformancePanel({ picture }: { picture: Picture }) {
                 Writer: {draft.modelId} · Dialogue and speaker fields are locked. Reapplying an
                 earlier version restores that version.
               </p>
-              <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded bg-inset p-3 text-xs">
-                {draft.prompt}
-              </pre>
+              <details>
+                <summary className="min-h-11 cursor-pointer text-xs">Diagnostic packet</summary>
+                <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded bg-inset p-3 text-xs">
+                  {draft.prompt}
+                </pre>
+              </details>
+              <details>
+                <summary className="min-h-11 cursor-pointer text-xs">
+                  Engine prompt inspection · preview does not grant generation capability
+                </summary>
+                {(["ltx-prose-1", "h3-ref2va-1"] as const).map((profile) => {
+                  try {
+                    const result = serializePerformance({
+                      profile,
+                      lines: draft.compiled,
+                      speakers: draft.config.character_baselines,
+                    });
+                    return (
+                      <div key={profile}>
+                        <p className="text-xs">{profile}</p>
+                        <pre className="max-h-64 overflow-auto whitespace-pre-wrap bg-inset p-3 text-xs">
+                          {result.text}
+                        </pre>
+                        <p className="text-xs text-muted">
+                          {[
+                            ...new Set(
+                              result.unsupported_controls.map((f) => `${f.control}: ${f.reason}`),
+                            ),
+                          ].join(" ")}
+                        </p>
+                      </div>
+                    );
+                  } catch (e) {
+                    return (
+                      <p key={profile} className="text-xs text-muted">
+                        {String(e)}
+                      </p>
+                    );
+                  }
+                })}
+              </details>
+              {state.applied[draft.sceneId] && state.applied[draft.sceneId] !== draft.id && (
+                <details>
+                  <summary className="min-h-11 cursor-pointer text-xs">
+                    Compare with applied version
+                  </summary>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {[state.drafts.find((d) => d.id === state.applied[draft.sceneId]), draft].map(
+                      (version, i) => (
+                        <div key={i}>
+                          <p className="text-xs">{i === 0 ? "Applied settings" : "This version"}</p>
+                          <pre className="max-h-64 overflow-auto whitespace-pre-wrap bg-inset p-3 text-xs">
+                            {JSON.stringify(
+                              {
+                                scene: version?.config.scene_defaults,
+                                characters: version?.config.character_overrides,
+                                lines: version?.config.lines.map((l) => ({
+                                  line: l.line_id,
+                                  settings: l.overrides,
+                                  beats: l.beats,
+                                })),
+                              },
+                              null,
+                              2,
+                            )}
+                          </pre>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </details>
+              )}
               {state.applied[draft.sceneId] === draft.id && (
                 <JointPerformanceWorkflow picture={picture} draft={draft} />
               )}
@@ -237,21 +381,38 @@ export function EmotionPerformancePanel({ picture }: { picture: Picture }) {
               )}
               {editing === draft.id && (
                 <div className="space-y-2">
-                  <label className="block text-xs">
-                    Structured settings — validated against the Cueboard catalogue
-                    <textarea
-                      aria-label="Editable performance settings"
-                      className="mt-2 min-h-64 w-full rounded border border-border bg-inset p-3 font-mono text-xs"
-                      value={text}
-                      onChange={(e) => setText(e.target.value)}
+                  {editConfig && catalog && (
+                    <CueboardSettingsEditor
+                      key={draft.id}
+                      config={editConfig}
+                      catalog={catalog}
+                      picture={picture}
+                      sceneId={draft.sceneId}
+                      onChange={(value) => setText(JSON.stringify(value, null, 2))}
                     />
-                  </label>
+                  )}
+                  <details>
+                    <summary className="min-h-11 cursor-pointer text-xs">
+                      Expert JSON · same validated schema
+                    </summary>
+                    <label className="block text-xs">
+                      Full settings and timed beat overrides
+                      <textarea
+                        aria-label="Editable performance settings"
+                        className="mt-2 min-h-64 w-full rounded border border-border bg-inset p-3 font-mono text-xs"
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                      />
+                    </label>
+                  </details>
                   <Button
                     size="sm"
                     onClick={() =>
                       execute(() => {
                         if (!catalog) return;
                         const p = latest();
+                        if (performanceSourceKey(p, draft.sceneId) !== editSource)
+                          throw new Error("Source changed while editing. Reopen a fresh draft.");
                         const next = makePerformanceDraft(
                           p,
                           catalog,

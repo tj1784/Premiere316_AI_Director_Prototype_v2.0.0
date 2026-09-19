@@ -22,20 +22,10 @@ export type StateType =
   | "neutral_baseline";
 
 export type Regulation =
-  | "open"
-  | "restrained"
-  | "suppressed"
-  | "masked"
-  | "performed"
-  | "conflicted";
+  "open" | "restrained" | "suppressed" | "masked" | "performed" | "conflicted";
 
 export type Framing =
-  | "extreme_close_up"
-  | "close_up"
-  | "medium"
-  | "wide"
-  | "audio_only"
-  | "silent_reaction";
+  "extreme_close_up" | "close_up" | "medium" | "wide" | "audio_only" | "silent_reaction";
 
 export type CueChannel = "face" | "voice" | "body";
 
@@ -336,6 +326,7 @@ export interface UnsupportedControl {
 }
 
 export interface CompiledOutput {
+  cinematic?: { version: "1.0.0"; action: string; delivery: string };
   schema_version: "1.0.0";
   scene_id: string;
   line_id: string;
@@ -406,6 +397,7 @@ export interface CatalogIndex {
 }
 
 export type WinningScope =
+  | "shot_plan"
   | "runtime_default"
   | "scene_default"
   | "character_override"

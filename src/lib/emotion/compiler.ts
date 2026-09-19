@@ -118,12 +118,17 @@ function applyFramingBudget(settings: ResolvedSettings): ResolvedSettings {
 export function resolveLineSettings(
   scene: SceneConfig,
   line: Line,
+  sourceFraming?: Framing,
 ): { settings: ResolvedSettings; trace: Record<string, WinningScope> } {
   const trace: Record<string, WinningScope> = {};
   for (const key of SETTINGS_TRACE_KEYS) {
     trace[key] = "runtime_default";
   }
   let current: Record<string, unknown> = { ...RUNTIME_DEFAULTS };
+  if (sourceFraming) {
+    current.framing = sourceFraming;
+    trace.framing = "shot_plan";
+  }
   current = mergeWithTrace(current, scene.scene_defaults, "scene_default", trace);
   const characterOverlay = scene.character_overrides[line.character_id];
   if (characterOverlay) {
@@ -138,6 +143,20 @@ export function resolveLineSettings(
 }
 
 export function resolveBeatSettings(lineSettings: ResolvedSettings, beat: Beat): ResolvedSettings {
+  for (const key of [
+    "allow_narration",
+    "allow_extra_dialogue",
+    "allow_nonverbal_vocalizations",
+  ] as const) {
+    if (beat.overrides[key] && !lineSettings[key])
+      throw new CompileError(`Beat '${beat.beat_id}' cannot escalate ${key}.`);
+  }
+  if (
+    beat.overrides.allowed_sound_events?.some(
+      (kind) => !lineSettings.allowed_sound_events.includes(kind),
+    )
+  )
+    throw new CompileError(`Beat '${beat.beat_id}' cannot expand allowed sound events.`);
   const merged = mergeSettings(
     {
       ...lineSettings,
@@ -188,6 +207,17 @@ function regionAllowed(
   spokenText = "",
   replacement = false,
 ): { ok: boolean; warning?: string } {
+  if (
+    !replacement &&
+    (region === "loudness" ||
+      /\b(scream\w*|shout\w*|yell\w*|tear\w*|weep\w*|strik\w*|hitt?ing|punch\w*|slap\w*|embrac\w*|kneel\w*|collapse\w*|run(?:s|ning)?|gasp\w*)\b/i.test(
+        text,
+      ))
+  )
+    return {
+      ok: false,
+      warning: `Catalog option requires an explicit authored regional replacement; felt intensity alone cannot authorize volume, tears, contact or extreme action: ${text}`,
+    };
   const conflict = speechConflict(text, Boolean(spokenText));
   if (conflict) return { ok: false, warning: `Omitted instruction: ${conflict}. Review: ${text}` };
   const required = requiredRegions(text, channel, region || undefined);
@@ -259,6 +289,7 @@ export function selectChannelCues(
   warnings: string[],
   spokenText = "",
 ): SelectedCue[] {
+  if (channel === "voice" && !spokenText) return [];
   const budget = settings.cue_budget[channel] ?? 0;
   if (budget <= 0) return [];
   const resolved = resolveSelection(view, selection);
@@ -379,10 +410,7 @@ function collectCuesForSettings(
 ): SelectedCue[] {
   const dominant = settings.felt_layers.find((layer) => layer.role === "dominant");
   if (!dominant) return [];
-  const displaySource =
-    settings.regulation === "masked" || settings.regulation === "performed"
-      ? settings.displayed_selection
-      : dominant.selection;
+  const displaySource = settings.displayed_selection ?? dominant.selection;
   if (!displaySource) return [];
 
   const visualSelection = displaySource;
@@ -408,6 +436,7 @@ function collectCuesForSettings(
     ...replacementCues("body", settings.body_overrides, resolved.emotion.id, resolved.level.level),
   ];
   for (const extra of replacements) {
+    if (extra.channel === "voice" && !spokenText) continue;
     const allow = regionAllowed(
       extra.channel,
       extra.region,
@@ -474,34 +503,56 @@ function composeDirections(
   character: CharacterBaseline | undefined,
   spokenText: string,
   warnings: string[],
+  cinematic = false,
+  framingAuthored = true,
 ): { video: string; delivery: string } {
   const dominant = settings.felt_layers.find((layer) => layer.role === "dominant")!;
   const felt = resolveSelection(view, dominant.selection);
-  const displaySel =
-    settings.regulation === "masked" || settings.regulation === "performed"
-      ? settings.displayed_selection!
-      : dominant.selection;
+  const displaySel = settings.displayed_selection ?? dominant.selection;
   const displayed = resolveSelection(view, displaySel);
   const visual = settings.framing !== "audio_only";
   const vocal = Boolean(spokenText) && settings.framing !== "silent_reaction";
-  const context = intentContext(view, settings);
-  const picture: string[] = visual ? [framingLead(settings.framing, !spokenText), ...context] : [];
+  const context = cinematic
+    ? [
+        settings.objective && `The character wants to ${settings.objective}`,
+        settings.relationship_context,
+        settings.appraisal,
+        settings.physical_context,
+      ].filter(Boolean)
+    : intentContext(view, settings);
+  const picture: string[] = visual
+    ? [
+        framingAuthored
+          ? framingLead(settings.framing, !spokenText)
+          : "Preserve the established shot composition",
+        ...context,
+      ]
+    : [];
   const voice: string[] = vocal ? [identityVoiceLead(character), ...context] : [];
   const regulation = `Regulation: ${settings.regulation}. Outward display allowance: ${settings.display_allowance} on the editorial 0–1 scale; felt intensity remains level ${dominant.selection.intensity}. ${settings.display_allowance <= 0.35 || settings.regulation === "restrained" || settings.regulation === "suppressed" ? "Contain the amplitude of selected cues" : "Use the selected cues within this allowance"}; do not add gestures to fill unused channels`;
-  if (visual) picture.push(regulation);
-  if (vocal) voice.push(regulation);
+  const outward = cinematic
+    ? `${settings.regulation === "open" ? "Allow an open expression" : `Keep the performance ${settings.regulation}`}. ${settings.display_allowance <= 0.35 ? "Keep outward expression contained" : "Use only the selected physical and vocal behavior"}; depth of feeling does not increase volume or add gestures`
+    : regulation;
+  if (visual) picture.push(outward);
+  if (vocal) voice.push(outward);
   if (settings.arousal_override !== null) {
-    const arousal = `Arousal intent: ${settings.arousal_override} on the editorial 0–1 scale, independent of pitch, loudness, and felt intensity`;
+    const arousal = cinematic
+      ? `${settings.arousal_override < 0.35 ? "Low" : settings.arousal_override > 0.7 ? "High" : "Moderate"} internal energy without changing vocal volume`
+      : `Arousal intent: ${settings.arousal_override} on the editorial 0–1 scale, independent of pitch, loudness, and felt intensity`;
     if (visual) picture.push(arousal);
     if (vocal) voice.push(arousal);
   }
   if (settings.regulation === "masked" || settings.regulation === "performed") {
-    const mask = `Outward state: ${displayed.emotion.label} (${displayed.variant.label}), level ${displaySel.intensity}. Hidden ${felt.emotion.label} remains internal; do not add a second physical or vocal display`;
+    const mask = cinematic
+      ? `Show ${displayed.emotion.label.toLowerCase()} while keeping ${felt.emotion.label.toLowerCase()} private`
+      : `Outward state: ${displayed.emotion.label} (${displayed.variant.label}), level ${displaySel.intensity}. Hidden ${felt.emotion.label} remains internal; do not add a second physical or vocal display`;
     if (visual) picture.push(mask);
     if (vocal) voice.push(mask);
   }
   if (settings.continuity.from_line_id && !settings.continuity.restart_onset) {
-    const continuity = `Continue the established performance from line ${JSON.stringify(settings.continuity.from_line_id)}; preserve carryover instead of replaying onset`;
+    const continuity = cinematic
+      ? "Continue the established performance and physical state, including position, contact, props, clothing and injuries; do not replay completed actions"
+      : `Continue the established performance from line ${JSON.stringify(settings.continuity.from_line_id)}; preserve carryover instead of replaying onset`;
     if (visual) picture.push(continuity);
     if (vocal) voice.push(continuity);
   }
@@ -694,7 +745,12 @@ function filterSoundEvents(line: Line, settings: ResolvedSettings, warnings: str
   return exported;
 }
 
-export function compileLine(catalog: Catalog, scene: SceneConfig, line: Line): CompiledOutput {
+export function compileLine(
+  catalog: Catalog,
+  scene: SceneConfig,
+  line: Line,
+  sourceFraming?: Framing,
+): CompiledOutput {
   try {
     const lineInScene =
       Array.isArray(scene?.lines) && scene.lines.some((entry) => entry.line_id === line?.line_id);
@@ -718,12 +774,17 @@ export function compileLine(catalog: Catalog, scene: SceneConfig, line: Line): C
       `Line '${line.line_id}' references unknown character '${line.character_id}'.`,
     );
   }
-  const { settings, trace } = resolveLineSettings(scene, line);
+  const { settings, trace } = resolveLineSettings(scene, line, sourceFraming);
+  if (trace.framing === "runtime_default")
+    warnings.push(
+      "Framing source is missing or ambiguous. Close-up is only a cue-visibility fallback; preserve the shot plan or choose an explicit framing override.",
+    );
   validateResolved(view, settings, line.line_id);
   validateBeats(line, warnings);
 
   const character = scene.character_baselines[line.character_id];
   const spoken = line.spoken_text;
+  if (!spoken) settings.cue_budget = { ...settings.cue_budget, voice: 0 };
   if (settings.allow_extra_dialogue) {
     warnings.push("allow_extra_dialogue is on; the compiler still will not invent speech.");
   }
@@ -736,10 +797,23 @@ export function compileLine(catalog: Catalog, scene: SceneConfig, line: Line): C
     character,
     spoken,
     warnings,
+    false,
+    trace.framing !== "runtime_default",
+  );
+  const cinematic = composeDirections(
+    view,
+    settings,
+    lineCues,
+    character,
+    spoken,
+    [],
+    true,
+    trace.framing !== "runtime_default",
   );
 
   const resolvedBeats: ResolvedBeatOutput[] = line.beats.map((beat) => {
     const beatSettings = resolveBeatSettings(settings, beat);
+    if (!spoken) beatSettings.cue_budget = { ...beatSettings.cue_budget, voice: 0 };
     validateResolved(view, beatSettings, `${line.line_id}/${beat.beat_id}`);
     const beatCues = collectCuesForSettings(view, beatSettings, warnings, spoken);
     const directions = composeDirections(view, beatSettings, beatCues, character, spoken, warnings);
@@ -781,12 +855,13 @@ export function compileLine(catalog: Catalog, scene: SceneConfig, line: Line): C
   // Keep expected-example keys even when the value is a runtime default that
   // scene_defaults already populated.
   for (const key of Object.keys(trace)) {
-    if (key in (settings as unknown as Record<string, unknown>)) {
+    if (key.includes(".") || key in (settings as unknown as Record<string, unknown>)) {
       winning[key] = trace[key];
     }
   }
 
   return {
+    cinematic: { version: "1.0.0", action: cinematic.video, delivery: cinematic.delivery },
     schema_version: "1.0.0",
     scene_id: scene.scene_id,
     line_id: line.line_id,

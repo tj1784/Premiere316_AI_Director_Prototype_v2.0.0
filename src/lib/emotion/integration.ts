@@ -3,9 +3,46 @@ import { parseScreenplayHierarchy } from "../studio/screenplay-hierarchy.ts";
 import { stableVoiceJson } from "../studio/voice-reconciliation.mjs";
 import { stableHash } from "../production/dependency-graph.ts";
 import { DEFAULT_ADAPTER } from "./constants.ts";
-import { compileScene } from "./compiler.ts";
+import { compileLine } from "./compiler.ts";
 import { assertSceneConfig } from "./validation.ts";
-import type { Catalog, SceneConfig, CompiledOutput } from "./types.ts";
+import type { Catalog, SceneConfig, CompiledOutput, Framing } from "./types.ts";
+
+export function performanceFraming(
+  picture: Picture,
+  sceneId: string,
+  lineId: string,
+): { framing?: Framing; source: string } {
+  const normalize = (value: string): Framing | undefined => {
+    const text = value.toLowerCase().replace(/[_-]/g, " ").trim();
+    if (/^(ecu|extreme close up)$/.test(text)) return "extreme_close_up";
+    if (/^(cu|close ?up|close shot)$/.test(text)) return "close_up";
+    if (/^(ms|mcu|medium|medium shot|medium close up|two shot|waist up)$/.test(text))
+      return "medium";
+    if (/^(ws|wide|wide shot|long shot|establishing)$/.test(text)) return "wide";
+    return undefined;
+  };
+  const canonical = (picture.performance?.shots ?? []).filter((s) => s.sceneId === sceneId);
+  const linked = canonical.filter((s) =>
+    s.audio.dialogue?.some((l) => l.id === lineId || cueboardId(l.id) === lineId),
+  );
+  const shots = linked.length ? linked : canonical;
+  const candidates = shots.length
+    ? shots.map((s) => ({ id: s.shotId, framing: normalize(s.framing.shotSize ?? "") }))
+    : picture.shots
+        .filter((s) => s.sceneId === sceneId)
+        .map((s) => ({ id: s.id, framing: normalize(s.type) }));
+  const values = new Set(candidates.map((s) => s.framing));
+  if (candidates.length && values.size === 1 && candidates[0].framing)
+    return {
+      framing: candidates[0].framing,
+      source: `Shot plan: ${candidates.map((s) => s.id).join(", ")}`,
+    };
+  return {
+    source: candidates.length
+      ? "Mixed or unrecognized coverage — choose an explicit override for this line"
+      : "No shot framing source — choose an explicit override",
+  };
+}
 
 export type PerformanceDraft = {
   id: string;
@@ -57,7 +94,10 @@ export function performanceReviewPicture(picture: Picture): Picture {
           })),
         }
       : undefined,
-    performance: picture.performance ? { beats: picture.performance.beats } : undefined,
+    performance: picture.performance
+      ? { beats: picture.performance.beats, shots: picture.performance.shots }
+      : undefined,
+    directorScenes: picture.directorScenes,
     characterVoiceDesigns: { selections: picture.characterVoiceDesigns?.selections },
   } as Picture;
 }
@@ -100,6 +140,8 @@ export function performanceSourceKey(picture: Picture, sceneId: string) {
       iterations: a.iterations.map((i) => ({ id: i.id, hash: i.mediaSha256, status: i.status })),
     })),
     shots: picture.shots.filter((s) => s.sceneId === sceneId),
+    coverage: picture.performance?.shots?.filter((s) => s.sceneId === sceneId),
+    director: picture.directorScenes?.[sceneId],
     beats: picture.performance?.beats.filter((b) => b.sceneId === sceneId),
     selections: picture.characterVoiceDesigns?.selections,
   });
@@ -145,7 +187,7 @@ export function sceneTemplate(picture: Picture, sceneId: string, catalog: Catalo
         character_id: speaker,
         spoken_text: "",
         duration_seconds: null,
-        overrides: {},
+        overrides: { framing: "silent_reaction" },
         beats: [],
         authored_sound_events: [],
       });
@@ -205,7 +247,13 @@ export function makePerformanceDraft(
     proposal.lines.some((l) => l.authored_sound_events.length)
   )
     throw new Error("Additional speech or sound events are not permitted in this production path.");
-  const compiled = compileScene(catalog, proposal);
+  const compiled = proposal.lines.map((line) => {
+    const framing = performanceFraming(picture, sceneId, line.line_id);
+    const output = compileLine(catalog, proposal, line, framing.framing);
+    if (output.resolution_trace.winning_scopes.framing === "shot_plan")
+      output.resolution_trace.winning_scopes.framing = framing.source;
+    return output;
+  });
   const prompt = compiled
     .map(
       (l) =>

@@ -128,8 +128,8 @@ export function JointPerformanceWorkflow({
           inputs: { image: "approved-reference.png" },
         };
         const [imageData, audioData] = await Promise.all([
-          mediaData(image.previewUri ?? image.mediaUri),
-          mediaData(selected.reference.audio.previewUri ?? selected.reference.audio.mediaUri),
+          mediaData(image.mediaUri),
+          mediaData(selected.reference.audio.mediaUri),
         ]);
         references.push({
           speaker,
