@@ -7,12 +7,39 @@ const equal = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 const widget = (schema) => Array.isArray(schema) && !schema[1]?.forceInput &&
   (Array.isArray(schema[0]) || scalarTypes.has(schema[0]));
 
-function inputDefinitions(info) {
+function inputDefinitions(info, node, issues) {
   const definitions = { ...info?.input?.required, ...info?.input?.optional };
+  const required = new Set(Object.keys(info?.input?.required ?? {}));
   const order = [...(info?.input_order?.required ?? Object.keys(info?.input?.required ?? {})),
     ...(info?.input_order?.optional ?? Object.keys(info?.input?.optional ?? {}))];
   for (const name of Object.keys(definitions)) if (!order.includes(name)) order.push(name);
-  return { definitions, order };
+  for (const [name, schema] of Object.entries(definitions)) {
+    if (schema[0] !== 'COMFY_AUTOGROW_V3') continue;
+    const template = schema[1]?.template;
+    const children = Object.values({ ...template?.input?.required, ...template?.input?.optional });
+    const names = Array.isArray(template?.names) ? template.names :
+      typeof template?.prefix === 'string' && Number.isInteger(template.max) && template.max >= 0 && template.max <= 100
+        ? Array.from({ length: template.max }, (_, index) => `${template.prefix}${index}`) : null;
+    const minimum = required.has(name) && Object.keys(template?.input?.required ?? {}).length ? (template?.min ?? 0) : 0;
+    if (!names || children.length !== 1 || !Number.isInteger(minimum) || minimum < 0 || minimum > names.length ||
+      names.some(child => typeof child !== 'string' || !child) || new Set(names).size !== names.length) {
+      issues.push(`Node ${node.id} ${name}: unsupported or invalid dynamic input template.`);
+      continue;
+    }
+    // V3 expands the container into dotted inputs; the first min names are
+    // required, rather than any arbitrary min-sized subset of connections.
+    delete definitions[name]; required.delete(name);
+    const expanded = names.map(child => `${name}.${child}`);
+    order.splice(order.indexOf(name), 1, ...expanded);
+    expanded.forEach((child, index) => {
+      definitions[child] = [children[0][0], { ...children[0][1], forceInput: true }];
+      if (index < minimum) required.add(child);
+    });
+    for (const input of node.inputs ?? []) if ((input.name === name || input.name.startsWith(`${name}.`)) && !expanded.includes(input.name)) {
+      issues.push(`Node ${node.id} ${input.name}: unavailable dynamic input name.`);
+    }
+  }
+  return { definitions, order, required };
 }
 
 function widgets(node, definitions, order, issues) {
@@ -97,7 +124,13 @@ function expand(graph, issues) {
       if (definition) {
         if (stack.includes(node.type)) throw new Error(`Recursive subgraph ${node.type} is unsupported.`);
         const child = context(definition, ctx, node, [...stack, node.type]);
-        const schemas = Object.fromEntries((definition.inputs ?? []).map((input) => [input.name, [input.type, {}]]));
+        const schemas = Object.fromEntries((definition.inputs ?? []).map((input) => {
+          const socket = node.inputs?.find(item => item.name === input.name);
+          // A linked scalar port is not necessarily a converted widget. Decode's
+          // plain fps socket has no saved positional value; a promoted seed does.
+          const portOnly = socket?.link != null && !socket.widget && !has(node.widgets_values_named, input.name);
+          return [input.name, [input.type, { forceInput: portOnly }]];
+        }));
         child.values = widgets(node, schemas, Object.keys(schemas), issues);
         ctx.children.set(String(node.id), child);
       } else {
@@ -146,11 +179,85 @@ function validateValue(label, value, schema, issues) {
   const [type, config = {}] = schema;
   const options = Array.isArray(type) ? type : type === 'COMBO' ? config.options : null;
   if (options && !options.some((option) => equal(option, value))) issues.push(`${label}: selected value ${JSON.stringify(value)} is unavailable in ComfyUI (check the installed model or option).`);
-  else if ((type === 'INT' && !Number.isInteger(value)) || (type === 'FLOAT' && (typeof value !== 'number' || !Number.isFinite(value))) ||
-    (type === 'STRING' && typeof value !== 'string') || (type === 'BOOLEAN' && typeof value !== 'boolean')) issues.push(`${label}: expected ${type}.`);
+  else if (typeof type === 'string') {
+    const types = type.split(',');
+    const matches = candidate => candidate === 'INT' ? Number.isInteger(value) : candidate === 'FLOAT' ? typeof value === 'number' && Number.isFinite(value) :
+      candidate === 'STRING' ? typeof value === 'string' : candidate === 'BOOLEAN' ? typeof value === 'boolean' : true;
+    if (!types.some(matches)) issues.push(`${label}: expected ${type}.`);
+  }
   if (typeof value === 'number' && (!Number.isFinite(value) || (typeof config.min === 'number' && value < config.min) || (typeof config.max === 'number' && value > config.max))) {
     issues.push(`${label}: value must be finite and within ${config.min ?? '-∞'} to ${config.max ?? '∞'}.`);
   }
+}
+
+const typeNames = type => Array.isArray(type) ? ['COMBO'] : String(type).split(',').map(name => name.trim());
+const compatible = (actual, expected) => actual === '*' || expected === '*' ||
+  typeNames(actual).some(type => typeNames(expected).includes(type) || (type === 'INT' && typeNames(expected).includes('FLOAT')));
+
+function matchTypes(prompt, objectInfo, schemas, issues) {
+  const groups = new Map();
+  const group = (id, name) => {
+    if (typeof name !== 'string' || !name) {
+      issues.push(`Node ${id}: missing dynamic match-type template id.`);
+      return null;
+    }
+    const key = `${id}/${name}`;
+    if (!groups.has(key)) groups.set(key, { key, parent: key, constraints: [] });
+    return key;
+  };
+  const root = key => {
+    const entry = groups.get(key);
+    if (entry.parent !== key) entry.parent = root(entry.parent);
+    return entry.parent;
+  };
+  const inputGroup = (id, schema) => schema?.[0] === 'COMFY_MATCHTYPE_V3' ? group(id, schema[1]?.template?.template_id) : null;
+  const outputGroup = (id, slot) => {
+    const info = objectInfo[prompt[id]?.class_type];
+    return info?.output?.[slot] === 'COMFY_MATCHTYPE_V3' ? group(id, info.output_matchtypes?.[slot]) : null;
+  };
+  const constrain = (key, type, producer = true) => {
+    if (key && type !== undefined) groups.get(key).constraints.push({ type, producer });
+  };
+  for (const [id, node] of Object.entries(prompt)) {
+    for (const schema of Object.values(schemas.get(id).definitions)) {
+      const key = inputGroup(id, schema);
+      const allowed = schema[1]?.template?.allowed_types ?? '*';
+      if (key) constrain(key, Array.isArray(allowed) ? allowed.join(',') : allowed);
+    }
+    for (const [name, value] of Object.entries(node.inputs)) {
+      const schema = schemas.get(id).definitions[name];
+      const expected = inputGroup(id, schema);
+      if (Array.isArray(value) && typeof value[0] === 'string' && Number.isInteger(value[1])) {
+        const actual = outputGroup(value[0], value[1]);
+        if (actual && expected) groups.get(root(actual)).parent = root(expected);
+        else if (expected) constrain(expected, objectInfo[prompt[value[0]]?.class_type]?.output?.[value[1]]);
+        else if (actual && schema) constrain(actual, Array.isArray(schema[0]) ? 'COMBO' : schema[0], false);
+      } else if (expected) {
+        const literal = typeof value === 'boolean' ? 'BOOLEAN' : typeof value === 'string' ? 'STRING' :
+          typeof value === 'number' ? Number.isInteger(value) ? 'INT' : 'FLOAT' : '*';
+        constrain(expected, literal);
+      }
+    }
+  }
+  const combined = new Map();
+  for (const entry of groups.values()) {
+    const key = root(entry.key);
+    if (!combined.has(key)) combined.set(key, []);
+    combined.get(key).push(...entry.constraints);
+  }
+  const resolved = new Map();
+  for (const [key, constraints] of combined) {
+    const concrete = constraints.filter(item => item.type !== '*');
+    const candidates = new Set(concrete.flatMap(item => typeNames(item.type)));
+    if (concrete.some(item => !item.producer && typeNames(item.type).includes('FLOAT'))) candidates.add('INT');
+    const allowed = [...candidates].filter(type => concrete.every(item => item.producer ? typeNames(item.type).includes(type) : compatible(type, item.type)));
+    if (concrete.length && !allowed.length) issues.push(`Node ${key}: incompatible dynamic match-type connections (${concrete.map(item => item.type).join(', ')}).`);
+    resolved.set(key, allowed.length ? allowed.join(',') : '*');
+  }
+  return {
+    input: (id, schema) => { const key = inputGroup(id, schema); return key ? resolved.get(root(key)) ?? '*' : schema?.[0]; },
+    output: (id, slot) => { const key = outputGroup(id, slot); return key ? resolved.get(root(key)) ?? '*' : objectInfo[prompt[id]?.class_type]?.output?.[slot]; },
+  };
 }
 
 /** Compile the approved UI graph without changing its timing or generation settings. */
@@ -164,7 +271,7 @@ export function compileDirectorWorkflow(workflow, objectInfo) {
     if (notes.has(node.type) || node.type === 'Reroute') continue;
     const info = has(objectInfo, node.type) ? objectInfo[node.type] : undefined;
     if (!info) issues.push(`Node ${id}: missing ComfyUI node class ${node.type}.`);
-    const { definitions, order } = inputDefinitions(info);
+    const { definitions, order, required } = inputDefinitions(info, node, issues);
     const values = widgets(node, definitions, order, issues);
     const inputs = { ...values };
     for (const input of node.inputs ?? []) if (input.link != null) {
@@ -186,24 +293,24 @@ export function compileDirectorWorkflow(workflow, objectInfo) {
       } catch { issues.push(`Node ${id}: timeline_data must contain segments with nonnegative integer starts, positive frame lengths, and prompts.`); }
     }
     prompt[id] = { class_type: node.type, inputs };
-    schemas.set(id, definitions);
+    schemas.set(id, { definitions, required });
   }
   const directors = Object.entries(prompt).filter(([, node]) => node.class_type === 'LTXDirector');
   if (directors.length !== 1) issues.push('The workflow must contain exactly one enabled LTXDirector node.');
+  const dynamicTypes = matchTypes(prompt, objectInfo, schemas, issues);
   for (const [id, node] of Object.entries(prompt)) {
-    const info = objectInfo[node.class_type];
-    for (const name of Object.keys(info?.input?.required ?? {})) if (!has(node.inputs, name)) issues.push(`Node ${id} ${node.class_type}: missing required input ${name}.`);
+    for (const name of schemas.get(id).required) if (!has(node.inputs, name)) issues.push(`Node ${id} ${node.class_type}: missing required input ${name}.`);
     for (const [name, value] of Object.entries(node.inputs)) {
-      const schema = schemas.get(id)[name];
+      const schema = schemas.get(id).definitions[name];
       if (Array.isArray(value) && value.length === 2 && typeof value[0] === 'string' && Number.isInteger(value[1])) {
         const upstream = prompt[value[0]];
         const outputs = objectInfo[upstream?.class_type]?.output;
         if (!upstream) issues.push(`Node ${id} ${name}: missing upstream node ${value[0]}.`);
         else if (outputs && (value[1] < 0 || value[1] >= outputs.length)) issues.push(`Node ${id} ${name}: invalid upstream output slot ${value[1]}.`);
         else if (schema && outputs) {
-          const expected = Array.isArray(schema[0]) ? 'COMBO' : schema[0];
-          const actual = outputs[value[1]];
-          if (expected !== '*' && actual !== '*' && !String(expected).split(',').includes(actual) && !(expected === 'FLOAT' && actual === 'INT')) issues.push(`Node ${id} ${name}: cannot connect ${actual} to ${expected}.`);
+          const expected = Array.isArray(schema[0]) ? 'COMBO' : dynamicTypes.input(id, schema);
+          const actual = dynamicTypes.output(value[0], value[1]);
+          if (!compatible(actual, expected)) issues.push(`Node ${id} ${name}: cannot connect ${actual} to ${expected}.`);
         }
       } else if (schema) validateValue(`Node ${id} ${name}`, value, schema, issues);
     }

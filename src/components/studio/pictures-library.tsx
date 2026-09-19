@@ -1,8 +1,10 @@
-import { CheckCircle2, Clock3, Film, Plus } from "lucide-react";
+import { CheckCircle2, Clock3, Plus } from "lucide-react";
+import { PictureCover } from "./picture-cover";
 import { Badge } from "@/components/ui/badge";
 import { STAGES } from "@/lib/studio/types";
 import type { PreparedPicture } from "@/lib/studio/picture-preparation";
 import { useStudio } from "@/lib/studio/store";
+import { formatRuntimeMinutes } from "@/lib/utils";
 
 function relativeModified(timestamp: number): string {
   if (!timestamp || timestamp <= 1) return "Studio sample";
@@ -65,12 +67,8 @@ export function PicturesLibrary({
                 className="group flex min-h-64 w-full flex-col overflow-hidden rounded-lg bg-elevated text-left shadow-[var(--shadow-border)] transition-[box-shadow,transform] duration-150 ease-out hover:shadow-[var(--shadow-border-hover)] active:scale-[0.98]"
               >
                 <span className="relative block aspect-video w-full overflow-hidden bg-inset">
-                  {picture.thumbnailUrl ? (
-                    <img src={picture.thumbnailUrl} alt="" className="size-full object-cover outline outline-1 -outline-offset-1 outline-white/10" />
-                  ) : (
-                    <span className="grid size-full place-items-center"><Film className="size-6 text-subtle" aria-hidden="true" /></span>
-                  )}
-                  <span className="absolute inset-x-3 top-3 flex items-center justify-between gap-2">
+                  <PictureCover picture={picture} />
+                  <span className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2">
                     {picture.sample ? <Badge>Sample</Badge> : <span />}
                     <Badge>{stage?.number} {stage?.label}</Badge>
                   </span>
@@ -78,7 +76,7 @@ export function PicturesLibrary({
                 <span className="flex flex-1 flex-col p-4">
                   <span className="flex items-start justify-between gap-3">
                     <span className="min-w-0 truncate font-display text-lg tracking-tight" title={picture.title}>{picture.title}</span>
-                    <span className="shrink-0 text-xs tabular-nums text-subtle">{picture.runtimeMinutes} min</span>
+                    <span className="shrink-0 text-xs tabular-nums text-subtle">{formatRuntimeMinutes(picture.runtimeMinutes)}</span>
                   </span>
                   <span className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">{picture.logline || "No logline yet."}</span>
                   <span className="mt-auto flex items-center justify-between gap-3 pt-4 text-[11px] text-subtle">

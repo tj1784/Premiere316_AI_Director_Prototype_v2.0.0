@@ -186,3 +186,115 @@ test('executable cycles are rejected rather than queued', () => {
   link[1] = director.id; link[2] = 0;
   assert.throws(() => compileDirectorWorkflow(graph, objectInfo), /Cyclic executable graph/);
 });
+
+// These dynamic schemas mirror current ComfyUI V3 object_info, not frontend
+// socket labels (which are already resolved in a saved workflow).
+const switchInfo = {
+  input: { required: { switch: ['BOOLEAN', {}] }, optional: {
+    on_false: ['COMFY_MATCHTYPE_V3', { template: { template_id: 'switch', allowed_types: '*' } }],
+    on_true: ['COMFY_MATCHTYPE_V3', { template: { template_id: 'switch', allowed_types: '*' } }],
+  } }, output: ['COMFY_MATCHTYPE_V3'], output_matchtypes: ['switch'],
+};
+function dynamicSwitchGraph(falseSource = 35, trueSource = 35) {
+  const graph = prepared();
+  const director = graph.nodes.find(node => node.type === 'LTXDirector');
+  const link = graph.links.find(item => item[0] === director.inputs.find(input => input.name === 'model').link);
+  link[1] = 9000; link[2] = 0;
+  graph.nodes.push({ id: 9000, type: 'ComfySwitchNode', widgets_values: [true],
+    inputs: [{ name: 'on_false', link: 9001 }, { name: 'on_true', link: 9002 }],
+    outputs: [{ name: 'output', type: 'MODEL', links: [link[0]] }] });
+  graph.links.push([9001, falseSource, 0, 9000, 0], [9002, trueSource, 0, 9000, 1]);
+  return graph;
+}
+
+test('V3 switches infer one type from both branches and the downstream consumer', () => {
+  const info = { ...objectInfo, ComfySwitchNode: switchInfo };
+  const graph = dynamicSwitchGraph();
+  const before = JSON.stringify(graph);
+  const result = compileDirectorWorkflow(graph, info);
+  assert.deepEqual(result.issues, []);
+  assert.deepEqual(result.prompt['135'].inputs.model, ['9000', 0]);
+  assert.equal(JSON.stringify(graph), before);
+  assert.match(compileDirectorWorkflow(dynamicSwitchGraph(35, 36), info).issues.join('\n'), /incompatible dynamic match-type connections/);
+  assert.match(compileDirectorWorkflow(dynamicSwitchGraph(36, 36), info).issues.join('\n'), /incompatible dynamic match-type connections/);
+});
+
+test('V3 match templates enforce allowed types and do not become global wildcards', () => {
+  for (const allowed of ['VAE', ['VAE']]) {
+    const restricted = structuredClone(switchInfo);
+    for (const schema of Object.values(restricted.input.optional)) schema[1].template.allowed_types = allowed;
+    assert.match(compileDirectorWorkflow(dynamicSwitchGraph(), { ...objectInfo, ComfySwitchNode: restricted }).issues.join('\n'), /incompatible dynamic match-type connections/);
+  }
+  const graph = dynamicSwitchGraph();
+  const first = graph.nodes.find(node => node.id === 9000);
+  first.inputs[0].link = 9003;
+  graph.links = graph.links.filter(link => link[0] !== 9001);
+  graph.nodes.push({ id: 9010, type: 'ComfySwitchNode', widgets_values: [false],
+    inputs: [{ name: 'on_false', link: 9004 }, { name: 'on_true', link: 9005 }],
+    outputs: [{ name: 'output', type: 'MODEL', links: [9003] }] });
+  graph.links.push([9003, 9010, 0, 9000, 0], [9004, 35, 0, 9010, 0], [9005, 35, 0, 9010, 1]);
+  const info = { ...objectInfo, ComfySwitchNode: switchInfo };
+  assert.deepEqual(compileDirectorWorkflow(graph, info).issues, []);
+  graph.links.find(link => link[0] === 9005)[1] = 36;
+  assert.match(compileDirectorWorkflow(graph, info).issues.join('\n'), /incompatible dynamic match-type connections/);
+});
+
+const mathInfo = { input: { required: {
+  expression: ['STRING', {}], values: ['COMFY_AUTOGROW_V3', { template: {
+    input: { required: { value: ['FLOAT,INT,BOOLEAN', {}] } }, names: ['a', 'b', 'c'], min: 1,
+  } }],
+} }, output: ['FLOAT', 'INT', 'BOOLEAN'] };
+function dynamicMathGraph(name = 'values.a', source = 138) {
+  const graph = prepared();
+  graph.nodes.push({ id: 9100, type: 'ComfyMathExpression', widgets_values: ['3 - 2 * a'],
+    inputs: [{ name, link: 9101 }], outputs: [{ name: 'FLOAT', type: 'FLOAT', links: [] }] });
+  graph.links.push([9101, source, 0, 9100, 0]);
+  return graph;
+}
+
+test('V3 autogrow expands dotted inputs and validates required names and union types', () => {
+  const info = { ...objectInfo, ComfyMathExpression: mathInfo };
+  const result = compileDirectorWorkflow(dynamicMathGraph(), info);
+  assert.deepEqual(result.issues, []);
+  assert.deepEqual(result.prompt['9100'].inputs['values.a'], ['138', 0]);
+  assert.ok(!('values' in result.prompt['9100'].inputs));
+  assert.match(compileDirectorWorkflow(dynamicMathGraph('values.b'), info).issues.join('\n'), /missing required input values.a/);
+  assert.match(compileDirectorWorkflow(dynamicMathGraph('values.aa'), info).issues.join('\n'), /unavailable dynamic input name/);
+  assert.match(compileDirectorWorkflow(dynamicMathGraph('values.a', 36), info).issues.join('\n'), /cannot connect VAE to FLOAT,INT,BOOLEAN/);
+});
+
+test('V3 autogrow prefix templates enforce their first required sockets', () => {
+  const info = structuredClone(mathInfo);
+  Object.assign(info.input.required.values[1].template, { prefix: 'input', max: 2, min: 1 });
+  delete info.input.required.values[1].template.names;
+  const schemas = { ...objectInfo, ComfyMathExpression: info };
+  assert.deepEqual(compileDirectorWorkflow(dynamicMathGraph('values.input0'), schemas).issues, []);
+  assert.match(compileDirectorWorkflow(dynamicMathGraph('values.input1'), schemas).issues.join('\n'), /missing required input values.input0/);
+  assert.match(compileDirectorWorkflow(dynamicMathGraph('values.input2'), schemas).issues.join('\n'), /unavailable dynamic input name/);
+});
+
+function decodeToggleGraph(convertedFps = false) {
+  const graph = prepared();
+  const wrapper = graph.nodes.find(node => node.id === 134);
+  const definition = graph.definitions.subgraphs.find(item => item.id === wrapper.type);
+  if (convertedFps) wrapper.inputs.find(input => input.name === 'fps').widget = { name: 'fps' };
+  wrapper.widgets_values = convertedFps ? [24, true] : [true];
+  wrapper.widgets_values_named = convertedFps ? { fps: 24, tiled_decode: true } : { tiled_decode: true };
+  const slot = definition.inputs.length;
+  definition.inputs.push({ name: 'tiled_decode', type: 'BOOLEAN', linkIds: [9201] });
+  definition.nodes.push({ id: 9200, type: 'BooleanConsumer', widgets_values: [false],
+    inputs: [{ name: 'switch', link: 9201 }], outputs: [] });
+  definition.links.push({ id: 9201, origin_id: -10, origin_slot: slot, target_id: 9200, target_slot: 0 });
+  return graph;
+}
+
+test('Decode plain linked fps does not consume tiled-decode position; converted widgets still do', () => {
+  const info = { ...objectInfo, BooleanConsumer: { input: { required: { switch: ['BOOLEAN', {}] } }, output: [] } };
+  for (const converted of [false, true]) for (const named of [false, true]) {
+    const graph = decodeToggleGraph(converted);
+    if (!named) delete graph.nodes.find(node => node.id === 134).widgets_values_named;
+    const result = compileDirectorWorkflow(graph, info);
+    assert.deepEqual(result.issues, []);
+    assert.equal(result.prompt['9200'].inputs.switch, true);
+  }
+});

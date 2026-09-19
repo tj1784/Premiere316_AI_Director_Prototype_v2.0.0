@@ -1,4 +1,5 @@
 import { Download, FileText } from "lucide-react";
+import { formatRuntimeMinutes } from "@/lib/utils";
 import type { ImportedPicturePackage } from "@/lib/studio/imported-picture-package";
 
 export function ImportedPackageResources({ importedPackage }: { importedPackage?: ImportedPicturePackage }) {
@@ -11,7 +12,7 @@ export function ImportedPackageResources({ importedPackage }: { importedPackage?
         <div className="min-w-0">
           <h3 className="font-medium">Complete screenplay package</h3>
           <p className="mt-1 text-sm leading-relaxed text-muted">
-            {seconds / 60} minute timing plan · {importedPackage.sourceAssets.length} asset records · {importedPackage.sceneAssetLinks.length} scene links · {importedPackage.continuity.length} continuity rules
+            {formatRuntimeMinutes(seconds / 60)} timing plan · {importedPackage.sourceAssets.length} asset records · {importedPackage.sceneAssetLinks.length} scene links · {importedPackage.continuity.length} continuity rules
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted">Accepted screenplay and linked inventory imported. Asset and frame views show the current images and selections.</p>
         </div>

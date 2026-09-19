@@ -130,6 +130,18 @@ try {
     if (readySelector) await page.locator(readySelector).waitFor({ state: "visible", timeout: timeoutMs });
     else await page.waitForTimeout(1000);
 
+    // Hydrated libraries can mount artwork after the document load event.
+    // Wait for on-screen images so the visual audit captures the finished cards.
+    await page.waitForFunction(() => Array.from(document.images).every((img) => {
+      const rect = img.getBoundingClientRect();
+      const visible = rect.width > 0 && rect.height > 0 && rect.top < innerHeight && rect.bottom > 0;
+      return !visible || img.complete;
+    }), undefined, { timeout: timeoutMs });
+    await page.evaluate(() => Promise.all(Array.from(document.images).filter((img) => {
+      const rect = img.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && rect.top < innerHeight && rect.bottom > 0;
+    }).map((img) => img.decode().catch(() => {}))));
+
     const title = await page.title();
     const hasCanvas = (await page.locator("canvas").count()) > 0;
     const bodyText = await page

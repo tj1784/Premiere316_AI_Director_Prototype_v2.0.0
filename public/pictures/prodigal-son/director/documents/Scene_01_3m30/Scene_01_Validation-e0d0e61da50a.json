@@ -1,0 +1,72 @@
+{
+  "source_filename": "Scene_01_Temple_and_the_Gathering(1).json",
+  "source_sha256": "af301652372572caf8227427bbf7bb98b1ebc353268e9e205bba64914bba40ba",
+  "workflow_filename": "Scene_01_Temple_and_the_Gathering_Varied_Angles.json",
+  "segments": 16,
+  "duration_seconds": 210,
+  "frame_rate": 24,
+  "duration_frames": 5040,
+  "retained_dialogue_source_segments": [
+    7,
+    8,
+    22
+  ],
+  "retained_dialogue_output_segments": [
+    10,
+    11,
+    16
+  ],
+  "exact_retained_dialogue_and_audio_tails_preserved": true,
+  "all_generation_settings_preserved": true,
+  "voice_reference_metadata_preserved": true,
+  "ic_reference_metadata_preserved_except_duration": true,
+  "all_serialized_copies_consistent": true,
+  "all_unrelated_nodes_and_root_fields_unchanged": true,
+  "rendered": false,
+  "image_files_pending": [],
+  "changed_json_paths": [
+    "/nodes/7/widgets_values/0",
+    "/nodes/15/properties/duration_frames",
+    "/nodes/15/properties/duration_seconds",
+    "/nodes/15/properties/end_frame",
+    "/nodes/15/properties/end_second",
+    "/nodes/15/properties/global_prompt",
+    "/nodes/15/properties/guide_strength",
+    "/nodes/15/properties/local_prompts",
+    "/nodes/15/properties/segment_lengths",
+    "/nodes/15/properties/timeline_data",
+    "/nodes/15/widgets_values/1",
+    "/nodes/15/widgets_values/2",
+    "/nodes/15/widgets_values/4",
+    "/nodes/15/widgets_values/5",
+    "/nodes/15/widgets_values/6",
+    "/nodes/15/widgets_values/7",
+    "/nodes/15/widgets_values/8",
+    "/nodes/15/widgets_values/10",
+    "/nodes/15/widgets_values_named/duration_frames",
+    "/nodes/15/widgets_values_named/duration_seconds",
+    "/nodes/15/widgets_values_named/end_frame",
+    "/nodes/15/widgets_values_named/end_second",
+    "/nodes/15/widgets_values_named/guide_strength",
+    "/nodes/15/widgets_values_named/local_prompts",
+    "/nodes/15/widgets_values_named/segment_lengths",
+    "/nodes/15/widgets_values_named/timeline_data"
+  ],
+  "voice_references": [
+    {
+      "segment": 10,
+      "speaker": "PHARISEE",
+      "file": "prodigal_son/voices/PHARISEE-reference.flac"
+    },
+    {
+      "segment": 11,
+      "speaker": "SCRIBE",
+      "file": "prodigal_son/voices/SCRIBE-reference.flac"
+    },
+    {
+      "segment": 16,
+      "speaker": "JESUS",
+      "file": "voices/shared/JESUS.flac"
+    }
+  ]
+}

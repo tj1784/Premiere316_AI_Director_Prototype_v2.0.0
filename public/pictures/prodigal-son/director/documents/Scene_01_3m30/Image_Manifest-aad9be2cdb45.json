@@ -1,0 +1,135 @@
+{
+  "images": [
+    {
+      "segment": 1,
+      "path": "input/prodigal_son/opening_rebuilt/01_Temple_Assembly.png",
+      "sha256": "a9d5f761c6c519845fbb0d30ba3c3809811bff4e1c7d63917b807a05a38651d1",
+      "width": 1920,
+      "height": 800,
+      "bytes": 2294251
+    },
+    {
+      "segment": 2,
+      "path": "input/prodigal_son/opening_rebuilt/02_Youth_Temple.png",
+      "sha256": "60ccad9393668a116b9ab7024d3e332f02d3acf3dd431406a3963adc439a7033",
+      "width": 1920,
+      "height": 800,
+      "bytes": 2065471
+    },
+    {
+      "segment": 3,
+      "path": "input/prodigal_son/opening_varied/S03_Exit_Perspective.png",
+      "sha256": "18a55ec0a64ee70e4b3d43227d2937e6c24ce55877c529216ce1ebec80d04dbe",
+      "width": 1942,
+      "height": 809,
+      "bytes": 2206356
+    },
+    {
+      "segment": 4,
+      "path": "input/prodigal_son/opening_rebuilt/03_Youth_Coin_Gateway.png",
+      "sha256": "d4590ff69d1028496f96630852ced10b426de3dedc65d38264d3afe035c31377",
+      "width": 1920,
+      "height": 800,
+      "bytes": 2083803
+    },
+    {
+      "segment": 5,
+      "path": "input/prodigal_son/opening_rebuilt/04_Youth_Leaves.png",
+      "sha256": "787b52d86989140e0804dc1c358914fa9123ce428a7a2e5ce30c5b0b9f8f71d2",
+      "width": 1920,
+      "height": 800,
+      "bytes": 2265136
+    },
+    {
+      "segment": 6,
+      "path": "input/prodigal_son/opening_rebuilt/05_Hillside_Assembly_Seated.png",
+      "sha256": "f4f0b261cc1a29a6116e39487a975f4212ac90e633873f48c8a94557bacff65c",
+      "width": 1920,
+      "height": 800,
+      "bytes": 2553459
+    },
+    {
+      "segment": 7,
+      "path": "input/prodigal_son/opening_varied/S07_Welcome_Group.png",
+      "sha256": "d3aba5b3a10e3047b793ebfb49b244c0a1f034e6b9b3113b9b1f97d4e6f9c526",
+      "width": 1942,
+      "height": 809,
+      "bytes": 2460272
+    },
+    {
+      "segment": 8,
+      "path": "input/prodigal_son/opening_varied/S08_Audience_Group.png",
+      "sha256": "7112e59ba8033d31526ebb0db3648f1f2b8381799bfc7fb51696734e01a9d3a3",
+      "width": 1942,
+      "height": 809,
+      "bytes": 2507881
+    },
+    {
+      "segment": 9,
+      "path": "input/prodigal_son/opening_varied/S09_Leaders_Establishing.png",
+      "sha256": "24e67215ad66dc2397ad0ef412f4207636018d13cbae1f6afdafc39b13fdc542",
+      "width": 1942,
+      "height": 809,
+      "bytes": 2314069
+    },
+    {
+      "segment": 10,
+      "path": "input/prodigal_son/opening_rebuilt/06_Leaders_Close.png",
+      "sha256": "2255615ef0e1650c03c0cc5cb9f7262f45aa6920de71f07802007c8e0572d85b",
+      "width": 1920,
+      "height": 800,
+      "bytes": 2333680
+    },
+    {
+      "segment": 11,
+      "path": "input/prodigal_son/opening_varied/S11_Scribe_Oblique.png",
+      "sha256": "f24bd314acda542460854e6afe0754088f73a0f66dc9f64894fa55ce9c9380a1",
+      "width": 1942,
+      "height": 809,
+      "bytes": 2353584
+    },
+    {
+      "segment": 12,
+      "path": "input/prodigal_son/opening_varied/S12_Seated_Jesus_Past_Leaders.png",
+      "sha256": "f00a1de65aff1321557f59600bbf5a46446ef8163ca25f256696270e695c1488",
+      "width": 1942,
+      "height": 809,
+      "bytes": 2520045
+    },
+    {
+      "segment": 13,
+      "path": "input/prodigal_son/opening_rebuilt/07_Youth_Listening.png",
+      "sha256": "27969c62bc0b315fcfaa49a6d096ebcb96cff8bfb8b672dabc1a3b2b5f17be30",
+      "width": 1920,
+      "height": 800,
+      "bytes": 2167627
+    },
+    {
+      "segment": 14,
+      "path": "input/prodigal_son/opening_varied/S14_Seated_Jesus_Rise_Start.png",
+      "sha256": "b911f5a04499a5b114c2c5bf67b84c77926a6bb40a6ed3aa26639e609edb3906",
+      "width": 1942,
+      "height": 809,
+      "bytes": 2502399
+    },
+    {
+      "segment": 15,
+      "path": "input/prodigal_son/opening_varied/S15_Audience_Reverse.png",
+      "sha256": "1b54184b6381f14a515ff7ecde8c4b9e5a03e1aea8b3cadb87169c639fbcdf5a",
+      "width": 1942,
+      "height": 809,
+      "bytes": 2499946
+    },
+    {
+      "segment": 16,
+      "path": "input/prodigal_son/opening_varied/S16_Jesus_Storyteller_Medium.png",
+      "sha256": "d14ce93b185811745f7a140a33b0268b48b603c1fa63528ce63dbcfb26fca389",
+      "width": 1942,
+      "height": 809,
+      "bytes": 2531242
+    }
+  ],
+  "image_count": 16,
+  "new_image_count": 9,
+  "retained_image_count": 7
+}

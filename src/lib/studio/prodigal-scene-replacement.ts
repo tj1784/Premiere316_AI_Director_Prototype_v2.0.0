@@ -5,10 +5,11 @@ import { emptyGenerateGates, type GenerateGateWorkspace } from "../production/ge
 import { PRODIGAL_SON_DIRECTOR } from "./bundled-pictures/prodigal-son/director.ts";
 import type { ProdigalDirectorManifest, ProdigalDirectorScene } from "./prodigal-director-types.ts";
 import { parseScreenplayHierarchy } from "./screenplay-hierarchy.ts";
+import { undoPerformanceDraft } from "../emotion/integration.ts";
 
 const withoutKeys = <T>(values: Record<string, T>, ids: Set<string>): Record<string, T> => Object.fromEntries(Object.entries(values).filter(([id]) => !ids.has(id)));
 const envelope = (text: string): PerformanceContinuityEnvelope => ({ visual: {}, performance: {}, story: { chronologyNote: text } });
-const sceneSlugline = (source: ProdigalDirectorScene): string => source.replacement!.screenplayMarkdown.match(/^## (EXT\.[^\r\n]+)$/m)?.[1] ?? source.title;
+const sceneSlugline = (source: ProdigalDirectorScene): string => source.replacement!.screenplayMarkdown.match(/^## ((?:EXT\.|INT\.)[^\r\n]+)$/m)?.[1] ?? source.title;
 
 /** Apply an explicitly supplied scene replacement once. Reloads never overwrite subsequent edits. */
 export function hydrateProdigalSceneReplacements(picture: Picture, manifest: ProdigalDirectorManifest = PRODIGAL_SON_DIRECTOR): Picture {
@@ -23,17 +24,48 @@ export function hydrateProdigalSceneReplacements(picture: Picture, manifest: Pro
   return next;
 }
 
+/** User-requested import into the active picture; automatic hydration keeps its version guard. */
+export function applyExplicitProdigalSceneReplacement(picture: Picture, source: ProdigalDirectorScene, manifest: ProdigalDirectorManifest): Picture {
+  if (manifest.schemaVersion !== 1 || picture.id !== manifest.pictureId || source.sceneId !== "PS-S01"
+    || !picture.performance || picture.performance.pictureId !== picture.id
+    || !picture.scenes.some((scene) => scene.id === source.sceneId) || !source.replacement?.revision) {
+    throw new Error("The explicit replacement must target Scene 01 of the matching active Prodigal Son picture.");
+  }
+  if (picture.directorSceneRevisions?.[source.sceneId] === source.replacement.revision) return picture;
+  if (!validReplacement(picture, source)) throw new Error("The scene replacement has invalid or conflicting shots, timing, prompts or media.");
+  if (parseScreenplayHierarchy(picture.screenplay.workingFountain).nodes.filter((node) => node.kind === "scene" && node.id === source.sceneId).length !== 1) {
+    throw new Error("Scene 01 must occur exactly once in the working screenplay before replacing it.");
+  }
+  return replaceScene(picture, source, manifest);
+}
+
 function validReplacement(picture: Picture, source: ProdigalDirectorScene): boolean {
+  const replacement = source.replacement;
+  if (!replacement || !replacement.revision.trim() || !replacement.screenplayMarkdown.trim()
+    || source.frameRate !== 24 || !Number.isFinite(source.storyDurationSeconds) || source.storyDurationSeconds <= 0
+    || !Number.isFinite(source.generationDurationSeconds) || source.generationDurationSeconds <= 0
+    || !Array.isArray(source.segments) || !Array.isArray(replacement.shotTitles)
+    || !source.title.trim() || !/^[a-f0-9]{64}$/i.test(source.workflow.sha256)
+    || !source.workflow.mediaUri.startsWith("/pictures/prodigal-son/director/")
+    || !Number.isSafeInteger(source.workflow.bytes) || source.workflow.bytes <= 0) return false;
+  const settings = replacement.settings;
+  if (!settings || ![settings.width, settings.height].every((value) => Number.isInteger(value) && value >= 0 && value <= 8192)
+    || ![settings.baseSteps, settings.refineSteps].every((value) => Number.isInteger(value) && value > 0 && value <= 10000)
+    || !settings.outputPrefix || /[\\:\x00]/.test(settings.outputPrefix)
+    || settings.outputPrefix.split("/").some((part) => !part || part === "." || part === "..")) return false;
   const ids = new Set(source.segments.map((segment) => segment.shotId));
-  if (!ids.size || ids.size !== source.segments.length || source.replacement!.shotTitles.length !== ids.size) return false;
+  if (!ids.size || ids.size !== source.segments.length || replacement.shotTitles.length !== ids.size
+    || replacement.shotTitles.some((title) => !title.trim())
+    || new Set(source.segments.map((segment) => segment.segmentId)).size !== ids.size) return false;
   if (picture.shots.some((shot) => ids.has(shot.id) && shot.sceneId !== source.sceneId)
     || picture.performance!.shots.some((shot) => (ids.has(shot.shotId) || ids.has(shot.canonicalShotId)) && shot.sceneId !== source.sceneId)) return false;
   let end = 0;
   for (const segment of source.segments) {
-    if (segment.startFrame !== end || !Number.isInteger(segment.durationFrames) || segment.durationFrames <= 0
+    if (!segment.shotId.trim() || !segment.segmentId.trim() || segment.startFrame !== end || !Number.isSafeInteger(segment.durationFrames) || segment.durationFrames <= 0
       || segment.durationSeconds !== segment.durationFrames / source.frameRate || !segment.prompt.trim()
       || !/^[a-f0-9]{64}$/i.test(segment.startImage.sha256) || !segment.startImage.mediaUri.startsWith("/pictures/prodigal-son/director/")) return false;
     end += segment.durationFrames;
+    if (!Number.isSafeInteger(end)) return false;
   }
   return end / source.frameRate === source.generationDurationSeconds;
 }
@@ -103,11 +135,17 @@ function replaceScene(picture: Picture, source: ProdigalDirectorScene, manifest:
     edges: [...previous.dependencyGraph.edges.filter((edge) => !affected(edge.from) && !affected(edge.to)), ...localGraph.edges] };
   const priorGates = picture.generateGates ?? emptyGenerateGates();
   const gates: GenerateGateWorkspace = { ...priorGates, pairs: priorGates.pairs.filter((pair) => !shotIds.has(pair.shotId)),
-    prompts: priorGates.prompts.filter((prompt) => !prompt.shotId || !shotIds.has(prompt.shotId)), iterations: priorGates.iterations.filter((iteration) => !shotIds.has(iteration.shotId)) };
+    prompts: [...priorGates.prompts], iterations: priorGates.iterations.map((iteration) => shotIds.has(iteration.shotId) && (iteration.canonical || iteration.status === "APPROVED")
+      ? { ...iteration, canonical: false, status: "STALE" as const } : iteration) };
+  const iterationIds = new Map(source.segments.map((segment) => {
+    const base = `${manifest.packageId}:${segment.shotId}:start:${segment.startImage.sha256}`;
+    // A later revision may reuse identical media without replacing the prior review record.
+    return [segment.shotId, priorGates.iterations.some((item) => item.id === base) ? `${base}:${replacement.revision}` : base];
+  }));
   for (const segment of source.segments) {
     const firstPromptId = `${manifest.packageId}:${replacement.revision}:${segment.shotId}:first:prompt`;
     const videoPromptId = `${manifest.packageId}:${replacement.revision}:${segment.shotId}:video`;
-    const iterationId = `${manifest.packageId}:${segment.shotId}:start:${segment.startImage.sha256}`;
+    const iterationId = iterationIds.get(segment.shotId)!;
     const firstPrompt = `Use the supplied starting image for ${segment.shotId}.`;
     gates.pairs.push({ shotId: segment.shotId, firstPrompt, lastPrompt: "", firstPromptVersionId: firstPromptId, lastPromptVersionId: null,
       firstApprovedId: null, lastApprovedId: null, status: "NEEDS_REVIEW", staleReasons: [], assetRefIds: [], waived: false });
@@ -117,7 +155,7 @@ function replaceScene(picture: Picture, source: ProdigalDirectorScene, manifest:
       mediaUri: segment.startImage.mediaUri, mediaSha256: segment.startImage.sha256, status: "NEEDS_REVIEW", canonical: false, createdAt: now, failClosedReason: null });
   }
   const next: Picture = {
-    ...picture, shots, performance, generateGates: gates,
+    ...picture, shots, performance, generateGates: gates, updatedAt: now,
     scenes: picture.scenes.map((scene) => scene.id === sceneId ? { ...scene, slugline: sceneSlugline(source), summary: source.title, emotionalBeat: source.title, durationSec: source.storyDurationSeconds } : scene),
     directorSceneRevisions: { ...picture.directorSceneRevisions, [sceneId]: replacement.revision },
     directorScenes: { ...picture.directorScenes, [sceneId]: {
@@ -126,19 +164,20 @@ function replaceScene(picture: Picture, source: ProdigalDirectorScene, manifest:
       refineSteps: replacement.settings.refineSteps, outputPrefix: replacement.settings.outputPrefix,
       segments: source.segments.map((segment) => ({ segmentId: segment.segmentId, shotId: segment.shotId, type: "image" as const,
         durationFrames: segment.durationFrames, prompt: segment.prompt, imageBinding: {
-          iterationId: `${manifest.packageId}:${segment.shotId}:start:${segment.startImage.sha256}`,
+          iterationId: iterationIds.get(segment.shotId)!,
           mediaUri: segment.startImage.mediaUri, sha256: segment.startImage.sha256,
         } })),
     } },
     ...(picture.directorWorkflowDrafts ? { directorWorkflowDrafts: withoutKeys(picture.directorWorkflowDrafts, new Set([sceneId])) } : {}),
+    ...(picture.emotionPerformance?.applied[sceneId] ? { emotionPerformance: undoPerformanceDraft(picture, sceneId, now) } : {}),
     ...(picture.frameBundle ? { frameBundle: { ...picture.frameBundle,
       importedShotIds: [...new Set([...picture.frameBundle.importedShotIds, ...source.segments.map((segment) => segment.shotId)])],
       skippedShotIds: picture.frameBundle.skippedShotIds.filter((id) => !shotIds.has(id)) } } : {}),
     directorBundle: { packageId: manifest.packageId, revision: picture.directorBundle?.revision ?? "",
       importedShotIds: [...new Set([...(picture.directorBundle?.importedShotIds ?? []).filter((id) => !shotIds.has(id)), ...source.segments.map((segment) => segment.shotId)])],
       skippedShotIds: (picture.directorBundle?.skippedShotIds ?? []).filter((id) => !shotIds.has(id)),
-      importedPromptIds: [...new Set([...(picture.directorBundle?.importedPromptIds ?? []), ...gates.prompts.filter((prompt) => prompt.kind === "video" && prompt.shotId && shotIds.has(prompt.shotId)).map((prompt) => prompt.id)])],
-      importedIterationIds: [...new Set([...(picture.directorBundle?.importedIterationIds ?? []), ...gates.iterations.filter((iteration) => shotIds.has(iteration.shotId)).map((iteration) => iteration.id)])] },
+      importedPromptIds: [...new Set([...(picture.directorBundle?.importedPromptIds ?? []), ...source.segments.map((segment) => `${manifest.packageId}:${replacement.revision}:${segment.shotId}:video`)])],
+      importedIterationIds: [...new Set([...(picture.directorBundle?.importedIterationIds ?? []), ...iterationIds.values()])] },
     ...(picture.video ? { video: { ...picture.video, takes: picture.video.takes.map((take) => shotIds.has(take.shotId) && (take.canonical || take.status === "CANONICAL")
       ? { ...take, canonical: false, status: "NEEDS_REVIEW" as const, reviewReason: "This scene was replaced. Review this earlier take against the new shot before using it." } : take) } } : {}),
     ...(picture.cinematography ? { cinematography: { ...picture.cinematography, shotPlans: picture.cinematography.shotPlans.map((plan) => plan.sceneId === sceneId || shotIds.has(plan.shotId) ? { ...plan, status: "STALE" as const, approvedVersionId: null } : plan) } } : {}),

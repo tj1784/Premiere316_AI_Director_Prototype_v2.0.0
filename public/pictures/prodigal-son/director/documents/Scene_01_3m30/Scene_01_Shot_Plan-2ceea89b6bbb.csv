@@ -1,0 +1,17 @@
+Segment,Start,End,Seconds,Shot,Angle,Image,Speaker,Voice_reference,Source_segment
+1,00:00,00:15,15,Temple assembly,Wide architectural establishing view,prodigal_son/opening_rebuilt/01_Temple_Assembly.png,,,1
+2,00:15,00:25,10,The distracted young listener,Chest-up character detail,prodigal_son/opening_rebuilt/02_Youth_Temple.png,,,2
+3,00:25,00:37,12,The life outside,Waist-up side/front three-quarter gateway perspective,prodigal_son/opening_varied/S03_Exit_Perspective.png,,,new silent connective shot
+4,00:37,00:52,15,One coin toss,Waist-up three-quarter gateway view,prodigal_son/opening_rebuilt/03_Youth_Coin_Gateway.png,,,3
+5,00:52,01:04,12,Leaving the Temple,Waist-up rear tracking view,prodigal_son/opening_rebuilt/04_Youth_Leaves.png,,,4
+6,01:04,01:19,15,The hillside gathering,Wide seated assembly establishing view,prodigal_son/opening_rebuilt/05_Hillside_Assembly_Seated.png,,,5
+7,01:19,01:31,12,Welcome among the listeners,Medium seated ensemble,prodigal_son/opening_varied/S07_Welcome_Group.png,,,6
+8,01:31,01:43,12,Those who feel welcome,Medium audience ensemble,prodigal_son/opening_varied/S08_Audience_Group.png,,,new silent connective shot
+9,01:43,01:55,12,The critics at the perimeter,Medium-wide leaders establishing pair,prodigal_son/opening_varied/S09_Leaders_Establishing.png,,,new silent connective shot
+10,01:55,02:04,9,The Pharisee objects,"Two-face close-up, reserved for the accusation",prodigal_son/opening_rebuilt/06_Leaders_Close.png,PHARISEE,prodigal_son/voices/PHARISEE-reference.flac,7
+11,02:04,02:18,14,The scribe answers,Oblique waist-up two-shot,prodigal_son/opening_varied/S11_Scribe_Oblique.png,SCRIBE,prodigal_son/voices/SCRIBE-reference.flac,8
+12,02:18,02:30,12,Jesus hears the objection,Seated Jesus past partial leaders in foreground,prodigal_son/opening_varied/S12_Seated_Jesus_Past_Leaders.png,,,9
+13,02:30,02:40,10,The young listener attends,"Listener close-up, a single reaction beat",prodigal_son/opening_rebuilt/07_Youth_Listening.png,,,10
+14,02:40,02:54,14,Jesus rises once,Listener-height medium with a gentle upward follow,prodigal_son/opening_varied/S14_Seated_Jesus_Rise_Start.png,,,11
+15,02:54,03:08,14,The gathering waits,Wide audience reverse past Jesus’s shoulder,prodigal_son/opening_varied/S15_Audience_Reverse.png,,,21
+16,03:08,03:30,22,A certain man had two sons,Waist-up storyteller medium,prodigal_son/opening_varied/S16_Jesus_Storyteller_Medium.png,JESUS,voices/shared/JESUS.flac,22

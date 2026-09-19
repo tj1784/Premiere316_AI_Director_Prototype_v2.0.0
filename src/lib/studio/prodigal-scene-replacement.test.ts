@@ -2,11 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { makeProdigalSonPicture } from "./prodigal-son.ts";
 import { hydrateProdigalSonFrames } from "./prodigal-frames.ts";
-import { hydrateProdigalSceneReplacements } from "./prodigal-scene-replacement.ts";
+import { applyExplicitProdigalSceneReplacement, hydrateProdigalSceneReplacements } from "./prodigal-scene-replacement.ts";
 import { hydrateProdigalSonDirector } from "./prodigal-director.ts";
 import { PRODIGAL_SON_DIRECTOR } from "./bundled-pictures/prodigal-son/director.ts";
 import { directorPlanForScene, directorPlanImages } from "./director-scene-authoring.ts";
 import { parseScreenplayHierarchy } from "./screenplay-hierarchy.ts";
+import { isPerformanceDraftStale, performanceSourceKey, type PerformanceDraft } from "../emotion/integration.ts";
+import { seedCinematographyFromPicture } from "../cinematography.ts";
+import type { VideoTake } from "../production/video-types.ts";
 
 const sceneId = "PS-S01";
 const sourceScene = PRODIGAL_SON_DIRECTOR.scenes.find((scene) => scene.sceneId === sceneId)!;
@@ -74,17 +77,25 @@ test("other scenes and user data survive exactly except necessary global shot/be
   assert.ok(updated.performance!.dependencyGraph.edges.some((edge) => edge.reason === "User requirement"));
 });
 
-test("reused shot IDs lose former approvals and never inherit old media or queue readiness", () => {
+test("reused shot IDs lose former approvals while earlier media stays in review history", () => {
   const original = baseline();
-  const oldImageUris = original.generateGates!.iterations.filter((iteration) => iteration.shotId.startsWith("PS-S01-")).map((iteration) => iteration.mediaUri);
+  const oldIterations = original.generateGates!.iterations.filter((iteration) => iteration.shotId.startsWith("PS-S01-"));
+  const oldIds = new Set(oldIterations.map((iteration) => iteration.id));
   const updated = hydrateProdigalSceneReplacements(original);
   for (const pair of updated.generateGates!.pairs.filter((pair) => pair.shotId.startsWith("PS-S01-"))) {
     assert.equal(pair.firstApprovedId, null); assert.equal(pair.lastApprovedId, null); assert.equal(pair.waived, false);
   }
   for (const iteration of updated.generateGates!.iterations.filter((iteration) => iteration.shotId.startsWith("PS-S01-"))) {
-    assert.equal(iteration.canonical, false); assert.equal(iteration.status, "NEEDS_REVIEW");
-    assert.ok(!oldImageUris.includes(iteration.mediaUri));
+    assert.equal(iteration.canonical, false);
+    if (oldIds.has(iteration.id)) {
+      const previous = oldIterations.find((item) => item.id === iteration.id)!;
+      assert.equal(iteration.mediaUri, previous.mediaUri);
+      assert.equal(iteration.mediaSha256, previous.mediaSha256);
+      assert.equal(iteration.status, previous.canonical || previous.status === "APPROVED" ? "STALE" : previous.status);
+    } else assert.equal(iteration.status, "NEEDS_REVIEW");
   }
+  assert.ok(oldIterations.every((iteration) => updated.generateGates!.iterations.some((item) => item.id === iteration.id)));
+  assert.deepEqual(updated.generateGates!.prompts.slice(0, original.generateGates!.prompts.length), original.generateGates!.prompts);
   const oldBeat = original.performance!.shots[0].beatId;
   assert.ok(!updated.performance!.dependencyGraph.nodes.some((node) => node.kind === "beat" && node.id === oldBeat));
   assert.ok(updated.performance!.shots[0].version > original.performance!.shots[0].version);
@@ -128,4 +139,97 @@ test("fresh and saved import pipelines keep all 149 Director segments without ch
   assert.equal(updated.directorBundle!.importedShotIds.length, 149);
   assert.equal(updated.directorBundle!.skippedShotIds.length, 0);
   assert.equal(hydrateProdigalSceneReplacements(updated), updated);
+});
+
+function replacement210() {
+  const source = structuredClone(sourceScene);
+  source.replacement!.revision = "explicit-210-second-replacement";
+  source.replacement!.shotTitles = source.replacement!.shotTitles.slice(0, 16);
+  source.replacement!.screenplayMarkdown = "# Replacement opening\n\n## EXT. TEMPLE COURTYARD - DAY\n\nJesus sees the young listener.\n\nJESUS\n\nA certain man had two sons.\n";
+  source.storyDurationSeconds = source.generationDurationSeconds = 210;
+  let start = 0;
+  source.segments = source.segments.slice(0, 16).map((segment, index) => {
+    const durationFrames = index === 15 ? 360 : 312;
+    const next = { ...segment, startFrame: start, durationFrames, durationSeconds: durationFrames / 24 };
+    start += durationFrames;
+    return next;
+  });
+  return source;
+}
+
+test("explicit Scene 01 import updates the active version without weakening automatic hydration", () => {
+  const original = baseline(), source = replacement210();
+  const approved = original.screenplay.versions.find((version) => version.id === original.screenplay.approvedVersionId)!;
+  original.screenplay.versions.push({ ...approved, id: "active-approved-version" });
+  original.screenplay.approvedVersionId = "active-approved-version";
+  const snapshot = structuredClone(original);
+  assert.equal(hydrateProdigalSceneReplacements(original), original, "automatic version guard remains intact");
+  const updated = applyExplicitProdigalSceneReplacement(original, source, PRODIGAL_SON_DIRECTOR);
+  assert.deepEqual(original, snapshot);
+  assert.equal(updated.shots.filter((shot) => shot.sceneId === sceneId).length, 16);
+  assert.equal(updated.scenes[0].durationSec, 210);
+  assert.equal(updated.directorScenes![sceneId].segments.reduce((total, segment) => total + segment.durationFrames, 0), 5040);
+  assert.equal(updated.performance!.beats.filter((beat) => beat.sceneId === sceneId).length, 16);
+  assert.deepEqual(outside(updated.shots).map((shot) => ({ ...shot, index: shot.index - 12 })), outside(original.shots));
+  assert.deepEqual(updated.scenes.slice(1), original.scenes.slice(1));
+  assert.equal(suffix(updated.screenplay.workingFountain), suffix(original.screenplay.workingFountain));
+  assert.equal(updated.screenplay.approvedVersionId, "active-approved-version");
+  assert.equal(updated.screenplay.status, "READY_FOR_REVIEW");
+  assert.deepEqual(updated.screenplay.versions.slice(0, -1), original.screenplay.versions);
+  assert.equal(updated.characters, original.characters);
+  assert.equal(updated.characterVoiceDesigns, original.characterVoiceDesigns);
+  assert.equal(updated.production, original.production);
+  assert.equal(hydrateProdigalSceneReplacements(updated), updated);
+  updated.shots[0].i2vPrompt = "User edit after importing";
+  assert.equal(applyExplicitProdigalSceneReplacement(updated, source, PRODIGAL_SON_DIRECTOR), updated);
+});
+
+test("explicit replacement un-applies old Cueboard and preserves takes, frame history and camera approvals for review", () => {
+  const original = hydrateProdigalSceneReplacements(baseline()), source = replacement210();
+  const oldSource = performanceSourceKey(original, sceneId);
+  const draft = { id: "old-cueboard", sceneId, source: oldSource } as PerformanceDraft;
+  original.emotionPerformance = { schemaVersion: 1, drafts: [draft], applied: { [sceneId]: draft.id, "PS-S02": "later-cueboard" }, history: [{ sceneId, draftId: draft.id, at: 1 }] };
+  original.cinematography = seedCinematographyFromPicture(original, 1);
+  original.cinematography.shotPlans[0].status = "APPROVED";
+  original.cinematography.shotPlans[0].approvedVersionId = "old-camera-approval";
+  const oldTake = { id: "old-take", shotId: original.shots[0].id, canonical: true, status: "CANONICAL", mediaUri: "/earlier-scene1.mp4" } as VideoTake;
+  const laterTake = { ...oldTake, id: "later-take", shotId: original.shots.find((shot) => shot.sceneId === "PS-S02")!.id };
+  original.video = { schemaVersion: 1, takes: [oldTake, laterTake], jobs: [], schedulerSnapshot: null };
+  const updated = applyExplicitProdigalSceneReplacement(original, source, PRODIGAL_SON_DIRECTOR);
+  assert.equal(updated.emotionPerformance!.applied[sceneId], undefined);
+  assert.equal(updated.emotionPerformance!.applied["PS-S02"], "later-cueboard");
+  assert.equal(updated.emotionPerformance!.drafts, original.emotionPerformance.drafts);
+  assert.deepEqual(updated.emotionPerformance!.history, [...original.emotionPerformance.history, { sceneId, draftId: null, at: PRODIGAL_SON_DIRECTOR.createdAt }]);
+  assert.equal(isPerformanceDraftStale(updated, draft), true, "changed scene shots/beats invalidate its source hash without falsifying screenplay approval");
+  assert.equal(updated.video!.takes[0].mediaUri, oldTake.mediaUri);
+  assert.equal(updated.video!.takes[0].canonical, false);
+  assert.equal(updated.video!.takes[0].status, "NEEDS_REVIEW");
+  assert.equal(updated.video!.takes[1], laterTake);
+  assert.equal(updated.cinematography!.shotPlans[0].status, "STALE");
+  assert.equal(updated.cinematography!.shotPlans[0].approvedVersionId, null);
+  assert.deepEqual(outside(updated.cinematography!.shotPlans), outside(original.cinematography.shotPlans));
+  assert.equal(updated.cinematography!.approvals, original.cinematography.approvals);
+  assert.equal(new Set(updated.generateGates!.iterations.map((item) => item.id)).size, updated.generateGates!.iterations.length, "reused media does not collide with the earlier iteration ID");
+  assert.deepEqual(updated.generateGates!.prompts.slice(0, original.generateGates!.prompts.length), original.generateGates!.prompts);
+  assert.equal(updated.generateGates!.iterations.length, original.generateGates!.iterations.length + 16);
+  const activeIds = new Set(source.segments.map((segment) => segment.shotId));
+  assert.ok(updated.generateGates!.pairs.filter((pair) => pair.shotId.startsWith("PS-S01-")).every((pair) => activeIds.has(pair.shotId) && pair.firstApprovedId === null));
+  assert.ok(!updated.shots.some((shot) => shot.id === "PS-S01-SH022"));
+  assert.ok(updated.generateGates!.iterations.some((item) => item.shotId === "PS-S01-SH022"), "removed shot's earlier frame survives as history");
+});
+
+test("explicit replacement fails closed on wrong targets, conflicting IDs and invalid source structure", () => {
+  const original = baseline();
+  assert.throws(() => applyExplicitProdigalSceneReplacement({ ...original, id: "another-picture" }, replacement210(), PRODIGAL_SON_DIRECTOR), /matching active/);
+  assert.throws(() => applyExplicitProdigalSceneReplacement(original, { ...replacement210(), sceneId: "PS-S02" }, PRODIGAL_SON_DIRECTOR), /Scene 01/);
+  const bad = replacement210();
+  bad.segments[1].startFrame += 1;
+  assert.throws(() => applyExplicitProdigalSceneReplacement(original, bad, PRODIGAL_SON_DIRECTOR), /invalid/);
+  const collision = replacement210();
+  collision.segments[0].shotId = original.shots.find((shot) => shot.sceneId === "PS-S02")!.id;
+  assert.throws(() => applyExplicitProdigalSceneReplacement(original, collision, PRODIGAL_SON_DIRECTOR), /conflicting/);
+  const duplicates = replacement210();
+  duplicates.segments[1].segmentId = duplicates.segments[0].segmentId;
+  assert.throws(() => applyExplicitProdigalSceneReplacement(original, duplicates, PRODIGAL_SON_DIRECTOR), /invalid/);
+  assert.throws(() => applyExplicitProdigalSceneReplacement({ ...original, screenplay: { ...original.screenplay, workingFountain: "Scene removed" } }, replacement210(), PRODIGAL_SON_DIRECTOR), /exactly once/);
 });

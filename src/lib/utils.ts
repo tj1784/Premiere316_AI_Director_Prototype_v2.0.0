@@ -9,6 +9,12 @@ export function uid(prefix = "id") {
   return `${prefix}_${Math.random().toString(36).slice(2, 8)}${Date.now().toString(36).slice(-4)}`;
 }
 
+export function formatRuntimeMinutes(minutes: number) {
+  const seconds = Math.max(0, Math.round(minutes * 60));
+  const remainder = seconds % 60;
+  return `${Math.floor(seconds / 60)} min${remainder ? ` ${remainder} sec` : ""}`;
+}
+
 export function formatTimecode(totalSec: number, fps = 24) {
   const clamped = Math.max(0, totalSec);
   const h = Math.floor(clamped / 3600);

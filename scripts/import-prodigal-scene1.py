@@ -28,6 +28,14 @@ DOCUMENT_NAMES = (
     "README.txt", "Shot_Timing.csv", "Complete_Opening_Screenplay.md",
     "Image_Generation_Prompts.md", "Validation.txt", "Image_Index.html",
 )
+VARIED_WORKFLOW_NAME = "Scene_01_Temple_and_the_Gathering_Varied_Angles.json"
+VARIED_DOCUMENT_NAMES = (
+    "APPLY_TO_PREMIERE316.md", "Image_Index.html", "Image_Manifest.json", "README_INSTALL.txt",
+    "Scene_01_Complete_Prompts.md", "Scene_01_Shot_Plan.csv", "Scene_01_Updated_Screenplay.md",
+    "Scene_01_Validation.json",
+)
+LEGACY_IMAGE_PATTERN = r"prodigal_son/opening_rebuilt/0[1-9]_[A-Za-z0-9_]+\.png"
+VARIED_IMAGE_PATTERN = r"prodigal_son/(?:opening_rebuilt/0[1-7]_[A-Za-z0-9_]+|opening_varied/S(?:03|07|08|09|11|12|14|15|16)_[A-Za-z0-9_]+)\.png"
 SCENE_ID = "PS-S01"
 
 
@@ -42,11 +50,11 @@ def safe_entry(name: str) -> None:
         raise ValueError(f"Unsafe archive path: {name!r}")
 
 
-def png_size(data: bytes) -> tuple[int, int]:
+def png_size(data: bytes, expected: tuple[int, int] = (1920, 800)) -> tuple[int, int]:
     if len(data) < 33 or data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
         raise ValueError("Starting image is not a PNG")
     size = struct.unpack(">II", data[16:24])
-    if size != (1920, 800):
+    if size != expected:
         raise ValueError(f"Unexpected starting-image size: {size}")
     return size
 
@@ -75,17 +83,32 @@ def read_archive(archive: Path) -> tuple[str, dict[str, bytes]]:
                 raise ValueError("Oversized or encrypted archive entry")
             if entry.file_size > max(1, entry.compress_size) * 250:
                 raise ValueError("Archive compression ratio exceeds the package limit")
-            if not (name == WORKFLOW_NAME or name in DOCUMENT_NAMES or
-                    re.fullmatch(r"input/prodigal_son/opening_rebuilt/0[1-9]_[A-Za-z0-9_]+\.png", name)):
+            if not (name in (WORKFLOW_NAME, VARIED_WORKFLOW_NAME, *DOCUMENT_NAMES, *VARIED_DOCUMENT_NAMES) or
+                    re.fullmatch(f"input/{LEGACY_IMAGE_PATTERN}", name) or
+                    re.fullmatch(f"input/{VARIED_IMAGE_PATTERN}", name)):
                 raise ValueError(f"Unrecognized package file: {name}")
             files[name] = bundle.read(entry)
-    if not {WORKFLOW_NAME, *DOCUMENT_NAMES}.issubset(files):
+    if WORKFLOW_NAME in files and VARIED_WORKFLOW_NAME in files:
+        raise ValueError("The archive mixes two Scene 01 package profiles")
+    workflow_name = VARIED_WORKFLOW_NAME if VARIED_WORKFLOW_NAME in files else WORKFLOW_NAME
+    document_names = VARIED_DOCUMENT_NAMES if workflow_name == VARIED_WORKFLOW_NAME else DOCUMENT_NAMES
+    if not {workflow_name, *document_names}.issubset(files):
         raise ValueError("The rebuilt scene archive is missing required source documents")
     return digest(archive_bytes), files
 
 
 def validate_scene(files: dict[str, bytes], archive_hash: str) -> tuple[dict, dict[str, bytes], list[dict]]:
     outputs: dict[str, bytes] = {}
+    varied = VARIED_WORKFLOW_NAME in files
+    if varied and WORKFLOW_NAME in files:
+        raise ValueError("The archive mixes two Scene 01 package profiles")
+    workflow_name = VARIED_WORKFLOW_NAME if varied else WORKFLOW_NAME
+    document_names = VARIED_DOCUMENT_NAMES if varied else DOCUMENT_NAMES
+    required_documents = {workflow_name, *document_names}
+    if not required_documents.issubset(files):
+        raise ValueError("The scene archive is missing required source documents")
+    shot_count, frame_count, seconds, image_count = (16, 5040, 210, 16) if varied else (22, 6720, 280, 9)
+    image_pattern = VARIED_IMAGE_PATTERN if varied else LEGACY_IMAGE_PATTERN
 
     def publish(relative: str, data: bytes) -> dict:
         checksum = digest(data)
@@ -94,7 +117,7 @@ def validate_scene(files: dict[str, bytes], archive_hash: str) -> tuple[dict, di
         outputs[name] = data
         return {"mediaUri": f"/pictures/prodigal-son/{name}", "sha256": checksum, "bytes": len(data)}
 
-    workflow = json.loads(files[WORKFLOW_NAME])
+    workflow = json.loads(files[workflow_name])
     nodes = [node for node in workflow["nodes"] if node["type"] == "LTXDirector"]
     if len(nodes) != 1:
         raise ValueError("The rebuilt scene must have exactly one Director node")
@@ -113,9 +136,10 @@ def validate_scene(files: dict[str, bytes], archive_hash: str) -> tuple[dict, di
     if props["frame_rate"] != 24 or timeline.get("normalStartFrame") != 0:
         raise ValueError("Expected a 24 fps scene beginning at frame zero")
     source_segments = timeline["segments"]
-    rows = list(csv.DictReader(io.StringIO(files["Shot_Timing.csv"].decode("utf-8-sig"))))
-    if len(rows) != 22 or len(source_segments) != 22:
-        raise ValueError("The rebuilt scene must contain 22 CSV shots and timeline segments")
+    csv_name = "Scene_01_Shot_Plan.csv" if varied else "Shot_Timing.csv"
+    rows = list(csv.DictReader(io.StringIO(files[csv_name].decode("utf-8-sig"), newline=None)))
+    if len(rows) != shot_count or len(source_segments) != shot_count:
+        raise ValueError(f"The scene must contain {shot_count} CSV shots and timeline segments")
     if props["local_prompts"] != " | ".join(segment["prompt"] for segment in source_segments):
         raise ValueError("Serialized local prompts differ from timeline prompts")
     if props["segment_lengths"] != ",".join(str(segment["length"]) for segment in source_segments):
@@ -138,28 +162,75 @@ def validate_scene(files: dict[str, bytes], archive_hash: str) -> tuple[dict, di
         if type(steps) is not int or steps < 1:
             raise ValueError(f"Invalid sampler steps: {stage_name}")
         stage_steps[stage_name] = steps
+        if varied and stage["widgets_values_named"].get("distilled_mode") is not False:
+            raise ValueError(f"The 3:30 package requires Dev mode: {stage_name}")
     settings = {"width": props["custom_width"], "height": props["custom_height"],
                 "baseSteps": stage_steps["Stage #1"], "refineSteps": stage_steps["Stage #2"],
                 "outputPrefix": videos[0]["widgets_values"]["filename_prefix"]}
     if any(type(settings[key]) is not int or not 0 <= settings[key] <= 8192 for key in ("width", "height")):
         raise ValueError("Invalid source resolution controls")
 
+    image_manifest = {}
+    if varied:
+        options = timeline.get("generationOptions", {})
+        if (options.get("distilled") is not False or options.get("tiledDecode") is not True
+                or options.get("unloadVae") is not False or stage_steps != {"Stage #1": 30, "Stage #2": 8}):
+            raise ValueError("The 3:30 package requires Dev 30/8, tiled decode on and unload VAE off")
+        references = timeline.get("motionSegments", [])
+        reference_paths = ["whatdreamscost/1a7cf183faa1-PS-CHR-JESUS.png", "whatdreamscost/87ed7075b0e7-PS-LOC-HILLSIDE.png"]
+        if (len(references) != 2 or timeline.get("icReferenceMode") is not True
+                or [item.get("videoFile") for item in references] != reference_paths
+                or any(item.get("inputIndex") != index or item.get("isStaticImage") is not True
+                       or item.get("start") != 0 or item.get("length") != 5040
+                       for index, item in enumerate(references))):
+            raise ValueError("The 3:30 package must retain its two full-scene IC identity references")
+        tiled_nodes = [item for item in workflow["nodes"] if "tiled_decode" in item.get("widgets_values_named", {})]
+        if len(tiled_nodes) != 1 or tiled_nodes[0]["widgets_values_named"]["tiled_decode"] is not True:
+            raise ValueError("The supplied decoder must use tiled decoding")
+        model_switches = [item for item in workflow["nodes"] if item.get("title") == "Dev / Distilled model"]
+        if len(model_switches) != 1 or model_switches[0].get("widgets_values_named", {}).get("switch") is not False:
+            raise ValueError("The supplied model switch must remain in Dev mode")
+        # Notes can contain stale explanatory text; execution widgets may not.
+        for container in [workflow, *workflow.get("definitions", {}).get("subgraphs", [])]:
+            for item in container["nodes"]:
+                if item.get("type") == "MarkdownNote" or not item.get("widgets_values_named"):
+                    continue
+                values, names = item.get("widgets_values"), item["widgets_values_named"]
+                if (isinstance(values, list) and list(names.values()) != values
+                        or isinstance(values, dict) and names != values):
+                    raise ValueError(f"Execution widget copies disagree: {item['id']}")
+        manifest = json.loads(files["Image_Manifest.json"])
+        images = manifest.get("images", [])
+        if (manifest.get("image_count") != 16 or manifest.get("new_image_count") != 9
+                or manifest.get("retained_image_count") != 7 or len(images) != 16):
+            raise ValueError("The 3:30 image manifest must identify seven retained and nine new images")
+        if len({item.get("path") for item in images}) != 16 or [item.get("segment") for item in images] != list(range(1, 17)):
+            raise ValueError("Image manifest paths and segment numbers must be unique and ordered")
+        image_manifest = {item["segment"]: item for item in images}
+        validation = json.loads(files["Scene_01_Validation.json"])
+        if any(validation.get(key) != expected for key, expected in {
+            "workflow_filename": workflow_name, "segments": 16, "duration_seconds": 210,
+            "frame_rate": 24, "duration_frames": 5040, "retained_dialogue_output_segments": [10, 11, 16],
+        }.items()):
+            raise ValueError("The validation document disagrees with the 3:30 scene profile")
+
     segments, titles, image_files, seen_ids = [], [], set(), set()
     end_frame = 0
     for number, (row, segment) in enumerate(zip(rows, source_segments), 1):
         shot_id = f"{SCENE_ID}-SH{number:03}"
-        if row["Shot"] != str(number) or not row["Title"].strip():
+        title = row["Shot"] if varied else row["Title"]
+        if row["Segment" if varied else "Shot"] != str(number) or not title.strip():
             raise ValueError(f"CSV shot order or title differs: {shot_id}")
         image_path = segment["imageFile"]
-        if not re.fullmatch(r"prodigal_son/opening_rebuilt/0[1-9]_[A-Za-z0-9_]+\.png", image_path):
+        if not re.fullmatch(image_pattern, image_path):
             raise ValueError(f"Unexpected image reference: {shot_id}")
-        if row["Reference image"] != PurePosixPath(image_path).name:
+        if (row["Image"] != image_path if varied else row["Reference image"] != PurePosixPath(image_path).name):
             raise ValueError(f"CSV and timeline image references disagree: {shot_id}")
         # imageB64 is an existing ComfyUI image URL, not embedded or remote data.
         image_url = urlsplit(segment["imageB64"])
         if image_url.scheme or image_url.netloc or image_url.path != "/api/view" or parse_qs(image_url.query) != {
             "filename": [PurePosixPath(image_path).name], "type": ["input"],
-            "subfolder": ["prodigal_son/opening_rebuilt"],
+            "subfolder": [str(PurePosixPath(image_path).parent)],
         }:
             raise ValueError(f"Image URL and image path disagree: {shot_id}")
         length = segment["length"]
@@ -167,7 +238,24 @@ def validate_scene(files: dict[str, bytes], archive_hash: str) -> tuple[dict, di
                 or segment.get("type") != "image" or segment.get("isEndFrame") is not False):
             raise ValueError(f"Invalid or noncontiguous segment timing: {shot_id}")
         expected = (Decimal(end_frame) / 24, Decimal(length) / 24, Decimal(end_frame + length) / 24)
-        actual = tuple(Decimal(row[key]) for key in ("Start seconds", "Duration seconds", "End seconds"))
+        if varied:
+            def timestamp(value: str) -> Decimal:
+                if not re.fullmatch(r"\d{2}:[0-5]\d", value):
+                    raise ValueError(f"Invalid CSV timestamp: {shot_id}")
+                minute, second = value.split(":")
+                return Decimal(minute) * 60 + Decimal(second)
+            actual = (timestamp(row["Start"]), Decimal(row["Seconds"]), timestamp(row["End"]))
+            expected_speaker, expected_voice = {
+                10: ("PHARISEE", "prodigal_son/voices/PHARISEE-reference.flac"),
+                11: ("SCRIBE", "prodigal_son/voices/SCRIBE-reference.flac"),
+                16: ("JESUS", "voices/shared/JESUS.flac"),
+            }.get(number, ("", ""))
+            if (row["Speaker"] != expected_speaker or row["Voice_reference"] != expected_voice
+                    or segment.get("speaker") != expected_speaker or segment.get("voiceReferenceFile") != expected_voice
+                    or segment.get("voiceReferenceEnabled") is not bool(expected_voice)):
+                raise ValueError(f"Voice identity differs from the supplied shot plan: {shot_id}")
+        else:
+            actual = tuple(Decimal(row[key]) for key in ("Start seconds", "Duration seconds", "End seconds"))
         if actual != expected:
             raise ValueError(f"CSV timing differs from the timeline: {shot_id}")
         segment_id = segment["id"]
@@ -179,30 +267,40 @@ def validate_scene(files: dict[str, bytes], archive_hash: str) -> tuple[dict, di
         if entry_name not in files:
             raise ValueError(f"Starting image is missing: {entry_name}")
         data = files[entry_name]
-        width, height = png_size(data)
+        expected_size = (1942, 809) if varied and "/opening_varied/" in image_path else (1920, 800)
+        width, height = png_size(data, expected_size)
+        if varied:
+            entry = image_manifest[number]
+            if any(entry.get(key) != value for key, value in {
+                "path": entry_name, "sha256": digest(data), "bytes": len(data), "width": width, "height": height,
+            }.items()):
+                raise ValueError(f"Image manifest differs from supplied image bytes: {shot_id}")
         image = publish(f"starting-images/{SCENE_ID}/{shot_id}_START.png", data)
         image.update(width=width, height=height)
         segments.append({"shotId": shot_id, "segmentId": segment_id, "startFrame": end_frame,
                          "durationFrames": length, "durationSeconds": length / 24, "prompt": segment["prompt"],
                          "sourceImagePath": image_path, "startImage": image})
-        titles.append(row["Title"])
+        titles.append(title)
         seen_ids.add(segment_id)
         image_files.add(entry_name)
         end_frame += length
-    if len(image_files) != 9 or image_files | {WORKFLOW_NAME, *DOCUMENT_NAMES} != files.keys():
-        raise ValueError("The archive must contain exactly the nine referenced images and source documents")
-    if end_frame != 6720 or timeline.get("normalDurationFrames") != end_frame:
-        raise ValueError("Expected the rebuilt 6,720-frame / 280-second opening")
+    if len(image_files) != image_count or image_files | required_documents != files.keys():
+        raise ValueError(f"The archive must contain exactly {image_count} referenced images and source documents")
+    if varied and len({item["startImage"]["sha256"] for item in segments}) != 16:
+        raise ValueError("The 3:30 package must contain 16 unique starting images")
+    if end_frame != frame_count or timeline.get("normalDurationFrames") != end_frame:
+        raise ValueError(f"Expected the {frame_count}-frame / {seconds}-second opening")
     expected_timing = {"start_frame": 0, "start_second": 0, "end_frame": end_frame,
-                       "duration_frames": end_frame, "end_second": 280, "duration_seconds": 280}
+                       "duration_frames": end_frame, "end_second": seconds, "duration_seconds": seconds}
     if any(props.get(key) != value for key, value in expected_timing.items()):
         raise ValueError("Serialized scene timing disagrees with the authored opening")
-    screenplay = files["Complete_Opening_Screenplay.md"].decode("utf-8")
-    documents = [dict(name=f"Scene 01 Rebuilt / {name}", **publish(f"documents/Scene_01_Rebuilt/{name}", files[name]))
-                 for name in DOCUMENT_NAMES]
+    screenplay = files["Scene_01_Updated_Screenplay.md" if varied else "Complete_Opening_Screenplay.md"].decode("utf-8")
+    label, document_folder = ("Scene 01 3m30", "Scene_01_3m30") if varied else ("Scene 01 Rebuilt", "Scene_01_Rebuilt")
+    documents = [dict(name=f"{label} / {name}", **publish(f"documents/{document_folder}/{name}", files[name]))
+                 for name in document_names]
     scene = {"sceneId": SCENE_ID, "title": "Temple and the Gathering",
-             "workflow": publish(f"workflows/{WORKFLOW_NAME}", files[WORKFLOW_NAME]), "frameRate": 24,
-             "storyDurationSeconds": 280.0, "generationDurationSeconds": 280.0,
+             "workflow": publish(f"workflows/{workflow_name}", files[workflow_name]), "frameRate": 24,
+             "storyDurationSeconds": float(seconds), "generationDurationSeconds": float(seconds),
              "globalPrompt": global_prompt, "segments": segments,
              "replacement": {"revision": archive_hash, "screenplayMarkdown": screenplay, "shotTitles": titles,
                              "settings": settings}}
@@ -268,8 +366,9 @@ def import_package(archive: Path, root: Path = ROOT) -> dict:
         manifest_path.write_bytes(serialized.encode("utf-8"))
         generated_path.write_bytes(generated.encode("utf-8"))
     return {"scene": SCENE_ID, "title": scene["title"], "sceneSegments": len(scene["segments"]),
-            "sceneFrames": 6720, "sceneSeconds": 280, "uniqueStartingImages": 9,
-            "publishedShotImages": 22, "otherScenesPreserved": 21,
+            "sceneFrames": sum(item["durationFrames"] for item in scene["segments"]), "sceneSeconds": scene["generationDurationSeconds"],
+            "uniqueStartingImages": len({item["startImage"]["sha256"] for item in scene["segments"]}),
+            "publishedShotImages": len(scene["segments"]), "otherScenesPreserved": len(manifest["scenes"]) - 1,
             "storyShots": manifest["storyShotCount"], "generationSegments": manifest["generationSegmentCount"],
             "storySeconds": manifest["storyDurationSeconds"], "generationSeconds": manifest["generationDurationSeconds"],
             "archiveSha256": archive_hash, "workflowSha256": scene["workflow"]["sha256"],
