@@ -30,6 +30,10 @@ Retain a rule register with `rule_id`, `revision`, `scope`, `status`, `supersede
 
 The user's first-frame-only scene-generation instruction remains effective; the addendum's mode-dependent LAST_FRAME type does not require a last frame. This adoption does not regenerate completed scenes, migrate project records, or claim deployed application validation. Resolve project registry backfills and reference packets from actual evidence when implementing the contracts.
 
+### Global render descriptions
+
+[Global Prompt Patch revision 1.0](Production_Bible_Global_Prompt_Patch.md) extends the adopted global production patch. Deliver a separately identified global render description, local prompts and execution/reference notes. Shared text contains only applicable audiovisual qualities; timeline settings, changing cast/state, plot, scoped score and authoring instructions remain in their own records. Inspect actual backend global-field behavior and review every affected combined prompt. Preserve local acting depth and camera dynamics. See the [rule register](RULE_REGISTER.md).
+
 ### What changes in R4
 
 | Rule ID | Revised decision | Conflict resolved |

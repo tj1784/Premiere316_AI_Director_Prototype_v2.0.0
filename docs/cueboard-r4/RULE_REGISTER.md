@@ -31,3 +31,22 @@
 Contracts `CONTRACT-GPB-001` (shot reference packet) and `CONTRACT-GPB-002` (adoption and migration) are adopted specifications. Their example IDs are placeholders, not executable project bindings. `SOURCE-GPB-001` records provenance.
 
 Source SHA-256: `9f5c8c4a7a3067b98419d1604f2ff24a6a3c9acb30441d8cb5a7f7b9b0c7cc08`.
+
+## BIBLE-PATCH-GLOBAL-PROMPT-001
+
+Revision 1.0; supplied research date 2026-09-20. Adopted documentation for future prompt packages and requested revisions. Extends BIBLE-PATCH-GLOBAL-001. Source: [Production_Bible_Global_Prompt_Patch.md](Production_Bible_Global_Prompt_Patch.md). Supersedes treating continuity notes or a scheduling summary as a global render description. Active user instructions retain precedence. Registry migration and application enforcement are separate work.
+
+| Rule ID | Revision | Status | Decision |
+|---|---|---|---|
+| RULE-GP-001 | 1.0 | Adopted documentation | Define what global means |
+| RULE-GP-002 | 1.0 | Adopted documentation | Develop the global description from approved sources |
+| RULE-GP-003 | 1.0 | Adopted documentation | Keep the shared layer focused |
+| RULE-GP-004 | 1.0 | Adopted documentation | Preserve performance depth in local prompts |
+| RULE-GP-005 | 1.0 | Adopted documentation | Preserve camera dynamics locally |
+| RULE-GP-006 | 1.0 | Adopted documentation | Resolve layers before serialization |
+| RULE-GP-007 | 1.0 | Adopted documentation | Use model-specific formats |
+| RULE-GP-008 | 1.0 | Adopted documentation | Mandatory delivery and adoption |
+
+CONTRACT-GP-001, TEMPLATE-GP-001 and CHECK-GP-001 are adopted specifications. Vendor evidence is retained as supplied, not independently re-researched in this change.
+
+Source SHA-256: `38b824562ae939722387e1ea72a304a01a9376bdf7c70a247a4f9a046b162c6f`.

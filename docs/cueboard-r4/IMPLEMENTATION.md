@@ -58,3 +58,7 @@ Run `node --experimental-strip-types --test src/lib/emotion/*.test.ts` plus the 
 ## Global production patch adoption
 
 Adopted [BIBLE-PATCH-GLOBAL-001 revision 1.0](Production_Bible_Global_Patch.md) verbatim and linked its [rule register](RULE_REGISTER.md) from the master. The supplied source date is retained. This commit also includes the earlier user-requested first-frame-only bible amendment. No project registry migration, application validation, prompt rewrite or media regeneration is claimed. The local HTML bible includes the same addendum.
+
+## Global prompt patch and Scene 18 correction
+
+Adopted BIBLE-PATCH-GLOBAL-PROMPT-001 revision 1.0. Scene 18 now has an explicitly authored shared render description grounded in its eight supplied images and existing live-action treatment. All eight local prompts, references, settings and Auto duration flags are preserved. The delivery includes independent-shot text previews and the whole-timeline relay text reconstructed from installed source. These are payload previews, not a submitted generation. No project database migration or generated-video review is claimed.
