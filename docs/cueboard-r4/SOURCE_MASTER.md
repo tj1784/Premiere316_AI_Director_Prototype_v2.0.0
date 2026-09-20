@@ -24,6 +24,12 @@ Apply the user's active instructions and the project's approved screenplay and s
 
 Retain a rule register with `rule_id`, `revision`, `scope`, `status`, `supersedes`, and a short rationale. Never resolve a conflict merely by concatenating both instructions into the model prompt. Record the effective rule and explain withheld controls.
 
+### Adopted global production patch
+
+[BIBLE-PATCH-GLOBAL-001, revision 1.0](Production_Bible_Global_Patch.md) is the operational addendum for future work and requested revisions across projects adopting this bible. The [addendum rule register](RULE_REGISTER.md) retains all 13 rule IDs, both contracts, source provenance and adoption status. It governs reference retrieval, character preparation, acting, camera coverage, geography, continuity, exact speech and review.
+
+The user's first-frame-only scene-generation instruction remains effective; the addendum's mode-dependent LAST_FRAME type does not require a last frame. This adoption does not regenerate completed scenes, migrate project records, or claim deployed application validation. Resolve project registry backfills and reference packets from actual evidence when implementing the contracts.
+
 ### What changes in R4
 
 | Rule ID | Revised decision | Conflict resolved |
@@ -55,7 +61,7 @@ Develop one cohesive movie. A scene, line, shot and generated clip are related p
 | Phase | Develop and review | Exit condition |
 |---|---|---|
 | A · Movie Script | Premise, moral question, character roles, causal scenes, exact dialogue, silent beats, camera plan, clip table, performance, image requirements, sound and score plan, engine prompt drafts. | The approved story and selected shot/clip plan contain the information needed for the chosen generation path. |
-| B · Assets | Character and location identity, scene first/last frames where needed, props, wardrobe states, approved voice identity references. | Required references resolve to the correct identities and revisions; review is recorded. |
+| B · Assets | Character and location identity, one approved first frame for scene generation, props, wardrobe states, approved voice identity references. | Required references resolve to the correct identities and revisions; review is recorded. |
 | C · Movie | Validate, compile, generate, review takes, continue dependent clips, assemble, score and export. | Outputs pass the applicable speech, picture, continuity, performance and technical review. |
 
 A generation failure can return work to an earlier phase. It must not silently rewrite an approved story or substitute an actor, voice or image. Required gates remain scoped to the actual workflow and existing approval policy.
@@ -76,12 +82,12 @@ Maintain stable references among scene, character, location, costume state, prop
 | Time | Editorial duration plus actual engine-valid duration, frame count and continuation policy. |
 | Composition | Approved shot size, camera direction, lens/focus intent and subject positions. |
 | Performance | Applied Cueboard version and continuity link. |
-| References | Required identity assets, approved iterations, first/last-frame bindings or predecessor dependency. |
+| References | Required identity assets, approved iterations and the approved scene first-frame binding. No last-frame binding is required. |
 | Audio | Native dialogue, allowed authored sounds, ambience and score choice. |
 | Engine | Selected adapter/mode, workflow revision and preserved generation settings. |
 | Review | Current readiness, unresolved warnings, take status and the next required decision. |
 
-Do not create a new still for every continuation automatically. `PREV_LAST` waits for the preceding successful output and validates that output before the dependent clip can run. A reusable character plate is not automatically a first frame.
+Scene generation requires one approved first frame only. Do not require a last-frame image, last-frame prompt, first/last-frame pair, or last-frame approval. Missing last frames must not block scene generation. Preserve authored continuity in the scene prompt; a reusable character plate is not automatically a scene first frame.
 
 <!-- chapter: story | Story & character | 03 / THE HUMAN CAUSE -->
 ## Every visible choice begins somewhere.

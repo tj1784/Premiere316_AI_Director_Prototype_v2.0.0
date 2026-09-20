@@ -6,6 +6,10 @@ Revision: `2026-09-19-R4`. The HTML/master and companion implementation prompt a
 
 ## Contract audit and changes
 
+### User amendment: scene first frame only (2026-09-19)
+
+Scene generation requires one approved first frame only. Last-frame images, prompts, pairs and approval are not required and must not block scene generation. This amendment supersedes conflicting frame requirements in the original binder and earlier implementation notes. The production master and the Downloads HTML bible are updated together. This is a documentation change; it does not claim that all application generation gates have been changed.
+
 The existing catalog is complete: 10 families, 57 subfamilies, 81 states, 162 variants, seven state levels and seven modifiers per variant, and 32 baseline regions. The R4 regression audits every record. No catalog, identity, screenplay, reference or project-content migration was needed.
 
 The existing schema already separates intensity (integer 1–7), display allowance (0–1), regulation, displayed state, arousal and regional vocal loudness. The compiler now honors an explicitly displayed selection outside masked/performed regulation too. Automatically selected volume/extreme-action options are withheld for explicit regional authoring; no intensity increase grants speech, sounds, tears, contact or violent behavior. Detailed catalog options remain intact. This prose filter is conservative editorial assistance, not a proof that a generative model will obey every physical constraint.
@@ -50,3 +54,7 @@ No existing numeric Tx/Ty/Tz serialized adapter was found in the Cueboard/Direct
 ## Verification
 
 Run `node --experimental-strip-types --test src/lib/emotion/*.test.ts` plus the listed reference, persistence, performance and desktop joint/preload suites, `npm run test:authoring` (includes Director), `npm run typecheck`, and `npm run build`. Current-run results and browser artifacts are recorded in `VERIFICATION.md`. Source-file hashes in `UPSTREAM.json` retain their imported provenance; local R4 changes are explicitly recorded separately.
+
+## Global production patch adoption
+
+Adopted [BIBLE-PATCH-GLOBAL-001 revision 1.0](Production_Bible_Global_Patch.md) verbatim and linked its [rule register](RULE_REGISTER.md) from the master. The supplied source date is retained. This commit also includes the earlier user-requested first-frame-only bible amendment. No project registry migration, application validation, prompt rewrite or media regeneration is claimed. The local HTML bible includes the same addendum.
