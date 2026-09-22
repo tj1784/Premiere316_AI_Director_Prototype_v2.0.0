@@ -1,3 +1,7 @@
+import { PromptPayloadPreview } from "./prompt-payload-preview";
+import { EditorialClipEditor } from "./editorial-clip-editor";
+import { ImageIterationReview } from "./image-iteration-review";
+import { useWorkspaceDraft } from "./use-workspace-draft";
 import { EmotionPerformancePanel } from "@/components/performance/emotion-performance-panel";
 import { storyDoctorRuns } from "@/lib/studio/story-doctor-runs";
 import { exactLocalWriterBlock } from "@/lib/studio/exact-local-writer";
@@ -180,7 +184,10 @@ import { canonicalShotsToLegacy, migratePicturePerformance } from "@/lib/perform
 import { KeyframeImages } from "./keyframe-images";
 import { approveKeyframeIteration } from "@/lib/production/generate-gates";
 import { HERMES_MODEL_ID, hydrateProductionRouting } from "@/lib/studio/production-profiles";
-import { bibleAuthoringContext, screenplaySourceContextFingerprint } from "@/lib/studio/movie-bible";
+import {
+  bibleAuthoringContext,
+  screenplaySourceContextFingerprint,
+} from "@/lib/studio/movie-bible";
 
 export function StageView() {
   const stage = useStage();
@@ -708,55 +715,75 @@ function ResearchStage({ picture }: { picture: Picture }) {
   const replaceActive = useStudio((state) => state.replaceActive);
   const [building, setBuilding] = useState(false);
   const bible = hydratePictureResearch(picture.research, picture.intake);
-  const researchProfile = hydrateProductionRouting(picture.productionRouting, { legacyLocalSelection: Boolean(picture.screenplay.pinnedWriterServedId || picture.screenplay.selectedModelId) });
-  const researchBinding = researchProfile.bindings.find(binding => binding.role === "architect");
-  const llamaAvailable = Boolean(researchBinding?.callableModelId && ["installed", "loaded"].includes(researchBinding.status));
+  const researchProfile = hydrateProductionRouting(picture.productionRouting, {
+    legacyLocalSelection: Boolean(
+      picture.screenplay.pinnedWriterServedId || picture.screenplay.selectedModelId,
+    ),
+  });
+  const researchBinding = researchProfile.bindings.find((binding) => binding.role === "architect");
+  const llamaAvailable = Boolean(
+    researchBinding?.callableModelId && ["installed", "loaded"].includes(researchBinding.status),
+  );
   const scan = useCallback(async () => {
-    toast.info("Refresh availability in the production profile controls above. No alternate model is used.");
+    toast.info(
+      "Refresh availability in the production profile controls above. No alternate model is used.",
+    );
   }, []);
   return (
-    <div className="min-w-0"><details className="border-b border-border p-3"><summary>Research production profile · {researchBinding?.label}</summary><ProductionProfileControls picture={picture} disabled={building} /></details>
-    <ResearchWorkspace
-      title={picture.title}
-      bible={bible}
-      llamaAvailable={llamaAvailable}
-      characters={picture.characters}
-      locations={picture.locations}
-      building={building}
-      onRescan={() => void scan()}
-      onChange={(research) => patchActive({ research })}
-      onBuildDraft={async () => {
-        setBuilding(true);
-        try {
-          let expected = screenplaySourceContextFingerprint(picture);
-          const saveCurrent = (next: Picture) => {
-            const current = useStudio.getState().pictures.find(item => item.id === picture.id);
-            if (!current || screenplaySourceContextFingerprint(current) !== expected) throw new Error("Research sources or profile changed during generation. Late output was not applied.");
-            replaceActive(next);
-            expected = screenplaySourceContextFingerprint(next);
-          };
-          const result = await executeResearchDraftOnServer(picture, saveCurrent);
-          saveCurrent(result.picture);
-          if (!result.providerCalled) {
-            toast.error(
-              result.flow.steps.find((step) => step.status === "failed")?.message ??
-                CONFIGURED_MODEL_UNAVAILABLE,
-            );
-            return;
+    <div className="min-w-0">
+      <details className="border-b border-border p-3">
+        <summary>Research production profile · {researchBinding?.label}</summary>
+        <ProductionProfileControls picture={picture} disabled={building} />
+      </details>
+      <ResearchWorkspace
+        title={picture.title}
+        bible={bible}
+        llamaAvailable={llamaAvailable}
+        characters={picture.characters}
+        locations={picture.locations}
+        building={building}
+        onRescan={() => void scan()}
+        onChange={(research) => patchActive({ research })}
+        onBuildDraft={async () => {
+          setBuilding(true);
+          try {
+            let expected = screenplaySourceContextFingerprint(picture);
+            const saveCurrent = (next: Picture) => {
+              const current = useStudio.getState().pictures.find((item) => item.id === picture.id);
+              if (!current || screenplaySourceContextFingerprint(current) !== expected)
+                throw new Error(
+                  "Research sources or profile changed during generation. Late output was not applied.",
+                );
+              replaceActive(next);
+              expected = screenplaySourceContextFingerprint(next);
+            };
+            const result = await executeResearchDraftOnServer(picture, saveCurrent);
+            saveCurrent(result.picture);
+            if (!result.providerCalled) {
+              toast.error(
+                result.flow.steps.find((step) => step.status === "failed")?.message ??
+                  CONFIGURED_MODEL_UNAVAILABLE,
+              );
+              return;
+            }
+            toast.success("Research Bible generated.");
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : CONFIGURED_MODEL_UNAVAILABLE);
+          } finally {
+            setBuilding(false);
           }
-          toast.success("Research Bible generated.");
-        } catch (error) {
-          toast.error(error instanceof Error ? error.message : CONFIGURED_MODEL_UNAVAILABLE);
-        } finally {
-          setBuilding(false);
-        }
-      }}
-    /></div>
+        }}
+      />
+    </div>
   );
 }
 
 function ScreenplayStage({ picture }: { picture: Picture }) {
-  const profile = hydrateProductionRouting(picture.productionRouting, {legacyLocalSelection:Boolean(picture.screenplay.pinnedWriterServedId || picture.screenplay.selectedModelId)});
+  const profile = hydrateProductionRouting(picture.productionRouting, {
+    legacyLocalSelection: Boolean(
+      picture.screenplay.pinnedWriterServedId || picture.screenplay.selectedModelId,
+    ),
+  });
   const patchActive = useStudio((state) => state.patchActive);
   const [models, setModels] = useState<ScreenplayModelRef[]>([]);
   const [provider, setProvider] = useState<LocalLLMProviderDiscovery | null>(null);
@@ -769,8 +796,14 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
 
   const persistScreenplay = useCallback(
     (screenplay: Picture["screenplay"]) => {
-      const state=useStudio.getState(), current=state.pictures.find(item=>item.id===picture.id);
-      if (current) state.replaceActive({...current,screenplay,screenplayFountain:screenplay.workingFountain});
+      const state = useStudio.getState(),
+        current = state.pictures.find((item) => item.id === picture.id);
+      if (current)
+        state.replaceActive({
+          ...current,
+          screenplay,
+          screenplayFountain: screenplay.workingFountain,
+        });
     },
     [picture.id],
   );
@@ -819,12 +852,23 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
           );
           return;
         }
-        const current=useStudio.getState().pictures.find(item=>item.id===picture.id);
-        if(snapshot.sourceContextFingerprint && (!current || screenplaySourceContextFingerprint(current)!==snapshot.sourceContextFingerprint)) {
+        const current = useStudio.getState().pictures.find((item) => item.id === picture.id);
+        if (
+          snapshot.sourceContextFingerprint &&
+          (!current ||
+            screenplaySourceContextFingerprint(current) !== snapshot.sourceContextFingerprint)
+        ) {
           void stopScreenplayJob(jobId);
           setJobId(null);
-          toast.error("Screenplay sources or profile changed. The obsolete response was not applied; start a revision from current sources.");
-          if(current) persistScreenplay({...current.screenplay,status:current.screenplay.approvedVersionId ? "APPROVED" : "READY_FOR_REVIEW",generation:null});
+          toast.error(
+            "Screenplay sources or profile changed. The obsolete response was not applied; start a revision from current sources.",
+          );
+          if (current)
+            persistScreenplay({
+              ...current.screenplay,
+              status: current.screenplay.approvedVersionId ? "APPROVED" : "READY_FOR_REVIEW",
+              generation: null,
+            });
           return;
         }
         setJob(snapshot);
@@ -866,9 +910,24 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
       toast.error(blockedResearch);
       return;
     }
-    const productionBinding=profile.bindings.find(binding=>binding.role === (options.applyQa || options.stepId || picture.screenplay.workingFountain.trim() ? "rewrite" : "writer"));
-    if (!productionBinding?.callableModelId || ["unavailable","needs-verification","needs-refresh"].includes(productionBinding.status)) { toast.error(productionBinding?.statusReason ?? "Refresh the production profile before writing."); return; }
-    const writerId=productionBinding.callableModelId, modelId=writerId;
+    const productionBinding = profile.bindings.find(
+      (binding) =>
+        binding.role ===
+        (options.applyQa || options.stepId || picture.screenplay.workingFountain.trim()
+          ? "rewrite"
+          : "writer"),
+    );
+    if (
+      !productionBinding?.callableModelId ||
+      ["unavailable", "needs-verification", "needs-refresh"].includes(productionBinding.status)
+    ) {
+      toast.error(
+        productionBinding?.statusReason ?? "Refresh the production profile before writing.",
+      );
+      return;
+    }
+    const writerId = productionBinding.callableModelId,
+      modelId = writerId;
     try {
       const initial = await beginScreenplayJob({
         sourceContextFingerprint: screenplaySourceContextFingerprint(picture),
@@ -892,10 +951,16 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
         selectedNodeIds: options.target?.nodeIds ?? null,
         selection: options.target?.selection ?? null,
       });
-      const current=useStudio.getState().pictures.find(item=>item.id===picture.id);
-      if (!current || current.screenplay.workingFountain!==picture.screenplay.workingFountain || screenplaySourceContextFingerprint(current)!==screenplaySourceContextFingerprint(picture)) {
+      const current = useStudio.getState().pictures.find((item) => item.id === picture.id);
+      if (
+        !current ||
+        current.screenplay.workingFountain !== picture.screenplay.workingFountain ||
+        screenplaySourceContextFingerprint(current) !== screenplaySourceContextFingerprint(picture)
+      ) {
         await stopScreenplayJob(initial.id);
-        throw new Error("Sources changed while the writing request started. Existing text was preserved.");
+        throw new Error(
+          "Sources changed while the writing request started. Existing text was preserved.",
+        );
       }
       setJob(initial);
       setJobId(initial.id);
@@ -915,7 +980,16 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto sm:overflow-hidden">
-      <details className="shrink-0 border-b border-border px-4 py-3"><summary>Production profile · {profile.profileId === "astra-ultra" ? "Astra Ultra" : "Local Models"}</summary><ProductionProfileControls picture={picture} disabled={job?.status === "running" || job?.status === "queued"} /></details>
+      <details className="shrink-0 border-b border-border px-4 py-3">
+        <summary>
+          Production profile ·{" "}
+          {profile.profileId === "astra-ultra" ? "Astra Ultra" : "Local Models"}
+        </summary>
+        <ProductionProfileControls
+          picture={picture}
+          disabled={job?.status === "running" || job?.status === "queued"}
+        />
+      </details>
       {picture.importedPackage ? (
         <div className="shrink-0 px-4 pt-3">
           <ImportedPackageResources importedPackage={picture.importedPackage} />
@@ -1025,8 +1099,21 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
             toast.success("Scoped revision appended. Prior approved Fountain is preserved.");
           }}
           onStoryDoctor={(modelId, target, secondOpinion) => {
-            const productionBinding=profile.bindings.find(binding=>binding.role === (secondOpinion ? "challenger" : "reviewer"));
-            if (!productionBinding?.callableModelId || ["unavailable","needs-verification","needs-refresh"].includes(productionBinding.status)) { toast.error(productionBinding?.statusReason ?? "Refresh the production profile before critique."); return; }
+            const productionBinding = profile.bindings.find(
+              (binding) => binding.role === (secondOpinion ? "challenger" : "reviewer"),
+            );
+            if (
+              !productionBinding?.callableModelId ||
+              ["unavailable", "needs-verification", "needs-refresh"].includes(
+                productionBinding.status,
+              )
+            ) {
+              toast.error(
+                productionBinding?.statusReason ??
+                  "Refresh the production profile before critique.",
+              );
+              return;
+            }
             const writerPin = explicitMoviePlanServedId(picture)?.replace(/^lmstudio:/, "") ?? null;
             const writer =
               models.find((model) => model.id === picture.screenplay.selectedModelId) ?? null;
@@ -1055,8 +1142,18 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
                 ),
               )
               .then((report) => {
-                const current=useStudio.getState().pictures.find(item=>item.id===picture.id);
-                if (!current || current.screenplay.workingFountain!==picture.screenplay.workingFountain || screenplaySourceContextFingerprint(current)!==screenplaySourceContextFingerprint(picture)) throw new Error("Sources changed during critique. The obsolete result was not applied.");
+                const current = useStudio
+                  .getState()
+                  .pictures.find((item) => item.id === picture.id);
+                if (
+                  !current ||
+                  current.screenplay.workingFountain !== picture.screenplay.workingFountain ||
+                  screenplaySourceContextFingerprint(current) !==
+                    screenplaySourceContextFingerprint(picture)
+                )
+                  throw new Error(
+                    "Sources changed during critique. The obsolete result was not applied.",
+                  );
                 persistScreenplay({
                   ...picture.screenplay,
                   lastQaReport: {
@@ -1092,65 +1189,82 @@ function InventoryStage({ picture }: { picture: Picture }) {
   const patchActive = useStudio((state) => state.patchActive);
   const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
   const [busy, setBusy] = useState(false);
+  const [surface, setSurface] = useWorkspaceDraft("asset-workspace-view", "library");
   const boundary = approvedScreenplayBoundary(picture.id, picture.intake, picture.screenplay);
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto sm:overflow-hidden">
-      {picture.importedPackage ? (
-        <div className="shrink-0 px-4 pt-3">
-          <ImportedPackageResources importedPackage={picture.importedPackage} />
+      <header className="workspace-header">
+        <div>
+          <p className="workspace-eyebrow">PRODUCTION ASSETS</p>
+          <h2>Assets & iterations</h2>
         </div>
-      ) : null}
-      <div className="shrink-0 px-4 pt-3">
-        <Button size="sm" variant="secondary" onClick={() => setGenerateFocus("assets")}>
-          Open Generate / Assets
-        </Button>
-      </div>
-      <div className="min-h-[40rem] flex-1 overflow-hidden sm:min-h-0">
-        <InventoryWorkspace
-          boundary={boundary}
-          record={picture.production ?? null}
-          busy={busy}
-          onRunBreakdown={async (approved) => {
-            setBusy(true);
-            try {
-              const extracted = await runProductionBreakdown(
-                approvedScreenplayInputFromBoundary(approved),
-                deterministicFountainExtractor,
-              );
-              const withResearch = createResearchAwareProductionBreakdown({
-                screenplay: approved,
-                research: hydratePictureResearch(picture.research, picture.intake),
-                drafts: extracted.requirements,
-              });
-              if ("error" in withResearch) throw new Error(withResearch.error);
-              const production = picture.production
-                ? reconcileProductionBreakdown(picture.production, withResearch)
-                : withResearch;
-              patchActive({ production });
-              toast.success(`Production breakdown ready · ${production.assets.length} assets`);
-            } catch (error) {
-              toast.error(
-                error instanceof Error ? error.message : "Unable to build production inventory.",
-              );
-            } finally {
-              setBusy(false);
+        <div className="workspace-tabs" aria-label="Asset workspace">
+          <button aria-pressed={surface === "library"} onClick={() => setSurface("library")}>
+            Library
+          </button>
+          <button
+            aria-pressed={surface === "preparation"}
+            onClick={() => setSurface("preparation")}
+          >
+            Specification & preparation
+          </button>
+        </div>
+      </header>
+      {surface === "library" && picture.production ? (
+        <div className="min-h-0 flex-1 overflow-auto p-4">
+          <GeneratedAssetsReview picture={picture} />
+        </div>
+      ) : (
+        <div className="min-h-[40rem] flex-1 overflow-hidden sm:min-h-0">
+          <InventoryWorkspace
+            boundary={boundary}
+            record={picture.production ?? null}
+            busy={busy}
+            onRunBreakdown={async (approved) => {
+              setBusy(true);
+              try {
+                const extracted = await runProductionBreakdown(
+                  approvedScreenplayInputFromBoundary(approved),
+                  deterministicFountainExtractor,
+                );
+                const withResearch = createResearchAwareProductionBreakdown({
+                  screenplay: approved,
+                  research: hydratePictureResearch(picture.research, picture.intake),
+                  drafts: extracted.requirements,
+                });
+                if ("error" in withResearch) throw new Error(withResearch.error);
+                const production = picture.production
+                  ? reconcileProductionBreakdown(picture.production, withResearch)
+                  : withResearch;
+                patchActive({ production });
+                toast.success(`Production breakdown ready · ${production.assets.length} assets`);
+              } catch (error) {
+                toast.error(
+                  error instanceof Error ? error.message : "Unable to build production inventory.",
+                );
+              } finally {
+                setBusy(false);
+              }
+            }}
+            visualApprovals={
+              picture.visualDevelopment?.approvals.map((approval) => approval.id) ?? []
             }
-          }}
-          visualApprovals={
-            picture.visualDevelopment?.approvals.map((approval) => approval.id) ?? []
-          }
-          cinematographyApprovals={
-            picture.cinematography?.approvals.map((approval) => approval.id) ?? []
-          }
-          onChange={(production) => patchActive({ production })}
-        />
-      </div>
+            cinematographyApprovals={
+              picture.cinematography?.approvals.map((approval) => approval.id) ?? []
+            }
+            onChange={(production) => patchActive({ production })}
+          />
+        </div>
+      )}
     </div>
   );
 }
 
 function VisualDevelopmentStage({ picture }: { picture: Picture }) {
-  const [surface, setSurface] = useState<"sheets" | "visual">("sheets");
+  const [surface, setSurface] = useWorkspaceDraft<"sheets" | "visual">(
+    "characters-workspace-view",
+    "sheets",
+  );
   const patchActive = useStudio((state) => state.patchActive);
   const visualDevelopment =
     picture.visualDevelopment ?? hydrateVisualDevelopmentState(null, picture);
@@ -1189,7 +1303,10 @@ function VisualDevelopmentStage({ picture }: { picture: Picture }) {
 }
 
 function CinematographyStage({ picture }: { picture: Picture }) {
-  const [surface, setSurface] = useState<"continuity" | "camera">("continuity");
+  const [surface, setSurface] = useWorkspaceDraft<"continuity" | "camera">(
+    "camera-workspace-view",
+    "continuity",
+  );
   const patchActive = useStudio((state) => state.patchActive);
   const visualDevelopment =
     picture.visualDevelopment ?? hydrateVisualDevelopmentState(null, picture);
@@ -1359,119 +1476,152 @@ function ShotsStage({ picture }: { picture: Picture }) {
 function PromptStage({ picture }: { picture: Picture }) {
   const setStage = useStudio((s) => s.setStage);
   const patchActive = useStudio((s) => s.patchActive);
+  const [surface, setSurface] = useWorkspaceDraft("prompt-workspace-view", "global");
   const lab = hydratePromptLabState(picture.promptLab);
   return (
-    <Pane title="Prompt Lab" kicker="09 · Dialects">
-      <RenderContextEditor />
-      <ShotContinuityEditor />
-      <p className="mb-4 max-w-xl text-sm text-muted">
-        Still dialect {engineById(picture.selectedEngine.image)?.name}. Motion dialect{" "}
-        {engineById(picture.selectedEngine.video)?.name}. Editorial duration stays separate from
-        executable clip limits.
-      </p>
-      <div className="mb-4 max-w-xl rounded-md bg-elevated p-3 shadow-[var(--shadow-border)]">
-        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Prompt compiler</p>
-        <select
-          aria-label="Prompt compiler"
-          className="mt-3 h-9 w-full rounded-sm bg-inset px-2 text-xs text-fg shadow-[var(--shadow-border)]"
-          value="llama"
-          onChange={() => patchActive({ promptLab: lab })}
-        >
-          <option value="llama">Deterministic selected-engine serializer · no model call</option>
-        </select>
-        <select
-          aria-label="Alternate compiler"
-          className="mt-2 h-9 w-full rounded-sm bg-inset px-2 text-xs text-fg shadow-[var(--shadow-border)]"
-          value={lab.alternate}
-          onChange={(event) =>
-            patchActive({
-              promptLab: { ...lab, alternate: event.target.value === "qwen" ? "qwen" : "none" },
-            })
-          }
-        >
-          <option value="none">Alternate · None</option>
-          <option value="qwen">Alternate · Qwen (explicit A/B only)</option>
-        </select>
-        <p className="mt-2 text-xs leading-relaxed text-muted">{promptLabRuntimeBlock()}</p>
-        <Button
-          className="mt-3"
-          size="sm"
-          variant="secondary"
-          onClick={() => {
-            const compiled = compilePicture(picture);
-            const drafts = compiled.shots.flatMap((shot) => {
-              const still = compileEnginePromptPackage({
-                picture: compiled,
-                shot,
-                target: "still",
-              });
-              const motion = compileEnginePromptPackage({
-                picture: compiled,
-                shot,
-                target: "video",
-              });
-              return [
-                {
-                  id: `${shot.id}:still`,
-                  family: "llama" as const,
-                  engineId: still.engineTarget,
-                  text: still.enginePrompt,
-                  canonicalSpecHash: canonicalSpecHash(still),
-                  createdAt: Date.now(),
-                  logicalRole: "prompt-engineer" as const,
-                  runtimeActivation: "gated-wave-5" as const,
-                },
-                {
-                  id: `${shot.id}:video`,
-                  family: "llama" as const,
-                  engineId: motion.engineTarget,
-                  text: motion.enginePrompt,
-                  canonicalSpecHash: canonicalSpecHash(motion),
-                  createdAt: Date.now(),
-                  logicalRole: "prompt-engineer" as const,
-                  runtimeActivation: "gated-wave-5" as const,
-                },
-              ];
-            });
-            patchActive({ shots: compiled.shots, promptLab: { ...lab, drafts } });
-            toast.success(
-              "Deterministic serializer wrote still and motion drafts. No model or media runtime was invoked.",
-            );
-          }}
-        >
-          Compile drafts
-        </Button>
-        <Button
-          className="mt-3 ml-2"
-          size="sm"
-          variant="ghost"
-          disabled
-          title={promptLabRuntimeBlock()}
-        >
-          A/B benchmark
-        </Button>
-      </div>
-      <div className="grid gap-3">
-        {picture.shots.map((s) => (
-          <article key={s.id} className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="text-xs text-subtle">
-                {String(s.index).padStart(2, "0")} · {s.type} · {s.durationSec}s
-              </h3>
-              <Badge>{s.emotion}</Badge>
-            </div>
-            <p className="mt-2 text-sm">{s.description}</p>
-            <p className="mt-1 text-xs text-muted">Face: {s.expression}</p>
-            <p className="mt-3 text-[11px] text-subtle uppercase">T2I</p>
-            <p className="mt-1 text-xs text-muted">{s.t2iPrompt}</p>
-            <p className="mt-3 text-[11px] text-subtle uppercase">I2V</p>
-            <p className="mt-1 text-xs text-muted">{s.i2vPrompt}</p>
-          </article>
+    <Pane title="Prompts & render direction" kicker="FILM / SCENE / SHOT">
+      <div className="workspace-tabs mb-5" aria-label="Prompt workspace">
+        {[
+          ["global", "Global & inherited look"],
+          ["scene", "Scene context"],
+          ["local", "Local shot direction"],
+          ["execution", "Execution & payload"],
+        ].map(([id, label]) => (
+          <button key={id} aria-pressed={surface === id} onClick={() => setSurface(id)}>
+            {label}
+          </button>
         ))}
       </div>
-      <Button className="mt-5" variant="secondary" onClick={() => setStage("generate")}>
-        Open generate bay
-      </Button>
+      <div hidden={surface !== "global"}>
+        <RenderContextEditor />
+      </div>
+      <div hidden={surface !== "scene"}>
+        <MovieBibleEditor kinds={["scene", "participant"]} title="Scene prompt context" />
+      </div>
+      <div hidden={surface !== "local"}>
+        <ShotContinuityEditor />
+      </div>
+      <div hidden={surface !== "execution"}>
+        <PromptPayloadPreview picture={picture} />
+        <details className="mt-6">
+          <summary className="cursor-pointer py-3 text-sm">
+            Batch compiler & saved shot prompts
+          </summary>
+          <p className="mb-4 max-w-xl text-sm text-muted">
+            Still dialect {engineById(picture.selectedEngine.image)?.name}. Motion dialect{" "}
+            {engineById(picture.selectedEngine.video)?.name}. Editorial duration stays separate from
+            executable clip limits.
+          </p>
+          <div className="mb-4 max-w-xl rounded-md bg-elevated p-3 shadow-[var(--shadow-border)]">
+            <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Prompt compiler</p>
+            <select
+              aria-label="Prompt compiler"
+              className="mt-3 h-9 w-full rounded-sm bg-inset px-2 text-xs text-fg shadow-[var(--shadow-border)]"
+              value="llama"
+              onChange={() => patchActive({ promptLab: lab })}
+            >
+              <option value="llama">
+                Deterministic selected-engine serializer · no model call
+              </option>
+            </select>
+            <select
+              aria-label="Alternate compiler"
+              className="mt-2 h-9 w-full rounded-sm bg-inset px-2 text-xs text-fg shadow-[var(--shadow-border)]"
+              value={lab.alternate}
+              onChange={(event) =>
+                patchActive({
+                  promptLab: { ...lab, alternate: event.target.value === "qwen" ? "qwen" : "none" },
+                })
+              }
+            >
+              <option value="none">Alternate · None</option>
+              <option value="qwen">Alternate · Qwen (explicit A/B only)</option>
+            </select>
+            <p className="mt-2 text-xs leading-relaxed text-muted">{promptLabRuntimeBlock()}</p>
+            <Button
+              className="mt-3"
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                const compiled = compilePicture(picture);
+                const drafts = compiled.shots.flatMap((shot) => {
+                  const still = compileEnginePromptPackage({
+                    picture: compiled,
+                    shot,
+                    target: "still",
+                  });
+                  const motion = compileEnginePromptPackage({
+                    picture: compiled,
+                    shot,
+                    target: "video",
+                  });
+                  return [
+                    {
+                      id: `${shot.id}:still`,
+                      family: "llama" as const,
+                      engineId: still.engineTarget,
+                      text: still.enginePrompt,
+                      canonicalSpecHash: canonicalSpecHash(still),
+                      createdAt: Date.now(),
+                      logicalRole: "prompt-engineer" as const,
+                      runtimeActivation: "gated-wave-5" as const,
+                    },
+                    {
+                      id: `${shot.id}:video`,
+                      family: "llama" as const,
+                      engineId: motion.engineTarget,
+                      text: motion.enginePrompt,
+                      canonicalSpecHash: canonicalSpecHash(motion),
+                      createdAt: Date.now(),
+                      logicalRole: "prompt-engineer" as const,
+                      runtimeActivation: "gated-wave-5" as const,
+                    },
+                  ];
+                });
+                patchActive({ shots: compiled.shots, promptLab: { ...lab, drafts } });
+                toast.success(
+                  "Deterministic serializer wrote still and motion drafts. No model or media runtime was invoked.",
+                );
+              }}
+            >
+              Compile drafts
+            </Button>
+            <Button
+              className="mt-3 ml-2"
+              size="sm"
+              variant="ghost"
+              disabled
+              title={promptLabRuntimeBlock()}
+            >
+              A/B benchmark
+            </Button>
+          </div>
+          <div className="grid gap-3">
+            {picture.shots.map((s) => (
+              <article
+                key={s.id}
+                className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-xs text-subtle">
+                    {String(s.index).padStart(2, "0")} · {s.type} · {s.durationSec}s
+                  </h3>
+                  <Badge>{s.emotion}</Badge>
+                </div>
+                <p className="mt-2 text-sm">{s.description}</p>
+                <p className="mt-1 text-xs text-muted">Face: {s.expression}</p>
+                <p className="mt-3 text-[11px] text-subtle uppercase">T2I</p>
+                <p className="mt-1 text-xs text-muted">{s.t2iPrompt}</p>
+                <p className="mt-3 text-[11px] text-subtle uppercase">I2V</p>
+                <p className="mt-1 text-xs text-muted">{s.i2vPrompt}</p>
+              </article>
+            ))}
+          </div>
+        </details>
+        <Button className="mt-5" variant="secondary" onClick={() => setStage("generate")}>
+          Open generate bay
+        </Button>
+      </div>
     </Pane>
   );
 }
@@ -2160,370 +2310,18 @@ function GenerateStage({ picture }: { picture: Picture }) {
 }
 
 function ReviewStage({ picture }: { picture: Picture }) {
-  const production = picture.production;
-  const replaceActive = useStudio((state) => state.replaceActive);
-  const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
-  const iterations =
-    production?.assets.flatMap((asset) =>
-      asset.iterations.map((iteration) => ({ asset, iteration })),
-    ) ?? [];
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
-  const [backendStatus, setBackendStatus] = useState<Awaited<
-    ReturnType<typeof desktopProductionAuthorityStatus>
-  > | null>(null);
-  const refreshAuthorityStatus = useCallback(async () => {
-    if (!isDesktopApp()) return null;
-    const status = await desktopProductionAuthorityStatus({ pictureId: picture.id });
-    setBackendStatus(status);
-    return status;
-  }, [picture.id]);
-  useEffect(() => {
-    void refreshAuthorityStatus().catch(() =>
-      setBackendStatus({ ok: false, error: "Backend authority status unavailable." }),
-    );
-  }, [refreshAuthorityStatus]);
-  const authorityCurrent =
-    backendStatus?.ok === true &&
-    backendStatus.status === "CURRENT" &&
-    backendStatus.authorityId === production?.productionAuthority?.authorityId &&
-    backendStatus.digest === production?.productionAuthority?.digest;
-  const verifiedRoots = new Map(
-    (backendStatus?.ok === true ? (backendStatus.preparedApprovals ?? []) : []).map((root) => [
-      root.preparedAssetId,
-      root,
-    ]),
-  );
-  const backendCanonicalHistory =
-    backendStatus?.ok === true ? (backendStatus.canonicalHistory ?? []) : [];
-  function applyReview(nextProduction: NonNullable<Picture["production"]>) {
-    replaceActive({ ...picture, production: nextProduction, updatedAt: Date.now() });
-  }
+  const replaceActive = useStudio((state) => state.replaceActive);
+  const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
   return (
-    <Pane title="Review" kicker="11 · Iteration decisions">
+    <Pane title="Review & approval" kicker="ITERATION DECISIONS">
       <div className="mb-4">
         <Button size="sm" variant="secondary" onClick={() => setGenerateFocus("video")}>
-          Open Generate / Video Clips
+          Open video jobs
         </Button>
       </div>
-      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">
-        A/B review is append-only. Rejections, continuity confirmations, and canonical approvals
-        preserve every generated file and sidecar; no output becomes canonical while dependencies,
-        durable media, or identity confirmations are stale.
-      </p>
-      <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">
-        {backendStatus?.ok === true
-          ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"} · scoped decisions ${backendCanonicalHistory.length}`
-          : backendStatus?.ok === false
-            ? `Backend authority unavailable: ${backendStatus.error}`
-            : "Backend authority status pending; review decisions fail closed."}
-      </div>
-      <div className="grid min-w-0 gap-3 lg:grid-cols-2">
-        {iterations.length ? (
-          iterations.map(({ asset, iteration }) => {
-            const findings = iteration.receiptContinuityFindings?.length
-              ? iteration.receiptContinuityFindings
-              : deterministicContinuityFindings(asset, iteration);
-            const reason = reasons[iteration.id] ?? "";
-            const allRequiredConfirmed = findings.every(
-              (finding) => finding.severity !== "blocker" || confirmed[finding.id],
-            );
-            const verifiedRoot = verifiedRoots.get(iteration.preparedAssetId ?? "");
-            const rootCurrent = Boolean(
-              verifiedRoot &&
-              verifiedRoot.rootId ===
-                (production?.preparedAssets ?? []).find(
-                  (item) => item.id === iteration.preparedAssetId,
-                )?.preparedApprovalRootId &&
-              verifiedRoot.authorityId === production?.productionAuthority?.authorityId &&
-              verifiedRoot.authorityDigest === production?.productionAuthority?.digest,
-            );
-            const backendDecision = backendCanonicalHistory.find(
-              (entry) =>
-                typeof entry === "object" &&
-                entry &&
-                "iterationId" in entry &&
-                entry.iterationId === iteration.id,
-            ) as { kind?: string } | undefined;
-            const backendCanonical = backendDecision?.kind === "canonicalDecision";
-            const backendRejected = backendDecision?.kind === "rejectionDecision";
-            return (
-              <article
-                key={iteration.id}
-                className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[11px] tracking-wide text-subtle uppercase">
-                      {backendCanonical
-                        ? "APPROVED"
-                        : backendRejected
-                          ? "REJECTED"
-                          : iteration.status}
-                    </p>
-                    <h3 className="truncate font-display text-xl">{asset.name}</h3>
-                  </div>
-                  <Badge>
-                    {backendCanonical ? "canonical" : backendRejected ? "rejected" : "iteration"}
-                  </Badge>
-                </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="overflow-hidden rounded-md bg-inset shadow-[var(--shadow-border)]">
-                    <div className="flex min-h-11 items-center justify-between px-3 py-2 text-xs text-muted">
-                      <span>Approved reference/spec</span>
-                      <span>A</span>
-                    </div>
-                    <div className="p-3 text-xs leading-relaxed text-muted">
-                      {asset.canonicalSpec.visualDescription ||
-                        asset.canonicalSpec.distinguishingFeatures.join(" · ") ||
-                        "No approved visual description recorded."}
-                    </div>
-                  </div>
-                  {iteration.mediaUri ? (
-                    <div className="overflow-hidden rounded-md bg-inset shadow-[var(--shadow-border)]">
-                      <div className="flex min-h-11 items-center justify-between px-3 py-2 text-xs text-muted">
-                        <span>Generated candidate</span>
-                        <span>B</span>
-                      </div>
-                      <img
-                        src={iteration.previewUri ?? iteration.mediaUri}
-                        alt={`Generated iteration for ${asset.name}`}
-                        className="aspect-square w-full object-contain"
-                      />
-                    </div>
-                  ) : null}
-                </div>
-                <p className="mt-2 truncate text-xs text-muted" title={iteration.mediaUri}>
-                  {iteration.mediaUri}
-                </p>
-                <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  <Stat
-                    k="Media hash"
-                    v={
-                      iteration.mediaSha256
-                        ? `${iteration.mediaSha256.slice(0, 10)}…`
-                        : "not recorded"
-                    }
-                  />
-                  <Stat
-                    k="Sidecar"
-                    v={
-                      iteration.sidecarSha256
-                        ? `${iteration.sidecarSha256.slice(0, 10)}…`
-                        : "not recorded"
-                    }
-                  />
-                  <Stat
-                    k="Size"
-                    v={
-                      iteration.width && iteration.height
-                        ? `${iteration.width} × ${iteration.height}`
-                        : "unknown"
-                    }
-                  />
-                  <Stat
-                    k="Decisions"
-                    v={String(
-                      iteration.reviewDecisionIds?.length ?? iteration.reviewDecisions?.length ?? 0,
-                    )}
-                  />
-                </dl>
-                <fieldset className="mt-3 rounded-sm bg-inset p-3 shadow-[var(--shadow-border)]">
-                  <legend className="text-[11px] tracking-wide text-subtle uppercase">
-                    Continuity checklist
-                  </legend>
-                  {findings.length ? (
-                    findings.map((finding) => (
-                      <label
-                        key={finding.id}
-                        className="mt-2 flex min-h-11 items-start gap-2 text-xs text-muted"
-                      >
-                        <input
-                          className="mt-1"
-                          type="checkbox"
-                          checked={Boolean(confirmed[finding.id])}
-                          onChange={(event) =>
-                            setConfirmed((current) => ({
-                              ...current,
-                              [finding.id]: event.target.checked,
-                            }))
-                          }
-                        />
-                        <span>
-                          <span className={finding.severity === "blocker" ? "text-rec" : "text-fg"}>
-                            {finding.severity}
-                          </span>{" "}
-                          · {finding.message}
-                        </span>
-                      </label>
-                    ))
-                  ) : (
-                    <p className="mt-2 text-xs text-muted">
-                      No automated vision claim is made. Enter a visible review reason before
-                      approval.
-                    </p>
-                  )}
-                </fieldset>
-                <div className="mt-3">
-                  <Label htmlFor={`reason-${iteration.id}`}>Reviewer reason</Label>
-                  <Textarea
-                    id={`reason-${iteration.id}`}
-                    className="mt-1.5 min-h-20"
-                    value={reason}
-                    onChange={(event) =>
-                      setReasons((current) => ({ ...current, [iteration.id]: event.target.value }))
-                    }
-                    placeholder="Describe the visible identity/continuity evidence for this decision."
-                  />
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    disabled={
-                      !production ||
-                      !authorityCurrent ||
-                      !rootCurrent ||
-                      !iteration.generationReceiptId ||
-                      !iteration.generationReceiptDigest ||
-                      backendRejected ||
-                      backendCanonical ||
-                      !reason.trim() ||
-                      !allRequiredConfirmed
-                    }
-                    title="Verify durable media, then approve this reviewed iteration as canonical"
-                    onClick={async () => {
-                      if (!production) return;
-                      try {
-                        const latest = await refreshAuthorityStatus();
-                        const latestRoot =
-                          latest?.ok === true
-                            ? (latest.preparedApprovals ?? []).find(
-                                (root) => root.preparedAssetId === iteration.preparedAssetId,
-                              )
-                            : null;
-                        const preparedApprovalRootId =
-                          (production.preparedAssets ?? []).find(
-                            (item) => item.id === iteration.preparedAssetId,
-                          )?.preparedApprovalRootId ?? "";
-                        if (
-                          latest?.ok !== true ||
-                          latest.status !== "CURRENT" ||
-                          latest.authorityId !== production.productionAuthority?.authorityId ||
-                          latest.digest !== production.productionAuthority?.digest ||
-                          latestRoot?.rootId !== preparedApprovalRootId
-                        )
-                          throw new Error(
-                            "Backend authority/prepared root mismatch; reseal or re-approve before canonical approval.",
-                          );
-                        const confirmedContinuityFindings = findings.map((finding) => ({
-                          ...finding,
-                          confirmed: finding.confirmed || Boolean(confirmed[finding.id]),
-                        }));
-                        const approved = await desktopApproveCanonicalImage({
-                          authorityId: latest.authorityId ?? "",
-                          preparedApprovalRootId,
-                          receiptId: iteration.generationReceiptId ?? "",
-                          iterationId: iteration.id,
-                          reason,
-                          findings: confirmedContinuityFindings.map(({ id, confirmed }) => ({
-                            id,
-                            confirmed,
-                          })),
-                        });
-                        if (!approved.ok) throw new Error(approved.error);
-                        applyReview(
-                          approveCanonicalIteration(production, {
-                            iterationId: iteration.id,
-                            reviewer: "user",
-                            reason,
-                            canonicalProof: approved.proof,
-                            continuityFindings: confirmedContinuityFindings,
-                          }),
-                        );
-                        await refreshAuthorityStatus();
-                        toast.success("Canonical image iteration approved.");
-                      } catch (error) {
-                        toast.error(
-                          error instanceof Error ? error.message : "Canonical approval failed.",
-                        );
-                      }
-                    }}
-                  >
-                    Approve canonical
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={
-                      !production ||
-                      !authorityCurrent ||
-                      !rootCurrent ||
-                      backendRejected ||
-                      backendCanonical ||
-                      !iteration.generationReceiptId ||
-                      !reason.trim()
-                    }
-                    title="Reject this iteration append-only"
-                    onClick={async () => {
-                      if (!production) return;
-                      try {
-                        const latest = await refreshAuthorityStatus();
-                        const latestRoot =
-                          latest?.ok === true
-                            ? (latest.preparedApprovals ?? []).find(
-                                (root) => root.preparedAssetId === iteration.preparedAssetId,
-                              )
-                            : null;
-                        const preparedApprovalRootId =
-                          (production.preparedAssets ?? []).find(
-                            (item) => item.id === iteration.preparedAssetId,
-                          )?.preparedApprovalRootId ?? "";
-                        if (
-                          latest?.ok !== true ||
-                          latest.status !== "CURRENT" ||
-                          latest.authorityId !== production.productionAuthority?.authorityId ||
-                          latest.digest !== production.productionAuthority?.digest ||
-                          latestRoot?.rootId !== preparedApprovalRootId
-                        )
-                          throw new Error(
-                            "Backend authority/prepared root mismatch; reseal or re-approve before rejection.",
-                          );
-                        const rejected = await desktopRejectCanonicalImage({
-                          authorityId: latest.authorityId ?? "",
-                          preparedApprovalRootId,
-                          receiptId: iteration.generationReceiptId ?? "",
-                          iterationId: iteration.id,
-                          reason,
-                        });
-                        if (!rejected.ok) throw new Error(rejected.error);
-                        applyReview(
-                          reviewGeneratedIteration(production, {
-                            iterationId: iteration.id,
-                            decision: "reject",
-                            reviewer: "user",
-                            reason,
-                          }),
-                        );
-                        await refreshAuthorityStatus();
-                        toast.success("Image iteration rejected.");
-                      } catch (error) {
-                        toast.error(error instanceof Error ? error.message : "Reject failed.");
-                      }
-                    }}
-                  >
-                    Reject
-                  </Button>
-                </div>
-              </article>
-            );
-          })
-        ) : (
-          <EmptyCard
-            title="No generated iterations"
-            body="Generate from an approved prepared asset after the native adapter gate passes. Imported or shot-only stills do not satisfy Wave 4."
-          />
-        )}
-      </div>
+      <ImageIterationReview picture={picture} />
       <section className="mt-6" aria-label="Video takes">
         <p className="mb-3 text-[11px] tracking-wide text-subtle uppercase">Video takes</p>
         <div className="grid min-w-0 gap-3 lg:grid-cols-2">
@@ -2580,7 +2378,11 @@ function ReviewStage({ picture }: { picture: Picture }) {
                   I reviewed this exact take against the current source, including speech and
                   continuity.
                 </label>
-                <SpeechReviewPanel key={`${take.id}:${take.mediaSha256}`} picture={picture} take={take}/>
+                <SpeechReviewPanel
+                  key={`${take.id}:${take.mediaSha256}`}
+                  picture={picture}
+                  take={take}
+                />
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button
                     size="sm"
@@ -2793,7 +2595,7 @@ function StitchStage({ picture }: { picture: Picture }) {
   const shot = picture.shots.find((s) => s.id === selectedShotId) ?? picture.shots[0];
   const plan = buildTimelinePlan(picture);
   return (
-    <Pane title="Stitch" kicker="12 · Assembly">
+    <Pane title="Timeline & soundtrack" kicker="MOVIE ASSEMBLY">
       <div className="overflow-hidden rounded-lg bg-inset shadow-[var(--shadow-border)]">
         <div className="grid h-[clamp(12rem,48dvh,32rem)] place-items-center">
           {shot?.videoUrl ? (
@@ -2807,6 +2609,14 @@ function StitchStage({ picture }: { picture: Picture }) {
           )}
         </div>
       </div>
+      <details className="mt-4 rounded border border-border p-3">
+        <summary className="cursor-pointer text-sm">
+          Editorial clip selection & sequence review
+        </summary>
+        <div className="mt-4">
+          <EditorialClipEditor picture={picture} />
+        </div>
+      </details>
       <ol className="mt-4 grid gap-1">
         {plan.clips.map((clip) => {
           const s = picture.shots.find((item) => item.id === clip.shotId);
@@ -2840,139 +2650,194 @@ function StitchStage({ picture }: { picture: Picture }) {
 function ScoreStage({ picture }: { picture: Picture }) {
   const replaceActive = useStudio((state) => state.replaceActive);
   const setStage = useStudio((state) => state.setStage);
+  const [surface, setSurface] = useWorkspaceDraft("sound-workspace-view", "cues");
   const audio = hydratePictureAudio(picture);
   return (
-    <Pane title="Score" kicker="13 · Voice + Sound + Music">
-      <SoundCueEditor />
-      <p className="mb-4 max-w-2xl text-sm text-muted">
-        Plan cues, manage voices, and review imported audio. Choose song, instrumental,
-        sound-effect, and speech tools in Generate.
-      </p>
-      <VoiceDesignWorkspace key={picture.id} picture={picture} />
-      <div
-        role="status"
-        className="max-w-2xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]"
-      >
-        {musicRuntimeBlock(musicEngineFromSelection(picture.selectedEngine.music))}
+    <Pane title="Sound, voice & music" kicker="AUDIO DEVELOPMENT">
+      <div className="workspace-tabs mb-5" aria-label="Sound workspace">
+        {[
+          ["cues", "Cue editor"],
+          ["voices", "Character voices"],
+          ["takes", "Audio takes & imports"],
+        ].map(([id, label]) => (
+          <button key={id} aria-pressed={surface === id} onClick={() => setSurface(id)}>
+            {label}
+          </button>
+        ))}
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => {
-            replaceActive({
-              ...picture,
-              audio: queueMissingDialogue(picture),
-              updatedAt: Date.now(),
-            });
-            toast.error("Dialogue queued fail-closed. No cloud TTS.");
-          }}
+      <div hidden={surface !== "cues"}>
+        <SoundCueEditor />
+      </div>
+      <div hidden={surface !== "voices"}>
+        <VoiceDesignWorkspace key={picture.id} picture={picture} />
+      </div>
+      <div hidden={surface !== "takes"}>
+        <p className="mb-4 max-w-2xl text-sm text-muted">
+          Plan cues, manage voices, and review imported audio. Choose song, instrumental,
+          sound-effect, and speech tools in Generate.
+        </p>
+        <div
+          role="status"
+          className="max-w-2xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]"
         >
-          Queue missing dialogue
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => {
-            replaceActive({ ...picture, audio: queueMissingScore(picture), updatedAt: Date.now() });
-            toast.error(
-              "Score cues saved. The selected audio runtime is not connected; no audio was generated.",
-            );
-          }}
-        >
-          Queue missing score
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => {
-            void (async () => {
-              const imported = await desktopImportAudio();
-              if (!imported.ok) {
-                if (imported.canceled) return;
-                toast.error(imported.error);
-                return;
-              }
-              const workspace = recordImportedAudioTake(hydratePictureAudio(picture), {
-                pictureId: picture.id,
-                kind: "score",
-                filename: imported.filename,
-                mediaUri: imported.mediaUri,
-                mediaSha256: imported.mediaSha256,
-                byteLength: imported.byteLength,
-                durationSec: imported.probe.durationSec ?? 0,
-                sampleRate: imported.probe.sampleRate,
-                channels: imported.probe.channels,
-                format: imported.probe.codec,
-                cueId: hydratePictureAudio(picture).cues[0]?.id ?? picture.cues[0]?.id ?? null,
+          {musicRuntimeBlock(musicEngineFromSelection(picture.selectedEngine.music))}
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              replaceActive({
+                ...picture,
+                audio: queueMissingDialogue(picture),
+                updatedAt: Date.now(),
               });
-              replaceActive({ ...picture, audio: workspace, updatedAt: Date.now() });
-              toast.success(
-                `Imported ${imported.filename} as audio. Provenance is imported, not generated.`,
+              toast.error("Dialogue queued fail-closed. No cloud TTS.");
+            }}
+          >
+            Queue missing dialogue
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              replaceActive({
+                ...picture,
+                audio: queueMissingScore(picture),
+                updatedAt: Date.now(),
+              });
+              toast.error(
+                "Score cues saved. The selected audio runtime is not connected; no audio was generated.",
               );
-              setStage("review");
-            })();
-          }}
-        >
-          Import audio
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => setStage("review")}>
-          Review audio takes
-        </Button>
-      </div>
-      <div className="mt-5 grid gap-3">
-        {audio.profiles.map((profile) => (
-          <article
-            key={profile.id}
-            className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+            }}
           >
-            <p className="text-[11px] tracking-wide text-subtle uppercase">Voice bible</p>
-            <h3 className="font-display text-xl">{profile.characterName}</h3>
-            <p className="mt-1 text-xs text-muted">
-              {profile.engineId} · {profile.notes}
-            </p>
-          </article>
-        ))}
-        {audio.lines.map((line) => (
-          <article
-            key={line.id}
-            className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+            Queue missing score
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              void (async () => {
+                const imported = await desktopImportAudio();
+                if (!imported.ok) {
+                  if (imported.canceled) return;
+                  toast.error(imported.error);
+                  return;
+                }
+                const workspace = recordImportedAudioTake(hydratePictureAudio(picture), {
+                  pictureId: picture.id,
+                  kind: "score",
+                  filename: imported.filename,
+                  mediaUri: imported.mediaUri,
+                  mediaSha256: imported.mediaSha256,
+                  byteLength: imported.byteLength,
+                  durationSec: imported.probe.durationSec ?? 0,
+                  sampleRate: imported.probe.sampleRate,
+                  channels: imported.probe.channels,
+                  format: imported.probe.codec,
+                  cueId: hydratePictureAudio(picture).cues[0]?.id ?? picture.cues[0]?.id ?? null,
+                });
+                replaceActive({ ...picture, audio: workspace, updatedAt: Date.now() });
+                toast.success(
+                  `Imported ${imported.filename} as audio. Provenance is imported, not generated.`,
+                );
+                setStage("review");
+              })();
+            }}
           >
-            <p className="text-[11px] tracking-wide text-subtle uppercase">
-              Dialogue · {line.targetDurationSec}s
-            </p>
-            <h3 className="font-display text-xl">{line.characterName}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted">{line.text}</p>
-            <p className="mt-2 text-xs text-subtle">
-              {line.emotion} · {line.delivery}
-            </p>
-          </article>
-        ))}
-        {(audio.cues.length
-          ? audio.cues
-          : picture.cues.map((c) => ({
-              id: c.id,
-              name: c.name,
-              notes: c.mood,
-              instrumentation: c.instruments,
-              kind: "score" as const,
-              startSec: c.startSec,
-              durationSec: c.durationSec,
-              sceneId: null,
-              shotId: null,
-            }))
-        ).map((c) => (
-          <article key={c.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-            <h3 className="font-display text-xl">{c.name}</h3>
-            <p className="mt-1 text-xs text-muted">{c.notes}</p>
-            <p className="mt-2 text-xs">{c.instrumentation}</p>
-          </article>
-        ))}
+            Import audio
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setStage("review")}>
+            Review audio takes
+          </Button>
+        </div>
+        <div className="mt-5 grid gap-3">
+          {audio.takes.map((take) => (
+            <article key={take.id} className="rounded-lg border border-border bg-surface p-4">
+              <h3 className="text-sm">
+                {take.kind} ·{" "}
+                {take.canonical
+                  ? "Selected for assembly"
+                  : take.status.toLowerCase().replaceAll("_", " ")}
+              </h3>
+              <p className="mt-1 text-xs text-muted">
+                {take.cueId
+                  ? (audio.cues.find((c) => c.id === take.cueId)?.name ?? take.cueId)
+                  : (take.shotId ?? "Film-wide take")}
+              </p>
+              {take.mediaUri ? (
+                <audio
+                  controls
+                  preload="metadata"
+                  src={take.mediaUri}
+                  className="mt-3 w-full"
+                  aria-label={`Audition ${take.kind} take`}
+                />
+              ) : (
+                <p className="mt-3 text-sm text-muted">
+                  Media is unavailable. Import a replacement take.
+                </p>
+              )}
+            </article>
+          ))}
+
+          {audio.profiles.map((profile) => (
+            <article
+              key={profile.id}
+              className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+            >
+              <p className="text-[11px] tracking-wide text-subtle uppercase">Voice bible</p>
+              <h3 className="font-display text-xl">{profile.characterName}</h3>
+              <p className="mt-1 text-xs text-muted">
+                {profile.engineId} · {profile.notes}
+              </p>
+            </article>
+          ))}
+          {audio.lines.map((line) => (
+            <article
+              key={line.id}
+              className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+            >
+              <p className="text-[11px] tracking-wide text-subtle uppercase">
+                Dialogue · {line.targetDurationSec}s
+              </p>
+              <h3 className="font-display text-xl">{line.characterName}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{line.text}</p>
+              <p className="mt-2 text-xs text-subtle">
+                {line.emotion} · {line.delivery}
+              </p>
+            </article>
+          ))}
+          {(audio.cues.length
+            ? audio.cues
+            : picture.cues.map((c) => ({
+                id: c.id,
+                name: c.name,
+                notes: c.mood,
+                instrumentation: c.instruments,
+                kind: "score" as const,
+                startSec: c.startSec,
+                durationSec: c.durationSec,
+                sceneId: null,
+                shotId: null,
+              }))
+          ).map((c) => (
+            <article
+              key={c.id}
+              className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+            >
+              <h3 className="font-display text-xl">{c.name}</h3>
+              <p className="mt-1 text-xs text-muted">{c.notes}</p>
+              <p className="mt-2 text-xs">{c.instrumentation}</p>
+            </article>
+          ))}
+        </div>
       </div>
     </Pane>
   );
 }
 
 function ExportStage({ picture }: { picture: Picture }) {
+  const [surface, setSurface] = useWorkspaceDraft("delivery-workspace-view", "package");
   const dur = totalDuration(picture);
   const [files, setFiles] = useState<ReadyFile[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
@@ -3021,218 +2886,236 @@ function ExportStage({ picture }: { picture: Picture }) {
   }
 
   return (
-    <Pane title="Export" kicker="14 · Delivery">
-      <MovieAssemblyPanel key={picture.id} picture={picture}/>
-      <section
-        className="mb-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
-        aria-label="Movie readiness"
-      >
-        <p className="text-[11px] tracking-wide text-subtle uppercase">Movie readiness</p>
-        <h3 className="mt-1 font-display text-xl">Guided finish path</h3>
-        <p className="mt-2 text-sm text-muted">{exportPlan.reason}</p>
-        <p className="mt-2 text-xs text-subtle">
-          {ffmpeg?.reason ?? "Checking local FFmpeg…"} {litePlan.reason} {plusPlan.reason}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button
-            className="mt-0"
-            size="sm"
-            variant="secondary"
-            onClick={() => setStage(nextStage)}
-          >
-            Next recommended · {nextStage}
-          </Button>
-          <Button
-            size="sm"
-            disabled={!canonicalImported || !ffmpeg?.ok}
-            onClick={() => {
-              void (async () => {
-                if (
-                  !canonicalImported?.mediaUri ||
-                  !canonicalImported.mediaSha256 ||
-                  !canonicalImported.probe?.durationSec
-                ) {
-                  toast.error("Canonical imported video is missing.");
-                  return;
-                }
-                const exported = await desktopExportLite({
-                  mediaUri: canonicalImported.mediaUri,
-                  mediaSha256: canonicalImported.mediaSha256,
-                  durationSec: canonicalImported.probe.durationSec,
-                  fps: canonicalImported.probe.fps ?? picture.fps ?? 24,
-                  hasAudio: canonicalImported.probe.hasAudio,
-                });
-                if (!exported.ok) {
-                  toast.error(exported.error);
-                  return;
-                }
-                setLastExport(exported.outputPath);
-                toast.success(`Exported imported MP4 ${exported.sha256.slice(0, 12)}…`);
-              })();
-            }}
-          >
-            Export MP4
-          </Button>
-          <Button
-            size="sm"
-            disabled={!plusPlan.ok}
-            onClick={() => {
-              void (async () => {
-                if (!canonicalAudio?.mediaUri || !canonicalAudio.mediaSha256) {
-                  toast.error("Canonical imported audio is required for the 30-second film.");
-                  return;
-                }
-                const exported = await desktopExportPlus({
-                  videos: film.clips,
-                  audioUri: canonicalAudio.mediaUri,
-                  audioSha256: canonicalAudio.mediaSha256,
-                  fps: picture.fps || 24,
-                });
-                if (!exported.ok) {
-                  toast.error(exported.error);
-                  return;
-                }
-                setLastExport(exported.outputPath);
-                toast.success(`Exported 30s imported film ${exported.sha256.slice(0, 12)}…`);
-              })();
-            }}
-          >
-            Export 30s film
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              void desktopOpenExportFolder().then((result) => {
-                if (!result.ok) toast.error(result.error || "Could not open folder");
-              });
-            }}
-          >
-            Open output folder
-          </Button>
-        </div>
-        {lastExport ? (
-          <p className="mt-2 truncate text-xs text-subtle" title={lastExport}>
-            Last export {lastExport}
-          </p>
-        ) : null}
-        <ul className="mt-4 grid gap-1 sm:grid-cols-2">
-          {readiness.map((item) => (
-            <li key={item.id}>
-              <button
-                type="button"
-                className="flex w-full items-start justify-between gap-2 rounded-sm bg-inset px-3 py-2 text-left text-xs shadow-[var(--shadow-border)]"
-                onClick={() => {
-                  if (item.id === "images" || item.id === "voice")
-                    useStudio.getState().setGenerateFocus("assets");
-                  else if (item.id === "video") useStudio.getState().setGenerateFocus("video");
-                  else setStage(item.stage);
-                }}
-              >
-                <span>
-                  <span className="text-subtle uppercase">{item.status}</span> · {item.label}
-                  <span className="mt-1 block text-muted">{item.reason}</span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-3 text-[11px] text-subtle">
-          {lifecycle.filter((stage) => stage.readiness).length} lifecycle stages tracked.
-          Checkpoint/resume uses the existing picture store; jobs re-queue instead of duplicating.
-        </p>
-      </section>
-      <dl className="grid max-w-md grid-cols-2 gap-3 text-sm">
-        <Stat k="Runtime" v={formatTimecode(dur, picture.fps)} />
-        <Stat k="Shots" v={String(picture.shots.length)} />
-        <Stat k="Plates" v={String(picture.shots.filter((s) => s.stillUrl).length)} />
-        <Stat k="Clips" v={String(picture.shots.filter((s) => s.videoUrl).length)} />
-      </dl>
-      <div className="mt-6 grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
-        <Button variant="secondary" onClick={() => void pull(buildFountain(picture))}>
-          Fountain
-        </Button>
-        <Button variant="secondary" onClick={() => void pull(buildShotList(picture))}>
-          Shot list
-        </Button>
-        <Button variant="secondary" onClick={() => void pull(buildEdl(picture))}>
-          EDL
-        </Button>
-        <Button variant="secondary" onClick={() => void pull(buildPromptPack(picture))}>
-          Prompt pack
-        </Button>
-        <Button variant="secondary" onClick={() => void pull(buildCueSheet(picture))}>
-          Cue sheet
-        </Button>
-        <Button onClick={() => void pull(buildProjectJson(picture))}>Project JSON</Button>
-        <Button
-          variant="outline"
-          onClick={() => {
-            void (async () => {
-              const pack = buildAllExports(picture);
-              setFiles((prev) => {
-                prev.forEach((f) => URL.revokeObjectURL(f.href));
-                return pack;
-              });
-              if (isDesktopApp()) {
-                const result = await desktopSaveMany({
-                  files: pack.map((f) => ({ filename: f.filename, contents: f.contents })),
-                });
-                if (!result.canceled)
-                  toast.success(`Saved ${result.count} files to ${result.folderLabel}`);
-                return;
-              }
-              toast.success("Six files ready. Hit Save on each.");
-            })();
-          }}
-        >
-          Prepare all
-        </Button>
+    <Pane title="Delivery" kicker="SCRIPT PACKAGE / FINISHED MOVIE">
+      <div className="workspace-tabs mb-5" aria-label="Delivery workspace">
+        {[
+          ["package", "Script & production package"],
+          ["movie", "Finished movie"],
+          ["readiness", "Readiness & other exports"],
+        ].map(([id, label]) => (
+          <button key={id} aria-pressed={surface === id} onClick={() => setSurface(id)}>
+            {label}
+          </button>
+        ))}
       </div>
-      {files.length ? (
-        <div className="mt-6 max-w-xl rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-          <p className="text-[11px] tracking-wide text-subtle uppercase">Ready to save</p>
-          <ul className="mt-3 grid gap-2">
-            {files.map((file) => (
-              <li
-                key={file.filename}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-inset px-3 py-2"
-              >
-                <span className="min-w-0 truncate text-sm">{file.filename}</span>
-                <span className="flex gap-1.5">
-                  <button
-                    type="button"
-                    className="inline-flex h-9 items-center rounded-sm bg-accent px-3 text-sm font-light text-accent-fg"
-                    onClick={() => {
-                      void saveReadyFile(file).then((result) => {
-                        if (result === "saved") toast.success(`Saved ${file.filename}`);
-                      });
-                    }}
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex h-9 items-center rounded-sm px-3 text-sm font-light"
-                    onClick={async () => {
-                      const ok = await copyText(file.contents);
-                      if (ok) {
-                        setCopied(file.filename);
-                        toast.success("Copied.");
-                      }
-                    }}
-                  >
-                    {copied === file.filename ? "Copied" : "Copy"}
-                  </button>
-                </span>
+      <div hidden={surface !== "movie"}>
+        <MovieAssemblyPanel key={picture.id} picture={picture} />
+      </div>
+      <div hidden={surface !== "readiness"}>
+        <section
+          className="mb-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+          aria-label="Movie readiness"
+        >
+          <p className="text-[11px] tracking-wide text-subtle uppercase">Movie readiness</p>
+          <h3 className="mt-1 font-display text-xl">Guided finish path</h3>
+          <p className="mt-2 text-sm text-muted">{exportPlan.reason}</p>
+          <p className="mt-2 text-xs text-subtle">
+            {ffmpeg?.reason ?? "Checking local FFmpeg…"} {litePlan.reason} {plusPlan.reason}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              className="mt-0"
+              size="sm"
+              variant="secondary"
+              onClick={() => setStage(nextStage)}
+            >
+              Next recommended · {nextStage}
+            </Button>
+            <Button
+              size="sm"
+              disabled={!canonicalImported || !ffmpeg?.ok}
+              onClick={() => {
+                void (async () => {
+                  if (
+                    !canonicalImported?.mediaUri ||
+                    !canonicalImported.mediaSha256 ||
+                    !canonicalImported.probe?.durationSec
+                  ) {
+                    toast.error("Canonical imported video is missing.");
+                    return;
+                  }
+                  const exported = await desktopExportLite({
+                    mediaUri: canonicalImported.mediaUri,
+                    mediaSha256: canonicalImported.mediaSha256,
+                    durationSec: canonicalImported.probe.durationSec,
+                    fps: canonicalImported.probe.fps ?? picture.fps ?? 24,
+                    hasAudio: canonicalImported.probe.hasAudio,
+                  });
+                  if (!exported.ok) {
+                    toast.error(exported.error);
+                    return;
+                  }
+                  setLastExport(exported.outputPath);
+                  toast.success(`Exported imported MP4 ${exported.sha256.slice(0, 12)}…`);
+                })();
+              }}
+            >
+              Export MP4
+            </Button>
+            <Button
+              size="sm"
+              disabled={!plusPlan.ok}
+              onClick={() => {
+                void (async () => {
+                  if (!canonicalAudio?.mediaUri || !canonicalAudio.mediaSha256) {
+                    toast.error("Canonical imported audio is required for the 30-second film.");
+                    return;
+                  }
+                  const exported = await desktopExportPlus({
+                    videos: film.clips,
+                    audioUri: canonicalAudio.mediaUri,
+                    audioSha256: canonicalAudio.mediaSha256,
+                    fps: picture.fps || 24,
+                  });
+                  if (!exported.ok) {
+                    toast.error(exported.error);
+                    return;
+                  }
+                  setLastExport(exported.outputPath);
+                  toast.success(`Exported 30s imported film ${exported.sha256.slice(0, 12)}…`);
+                })();
+              }}
+            >
+              Export 30s film
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                void desktopOpenExportFolder().then((result) => {
+                  if (!result.ok) toast.error(result.error || "Could not open folder");
+                });
+              }}
+            >
+              Open output folder
+            </Button>
+          </div>
+          {lastExport ? (
+            <p className="mt-2 truncate text-xs text-subtle" title={lastExport}>
+              Last export {lastExport}
+            </p>
+          ) : null}
+          <ul className="mt-4 grid gap-1 sm:grid-cols-2">
+            {readiness.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  className="flex w-full items-start justify-between gap-2 rounded-sm bg-inset px-3 py-2 text-left text-xs shadow-[var(--shadow-border)]"
+                  onClick={() => {
+                    if (item.id === "images" || item.id === "voice")
+                      useStudio.getState().setGenerateFocus("assets");
+                    else if (item.id === "video") useStudio.getState().setGenerateFocus("video");
+                    else setStage(item.stage);
+                  }}
+                >
+                  <span>
+                    <span className="text-subtle uppercase">{item.status}</span> · {item.label}
+                    <span className="mt-1 block text-muted">{item.reason}</span>
+                  </span>
+                </button>
               </li>
             ))}
           </ul>
+          <p className="mt-3 text-[11px] text-subtle">
+            {lifecycle.filter((stage) => stage.readiness).length} lifecycle stages tracked.
+            Checkpoint/resume uses the existing picture store; jobs re-queue instead of duplicating.
+          </p>
+        </section>
+      </div>
+      <section hidden={surface !== "package"} aria-label="Script and production package">
+        <h3 className="font-display text-2xl">Your movie script package</h3>
+        <p className="mb-6 mt-2 text-sm text-muted">
+          Save the complete writing and production handoff, or choose individual files.
+        </p>
+        <dl className="grid max-w-md grid-cols-2 gap-3 text-sm">
+          <Stat k="Runtime" v={formatTimecode(dur, picture.fps)} />
+          <Stat k="Shots" v={String(picture.shots.length)} />
+          <Stat k="Plates" v={String(picture.shots.filter((s) => s.stillUrl).length)} />
+          <Stat k="Clips" v={String(picture.shots.filter((s) => s.videoUrl).length)} />
+        </dl>
+        <div className="mt-6 grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+          <Button variant="secondary" onClick={() => void pull(buildFountain(picture))}>
+            Fountain
+          </Button>
+          <Button variant="secondary" onClick={() => void pull(buildShotList(picture))}>
+            Shot list
+          </Button>
+          <Button variant="secondary" onClick={() => void pull(buildEdl(picture))}>
+            EDL
+          </Button>
+          <Button variant="secondary" onClick={() => void pull(buildPromptPack(picture))}>
+            Prompt pack
+          </Button>
+          <Button variant="secondary" onClick={() => void pull(buildCueSheet(picture))}>
+            Cue sheet
+          </Button>
+          <Button onClick={() => void pull(buildProjectJson(picture))}>Project JSON</Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              void (async () => {
+                const pack = buildAllExports(picture);
+                setFiles((prev) => {
+                  prev.forEach((f) => URL.revokeObjectURL(f.href));
+                  return pack;
+                });
+                if (isDesktopApp()) {
+                  const result = await desktopSaveMany({
+                    files: pack.map((f) => ({ filename: f.filename, contents: f.contents })),
+                  });
+                  if (!result.canceled)
+                    toast.success(`Saved ${result.count} files to ${result.folderLabel}`);
+                  return;
+                }
+                toast.success(`${pack.length} files ready. Choose Save for each file.`);
+              })();
+            }}
+          >
+            Export complete package
+          </Button>
         </div>
-      ) : null}
-      <p className="mt-6 max-w-lg text-xs text-muted">
-        Standalone delivery. No Comfy graph. Local weights remain at {MODEL_ROOT}.
-      </p>
+        {files.length ? (
+          <div className="mt-6 max-w-xl rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+            <p className="text-[11px] tracking-wide text-subtle uppercase">Ready to save</p>
+            <ul className="mt-3 grid gap-2">
+              {files.map((file) => (
+                <li
+                  key={file.filename}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-inset px-3 py-2"
+                >
+                  <span className="min-w-0 truncate text-sm">{file.filename}</span>
+                  <span className="flex gap-1.5">
+                    <button
+                      type="button"
+                      className="inline-flex h-9 items-center rounded-sm bg-accent px-3 text-sm font-light text-accent-fg"
+                      onClick={() => {
+                        void saveReadyFile(file).then((result) => {
+                          if (result === "saved") toast.success(`Saved ${file.filename}`);
+                        });
+                      }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex h-9 items-center rounded-sm px-3 text-sm font-light"
+                      onClick={async () => {
+                        const ok = await copyText(file.contents);
+                        if (ok) {
+                          setCopied(file.filename);
+                          toast.success("Copied.");
+                        }
+                      }}
+                    >
+                      {copied === file.filename ? "Copied" : "Copy"}
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </section>
     </Pane>
   );
 }

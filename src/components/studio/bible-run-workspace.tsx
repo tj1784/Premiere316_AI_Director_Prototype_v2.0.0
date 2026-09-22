@@ -1,10 +1,10 @@
+import { reviewDifferences } from "@/lib/studio/review-differences";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/field";
 import { useActivePicture, useStudio } from "@/lib/studio/store";
 import {
-  assembledBibleScreenplay,
   editBibleCandidate,
   nextBibleUnit,
   parseBibleResponse,
@@ -14,8 +14,7 @@ import {
 } from "@/lib/studio/bible-run";
 import { BibleDraftContent } from "./bible-draft-content";
 import { bibleWorkerActive, executeBibleRun } from "@/lib/studio/bible-run-client";
-import { appendScreenplayVersion } from "@/lib/studio/screenplay";
-import { readyTextFile, saveReadyFile, uid } from "@/lib/utils";
+import { readyTextFile, saveReadyFile } from "@/lib/utils";
 import { applyBibleScreenplay, applyBiblePlanning } from "@/lib/studio/bible-application";
 import { startScopedBibleRevision } from "@/lib/studio/bible-run";
 import { useWorkspaceDraft } from "./use-workspace-draft";
@@ -25,15 +24,24 @@ export function BibleRunWorkspace() {
   const patch = useStudio((s) => s.patchActive);
   const [challenger, setChallenger] = useState(false);
   const [budget, setBudget] = useState(100);
-  const [selectedId, setSelectedId] = useState("");
+  const [selectedId, setSelectedId] = useWorkspaceDraft("run-selected-unit", "");
   const [feedback, setFeedback] = useWorkspaceDraft("run-feedback", "");
   const [compare, setCompare] = useState(false);
-  const [edited, setEdited] = useState<string | null>(null);
+  const [drafts, setDrafts] = useWorkspaceDraft<Record<string, string>>("run-candidate-drafts", {});
   const [revisionScene, setRevisionScene] = useState("");
   if (!picture) return null;
   const run = picture.bibleRun;
   const current = run && nextBibleUnit(run);
   const selected = run?.units.find((u) => u.id === selectedId) ?? current ?? run?.units.at(-1);
+  const draftKey = `${run?.id ?? ""}:${selected?.id ?? ""}`;
+  const edited = drafts[draftKey] ?? null;
+  const setEdited = (text: string | null) =>
+    setDrafts((previous) => {
+      const next = { ...previous };
+      if (text === null) delete next[draftKey];
+      else next[draftKey] = text;
+      return next;
+    });
   let readable: Parameters<typeof BibleDraftContent>[0]["value"] = null;
   try {
     readable = parseBibleResponse(edited ?? selected?.candidates.at(-1)?.text ?? "") as Parameters<
@@ -41,6 +49,35 @@ export function BibleRunWorkspace() {
     >[0]["value"];
   } catch {
     /* Invalid candidates remain available in the raw evidence view. */
+  }
+  let previousReadable: typeof readable = null;
+  try {
+    previousReadable = parseBibleResponse(
+      selected?.candidates.at(-2)?.text ?? "",
+    ) as typeof readable;
+  } catch {
+    /* Raw previous evidence is retained below. */
+  }
+  const differences =
+    previousReadable && readable ? reviewDifferences(previousReadable, readable) : [];
+  const differenceText = (value: unknown) =>
+    value === undefined
+      ? "Not present"
+      : typeof value === "string"
+        ? value || "(empty)"
+        : JSON.stringify(value, null, 2);
+  let nextLabel = "";
+  let canAccept = false;
+  if (run && selected && ["review", "failed", "rejected"].includes(selected.status)) {
+    try {
+      const accepted = reviewBibleUnit(run, selected.id, "accept");
+      canAccept = true;
+      const successor = nextBibleUnit(accepted);
+      nextLabel =
+        successor && !["review", "rejected"].includes(successor.status) ? successor.label : "";
+    } catch {
+      /* Review remains disabled until the candidate is valid. */
+    }
   }
   const update = (next: BibleRun) => patch({ bibleRun: next });
   const review = (decision: "accept" | "reject" | "revise", next = false) => {
@@ -55,7 +92,7 @@ export function BibleRunWorkspace() {
   };
   return (
     <section
-      className="grid gap-4 rounded-lg border border-border bg-surface p-4"
+      className="run-workspace grid gap-4 rounded-lg border border-border bg-surface p-4"
       aria-label="Complete Movie Script run"
     >
       <header>
@@ -166,13 +203,21 @@ export function BibleRunWorkspace() {
               ? "Complete text package — awaiting final review"
               : run.status === "running" && !bibleWorkerActive(run.id)
                 ? "Interrupted run — explicit reconciliation required"
-                : run.status}{" "}
+                : current?.status === "review"
+                  ? "Awaiting your review"
+                  : run.status.replaceAll("-", " ")}{" "}
             · {run.units.filter((u) => ["accepted", "checkpoint"].includes(u.status)).length}/
             {run.units.length} units · {run.requests}/{run.maxRequests} requests
             <p className="mt-1 text-xs text-muted">
               {run.profileId} · {run.mode} · snapshot {run.sourceHash}
             </p>
           </div>
+          <progress
+            className="h-1.5 w-full accent-accent"
+            aria-label="Authoring coverage"
+            value={run.units.filter((u) => ["accepted", "checkpoint"].includes(u.status)).length}
+            max={Math.max(1, run.units.length)}
+          />
           {run.failure && (
             <p role="alert" className="whitespace-pre-wrap text-sm text-rec">
               {run.failure}
@@ -256,7 +301,7 @@ export function BibleRunWorkspace() {
             )}
           </div>
           <div className="grid gap-4 xl:grid-cols-[minmax(12rem,1fr)_minmax(0,3fr)]">
-            <div className="max-h-96 overflow-auto" aria-label="Run coverage ledger">
+            <div className="run-coverage-ledger" aria-label="Run coverage ledger">
               {run.units.map((u) => (
                 <button
                   className="workspace-nav-link"
@@ -264,7 +309,6 @@ export function BibleRunWorkspace() {
                   key={u.id}
                   onClick={() => {
                     setSelectedId(u.id);
-                    setEdited(null);
                   }}
                 >
                   <span>
@@ -297,13 +341,53 @@ export function BibleRunWorkspace() {
                 >
                   {compare ? "Hide previous revision" : "Compare revisions"}
                 </Button>
+                {compare && previousReadable && readable && (
+                  <details className="my-3 rounded border border-border p-3" open>
+                    <summary className="cursor-pointer text-sm">
+                      {differences.length} changed fields
+                    </summary>
+                    <div className="mt-3 grid gap-3">
+                      {differences.map((change) => (
+                        <section key={change.path} className="border-t border-border pt-3">
+                          <h4 className="text-xs text-accent">{change.path}</h4>
+                          <div className="mt-2 grid gap-3 lg:grid-cols-2">
+                            <div>
+                              <p className="text-xs text-muted">Before</p>
+                              <pre className="mt-1 whitespace-pre-wrap break-words font-sans text-sm">
+                                {differenceText(change.before)}
+                              </pre>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted">After</p>
+                              <pre className="mt-1 whitespace-pre-wrap break-words font-sans text-sm">
+                                {differenceText(change.after)}
+                              </pre>
+                            </div>
+                          </div>
+                        </section>
+                      ))}
+                    </div>
+                  </details>
+                )}
                 <div className={compare ? "grid gap-3 lg:grid-cols-2" : ""}>
                   {compare && (
-                    <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-md bg-inset p-3 text-xs">
-                      {selected.candidates.at(-2)?.text}
-                    </pre>
+                    <section className="rounded-md border border-border bg-inset p-4">
+                      <h4 className="mb-4 text-sm text-accent">
+                        Previous revision · {selected.candidates.length - 1}
+                      </h4>
+                      {previousReadable ? (
+                        <BibleDraftContent value={previousReadable} />
+                      ) : (
+                        <pre className="whitespace-pre-wrap break-words text-xs">
+                          {selected.candidates.at(-2)?.text}
+                        </pre>
+                      )}
+                    </section>
                   )}
-                  <div className="max-h-96 overflow-auto rounded-md bg-inset p-4">
+                  <div className="rounded-md border border-border bg-inset p-4">
+                    <h4 className="mb-4 text-sm text-accent">
+                      Current revision · {selected.candidates.length}
+                    </h4>
                     {readable ? (
                       <BibleDraftContent
                         value={readable}
@@ -365,16 +449,32 @@ export function BibleRunWorkspace() {
                       onChange={(e) => setFeedback(e.target.value)}
                     />
                     <div className="flex flex-wrap gap-2">
-                      <Button onClick={() => review("accept")}>
+                      <Button
+                        disabled={edited !== null || !canAccept || run.status === "running"}
+                        onClick={() => review("accept")}
+                      >
                         Accept this draft · stay paused
                       </Button>
-                      <Button onClick={() => review("accept", true)}>
-                        Accept & run one next unit
+                      <Button
+                        className="h-auto min-h-11 whitespace-normal text-left"
+                        variant="secondary"
+                        disabled={edited !== null || !nextLabel || run.status === "running"}
+                        onClick={() => review("accept", true)}
+                      >
+                        Accept & run: {nextLabel || "no next unit"}
                       </Button>
-                      <Button variant="secondary" onClick={() => review("revise")}>
+                      <Button
+                        variant="secondary"
+                        disabled={edited !== null || run.status === "running"}
+                        onClick={() => review("revise")}
+                      >
                         Request changes
                       </Button>
-                      <Button variant="ghost" onClick={() => review("reject")}>
+                      <Button
+                        variant="ghost"
+                        disabled={edited !== null || run.status === "running"}
+                        onClick={() => review("reject")}
+                      >
                         Reject
                       </Button>
                     </div>

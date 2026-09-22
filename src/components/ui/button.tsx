@@ -4,12 +4,13 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "relative z-10 inline-flex items-center justify-center gap-2 whitespace-nowrap font-light transition-[opacity,transform,background-color,box-shadow] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 disabled:opacity-40 disabled:cursor-not-allowed active:enabled:scale-[0.96] [&_svg]:size-4 [&_svg]:shrink-0 pointer-events-auto",
+  "relative z-10 inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-[opacity,transform,background-color,box-shadow] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 disabled:opacity-40 disabled:cursor-not-allowed active:enabled:scale-[0.96] [&_svg]:size-4 [&_svg]:shrink-0 pointer-events-auto",
   {
     variants: {
       variant: {
         primary: "bg-accent text-accent-fg hover:opacity-90",
-        secondary: "bg-elevated text-fg shadow-[var(--shadow-border)] hover:shadow-[var(--shadow-border-hover)]",
+        secondary:
+          "bg-elevated text-fg shadow-[var(--shadow-border)] hover:shadow-[var(--shadow-border-hover)]",
         ghost: "text-muted hover:bg-elevated hover:text-fg",
         rec: "bg-rec text-fg hover:opacity-90",
         outline: "text-fg shadow-[var(--shadow-border)] hover:bg-elevated",
@@ -27,8 +28,7 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 

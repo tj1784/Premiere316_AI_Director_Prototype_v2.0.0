@@ -3,7 +3,11 @@ import { BookOpen, ChevronDown, Film, Home, Layers, ListChecks, Menu, X } from "
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import type { StageId } from "@/lib/studio/types";
 
-const groups: { title: string; icon: typeof BookOpen; links: [StageId, string][] }[] = [
+export const workspaceGroups: {
+  title: string;
+  icon: typeof BookOpen;
+  links: [StageId, string][];
+}[] = [
   {
     title: "Movie Script",
     icon: BookOpen,
@@ -54,9 +58,9 @@ export function WorkspaceNavigation() {
           <small>PRODUCTION WORKSPACE · V4</small>
         </div>
         <button className="workspace-nav-link" onClick={close}>
-          <Home size={15} /> All pictures
+          <Home size={15} /> Home · movie scripts
         </button>
-        {groups.map((group) => (
+        {workspaceGroups.map((group) => (
           <section key={group.title}>
             <h2>
               <group.icon size={12} />
@@ -103,7 +107,8 @@ export function WorkspaceNavigation() {
           </section>
         ))}
         <p className="workspace-nav-footer">
-          {picture?.scenes.length || picture?.performance?.scenes.length || 0} scenes · {picture?.shots.length ?? 0} shots
+          {picture?.scenes.length || picture?.performance?.scenes.length || 0} scenes ·{" "}
+          {picture?.shots.length ?? 0} shots
           <br />
           Approved work stays protected
         </p>

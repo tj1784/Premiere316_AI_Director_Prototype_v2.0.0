@@ -1,6 +1,5 @@
 import { Clapperboard } from "lucide-react";
 import { makePictureIntake } from "@/lib/studio/picture-intake";
-import { MODEL_ROOT } from "@/lib/studio/types";
 import { useStudio } from "@/lib/studio/store";
 import { InterfaceScale } from "./interface-scale";
 import { PicturesLibrary } from "./pictures-library";
@@ -25,17 +24,11 @@ export function HomeBay() {
           </div>
         </div>
         <div className="flex min-w-0 items-center gap-2">
-          <p
-            className="hidden max-w-64 truncate text-[11px] text-subtle sm:block"
-            title={MODEL_ROOT}
-          >
-            {MODEL_ROOT}
-          </p>
           <InterfaceScale />
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-5 pb-16 pt-8 sm:px-8 sm:pt-10">
+      <main className="mx-auto max-w-[100rem] px-5 pb-16 pt-8 sm:px-8 sm:pt-10">
         <PicturesLibrary
           pictures={pictures}
           onNew={() => newPicture(makePictureIntake())}

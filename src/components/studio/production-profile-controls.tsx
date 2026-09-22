@@ -34,11 +34,11 @@ const PROFILE_COPY: Record<ProductionProfileId, { title: string; description: st
 
 const MODE_COPY: Record<ProductionExecutionMode, { title: string; description: string }> = {
   guided: {
-    title: "Guided review",
+    title: "Step-by-step review",
     description: "Run one bounded production unit, save its draft, and stop for your approval.",
   },
   "autonomous-complete-script": {
-    title: "Autonomous complete script",
+    title: "Autonomous — Complete Movie Script",
     description:
       "Explicitly start the complete text package, with persistent scene checkpoints, bounded requests and final review.",
   },
