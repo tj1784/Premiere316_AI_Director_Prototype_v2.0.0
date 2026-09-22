@@ -154,6 +154,7 @@ export function StudioShell() {
       className="studio-desktop"
     >
       <header className="studio-titlebar">
+        <div className="studio-project-identity">
         <button
           className="studio-project-switch"
           aria-label="Home · movie scripts"
@@ -163,6 +164,8 @@ export function StudioShell() {
           <span>{picture.title}</span>
         </button>
         <ProjectSaveStatus />
+        </div>
+        {!expanded && <WorkspaceNavigation />}
         <div className="studio-title-actions">
           {!workspacePanel && leftKind && (
             <Button
@@ -223,7 +226,6 @@ export function StudioShell() {
           </div>
         )}
       </div>
-      {!expanded && <WorkspaceNavigation />}
       <CabinetModal title="Project settings" open={profileOpen} onOpenChange={setProfileOpen}>
         <ProductionProfileControls picture={picture} />
         <InterfaceScale />

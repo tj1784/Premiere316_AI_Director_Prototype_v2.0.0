@@ -1125,12 +1125,19 @@
 .studio-titlebar {
   height: 58px;
   min-height: 58px !important;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 14px;
   padding: 0 28px !important;
   border: 0;
   flex-shrink: 0;
+}
+.studio-project-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
 }
 .studio-project-switch {
   display: flex;
@@ -1156,11 +1163,12 @@
   gap: 4px;
   align-items: center;
   margin-left: auto;
+  grid-column: 3;
 }
 .studio-canvas {
   flex: 1;
   min-height: 0;
-  margin: 0 24px 86px;
+  margin: 0 24px 16px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1179,60 +1187,45 @@
   flex-shrink: 0;
   border-top: 1px solid var(--color-border);
 }
-.studio-desktop[data-editor-expanded="true"] .studio-canvas {
-  margin-bottom: 20px;
-}
 .studio-dock {
-  position: absolute;
-  bottom: 18px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 7px 10px;
-  background: color-mix(in srgb, var(--color-elevated) 94%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-muted) 22%, transparent);
-  border-radius: 19px;
-  box-shadow: 0 9px 24px #0005;
+  justify-content: center;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
   z-index: 30;
-  backdrop-filter: blur(18px);
 }
 .dock-icon {
   position: relative;
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
+  background: transparent;
+  border: 0;
   color: var(--color-muted);
-  transition:
-    background 140ms,
-    color 140ms,
-    transform 140ms;
+  transition: color 140ms;
 }
 .dock-icon:hover,
 .dock-icon:focus-visible {
   color: var(--color-fg);
-  background: var(--color-border);
-  transform: translateY(-3px);
+  background: transparent;
+}
+.dock-icon:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: -4px;
+  border-radius: 6px;
 }
 .dock-icon[aria-current="page"] {
   color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
-}
-.dock-icon[aria-current="page"]::after {
-  content: "";
-  position: absolute;
-  bottom: 3px;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--color-accent);
+  background: transparent;
 }
 .dock-tooltip {
   position: absolute;
-  bottom: calc(100% + 14px);
+  top: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
@@ -1370,21 +1363,28 @@
 }
 @media (max-width: 700px) {
   .studio-titlebar {
-    padding: 0 12px !important;
-    gap: 8px;
+    padding: 4px 12px !important;
+    height: auto;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 8px;
+  }
+  .studio-title-actions {
+    grid-column: 2;
+    grid-row: 1;
   }
   .studio-titlebar [role="status"] {
     display: none;
   }
   .studio-canvas {
-    margin: 0 8px 84px;
+    margin: 0 8px 12px;
     border-radius: 12px;
   }
   .studio-dock {
-    bottom: 16px;
-    gap: 0;
-    padding: 6px;
-    max-width: calc(100% - 16px);
+    grid-column: 1 / -1;
+    grid-row: 2;
+    gap: 4px;
+    padding: 0;
+    justify-self: center;
   }
   .dock-icon {
     width: 42px;
@@ -2022,3 +2022,144 @@
     justify-content: center;
   }
 }
+
+/* Optical glass, softly sculpted controls, and restrained motion. */
+.studio-desktop,
+.home-atrium {
+  background:
+    radial-gradient(ellipse at 8% 0%, #355a7c70 0%, transparent 48%),
+    radial-gradient(ellipse at 97% 86%, #60517942 0%, transparent 47%),
+    radial-gradient(ellipse at 65% -25%, #d0a56d25 0%, transparent 45%),
+    #10151e;
+}
+.studio-canvas {
+  position: relative;
+  isolation: isolate;
+  border-color: #d5e5ff24;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #d1e3ff0d, #9bb6e103 48%, #d4c1fb08), #171e2aad;
+  backdrop-filter: blur(28px) saturate(125%);
+  box-shadow: inset 0 1px 0 #eef5ff13, inset 0 -1px 0 #0004, 0 18px 48px #03060e45;
+}
+.studio-canvas::before {
+  content: "";
+  position: absolute;
+  inset: 0 14% auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #d7e9ff55, transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+.studio-titlebar { color: #e7edf6; }
+.studio-titlebar .dock-icon { transition: color 180ms ease, filter 220ms ease, translate 180ms ease; }
+.studio-titlebar .dock-icon:hover { translate: 0 -1px; filter: drop-shadow(0 0 7px #bedbff75); }
+.studio-titlebar .dock-icon:active { translate: 0 1px; }
+.studio-titlebar .dock-icon[aria-current="page"] { filter: drop-shadow(0 0 8px #e1c49160); }
+.studio-titlebar .dock-icon,
+.studio-titlebar .dock-icon:hover,
+.studio-titlebar .dock-icon[aria-current="page"] { background: transparent; box-shadow: none; }
+.studio-canvas .screenplay-workspace > section { background: transparent; }
+.studio-canvas .screenplay-editor-surface textarea.screenplay {
+  background: linear-gradient(150deg, #152031b3, #12182480);
+  border: 1px solid #bfd8ff12;
+  border-radius: 16px;
+  box-shadow: inset 0 2px 9px #02061045, 0 1px 0 #ffffff0b;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.studio-canvas .screenplay-editor-surface textarea.screenplay:focus {
+  border-color: #a5c8ee35;
+  box-shadow: inset 0 2px 9px #02061045, 0 0 0 3px #a5c8ee05;
+  outline: none;
+}
+.bible-desk-heading,
+.screenplay-document-header {
+  background: linear-gradient(180deg, #dceaff06, transparent);
+}
+.bible-record-title { color: #edf2fb; text-shadow: 0 2px 16px #d3e5ff12; }
+.bible-passage h3 { color: #a2b5cb; letter-spacing: 0.13em; }
+.bible-passage p { color: #e1e8f2; }
+.bible-add-direction,
+.home-new-picture {
+  border-radius: 12px;
+  border: 1px solid #d5e5ff1c;
+  background: linear-gradient(145deg, #39465780, #1c2636b3);
+  box-shadow: inset 0 1px 0 #ffffff15, inset 0 -2px 3px #0003, 0 4px 12px #050a1426;
+  transition: translate 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.bible-add-direction:hover {
+  translate: 0 -1px;
+  border-color: #d5e5ff40;
+  box-shadow: inset 0 1px 0 #ffffff20, 0 5px 18px #050a1438;
+}
+.cabinet-overlay {
+  background: #060c1859;
+  backdrop-filter: blur(14px) saturate(85%);
+}
+.cabinet-modal,
+.home-delete-dialog {
+  border: 1px solid #d5e5ff30;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #64799224, #3e455515 65%), #192331e8;
+  backdrop-filter: blur(32px) saturate(140%);
+  box-shadow: inset 0 1px 1px #ffffff24, inset 0 -2px 5px #0004, 0 28px 100px #01040bbb, 0 8px 24px #02081055;
+}
+.cabinet-modal > header { border-color: #d5e5ff14; padding: 22px 26px; }
+.cabinet-modal :is(input, textarea, select) {
+  border-color: #d5e5ff1c;
+  border-radius: 10px;
+  background-color: #0d152280;
+  box-shadow: inset 0 2px 5px #0003, 0 1px 0 #ffffff07;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.cabinet-modal :is(input, textarea, select):focus-visible { outline: 1px solid #9ec3ef75; outline-offset: 2px; }
+.workspace-launcher button,
+.bible-record-choice {
+  border: 1px solid transparent;
+  border-radius: 12px;
+  transition: background 180ms ease, border-color 180ms ease, translate 180ms ease, box-shadow 180ms ease;
+}
+.workspace-launcher button:hover,
+.bible-record-choice:hover {
+  background: linear-gradient(145deg, #c9dfff15, #a7c7ef05);
+  border-color: #d5e5ff1c;
+  box-shadow: inset 0 1px 0 #ffffff0d, 0 4px 10px #0002;
+  translate: 0 -1px;
+}
+.cabinet-tabs [data-state="active"] {
+  background: linear-gradient(145deg, #b9d6f520, #718eaf15);
+  box-shadow: inset 0 1px 0 #ffffff1c, 0 3px 10px #0003;
+  border-radius: 10px;
+}
+.dock-tooltip { background: #253245e8; border-color: #c8def52b; backdrop-filter: blur(16px); box-shadow: 0 6px 20px #0004; transition: opacity 140ms ease; }
+.home-picture {
+  padding: 18px;
+  border: 1px solid #d5e5ff1c;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #8dabd51c, #ffffff04);
+  backdrop-filter: blur(20px);
+  box-shadow: inset 0 1px 0 #ffffff0e, 0 12px 26px #0002;
+  transition: translate 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+.home-picture:hover { translate: 0 -3px; border-color: #d5e5ff38; box-shadow: inset 0 1px 0 #ffffff1c, 0 18px 35px #0003; }
+.home-picture-art:has(.picture-cover-empty) { background: #0e182940; border-color: #c8def51a; box-shadow: inset 0 2px 6px #0002; }
+.home-picture-art .picture-cover-empty { background: transparent; color: #9fb1c8; }
+.asset-library-tile { background: linear-gradient(145deg, #52688724, #16202d80); border-color: #d5e5ff20; box-shadow: inset 0 1px 0 #ffffff0d, 0 8px 20px #0002; transition: border-color 200ms, translate 200ms; }
+.asset-library-tile:hover { border-color: #d5e5ff50; translate: 0 -2px; }
+@keyframes studio-surface-enter { from { opacity: 0; translate: 0 5px; } to { opacity: 1; translate: 0 0; } }
+@keyframes studio-modal-enter { from { opacity: 0; scale: 0.98; translate: 0 8px; } to { opacity: 1; scale: 1; translate: 0 0; } }
+@keyframes studio-modal-exit { to { opacity: 0; scale: 0.985; translate: 0 5px; } }
+@keyframes studio-overlay-enter { from { opacity: 0; } to { opacity: 1; } }
+.studio-canvas > main > * { animation: studio-surface-enter 260ms ease-out; }
+.cabinet-modal[data-state="open"] { animation: studio-modal-enter 220ms cubic-bezier(.16,1,.3,1); }
+.cabinet-modal[data-state="closed"] { animation: studio-modal-exit 130ms ease-in; }
+.cabinet-overlay[data-state="open"] { animation: studio-overlay-enter 180ms ease-out; }
+.cabinet-overlay[data-state="closed"] { animation: studio-overlay-enter 130ms ease-in reverse; }
+@media (prefers-reduced-motion: reduce) {
+  .studio-canvas > main > *, .cabinet-modal, .cabinet-overlay { animation: none !important; }
+  .studio-titlebar .dock-icon, .home-picture, .asset-library-tile, .bible-add-direction, .workspace-launcher button, .bible-record-choice { transition: none; translate: none !important; }
+}
+.studio-canvas { transition: border-color 300ms ease, box-shadow 300ms ease; }
+.studio-canvas:hover { border-color: #d5e5ff32; box-shadow: inset 0 1px 0 #eef5ff1c, inset 0 -1px 0 #0004, 0 18px 48px #03060e45, 0 0 24px #94baff05; }
+.bible-record-title { padding: 8px 12px; margin-left: -12px; border: 1px solid transparent; border-radius: 12px; transition: background 180ms ease, border-color 180ms ease; }
+.bible-record-title:hover { background: linear-gradient(135deg, #c4ddff12, #c4ddff04); border-color: #d5e5ff1c; }
+@media (prefers-reduced-motion: reduce) { .studio-canvas, .bible-record-title, .dock-tooltip { transition: none; } }

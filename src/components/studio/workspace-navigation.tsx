@@ -107,7 +107,6 @@ export function WorkspaceNavigation() {
             </button>
           );
         })}
-        <span className="dock-divider" aria-hidden="true" />
         <button
           className="dock-icon"
           aria-label="All workspaces"
