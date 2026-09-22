@@ -1,27 +1,21 @@
 import { useState } from "react";
+import * as AlertDialog from "@radix-ui/react-alert-dialog";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Plus, Search, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Clock3, Plus } from "lucide-react";
 import { PictureCover } from "./picture-cover";
-import { Badge } from "@/components/ui/badge";
-import { STAGES } from "@/lib/studio/types";
 import type { PreparedPicture } from "@/lib/studio/picture-preparation";
 import { useStudio } from "@/lib/studio/store";
 import { formatRuntimeMinutes } from "@/lib/utils";
 
+const PAGE_SIZE = 3;
+
 function relativeModified(timestamp: number): string {
   if (!timestamp || timestamp <= 1) return "Studio sample";
   const days = Math.max(0, Math.floor((Date.now() - timestamp) / 86_400_000));
-  if (days === 0) return "Modified today";
-  if (days === 1) return "Modified yesterday";
-  return `Modified ${days} days ago`;
-}
-
-function preparationLabel(picture: PreparedPicture): string {
-  if (picture.screenplay.status === "APPROVED") return "Screenplay approved";
-  if (picture.screenplay.status === "READY_FOR_REVIEW") return "Ready for review";
-  if (picture.screenplay.status === "GENERATING") return "Screenplay generating";
-  return "Intake saved";
+  if (days === 0) return "Edited today";
+  if (days === 1) return "Edited yesterday";
+  return `Edited ${days} days ago`;
 }
 
 export function PicturesLibrary({
@@ -36,161 +30,110 @@ export function PicturesLibrary({
   const deletePicture = useStudio((state) => state.deletePicture);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
+  const [page, setPage] = useState(0);
   const visible = [...pictures]
     .filter(
-      (p) =>
-        (filter === "all" || (filter === "samples" ? p.sample : !p.sample)) &&
-        `${p.title} ${p.logline} ${p.genre}`.toLowerCase().includes(query.toLowerCase()),
+      (picture) =>
+        (filter === "all" || (filter === "samples" ? picture.sample : !picture.sample)) &&
+        `${picture.title} ${picture.logline} ${picture.genre}`.toLowerCase().includes(query.toLowerCase()),
     )
     .sort((a, b) => b.updatedAt - a.updatedAt);
-  const recent = [...pictures]
-    .filter((p) => !p.sample)
-    .sort((a, b) => b.updatedAt - a.updatedAt)[0];
+  const pages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pages - 1);
+
   return (
-    <section aria-labelledby="pictures-heading">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] tracking-[0.2em] text-subtle uppercase">
-            YOUR PRODUCTION LIBRARY
-          </p>
-          <h1
-            id="pictures-heading"
-            className="mt-1 font-display text-[clamp(2rem,5vw,3rem)] tracking-tight text-balance"
-          >
-            Movie scripts
-          </h1>
-        </div>
-        <Button onClick={onNew}>
-          <Plus />
-          New movie script
+    <section className="home-library" aria-labelledby="pictures-heading">
+      <div className="home-library-heading">
+        <h1 id="pictures-heading">Your films<span className="home-library-count">{pictures.length}</span></h1>
+        <Button className="home-create" size="icon" onClick={onNew} aria-label="New movie script" title="New movie script">
+          <Plus aria-hidden="true" />
         </Button>
       </div>
 
-      {recent && !query && (
-        <section className="home-resume mt-7" aria-label="Resume recent script">
-          <div>
-            <p className="workspace-eyebrow">CONTINUE WRITING</p>
-            <h2 className="mt-2 font-display text-3xl">{recent.title}</h2>
-            <p className="mt-2 max-w-2xl text-sm text-muted">
-              {recent.logline || "Continue developing your movie script."}
-            </p>
-            <p className="mt-3 text-xs text-muted">
-              {preparationLabel(recent)} · {relativeModified(recent.updatedAt)}
-            </p>
-          </div>
-          <Button variant="secondary" onClick={() => onOpen(recent.id)}>
-            Resume script →
-          </Button>
-        </section>
-      )}
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-        <div className="workspace-tabs" aria-label="Filter movie scripts">
-          {[
-            ["all", "All scripts"],
-            ["projects", "My scripts"],
-            ["samples", "Studio samples"],
-          ].map(([id, label]) => (
-            <button key={id} aria-pressed={filter === id} onClick={() => setFilter(id)}>
-              {label}
-            </button>
-          ))}
-        </div>
-        <Input
-          className="max-w-xs"
-          aria-label="Search movie scripts"
-          placeholder="Search scripts, genres or story…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+      <div className="home-library-tools">
+        <label className="home-search">
+          <Search className="size-4" aria-hidden="true" />
+          <Input
+            aria-label="Search movie scripts"
+            placeholder="Find a film…"
+            value={query}
+            onChange={(event) => { setQuery(event.target.value); setPage(0); }}
+          />
+        </label>
+        <select
+          className="home-filter"
+          aria-label="Filter movie scripts"
+          value={filter}
+          onChange={(event) => { setFilter(event.target.value); setPage(0); }}
+        >
+          <option value="all">All films</option>
+          <option value="projects">My films</option>
+          <option value="samples">Samples</option>
+        </select>
       </div>
-      <p className="mt-4 text-xs text-muted" role="status">
-        {visible.length} {visible.length === 1 ? "script" : "scripts"}
-      </p>
-      <ul className="picture-grid mt-4 grid gap-4">
-        <li>
-          <button
-            type="button"
-            onClick={onNew}
-            className="group flex min-h-64 w-full flex-col justify-between rounded-lg bg-elevated p-5 text-left shadow-[var(--shadow-border)] transition-[box-shadow,transform] duration-150 ease-out hover:shadow-[var(--shadow-border-hover)] active:scale-[0.98]"
-          >
-            <span className="grid size-11 place-items-center rounded-md bg-accent text-accent-fg">
-              <Plus className="size-4" aria-hidden="true" />
-            </span>
-            <span>
-              <span className="block font-display text-xl tracking-tight">New movie script</span>
-              <span className="mt-1 block max-w-56 text-xs leading-relaxed text-muted">
-                Begin with a concept, treatment, screenplay, or source.
+
+      <ul className="home-gallery">
+        {visible.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE).map((picture) => (
+          <li key={picture.id} className="home-picture">
+            <button
+              type="button"
+              className="home-picture-open"
+              onClick={() => onOpen(picture.id)}
+              aria-label={`Open ${picture.title}`}
+            >
+              <span className="home-picture-art">
+                <PictureCover picture={picture} />
+                <span className="home-picture-enter" aria-hidden="true"><ArrowUpRight /></span>
               </span>
-            </span>
-          </button>
-        </li>
-        {visible.map((picture) => {
-          const stage = STAGES.find((item) => item.id === picture.lastOpenedStage) ?? STAGES[0];
-          return (
-            <li key={picture.id}>
-              <button
-                type="button"
-                onClick={() => onOpen(picture.id)}
-                className="group flex min-h-64 w-full flex-col overflow-hidden rounded-lg bg-elevated text-left shadow-[var(--shadow-border)] transition-[box-shadow,transform] duration-150 ease-out hover:shadow-[var(--shadow-border-hover)] active:scale-[0.98]"
-              >
-                <span className="relative block aspect-video w-full overflow-hidden bg-inset">
-                  <PictureCover picture={picture} />
-                  <span className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2">
-                    {picture.sample ? <Badge>Sample</Badge> : <span />}
-                    <Badge>
-                      {stage?.number} {stage?.label}
-                    </Badge>
-                  </span>
-                </span>
-                <span className="flex flex-1 flex-col p-4">
-                  <span className="flex items-start justify-between gap-3">
-                    <span
-                      className="min-w-0 truncate font-display text-lg tracking-tight"
-                      title={picture.title}
-                    >
-                      {picture.title}
-                    </span>
-                    <span className="shrink-0 text-xs tabular-nums text-subtle">
-                      {formatRuntimeMinutes(picture.runtimeMinutes)}
-                    </span>
-                  </span>
-                  <span className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">
-                    {picture.logline || "No logline yet."}
-                  </span>
-                  <span className="mt-auto flex items-center justify-between gap-3 pt-4 text-[11px] text-subtle">
-                    <span className="truncate">{picture.genre}</span>
-                    <span className="flex shrink-0 items-center gap-1">
-                      <Clock3 className="size-3" />
-                      {relativeModified(picture.updatedAt)}
-                    </span>
-                  </span>
-                  <span className="mt-2 flex items-center gap-1.5 text-[11px] text-muted">
-                    {picture.screenplay.status === "APPROVED" ? (
-                      <CheckCircle2 className="size-3 text-good" />
-                    ) : null}
-                    {preparationLabel(picture)}
-                  </span>
-                </span>
-              </button>
-              {!picture.sample ? (
-                <button
-                  type="button"
-                  className="mt-2 min-h-11 px-3 text-sm text-rec"
-                  aria-label={`Delete picture ${picture.title}`}
-                  onClick={() => deletePicture(picture.id)}
-                >
-                  Delete picture
-                </button>
-              ) : null}
-            </li>
-          );
-        })}
+              <span className="home-picture-copy">
+                <span className="home-picture-title">{picture.title}</span>
+                {picture.logline && <span className="home-picture-logline">{picture.logline}</span>}
+              </span>
+            </button>
+            <div className="home-picture-footer">
+              <span className="home-picture-meta">
+                <span>{picture.sample ? "Sample" : relativeModified(picture.updatedAt)}</span>
+                {picture.runtimeMinutes > 0 && <span>{formatRuntimeMinutes(picture.runtimeMinutes)}</span>}
+              </span>
+              {!picture.sample && (
+                <AlertDialog.Root>
+                  <AlertDialog.Trigger asChild>
+                    <Button variant="ghost" size="icon" className="home-picture-delete" aria-label={`Delete picture ${picture.title}`} title="Delete film">
+                      <Trash2 aria-hidden="true" />
+                    </Button>
+                  </AlertDialog.Trigger>
+                  <AlertDialog.Portal>
+                    <AlertDialog.Overlay className="cabinet-overlay" />
+                    <AlertDialog.Content className="home-delete-dialog">
+                      <AlertDialog.Title>Delete “{picture.title}”?</AlertDialog.Title>
+                      <AlertDialog.Description>
+                        This removes the film and its saved work from your library. This cannot be undone.
+                      </AlertDialog.Description>
+                      <div className="home-delete-actions">
+                        <AlertDialog.Cancel asChild><Button variant="secondary">Keep film</Button></AlertDialog.Cancel>
+                        <AlertDialog.Action asChild><Button variant="rec" onClick={() => deletePicture(picture.id)}>Delete film</Button></AlertDialog.Action>
+                      </div>
+                    </AlertDialog.Content>
+                  </AlertDialog.Portal>
+                </AlertDialog.Root>
+              )}
+            </div>
+          </li>
+        ))}
       </ul>
-      {!visible.length ? (
-        <p className="mt-4 text-sm text-muted">
-          No scripts match this view. Start a new movie script or change your search.
+
+      {!visible.length && (
+        <p className="home-library-empty" role="status">
+          {query || filter !== "all" ? "No films match. Try another search or filter." : "Your next film starts here. Use + to begin."}
         </p>
-      ) : null}
+      )}
+      {pages > 1 && (
+        <div className="home-gallery-paging" aria-label="Film gallery pages">
+          <Button variant="ghost" size="icon" aria-label="Previous films" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}><ChevronLeft /></Button>
+          <span aria-live="polite">{currentPage + 1} / {pages}</span>
+          <Button variant="ghost" size="icon" aria-label="Next films" disabled={currentPage >= pages - 1} onClick={() => setPage(currentPage + 1)}><ChevronRight /></Button>
+        </div>
+      )}
     </section>
   );
 }

@@ -1,7 +1,26 @@
-import * as Tabs from "@radix-ui/react-tabs";
-import { BookOpen, ChevronDown, Film, Home, Layers, ListChecks, Menu, X } from "lucide-react";
+import { useState } from "react";
+import {
+  BookOpen,
+  Film,
+  Home,
+  Layers,
+  ListChecks,
+  PenLine,
+  AudioLines,
+  Grid2X2,
+  FileText,
+  Users,
+  Camera,
+  Clapperboard,
+  Workflow,
+  ScanLine,
+  Download,
+  Play,
+  type LucideIcon,
+} from "lucide-react";
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import type { StageId } from "@/lib/studio/types";
+import { CabinetModal } from "./cabinet";
 
 export const workspaceGroups: {
   title: string;
@@ -36,24 +55,92 @@ export const workspaceGroups: {
   { title: "Review", icon: ListChecks, links: [["review", "Reviews"]] },
 ];
 
+type Destination = StageId | "bible" | "run";
+const tools: { id: Destination; label: string; icon: LucideIcon }[] = [
+  { id: "intake", label: "Brief & sources", icon: FileText },
+  { id: "research", label: "Story & chronology", icon: Workflow },
+  { id: "bible", label: "Production Bible", icon: BookOpen },
+  { id: "screenplay", label: "Screenplay", icon: PenLine },
+  { id: "visual-development", label: "Characters & world", icon: Users },
+  { id: "performance", label: "Scenes & performance", icon: Clapperboard },
+  { id: "cinematography", label: "Camera & continuity", icon: Camera },
+  { id: "shots", label: "Shots & coverage", icon: ScanLine },
+  { id: "prompts", label: "Prompts", icon: FileText },
+  { id: "score", label: "Sound & music", icon: AudioLines },
+  { id: "inventory", label: "Assets", icon: Layers },
+  { id: "generate", label: "Jobs & takes", icon: Play },
+  { id: "timeline", label: "Movie timeline", icon: Film },
+  { id: "export", label: "Delivery", icon: Download },
+  { id: "run", label: "Script runs", icon: Workflow },
+  { id: "review", label: "Reviews", icon: ListChecks },
+];
+const pinned: Destination[] = ["bible", "screenplay", "inventory", "timeline", "score", "review"];
+
 export function WorkspaceNavigation() {
   const stage = useStage();
   const picture = useActivePicture();
-  const open = useStudio(s => s.openAdvancedDepartment);
-  const patch = useStudio(s => s.patchActive);
-  const active = picture?.workspacePanel === "run" ? "Review" : picture?.workspacePanel === "bible" ? "Movie Script" : workspaceGroups.find(g => g.links.some(([id]) => id === stage))?.title ?? "Movie Script";
-  return <nav className="cabinet-rail" aria-label="Production departments">
-    <span className="cabinet-monogram">P<span>316</span></span>
-    <button onClick={() => useStudio.getState().closePicture()} aria-label="Home · movie scripts"><Home size={20}/><span>Home</span></button>
-    {workspaceGroups.map(group => <button key={group.title} aria-current={active === group.title ? "page" : undefined} onClick={() => { patch({workspacePanel: group.title === "Movie Script" ? "bible" : group.title === "Review" ? "run" : null}); if (group.title !== "Movie Script" && group.title !== "Review") open(group.links[0][0]); }}><group.icon size={21}/><span>{group.title === "Movie Script" ? "Script" : group.title}</span></button>)}
-    <span className="cabinet-rail-foot">V4</span>
-  </nav>;
-}
-export function WorkspaceTabs() {
-  const stage = useStage();
-  const picture = useActivePicture();
-  const group = picture?.workspacePanel === "run" ? workspaceGroups[3] : picture?.workspacePanel === "bible" ? workspaceGroups[0] : workspaceGroups.find(g => g.links.some(([id]) => id === stage)) ?? workspaceGroups[0];
-  const links: [string,string][] = [...(group.title === "Movie Script" ? [["bible", "Bible cabinet"] as [string,string]] : group.title === "Review" ? [["run", "Script runs"] as [string,string]] : []), ...group.links];
-  const value = picture?.workspacePanel || stage;
-  return <Tabs.Root className="workspace-top-tabs" value={value} onValueChange={id => {useStudio.getState().patchActive({workspacePanel: id === "bible" || id === "run" ? id : null}); if(id !== "bible" && id !== "run") useStudio.getState().openAdvancedDepartment(id as StageId);}}><Tabs.List aria-label={`${group.title} workspaces`}>{links.map(([id,label]) => <Tabs.Trigger value={id} key={id}>{label.replace("Overview & Sources", "Brief").replace("Story & chronology", "Story").replace("Characters & world", "World").replace("Scenes & performance", "Performance").replace("Camera & continuity", "Camera").replace("Shots & coverage", "Shots").replace("Sound & music", "Sound")}</Tabs.Trigger>)}</Tabs.List></Tabs.Root>;
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const active = picture?.workspacePanel || stage;
+  const navigate = (id: Destination) => {
+    useStudio
+      .getState()
+      .patchActive({ workspacePanel: id === "bible" || id === "run" ? id : null });
+    if (id !== "bible" && id !== "run") useStudio.getState().openAdvancedDepartment(id);
+    setOpen(false);
+  };
+  return (
+    <>
+      <div className="studio-dock" role="navigation" aria-label="Workspace dock">
+        {pinned.map((id) => {
+          const item = tools.find((t) => t.id === id)!;
+          return (
+            <button
+              key={id}
+              className="dock-icon"
+              aria-label={item.label}
+              aria-current={active === id ? "page" : undefined}
+              onClick={() => navigate(id)}
+            >
+              <item.icon size={21} strokeWidth={1.6} />
+              <span className="dock-tooltip">{item.label}</span>
+            </button>
+          );
+        })}
+        <span className="dock-divider" aria-hidden="true" />
+        <button
+          className="dock-icon"
+          aria-label="All workspaces"
+          aria-expanded={open}
+          onClick={() => setOpen(true)}
+        >
+          <Grid2X2 size={20} strokeWidth={1.6} />
+          <span className="dock-tooltip">All workspaces</span>
+        </button>
+      </div>
+      <CabinetModal title="Workspaces" open={open} onOpenChange={setOpen}>
+        <input
+          className="workspace-finder"
+          aria-label="Find a workspace"
+          placeholder="Find a workspace…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <div className="workspace-launcher">
+          {tools
+            .filter((t) => t.label.toLowerCase().includes(query.toLowerCase()))
+            .map((item) => (
+              <button
+                key={item.id}
+                onClick={() => navigate(item.id)}
+                aria-current={active === item.id ? "page" : undefined}
+              >
+                <item.icon size={20} strokeWidth={1.5} />
+                <span>{item.label}</span>
+              </button>
+            ))}
+        </div>
+      </CabinetModal>
+    </>
+  );
 }

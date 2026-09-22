@@ -10,25 +10,16 @@ export function HomeBay() {
   const newPicture = useStudio((state) => state.newPicture);
 
   return (
-    <div className="min-h-dvh bg-bg">
-      <header className="flex items-center justify-between gap-4 px-5 py-4 sm:px-8">
-        <div className="flex items-center gap-3">
-          <span className="relative grid size-10 place-items-center rounded-md bg-elevated shadow-[var(--shadow-border)]">
-            <Clapperboard className="size-4 text-accent" aria-hidden="true" />
-          </span>
-          <div>
-            <p className="font-display text-lg leading-tight tracking-tight">Premiere316</p>
-            <p className="text-[11px] tracking-[0.18em] text-muted uppercase">
-              V4 · Movie Script Production Bible
-            </p>
-          </div>
+    <div className="home-atrium">
+      <header className="home-masthead">
+        <div className="home-wordmark">
+          <Clapperboard className="size-5" aria-hidden="true" />
+          <span>Premiere316</span>
         </div>
-        <div className="flex min-w-0 items-center gap-2">
-          <InterfaceScale />
-        </div>
+        <InterfaceScale />
       </header>
 
-      <main className="mx-auto max-w-[100rem] px-5 pb-16 pt-8 sm:px-8 sm:pt-10">
+      <main className="home-main">
         <PicturesLibrary
           pictures={pictures}
           onNew={() => newPicture(makePictureIntake())}

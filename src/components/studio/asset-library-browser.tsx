@@ -1,13 +1,11 @@
-import { CabinetCarousel } from "./cabinet";
+import { CabinetCarousel, CabinetModal } from "./cabinet";
 import { openCharacterSheet } from "./workspace-links";
-import type { CSSProperties } from "react";
 import { AssetImagePreview } from "./asset-image-preview";
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Image, Maximize2 } from "lucide-react";
+import { Image, Maximize2, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/field";
-import { Badge } from "@/components/ui/badge";
 import type { ProductionAsset, GeneratedIteration } from "@/lib/production";
 import type { Picture } from "@/lib/studio/types";
 import { useStudio } from "@/lib/studio/store";
@@ -44,7 +42,6 @@ export function AssetLibraryBrowser({
   const [iterationId, setIterationId] = useWorkspaceDraft("asset-library-iteration", "");
   const [tab, setTab] = useWorkspaceDraft("asset-library-inspector", "preview");
   const [query, setQuery] = useState("");
-  const [inspectorWidth, setInspectorWidth] = useWorkspaceDraft("asset-inspector-width", 384);
   const [status, setStatus] = useState("all");
   const [compareId, setCompareId] = useState("");
   const [enlarged, setEnlarged] = useState(false);
@@ -59,7 +56,7 @@ export function AssetLibraryBrowser({
       (status === "all" ||
         (status === "approved" ? Boolean(a.approvedIterationId) : !a.approvedIterationId)),
   );
-  const asset = filtered.find((a) => a.id === selectedId) ?? filtered[0];
+  const asset = assets.find((a) => a.id === selectedId);
   const review = reviews.find((r) => r.asset.id === asset?.id);
   const iterations = [...(asset?.iterations ?? [])].reverse();
   const selected =
@@ -75,54 +72,74 @@ export function AssetLibraryBrowser({
     if (latest) replaceActive({ ...latest, production, updatedAt: Date.now() });
   };
   return (
-    <section aria-label="Asset library" className="grid gap-4">
-      <div className="workspace-tabs" aria-label="Asset categories">
-        <button aria-pressed={category === "all"} onClick={() => setCategory("all")}>
-          All assets · {assets.length}
-        </button>
-        {ASSET_REVIEW_GROUPS.map((group) => (
-          <button
-            key={group.id}
-            aria-pressed={category === group.id}
-            onClick={() => setCategory(group.id)}
-          >
-            {group.label} ·{" "}
-            {assets.filter((a) => assetReviewGroup(a.category).id === group.id).length}
-          </button>
-        ))}
-      </div>
-      <div className="flex flex-wrap items-center gap-3">
+    <section aria-label="Asset library" className="asset-library-browser grid gap-4">
+      <div className="asset-library-filters flex items-center gap-3">
         <Input
-          className="max-w-md"
+          className="min-w-0 max-w-md flex-1"
           aria-label="Search assets"
-          placeholder="Search assets or visual descriptions…"
+          placeholder="Search assets…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <select
-          aria-label="Filter asset approval"
-          className="min-h-10 rounded border border-border bg-inset px-3 text-sm"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
+        <CabinetModal
+          title="Filter assets"
+          trigger={
+            <Button variant="ghost" size="icon" aria-label="Filter assets" title="Filter assets">
+              <SlidersHorizontal />
+            </Button>
+          }
         >
-          <option value="all">All statuses</option>
-          <option value="approved">Approved image</option>
-          <option value="pending">Awaiting image approval</option>
-        </select>
-        <span className="text-xs text-muted" role="status">
-          {filtered.length} assets
-        </span>
+          <div className="grid gap-5">
+            <label className="grid gap-2 text-sm text-muted">
+              Category
+              <select
+                aria-label="Asset category"
+                className="min-h-11 rounded border border-border bg-inset px-3 text-fg"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="all">All assets · {assets.length}</option>
+                {ASSET_REVIEW_GROUPS.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.label} ·{" "}
+                    {assets.filter((a) => assetReviewGroup(a.category).id === group.id).length}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-2 text-sm text-muted">
+              Approval
+              <select
+                aria-label="Filter asset approval"
+                className="min-h-11 rounded border border-border bg-inset px-3 text-fg"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="all">All statuses</option>
+                <option value="approved">Approved image</option>
+                <option value="pending">Awaiting image approval</option>
+              </select>
+            </label>
+          </div>
+        </CabinetModal>
+        {(category !== "all" || status !== "all") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setCategory("all");
+              setStatus("all");
+            }}
+          >
+            Clear filters
+          </Button>
+        )}
       </div>
-      <div
-        className="asset-library-layout"
-        style={
-          {
-            "--asset-inspector-width": `${Math.max(280, Math.min(480, inspectorWidth))}px`,
-          } as CSSProperties
-        }
-      >
-        <div className="asset-cabinet-carousel">
-          <CabinetCarousel label="Assets" pageSize={4} items={filtered.map((item) => {
+      <div className="asset-cabinet-carousel">
+        <CabinetCarousel
+          label="Assets"
+          pageSize={4}
+          items={filtered.map((item) => {
             const itemReview = reviews.find((r) => r.asset.id === item.id);
             const cover =
               item.iterations.find((i) => i.id === item.approvedIterationId) ?? itemReview?.latest;
@@ -157,7 +174,9 @@ export function AssetLibraryBrowser({
                   )}
                 </span>
                 <span className="block p-3">
-                  <span className="block truncate font-display text-lg">{item.name}</span>
+                  <span className="block whitespace-normal break-words font-display text-lg leading-snug">
+                    {item.name}
+                  </span>
                   <span className="mt-1 block text-xs text-muted">
                     {item.category.replaceAll("_", " ")} · {item.iterations.length} iterations
                   </span>
@@ -167,38 +186,24 @@ export function AssetLibraryBrowser({
                 </span>
               </button>
             );
-          })}/>
-          {!filtered.length && (
-            <p className="col-span-full rounded-lg border border-dashed border-border p-8 text-sm text-muted">
-              No assets match this view. Change the filters, or prepare the screenplay breakdown in
-              Specification & preparation.
-            </p>
-          )}
-        </div>
-        <aside className="asset-library-inspector" aria-label="Selected asset inspector">
+          })}
+        />
+      </div>
+      <CabinetModal
+        title={asset?.name ?? "Asset"}
+        open={Boolean(asset)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId("");
+        }}
+      >
+        <div className="asset-detail-modal" aria-label="Selected asset inspector">
           {asset ? (
             <>
-              <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-4">
-                <div>
-                  <p className="workspace-eyebrow">{asset.category.replaceAll("_", " ")}</p>
-                  <h3 className="mt-1 font-display text-2xl">{asset.name}</h3>
-                </div>
-                <Badge>{asset.approvedIterationId ? "Approved image" : "In development"}</Badge>
-              </header>
-              <div className="p-4">
-                <label className="mb-4 hidden items-center gap-3 text-xs text-muted xl:flex">
-                  Inspector width
-                  <input
-                    aria-label="Asset inspector width"
-                    className="min-w-0 flex-1 accent-accent"
-                    type="range"
-                    min={280}
-                    max={480}
-                    step={8}
-                    value={inspectorWidth}
-                    onChange={(e) => setInspectorWidth(Number(e.target.value))}
-                  />
-                </label>
+              <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-muted">
+                <span>{asset.category.replaceAll("_", " ")}</span>
+                <span>{asset.approvedIterationId ? "Approved image" : "In development"}</span>
+              </div>
+              <div>
                 <div className="workspace-tabs mb-4" aria-label="Asset inspector views">
                   {[
                     ["preview", "Preview"],
@@ -215,7 +220,7 @@ export function AssetLibraryBrowser({
                   <div className="grid gap-4">
                     <div className={compared ? "grid grid-cols-2 gap-2" : ""}>
                       <figure>
-                        <div className="asset-preview">
+                        <div className="asset-preview aspect-video max-h-96">
                           {imageUri ? (
                             <AssetImagePreview
                               previewUri={selected?.previewUri}
@@ -229,7 +234,7 @@ export function AssetLibraryBrowser({
                             </p>
                           )}
                         </div>
-                        <figcaption className="mt-2 text-xs text-muted">
+                        <figcaption className="mt-2 break-words text-xs text-muted">
                           {selected
                             ? `Selected preview · ${selected.status.toLowerCase().replaceAll("_", " ")}`
                             : "No image selected"}
@@ -237,7 +242,7 @@ export function AssetLibraryBrowser({
                       </figure>
                       {compared && (
                         <figure>
-                          <div className="asset-preview">
+                          <div className="asset-preview aspect-video max-h-96">
                             <AssetImagePreview
                               previewUri={compared.previewUri}
                               mediaUri={compared.mediaUri}
@@ -245,7 +250,7 @@ export function AssetLibraryBrowser({
                               onRepair={() => setTab("references")}
                             />
                           </div>
-                          <figcaption className="mt-2 text-xs text-muted">
+                          <figcaption className="mt-2 break-words text-xs text-muted">
                             Comparison · {compared.status.toLowerCase().replaceAll("_", " ")}
                           </figcaption>
                         </figure>
@@ -271,7 +276,6 @@ export function AssetLibraryBrowser({
                           ? `${selected.width} × ${selected.height} · `
                           : ""}
                         {new Date(selected.createdAt).toLocaleString()}
-                        {selected.execution ? ` · ${selected.execution.engineName}` : ""}
                       </p>
                     )}
                     <label className="grid gap-2 text-xs text-muted">
@@ -300,7 +304,7 @@ export function AssetLibraryBrowser({
                         Open {asset.category} sheet
                       </Button>
                     )}
-                    <p className="text-sm leading-relaxed text-muted">
+                    <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-muted">
                       {asset.canonicalSpec.visualDescription ||
                         "No visual description authored yet."}
                     </p>
@@ -352,7 +356,7 @@ export function AssetLibraryBrowser({
                         <p className="mt-2 whitespace-pre-wrap text-sm text-muted">
                           {source.sourceQuote}
                         </p>
-                        <p className="mt-2 text-xs text-muted">
+                        <p className="mt-2 break-words text-xs text-muted">
                           {source.sceneIds.join(" · ")} · {source.modelId}
                         </p>
                       </details>
@@ -377,7 +381,7 @@ export function AssetLibraryBrowser({
                             alt={ref.name}
                             className="aspect-square w-full rounded bg-inset object-contain"
                           />
-                          <figcaption className="mt-1 text-xs text-muted">
+                          <figcaption className="mt-1 break-words text-xs text-muted">
                             {ref.name}
                             {ref.preferred ? " · Preferred" : ""}
                           </figcaption>
@@ -432,7 +436,9 @@ export function AssetLibraryBrowser({
                     ))}
                   </div>
                   {!iterations.length && (
-                    <p className="mt-2 text-xs text-muted">No generated or imported images yet.</p>
+                    <p className="mt-2 break-words text-xs text-muted">
+                      No generated or imported images yet.
+                    </p>
                   )}
                 </section>
                 {review && (
@@ -455,8 +461,8 @@ export function AssetLibraryBrowser({
               Select an asset to inspect its images, prompts and references.
             </p>
           )}
-        </aside>
-      </div>
+        </div>
+      </CabinetModal>
       {specification && asset && picture.production && (
         <AssetInspector
           key={asset.id}

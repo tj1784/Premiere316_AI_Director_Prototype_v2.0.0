@@ -9,7 +9,13 @@ import { exactLocalWriterBlock } from "@/lib/studio/exact-local-writer";
 import { explicitMoviePlanServedId } from "@/lib/studio/movie-plan-model";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ImagePlus,
+  SlidersHorizontal,
+  ArrowUpRight,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/field";
@@ -23,7 +29,7 @@ import {
   buildPromptPack,
   buildShotList,
 } from "@/lib/studio/export";
-import { ENGINES, KIND_LABEL, engineById } from "@/lib/studio/engines";
+import { engineById } from "@/lib/studio/engines";
 import { MODEL_ROOT, type Picture } from "@/lib/studio/types";
 import { AdvancedDepartmentsDashboard, AdvancedDepartmentsRail } from "./advanced-departments";
 import { MoviePlanActivity } from "./movie-plan-activity";
@@ -372,7 +378,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
     setBuilding(false);
   }
   return (
-    <Pane title="Picture Intake" kicker="01 · Source & intent">
+    <Pane title="The brief" kicker="01 · Source & intent">
       <div className="intake-cabinet-grid">
         <div>
           <Label htmlFor="movie-idea">What are we making?</Label>
@@ -388,54 +394,54 @@ function IntakeStage({ picture }: { picture: Picture }) {
             links, or request web research and name the source and period.
           </p>
         </div>
-        <CabinetModal title="Production profile" trigger={<Button variant="secondary">Production profile & models</Button>}><ProductionProfileControls picture={picture} disabled={building} /></CabinetModal>
-        <CabinetModal title="Script run" trigger={<Button variant="secondary">Configure & start script run</Button>}><BibleRunWorkspace /></CabinetModal>
-        <CabinetModal title="Visual direction" trigger={<Button variant="secondary">Visual direction & references</Button>}>
-        <VisualDirectionField
-          value={picture.intake.visualDirection}
-          onChange={(value) => patchIntake("visualDirection", value)}
-          disabled={building}
-          onBusy={setDirectionBusy}
-          writerId={picture.screenplay.pinnedWriterServedId ?? undefined}
-        />
-        </CabinetModal>
-        <label className="grid gap-2 text-sm">
-          Asset image model
-          <select
-            aria-label="Intake asset image model"
-            className="min-h-11 w-full rounded-md border border-edge bg-inset px-3 text-fg"
-            disabled={building}
-            value={picture.selectedEngine.image}
-            onChange={(event) =>
-              patchActive({
-                selectedEngine: { ...picture.selectedEngine, image: event.target.value },
-              })
-            }
-          >
-            <option value="krea-2">KREA2 RAW</option>
-            <option value="flux2">FLUX.2 Dev</option>
-            <option value="flux">FLUX.1 Dev</option>
-          </select>
-        </label>
-        <Button
-          className="h-12 text-base"
-          onClick={() => void runGuidedResearch()}
-          disabled={
-            building ||
-            directionBusy ||
-            routing.profileId !== "local-models" ||
-            routing.executionMode !== "guided"
-          }
-          title={
-            routing.profileId !== "local-models"
-              ? "Configure an Astra provider or choose Local Models."
-              : routing.executionMode !== "guided"
-                ? "Use Start autonomous complete script above."
-                : undefined
+        <CabinetModal
+          title="Script run"
+          trigger={
+            <Button className="intake-run-action">
+              Create movie script <ArrowUpRight size={16} />
+            </Button>
           }
         >
-          {building ? "Running Hermes research…" : "Run guided research step"}
-        </Button>
+          <BibleRunWorkspace />
+        </CabinetModal>
+        <CabinetModal
+          title="Visual direction"
+          trigger={
+            <Button className="intake-reference-action" variant="ghost">
+              <ImagePlus size={17} /> Visual references
+            </Button>
+          }
+        >
+          <VisualDirectionField
+            value={picture.intake.visualDirection}
+            onChange={(value) => patchIntake("visualDirection", value)}
+            disabled={building}
+            onBusy={setDirectionBusy}
+            writerId={picture.screenplay.pinnedWriterServedId ?? undefined}
+          />
+        </CabinetModal>
+
+        {routing.profileId === "local-models" && routing.executionMode === "guided" && (
+          <Button
+            className="h-12 text-base"
+            onClick={() => void runGuidedResearch()}
+            disabled={
+              building ||
+              directionBusy ||
+              routing.profileId !== "local-models" ||
+              routing.executionMode !== "guided"
+            }
+            title={
+              routing.profileId !== "local-models"
+                ? "Configure an Astra provider or choose Local Models."
+                : routing.executionMode !== "guided"
+                  ? "Use Start autonomous complete script above."
+                  : undefined
+            }
+          >
+            {building ? "Running Hermes research…" : "Run guided research step"}
+          </Button>
+        )}
         {activityStartedAt !== null ? (
           <MoviePlanActivity events={activity} startedAt={activityStartedAt} running={building} />
         ) : null}
@@ -491,7 +497,14 @@ function IntakeStage({ picture }: { picture: Picture }) {
             ))}
           </ul>
         ) : null}
-        <CabinetModal title="Source details" trigger={<Button variant="secondary">Source details & story settings</Button>}>
+        <CabinetModal
+          title="Source details"
+          trigger={
+            <Button className="intake-details-action" variant="ghost">
+              <SlidersHorizontal size={17} /> Story settings
+            </Button>
+          }
+        >
           <div className="mt-4 grid gap-5">
             <label className="flex min-h-11 items-center gap-2 text-sm">
               <input
@@ -729,7 +742,12 @@ function ResearchStage({ picture }: { picture: Picture }) {
     <div className="min-w-0">
       <details className="border-b border-border p-3">
         <summary>Research production profile · {researchBinding?.label}</summary>
-        <CabinetModal title="Production profile" trigger={<Button variant="secondary">Production profile & models</Button>}><ProductionProfileControls picture={picture} disabled={building} /></CabinetModal>
+        <CabinetModal
+          title="Production profile"
+          trigger={<Button variant="secondary">Production profile & models</Button>}
+        >
+          <ProductionProfileControls picture={picture} disabled={building} />
+        </CabinetModal>
       </details>
       <ResearchWorkspace
         title={picture.title}
@@ -3103,39 +3121,6 @@ function ExportStage({ picture }: { picture: Picture }) {
         ) : null}
       </section>
     </Pane>
-  );
-}
-
-function EnginePick() {
-  const picture = useActivePicture();
-  const setEngines = useStudio((s) => s.setEngines);
-  if (!picture) return null;
-  const slots = [
-    { key: "director" as const, kind: "director" as const },
-    { key: "image" as const, kind: "image" as const },
-    { key: "video" as const, kind: "video" as const },
-    { key: "voice" as const, kind: "voice" as const },
-    { key: "music" as const, kind: "music" as const },
-  ];
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {slots.map((slot) => (
-        <div key={slot.key}>
-          <Label>{KIND_LABEL[slot.kind]}</Label>
-          <select
-            className="mt-1.5 h-11 w-full rounded-md bg-inset px-3 text-sm text-fg shadow-[var(--shadow-border)]"
-            value={picture.selectedEngine[slot.key]}
-            onChange={(e) => setEngines({ [slot.key]: e.target.value })}
-          >
-            {ENGINES.filter((e) => e.kind === slot.kind && !e.note).map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      ))}
-    </div>
   );
 }
 
