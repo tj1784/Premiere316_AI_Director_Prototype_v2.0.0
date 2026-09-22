@@ -14,7 +14,7 @@ export const Route = createRootRoute({
       { title: APP_NAME },
       {
         name: "description",
-        content: "Premiere316 V3.02 — a standalone picture factory. Screenplay to stitch, no ComfyUI.",
+        content: "Premiere316 V4 — Movie Script Production Bible. Develop, write, direct, review and deliver your film.",
       },
       { name: "theme-color", content: "#09090b" },
     ],

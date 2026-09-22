@@ -52,10 +52,23 @@
       "revision": "2026-09-19-R4",
       "source": "Cueboard_Revised_Binder_R4.zip",
       "sourceSha256": "1318a0cf00c3fa887005d8fbb76edb2b397a6daad5b5a796a00bf979128db8c9",
-      "modifiedImportedModules": ["src/lib/emotion/compiler.ts", "src/lib/emotion/merge.ts", "src/lib/emotion/types.ts"],
+      "modifiedImportedModules": [
+        "src/lib/emotion/compiler.ts",
+        "src/lib/emotion/merge.ts",
+        "src/lib/emotion/types.ts"
+      ],
       "changes": "Separate cinematic directions from diagnostics, source-framing support, independent displayed selection, explicit regional action/volume authoring, silent voice budgets, direct beat permission checks and regional scope trace. Existing integration/panel now expose structured authoring and versioned serializers.",
       "ledger": "docs/cueboard-r4/IMPLEMENTATION.md",
       "catalogAndSchema": "Unchanged; catalog completeness audited in src/lib/emotion/r4.test.ts. No production-content migration."
+    },
+    {
+      "revision": "2026-09-22-Sites",
+      "modifiedImportedModules": [
+        "src/lib/emotion/validation.ts"
+      ],
+      "changes": "Precompile the existing canonical JSON schema with identical Ajv options for execution without runtime eval in the hosted application. Preserve every semantic validation and the canonical schema.",
+      "generator": "scripts/generate-cueboard-validator.mjs",
+      "generatedValidator": "src/lib/emotion/scene-shape-validator.js"
     }
   ]
 }

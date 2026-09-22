@@ -182,6 +182,7 @@ function authPopupPlugin(): Plugin {
 export default defineConfig(({ command, isPreview }) => ({
   server: {
     host: "0.0.0.0",
+    allowedHosts: ["terminal.local"],
     port: 8080,
     strictPort: true,
     watch: {
@@ -208,7 +209,12 @@ export default defineConfig(({ command, isPreview }) => ({
     ...(command === "build" || isPreview
       ? [
           nitro({
-            preset: process.env.PREMIERE316_DESKTOP === "1" ? "node-server" : "vercel",
+            preset:
+              process.env.PREMIERE316_SITES === "1"
+                ? "cloudflare-module"
+                : process.env.PREMIERE316_DESKTOP === "1"
+                  ? "node-server"
+                  : "vercel",
             // Auto-registers server/middleware/* (the PWA install page +
             // manifest + head-tag middleware). Nitro v3 defaults serverDir to
             // false, so removing this silently unwires /?install=1 on deploys.

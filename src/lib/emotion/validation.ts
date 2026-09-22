@@ -1,14 +1,8 @@
-import Ajv2020 from "ajv/dist/2020.js";
-import schema from "../../data/emotion-node-config.schema.json" with { type: "json" };
+import validateShape from "./scene-shape-validator.js";
 import type { PerformanceSettings, SceneConfig } from "./types.ts";
 
-// Use the development pack's canonical schema. Validation never coerces,
-// defaults, removes fields, or changes the author's dialogue.
-const validateShape = new Ajv2020({
-  allErrors: true,
-  strict: false,
-  ownProperties: true,
-}).compile<SceneConfig>(schema);
+// Generated from the canonical schema with the same Ajv settings. Precompiling
+// avoids runtime code generation in hosted Workers without changing validation.
 
 export function assertSceneConfig(
   value: unknown,

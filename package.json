@@ -29,7 +29,9 @@
     "electron:pack:dir": "node desktop/pack.mjs --dir",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test:authoring": "node --experimental-strip-types --test src/lib/studio/authoring-contract.test.ts src/lib/studio/prodigal-son.test.ts src/lib/studio/research-evidence.test.ts src/lib/studio/asset-prompt-pipeline.test.ts src/lib/studio/prodigal-frames.test.ts src/lib/studio/prodigal-director.test.ts src/lib/studio/prodigal-scene-replacement.test.ts src/lib/studio/video-defaults.test.ts src/lib/studio/audio-generation-catalog.test.ts src/lib/studio/project-storage.test.ts src/lib/studio/director-workflow-editor.test.ts src/lib/studio/director-image-guides.test.ts src/lib/studio/director-scene-authoring.test.ts src/lib/studio/character-voice-designs.test.ts src/lib/studio/voice-design-library.test.ts && npm run test:director"
+    "test:authoring": "node --experimental-strip-types --test src/lib/studio/authoring-contract.test.ts src/lib/studio/prodigal-son.test.ts src/lib/studio/research-evidence.test.ts src/lib/studio/asset-prompt-pipeline.test.ts src/lib/studio/prodigal-frames.test.ts src/lib/studio/prodigal-director.test.ts src/lib/studio/prodigal-scene-replacement.test.ts src/lib/studio/video-defaults.test.ts src/lib/studio/audio-generation-catalog.test.ts src/lib/studio/project-storage.test.ts src/lib/studio/director-workflow-editor.test.ts src/lib/studio/director-image-guides.test.ts src/lib/studio/director-scene-authoring.test.ts src/lib/studio/character-voice-designs.test.ts src/lib/studio/voice-design-library.test.ts && npm run test:director",
+    "build:sites": "node scripts/build-sites.mjs",
+    "check:cueboard-schema": "node scripts/generate-cueboard-validator.mjs --check"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",

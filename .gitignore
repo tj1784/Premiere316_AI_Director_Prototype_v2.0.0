@@ -22,3 +22,6 @@ checkpoints
 # Local picture navigation and unidentified recovery material
 /Pictures/**/*.lnk
 /Pictures/Unassigned/Recovered Upload Candidates/
+
+.wrangler/
+.sites-runtime/
