@@ -135,6 +135,7 @@ export type VoiceTake = {
 };
 
 export type Picture = {
+  productionRouting?: import("./production-profiles.ts").ProductionRoutingState;
   emotionPerformance?: import('../emotion/integration.ts').EmotionWorkspace;
   projectLibrary?: import('./project-library-client.ts').ProjectLibraryLink;
   characterVoiceDesigns?: import("./character-voice-designs.ts").CharacterVoiceDesignState;

@@ -36,7 +36,7 @@ test("GREEN requires successful live packaged provider and artifact evidence", (
   assert.equal(livePackagedUatPassed({ ...live, network: { ...live.network, web: 1 } }), false);
 });
 
-test("Intake keeps optional fields inside a closed disclosure and the idea/action/review outside", () => {
+test("Intake keeps optional fields closed and the idea/profile/guided action outside", () => {
   const file = ts.createSourceFile("stage-views.tsx", source("src/components/studio/stage-views.tsx"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   const intake = file.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === "IntakeStage");
   assert.ok(intake);
@@ -56,10 +56,11 @@ test("Intake keeps optional fields inside a closed disclosure and the idea/actio
   const primary = intake.getText(file).replace(optional, "");
   assert.match(optional, />Optional details<\/summary>/);
   assert.match(primary, /What are we making\?/);
-  assert.match(primary, /Build Movie Plan/);
-  assert.match(primary, /Review and approve every production phase/);
+  assert.match(primary, /ProductionProfileControls/);
+  assert.match(primary, /Run guided research step/);
+  assert.doesNotMatch(primary, /Build Movie Plan|Review and approve every production phase/);
   assert.doesNotMatch(primary, /<Field|<Label>(?:Logline|Premise|Director notes)/);
-  assert.doesNotMatch(optional, /Build Movie Plan|What are we making\?/);
+  assert.doesNotMatch(optional, /Run guided research step|What are we making\?/);
 });
 
 test("New Picture opens Intake without a mandatory title or creation form", () => {

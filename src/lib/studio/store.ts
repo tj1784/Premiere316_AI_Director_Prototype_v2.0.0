@@ -16,6 +16,7 @@ import { hydrateVideoWorkspace } from "../production/video-types.ts";
 import { restoreAudioWorkspace } from "../production/audio-iterations.ts";
 import { hydrateGenerateGates } from "../production/generate-gates.ts";
 import { hydrateProductFlow, type ProductTouchpoint } from "./product-flow.ts";
+import { defaultProductionRouting, hydrateProductionRouting } from "./production-profiles.ts";
 import { hydrateVisualDevelopmentState } from "../visual-development.ts";
 import { hydrateCinematographyState } from "../cinematography.ts";
 import { hydrateProdigalSonVisualReference, mergeBundledPictures } from "./prodigal-son.ts";
@@ -96,6 +97,7 @@ function blankPicture(intake: PictureIntake): Picture {
     videoDefaultsVersion: 1,
     screenplayFountain: "",
     production: null,
+    productionRouting: defaultProductionRouting(now),
     performance: null,
     acts: [],
     scenes: [],
@@ -320,7 +322,13 @@ function migratePicture(picture: LegacyPicture): Picture {
   const withResearch = { ...withPerformance, research: hydratePictureResearch(withPerformance.research, withPerformance.intake), promptLab: hydratePromptLabState(withPerformance.promptLab), video: hydrateVideoWorkspace(withPerformance.video), audio: restoreAudioWorkspace(withPerformance.audio) };
   const withVisual = { ...withResearch, visualDevelopment: hydrateVisualDevelopmentState(withResearch.visualDevelopment, withResearch) };
   const withCinema = { ...withVisual, cinematography: hydrateCinematographyState(withVisual.cinematography, withVisual) };
-  const migrated = hydrateProdigalSonVisualReference({ ...withCinema, generateGates: hydrateGenerateGates(withCinema.generateGates, withCinema), productFlow: hydrateProductFlow(withCinema.productFlow) });
+  const legacyLocalSelection = Boolean(withCinema.screenplay?.pinnedWriterServedId || withCinema.screenplay?.selectedModelId);
+  const migrated = hydrateProdigalSonVisualReference({
+    ...withCinema,
+    generateGates: hydrateGenerateGates(withCinema.generateGates, withCinema),
+    productFlow: hydrateProductFlow(withCinema.productFlow),
+    productionRouting: hydrateProductionRouting(withCinema.productionRouting, { legacyLocalSelection, now: withCinema.updatedAt }),
+  });
   return withRedSeaThumbnail(hydrateProdigalCharacterVoices(hydrateProdigalSonDirector(hydrateProdigalSceneReplacements(hydrateProdigalSonFrames(migrated)))));
 }
 

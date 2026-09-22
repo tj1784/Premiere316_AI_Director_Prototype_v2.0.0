@@ -23,7 +23,6 @@ import { MODEL_ROOT, type Picture } from "@/lib/studio/types";
 import { AdvancedDepartmentsDashboard, AdvancedDepartmentsRail } from "./advanced-departments";
 import { MoviePlanActivity } from "./movie-plan-activity";
 import { GeneratedAssetsReview } from "./generated-assets-review";
-import { generateAssetDrafts } from "@/lib/studio/asset-generation-client";
 import { NativeFilmPanel } from "./native-film-panel";
 import { DirectorVideoPanel } from "./director-video-panel";
 import { VideoGenerationOptions } from "./video-generation-options";
@@ -31,9 +30,9 @@ import { AudioGenerationOptions } from "./audio-generation-options";
 import { VoiceDesignWorkspace } from "./voice-design-workspace";
 import type { MoviePlanProgress } from "@/lib/studio/movie-plan-stream.ts";
 import { isAdvancedDashboard } from "@/lib/studio/advanced-departments.ts";
-import { DEFAULT_NAV_STEPS, INTERNAL_PHASES, PHASE_LABELS, PHASE_STAGE, allPhaseReviewsOn, hydrateProductFlow, pausedInternalPhase, PHASE_REVIEW_DEFAULTS, type InternalPhase } from "@/lib/studio/product-flow.ts";
+import { DEFAULT_NAV_STEPS, allPhaseReviewsOn, hydrateProductFlow, type InternalPhase } from "@/lib/studio/product-flow.ts";
 import { CONFIGURED_MODEL_UNAVAILABLE, MANUAL_FALLBACK_LABEL } from "@/lib/studio/movie-plan-pipeline.ts";
-import { executeMoviePlanOnServer, executeResearchDraftOnServer, releaseMoviePlanWriterForImages } from "@/lib/studio/movie-plan-client.ts";
+import { executeResearchDraftOnServer, releaseMoviePlanWriterForImages } from "@/lib/studio/movie-plan-client.ts";
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import { useDirector } from "@/lib/studio/use-director";
 import { compileEnginePromptPackage, compilePicture, totalDuration } from "@/lib/studio/prompt-compiler";
@@ -43,7 +42,7 @@ import { runtimeDefaults } from "@/lib/studio/engine-controls.ts";
 import { cn, copyText, formatTimecode, saveReadyFile, uid, type ReadyFile } from "@/lib/utils";
 import type { LocalLLMProviderDiscovery } from "@/lib/studio/local-llm-provider";
 import type { PictureIntake } from "@/lib/studio/picture-intake";
-import { LocalWriterSelect } from "./local-writer-select";
+import { ProductionProfileControls } from "./production-profile-controls";
 import { VisualDirectionField } from "./visual-direction-field";
 import { SOURCE_TYPE_LABELS } from "@/lib/studio/picture-intake";
 import type { ScreenplayModelRef } from "@/lib/studio/screenplay";
@@ -94,6 +93,7 @@ import { ShotPreparationWorkspace } from "@/components/performance/shot-workspac
 import { canonicalShotsToLegacy, migratePicturePerformance } from "@/lib/performance/persistence";
 import { KeyframeImages } from "./keyframe-images";
 import { approveKeyframeIteration } from "@/lib/production/generate-gates";
+import { HERMES_MODEL_ID, hydrateProductionRouting } from "@/lib/studio/production-profiles";
 
 export function StageView() {
   const stage = useStage();
@@ -151,16 +151,16 @@ function Pane({ title, kicker, children }: { title: string; kicker: string; chil
 function IntakeStage({ picture }: { picture: Picture }) {
   const patchActive = useStudio((state) => state.patchActive);
   const replaceActive = useStudio((state) => state.replaceActive);
-  const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
   const flow = hydrateProductFlow(picture.productFlow);
   const openAdvancedDepartment = useStudio((state) => state.openAdvancedDepartment);
-  const [reviewInternal, setReviewInternal] = useState(flow.reviewInternalPhases);
-  const [reviewPhases, setReviewPhases] = useState(flow.reviewPhases);
   const [building, setBuilding] = useState(false);
   const [directionBusy, setDirectionBusy] = useState(false);
-  const [assetActivity, setAssetActivity] = useState("");
   const [activity, setActivity] = useState<MoviePlanProgress[]>([]);
   const [activityStartedAt, setActivityStartedAt] = useState<number | null>(null);
+  const routing = hydrateProductionRouting(picture.productionRouting, {
+    legacyLocalSelection: Boolean(picture.screenplay.pinnedWriterServedId || picture.screenplay.selectedModelId),
+    now: picture.updatedAt,
+  });
   const patchIntake = <K extends keyof PictureIntake>(key: K, value: PictureIntake[K]) => {
     const intake = { ...picture.intake, [key]: value, ...(key === "targetRuntimeMinutes" ? { runtimeSource: "manual" as const } : {}), updatedAt: Date.now() };
     patchActive({
@@ -174,29 +174,72 @@ function IntakeStage({ picture }: { picture: Picture }) {
     });
   };
 
-  async function buildPlan() {
+  async function runGuidedResearch() {
     if (directionBusy) return;
+    if (routing.profileId !== "local-models") {
+      toast.error("Astra Ultra is selected, but no callable Astra provider is configured. No local fallback was started.");
+      return;
+    }
+    if (routing.executionMode !== "guided") {
+      toast.error("Autonomous complete-script orchestration is not implemented yet. No legacy pipeline was started.");
+      return;
+    }
     setBuilding(true);
     setActivity([]);
     setActivityStartedAt(Date.now());
+    const startedAt = Date.now();
+    const activeRun = {
+      id: uid("production-run"),
+      profileId: routing.profileId,
+      mode: routing.executionMode,
+      profileRevision: routing.profileRevision,
+      bindings: routing.bindings.map((binding) => ({ ...binding })),
+      startedAt,
+      status: "running" as const,
+    };
+    const runPicture: Picture = {
+      ...picture,
+      screenplay: {
+        ...picture.screenplay,
+        selectedModelId: `lmstudio:${HERMES_MODEL_ID}`,
+        pinnedWriterServedId: HERMES_MODEL_ID,
+        updatedAt: startedAt,
+      },
+      productFlow: { ...flow, reviewInternalPhases: true, reviewPhases: allPhaseReviewsOn() },
+      productionRouting: { ...routing, activeRun, updatedAt: startedAt },
+      updatedAt: startedAt,
+    };
+    replaceActive(runPicture);
+    let latestPicture = runPicture;
     try {
-      const result = await executeMoviePlanOnServer({
-        ...picture,
-        productFlow: { ...flow, reviewInternalPhases: reviewInternal, reviewPhases },
-      }, (event) => setActivity((current) => [...current.filter((item) => item.phase !== event.phase), event]), false, replaceActive);
-      replaceActive(result.picture);
-      const paused = pausedInternalPhase(result.flow);
-      if (paused) {
-        openAdvancedDepartment(PHASE_STAGE[paused]);
-        toast.message(`Paused for optional ${paused} review after a real model pass.`);
-      } else if (!result.providerCalled || result.flow.manualFallback || result.flow.steps.some((step) => step.status === "failed")) {
+      const result = await executeResearchDraftOnServer(
+        runPicture,
+        (next) => {
+          latestPicture = next;
+          replaceActive(next);
+        },
+        (event) => setActivity((current) => [...current.filter((item) => item.phase !== event.phase), event]),
+      );
+      const failed = !result.providerCalled || result.flow.manualFallback || result.flow.steps.some((step) => step.status === "failed");
+      replaceActive({
+        ...result.picture,
+        productionRouting: {
+          ...routing,
+          activeRun: { ...activeRun, status: failed ? "failed" : "awaiting-review" },
+          updatedAt: Date.now(),
+        },
+      });
+      if (failed) {
         toast.error(result.flow.steps.find((step) => step.status === "failed")?.message ?? CONFIGURED_MODEL_UNAVAILABLE);
-      } else if (result.flow.nextTouchpoint === "asset-approval") {
-        await generateAssetDrafts(result.picture, replaceActive, setAssetActivity);
-        setGenerateFocus("assets");
-        toast.success("Asset pass complete. Review available images and any pending states.");
+      } else {
+        openAdvancedDepartment("research");
+        toast.success("Hermes research draft is ready. The run stopped for your review.");
       }
     } catch (error) {
+      replaceActive({
+        ...latestPicture,
+        productionRouting: { ...routing, activeRun: { ...activeRun, status: "failed" }, updatedAt: Date.now() },
+      });
       toast.error(error instanceof Error ? error.message : CONFIGURED_MODEL_UNAVAILABLE);
     }
     setBuilding(false);
@@ -209,37 +252,22 @@ function IntakeStage({ picture }: { picture: Picture }) {
           <Textarea id="movie-idea" className="mt-1.5 min-h-32 text-base" value={picture.intake.concept || picture.intake.premise || picture.intake.logline} onChange={(event) => patchIntake("concept", event.target.value)} placeholder="2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal…" />
           <p className="mt-2 text-xs leading-relaxed text-muted">Research comes before writing. For a historical adaptation, include source text or links, or request web research and name the source and period.</p>
         </div>
-        <LocalWriterSelect picture={picture} disabled={building} label="Intake local text model" />
+        <ProductionProfileControls picture={picture} disabled={building} />
         <VisualDirectionField value={picture.intake.visualDirection} onChange={value => patchIntake("visualDirection", value)} disabled={building} onBusy={setDirectionBusy} writerId={picture.screenplay.pinnedWriterServedId ?? undefined} />
         <label className="grid gap-2 text-sm">Asset image model
           <select aria-label="Intake asset image model" className="min-h-11 w-full rounded-md border border-edge bg-inset px-3 text-fg" disabled={building} value={picture.selectedEngine.image} onChange={(event) => patchActive({ selectedEngine: { ...picture.selectedEngine, image: event.target.value } })}>
             <option value="krea-2">KREA2 RAW</option><option value="flux2">FLUX.2 Dev</option><option value="flux">FLUX.1 Dev</option>
           </select>
         </label>
-        <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-          <label className="flex min-h-11 items-start gap-2 text-sm">
-            <input className="mt-1" type="checkbox" checked={reviewInternal} onChange={(event) => {
-              const on = event.target.checked;
-              setReviewInternal(on);
-              setReviewPhases(on ? allPhaseReviewsOn() : { ...PHASE_REVIEW_DEFAULTS });
-            }} />
-            <span>Review and approve every production phase</span>
-          </label>
-          {reviewInternal ? (
-            <div className="mt-3 grid gap-2">
-              <p className="text-xs text-muted">Checking this pauses at every selected department. Uncheck a row to skip that pause. Assets, First/Last Frames, Video Clips, and Export remain required.</p>
-              {INTERNAL_PHASES.map((phase) => (
-                <label key={phase} className="flex min-h-10 items-start gap-2 text-sm">
-                  <input className="mt-1" type="checkbox" checked={reviewPhases[phase]} onChange={(event) => setReviewPhases((current) => ({ ...current, [phase]: event.target.checked }))} />
-                  <span>{PHASE_LABELS[phase]}</span>
-                </label>
-              ))}
-            </div>
-          ) : null}
-        </div>
-        <Button className="h-12 text-base" onClick={() => void buildPlan()} disabled={building || directionBusy}>{building ? "Building…" : "Build Movie Plan"}</Button>
+        <Button
+          className="h-12 text-base"
+          onClick={() => void runGuidedResearch()}
+          disabled={building || directionBusy || routing.profileId !== "local-models" || routing.executionMode !== "guided"}
+          title={routing.profileId !== "local-models" ? "Configure an Astra provider or choose Local Models." : routing.executionMode !== "guided" ? "Autonomous orchestration is not implemented yet." : undefined}
+        >
+          {building ? "Running Hermes research…" : "Run guided research step"}
+        </Button>
         {activityStartedAt !== null ? <MoviePlanActivity events={activity} startedAt={activityStartedAt} running={building} /> : null}
-        {assetActivity ? <p role="status" className="text-sm text-muted">{assetActivity}</p> : null}
         {flow.manualFallback || flow.steps.some((step) => step.status === "failed") ? (
           <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" data-movie-plan-blocked="true">
             <p className="text-sm">{flow.steps.find((step) => step.status === "failed")?.message ?? CONFIGURED_MODEL_UNAVAILABLE}</p>

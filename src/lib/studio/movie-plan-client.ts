@@ -178,10 +178,10 @@ export async function executeMoviePlanOnServer(picture: Picture, onProgress?: (e
   return executeMoviePlan(picture, { runtime: await runtimeFromStatus(picture, onProgress), fromCompletedScreenplay, onPicture });
 }
 
-export async function executeResearchDraftOnServer(picture: Picture, onPicture?: (picture: Picture) => void) {
-  picture = await prepareResearchEvidenceOnServer(picture);
+export async function executeResearchDraftOnServer(picture: Picture, onPicture?: (picture: Picture) => void, onProgress?: (event: MoviePlanProgress) => void) {
+  picture = await prepareResearchEvidenceOnServer(picture, onProgress);
   onPicture?.(picture);
-  return executeResearchDraft(picture, { runtime: await runtimeFromStatus(picture) });
+  return executeResearchDraft(picture, { runtime: await runtimeFromStatus(picture, onProgress) });
 }
 
 export async function writeAssetPromptsOnServer(picture: Picture, onProgress?: (event: MoviePlanProgress) => void, replaceEditedPrompts = false, onPicture?: (picture: Picture) => void, onStatus?: (message: string) => void, onlyAssetId?: string, forceRewrite = false) {
