@@ -1,3 +1,4 @@
+import { CabinetCarousel } from "./cabinet";
 import { openCharacterSheet } from "./workspace-links";
 import type { CSSProperties } from "react";
 import { AssetImagePreview } from "./asset-image-preview";
@@ -120,8 +121,8 @@ export function AssetLibraryBrowser({
           } as CSSProperties
         }
       >
-        <div className="asset-library-tiles" aria-label="Asset tiles">
-          {filtered.map((item) => {
+        <div className="asset-cabinet-carousel">
+          <CabinetCarousel label="Assets" pageSize={4} items={filtered.map((item) => {
             const itemReview = reviews.find((r) => r.asset.id === item.id);
             const cover =
               item.iterations.find((i) => i.id === item.approvedIterationId) ?? itemReview?.latest;
@@ -166,7 +167,7 @@ export function AssetLibraryBrowser({
                 </span>
               </button>
             );
-          })}
+          })}/>
           {!filtered.length && (
             <p className="col-span-full rounded-lg border border-dashed border-border p-8 text-sm text-muted">
               No assets match this view. Change the filters, or prepare the screenplay breakdown in

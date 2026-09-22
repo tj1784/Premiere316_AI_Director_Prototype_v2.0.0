@@ -1,4 +1,4 @@
-import { useState } from "react";
+import * as Tabs from "@radix-ui/react-tabs";
 import { BookOpen, ChevronDown, Film, Home, Layers, ListChecks, Menu, X } from "lucide-react";
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import type { StageId } from "@/lib/studio/types";
@@ -39,80 +39,21 @@ export const workspaceGroups: {
 export function WorkspaceNavigation() {
   const stage = useStage();
   const picture = useActivePicture();
-  const open = useStudio((s) => s.openAdvancedDepartment);
-  const close = useStudio((s) => s.closePicture);
-  const patch = useStudio((s) => s.patchActive);
-  const [expanded, setExpanded] = useState(false);
-  return (
-    <nav className="workspace-navigation" aria-label="Production workspace">
-      <button
-        className="workspace-nav-toggle"
-        aria-expanded={expanded}
-        onClick={() => setExpanded(!expanded)}
-      >
-        {expanded ? <X size={18} /> : <Menu size={18} />} Workspace <ChevronDown size={14} />
-      </button>
-      <div className={`workspace-nav-content ${expanded ? "is-open" : ""}`}>
-        <div className="workspace-wordmark">
-          <span>P316</span>
-          <small>PRODUCTION WORKSPACE · V4</small>
-        </div>
-        <button className="workspace-nav-link" onClick={close}>
-          <Home size={15} /> Home · movie scripts
-        </button>
-        {workspaceGroups.map((group) => (
-          <section key={group.title}>
-            <h2>
-              <group.icon size={12} />
-              {group.title}
-            </h2>
-            {group.title === "Movie Script" && (
-              <button
-                className="workspace-nav-link"
-                aria-current={picture?.workspacePanel === "bible" ? "page" : undefined}
-                onClick={() => {
-                  patch({ workspacePanel: "bible" });
-                  setExpanded(false);
-                }}
-              >
-                Bible & source registry
-              </button>
-            )}
-            {group.title === "Review" && (
-              <button
-                className="workspace-nav-link"
-                aria-current={picture?.workspacePanel === "run" ? "page" : undefined}
-                onClick={() => {
-                  patch({ workspacePanel: "run" });
-                  setExpanded(false);
-                }}
-              >
-                Script runs & checkpoints
-              </button>
-            )}
-            {group.links.map(([id, label]) => (
-              <button
-                key={id}
-                className="workspace-nav-link"
-                aria-current={!picture?.workspacePanel && stage === id ? "page" : undefined}
-                onClick={() => {
-                  patch({ workspacePanel: null });
-                  open(id);
-                  setExpanded(false);
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </section>
-        ))}
-        <p className="workspace-nav-footer">
-          {picture?.scenes.length || picture?.performance?.scenes.length || 0} scenes ·{" "}
-          {picture?.shots.length ?? 0} shots
-          <br />
-          Approved work stays protected
-        </p>
-      </div>
-    </nav>
-  );
+  const open = useStudio(s => s.openAdvancedDepartment);
+  const patch = useStudio(s => s.patchActive);
+  const active = picture?.workspacePanel === "run" ? "Review" : picture?.workspacePanel === "bible" ? "Movie Script" : workspaceGroups.find(g => g.links.some(([id]) => id === stage))?.title ?? "Movie Script";
+  return <nav className="cabinet-rail" aria-label="Production departments">
+    <span className="cabinet-monogram">P<span>316</span></span>
+    <button onClick={() => useStudio.getState().closePicture()} aria-label="Home · movie scripts"><Home size={20}/><span>Home</span></button>
+    {workspaceGroups.map(group => <button key={group.title} aria-current={active === group.title ? "page" : undefined} onClick={() => { patch({workspacePanel: group.title === "Movie Script" ? "bible" : group.title === "Review" ? "run" : null}); if (group.title !== "Movie Script" && group.title !== "Review") open(group.links[0][0]); }}><group.icon size={21}/><span>{group.title === "Movie Script" ? "Script" : group.title}</span></button>)}
+    <span className="cabinet-rail-foot">V4</span>
+  </nav>;
+}
+export function WorkspaceTabs() {
+  const stage = useStage();
+  const picture = useActivePicture();
+  const group = picture?.workspacePanel === "run" ? workspaceGroups[3] : picture?.workspacePanel === "bible" ? workspaceGroups[0] : workspaceGroups.find(g => g.links.some(([id]) => id === stage)) ?? workspaceGroups[0];
+  const links: [string,string][] = [...(group.title === "Movie Script" ? [["bible", "Bible cabinet"] as [string,string]] : group.title === "Review" ? [["run", "Script runs"] as [string,string]] : []), ...group.links];
+  const value = picture?.workspacePanel || stage;
+  return <Tabs.Root className="workspace-top-tabs" value={value} onValueChange={id => {useStudio.getState().patchActive({workspacePanel: id === "bible" || id === "run" ? id : null}); if(id !== "bible" && id !== "run") useStudio.getState().openAdvancedDepartment(id as StageId);}}><Tabs.List aria-label={`${group.title} workspaces`}>{links.map(([id,label]) => <Tabs.Trigger value={id} key={id}>{label.replace("Overview & Sources", "Brief").replace("Story & chronology", "Story").replace("Characters & world", "World").replace("Scenes & performance", "Performance").replace("Camera & continuity", "Camera").replace("Shots & coverage", "Shots").replace("Sound & music", "Sound")}</Tabs.Trigger>)}</Tabs.List></Tabs.Root>;
 }

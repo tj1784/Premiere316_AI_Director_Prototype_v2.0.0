@@ -575,7 +575,7 @@ export function editBibleField(
     },
     corrections: [
       ...bible.corrections,
-      { id: `correction:${crypto.randomUUID()}`, recordId, field, before, after, at: now },
+      { id: `correction:${Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.toString(16).padStart(8, "0")).join("")}`, recordId, field, before, after, at: now },
     ],
   };
 }

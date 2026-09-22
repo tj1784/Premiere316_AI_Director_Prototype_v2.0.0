@@ -1,3 +1,4 @@
+import { CabinetModal } from "./cabinet";
 import { openCharacterSheet, openAssetIterations } from "./workspace-links";
 import {
   replaceScreenplayEditorScene,
@@ -216,8 +217,9 @@ export function ScreenplayWorkspace({
   );
 
   return (
-    <div className="screenplay-workspace grid h-full min-h-0 min-w-0 grid-cols-1 grid-rows-[auto_minmax(36rem,1fr)_auto] overflow-y-auto lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)_minmax(14rem,18rem)] lg:grid-rows-1 lg:overflow-hidden">
-      <aside
+    <div className="screenplay-workspace cabinet-screenplay">
+      <div className="screenplay-cabinet-toolbar"><span>Writing desk</span><div>
+        <CabinetModal title="Scenes" trigger={<Button variant="secondary" size="sm">Scenes · {scenes.length}</Button>}>      <aside
         className="max-h-64 min-h-32 overflow-y-auto border-r border-border p-3 lg:max-h-none lg:min-h-0"
         aria-label="Screenplay scenes and versions"
       >
@@ -283,261 +285,8 @@ export function ScreenplayWorkspace({
             Scene headings appear here as the Fountain draft develops.
           </p>
         ) : null}
-      </aside>
-
-      <section className="flex min-h-0 min-w-0 flex-col">
-        <header className="shrink-0 border-b border-border px-4 py-3 sm:px-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">
-                SCREENPLAY WORKSPACE
-              </p>
-              <h2 className="mt-1 font-display text-xl tracking-tight">
-                {intake.title || "Untitled Picture"}
-              </h2>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge>{statusLabel(running ? "GENERATING" : screenplay.status)}</Badge>
-              {screenplay.status === "APPROVED" ? <Badge>Canonical</Badge> : null}
-            </div>
-          </div>
-          {generation ? (
-            <div className="mt-3">
-              <p className="text-xs text-muted">{job?.activeLabel ?? generation.activeLabel}</p>
-              <ol className="mt-2 flex flex-wrap gap-2">
-                {steps.map((step) => {
-                  const active = generation.activeLabel === step.label;
-                  const done = completed.has(step.label);
-                  return (
-                    <li key={step.id} className="flex items-center gap-1 text-[11px] text-muted">
-                      {done ? (
-                        <Check className="size-3 text-good" />
-                      ) : active ? (
-                        <LoaderCircle className="size-3 animate-spin text-accent" />
-                      ) : (
-                        <Circle className="size-2.5 text-subtle" />
-                      )}
-                      {step.label}
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-          ) : null}
-          {job?.error ? (
-            <p role="alert" className="mt-2 text-xs text-rec">
-              {job.error}
-            </p>
-          ) : null}
-        </header>
-
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
-          <StoryDoctorActivity picture={picture} />
-          <AssetRunActivity pictureId={picture.id} />
-          {job || running ? (
-            <section
-              aria-label="Live screenplay activity"
-              className="mb-4 grid gap-2 rounded-md border border-accent bg-inset p-3"
-            >
-              <p className="text-sm" role="status">
-                {job?.activeLabel ?? generation?.activeLabel ?? "Connecting to current generation"}{" "}
-                · {writerPin}
-              </p>
-              <p className="text-xs text-muted">
-                {Math.max(
-                  0,
-                  Math.floor(
-                    ((running ? now : (job?.updatedAt ?? now)) -
-                      (job?.startedAt ?? generation?.startedAt ?? now)) /
-                      1000,
-                  ),
-                )}
-                s elapsed · {job?.partialFountain.length ?? 0} output characters · Last update{" "}
-                {Math.max(0, Math.floor((now - (job?.updatedAt ?? now)) / 1000))}s ago
-              </p>
-              {job?.reasoning ? (
-                <details open>
-                  <summary className="text-xs">
-                    Local model reasoning reported by LM Studio ·{" "}
-                    {job.reasoning.length.toLocaleString()} characters
-                  </summary>
-                  <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-xs">
-                    {job.reasoning}
-                  </pre>
-                </details>
-              ) : (
-                <p className="text-xs text-muted">
-                  {running
-                    ? "Waiting for model output. Any reasoning supplied by LM Studio will appear here."
-                    : "LM Studio did not supply reasoning for this run."}
-                </p>
-              )}
-              {job?.partialFountain ? (
-                <details open>
-                  <summary className="text-xs">Live screenplay output</summary>
-                  <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-xs">
-                    {job.partialFountain}
-                  </pre>
-                </details>
-              ) : null}
-            </section>
-          ) : null}
-          {compared ? (
-            <div className="mb-4 grid gap-3 xl:grid-cols-2">
-              <section className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]">
-                <p className="mb-2 text-[10px] tracking-wide text-subtle uppercase">Current</p>
-                <pre className="max-h-80 overflow-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-muted">
-                  {screenplay.workingFountain}
-                </pre>
-              </section>
-              <section className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]">
-                <p className="mb-2 text-[10px] tracking-wide text-subtle uppercase">
-                  {compared.label}
-                </p>
-                <pre className="max-h-80 overflow-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-muted">
-                  {compared.fountain}
-                </pre>
-              </section>
-            </div>
-          ) : null}
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="workspace-eyebrow">
-                {sceneOnly && activeScene ? `SCENE ${activeScene.order + 1}` : "FULL MOVIE SCRIPT"}
-              </p>
-              <h3 className="mt-1 font-display text-lg">
-                {sceneOnly && activeScene
-                  ? activeScene.slugline || activeScene.title
-                  : "Complete screenplay"}
-              </h3>
-            </div>
-            <div className="workspace-tabs" aria-label="Editor scope">
-              <button
-                aria-pressed={!sceneOnly}
-                onClick={() => {
-                  setSceneOnly(false);
-                  setSelection(null);
-                }}
-              >
-                Full script
-              </button>
-              <button
-                disabled={!activeScene || running}
-                aria-pressed={sceneOnly}
-                onClick={() => {
-                  setSceneOnly(true);
-                  setSelection(null);
-                }}
-              >
-                Selected scene
-              </button>
-            </div>
-          </div>
-          <Textarea
-            ref={editor}
-            aria-label="Fountain screenplay"
-            className="screenplay min-h-[36rem] resize-y bg-inset font-mono leading-relaxed"
-            value={editorText}
-            readOnly={running}
-            onChange={(event) => {
-              const text = event.target.value;
-              onTextChange(
-                sceneOnly && activeScene
-                  ? replaceScreenplayEditorScene(shownText, activeScene, text)
-                  : replaceScreenplayEditorScene(
-                      shownText,
-                      { sourceStart: 0, sourceEnd: shownText.length },
-                      text,
-                    ),
-              );
-            }}
-            onSelect={(event) => {
-              const start = event.currentTarget.selectionStart ?? 0;
-              const end = event.currentTarget.selectionEnd ?? 0;
-              if (end > start) {
-                setSelection({
-                  start: textareaOffsetToSource(editorText, start) + editorOffset,
-                  end: textareaOffsetToSource(editorText, end) + editorOffset,
-                });
-                setRewriteScope("selected-text");
-              } else {
-                setSelection(null);
-              }
-            }}
-            placeholder="Your Fountain screenplay will appear here."
-          />
-        </div>
-
-        <footer className="shrink-0 border-t border-border px-4 py-3 sm:px-6">
-          <div className="flex flex-wrap items-center gap-2">
-            {running ? (
-              <Button variant="rec" onClick={onStop}>
-                <Square />
-                Stop
-              </Button>
-            ) : (
-              <Button
-                onClick={() => onGenerate(rewriteTarget)}
-                disabled={!generateEnabled}
-                title={generateBlock ?? undefined}
-              >
-                Generate Screenplay
-              </Button>
-            )}
-            {stopped ? (
-              <Button
-                variant="secondary"
-                onClick={() => onContinue(rewriteTarget)}
-                disabled={!generateEnabled}
-              >
-                Continue
-              </Button>
-            ) : null}
-            <Button
-              variant="secondary"
-              disabled={running || !screenplay.workingFountain.trim()}
-              onClick={onSaveRevision}
-            >
-              <Save />
-              Save Revision
-            </Button>
-            <Button
-              variant="secondary"
-              disabled={running || !passSteps.length || !generateEnabled}
-              onClick={() => onRegeneratePass(passId, rewriteTarget)}
-            >
-              <RotateCcw />
-              Regenerate Pass
-            </Button>
-            {passSteps.length ? (
-              <select
-                aria-label="Pass to regenerate"
-                className="h-9 rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]"
-                value={passId}
-                onChange={(event) => setPassId(event.target.value as ScreenplayStep["id"])}
-              >
-                {passSteps.map((step) => (
-                  <option key={step.id} value={step.id}>
-                    {step.label}
-                  </option>
-                ))}
-              </select>
-            ) : null}
-            <Button
-              className="ml-auto"
-              disabled={
-                running || !screenplay.workingFountain.trim() || screenplay.status === "APPROVED"
-              }
-              onClick={onApprove}
-            >
-              <Check />
-              Approve Screenplay
-            </Button>
-          </div>
-        </footer>
-      </section>
-
-      <aside
+      </aside></CabinetModal>
+        <CabinetModal title="Writing & versions" trigger={<Button variant="secondary" size="sm">Writing & versions</Button>}>      <aside
         className="min-h-0 overflow-y-auto border-l border-border p-4"
         aria-label="Screenplay profile, writing and critique"
       >
@@ -832,7 +581,263 @@ export function ScreenplayWorkspace({
             </>
           ) : null}
         </div>
-      </aside>
+      </aside></CabinetModal>
+      </div></div>
+
+
+      <section className="flex min-h-0 min-w-0 flex-col">
+        <header className="shrink-0 border-b border-border px-4 py-3 sm:px-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">
+                SCREENPLAY WORKSPACE
+              </p>
+              <h2 className="mt-1 font-display text-xl tracking-tight">
+                {intake.title || "Untitled Picture"}
+              </h2>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>{statusLabel(running ? "GENERATING" : screenplay.status)}</Badge>
+              {screenplay.status === "APPROVED" ? <Badge>Canonical</Badge> : null}
+            </div>
+          </div>
+          {generation ? (
+            <div className="mt-3">
+              <p className="text-xs text-muted">{job?.activeLabel ?? generation.activeLabel}</p>
+              <ol className="mt-2 flex flex-wrap gap-2">
+                {steps.map((step) => {
+                  const active = generation.activeLabel === step.label;
+                  const done = completed.has(step.label);
+                  return (
+                    <li key={step.id} className="flex items-center gap-1 text-[11px] text-muted">
+                      {done ? (
+                        <Check className="size-3 text-good" />
+                      ) : active ? (
+                        <LoaderCircle className="size-3 animate-spin text-accent" />
+                      ) : (
+                        <Circle className="size-2.5 text-subtle" />
+                      )}
+                      {step.label}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          ) : null}
+          {job?.error ? (
+            <p role="alert" className="mt-2 text-xs text-rec">
+              {job.error}
+            </p>
+          ) : null}
+        </header>
+
+        <div className="screenplay-editor-surface min-h-0 flex-1 p-4 sm:p-6">
+          <StoryDoctorActivity picture={picture} />
+          <AssetRunActivity pictureId={picture.id} />
+          {job || running ? (
+            <section
+              aria-label="Live screenplay activity"
+              className="mb-4 grid gap-2 rounded-md border border-accent bg-inset p-3"
+            >
+              <p className="text-sm" role="status">
+                {job?.activeLabel ?? generation?.activeLabel ?? "Connecting to current generation"}{" "}
+                · {writerPin}
+              </p>
+              <p className="text-xs text-muted">
+                {Math.max(
+                  0,
+                  Math.floor(
+                    ((running ? now : (job?.updatedAt ?? now)) -
+                      (job?.startedAt ?? generation?.startedAt ?? now)) /
+                      1000,
+                  ),
+                )}
+                s elapsed · {job?.partialFountain.length ?? 0} output characters · Last update{" "}
+                {Math.max(0, Math.floor((now - (job?.updatedAt ?? now)) / 1000))}s ago
+              </p>
+              {job?.reasoning ? (
+                <details open>
+                  <summary className="text-xs">
+                    Local model reasoning reported by LM Studio ·{" "}
+                    {job.reasoning.length.toLocaleString()} characters
+                  </summary>
+                  <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-xs">
+                    {job.reasoning}
+                  </pre>
+                </details>
+              ) : (
+                <p className="text-xs text-muted">
+                  {running
+                    ? "Waiting for model output. Any reasoning supplied by LM Studio will appear here."
+                    : "LM Studio did not supply reasoning for this run."}
+                </p>
+              )}
+              {job?.partialFountain ? (
+                <details open>
+                  <summary className="text-xs">Live screenplay output</summary>
+                  <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-xs">
+                    {job.partialFountain}
+                  </pre>
+                </details>
+              ) : null}
+            </section>
+          ) : null}
+          {compared ? (
+            <div className="mb-4 grid gap-3 xl:grid-cols-2">
+              <section className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]">
+                <p className="mb-2 text-[10px] tracking-wide text-subtle uppercase">Current</p>
+                <pre className="max-h-80 overflow-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-muted">
+                  {screenplay.workingFountain}
+                </pre>
+              </section>
+              <section className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]">
+                <p className="mb-2 text-[10px] tracking-wide text-subtle uppercase">
+                  {compared.label}
+                </p>
+                <pre className="max-h-80 overflow-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-muted">
+                  {compared.fountain}
+                </pre>
+              </section>
+            </div>
+          ) : null}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="workspace-eyebrow">
+                {sceneOnly && activeScene ? `SCENE ${activeScene.order + 1}` : "FULL MOVIE SCRIPT"}
+              </p>
+              <h3 className="mt-1 font-display text-lg">
+                {sceneOnly && activeScene
+                  ? activeScene.slugline || activeScene.title
+                  : "Complete screenplay"}
+              </h3>
+            </div>
+            <div className="workspace-tabs" aria-label="Editor scope">
+              <button
+                aria-pressed={!sceneOnly}
+                onClick={() => {
+                  setSceneOnly(false);
+                  setSelection(null);
+                }}
+              >
+                Full script
+              </button>
+              <button
+                disabled={!activeScene || running}
+                aria-pressed={sceneOnly}
+                onClick={() => {
+                  setSceneOnly(true);
+                  setSelection(null);
+                }}
+              >
+                Selected scene
+              </button>
+            </div>
+          </div>
+          <Textarea
+            ref={editor}
+            aria-label="Fountain screenplay"
+            className="screenplay min-h-0 resize-none bg-inset font-mono leading-relaxed"
+            value={editorText}
+            readOnly={running}
+            onChange={(event) => {
+              const text = event.target.value;
+              onTextChange(
+                sceneOnly && activeScene
+                  ? replaceScreenplayEditorScene(shownText, activeScene, text)
+                  : replaceScreenplayEditorScene(
+                      shownText,
+                      { sourceStart: 0, sourceEnd: shownText.length },
+                      text,
+                    ),
+              );
+            }}
+            onSelect={(event) => {
+              const start = event.currentTarget.selectionStart ?? 0;
+              const end = event.currentTarget.selectionEnd ?? 0;
+              if (end > start) {
+                setSelection({
+                  start: textareaOffsetToSource(editorText, start) + editorOffset,
+                  end: textareaOffsetToSource(editorText, end) + editorOffset,
+                });
+                setRewriteScope("selected-text");
+              } else {
+                setSelection(null);
+              }
+            }}
+            placeholder="Your Fountain screenplay will appear here."
+          />
+        </div>
+
+        <footer className="shrink-0 border-t border-border px-4 py-3 sm:px-6">
+          <div className="flex flex-wrap items-center gap-2">
+            {running ? (
+              <Button variant="rec" onClick={onStop}>
+                <Square />
+                Stop
+              </Button>
+            ) : (
+              <Button
+                onClick={() => onGenerate(rewriteTarget)}
+                disabled={!generateEnabled}
+                title={generateBlock ?? undefined}
+              >
+                Generate Screenplay
+              </Button>
+            )}
+            {stopped ? (
+              <Button
+                variant="secondary"
+                onClick={() => onContinue(rewriteTarget)}
+                disabled={!generateEnabled}
+              >
+                Continue
+              </Button>
+            ) : null}
+            <Button
+              variant="secondary"
+              disabled={running || !screenplay.workingFountain.trim()}
+              onClick={onSaveRevision}
+            >
+              <Save />
+              Save Revision
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={running || !passSteps.length || !generateEnabled}
+              onClick={() => onRegeneratePass(passId, rewriteTarget)}
+            >
+              <RotateCcw />
+              Regenerate Pass
+            </Button>
+            {passSteps.length ? (
+              <select
+                aria-label="Pass to regenerate"
+                className="h-9 rounded-sm bg-elevated px-2 text-xs text-fg shadow-[var(--shadow-border)]"
+                value={passId}
+                onChange={(event) => setPassId(event.target.value as ScreenplayStep["id"])}
+              >
+                {passSteps.map((step) => (
+                  <option key={step.id} value={step.id}>
+                    {step.label}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+            <Button
+              className="ml-auto"
+              disabled={
+                running || !screenplay.workingFountain.trim() || screenplay.status === "APPROVED"
+              }
+              onClick={onApprove}
+            >
+              <Check />
+              Approve Screenplay
+            </Button>
+          </div>
+        </footer>
+      </section>
+
+
     </div>
   );
 }

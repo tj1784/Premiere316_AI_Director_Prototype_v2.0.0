@@ -2,13 +2,15 @@ import { hydrateProductionRouting } from "@/lib/studio/production-profiles";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowLeft, PanelLeft, PanelRight, X, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CabinetModal } from "./cabinet";
+import { ProductionProfileControls } from "./production-profile-controls";
 import { ProjectFiles } from "./project-files";
 import { ProjectSaveStatus } from "./project-save-status";
 import { Bin } from "./bin";
 import { Inspector } from "./inspector";
 import { InterfaceScale } from "./interface-scale";
 import { StageView } from "./stage-views";
-import { WorkspaceNavigation, workspaceGroups } from "./workspace-navigation";
+import { WorkspaceNavigation, WorkspaceTabs, workspaceGroups } from "./workspace-navigation";
 import { MovieBibleEditor } from "./movie-bible-editor";
 import { BibleRunWorkspace } from "./bible-run-workspace";
 import { useWorkspaceDraft } from "./use-workspace-draft";
@@ -140,6 +142,7 @@ export function StudioShell() {
   const [leftDrawer, setLeftDrawer] = useState(false);
   const [rightDrawer, setRightDrawer] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [inspectorWidth, setInspectorWidth] = useWorkspaceDraft("inspector-width", 320);
   const [navHidden, setNavHidden] = useWorkspaceDraft("navigation-collapsed", false);
   useEffect(() => {
@@ -280,10 +283,7 @@ export function StudioShell() {
         <button
           className="hidden rounded-md border border-border px-3 py-2 text-left text-xs text-muted lg:block"
           aria-label="Open production profile"
-          onClick={() => {
-            useStudio.getState().patchActive({ workspacePanel: null });
-            useStudio.getState().openAdvancedDepartment("intake");
-          }}
+          onClick={() => setProfileOpen(true)}
         >
           <span className="block text-fg">
             {routing.profileId === "astra-ultra" ? "Astra Ultra" : "Local Models"}
@@ -317,6 +317,7 @@ export function StudioShell() {
         ) : null}
       </header>
 
+      <WorkspaceTabs />
       <div className={`workspace-body ${expanded || navHidden ? "workspace-expanded" : ""}`}>
         {!expanded && !navHidden && <WorkspaceNavigation />}
         <div
@@ -336,7 +337,7 @@ export function StudioShell() {
           ) : null}
           <main className="min-h-0 min-w-0 overflow-hidden bg-bg">
             {workspacePanel ? (
-              <div className="h-full overflow-auto p-4 sm:p-6">
+              <div className="cabinet-workspace-panel">
                 {workspacePanel === "bible" ? <MovieBibleEditor /> : <BibleRunWorkspace />}
               </div>
             ) : (
@@ -374,6 +375,7 @@ export function StudioShell() {
         </div>
       </div>
 
+      <CabinetModal title="Production profile" open={profileOpen} onOpenChange={setProfileOpen}><ProductionProfileControls picture={picture} /></CabinetModal>
       {leftDrawer && leftKind ? (
         <Drawer side="left" title={leftTitle} onClose={closeLeftDrawer}>
           <LeftPanel kind={leftKind} />

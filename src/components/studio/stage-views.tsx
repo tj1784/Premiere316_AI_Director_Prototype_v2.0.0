@@ -1,3 +1,4 @@
+import { CabinetModal } from "./cabinet";
 import { PromptPayloadPreview } from "./prompt-payload-preview";
 import { EditorialClipEditor } from "./editorial-clip-editor";
 import { ImageIterationReview } from "./image-iteration-review";
@@ -372,7 +373,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
   }
   return (
     <Pane title="Picture Intake" kicker="01 · Source & intent">
-      <div className="grid max-w-3xl gap-5">
+      <div className="intake-cabinet-grid">
         <div>
           <Label htmlFor="movie-idea">What are we making?</Label>
           <Textarea
@@ -387,8 +388,9 @@ function IntakeStage({ picture }: { picture: Picture }) {
             links, or request web research and name the source and period.
           </p>
         </div>
-        <ProductionProfileControls picture={picture} disabled={building} />
-        <BibleRunWorkspace />
+        <CabinetModal title="Production profile" trigger={<Button variant="secondary">Production profile & models</Button>}><ProductionProfileControls picture={picture} disabled={building} /></CabinetModal>
+        <CabinetModal title="Script run" trigger={<Button variant="secondary">Configure & start script run</Button>}><BibleRunWorkspace /></CabinetModal>
+        <CabinetModal title="Visual direction" trigger={<Button variant="secondary">Visual direction & references</Button>}>
         <VisualDirectionField
           value={picture.intake.visualDirection}
           onChange={(value) => patchIntake("visualDirection", value)}
@@ -396,6 +398,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
           onBusy={setDirectionBusy}
           writerId={picture.screenplay.pinnedWriterServedId ?? undefined}
         />
+        </CabinetModal>
         <label className="grid gap-2 text-sm">
           Asset image model
           <select
@@ -488,14 +491,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
             ))}
           </ul>
         ) : null}
-        <details
-          key={picture.id}
-          className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
-          data-optional-intake="true"
-        >
-          <summary className="min-h-11 cursor-pointer content-center text-sm text-muted">
-            Optional details
-          </summary>
+        <CabinetModal title="Source details" trigger={<Button variant="secondary">Source details & story settings</Button>}>
           <div className="mt-4 grid gap-5">
             <label className="flex min-h-11 items-center gap-2 text-sm">
               <input
@@ -690,7 +686,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
               />
             </div>
           </div>
-        </details>
+        </CabinetModal>
       </div>
     </Pane>
   );
@@ -733,7 +729,7 @@ function ResearchStage({ picture }: { picture: Picture }) {
     <div className="min-w-0">
       <details className="border-b border-border p-3">
         <summary>Research production profile · {researchBinding?.label}</summary>
-        <ProductionProfileControls picture={picture} disabled={building} />
+        <CabinetModal title="Production profile" trigger={<Button variant="secondary">Production profile & models</Button>}><ProductionProfileControls picture={picture} disabled={building} /></CabinetModal>
       </details>
       <ResearchWorkspace
         title={picture.title}
@@ -980,16 +976,6 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto sm:overflow-hidden">
-      <details className="shrink-0 border-b border-border px-4 py-3">
-        <summary>
-          Production profile ·{" "}
-          {profile.profileId === "astra-ultra" ? "Astra Ultra" : "Local Models"}
-        </summary>
-        <ProductionProfileControls
-          picture={picture}
-          disabled={job?.status === "running" || job?.status === "queued"}
-        />
-      </details>
       {picture.importedPackage ? (
         <div className="shrink-0 px-4 pt-3">
           <ImportedPackageResources importedPackage={picture.importedPackage} />
