@@ -175,4 +175,3 @@ export const PRODUCTION_ROLE_LABELS: Record<ProductionRoleId, string> = {
   "prompt-cue": "Shot, prompt & cue author",
   reviewer: "Semantic continuity reviewer",
 };
-
