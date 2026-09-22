@@ -1,10 +1,10 @@
 # Astra Ultra / Local Models — Implementation Step 1 change map
 
-Source specification: `Premiere316_V3_Two_Profile_Review_Patch.md`, revision 1.1 (supplied 2026-09-22).
+Source specification: `Premiere316_V3_Two_Profile_Review_Patch(1).md`, revision 1.2 (supplied 2026-09-22). This packet supersedes the revision 1.1 Step 1 review map at the same inspection baseline.
 
 Inspection baseline: commit `35cdafb` on `codex/voice-reference-emotion`. The historical R4 review point was `90c6732`; the current branch also contains the later Cueboard implementation commit `0e2b43b`.
 
-Status: review packet only. No profile, orchestration, approval, serializer, project-data, or live-generation behavior has been changed. This completes Implementation Step 1 and deliberately stops before Step 2.
+Status: review packet only. No profile, orchestration, approval, serializer, project-data, download, or live-generation behavior has been changed. This completes the revision 1.2 update to Implementation Step 1 and deliberately stops before Step 2.
 
 ## Executive finding
 
@@ -53,6 +53,20 @@ Read-only inspection of LM Studio's native model catalog at Step 1 found no load
 | GPT-OSS 120B | Native key `gptoss-120b-uncensored-hauhaucs-aggressive`; MXFP4, 65,369,016,544 bytes, 131,072 max context; not loaded | Installed, requested uncensored variant preserved, not currently runnable |
 
 This is a machine snapshot, not a permanent registry assertion. Runtime resolution must always refresh the native catalog and record the exact served instance. The application must not treat `/v1/models` rows as loaded; `LmStudioProvider` already correctly relies on `/api/v1/models` loaded instances.
+
+### Revision 1.2 user-authorized unavailable placeholders
+
+Revision 1.2 explicitly authorizes the three screenshot entries below to remain stable unavailable/pending placeholders. They do not block Step 2 profile, persistence, migration, or review-UI work, and they do not block an independently configured Astra Ultra run. This exception authorizes skipping affected inference; it does not authorize a substitute model, a fabricated callable ID, a forged output, a model download, or a retry.
+
+| Placeholder display identity | Persisted availability/reason | Assignment and routing consequence |
+| --- | --- | --- |
+| `nousresearch/hermes-4-70b` | Unavailable; download/verification incomplete and the supplied screenshot shows checksum failure | Preserve Hermes as the intended architect, lead writer, and rewrite owner with a null callable ID until exact installation validation |
+| `Observerx: Qwen3.8 27B Heretic Abliterated Uncensored GGUF…` | Pending/unavailable; the screenshot shows an in-progress transfer and the exact variant is truncated | Keep as an unassigned alternate catalog entry; never equate it with GAIN V1.1 or report an unobserved checksum failure |
+| `huihui-ai: Huihui Qwen3.8 27B Abliterated GGUF BF16` | Unavailable; download/verification incomplete and the supplied screenshot shows checksum failure | Keep as an unassigned alternate catalog entry; never replace GAIN or another assigned role with it |
+
+The placeholder record belongs in the same versioned production-routing state proposed for `Picture`. It needs a stable identity, display label, optional intended role, status, observed/user-reported reason, `authorizedSkip: true`, and `callableModelId: null`. Artemis remains the separately named optional challenger; GAIN and GPT-OSS retain their own assignments and must continue to resolve from live catalog evidence.
+
+For an affected inference unit, the orchestrator must record **Skipped — model unavailable** without issuing a request. Guided mode still enters the ordinary review pause. Autonomous mode may continue independent eligible units, but dependent work with no real required input must become **Skipped — required source unavailable**. Such a run ends **Finished with missing sections — review required**, never **Complete movie script**. Availability refresh and retry remain explicit user actions after a verified installation, while placeholder identity and history stay intact.
 
 ### Shared engines
 
@@ -204,6 +218,7 @@ The compact creative surface should show profile, mode, current unit/scope, sour
 - Extend `Picture` and `store.ts::blankPicture/migratePicture` with compatible routing/run defaults.
 - Replace legacy Llama/Qwen default resolution in `model-routing.ts` and `movie-plan-model.ts` with exact role resolution while preserving legacy explicit IDs.
 - Generalize provider status enough to represent unavailable Astra without fabricating a call.
+- Persist the three revision 1.2 placeholder records with null callable IDs and the user-authorized skip policy; expose Refresh availability without starting a download or retry.
 - Add the two selectors/status/technical details in `stage-views.tsx` and supporting components.
 
 ### Step 3 — execution and review
@@ -212,7 +227,7 @@ The compact creative surface should show profile, mode, current unit/scope, sour
 - Refactor `executeMoviePlan`, `runScreenplayWorkflow`, and `ScreenplayJobManager` around immutable request snapshots and idempotent dispatch.
 - Remove machine-created research/screenplay approval from the orchestration path.
 - Add shared review actions mapped to existing approval functions.
-- Add coverage, retry/revision budgets, pause/cancel/recovery, late-result quarantine, and autonomous P1–P6 completion validation.
+- Add coverage, retry/revision budgets, pause/cancel/recovery, late-result quarantine, authorized unavailable-step records, missing-source propagation, affected-scope retry, and autonomous P1–P6 completion validation.
 
 ### Step 4 — authoring, registry resolution, serializers, and V3
 
@@ -237,8 +252,8 @@ The compact creative surface should show profile, mode, current unit/scope, sour
 Extend these suites rather than creating a disconnected checklist:
 
 - Profiles/bindings/defaults: `model-routing.test.ts`, `movie-plan-model.test.ts`, new `production-profiles.test.ts`.
-- Persistence/migration/recovery: `project-storage.test.ts`, `screenplay.test.ts`, `audio-iterations.test.ts`, `video-iterations.test.ts`.
-- Guided/autonomous orchestration: `movie-plan-pipeline.test.ts`, `screenplay-jobs.test.ts`, `movie-plan-stream.test.ts`, plus new run-state tests.
+- Persistence/migration/recovery: `project-storage.test.ts`, `screenplay.test.ts`, `audio-iterations.test.ts`, `video-iterations.test.ts`, including stable placeholder identity across availability refresh.
+- Guided/autonomous orchestration: `movie-plan-pipeline.test.ts`, `screenplay-jobs.test.ts`, `movie-plan-stream.test.ts`, plus new run-state tests for authorized skip, dependency propagation, truthful incomplete status, and affected-scope retry.
 - Approval/staleness/identity: `research` tests, `production/dependency-graph.test.ts`, `generate-gates.test.ts`, `performance*.test.ts`, `emotion/integration.test.ts`, `emotion/review-guard.test.ts`.
 - Serializers and exact speech/sound: `emotion/r4.test.ts`, `prompt-compiler.test.ts`, `director-compiler.test.mjs`.
 - Submission/idempotency/media review: `director-execution.test.mjs`, `audio-iterations.test.ts`, `video-iterations.test.ts`.
@@ -246,17 +261,20 @@ Extend these suites rather than creating a disconnected checklist:
 
 Several current assertions must intentionally change, including `product-flow.test.ts` (“phase-review checkboxes default off”) and `movie-plan-pipeline.test.ts` (“default mode auto-approves internal research and screenplay”).
 
-## Decisions required before Step 2 can complete
+## Decisions and boundaries for Step 2
 
 1. The actual callable Astra provider/model binding and its supported Ultra effort value must be supplied or configured. Until then, Astra Ultra can be the visible new-work default but must show a blocking setup state and make no call.
-2. The two missing local bindings must be resolved: a complete Hermes 4 70B installation and optional Artemis 31B v1.1. No fallback is authorized.
-3. The Harrowing V3 direction/routing source documents named by the specification must be imported or mapped to existing approved project revisions before preset content is written.
-4. Persistent patch/rule IDs for this proposed addendum should be allocated in `docs/cueboard-r4/RULE_REGISTER.md` only when the addendum is adopted; Step 1 does not claim those IDs.
+2. The three revision 1.2 download entries are not Step 2 completion gates. Step 2 must persist them as authorized unavailable/pending placeholders with unresolved callable IDs. It must not repair, redownload, substitute, or repeatedly request skip permission. Artemis remains optional and separately unavailable until verified.
+3. GAIN V1.1 and GPT-OSS 120B must still be resolved from the current LM Studio catalog when a run starts; the historical Step 1 snapshot is not runtime proof of availability.
+4. The Harrowing V3 direction/routing source documents named by the specification must be imported or mapped to existing approved project revisions before preset content is written.
+5. Persistent patch/rule IDs for this proposed addendum should be allocated in `docs/cueboard-r4/RULE_REGISTER.md` only when the addendum is adopted; Step 1 does not claim those IDs.
 
 ## Step 1 verification boundary
 
 - Inspected current repository instructions, source, tests, current branch history, R4 implementation record, provider adapters, live LM Studio native catalog, installed relevant model files, Harrowing project records, serializers, audio/video paths, approvals, and persistence.
+- Compared specification revisions 1.1 and 1.2 and incorporated the user's narrow placeholder/skip authorization into the planned persistence, orchestration, UI, and test surfaces.
 - No model was loaded, unloaded, or called.
+- No model download was started, repaired, canceled, or retried.
 - No media was generated, submitted, changed, approved, or deleted.
 - No existing project record, source text, reference, engine choice, or approval was changed.
 - No application code was changed; build/browser gates are deferred until an implementation step changes runtime behavior.
