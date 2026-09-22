@@ -2,6 +2,8 @@ import type { Picture } from "../studio/types.ts";
 import { parseScreenplayHierarchy } from "../studio/screenplay-hierarchy.ts";
 import { stableVoiceJson } from "../studio/voice-reconciliation.mjs";
 import { stableHash } from "../production/dependency-graph.ts";
+import { resolveRenderContext } from "../studio/render-context.ts";
+import { continuityFingerprint } from "../studio/shot-continuity.ts";
 import { DEFAULT_ADAPTER } from "./constants.ts";
 import { compileLine } from "./compiler.ts";
 import { assertSceneConfig } from "./validation.ts";
@@ -74,6 +76,10 @@ export function performanceReviewPicture(picture: Picture): Picture {
   const { version } = approvedPerformanceSource(picture);
   return {
     id: picture.id,
+    movieBible: picture.movieBible,
+    renderContext: picture.renderContext,
+    shotContinuity: picture.shotContinuity,
+    productionRouting: picture.productionRouting,
     screenplay: { ...picture.screenplay, versions: [version] },
     characters: picture.characters,
     shots: picture.shots,
@@ -95,7 +101,11 @@ export function performanceReviewPicture(picture: Picture): Picture {
         }
       : undefined,
     performance: picture.performance
-      ? { beats: picture.performance.beats, shots: picture.performance.shots }
+      ? {
+          beats: picture.performance.beats,
+          shots: picture.performance.shots,
+          performance: picture.performance.performance,
+        }
       : undefined,
     directorScenes: picture.directorScenes,
     characterVoiceDesigns: { selections: picture.characterVoiceDesigns?.selections },
@@ -128,6 +138,24 @@ export function performanceSourceKey(picture: Picture, sceneId: string) {
   if (!scene) throw new Error("Scene is no longer in the approved screenplay.");
   // This is a source snapshot, not a security hash. Every relevant source remains reviewable.
   return stableHash({
+    ...(picture.renderContext
+      ? { renderContext: resolveRenderContext(picture, { id: "", sceneId }).effective }
+      : {}),
+    ...(picture.movieBible
+      ? {
+          bible: Object.values(picture.movieBible.records).filter(
+            (r) =>
+              r.recordId === picture.id ||
+              r.recordId === sceneId ||
+              r.kind === "character" ||
+              (r.kind === "participant" &&
+                picture.performance?.beats.some(
+                  (b) => b.sceneId === sceneId && r.recordId.startsWith(`performance:${b.id}:`),
+                )),
+          ),
+        }
+      : {}),
+    ...(picture.shotContinuity ? { continuity: continuityFingerprint(picture, sceneId) } : {}),
     version: version.id,
     screenplay: version.fountain,
     scene: scene.fountain,

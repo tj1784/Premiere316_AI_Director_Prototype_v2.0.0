@@ -6,6 +6,8 @@ npmRebuild: false
 directories:
   output: dist-desktop
 files:
+  - desktop/movie-assembly.mjs
+  - desktop/specialist-audio.mjs
   - desktop/project-location.mjs
   - desktop/project-library.mjs
   - desktop/director-progress.mjs
@@ -31,6 +33,10 @@ files:
   - package.json
   - "!**/node_modules/**"
 extraResources:
+  - from: desktop/dist/movie-assembly-plan.mjs
+    to: movie-assembly-plan.mjs
+  - from: desktop/workers/specialist_audio_worker.py
+    to: workers/specialist_audio_worker.py
   - from: desktop/workers/native_h3_film.py
     to: workers/native_h3_film.py
   - from: desktop/workers/native_h3_runtime.py

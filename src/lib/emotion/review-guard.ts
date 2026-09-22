@@ -2,6 +2,7 @@ import { stableVoiceJson } from "../studio/voice-reconciliation.mjs";
 import { exportVoiceReferences } from "../studio/voice-reference.ts";
 import { performanceSourceKey, type PerformanceDraft } from "./integration.ts";
 import type { Picture } from "../studio/types.ts";
+import { resolveRenderContext } from "../studio/render-context.ts";
 
 export type ReviewTicket = { generation: number; fingerprint: string };
 export function createReviewGuard() {
@@ -26,6 +27,7 @@ export function jointReviewFingerprint(input: {
   workflow: string;
   lines: string[];
   bindings: Record<string, string>;
+  shotId?: string;
 }): string {
   const { picture, draft, workflow, lines, bindings } = input;
   const manifest = exportVoiceReferences(picture);
@@ -35,6 +37,9 @@ export function jointReviewFingerprint(input: {
     workflow,
     lines,
     bindings,
+    shotId: input.shotId,
+    render: resolveRenderContext(picture, { id: input.shotId ?? "", sceneId: draft.sceneId }),
+    continuity: input.shotId ? picture.shotContinuity?.[input.shotId] : null,
     source: performanceSourceKey(picture, draft.sceneId),
     applied: picture.emotionPerformance?.applied[draft.sceneId],
     references: manifest.references,

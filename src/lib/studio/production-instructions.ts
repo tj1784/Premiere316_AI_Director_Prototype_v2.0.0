@@ -12,13 +12,16 @@ ${AUTHORING_WORKFLOW_CONTRACT}
 6. Artifacts and props must clearly show period construction, materials and useful angles. Locations must preserve the screenplay's geography, scale, time of day and cinematography. Visible fire sources must produce motivated readable light in scene/location imagery; do not render an unreadably dark night scene beside a bright fire source.
 7. Search for and attach relevant real visual references when a costume, artifact or architectural form is difficult to describe. Treat each reference according to its role. Do not mistake a costume reference for an actor identity or rendering-style instruction. Never invent source URLs or claim image conditioning when the chosen renderer accepts text only.
 8. Use the selected image model's actual prompt format. KREA2 RAW receives self-contained natural-language text. Use no FLUX-specific syntax, weighted tags, sampler settings, prose citations or visible text overlays in a KREA prompt. Respect explicit user prompt edits; regenerate model-written prompts only when requested.
-9. The normal automatic process continues through generated assets. The next required user review is the actual generated assets, followed by generated first/last frames, then generated video clips. Do not describe breakdown rows, prompts, queued jobs or placeholders as completed images.`;
+9. Guided production executes one declared unit and then awaits explicit review; accepting a draft alone never starts a successor. An explicitly started autonomous Movie Script run may complete text authoring and machine checkpoints only, without human approval or media rendering. Image, video, speech, music and sound generation remain explicitly started jobs. Do not describe breakdown rows, prompts, queued jobs or placeholders as completed images.`;
 
 const GLOBAL_KEY = "premiere316-global-production-instructions-v1";
 const listeners = new Set<() => void>();
 export function getGlobalProductionInstructions(): string {
-  try { return globalThis.localStorage?.getItem(GLOBAL_KEY)?.trim() || GLOBAL_PRODUCTION_INSTRUCTIONS; }
-  catch { return GLOBAL_PRODUCTION_INSTRUCTIONS; }
+  try {
+    return globalThis.localStorage?.getItem(GLOBAL_KEY)?.trim() || GLOBAL_PRODUCTION_INSTRUCTIONS;
+  } catch {
+    return GLOBAL_PRODUCTION_INSTRUCTIONS;
+  }
 }
 export function setGlobalProductionInstructions(instructions: string): void {
   globalThis.localStorage?.setItem(GLOBAL_KEY, instructions);
@@ -26,6 +29,14 @@ export function setGlobalProductionInstructions(instructions: string): void {
 }
 export function subscribeGlobalProductionInstructions(listener: () => void) {
   listeners.add(listener);
-  return () => { listeners.delete(listener); };
+  return () => {
+    listeners.delete(listener);
+  };
 }
-export const withProductionInstructions = (system: string, instructions = getGlobalProductionInstructions()) => system.includes(instructions) ? system : `${instructions}\n\n${system.replace(GLOBAL_PRODUCTION_INSTRUCTIONS, "").trim()}`;
+export const withProductionInstructions = (
+  system: string,
+  instructions = getGlobalProductionInstructions(),
+) =>
+  system.includes(instructions)
+    ? system
+    : `${instructions}\n\n${system.replace(GLOBAL_PRODUCTION_INSTRUCTIONS, "").trim()}`;

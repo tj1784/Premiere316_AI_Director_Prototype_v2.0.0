@@ -112,19 +112,21 @@ export function inspectVideoTakeQC(input: {
   return { ok: checks.every((check) => check.ok), checks };
 }
 
-export function reviewVideoTake(workspace: VideoWorkspace, takeId: string, decision: "reject" | "canonical", reason: string, now = Date.now()): VideoWorkspace {
+export function reviewVideoTake(workspace: VideoWorkspace, takeId: string, decision: "reject" | "canonical", reason: string, now = Date.now(), sourceFingerprint?: string): VideoWorkspace {
   const take = workspace.takes.find((item) => item.id === takeId);
   if (!take) throw new Error("Video take not found.");
   if (take.status === "FAILED" || take.status === "CANCELLED") throw new Error("Failed or cancelled takes cannot become canonical.");
   if (decision === "canonical" && take.origin === "fail-closed") throw new Error("Fail-closed video cannot become canonical.");
   if (decision === "canonical" && !take.mediaSha256) throw new Error("Canonical video approval requires durable media.");
   if (decision === "canonical" && take.origin === "imported" && !take.probe?.ok) throw new Error("Imported canonical video requires a successful probe.");
+  if (sourceFingerprint && !reason.trim()) throw new Error("Current-source review requires an observed review reason.");
   if (decision === "canonical") {
     return {
       ...workspace,
       takes: workspace.takes.map((item) => item.shotId === take.shotId
         ? item.id === takeId
-          ? { ...item, status: "CANONICAL", canonical: true, reviewReason: reason, updatedAt: now }
+          ? { ...item, status: "CANONICAL", canonical: true, reviewReason: reason, updatedAt: now,
+              sourceReviews: sourceFingerprint ? [...(item.sourceReviews ?? []), { id: `review:${crypto.randomUUID()}`, sourceFingerprint, mediaSha256: item.mediaSha256!, reason, at: now }] : item.sourceReviews }
           : item.canonical
             ? { ...item, canonical: false, status: item.status === "CANONICAL" ? "NEEDS_REVIEW" : item.status, updatedAt: now }
             : item
@@ -181,8 +183,8 @@ export function recordImportedVideoTake(workspace: VideoWorkspace, input: {
     error: null,
   };
   const take = {
-    id: `videotake:import:${input.shotId}:${now}`,
-    jobId: `videojob:import:${input.shotId}:${now}`,
+    id: `videotake:import:${input.shotId}:${crypto.randomUUID()}`,
+    jobId: `videojob:import:${input.shotId}:${crypto.randomUUID()}`,
     shotId: input.shotId,
     pictureId: input.pictureId,
     engineId: "ltx-2" as const,

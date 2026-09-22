@@ -236,6 +236,13 @@ export type Premiere316Desktop = {
     saveMany: (input: SaveManyInput) => Promise<SaveManyResult>;
   };
   media: {
+    assemble: (input: {pictureId:string;pictureSnapshot:string;plan:import("../studio/movie-assembly.ts").MovieAssemblyPlan}) => Promise<import("../studio/movie-assembly.ts").MovieAssemblyResult>;
+    assemblyHistory: (pictureId:string) => Promise<{ok:true;deliveries:import("../studio/movie-assembly.ts").MovieDelivery[]} | {ok:false;error:string}>;
+    verifyAssembly: (pictureId:string,id:string) => Promise<{ok:true} | {ok:false;error:string}>;
+    assemblyStatus: (pictureId:string) => Promise<{ok:true;busy:boolean;phase:string|null} | {ok:false;error:string}>;
+    cancelAssembly: (pictureId:string) => Promise<{ok:true} | {ok:false;error:string}>;
+    continuationFrame: (pictureId:string,takeId:string) => Promise<{ok:true;binding:import("../studio/director-scene-authoring.ts").DirectorImageBinding} | {ok:false;error:string}>;
+    specialistAudio: (input: import("../studio/specialist-audio.ts").SpecialistInput) => Promise<import("../studio/specialist-audio.ts").SpecialistResult>;
     discover: () => Promise<{ ok: boolean; ffmpeg: string | null; ffprobe: string | null; reason: string }>;
     importVideo: () => Promise<ImportedVideoResult>;
     importAudio: () => Promise<ImportedAudioResult>;
@@ -314,7 +321,9 @@ export const DESKTOP_CHANNELS = {
   mediaDiscover: "p316:media:discover",
   mediaImportVideo: "p316:media:importVideo",
   mediaImportAudio: "p316:media:importAudio",
+  specialistAudio: "p316:media:specialistAudio",
   mediaExportLite: "p316:media:exportLite",
   mediaExportPlus: "p316:media:exportPlus",
+  mediaAssemble: "p316:media:assemble",
   mediaOpenFolder: "p316:media:openFolder",
 } as const;

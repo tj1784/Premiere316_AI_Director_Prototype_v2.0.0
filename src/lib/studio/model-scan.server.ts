@@ -1,5 +1,15 @@
 import { createHash } from "node:crypto";
-import { mkdirSync, openSync, readSync, closeSync, readFileSync, writeFileSync, statSync, readdirSync, existsSync } from "node:fs";
+import {
+  mkdirSync,
+  openSync,
+  readSync,
+  closeSync,
+  readFileSync,
+  writeFileSync,
+  statSync,
+  readdirSync,
+  existsSync,
+} from "node:fs";
 import { dirname, extname, join, relative } from "node:path";
 import { MODEL_ROOT, type CatalogStats, type ModelCatalog } from "./model-catalog.ts";
 import {
@@ -106,7 +116,9 @@ function parseSafetensorsHeader(buf: Buffer): HeaderEvidence | undefined {
       }
     }
     return {
-      architecture: String(meta.format ?? meta.ss_base_model_name ?? meta.modelspec_architecture ?? "") || undefined,
+      architecture:
+        String(meta.format ?? meta.ss_base_model_name ?? meta.modelspec_architecture ?? "") ||
+        undefined,
       name: String(meta.ss_output_name ?? meta.modelspec_title ?? "") || undefined,
       dtypes: [...dtypes],
       parameterCount: params > 0 ? params : undefined,
@@ -176,6 +188,13 @@ function ggufValue(r: GGUFReader, type: number): unknown {
     case 9: {
       const itemType = u32(r);
       const count = u64(r);
+      if (
+        !Number.isSafeInteger(count) ||
+        count < 0 ||
+        count > r.buf.length - r.off ||
+        itemType === 9
+      )
+        throw new Error("Invalid or oversized GGUF metadata array.");
       const cap = Math.min(count, 32);
       const arr: unknown[] = [];
       for (let i = 0; i < count; i++) {
@@ -201,6 +220,51 @@ function ggufValue(r: GGUFReader, type: number): unknown {
   }
 }
 
+export function inspectGgufVariant(buf: Buffer): {
+  architecture: string;
+  name: string;
+  fileType: number;
+  tensorCount: number;
+  mtp: boolean;
+  complete: boolean;
+} {
+  if (buf.length < 24 || buf.subarray(0, 4).toString("utf8") !== "GGUF")
+    throw new Error("Not a GGUF artifact.");
+  const r: GGUFReader = { buf, off: 4 };
+  const version = u32(r);
+  if (![2, 3].includes(version)) throw new Error("Unsupported GGUF header version.");
+  const tensorCount = u64(r),
+    count = u64(r);
+  if (count > 10000 || tensorCount > 100000)
+    throw new Error("GGUF header exceeds inspection limits.");
+  const metadata: Record<string, unknown> = {};
+  let mtp = false;
+  for (let i = 0; i < count; i++) {
+    const key = ggufString(r),
+      type = u32(r),
+      value = ggufValue(r, type);
+    if (/nextn|mtp|multi.?token.?predict/i.test(key) && value !== 0 && value !== false) mtp = true;
+    if (key.startsWith("general.")) metadata[key] = value;
+    if (r.off > buf.length) throw new Error("Incomplete GGUF metadata inspection.");
+  }
+  for (let i = 0; i < tensorCount; i++) {
+    const name = ggufString(r),
+      dims = u32(r);
+    if (!name || dims > 8) throw new Error("Incomplete GGUF tensor inspection.");
+    if (/nextn|mtp|multi.?token.?predict/i.test(name)) mtp = true;
+    r.off += dims * 8 + 4 + 8;
+    if (r.off > buf.length) throw new Error("Incomplete GGUF tensor inspection.");
+  }
+  return {
+    architecture: String(metadata["general.architecture"] ?? ""),
+    name: String(metadata["general.name"] ?? ""),
+    fileType: Number(metadata["general.file_type"]),
+    tensorCount,
+    mtp,
+    complete: true,
+  };
+}
+
 function parseGgufHeader(buf: Buffer): HeaderEvidence | undefined {
   if (buf.length < 24 || buf.subarray(0, 4).toString("utf8") !== "GGUF") return undefined;
   const r: GGUFReader = { buf, off: 4 };
@@ -224,7 +288,10 @@ function parseGgufHeader(buf: Buffer): HeaderEvidence | undefined {
     return {
       architecture: arch || undefined,
       name: String(kv["general.name"] ?? "") || undefined,
-      parameterCount: typeof kv["general.parameter_count"] === "number" ? (kv["general.parameter_count"] as number) : undefined,
+      parameterCount:
+        typeof kv["general.parameter_count"] === "number"
+          ? (kv["general.parameter_count"] as number)
+          : undefined,
       contextLength: ctxKey && typeof kv[ctxKey] === "number" ? (kv[ctxKey] as number) : undefined,
       license: String(kv["general.license"] ?? "") || undefined,
       quantization: fileType !== undefined ? `GGUF file_type=${fileType}` : undefined,
@@ -265,7 +332,10 @@ function headerFor(path: string, ext: string): HeaderEvidence | undefined {
   return undefined;
 }
 
-function sha256File(path: string, size: number): { sha256: string; kind: "full" | "sampled" } | undefined {
+function sha256File(
+  path: string,
+  size: number,
+): { sha256: string; kind: "full" | "sampled" } | undefined {
   const FULL_LIMIT = 512 * 1024 * 1024;
   let fd: number | undefined;
   try {
@@ -298,7 +368,16 @@ function sha256File(path: string, size: number): { sha256: string; kind: "full" 
 type Walked = {
   folders: number;
   files: number;
-  weights: { path: string; size: number; mtimeMs: number; name: string; relativePath: string; topFolder: string; dir: string; ext: string }[];
+  weights: {
+    path: string;
+    size: number;
+    mtimeMs: number;
+    name: string;
+    relativePath: string;
+    topFolder: string;
+    dir: string;
+    ext: string;
+  }[];
   metaByDir: Map<string, SidecarEvidence>;
 };
 
@@ -363,7 +442,13 @@ function walkRoot(root: string): Walked {
         sidecar.licenseText = readTextCap(full, README_CAP);
       }
     }
-    if (sidecar.config || sidecar.modelIndex || sidecar.tokenizer || sidecar.readme || sidecar.licenseText) {
+    if (
+      sidecar.config ||
+      sidecar.modelIndex ||
+      sidecar.tokenizer ||
+      sidecar.readme ||
+      sidecar.licenseText
+    ) {
       out.metaByDir.set(dir, sidecar);
     }
   };
@@ -375,7 +460,9 @@ function configHeader(sidecar?: SidecarEvidence): HeaderEvidence | undefined {
   if (!sidecar?.config) return undefined;
   const c = sidecar.config;
   const architectures = c.architectures;
-  const arch = Array.isArray(architectures) ? String(architectures[0] ?? "") : String(c.model_type ?? "");
+  const arch = Array.isArray(architectures)
+    ? String(architectures[0] ?? "")
+    : String(c.model_type ?? "");
   const ctx = c.max_position_embeddings ?? c.max_seq_len ?? c.n_positions;
   const params = c.num_parameters ?? c.n_params;
   return {
@@ -454,7 +541,14 @@ export function loadCatalog(opts: ScanOptions = {}): ModelCatalog {
         dtypes: header?.dtypes?.length ? header.dtypes : fromConfig.dtypes,
       };
     }
-    nextFiles[w.path] = { size: w.size, mtimeMs: w.mtimeMs, fingerprint: fp, header, sha256, sha256Kind };
+    nextFiles[w.path] = {
+      size: w.size,
+      mtimeMs: w.mtimeMs,
+      fingerprint: fp,
+      header,
+      sha256,
+      sha256Kind,
+    };
     weights.push({
       path: w.path,
       relativePath: w.relativePath,

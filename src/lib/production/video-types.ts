@@ -25,6 +25,8 @@ export type VideoTakeQC = {
 };
 
 export type VideoTake = {
+  speechReviews?: import("../studio/speech-review.ts").SpeechReview[];
+  sourceReviews?: Array<{ id: string; sourceFingerprint: string; mediaSha256: string; reason: string; at: number }>;
   id: string;
   jobId: string;
   shotId: string;

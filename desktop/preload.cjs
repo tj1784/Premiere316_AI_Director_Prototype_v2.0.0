@@ -49,8 +49,10 @@ const channels = {
   mediaDiscover: "p316:media:discover",
   mediaImportVideo: "p316:media:importVideo",
   mediaImportAudio: "p316:media:importAudio",
+  specialistAudio: "p316:media:specialistAudio",
   mediaExportLite: "p316:media:exportLite",
   mediaExportPlus: "p316:media:exportPlus",
+  mediaAssemble: "p316:media:assemble",
   mediaOpenFolder: "p316:media:openFolder",
 };
 
@@ -132,8 +134,15 @@ contextBridge.exposeInMainWorld("premiere316", {
     discover: () => invoke(channels.mediaDiscover),
     importVideo: () => invoke(channels.mediaImportVideo),
     importAudio: () => invoke(channels.mediaImportAudio),
+    specialistAudio: (input) => invoke(channels.specialistAudio, input ?? {}),
     exportLite: (input) => invoke(channels.mediaExportLite, input ?? {}),
     exportPlus: (input) => invoke(channels.mediaExportPlus, input ?? {}),
+    assemble: (input) => invoke(channels.mediaAssemble, input ?? {}),
+    assemblyHistory: (pictureId) => invoke(channels.mediaAssemble, {operation:"history",pictureId}),
+    verifyAssembly: (pictureId,id) => invoke(channels.mediaAssemble, {operation:"verify",pictureId,id}),
+    assemblyStatus: (pictureId) => invoke(channels.mediaAssemble, {operation:"status",pictureId}),
+    cancelAssembly: (pictureId) => invoke(channels.mediaAssemble, {operation:"cancel",pictureId}),
+    continuationFrame: (pictureId,takeId) => invoke(channels.mediaAssemble, {operation:"continuation-frame",pictureId,takeId}),
     openFolder: () => invoke(channels.mediaOpenFolder),
   },
   zoom: {

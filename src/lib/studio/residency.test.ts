@@ -191,7 +191,11 @@ describe("BF16 fit and fallbacks", () => {
   });
   it("12. quantized fallback is suggested before full model swapping", () => {
     const plan = planPlacement(hugeFluxPipeline(), { vramBytes: 24 * GiB });
-    assert.ok(plan.nextFallback === "validated quantized core weights" || plan.nextFallback === "VAE on CPU / tiled decode" || plan.nextFallback);
+    assert.ok(
+      plan.nextFallback === "validated quantized core weights" ||
+        plan.nextFallback === "VAE on CPU / tiled decode" ||
+        plan.nextFallback,
+    );
     assert.notEqual(plan.nextFallback, "swap entire model");
   });
 });
@@ -264,19 +268,31 @@ describe("visibility and native still isolation", () => {
     const readme = readFileSync(join(process.cwd(), "README.md"), "utf8");
     assert.match(readme, /LTX Director is the default video option/i);
     const home = readFileSync(join(process.cwd(), "src/components/studio/home.tsx"), "utf8");
-    assert.match(home, /Standalone picture studio/);
-    const stillBay = readFileSync(join(process.cwd(), "src/components/studio/still-bay.tsx"), "utf8");
+    assert.match(home, /V4 · Movie Script Production Bible/);
+    const stillBay = readFileSync(
+      join(process.cwd(), "src/components/studio/still-bay.tsx"),
+      "utf8",
+    );
     assert.doesNotMatch(stillBay, /Comfy graph/i);
-    const stills = readFileSync(join(process.cwd(), "src/lib/studio/local-still.server.ts"), "utf8");
+    const stills = readFileSync(
+      join(process.cwd(), "src/lib/studio/local-still.server.ts"),
+      "utf8",
+    );
     assert.doesNotMatch(stills, /8188/);
     assert.doesNotMatch(stills, /ComfyUI/i);
     assert.doesNotMatch(stills, /class_type/);
     assert.match(stills, /flux2_dev\.safetensors/);
     assert.match(stills, /flux1-dev\.safetensors/);
-    const worker = readFileSync(join(process.cwd(), "desktop/workers/flux1_jsonl_worker.py"), "utf8");
+    const worker = readFileSync(
+      join(process.cwd(), "desktop/workers/flux1_jsonl_worker.py"),
+      "utf8",
+    );
     assert.doesNotMatch(worker, /8188|ComfyUI|Flux2/i);
     assert.doesNotMatch(worker, /from_pretrained|hf_hub_download|snapshot_download/);
-    const flux2Worker = readFileSync(join(process.cwd(), "desktop/workers/flux2_jsonl_worker.py"), "utf8");
+    const flux2Worker = readFileSync(
+      join(process.cwd(), "desktop/workers/flux2_jsonl_worker.py"),
+      "utf8",
+    );
     assert.doesNotMatch(flux2Worker, /8188|ComfyUI/i);
     assert.doesNotMatch(flux2Worker, /hf_hub_download|snapshot_download/);
     const engines = readFileSync(join(process.cwd(), "src/lib/studio/engines.ts"), "utf8");

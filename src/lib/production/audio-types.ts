@@ -1,8 +1,19 @@
 import type { MusicEngineId, VoiceEngineId } from "../studio/audio-runtime.ts";
 
-export type AudioTakeStatus = "QUEUED" | "RUNNING" | "FAILED" | "NEEDS_REVIEW" | "REJECTED" | "CANONICAL" | "CANCELLED";
-export type AudioKind = "dialogue" | "foley" | "ambience" | "room-tone" | "impact" | "creature" | "environment" | "transition" | "score" | "silence";
-export type AudioOrigin = "fail-closed" | "imported";
+export type AudioTakeStatus =
+  "QUEUED" | "RUNNING" | "FAILED" | "NEEDS_REVIEW" | "REJECTED" | "CANONICAL" | "CANCELLED";
+export type AudioKind =
+  | "dialogue"
+  | "foley"
+  | "ambience"
+  | "room-tone"
+  | "impact"
+  | "creature"
+  | "environment"
+  | "transition"
+  | "score"
+  | "silence";
+export type AudioOrigin = "fail-closed" | "imported" | "native-generated";
 
 export type AudioProbe = {
   ok: boolean;
@@ -42,6 +53,8 @@ export type VoiceProfile = {
 };
 
 export type AudioTake = {
+  generationProvenance?: unknown;
+  cueFingerprint?: string;
   id: string;
   jobId: string | null;
   pictureId: string;
@@ -81,6 +94,24 @@ export type AudioJob = {
 };
 
 export type SoundCueRecord = {
+  revision?: number;
+  sourceHash?: string;
+  perspective?: string;
+  mixPriority?: string;
+  syncLandmarks?: string;
+  tailSec?: number;
+  motif?: {
+    pitches: string;
+    rhythm: string;
+    register: string;
+    tempo: string;
+    development: string;
+    referenceId: string;
+  };
+  vocalPolicy?: string;
+  transition?: string;
+  destination?: string;
+  requestedEngine?: string;
   id: string;
   name: string;
   kind: AudioKind;

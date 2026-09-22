@@ -42,6 +42,8 @@ export const startScreenplayJob = createServerFn({ method: "POST" })
   .validator((input: StartInput) => ({
     endpoint: input.endpoint ?? null,
     intake: input.intake as PictureIntake,
+    productionBinding: input.productionBinding,
+    sourceContextFingerprint: input.sourceContextFingerprint,
     screenplay: input.screenplay as PictureScreenplay,
     research: input.research ?? null,
     modelId: String(input.modelId),
@@ -68,6 +70,7 @@ export const runScreenplayQa = createServerFn({ method: "POST" })
     fountain: string;
     modelId: string;
     writerId?: string | null;
+    productionBinding?: import("./production-profiles.ts").ProductionModelBinding;
     pinnedQaServedId?: string | null;
     endpoint?: string | null;
     secondOpinion?: boolean;
@@ -91,6 +94,7 @@ export const runScreenplayQa = createServerFn({ method: "POST" })
       fountain: String(input.fountain ?? ""),
       modelId: String(input.modelId),
       writerId: input.writerId ?? null,
+      productionBinding: input.productionBinding,
       pinnedQaServedId: input.pinnedQaServedId ?? null,
       secondOpinion: Boolean(input.secondOpinion),
       goal: input.goal ?? "",

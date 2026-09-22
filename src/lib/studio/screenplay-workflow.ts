@@ -51,6 +51,7 @@ export type WorkflowUpdate = {
 };
 
 export type WorkflowRunInput = {
+  validateAtDispatch?: boolean;
   intake: PictureIntake;
   screenplay: PictureScreenplay;
   model: ScreenplayModelRef;
@@ -81,7 +82,7 @@ export class ScreenplayGenerationCanceled extends Error {
 }
 
 export async function runScreenplayWorkflow(runtime: ScreenplayRuntimePort, input: WorkflowRunInput): Promise<PictureScreenplay> {
-  if (input.model.status !== "ready") throw new Error(input.model.statusReason || "Selected screenplay model is not runnable.");
+  if (input.model.status !== "ready" && !input.validateAtDispatch) throw new Error(input.model.statusReason || "Selected screenplay model is not runnable.");
   const settings = { ...DEFAULT_SCREENPLAY_SETTINGS,
     ...(!input.rewriteScope || input.rewriteScope === "full" ? { maxTokens: screenplayOutputBudget(input.intake.targetRuntimeMinutes) } : {}),
     ...input.settings };

@@ -9,13 +9,21 @@ import type {
   LocalLLMServedModel,
 } from "./local-llm-provider.ts";
 import { LM_STUDIO_ENDPOINT_CANDIDATES } from "./local-llm-provider.ts";
-import { discoverCachedLoopbackEndpoint, isApprovedLmStudioEndpoint, MemoryEndpointCache, normalizeLoopbackEndpoint, type LocalLLMEndpointCache } from "./local-llm-endpoint.ts";
+import {
+  discoverCachedLoopbackEndpoint,
+  isApprovedLmStudioEndpoint,
+  MemoryEndpointCache,
+  normalizeLoopbackEndpoint,
+  type LocalLLMEndpointCache,
+} from "./local-llm-endpoint.ts";
 import type { ScreenplayTelemetry } from "./screenplay.ts";
 
 type FetchLike = typeof fetch;
 
 function asObject(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }
 
 function finiteNumber(value: unknown): number | null {
@@ -24,8 +32,11 @@ function finiteNumber(value: unknown): number | null {
 
 function normalizeModel(raw: unknown, native: boolean): LocalLLMServedModel | null {
   const model = asObject(raw);
-  const instances = Array.isArray(model.loaded_instances) ? model.loaded_instances.map(asObject) : [];
+  const instances = Array.isArray(model.loaded_instances)
+    ? model.loaded_instances.map(asObject)
+    : [];
   const first = instances[0] ?? {};
+  const instanceConfig = asObject(first.config);
   const id = String(model.id ?? model.key ?? model.model ?? "").trim();
   if (!id) return null;
   const type = String(model.type ?? "llm").toLowerCase();
@@ -38,14 +49,27 @@ function normalizeModel(raw: unknown, native: boolean): LocalLLMServedModel | nu
     instanceId: first.id ? String(first.id) : null,
     path: model.path ? String(model.path) : null,
     precision: model.precision ? String(model.precision) : null,
-    quantization: quant.name ? String(quant.name) : model.quantization ? String(model.quantization) : null,
-    contextLength: finiteNumber(first.context_length ?? model.max_context_length ?? model.context_length),
+    quantization: quant.name
+      ? String(quant.name)
+      : model.quantization
+        ? String(model.quantization)
+        : null,
+    contextLength: finiteNumber(
+      instanceConfig.context_length ??
+        first.context_length ??
+        model.max_context_length ??
+        model.context_length,
+    ),
+    speculativeDraft:
+      instanceConfig.speculative_draft_mtp === true ||
+      instanceConfig.speculative_draft_simple === true ||
+      Boolean(instanceConfig.speculative_draft_model),
     sizeBytes: finiteNumber(model.size_bytes ?? model.sizeBytes),
   };
 }
 
 async function responseJson(response: Response): Promise<Record<string, unknown>> {
-  const data = await response.json() as unknown;
+  const data = (await response.json()) as unknown;
   return asObject(data);
 }
 
@@ -56,11 +80,15 @@ function errorMessage(data: Record<string, unknown>, fallback: string): string {
 
 function sampleGpuUsedBytes(): number | null {
   try {
-    const raw = execFileSync("nvidia-smi", ["--query-gpu=memory.used", "--format=csv,noheader,nounits"], {
-      encoding: "utf8",
-      timeout: 2_000,
-      windowsHide: true,
-    });
+    const raw = execFileSync(
+      "nvidia-smi",
+      ["--query-gpu=memory.used", "--format=csv,noheader,nounits"],
+      {
+        encoding: "utf8",
+        timeout: 2_000,
+        windowsHide: true,
+      },
+    );
     const mib = Math.max(...raw.split(/\r?\n/).map(Number).filter(Number.isFinite));
     return Number.isFinite(mib) ? mib * 1024 * 1024 : null;
   } catch {
@@ -89,25 +117,35 @@ export class LMStudioProvider implements LocalLLMProvider {
     sampleResources?: () => { peakVramBytes: number | null; peakSystemRamBytes: number | null };
   };
 
-  constructor(options: {
+  constructor(
+    options: {
       fetch?: FetchLike;
       endpointCache?: LocalLLMEndpointCache;
       candidates?: string[];
       timeoutMs?: number;
       now?: () => number;
       sampleResources?: () => { peakVramBytes: number | null; peakSystemRamBytes: number | null };
-    } = {}) {
+    } = {},
+  ) {
     this.options = options;
   }
 
-  get fetcher(): FetchLike { return this.options.fetch ?? fetch; }
-  get cache(): LocalLLMEndpointCache { return this.options.endpointCache ?? defaultEndpointCache; }
-  get now(): () => number { return this.options.now ?? Date.now; }
+  get fetcher(): FetchLike {
+    return this.options.fetch ?? fetch;
+  }
+  get cache(): LocalLLMEndpointCache {
+    return this.options.endpointCache ?? defaultEndpointCache;
+  }
+  get now(): () => number {
+    return this.options.now ?? Date.now;
+  }
   sampleResources(): { peakVramBytes: number | null; peakSystemRamBytes: number | null } {
-    return this.options.sampleResources?.() ?? {
-      peakVramBytes: sampleGpuUsedBytes(),
-      peakSystemRamBytes: totalmem() - freemem(),
-    };
+    return (
+      this.options.sampleResources?.() ?? {
+        peakVramBytes: sampleGpuUsedBytes(),
+        peakSystemRamBytes: totalmem() - freemem(),
+      }
+    );
   }
 
   async #fetch(path: string, init?: RequestInit): Promise<Response> {
@@ -116,7 +154,8 @@ export class LMStudioProvider implements LocalLLMProvider {
     try {
       response = await this.fetcher(`${this.#endpoint}${path}`, init);
     } catch (error) {
-      if (init?.signal?.aborted || error instanceof Error && /aborted/i.test(error.message)) throw error;
+      if (init?.signal?.aborted || (error instanceof Error && /aborted/i.test(error.message)))
+        throw error;
       this.cache.clear();
       this.#endpoint = null;
       throw error;
@@ -160,7 +199,8 @@ export class LMStudioProvider implements LocalLLMProvider {
         local: true,
         cloudFallback: false,
         available: false,
-        reason: "LM Studio local server is unavailable. Start its local API and load a text model, then rescan.",
+        reason:
+          "LM Studio local server is unavailable. Start its local API and load a text model, then rescan.",
         models: [],
         discoveredAt: this.now(),
       };
@@ -186,30 +226,50 @@ export class LMStudioProvider implements LocalLLMProvider {
     try {
       const nativeResponse = await this.#fetch("/api/v1/models");
       const nativeData = await responseJson(nativeResponse);
-      const rows = Array.isArray(nativeData.models) ? nativeData.models : Array.isArray(nativeData.data) ? nativeData.data : [];
+      const rows = Array.isArray(nativeData.models)
+        ? nativeData.models
+        : Array.isArray(nativeData.data)
+          ? nativeData.data
+          : [];
       this.#listingAuthority = "native";
-      return rows.map((item) => normalizeModel(item, true)).filter((item): item is LocalLLMServedModel => Boolean(item));
+      return rows
+        .map((item) => normalizeModel(item, true))
+        .filter((item): item is LocalLLMServedModel => Boolean(item));
     } catch {
       if (!this.#endpoint) return [];
       const response = await this.#fetch("/v1/models");
       const data = await responseJson(response);
       const rows = Array.isArray(data.data) ? data.data : [];
       this.#listingAuthority = "openai-fallback";
-      return rows.map((item) => normalizeModel(item, false)).filter((item): item is LocalLLMServedModel => Boolean(item));
+      return rows
+        .map((item) => normalizeModel(item, false))
+        .filter((item): item is LocalLLMServedModel => Boolean(item));
     }
   }
 
   async #assertExactServedLoaded(servedModelId: string): Promise<LocalLLMServedModel> {
     const models = await this.listModels();
     if (this.#listingAuthority !== "native") {
-      throw new Error("LM Studio native model status is unavailable. OpenAI /v1/models rows are not treated as loaded, and Premiere316 will not auto-load a model.");
+      throw new Error(
+        "LM Studio native model status is unavailable. OpenAI /v1/models rows are not treated as loaded, and Premiere316 will not auto-load a model.",
+      );
     }
-    const matches = models.filter((item) => item.id === servedModelId && item.loaded && item.type === "llm");
+    const matches = models.filter(
+      (item) => item.id === servedModelId && item.loaded && item.type === "llm",
+    );
     const model = matches.length === 1 ? matches[0] : null;
     if (!model) {
-      throw new Error(`The exact served model ${servedModelId} is not currently loaded or is ambiguous. No substitute is used.`);
+      throw new Error(
+        `The exact served model ${servedModelId} is not currently loaded or is ambiguous. No substitute is used.`,
+      );
     }
     return model;
+  }
+
+  async verifiedNativeModels(): Promise<LocalLLMServedModel[]> {
+    const models = await this.listModels();
+    if (this.#listingAuthority !== "native") throw new Error("Native residency evidence is unavailable; fallback model listings cannot verify ownership or release.");
+    return models;
   }
 
   async load(config: LocalLLMLoadConfig): Promise<void> {
@@ -244,7 +304,10 @@ export class LMStudioProvider implements LocalLLMProvider {
     };
   }
 
-  async generate(request: LocalLLMGenerateRequest, config: LocalLLMLoadConfig): Promise<LocalLLMGenerateResult> {
+  async generate(
+    request: LocalLLMGenerateRequest,
+    config: LocalLLMLoadConfig,
+  ): Promise<LocalLLMGenerateResult> {
     const expectedModel = await this.#assertExactServedLoaded(config.servedModelId);
     this.#activeModel = expectedModel;
     const started = this.now();
@@ -256,69 +319,93 @@ export class LMStudioProvider implements LocalLLMProvider {
     let generatedTokens: number | null = null;
     try {
       const response = await this.#fetch("/v1/chat/completions", {
-      method: "POST",
-      headers: { "content-type": "application/json", accept: "text/event-stream" },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: config.servedModelId,
-        messages: [{ role: "system", content: request.system }, { role: "user", content: request.prompt }],
-        temperature: config.settings.temperature,
-        top_p: config.settings.topP,
-        max_tokens: config.settings.maxTokens,
-        seed: config.settings.seed,
-        ...(request.responseFormat ? { response_format: request.responseFormat } : {}),
-        ...(request.thinkingEnabled !== undefined ? {
-          reasoning_effort: request.thinkingEnabled ? "medium" : "none",
-          chat_template_kwargs: { enable_thinking: request.thinkingEnabled },
-        } : {}),
-        stream: true,
-        stream_options: { include_usage: true },
-      }),
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "text/event-stream" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: config.servedModelId,
+          messages: [
+            { role: "system", content: request.system },
+            { role: "user", content: request.prompt },
+          ],
+          ...(request.useModelDefaults
+            ? {}
+            : {
+                temperature: config.settings.temperature,
+                top_p: config.settings.topP,
+                seed: config.settings.seed,
+              }),
+          max_tokens: config.settings.maxTokens,
+          ...(request.responseFormat ? { response_format: request.responseFormat } : {}),
+          ...(request.thinkingEnabled !== undefined
+            ? {
+                reasoning_effort: request.thinkingEnabled ? "medium" : "none",
+                chat_template_kwargs: { enable_thinking: request.thinkingEnabled },
+              }
+            : {}),
+          stream: true,
+          stream_options: { include_usage: true },
+        }),
       });
       if (response.body) {
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let pending = "";
-      while (true) {
-        const part = await reader.read();
-        if (part.done) break;
-        pending += decoder.decode(part.value, { stream: true });
-        const lines = pending.split(/\r?\n/);
-        pending = lines.pop() ?? "";
-        for (const line of lines) {
-          if (!line.startsWith("data:")) continue;
-          const value = line.slice(5).trim();
-          if (!value || value === "[DONE]") continue;
-          const event = asObject(JSON.parse(value));
-          if (event.model !== undefined) {
-            if (event.model !== expectedModel.id && event.model !== expectedModel.instanceId) {
-              throw new Error(`LM Studio returned ${String(event.model)} instead of the selected writer ${config.servedModelId}. The response was rejected.`);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let pending = "";
+        while (true) {
+          const part = await reader.read();
+          if (part.done) break;
+          pending += decoder.decode(part.value, { stream: true });
+          const lines = pending.split(/\r?\n/);
+          pending = lines.pop() ?? "";
+          for (const line of lines) {
+            if (!line.startsWith("data:")) continue;
+            const value = line.slice(5).trim();
+            if (!value || value === "[DONE]") continue;
+            const event = asObject(JSON.parse(value));
+            if (event.model !== undefined) {
+              if (event.model !== expectedModel.id && event.model !== expectedModel.instanceId) {
+                throw new Error(
+                  `LM Studio returned ${String(event.model)} instead of the selected writer ${config.servedModelId}. The response was rejected.`,
+                );
+              }
+              responseModelVerified = true;
             }
-            responseModelVerified = true;
+            const choices = Array.isArray(event.choices) ? event.choices.map(asObject) : [];
+            const delta = asObject(choices[0]?.delta);
+            const reasoning =
+              typeof delta.reasoning_content === "string"
+                ? delta.reasoning_content
+                : typeof delta.reasoning === "string"
+                  ? delta.reasoning
+                  : "";
+            if (reasoning) {
+              if (!responseModelVerified)
+                throw new Error(
+                  `LM Studio did not identify the responding writer as ${config.servedModelId}. The response was rejected.`,
+                );
+              request.onReasoning?.(reasoning);
+            }
+            const token = typeof delta.content === "string" ? delta.content : "";
+            if (token) {
+              if (!responseModelVerified)
+                throw new Error(
+                  `LM Studio did not identify the responding writer as ${config.servedModelId}. The response was rejected.`,
+                );
+              text += token;
+              request.onToken?.(token);
+            }
+            const usage = asObject(event.usage);
+            promptTokens = finiteNumber(usage.prompt_tokens) ?? promptTokens;
+            generatedTokens = finiteNumber(usage.completion_tokens) ?? generatedTokens;
           }
-          const choices = Array.isArray(event.choices) ? event.choices.map(asObject) : [];
-          const delta = asObject(choices[0]?.delta);
-          const reasoning = typeof delta.reasoning_content === "string" ? delta.reasoning_content : typeof delta.reasoning === "string" ? delta.reasoning : "";
-          if (reasoning) {
-            if (!responseModelVerified) throw new Error(`LM Studio did not identify the responding writer as ${config.servedModelId}. The response was rejected.`);
-            request.onReasoning?.(reasoning);
-          }
-          const token = typeof delta.content === "string" ? delta.content : "";
-          if (token) {
-            if (!responseModelVerified) throw new Error(`LM Studio did not identify the responding writer as ${config.servedModelId}. The response was rejected.`);
-            text += token;
-            request.onToken?.(token);
-          }
-          const usage = asObject(event.usage);
-          promptTokens = finiteNumber(usage.prompt_tokens) ?? promptTokens;
-          generatedTokens = finiteNumber(usage.completion_tokens) ?? generatedTokens;
         }
-      }
       }
       const durationMs = this.now() - started;
       const resources = this.sampleResources();
-      this.#peakVramBytes = Math.max(this.#peakVramBytes ?? 0, resources.peakVramBytes ?? 0) || null;
-      this.#peakSystemRamBytes = Math.max(this.#peakSystemRamBytes ?? 0, resources.peakSystemRamBytes ?? 0) || null;
+      this.#peakVramBytes =
+        Math.max(this.#peakVramBytes ?? 0, resources.peakVramBytes ?? 0) || null;
+      this.#peakSystemRamBytes =
+        Math.max(this.#peakSystemRamBytes ?? 0, resources.peakSystemRamBytes ?? 0) || null;
       if (this.#telemetry) {
         this.#telemetry = {
           ...this.#telemetry,
@@ -352,7 +439,9 @@ export class LMStudioProvider implements LocalLLMProvider {
     await this.releaseResident("held-resident");
   }
 
-  async releaseResident(boundary: "held-resident" | "user-explicit" = "held-resident"): Promise<void> {
+  async releaseResident(
+    boundary: "held-resident" | "user-explicit" = "held-resident",
+  ): Promise<void> {
     const started = this.now();
     if (boundary !== "user-explicit") {
       if (this.#telemetry) {
@@ -376,7 +465,9 @@ export class LMStudioProvider implements LocalLLMProvider {
           body: JSON.stringify({ instance_id: active.instanceId }),
         });
         const models = await this.listModels();
-        verification = models.some((model) => model.instanceId === active.instanceId) ? "failed" : "user-released";
+        verification = this.#listingAuthority !== "native" || models.some((model) => model.instanceId === active.instanceId)
+          ? "failed"
+          : "user-released";
       } catch {
         verification = "failed";
       }
@@ -398,7 +489,8 @@ const defaultEndpointCache = new MemoryEndpointCache();
 
 export function createLMStudioProvider(preferredEndpoint?: string | null): LMStudioProvider {
   const normalized = preferredEndpoint ? normalizeLoopbackEndpoint(preferredEndpoint) : null;
-  if (preferredEndpoint && !normalized) throw new Error("Only a loopback HTTP endpoint is allowed for local screenplay inference.");
+  if (preferredEndpoint && !normalized)
+    throw new Error("Only a loopback HTTP endpoint is allowed for local screenplay inference.");
   const approved = normalized && isApprovedLmStudioEndpoint(normalized) ? normalized : null;
   if (approved && defaultEndpointCache.get() !== approved) defaultEndpointCache.set(approved);
   return new LMStudioProvider({

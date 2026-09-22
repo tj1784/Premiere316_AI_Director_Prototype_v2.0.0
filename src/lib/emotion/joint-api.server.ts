@@ -8,6 +8,9 @@ import type { Picture } from "../studio/types";
 import { isPerformanceDraftStale } from "./integration";
 import { mapJointPerformanceRequest } from "./joint-generation";
 import type { JointReviewInput } from "./joint-api";
+import { resolveRenderContext } from "../studio/render-context";
+import { continuityText } from "../studio/shot-continuity";
+import { scopedBibleDirection } from "../studio/resolved-shot-packet";
 const endpoint = "http://127.0.0.1:8191"; // Installed MiniMax_H3 instance; never switch the LTX instance/model.
 const services = new Map<string, ReturnType<typeof createDirectorExecutionService>>();
 const archived = new Map<string, string>();
@@ -41,11 +44,53 @@ function validateCurrent(input: JointReviewInput) {
     if (!image || image.mediaSha256 !== ref.imageSha256)
       throw new Error("Use the approved image for the explicitly assigned speaker.");
   }
-  return mapJointPerformanceRequest({ mode: "h3-ref2va", ...input, draft, manifest });
+  const shot = input.shotId
+    ? p.shots.find((s) => s.id === input.shotId && s.sceneId === draft.sceneId)
+    : undefined;
+  if (input.shotId && !shot)
+    throw new Error("Selected shot is not part of this performance scene.");
+  if (
+    !shot &&
+    p.shots.some(
+      (s) =>
+        s.sceneId === draft.sceneId &&
+        (p.shotContinuity?.[s.id] ||
+          p.renderContext?.clauses.some((c) => c.scope === "shot" && c.scopeId === s.id)),
+    )
+  )
+    throw new Error("Select the exact shot to resolve its local render and continuity sources.");
+  const resolved = resolveRenderContext(p, { id: shot?.id ?? "", sceneId: draft.sceneId });
+  if (resolved.issues.length) throw new Error(resolved.issues.join("\n"));
+  const continuity = shot ? p.shotContinuity?.[shot.id] : undefined;
+  if (continuity && continuity.imageDisposition === "uninspected")
+    throw new Error("Inspect the actual selected image reference in Camera & continuity before this shot's reference-conditioned submission.");
+  if (continuity?.imageDisposition === "consistent" && !input.references.some(ref => ref.imageIterationId === continuity.imageInspection?.referenceId && ref.imageSha256 === continuity.imageInspection?.sha256))
+    throw new Error("The inspected image is not one of this workflow's exact selected image bindings. Inspect the actual selected reference; no conditioning is substituted.");
+  return mapJointPerformanceRequest({
+    mode: "h3-ref2va",
+    ...input,
+    draft,
+    manifest,
+    renderDescription: [
+      resolved.effective
+        .filter((c) => c.field !== "music")
+        .map((c) => `${c.field}: ${c.value}`)
+        .join("\n"),
+      shot ? continuityText(p, shot) : "",
+      shot ? scopedBibleDirection(p, shot) : "",
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    music: resolved.effective.find((c) => c.field === "music")?.value,
+  });
 }
 type Wrapped = {
   nodes: Array<{ id: string }>;
-  joint: { prompt: JointReviewInput["workflow"]; input: JointReviewInput };
+  joint: {
+    prompt: JointReviewInput["workflow"];
+    input: JointReviewInput;
+    sourceFingerprint: string;
+  };
 };
 function service(id: string) {
   if (services.has(id)) return services.get(id)!;
@@ -73,7 +118,14 @@ function service(id: string) {
       workflow: Wrapped,
       fetchLocal: (path: string, options?: RequestInit) => Promise<Response>,
     ) => {
-      validateCurrent(workflow.joint.input);
+      const current = validateCurrent(workflow.joint.input);
+      if (
+        createHash("sha256").update(JSON.stringify(current)).digest("hex") !==
+        workflow.joint.sourceFingerprint
+      )
+        throw new Error(
+          "Resolved prompt, continuity or references changed after workflow review. Review the current source packet again.",
+        );
       for (const ref of workflow.joint.input.references)
         for (const kind of ["image", "audio"] as const) {
           const data = kind === "image" ? ref.imageData : ref.audioData,
@@ -126,7 +178,11 @@ export async function reviewJoint(input: JointReviewInput) {
   const mapped = validateCurrent(input);
   const workflow: Wrapped = {
     nodes: Object.keys(mapped.workflow).map((id) => ({ id })),
-    joint: { prompt: mapped.workflow, input },
+    joint: {
+      prompt: mapped.workflow,
+      input,
+      sourceFingerprint: createHash("sha256").update(JSON.stringify(mapped)).digest("hex"),
+    },
   };
   const p = picture(input.pictureId),
     draft = p.emotionPerformance!.drafts.find((d) => d.id === input.draftId)!;

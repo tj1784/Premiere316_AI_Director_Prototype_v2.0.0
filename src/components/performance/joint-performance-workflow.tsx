@@ -37,6 +37,7 @@ export function JointPerformanceWorkflow({
   draft: PerformanceDraft;
 }) {
   const [workflow, setWorkflow] = useState(""),
+    [shotId, setShotId] = useState(""),
     [lines, setLines] = useState<string[]>([]),
     [bindings, setBindings] = useState<Record<string, string>>({}),
     [review, setReview] = useState<DirectorReviewResult | null>(null),
@@ -62,7 +63,7 @@ export function JointPerformanceWorkflow({
     const latest = useStudio.getState().pictures.find((p) => p.id === picture.id);
     if (!latest) return "missing-picture";
     try {
-      return jointReviewFingerprint({ picture: latest, draft, workflow, lines, bindings });
+      return jointReviewFingerprint({ picture: latest, draft, workflow, lines, bindings, shotId });
     } catch {
       return "invalid-source";
     }
@@ -147,6 +148,7 @@ export function JointPerformanceWorkflow({
       const result = await reviewJointWorkflow({
         data: {
           pictureId: picture.id,
+          shotId: shotId || undefined,
           draftId: draft.id,
           lineIds: lines,
           workflow: graph,
@@ -256,6 +258,26 @@ export function JointPerformanceWorkflow({
               invalidate();
             }}
           />
+        </label>
+        <label className="block text-xs">
+          Source shot / local continuity
+          <select
+            className="mt-1 min-h-11 w-full rounded border border-border bg-inset px-2"
+            value={shotId}
+            onChange={(e) => {
+              setShotId(e.target.value);
+              invalidate();
+            }}
+          >
+            <option value="">Scene context only (no shot overrides)</option>
+            {picture.shots
+              .filter((s) => s.sceneId === draft.sceneId)
+              .map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.index} · {s.description}
+                </option>
+              ))}
+          </select>
         </label>
         <p className="text-xs text-muted">Select dialogue for one bounded clip:</p>
         {draft.compiled.map((l) => (

@@ -52,14 +52,7 @@ export const STAGES: { id: StageId; number: string; label: string }[] = [
   { id: "export", number: "14", label: "Export" },
 ];
 
-export type EngineKind =
-  | "director"
-  | "image"
-  | "video"
-  | "voice"
-  | "music"
-  | "tool"
-  | "heritage";
+export type EngineKind = "director" | "image" | "video" | "voice" | "music" | "tool" | "heritage";
 
 export type SelectedEngines = {
   director: string;
@@ -135,20 +128,48 @@ export type VoiceTake = {
 };
 
 export type Picture = {
+  creativePreset?: "none" | "harrowing-v3";
+  bibleAppliedPlans?: string[];
+  movieAssemblies?: import("./movie-assembly.ts").MovieDelivery[];
+  editorialClipSequences?: import("./editorial-clips.ts").EditorialClipSequence[];
+  shotContinuity?: Record<string, import("./shot-continuity.ts").ShotContinuity>;
+  editorDrafts?: Record<string, unknown>;
+  workspacePanel?: "bible" | "run" | null;
+  movieBible?: import("./movie-bible.ts").MovieBible;
+  renderContext?: import("./render-context.ts").RenderContext;
+  bibleRun?: import("./bible-run.ts").BibleRun;
+  bibleRunHistory?: import("./bible-run.ts").BibleRun[];
   productionRouting?: import("./production-profiles.ts").ProductionRoutingState;
-  emotionPerformance?: import('../emotion/integration.ts').EmotionWorkspace;
-  projectLibrary?: import('./project-library-client.ts').ProjectLibraryLink;
+  emotionPerformance?: import("../emotion/integration.ts").EmotionWorkspace;
+  projectLibrary?: import("./project-library-client.ts").ProjectLibraryLink;
   characterVoiceDesigns?: import("./character-voice-designs.ts").CharacterVoiceDesignState;
   directorScenes?: Record<string, import("./director-scene-authoring.ts").DirectorScenePlan>;
   videoDefaultsVersion?: 1;
   directorBundle?: import("./prodigal-director-types.ts").ProdigalDirectorImportState;
   directorSceneRevisions?: Record<string, string>;
-  directorWorkflowDrafts?: Record<string, import("./director-workflow-editor.ts").DirectorWorkflowDraft>;
-  directorRenderJobs?: Record<string, { promptId: string; submittedAt: number; uncertain?: boolean; jobs?: Array<{ promptId: string; label: string; submittedAt: number; uncertain?: boolean }> }>;
+  directorWorkflowDrafts?: Record<
+    string,
+    import("./director-workflow-editor.ts").DirectorWorkflowDraft
+  >;
+  directorRenderJobs?: Record<
+    string,
+    {
+      promptId: string;
+      submittedAt: number;
+      uncertain?: boolean;
+      jobs?: Array<{ promptId: string; label: string; submittedAt: number; uncertain?: boolean }>;
+    }
+  >;
   frameBundle?: import("./prodigal-frame-types.ts").ProdigalFrameImportState;
   importedPackage?: import("./imported-picture-package.ts").ImportedPicturePackage;
   assetPromptSources?: Record<string, import("./asset-prompt-context.ts").AssetPromptSource>;
-  assetPromptHistory?: Array<{ createdAt: number; prompts: Record<string, string>; sources: Record<string, import("./asset-prompt-context.ts").AssetPromptSource>; modelId: string; rawResponse: string }>;
+  assetPromptHistory?: Array<{
+    createdAt: number;
+    prompts: Record<string, string>;
+    sources: Record<string, import("./asset-prompt-context.ts").AssetPromptSource>;
+    modelId: string;
+    rawResponse: string;
+  }>;
   assetImagePrompts?: Record<string, string>;
   nativeFilm?: import("./native-film.ts").NativeFilmDraft;
   id: string;

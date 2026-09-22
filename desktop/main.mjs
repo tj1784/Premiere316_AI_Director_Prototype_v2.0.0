@@ -12,11 +12,57 @@ import { createHash, randomBytes } from "node:crypto";
 import { cpus, freemem, totalmem } from "node:os";
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { createInterface } from "node:readline";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { createRequire } from "node:module";
 import { assertImportableAudio, assertImportableVideo, assertPlusExportReady, buildLiteExportArgs, buildPlusExportArgs, concatListContents, missingFfmpegResult, parseFfprobeAudioJson, parseFfprobeJson, plusExportDurationSec, timelineDurationSec } from "./ffmpeg-tool.mjs";
 
 import { createNativeFilmService } from "./native-film.mjs";
+import { createSpecialistAudioService } from "./specialist-audio.mjs";
+import { createMovieAssemblyService } from "./movie-assembly.mjs";
+let movieAssemblyService = null;
+function movieAssembly() {
+  return movieAssemblyService ??= createMovieAssemblyService({
+    root:join(app.getPath("userData"),"movie-assemblies"),
+    readPicture:id => JSON.parse(createProjectLibrary({root:projectRoot()}).readState()).state.pictures.find(p => p.id === id),
+    resolveMedia:resolveProjectMedia,
+    discoverTools:discoverFfmpegTools,
+    resolvePlan:async picture => {
+      const modulePath = app.isPackaged ? join(process.resourcesPath,"movie-assembly-plan.mjs") : join(ROOT,"desktop","dist","movie-assembly-plan.mjs");
+      return (await import(pathToFileURL(modulePath).href)).movieAssemblyPlan(picture);
+    },
+    resolveContinuation:async (picture,takeId) => {
+      const modulePath = app.isPackaged ? join(process.resourcesPath,"movie-assembly-plan.mjs") : join(ROOT,"desktop","dist","movie-assembly-plan.mjs");
+      return (await import(pathToFileURL(modulePath).href)).continuationSourceIssue(picture,takeId);
+    },
+    run:spawnCapture,
+    assertPath:(path,uri) => {if(isUnderModelRoot(path) || isUnderProtectedRuntimeRoot(path) || (!uri.startsWith('/api/project-media?') && !isUnderRoot(realpathSync(path),realpathSync(app.getPath("userData"))))) throw new Error("Assembly accepts only canonical project/profile media.");},
+  });
+}
+let specialistAudioService = null;
+
+function specialistAudio() {
+  return specialistAudioService ??= createSpecialistAudioService({
+    root:join(app.getPath("userData"), "specialist-audio"),
+    workerPath:app.isPackaged ? join(process.resourcesPath, "workers", "specialist_audio_worker.py") : join(ROOT, "desktop", "workers", "specialist_audio_worker.py"),
+    readPicture:id => JSON.parse(createProjectLibrary({root:projectRoot()}).readState()).state.pictures.find(p => p.id === id),
+    resolveMedia:resolveProjectMedia,
+    publicMediaUri:(_path,id) => `media://specialist/${id}/candidate.wav`,
+    assertGpuIdle:async () => {
+      const tools = await discoverFfmpegTools();
+      if (!tools.ok) throw new Error(tools.reason);
+      const state = await spawnCapture("nvidia-smi", ["--query-compute-apps=pid,process_name", "--format=csv,noheader"], 10000);
+      if (state.code !== 0) throw new Error("GPU ownership could not be checked; specialist admission is blocked.");
+      if (state.stdout.trim()) throw new Error("Another compute process owns GPU resources. Its models will not be unloaded. Release it explicitly before starting specialist audio.");
+    },
+    probe:async mediaUri => {
+      const tools = await discoverFfmpegTools();
+      if (!tools.ok) throw new Error(tools.reason);
+      const inspected = await spawnCapture(tools.ffprobe, ["-v", "error", "-show_format", "-show_streams", "-print_format", "json", mediaUri]);
+      if (inspected.code !== 0) throw new Error(inspected.stderr || "Audio probe failed.");
+      return parseFfprobeAudioJson(inspected.stdout);
+    },
+  });
+}
 
 const require = createRequire(import.meta.url);
 let nativeFilmService = null;
@@ -295,9 +341,12 @@ function hashFile(filePath) {
   return createHash("sha256").update(readFileSync(filePath)).digest("hex");
 }
 
-function spawnCapture(command, args, timeoutMs = 30_000) {
+function spawnCapture(command, args, timeoutMs = 30_000, signal) {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) { reject(signal.reason); return; }
     const child = spawn(command, args, { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+    const onAbort = () => { killTree(child); reject(signal.reason); };
+    signal?.addEventListener("abort", onAbort, {once:true});
     let stdout = "";
     let stderr = "";
     const timer = setTimeout(() => {
@@ -311,10 +360,12 @@ function spawnCapture(command, args, timeoutMs = 30_000) {
       stderr += chunk;
     });
     child.on("error", (error) => {
+      signal?.removeEventListener("abort", onAbort);
       clearTimeout(timer);
       reject(error);
     });
     child.on("exit", (code) => {
+      signal?.removeEventListener("abort", onAbort);
       clearTimeout(timer);
       resolve({ code: code ?? 1, stdout, stderr });
     });
@@ -605,6 +656,30 @@ function projectRoot() {
 }
 
 function resolveProjectMedia(value) {
+  if (String(value).startsWith("media://assemblies/")) {
+    const match = /^media:\/\/assemblies\/([a-f0-9-]{36})\/(movie\.mp4|continuation\.png)$/.exec(value);
+    if (!match) throw new Error("Invalid assembly media URI.");
+    const root = realpathSync(join(app.getPath("userData"),"movie-assemblies"));
+    const file = realpathSync(join(root,match[1],match[2]));
+    if (!isUnderRoot(file,root)) throw new Error("Assembly media escaped its owned root.");
+    return file;
+  }
+  if (String(value).startsWith("media://films/")) {
+    const match = /^media:\/\/films\/([a-f0-9]{64})\/(shot-\d{2}|movie)\.mp4$/.exec(value);
+    if (!match) throw new Error("Invalid film media URI.");
+    const root = realpathSync(join(imageMediaRoot(),"films"));
+    const file = realpathSync(join(root,match[1],`${match[2]}.mp4`));
+    if (!isUnderRoot(file,root)) throw new Error("Film media escaped its owned root.");
+    return file;
+  }
+  if (String(value).startsWith("media://specialist/")) {
+    const match = /^media:\/\/specialist\/([a-f0-9-]{36})\/candidate\.wav$/.exec(value);
+    if (!match) throw new Error("Invalid specialist media URI.");
+    const root = realpathSync(join(app.getPath("userData"),"specialist-audio"));
+    const file = realpathSync(join(root,match[1],"candidate.wav"));
+    if (!isUnderRoot(file,root)) throw new Error("Specialist media escaped its owned root.");
+    return file;
+  }
   if (!String(value).startsWith('/api/project-media?')) return value;
   const url = new URL(value, 'http://localhost');
   return createProjectLibrary({ root: projectRoot() }).mediaFile(url.searchParams.get('project'), url.searchParams.get('file'));
@@ -749,6 +824,15 @@ function registerMediaProtocol() {
   electronProtocol.registerFileProtocol("media", (request, callback) => {
     try {
       const url = new URL(request.url);
+      if (url.hostname === "specialist") return callback({path:resolveProjectMedia(request.url)});
+      if (url.hostname === "assemblies") {
+        const match = /^\/([a-f0-9-]{36})\/(movie\.mp4|continuation\.png)$/.exec(url.pathname);
+        if (!match) throw new Error("Invalid assembly URI.");
+        const root = realpathSync(join(app.getPath("userData"),"movie-assemblies"));
+        const file = realpathSync(join(root,match[1],match[2]));
+        if(!isUnderRoot(file,root)) throw new Error("Assembly escaped its owned root.");
+        return callback({path:file});
+      }
       if (url.hostname === "films") {
         const match = /^\/([a-f0-9]{64})\/(shot-\d{2}|movie)\.mp4$/.exec(url.pathname);
         if (!match) throw new Error('Invalid film media path.');
@@ -1074,8 +1158,37 @@ function registerIpc() {
   ipcMain.handle(channels.mediaDiscover, wrap(() => discoverFfmpegTools()));
   ipcMain.handle(channels.mediaImportVideo, wrap(() => importVideoFromDisk()));
   ipcMain.handle(channels.mediaImportAudio, wrap(() => importAudioFromDisk()));
+  ipcMain.handle(channels.specialistAudio, wrap(async (_e, input) => {
+    try {
+      if (input?.operation === "configure") {
+        if (!["ace-step-1.5-xl-sft", "stable-audio-3-small-sfx"].includes(input.engineId)) throw new Error("Choose an exact specialist.");
+        const paths = {};
+        for (const [key, title, properties] of [["python", "Choose this specialist's installed Python executable", ["openFile"]], ["runtimeRoot", "Choose this specialist's installed runtime project folder", ["openDirectory"]], ["cacheRoot", "Choose its existing Hugging Face cache root", ["openDirectory"]]]) {
+          const selected = await dialog.showOpenDialog(mainWindow ?? undefined, {title, properties});
+          if (selected.canceled || !selected.filePaths[0]) return {ok:false, error:"Configuration selection cancelled; previous settings retained."};
+          paths[key] = selected.filePaths[0];
+        }
+        return specialistAudio().configure({[input.engineId]:paths});
+      }
+      if (input?.operation === "start") return await specialistAudio().start(input);
+      if (input?.operation === "cancel") return specialistAudio().cancel(input.jobId);
+      if (input?.operation === "status") return specialistAudio().status(input.pictureId);
+      throw new Error("Unknown specialist audio operation.");
+    } catch (error) { return {ok:false, error:error instanceof Error ? error.message : String(error)}; }
+  }));
   ipcMain.handle(channels.mediaExportLite, wrap((_e, input) => exportLiteMp4(input)));
   ipcMain.handle(channels.mediaExportPlus, wrap((_e, input) => exportPlusMp4(input)));
+  ipcMain.handle(channels.mediaAssemble, wrap(async (_e, input) => {
+    if(input?.operation === "continuation-frame") return movieAssembly().continuationFrame(input.pictureId,input.takeId);
+    if(input?.operation === "status") return movieAssembly().status(input.pictureId);
+    if(input?.operation === "cancel") return movieAssembly().cancel(input.pictureId);
+    if(input?.operation === "history") return movieAssembly().history(input.pictureId);
+    if(input?.operation === "verify") return movieAssembly().verify(input.pictureId,input.id);
+    const result = await movieAssembly().assemble(input);
+    lastExportPath = result.outputPath;
+    lastExportDir = dirname(result.outputPath);
+    return result;
+  }));
   ipcMain.handle(channels.mediaOpenFolder, wrap(async () => {
     const folder = lastExportDir || join(app.getPath("userData"), "exports");
     if (isUnderModelRoot(folder) || isUnderProtectedRuntimeRoot(folder)) throw new Error("Refusing to open a protected root.");
@@ -1317,6 +1430,8 @@ function createWindow() {
 }
 
 async function stopSupervised() {
+  specialistAudioService?.shutdown();
+  movieAssemblyService?.shutdown();
   directorHost?.stop();
   directorProgress?.stop();
   nativeFilmService?.stop();
@@ -1373,6 +1488,8 @@ if (!gotLock) {
     if (quitting) return;
     event.preventDefault();
     quitting = true;
+    specialistAudioService?.shutdown();
+    movieAssemblyService?.shutdown();
     void stopSupervised().finally(() => app.exit(0));
   });
 }

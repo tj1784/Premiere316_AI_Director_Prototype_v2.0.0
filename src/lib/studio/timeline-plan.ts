@@ -2,6 +2,8 @@ import { hydrateAudioWorkspace } from "../production/audio-types.ts";
 import { hydrateVideoWorkspace } from "../production/video-types.ts";
 import { shotStarts } from "./prompt-compiler.ts";
 import type { Picture } from "./types.ts";
+import { stableHash } from "../production/dependency-graph.ts";
+import { shotPacketFreshness } from "./resolved-shot-packet.ts";
 
 export type TimelineClip = {
   shotId: string;
@@ -13,22 +15,52 @@ export type TimelineClip = {
   missing: string[];
 };
 
-export function buildTimelinePlan(picture: Picture): { durationSec: number; clips: TimelineClip[] } {
+export function buildTimelinePlan(picture: Picture): {
+  durationSec: number;
+  clips: TimelineClip[];
+} {
   const starts = shotStarts(picture);
   const video = hydrateVideoWorkspace(picture.video);
   const audio = hydrateAudioWorkspace(picture.audio);
   const clips = picture.shots.map((shot) => {
     const span = starts.find((item) => item.id === shot.id);
     const canonical = video.takes.find((take) => take.shotId === shot.id && take.canonical);
-    const audioTakeIds = audio.takes.filter((take) => take.canonical && (take.shotId === shot.id || take.lineId)).map((take) => take.id);
+    const matchingCues = audio.cues.filter(
+      (c) =>
+        c.shotId === shot.id ||
+        (!c.shotId &&
+          (!c.sceneId || c.sceneId === shot.sceneId) &&
+          c.startSec < (span?.end ?? shot.durationSec) &&
+          c.startSec + c.durationSec > (span?.start ?? 0)),
+    );
+    const audioTakeIds = audio.takes
+      .filter(
+        (take) =>
+          take.canonical &&
+          (!take.cueFingerprint ||
+            take.cueFingerprint === stableHash(audio.cues.find((c) => c.id === take.cueId))) &&
+          (take.shotId === shot.id ||
+            (take.lineId &&
+              audio.lines.some((line) => line.id === take.lineId && line.shotId === shot.id)) ||
+            (take.cueId && matchingCues.some((c) => c.id === take.cueId))),
+      )
+      .map((take) => take.id);
     const missing: string[] = [];
+    if (
+      canonical &&
+      shotPacketFreshness(picture, shot, canonical.jobId, canonical.id).status === "stale"
+    )
+      missing.push("source-changed: re-review video");
     if (!canonical?.mediaUri && !shot.videoUrl) missing.push("video");
-    if (!audioTakeIds.length) missing.push("dialogue-or-score");
+    if (!audioTakeIds.length && !matchingCues.some((c) => c.kind === "silence" && c.notes.trim()))
+      missing.push("dialogue-or-score");
     return {
       shotId: shot.id,
       startSec: span?.start ?? 0,
       endSec: span?.end ?? shot.durationSec,
-      videoOrigin: canonical?.origin ?? (shot.videoUrl ? "legacy-url" : shot.stillUrl ? "still-placeholder" : "missing"),
+      videoOrigin:
+        canonical?.origin ??
+        (shot.videoUrl ? "legacy-url" : shot.stillUrl ? "still-placeholder" : "missing"),
       videoUri: canonical?.mediaUri ?? shot.videoUrl ?? null,
       audioTakeIds,
       missing,
@@ -37,12 +69,30 @@ export function buildTimelinePlan(picture: Picture): { durationSec: number; clip
   return { durationSec: clips.at(-1)?.endSec ?? 0, clips };
 }
 
-export function importedCanonicalFilm(picture: Picture): { durationSec: number; clips: Array<{ shotId: string; mediaUri: string; mediaSha256: string; durationSec: number }> } {
+export function importedCanonicalFilm(picture: Picture): {
+  durationSec: number;
+  clips: Array<{ shotId: string; mediaUri: string; mediaSha256: string; durationSec: number }>;
+} {
   const video = hydrateVideoWorkspace(picture.video);
   const clips = picture.shots.flatMap((shot) => {
-    const take = video.takes.find((item) => item.shotId === shot.id && item.canonical && item.origin === "imported" && item.mediaUri && item.mediaSha256);
+    const take = video.takes.find(
+      (item) =>
+        item.shotId === shot.id &&
+        item.canonical &&
+        item.origin === "imported" &&
+        item.mediaUri &&
+        item.mediaSha256 &&
+        shotPacketFreshness(picture, shot, item.jobId, item.id).status !== "stale",
+    );
     if (!take?.mediaUri || !take.mediaSha256) return [];
-    return [{ shotId: shot.id, mediaUri: take.mediaUri, mediaSha256: take.mediaSha256, durationSec: take.probe?.durationSec ?? 0 }];
+    return [
+      {
+        shotId: shot.id,
+        mediaUri: take.mediaUri,
+        mediaSha256: take.mediaSha256,
+        durationSec: take.probe?.durationSec ?? 0,
+      },
+    ];
   });
   return { durationSec: clips.reduce((sum, clip) => sum + clip.durationSec, 0), clips };
 }

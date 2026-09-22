@@ -37,6 +37,8 @@ export function mapJointPerformanceRequest(input: {
   manifest: VoiceReferenceManifest;
   references: SpeakerReference[];
   basePrompt: string;
+  renderDescription?: string;
+  music?: string;
 }) {
   const capability = jointCapability(input.mode);
   if (!capability.supported) throw new Error(capability.reason);
@@ -105,7 +107,8 @@ export function mapJointPerformanceRequest(input: {
   const serialized = serializePerformance({
     profile: "h3-ref2va-1",
     lines,
-    basePrompt: input.basePrompt,
+    basePrompt: [input.renderDescription, input.basePrompt].filter(Boolean).join("\n\n"),
+    music: input.music,
     speakers: Object.fromEntries(
       bindings.map((r) => [
         r.speaker,

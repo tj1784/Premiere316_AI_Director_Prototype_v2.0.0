@@ -6,6 +6,7 @@ node_modules
 .nitro
 dist
 dist-desktop
+dist-desktop-v4
 desktop/dist
 *.local
 .DS_Store

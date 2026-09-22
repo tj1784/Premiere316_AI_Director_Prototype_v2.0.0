@@ -48,10 +48,7 @@ export const releaseMoviePlanModel = createServerFn({ method: "POST" })
     const discovery = await provider.discover();
     if (!discovery.available) throw new Error("Cannot verify writer memory release: local model server is unavailable.");
     if (!discovery.models.some((model) => model.id === data.servedModelId && model.loaded)) return { released: true };
-    await provider.load({ servedModelId: data.servedModelId, settings: DEFAULT_SCREENPLAY_SETTINGS });
-    await provider.releaseResident("user-explicit");
-    if ((await provider.listModels()).some((model) => model.id === data.servedModelId && model.loaded)) throw new Error("Writer model is still loaded. Image generation has not started.");
-    return { released: true };
+    throw new Error("The writer is still loaded but this request does not own its residency. Unload it explicitly in LM Studio before image generation; borrowed models are never evicted automatically.");
   });
 
 function endpointKey(endpoint?: string | null): string {

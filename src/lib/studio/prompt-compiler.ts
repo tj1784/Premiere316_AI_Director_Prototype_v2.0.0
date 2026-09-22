@@ -1,12 +1,22 @@
 import { engineById } from "./engines.ts";
 import { dialogueFramingDirection } from "./dialogue-framing.ts";
 import type { Picture, Shot } from "./types";
+import { renderContextText, resolveRenderContext } from "./render-context.ts";
+import { continuityText } from "./shot-continuity.ts";
+import { resolveShotPacket, scopedBibleDirection } from "./resolved-shot-packet.ts";
 export { defaultPromptCompilerRouting } from "./model-routing.ts";
 import type { CanonicalShotSpec } from "../performance/types.ts";
 import type { PictureResearchBible } from "../research/bible.ts";
-import { defaultVideoSettings, videoEngineFromSelection, type CompiledMediaTarget, type SeedPolicy } from "./generation-config.ts";
+import {
+  defaultVideoSettings,
+  videoEngineFromSelection,
+  type CompiledMediaTarget,
+  type SeedPolicy,
+} from "./generation-config.ts";
 
 export type EnginePromptPackage = {
+  sourcePacket: ReturnType<typeof resolveShotPacket>;
+  renderContext?: ReturnType<typeof resolveRenderContext>;
   schemaVersion: 1;
   compiler: "deterministic-llama-default";
   engineTarget: CompiledMediaTarget;
@@ -58,14 +68,16 @@ export function shotStarts(picture: Picture) {
 }
 
 export function fountainFrom(picture: Picture) {
-  const lines = [`Title: ${picture.title}`, `Credit: written by Premiere316`, `Draft date: V3.02`, ""];
+  if (picture.screenplay?.workingFountain?.trim()) return picture.screenplay.workingFountain;
+  const lines = [
+    `Title: ${picture.title}`,
+    `Credit: written by Premiere316`,
+    `Draft date: V3.02`,
+    "",
+  ];
   for (const scene of picture.scenes) {
     lines.push(scene.slugline, "");
-    const beat = picture.characters[0];
     lines.push(scene.summary, "");
-    if (beat) {
-      lines.push(beat.name.toUpperCase(), scene.emotionalBeat, "");
-    }
   }
   return lines.join("\n");
 }
@@ -82,11 +94,16 @@ function compileShot(picture: Picture, shot: Shot, image: string, video: string)
   const pkgVideo = compileEnginePromptPackage({ picture, shot, target: "video" });
   return {
     ...shot,
-    t2iPrompt: (picture.nativeFilm?.writer ? picture.nativeFilm.imagePrompts?.[shot.id] : undefined) ?? pkgStill.enginePrompt,
+    t2iPrompt:
+      (picture.nativeFilm?.writer ? picture.nativeFilm.imagePrompts?.[shot.id] : undefined) ??
+      pkgStill.enginePrompt,
     i2vPrompt: picture.directorBundle?.importedShotIds.includes(shot.id)
       ? shot.i2vPrompt
-      : (picture.nativeFilm?.writer ? picture.nativeFilm.prompts?.[shot.id] : undefined) ?? pkgVideo.enginePrompt,
-    t2voicePrompt: shot.t2voicePrompt || (shot.type === "closeup" ? `${shot.emotion}, close-mic, dry room, ${shot.expression}` : ""),
+      : ((picture.nativeFilm?.writer ? picture.nativeFilm.prompts?.[shot.id] : undefined) ??
+        pkgVideo.enginePrompt),
+    t2voicePrompt:
+      shot.t2voicePrompt ||
+      (shot.type === "closeup" ? `${shot.emotion}, close-mic, dry room, ${shot.expression}` : ""),
   };
 }
 
@@ -94,32 +111,56 @@ export function compileEnginePromptPackage(input: CompilePromptInput): EnginePro
   const now = input.now ?? Date.now();
   const { picture, shot } = input;
   const scene = picture.scenes.find((item) => item.id === shot.sceneId);
-  const canonical = input.canonical ?? picture.performance?.shots.find((item) => item.shotId === shot.id || item.legacy?.id === shot.id) ?? null;
+  const canonical =
+    input.canonical ??
+    picture.performance?.shots.find(
+      (item) => item.shotId === shot.id || item.legacy?.id === shot.id,
+    ) ??
+    null;
   const research = input.research ?? picture.research ?? null;
   const videoEngine = videoEngineFromSelection(picture.selectedEngine.video);
-  const stillTarget: CompiledMediaTarget = /flux2/i.test(picture.selectedEngine.image) ? "flux2-dev" : "flux1-dev";
-  const target = input.target === "video" ? (videoEngine === "ltx-2" ? "ltx-2.5" : videoEngine) : stillTarget;
+  const stillTarget: CompiledMediaTarget = /flux2/i.test(picture.selectedEngine.image)
+    ? "flux2-dev"
+    : "flux1-dev";
+  const target =
+    input.target === "video" ? (videoEngine === "ltx-2" ? "ltx-2.5" : videoEngine) : stillTarget;
   const settings = defaultVideoSettings(videoEngine, shot.durationSec);
-  const locks = unique([
-    ...(canonical?.continuity.hardLocks ?? []),
-    ...(picture.production?.assets ?? []).flatMap((asset) => asset.canonicalSpec.continuityLocks ?? []),
-    shot.emotion,
-    shot.expression,
-  ].filter(Boolean));
+  // A preview cannot silently shorten an editorial shot to fit one executable clip.
+  settings.durationSec = shot.durationSec;
+  const locks = unique(
+    [
+      ...(canonical?.continuity.hardLocks ?? []),
+      ...(picture.production?.assets ?? [])
+        .filter((asset) => !asset.tombstone && asset.requiredSceneIds.includes(shot.sceneId))
+        .flatMap((asset) => asset.canonicalSpec.continuityLocks ?? []),
+      shot.emotion,
+      shot.expression,
+    ].filter(Boolean),
+  );
   const references = unique([
     ...(canonical?.references.characterReference ?? []),
     ...(canonical?.references.location ?? []),
     ...(canonical?.references.wardrobe ?? []),
-    ...(picture.production?.assets ?? []).flatMap((asset) => asset.references.filter((item) => item.preferred).map((item) => item.id)),
+    ...(picture.production?.assets ?? [])
+      .filter((asset) => !asset.tombstone && asset.requiredSceneIds.includes(shot.sceneId))
+      .flatMap((asset) => asset.references.filter((item) => item.preferred).map((item) => item.id)),
   ]);
   const camera = canonical
     ? `${canonical.camera.style ?? shot.camera} ${canonical.framing.lens ?? shot.lens}, ${canonical.camera.movementPath ?? shot.cameraMove}`
     : `${shot.camera} ${shot.lens}, ${shot.cameraMove}`;
   const action = canonical?.subject.actions?.join("; ") || shot.description;
-  const who = picture.characters.map((character) => `${character.name}, ${character.look}`).join("; ");
-  const place = picture.locations.map((location) => `${location.name}: ${location.description}`).join("; ");
-  const researchNote = research?.approvedVersionId ? `Approved research ${research.approvedVersionId}.` : "Research not approved.";
-  const dialogue = scene?.emotionalBeat ?? "";
+  const stateDirection = [continuityText(picture, shot), scopedBibleDirection(picture, shot)]
+    .filter(Boolean)
+    .join("\n");
+  const relevantText = `${action} ${scene?.slugline ?? ""}`.toLowerCase();
+  const who = picture.characters
+    .filter((c) => relevantText.includes(c.name.toLowerCase()))
+    .map((character) => `${character.name}, ${character.look}`)
+    .join("; ");
+  const place = picture.locations
+    .filter((l) => relevantText.includes(l.name.toLowerCase()))
+    .map((location) => `${location.name}: ${location.description}`)
+    .join("; ");
   const negative = unique([
     ...(canonical?.negatives ?? []),
     "morphing faces",
@@ -135,34 +176,52 @@ export function compileEnginePromptPackage(input: CompilePromptInput): EnginePro
     dialogueFramingDirection(shot),
     `Face / emotion: ${shot.emotion}. ${shot.expression}.`,
     who ? `Cast: ${who}.` : "",
-    place ? `Place: ${place}. ${scene?.slugline ?? ""}.` : scene?.slugline ?? "",
+    place ? `Place: ${place}. ${scene?.slugline ?? ""}.` : (scene?.slugline ?? ""),
     locks.length ? `Continuity locks: ${locks.join("; ")}.` : "",
-    researchNote,
     "No text, no watermark, cinematic color, natural skin.",
-  ].filter(Boolean).join(" ");
-  const videoPrompt = [
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const authoredVideo = picture.movieBible?.records[shot.id]?.fields["Complete local video prompt"];
+  const videoPrompt = authoredVideo?.disposition === "authored" && authoredVideo.value.trim()
+    ? [authoredVideo.value, stateDirection].filter(Boolean).join("\n") : [
     `${engineById(picture.selectedEngine.video)?.name ?? "LTX-2"} ${shot.stillUrl ? "image-to-video" : "text-to-video"}, ${settings.durationSec}s, ${settings.fps}fps, photoreal.`,
     `Human performance: ${shot.expression}. Emotion: ${shot.emotion}.`,
     `Camera timeline: ${camera}.`,
     dialogueFramingDirection(shot),
     `Action timeline: ${action}.`,
-    dialogue ? `Dialogue/intent: ${dialogue}.` : "",
+    stateDirection,
     locks.length ? `Hold identity/continuity: ${locks.join("; ")}.` : "",
-    "Micro-expressions, realistic eye saccades, breath, cloth.",
     "No morphing faces, no extra limbs, hold identity.",
-  ].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
   const warnings: string[] = [];
-  if (!research?.approvedVersionId) warnings.push("Compiled without an approved research snapshot.");
+  if (shot.durationSec > 15) warnings.push("Editorial duration exceeds the generic single-clip preview range. Select an explicitly supported continuation workflow; no duration was shortened.");
+  if (!research?.approvedVersionId)
+    warnings.push("Compiled without an approved research snapshot.");
   if (!canonical) warnings.push("Compiled from legacy shot fields; CanonicalShotSpec was absent.");
-  if (input.target === "video" && !shot.stillUrl) warnings.push("I2V preferred but no still plate is bound; T2V prompt was used.");
+  if (input.target === "video" && !shot.stillUrl)
+    warnings.push("I2V preferred but no still plate is bound; T2V prompt was used.");
   if (shot.durationSec < 6) warnings.push("Shot duration is below the 6s performance floor.");
   return {
     schemaVersion: 1,
     compiler: "deterministic-llama-default",
     engineTarget: target,
-    enginePrompt: input.target === "video" ? videoPrompt : stillPrompt,
+    enginePrompt: [
+      renderContextText(picture, shot),
+      input.target === "video" ? videoPrompt : stillPrompt,
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
+    renderContext: resolveRenderContext(picture, shot),
+    sourcePacket: resolveShotPacket(picture, shot),
     negativePrompt: negative,
-    shotSummary: `${shot.type} · ${shot.durationSec}s · ${scene?.slugline ?? shot.sceneId} · ${action}`.slice(0, 400),
+    shotSummary:
+      `${shot.type} · ${shot.durationSec}s · ${scene?.slugline ?? shot.sceneId} · ${action}`.slice(
+        0,
+        400,
+      ),
     cameraTimeline: camera,
     actionTimeline: action,
     continuityLocks: locks,
@@ -170,7 +229,11 @@ export function compileEnginePromptPackage(input: CompilePromptInput): EnginePro
     seedPolicy: { mode: input.seed == null ? "randomize" : "locked", seed: input.seed ?? null },
     durationSec: settings.durationSec,
     fps: settings.fps,
-    resolution: { width: input.target === "video" ? settings.width : 512, height: input.target === "video" ? settings.height : 512, aspectRatio: picture.format || "16:9" },
+    resolution: {
+      width: input.target === "video" ? settings.width : 512,
+      height: input.target === "video" ? settings.height : 512,
+      aspectRatio: picture.format || "16:9",
+    },
     engineSettings: {
       motionIntensity: settings.motionIntensity,
       intendedEngine: canonical?.intendedEngine ?? picture.selectedEngine.video,
@@ -184,7 +247,8 @@ export function compileEnginePromptPackage(input: CompilePromptInput): EnginePro
       sceneId: shot.sceneId,
       compiledAt: now,
       researchVersionId: research?.approvedVersionId ?? null,
-      screenplayVersionId: picture.screenplay?.currentVersionId ?? picture.screenplay?.approvedVersionId ?? null,
+      screenplayVersionId:
+        picture.screenplay?.currentVersionId ?? picture.screenplay?.approvedVersionId ?? null,
       canonicalSpecVersion: canonical?.version ?? null,
     },
   };

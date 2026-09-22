@@ -125,6 +125,8 @@ test("H3 mapping uses actual zero-based V3 autogrow sockets, exact dialogue, no 
       audioSha256: sha,
     })),
     basePrompt: "Keep camera, wardrobe and props.",
+    renderDescription: "materials: weathered limestone",
+    music: "A single cello enters after the pause.",
   };
   const mapped = mapJointPerformanceRequest(input);
   assert.deepEqual(mapped.workflow.ref.inputs["ref_audios.ref_audio_0"], ["a0", 0]);
@@ -136,6 +138,11 @@ test("H3 mapping uses actual zero-based V3 autogrow sockets, exact dialogue, no 
   );
   assert.doesNotMatch(JSON.stringify(mapped.workflow), /AUDITION MUST NOT LEAK|TTS/);
   assert.equal(workflow.ref.inputs.prompt, "old");
+  assert.equal(
+    String(mapped.workflow.ref.inputs.prompt).split("weathered limestone").length - 1,
+    1,
+  );
+  assert.match(String(mapped.workflow.ref.inputs.prompt), /A single cello/);
   assert.throws(() => mapJointPerformanceRequest({ ...input, mode: "h3-fl2va" }), /cannot/);
   assert.equal(jointCapability("ltx-supplied-audio").supported, false);
   manifest.references[0].reference.audio!.durationSec = 49;

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { createProjectStorage, type ProjectStorageBackend, type ProjectStorageError } from "./project-storage.ts";
+import { createProjectStorage, getProjectSaveStatus, subscribeProjectSaveStatus, type ProjectStorageBackend, type ProjectStorageError } from "./project-storage.ts";
 
 const KEY = "premiere316-v302-c";
 function legacyStorage(initial: Record<string, string> = {}) {
@@ -18,6 +18,23 @@ function durableStorage(initial: Record<string, string> = {}) {
 }
 
 describe("large project persistence", () => {
+  it("reports saved only after the durable write completes and preserves failure status", async () => {
+    let finish!:()=>void;
+    const gate=new Promise<void>(resolve=>{finish=resolve;});
+    const states:string[]=[];
+    const unsubscribe=subscribeProjectSaveStatus(()=>states.push(getProjectSaveStatus()));
+    try {
+      const storage=createProjectStorage({backend:{getItem:async()=>null,setItem:async()=>gate,removeItem:async()=>{}},legacyStorage:null});
+      const writing=storage.setItem(KEY,"fixture");
+      assert.equal(getProjectSaveStatus(),"saving");
+      finish();await writing;
+      assert.equal(getProjectSaveStatus(),"saved");
+      const failed=createProjectStorage({backend:{getItem:async()=>null,setItem:async()=>{throw new Error("fixture storage failure");},removeItem:async()=>{}},legacyStorage:null,onError:()=>{}});
+      await failed.setItem(KEY,"retained only in memory");
+      assert.equal(getProjectSaveStatus(),"error");
+      assert.deepEqual(states,["saving","saved","saving","error"]);
+    } finally {unsubscribe();}
+  });
   it("migrates the exact existing payload and reloads from the durable backend", async () => {
     const raw = JSON.stringify({ state: { pictures: [{ id: "existing", screenplay: "scene" }] }, version: 0 });
     const legacy = legacyStorage({ [KEY]: raw });

@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
+await (await import("esbuild")).build({entryPoints:[join(ROOT,"src/lib/studio/movie-assembly.ts")],outfile:join(ROOT,"desktop/dist/movie-assembly-plan.mjs"),bundle:true,platform:"node",format:"esm",target:"node22"});
 const UI = "http://127.0.0.1:8080/";
 
 async function uiUp() {

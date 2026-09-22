@@ -16,7 +16,9 @@ export async function localLLMStatus() {
 }
 
 export async function beginScreenplayJob(input: StartScreenplayJobInput) {
-  const intake = await prepareVisualDirection(input.intake, input.screenplay.pinnedWriterServedId ?? undefined);
+  const board=input.intake.visualDirection;
+  if (input.productionBinding && board?.sources.length && (!board.guide || board.analyzedBoardId !== board.boardId)) throw new Error("Review the current visual-direction board before profile writing. A text role cannot silently substitute for image inspection.");
+  const intake = input.productionBinding ? input.intake : await prepareVisualDirection(input.intake, input.screenplay.pinnedWriterServedId ?? undefined);
   if (intake !== input.intake) {
     if (input.screenplay.pinnedWriterServedId) {
       const { ensureMoviePlanModel } = await import("./movie-plan-api.ts");
@@ -28,7 +30,7 @@ export async function beginScreenplayJob(input: StartScreenplayJobInput) {
     if (active?.intake.visualDirection?.boardId === intake.visualDirection?.boardId) state.patchActive({ intake });
     input = { ...input, intake };
   }
-  return startScreenplayJob({ data: { ...input, generationInstructions: getGlobalProductionInstructions(), endpoint: endpointCache.get() } });
+  return startScreenplayJob({ data: { ...input, generationInstructions: [getGlobalProductionInstructions(),input.generationInstructions].filter(Boolean).join("\n\n"), endpoint: endpointCache.get() } });
 }
 
 export async function readScreenplayJob(jobId: string) {
@@ -40,6 +42,8 @@ export async function stopScreenplayJob(jobId: string) {
 }
 
 export async function beginScreenplayQa(input: {
+  generationInstructions?: string;
+  productionBinding?: import("./production-profiles.ts").ProductionModelBinding;
   fountain: string;
   modelId: string;
   writerId: string | null;
@@ -56,7 +60,7 @@ export async function beginScreenplayQa(input: {
   research?: PictureResearchBible | null;
   directorNotes?: string;
 }, progress?: { signal?: AbortSignal; onText?: (text: string) => void; onReasoning?: (text: string) => void }): Promise<ScreenplayQaReport> {
-  const response = await runScreenplayQa({ data: { ...input, generationInstructions: getGlobalProductionInstructions(), endpoint: endpointCache.get() }, signal: progress?.signal });
+  const response = await runScreenplayQa({ data: { ...input, generationInstructions: [getGlobalProductionInstructions(), input.generationInstructions].filter(Boolean).join("\n\n"), endpoint: endpointCache.get() }, signal: progress?.signal });
   const result = await readMoviePlanStream(response, progress?.onText, progress?.onReasoning);
   return JSON.parse(result.text) as ScreenplayQaReport;
 }

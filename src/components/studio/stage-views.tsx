@@ -24,51 +24,137 @@ import { AdvancedDepartmentsDashboard, AdvancedDepartmentsRail } from "./advance
 import { MoviePlanActivity } from "./movie-plan-activity";
 import { GeneratedAssetsReview } from "./generated-assets-review";
 import { NativeFilmPanel } from "./native-film-panel";
+import { SpeechReviewPanel } from "./speech-review-panel";
+import { MovieAssemblyPanel } from "./movie-assembly-panel";
 import { DirectorVideoPanel } from "./director-video-panel";
 import { VideoGenerationOptions } from "./video-generation-options";
 import { AudioGenerationOptions } from "./audio-generation-options";
 import { VoiceDesignWorkspace } from "./voice-design-workspace";
 import type { MoviePlanProgress } from "@/lib/studio/movie-plan-stream.ts";
 import { isAdvancedDashboard } from "@/lib/studio/advanced-departments.ts";
-import { DEFAULT_NAV_STEPS, allPhaseReviewsOn, hydrateProductFlow, type InternalPhase } from "@/lib/studio/product-flow.ts";
-import { CONFIGURED_MODEL_UNAVAILABLE, MANUAL_FALLBACK_LABEL } from "@/lib/studio/movie-plan-pipeline.ts";
-import { executeResearchDraftOnServer, releaseMoviePlanWriterForImages } from "@/lib/studio/movie-plan-client.ts";
+import {
+  DEFAULT_NAV_STEPS,
+  allPhaseReviewsOn,
+  hydrateProductFlow,
+  type InternalPhase,
+} from "@/lib/studio/product-flow.ts";
+import {
+  CONFIGURED_MODEL_UNAVAILABLE,
+  MANUAL_FALLBACK_LABEL,
+} from "@/lib/studio/movie-plan-pipeline.ts";
+import {
+  executeResearchDraftOnServer,
+  releaseMoviePlanWriterForImages,
+} from "@/lib/studio/movie-plan-client.ts";
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import { useDirector } from "@/lib/studio/use-director";
-import { compileEnginePromptPackage, compilePicture, totalDuration } from "@/lib/studio/prompt-compiler";
-import { desktopApproveCanonicalImage, desktopAuthorizePreparedImage, desktopExportLite, desktopExportPlus, desktopGeneratePreparedImage, desktopImageManifests, desktopImportAudio, desktopImportVideo, desktopMediaDiscover, desktopOpenExportFolder, desktopProductionAuthorityStatus, desktopRejectCanonicalImage, desktopSaveMany, isDesktopApp } from "@/lib/desktop/client";
+import {
+  compileEnginePromptPackage,
+  compilePicture,
+  totalDuration,
+} from "@/lib/studio/prompt-compiler";
+import {
+  desktopApproveCanonicalImage,
+  desktopAuthorizePreparedImage,
+  desktopExportLite,
+  desktopExportPlus,
+  desktopGeneratePreparedImage,
+  desktopImageManifests,
+  desktopImportAudio,
+  desktopImportVideo,
+  desktopMediaDiscover,
+  desktopOpenExportFolder,
+  desktopProductionAuthorityStatus,
+  desktopRejectCanonicalImage,
+  desktopSaveMany,
+  isDesktopApp,
+} from "@/lib/desktop/client";
 import type { ImageComponentManifest } from "@/lib/studio/image-component-resolver.server.ts";
 import { runtimeDefaults } from "@/lib/studio/engine-controls.ts";
 import { cn, copyText, formatTimecode, saveReadyFile, uid, type ReadyFile } from "@/lib/utils";
 import type { LocalLLMProviderDiscovery } from "@/lib/studio/local-llm-provider";
 import type { PictureIntake } from "@/lib/studio/picture-intake";
 import { ProductionProfileControls } from "./production-profile-controls";
+import { BibleRunWorkspace } from "./bible-run-workspace";
+import { SoundCueEditor } from "./sound-cue-editor";
+import { ShotContinuityEditor } from "./shot-continuity-editor";
+import { MovieBibleEditor } from "./movie-bible-editor";
+import { RenderContextEditor } from "./render-context-editor";
 import { VisualDirectionField } from "./visual-direction-field";
 import { SOURCE_TYPE_LABELS } from "@/lib/studio/picture-intake";
 import type { ScreenplayModelRef } from "@/lib/studio/screenplay";
-import { addManualScreenplayVersion, approveCurrentScreenplay, restoreScreenplayVersion } from "@/lib/studio/screenplay";
+import {
+  addManualScreenplayVersion,
+  approveCurrentScreenplay,
+  restoreScreenplayVersion,
+} from "@/lib/studio/screenplay";
 import type { ScreenplayStep } from "@/lib/studio/screenplay-prompts";
 import type { ScreenplayJobSnapshot } from "@/lib/studio/screenplay-jobs.server";
-import { beginScreenplayJob, beginScreenplayQa, localLLMStatus, readScreenplayJob, releaseLocalScreenplayModel, stopScreenplayJob } from "@/lib/studio/screenplay-client";
+import {
+  beginScreenplayJob,
+  beginScreenplayQa,
+  localLLMStatus,
+  readScreenplayJob,
+  releaseLocalScreenplayModel,
+  stopScreenplayJob,
+} from "@/lib/studio/screenplay-client";
 import { ScreenplayWorkspace } from "./screenplay-workspace";
 import { ImportedPackageResources } from "./imported-package-resources";
 import { ResearchWorkspace } from "@/components/research/research-workspace";
-import { hydratePictureResearch, isResearchApproved, researchBlocksScreenplay } from "@/lib/research/bible.ts";
+import {
+  hydratePictureResearch,
+  isResearchApproved,
+  researchBlocksScreenplay,
+} from "@/lib/research/bible.ts";
 import { qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
-import { canonicalSpecHash, hydratePromptLabState, promptLabRuntimeBlock } from "@/lib/studio/prompt-lab.ts";
+import {
+  canonicalSpecHash,
+  hydratePromptLabState,
+  promptLabRuntimeBlock,
+} from "@/lib/studio/prompt-lab.ts";
 import { videoEngineFromSelection } from "@/lib/studio/generation-config.ts";
 import { videoRuntimeBlock } from "@/lib/studio/video-runtime.ts";
-import { musicEngineFromSelection, musicRuntimeBlock, voiceEngineFromSelection, voiceRuntimeBlock } from "@/lib/studio/audio-runtime.ts";
+import {
+  musicEngineFromSelection,
+  musicRuntimeBlock,
+  voiceEngineFromSelection,
+  voiceRuntimeBlock,
+} from "@/lib/studio/audio-runtime.ts";
 import { movieReadiness } from "@/lib/studio/movie-readiness.ts";
 import { guidedNextStage, movieLifecycle } from "@/lib/studio/movie-lifecycle.ts";
-import { planLiteImportedExport, planPictureExport, planPlusImportedExport } from "@/lib/studio/ffmpeg-export.ts";
+import {
+  planLiteImportedExport,
+  planPictureExport,
+  planPlusImportedExport,
+} from "@/lib/studio/ffmpeg-export.ts";
 import { buildTimelinePlan, importedCanonicalFilm } from "@/lib/studio/timeline-plan.ts";
-import { nextShotForImport, recordImportedVideoTake, reviewVideoTake, shotVideoReadiness } from "@/lib/production/video-iterations.ts";
-import { failClosedKeyframe, generateGateReadiness, hydrateGenerateGates, savePromptVersion, waiveKeyframePair } from "@/lib/production/generate-gates.ts";
+import { resolveShotPacket, shotPacketFreshness } from "@/lib/studio/resolved-shot-packet";
+import {
+  nextShotForImport,
+  recordImportedVideoTake,
+  reviewVideoTake,
+  shotVideoReadiness,
+} from "@/lib/production/video-iterations.ts";
+import {
+  failClosedKeyframe,
+  generateGateReadiness,
+  hydrateGenerateGates,
+  savePromptVersion,
+  waiveKeyframePair,
+} from "@/lib/production/generate-gates.ts";
 import { hydrateVideoWorkspace } from "@/lib/production/video-types.ts";
-import { hydratePictureAudio, queueMissingDialogue, queueMissingScore, recordImportedAudioTake, reviewAudioTake } from "@/lib/production/audio-iterations.ts";
+import {
+  hydratePictureAudio,
+  queueMissingDialogue,
+  queueMissingScore,
+  recordImportedAudioTake,
+  reviewAudioTake,
+} from "@/lib/production/audio-iterations.ts";
 import { hydrateAudioWorkspace } from "@/lib/production/audio-types.ts";
-import { DEFAULT_CREW_WRITER_DISPLAY, OPTIONAL_CREW_WRITER_DISPLAY } from "@/lib/studio/model-routing.ts";
+import {
+  DEFAULT_CREW_WRITER_DISPLAY,
+  OPTIONAL_CREW_WRITER_DISPLAY,
+} from "@/lib/studio/model-routing.ts";
 import type { ScreenplayRewriteTarget, ScreenplayScope } from "@/lib/studio/screenplay-scope.ts";
 import { isLlamaQaCandidate as isLlamaFamily } from "@/lib/studio/qwen-writer-identity.ts";
 import { InventoryWorkspace } from "@/components/production/inventory-workspace";
@@ -94,6 +180,7 @@ import { canonicalShotsToLegacy, migratePicturePerformance } from "@/lib/perform
 import { KeyframeImages } from "./keyframe-images";
 import { approveKeyframeIteration } from "@/lib/production/generate-gates";
 import { HERMES_MODEL_ID, hydrateProductionRouting } from "@/lib/studio/production-profiles";
+import { bibleAuthoringContext, screenplaySourceContextFingerprint } from "@/lib/studio/movie-bible";
 
 export function StageView() {
   const stage = useStage();
@@ -141,9 +228,16 @@ function Pane({ title, kicker, children }: { title: string; kicker: string; chil
     <div className="stage-pane flex h-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden">
       <header className="shrink-0 px-4 pb-2 pt-3 sm:px-6 sm:pb-3 sm:pt-4">
         <p className="text-[11px] tracking-[0.2em] text-subtle uppercase">{kicker}</p>
-        <h2 className="mt-1 truncate font-display text-[clamp(1.5rem,3vw,1.875rem)] tracking-tight" title={title}>{title}</h2>
+        <h2
+          className="mt-1 truncate font-display text-[clamp(1.5rem,3vw,1.875rem)] tracking-tight"
+          title={title}
+        >
+          {title}
+        </h2>
       </header>
-      <div className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto px-4 pb-8 sm:px-6">{children}</div>
+      <div className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto px-4 pb-8 sm:px-6">
+        {children}
+      </div>
     </div>
   );
 }
@@ -158,11 +252,18 @@ function IntakeStage({ picture }: { picture: Picture }) {
   const [activity, setActivity] = useState<MoviePlanProgress[]>([]);
   const [activityStartedAt, setActivityStartedAt] = useState<number | null>(null);
   const routing = hydrateProductionRouting(picture.productionRouting, {
-    legacyLocalSelection: Boolean(picture.screenplay.pinnedWriterServedId || picture.screenplay.selectedModelId),
+    legacyLocalSelection: Boolean(
+      picture.screenplay.pinnedWriterServedId || picture.screenplay.selectedModelId,
+    ),
     now: picture.updatedAt,
   });
   const patchIntake = <K extends keyof PictureIntake>(key: K, value: PictureIntake[K]) => {
-    const intake = { ...picture.intake, [key]: value, ...(key === "targetRuntimeMinutes" ? { runtimeSource: "manual" as const } : {}), updatedAt: Date.now() };
+    const intake = {
+      ...picture.intake,
+      [key]: value,
+      ...(key === "targetRuntimeMinutes" ? { runtimeSource: "manual" as const } : {}),
+      updatedAt: Date.now(),
+    };
     patchActive({
       intake,
       ...(key === "title" ? { title: String(value) } : {}),
@@ -177,11 +278,15 @@ function IntakeStage({ picture }: { picture: Picture }) {
   async function runGuidedResearch() {
     if (directionBusy) return;
     if (routing.profileId !== "local-models") {
-      toast.error("Astra Ultra is selected, but no callable Astra provider is configured. No local fallback was started.");
+      toast.error(
+        "Astra Ultra is selected, but no callable Astra provider is configured. No local fallback was started.",
+      );
       return;
     }
     if (routing.executionMode !== "guided") {
-      toast.error("Autonomous complete-script orchestration is not implemented yet. No legacy pipeline was started.");
+      toast.error(
+        "Autonomous complete-script orchestration is not implemented yet. No legacy pipeline was started.",
+      );
       return;
     }
     setBuilding(true);
@@ -218,9 +323,16 @@ function IntakeStage({ picture }: { picture: Picture }) {
           latestPicture = next;
           replaceActive(next);
         },
-        (event) => setActivity((current) => [...current.filter((item) => item.phase !== event.phase), event]),
+        (event) =>
+          setActivity((current) => [
+            ...current.filter((item) => item.phase !== event.phase),
+            event,
+          ]),
       );
-      const failed = !result.providerCalled || result.flow.manualFallback || result.flow.steps.some((step) => step.status === "failed");
+      const failed =
+        !result.providerCalled ||
+        result.flow.manualFallback ||
+        result.flow.steps.some((step) => step.status === "failed");
       replaceActive({
         ...result.picture,
         productionRouting: {
@@ -230,7 +342,10 @@ function IntakeStage({ picture }: { picture: Picture }) {
         },
       });
       if (failed) {
-        toast.error(result.flow.steps.find((step) => step.status === "failed")?.message ?? CONFIGURED_MODEL_UNAVAILABLE);
+        toast.error(
+          result.flow.steps.find((step) => step.status === "failed")?.message ??
+            CONFIGURED_MODEL_UNAVAILABLE,
+        );
       } else {
         openAdvancedDepartment("research");
         toast.success("Hermes research draft is ready. The run stopped for your review.");
@@ -238,7 +353,11 @@ function IntakeStage({ picture }: { picture: Picture }) {
     } catch (error) {
       replaceActive({
         ...latestPicture,
-        productionRouting: { ...routing, activeRun: { ...activeRun, status: "failed" }, updatedAt: Date.now() },
+        productionRouting: {
+          ...routing,
+          activeRun: { ...activeRun, status: "failed" },
+          updatedAt: Date.now(),
+        },
       });
       toast.error(error instanceof Error ? error.message : CONFIGURED_MODEL_UNAVAILABLE);
     }
@@ -249,80 +368,320 @@ function IntakeStage({ picture }: { picture: Picture }) {
       <div className="grid max-w-3xl gap-5">
         <div>
           <Label htmlFor="movie-idea">What are we making?</Label>
-          <Textarea id="movie-idea" className="mt-1.5 min-h-32 text-base" value={picture.intake.concept || picture.intake.premise || picture.intake.logline} onChange={(event) => patchIntake("concept", event.target.value)} placeholder="2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal…" />
-          <p className="mt-2 text-xs leading-relaxed text-muted">Research comes before writing. For a historical adaptation, include source text or links, or request web research and name the source and period.</p>
+          <Textarea
+            id="movie-idea"
+            className="mt-1.5 min-h-32 text-base"
+            value={picture.intake.concept || picture.intake.premise || picture.intake.logline}
+            onChange={(event) => patchIntake("concept", event.target.value)}
+            placeholder="2-minute fan-made live-action trailer for Xenogears, cinematic, photoreal…"
+          />
+          <p className="mt-2 text-xs leading-relaxed text-muted">
+            Research comes before writing. For a historical adaptation, include source text or
+            links, or request web research and name the source and period.
+          </p>
         </div>
         <ProductionProfileControls picture={picture} disabled={building} />
-        <VisualDirectionField value={picture.intake.visualDirection} onChange={value => patchIntake("visualDirection", value)} disabled={building} onBusy={setDirectionBusy} writerId={picture.screenplay.pinnedWriterServedId ?? undefined} />
-        <label className="grid gap-2 text-sm">Asset image model
-          <select aria-label="Intake asset image model" className="min-h-11 w-full rounded-md border border-edge bg-inset px-3 text-fg" disabled={building} value={picture.selectedEngine.image} onChange={(event) => patchActive({ selectedEngine: { ...picture.selectedEngine, image: event.target.value } })}>
-            <option value="krea-2">KREA2 RAW</option><option value="flux2">FLUX.2 Dev</option><option value="flux">FLUX.1 Dev</option>
+        <BibleRunWorkspace />
+        <VisualDirectionField
+          value={picture.intake.visualDirection}
+          onChange={(value) => patchIntake("visualDirection", value)}
+          disabled={building}
+          onBusy={setDirectionBusy}
+          writerId={picture.screenplay.pinnedWriterServedId ?? undefined}
+        />
+        <label className="grid gap-2 text-sm">
+          Asset image model
+          <select
+            aria-label="Intake asset image model"
+            className="min-h-11 w-full rounded-md border border-edge bg-inset px-3 text-fg"
+            disabled={building}
+            value={picture.selectedEngine.image}
+            onChange={(event) =>
+              patchActive({
+                selectedEngine: { ...picture.selectedEngine, image: event.target.value },
+              })
+            }
+          >
+            <option value="krea-2">KREA2 RAW</option>
+            <option value="flux2">FLUX.2 Dev</option>
+            <option value="flux">FLUX.1 Dev</option>
           </select>
         </label>
         <Button
           className="h-12 text-base"
           onClick={() => void runGuidedResearch()}
-          disabled={building || directionBusy || routing.profileId !== "local-models" || routing.executionMode !== "guided"}
-          title={routing.profileId !== "local-models" ? "Configure an Astra provider or choose Local Models." : routing.executionMode !== "guided" ? "Autonomous orchestration is not implemented yet." : undefined}
+          disabled={
+            building ||
+            directionBusy ||
+            routing.profileId !== "local-models" ||
+            routing.executionMode !== "guided"
+          }
+          title={
+            routing.profileId !== "local-models"
+              ? "Configure an Astra provider or choose Local Models."
+              : routing.executionMode !== "guided"
+                ? "Use Start autonomous complete script above."
+                : undefined
+          }
         >
           {building ? "Running Hermes research…" : "Run guided research step"}
         </Button>
-        {activityStartedAt !== null ? <MoviePlanActivity events={activity} startedAt={activityStartedAt} running={building} /> : null}
+        {activityStartedAt !== null ? (
+          <MoviePlanActivity events={activity} startedAt={activityStartedAt} running={building} />
+        ) : null}
         {flow.manualFallback || flow.steps.some((step) => step.status === "failed") ? (
-          <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" data-movie-plan-blocked="true">
-            <p className="text-sm">{flow.steps.find((step) => step.status === "failed")?.message ?? CONFIGURED_MODEL_UNAVAILABLE}</p>
+          <div
+            className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+            data-movie-plan-blocked="true"
+          >
+            <p className="text-sm">
+              {flow.steps.find((step) => step.status === "failed")?.message ??
+                CONFIGURED_MODEL_UNAVAILABLE}
+            </p>
             <p className="mt-2 text-xs text-muted">{MANUAL_FALLBACK_LABEL}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button size="sm" variant="secondary" onClick={() => void localLLMStatus().then(() => toast.message("Rescanned configured model."), () => toast.error(CONFIGURED_MODEL_UNAVAILABLE))}>Rescan</Button>
-              <Button size="sm" variant="secondary" onClick={() => toast.success("Intake draft is already saved on this picture.")}>Save Intake Draft</Button>
-              <Button size="sm" variant="ghost" onClick={() => openAdvancedDepartment("research")}>Open Manual Advanced Fallback</Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                  void localLLMStatus().then(
+                    () => toast.message("Rescanned configured model."),
+                    () => toast.error(CONFIGURED_MODEL_UNAVAILABLE),
+                  )
+                }
+              >
+                Rescan
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => toast.success("Intake draft is already saved on this picture.")}
+              >
+                Save Intake Draft
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => openAdvancedDepartment("research")}>
+                Open Manual Advanced Fallback
+              </Button>
             </div>
           </div>
         ) : null}
-        {flow.steps.length ? <ul className="grid gap-1 text-sm text-muted">{flow.steps.map((step) => <li key={step.id}>{step.status === "failed" ? "! failed" : step.status === "waitingForOptionalUserReview" ? "⏸ paused" : step.status === "draftReady" ? "· generated" : step.status} — {step.id}: {step.message}</li>)}</ul> : null}
-        <details key={picture.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" data-optional-intake="true">
-          <summary className="min-h-11 cursor-pointer content-center text-sm text-muted">Optional details</summary>
+        {flow.steps.length ? (
+          <ul className="grid gap-1 text-sm text-muted">
+            {flow.steps.map((step) => (
+              <li key={step.id}>
+                {step.status === "failed"
+                  ? "! failed"
+                  : step.status === "waitingForOptionalUserReview"
+                    ? "⏸ paused"
+                    : step.status === "draftReady"
+                      ? "· generated"
+                      : step.status}{" "}
+                — {step.id}: {step.message}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <details
+          key={picture.id}
+          className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+          data-optional-intake="true"
+        >
+          <summary className="min-h-11 cursor-pointer content-center text-sm text-muted">
+            Optional details
+          </summary>
           <div className="mt-4 grid gap-5">
             <label className="flex min-h-11 items-center gap-2 text-sm">
-              <input type="checkbox" checked={flow.thinkingEnabled === true} disabled={building} onChange={(event) => patchActive({ productFlow: { ...flow, thinkingEnabled: event.target.checked } })} />
+              <input
+                type="checkbox"
+                checked={flow.thinkingEnabled === true}
+                disabled={building}
+                onChange={(event) =>
+                  patchActive({ productFlow: { ...flow, thinkingEnabled: event.target.checked } })
+                }
+              />
               <span>Enable model thinking (slower, supported models only)</span>
             </label>
             <label className="flex min-h-11 items-center gap-2 text-sm">
-              <input type="checkbox" checked={flow.qaEnabled === true} disabled={building} onChange={(event) => patchActive({ productFlow: { ...flow, qaEnabled: event.target.checked } })} />
+              <input
+                type="checkbox"
+                checked={flow.qaEnabled === true}
+                disabled={building}
+                onChange={(event) =>
+                  patchActive({ productFlow: { ...flow, qaEnabled: event.target.checked } })
+                }
+              />
               <span>Run screenplay QA and corrections (slower)</span>
             </label>
-            <p className="text-xs text-muted">QA reviews source fidelity and character psychology, then material culture and continuity, before the inventory is built.</p>
+            <p className="text-xs text-muted">
+              QA reviews source fidelity and character psychology, then material culture and
+              continuity, before the inventory is built.
+            </p>
             <div>
               <Label htmlFor="intake-source-mode">Source mode</Label>
-              <select id="intake-source-mode" className="mt-1.5 h-11 w-full rounded-md bg-inset px-3 text-sm text-fg shadow-[var(--shadow-border)]" value={picture.intake.sourceType} onChange={(event) => {
-                const sourceType = event.target.value as PictureIntake["sourceType"];
-                patchActive({ intake: { ...picture.intake, sourceType, workflow: sourceType === "biblical-historical" ? "biblical-7-pass" : picture.intake.workflow === "biblical-7-pass" ? "single" : picture.intake.workflow, updatedAt: Date.now() } });
-              }}>
-                {Object.entries(SOURCE_TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              <select
+                id="intake-source-mode"
+                className="mt-1.5 h-11 w-full rounded-md bg-inset px-3 text-sm text-fg shadow-[var(--shadow-border)]"
+                value={picture.intake.sourceType}
+                onChange={(event) => {
+                  const sourceType = event.target.value as PictureIntake["sourceType"];
+                  patchActive({
+                    intake: {
+                      ...picture.intake,
+                      sourceType,
+                      workflow:
+                        sourceType === "biblical-historical"
+                          ? "biblical-7-pass"
+                          : picture.intake.workflow === "biblical-7-pass"
+                            ? "single"
+                            : picture.intake.workflow,
+                      updatedAt: Date.now(),
+                    },
+                  });
+                }}
+              >
+                {Object.entries(SOURCE_TYPE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
               </select>
-              <p className="mt-1 text-xs text-muted">The original intake and every imported text source remain preserved in version history.</p>
+              <p className="mt-1 text-xs text-muted">
+                The original intake and every imported text source remain preserved in version
+                history.
+              </p>
             </div>
-            <Field label="Title" value={picture.intake.title} onChange={(value) => patchIntake("title", value)} />
+            <Field
+              label="Title"
+              value={picture.intake.title}
+              onChange={(value) => patchIntake("title", value)}
+            />
             <div>
               <Label>Logline</Label>
-              <Textarea className="mt-1.5 min-h-24" value={picture.intake.logline} onChange={(event) => patchIntake("logline", event.target.value)} />
+              <Textarea
+                className="mt-1.5 min-h-24"
+                value={picture.intake.logline}
+                onChange={(event) => patchIntake("logline", event.target.value)}
+              />
             </div>
-            {picture.intake.sourceType === "concept" ? <div><Label>Premise</Label><Textarea className="mt-1.5 min-h-32" value={picture.intake.premise} onChange={(event) => patchIntake("premise", event.target.value)} /></div> : null}
-            {picture.intake.sourceType === "treatment" ? <div><Label>Treatment / Outline</Label><Textarea className="mt-1.5 min-h-80" value={picture.intake.treatment} onChange={(event) => patchIntake("treatment", event.target.value)} /></div> : null}
-            {picture.intake.sourceType === "existing-screenplay" ? <div><Label>Existing screenplay</Label><Textarea className="screenplay mt-1.5 min-h-[30rem]" value={picture.intake.existingScreenplay} onChange={(event) => patchIntake("existingScreenplay", event.target.value)} /></div> : null}
-            {picture.intake.sourceType === "source-material" ? <div><Label>Source material</Label><Textarea className="mt-1.5 min-h-80" value={picture.intake.sourceMaterial} onChange={(event) => patchIntake("sourceMaterial", event.target.value)} /></div> : null}
-            {picture.intake.sourceType === "biblical-historical" ? <><div><Label>Source passages / references</Label><Textarea className="mt-1.5" value={picture.intake.sourcePassages} onChange={(event) => patchIntake("sourcePassages", event.target.value)} /></div><div><Label>Supplied Scripture / source text</Label><Textarea className="mt-1.5 min-h-80" value={picture.intake.suppliedSourceText} onChange={(event) => patchIntake("suppliedSourceText", event.target.value)} /></div><div><Label>Fidelity requirements</Label><Textarea className="mt-1.5" value={picture.intake.fidelityRequirements} onChange={(event) => patchIntake("fidelityRequirements", event.target.value)} /></div></> : null}
-            {picture.intake.sourceType === "biblical-historical" ? <>
-              <Field label="Historical period" value={picture.intake.historicalPeriod} onChange={(value) => patchIntake("historicalPeriod", value)} />
-              <div><Label>Cultural and social world</Label><Textarea className="mt-1.5" value={picture.intake.culturalSocialWorld} onChange={(event) => patchIntake("culturalSocialWorld", event.target.value)} /></div>
-              <div><Label>Permitted dramatization</Label><Textarea className="mt-1.5" value={picture.intake.materialMayDramatize} onChange={(event) => patchIntake("materialMayDramatize", event.target.value)} /></div>
-            </> : null}
+            {picture.intake.sourceType === "concept" ? (
+              <div>
+                <Label>Premise</Label>
+                <Textarea
+                  className="mt-1.5 min-h-32"
+                  value={picture.intake.premise}
+                  onChange={(event) => patchIntake("premise", event.target.value)}
+                />
+              </div>
+            ) : null}
+            {picture.intake.sourceType === "treatment" ? (
+              <div>
+                <Label>Treatment / Outline</Label>
+                <Textarea
+                  className="mt-1.5 min-h-80"
+                  value={picture.intake.treatment}
+                  onChange={(event) => patchIntake("treatment", event.target.value)}
+                />
+              </div>
+            ) : null}
+            {picture.intake.sourceType === "existing-screenplay" ? (
+              <div>
+                <Label>Existing screenplay</Label>
+                <Textarea
+                  className="screenplay mt-1.5 min-h-[30rem]"
+                  value={picture.intake.existingScreenplay}
+                  onChange={(event) => patchIntake("existingScreenplay", event.target.value)}
+                />
+              </div>
+            ) : null}
+            {picture.intake.sourceType === "source-material" ? (
+              <div>
+                <Label>Source material</Label>
+                <Textarea
+                  className="mt-1.5 min-h-80"
+                  value={picture.intake.sourceMaterial}
+                  onChange={(event) => patchIntake("sourceMaterial", event.target.value)}
+                />
+              </div>
+            ) : null}
+            {picture.intake.sourceType === "biblical-historical" ? (
+              <>
+                <div>
+                  <Label>Source passages / references</Label>
+                  <Textarea
+                    className="mt-1.5"
+                    value={picture.intake.sourcePassages}
+                    onChange={(event) => patchIntake("sourcePassages", event.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Supplied Scripture / source text</Label>
+                  <Textarea
+                    className="mt-1.5 min-h-80"
+                    value={picture.intake.suppliedSourceText}
+                    onChange={(event) => patchIntake("suppliedSourceText", event.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Fidelity requirements</Label>
+                  <Textarea
+                    className="mt-1.5"
+                    value={picture.intake.fidelityRequirements}
+                    onChange={(event) => patchIntake("fidelityRequirements", event.target.value)}
+                  />
+                </div>
+              </>
+            ) : null}
+            {picture.intake.sourceType === "biblical-historical" ? (
+              <>
+                <Field
+                  label="Historical period"
+                  value={picture.intake.historicalPeriod}
+                  onChange={(value) => patchIntake("historicalPeriod", value)}
+                />
+                <div>
+                  <Label>Cultural and social world</Label>
+                  <Textarea
+                    className="mt-1.5"
+                    value={picture.intake.culturalSocialWorld}
+                    onChange={(event) => patchIntake("culturalSocialWorld", event.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Permitted dramatization</Label>
+                  <Textarea
+                    className="mt-1.5"
+                    value={picture.intake.materialMayDramatize}
+                    onChange={(event) => patchIntake("materialMayDramatize", event.target.value)}
+                  />
+                </div>
+              </>
+            ) : null}
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Genre" value={picture.intake.genre} onChange={(value) => patchIntake("genre", value)} />
-              <Field label="Runtime (min)" value={String(picture.intake.targetRuntimeMinutes)} onChange={(value) => patchIntake("targetRuntimeMinutes", Number(value) || 1)} type="number" />
+              <Field
+                label="Genre"
+                value={picture.intake.genre}
+                onChange={(value) => patchIntake("genre", value)}
+              />
+              <Field
+                label="Runtime (min)"
+                value={String(picture.intake.targetRuntimeMinutes)}
+                onChange={(value) => patchIntake("targetRuntimeMinutes", Number(value) || 1)}
+                type="number"
+              />
             </div>
-            <Field label="Tone" value={picture.intake.tone} onChange={(value) => patchIntake("tone", value)} />
-            <div><Label>Director notes</Label><Textarea className="mt-1.5" value={picture.intake.directorNotes} onChange={(event) => patchIntake("directorNotes", event.target.value)} /></div>
+            <Field
+              label="Tone"
+              value={picture.intake.tone}
+              onChange={(value) => patchIntake("tone", value)}
+            />
+            <div>
+              <Label>Director notes</Label>
+              <Textarea
+                className="mt-1.5"
+                value={picture.intake.directorNotes}
+                onChange={(event) => patchIntake("directorNotes", event.target.value)}
+              />
+            </div>
           </div>
         </details>
       </div>
@@ -347,21 +706,16 @@ function offlineDiscovery(reason: string): LocalLLMProviderDiscovery {
 function ResearchStage({ picture }: { picture: Picture }) {
   const patchActive = useStudio((state) => state.patchActive);
   const replaceActive = useStudio((state) => state.replaceActive);
-  const [llamaAvailable, setLlamaAvailable] = useState<boolean | null>(null);
   const [building, setBuilding] = useState(false);
   const bible = hydratePictureResearch(picture.research, picture.intake);
+  const researchProfile = hydrateProductionRouting(picture.productionRouting, { legacyLocalSelection: Boolean(picture.screenplay.pinnedWriterServedId || picture.screenplay.selectedModelId) });
+  const researchBinding = researchProfile.bindings.find(binding => binding.role === "architect");
+  const llamaAvailable = Boolean(researchBinding?.callableModelId && ["installed", "loaded"].includes(researchBinding.status));
   const scan = useCallback(async () => {
-    try {
-      const status = await localLLMStatus();
-      setLlamaAvailable(Boolean(status.provider?.available));
-    } catch {
-      setLlamaAvailable(false);
-    }
+    toast.info("Refresh availability in the production profile controls above. No alternate model is used.");
   }, []);
-  useEffect(() => {
-    void scan();
-  }, [scan]);
   return (
+    <div className="min-w-0"><details className="border-b border-border p-3"><summary>Research production profile · {researchBinding?.label}</summary><ProductionProfileControls picture={picture} disabled={building} /></details>
     <ResearchWorkspace
       title={picture.title}
       bible={bible}
@@ -374,11 +728,20 @@ function ResearchStage({ picture }: { picture: Picture }) {
       onBuildDraft={async () => {
         setBuilding(true);
         try {
-          await scan();
-          const result = await executeResearchDraftOnServer(picture, replaceActive);
-          replaceActive(result.picture);
+          let expected = screenplaySourceContextFingerprint(picture);
+          const saveCurrent = (next: Picture) => {
+            const current = useStudio.getState().pictures.find(item => item.id === picture.id);
+            if (!current || screenplaySourceContextFingerprint(current) !== expected) throw new Error("Research sources or profile changed during generation. Late output was not applied.");
+            replaceActive(next);
+            expected = screenplaySourceContextFingerprint(next);
+          };
+          const result = await executeResearchDraftOnServer(picture, saveCurrent);
+          saveCurrent(result.picture);
           if (!result.providerCalled) {
-            toast.error(result.flow.steps.find((step) => step.status === "failed")?.message ?? CONFIGURED_MODEL_UNAVAILABLE);
+            toast.error(
+              result.flow.steps.find((step) => step.status === "failed")?.message ??
+                CONFIGURED_MODEL_UNAVAILABLE,
+            );
             return;
           }
           toast.success("Research Bible generated.");
@@ -388,20 +751,29 @@ function ResearchStage({ picture }: { picture: Picture }) {
           setBuilding(false);
         }
       }}
-    />
+    /></div>
   );
 }
 
 function ScreenplayStage({ picture }: { picture: Picture }) {
+  const profile = hydrateProductionRouting(picture.productionRouting, {legacyLocalSelection:Boolean(picture.screenplay.pinnedWriterServedId || picture.screenplay.selectedModelId)});
   const patchActive = useStudio((state) => state.patchActive);
   const [models, setModels] = useState<ScreenplayModelRef[]>([]);
   const [provider, setProvider] = useState<LocalLLMProviderDiscovery | null>(null);
   const [job, setJob] = useState<ScreenplayJobSnapshot | null>(null);
-  const [jobId, setJobId] = useState<string | null>(picture.screenplay.status === "GENERATING" ? picture.screenplay.generation?.runId ?? null : null);
+  const [jobId, setJobId] = useState<string | null>(
+    picture.screenplay.status === "GENERATING"
+      ? (picture.screenplay.generation?.runId ?? null)
+      : null,
+  );
 
-  const persistScreenplay = useCallback((screenplay: Picture["screenplay"]) => {
-    patchActive({ screenplay, screenplayFountain: screenplay.workingFountain });
-  }, [patchActive]);
+  const persistScreenplay = useCallback(
+    (screenplay: Picture["screenplay"]) => {
+      const state=useStudio.getState(), current=state.pictures.find(item=>item.id===picture.id);
+      if (current) state.replaceActive({...current,screenplay,screenplayFountain:screenplay.workingFountain});
+    },
+    [picture.id],
+  );
 
   const scan = useCallback(async () => {
     setProvider(null);
@@ -411,11 +783,17 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
       setModels(status.models);
     } catch (error) {
       setModels([]);
-      setProvider(offlineDiscovery(error instanceof Error ? error.message : "LM Studio local API is unavailable."));
+      setProvider(
+        offlineDiscovery(
+          error instanceof Error ? error.message : "LM Studio local API is unavailable.",
+        ),
+      );
     }
   }, []);
 
-  useEffect(() => { void scan(); }, [scan]);
+  useEffect(() => {
+    void scan();
+  }, [scan]);
 
   useEffect(() => {
     if (!jobId) return;
@@ -427,16 +805,43 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
         if (disposed) return;
         if (!snapshot) {
           setJobId(null);
-          persistScreenplay({ ...picture.screenplay, status: picture.screenplay.approvedVersionId ? "APPROVED" : picture.screenplay.workingFountain.trim() ? "READY_FOR_REVIEW" : "DRAFT", generation: null });
-          toast.message("The previous screenplay job is no longer active. Your saved screenplay is retained.");
+          persistScreenplay({
+            ...picture.screenplay,
+            status: picture.screenplay.approvedVersionId
+              ? "APPROVED"
+              : picture.screenplay.workingFountain.trim()
+                ? "READY_FOR_REVIEW"
+                : "DRAFT",
+            generation: null,
+          });
+          toast.message(
+            "The previous screenplay job is no longer active. Your saved screenplay is retained.",
+          );
+          return;
+        }
+        const current=useStudio.getState().pictures.find(item=>item.id===picture.id);
+        if(snapshot.sourceContextFingerprint && (!current || screenplaySourceContextFingerprint(current)!==snapshot.sourceContextFingerprint)) {
+          void stopScreenplayJob(jobId);
+          setJobId(null);
+          toast.error("Screenplay sources or profile changed. The obsolete response was not applied; start a revision from current sources.");
+          if(current) persistScreenplay({...current.screenplay,status:current.screenplay.approvedVersionId ? "APPROVED" : "READY_FOR_REVIEW",generation:null});
           return;
         }
         setJob(snapshot);
         persistScreenplay(snapshot.screenplay);
-        if (snapshot.status === "queued" || snapshot.status === "running") timer = setTimeout(() => void poll(), 300);
+        if (snapshot.status === "queued" || snapshot.status === "running")
+          timer = setTimeout(() => void poll(), 300);
       } catch (error) {
         if (!disposed) {
-          setJob((current) => current ? { ...current, status: "failed", error: error instanceof Error ? error.message : String(error) } : current);
+          setJob((current) =>
+            current
+              ? {
+                  ...current,
+                  status: "failed",
+                  error: error instanceof Error ? error.message : String(error),
+                }
+              : current,
+          );
         }
       }
     };
@@ -447,32 +852,39 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
     };
   }, [jobId, persistScreenplay]);
 
-  const start = async (options: { resume?: boolean; stepId?: ScreenplayStep["id"]; target?: ScreenplayRewriteTarget; applyQa?: boolean } = {}) => {
+  const start = async (
+    options: {
+      resume?: boolean;
+      stepId?: ScreenplayStep["id"];
+      target?: ScreenplayRewriteTarget;
+      applyQa?: boolean;
+    } = {},
+  ) => {
     const research = hydratePictureResearch(picture.research, picture.intake);
     const blockedResearch = researchBlocksScreenplay(research);
     if (blockedResearch) {
       toast.error(blockedResearch);
       return;
     }
-    const writerId = explicitMoviePlanServedId(picture)?.replace(/^lmstudio:/, "") ?? null;
-    const modelId = models.find((model) => model.servedModelId === writerId)?.id ?? null;
-    const selected = models.find((model) => model.id === modelId) ?? null;
-    const blockedWriter = exactLocalWriterBlock(selected, Boolean(provider?.available), writerId);
-    if (blockedWriter) {
-      toast.error(blockedWriter);
-      return;
-    }
-    if (!modelId) {
-      toast.error("Pin the full currently served Llama model ID. Family names are not accepted. Qwen is an optional explicit alternate.");
-      return;
-    }
+    const productionBinding=profile.bindings.find(binding=>binding.role === (options.applyQa || options.stepId || picture.screenplay.workingFountain.trim() ? "rewrite" : "writer"));
+    if (!productionBinding?.callableModelId || ["unavailable","needs-verification","needs-refresh"].includes(productionBinding.status)) { toast.error(productionBinding?.statusReason ?? "Refresh the production profile before writing."); return; }
+    const writerId=productionBinding.callableModelId, modelId=writerId;
     try {
       const initial = await beginScreenplayJob({
+        sourceContextFingerprint: screenplaySourceContextFingerprint(picture),
+        productionBinding,
+        generationInstructions: JSON.stringify(bibleAuthoringContext(picture)),
         intake: picture.intake,
-        screenplay: { ...picture.screenplay, selectedModelId: modelId, pinnedWriterServedId: writerId },
+        screenplay: {
+          ...picture.screenplay,
+          selectedModelId: modelId,
+          pinnedWriterServedId: writerId,
+        },
         research,
         modelId,
-        revisionInstructions: options.applyQa ? JSON.stringify(picture.screenplay.lastQaReport?.findings ?? []) : undefined,
+        revisionInstructions: options.applyQa
+          ? JSON.stringify(picture.screenplay.lastQaReport?.findings ?? [])
+          : undefined,
         resume: options.resume,
         stepId: options.stepId,
         rewriteScope: options.target?.scope,
@@ -480,6 +892,11 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
         selectedNodeIds: options.target?.nodeIds ?? null,
         selection: options.target?.selection ?? null,
       });
+      const current=useStudio.getState().pictures.find(item=>item.id===picture.id);
+      if (!current || current.screenplay.workingFountain!==picture.screenplay.workingFountain || screenplaySourceContextFingerprint(current)!==screenplaySourceContextFingerprint(picture)) {
+        await stopScreenplayJob(initial.id);
+        throw new Error("Sources changed while the writing request started. Existing text was preserved.");
+      }
       setJob(initial);
       setJobId(initial.id);
       persistScreenplay({
@@ -489,98 +906,185 @@ function ScreenplayStage({ picture }: { picture: Picture }) {
         updatedAt: Date.now(),
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to start local screenplay generation.");
+      toast.error(
+        error instanceof Error ? error.message : "Unable to start local screenplay generation.",
+      );
       void scan();
     }
   };
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto sm:overflow-hidden">
-    {picture.importedPackage ? <div className="shrink-0 px-4 pt-3"><ImportedPackageResources importedPackage={picture.importedPackage} /></div> : null}
-    <div className="min-h-[40rem] flex-1 overflow-hidden sm:min-h-0"><ScreenplayWorkspace
-      picture={picture}
-      intake={picture.intake}
-      screenplay={picture.screenplay}
-      models={models}
-      provider={provider}
-      job={job}
-      onTextChange={(workingFountain) => persistScreenplay({ ...picture.screenplay, workingFountain, status: picture.screenplay.approvedVersionId ? picture.screenplay.status : "READY_FOR_REVIEW", updatedAt: Date.now() })}
-      onSaveRevision={() => persistScreenplay(addManualScreenplayVersion(picture.screenplay, picture.screenplay.workingFountain, uid("spv")))}
-      onGenerate={(target) => void start({ target })}
-      onContinue={(target) => void start({ resume: true, target })}
-      onApplyQaRecommendations={(target) => void start({ target, applyQa: true })}
-      onRegeneratePass={(stepId, target) => void start({ stepId, target })}
-      researchApproved={isResearchApproved(hydratePictureResearch(picture.research, picture.intake))}
-      onStop={() => {
-        const activeJobId = jobId ?? picture.screenplay.generation?.runId;
-        if (!activeJobId) return;
-        void stopScreenplayJob(activeJobId).then((snapshot) => {
-          setJob(snapshot);
-          setJobId(null);
-          persistScreenplay(snapshot?.screenplay ?? { ...picture.screenplay, status: picture.screenplay.approvedVersionId ? "APPROVED" : "READY_FOR_REVIEW", generation: null });
-        }).catch((error) => toast.error(error instanceof Error ? error.message : "Could not stop generation."));
-      }}
-      onRestore={(versionId) => persistScreenplay(restoreScreenplayVersion(picture.screenplay, versionId, uid("spv")))}
-      onApprove={() => persistScreenplay(approveCurrentScreenplay(picture.screenplay, uid("spv")))}
-      onRescan={() => void scan()}
-      onModelChange={(selectedModelId) => {
-        const chosen = models.find((model) => model.id === selectedModelId) ?? null;
-        const intake = { ...picture.intake, screenplayModelId: selectedModelId, updatedAt: Date.now() };
-        persistScreenplay({
-          ...picture.screenplay,
-          selectedModelId,
-          pinnedWriterServedId: chosen?.servedModelId ?? null,
-          pinnedQaServedId: chosen && isLlamaFamily(chosen) ? (picture.screenplay.pinnedQaServedId ?? chosen.servedModelId) : picture.screenplay.pinnedQaServedId,
-          updatedAt: Date.now(),
-        });
-        patchActive({ intake });
-      }}
-      onQaPin={(servedModelId) => persistScreenplay({ ...picture.screenplay, pinnedQaServedId: servedModelId, updatedAt: Date.now() })}
-      onReleaseResident={() => {
-        void releaseLocalScreenplayModel().then(() => toast.message("Local model claim released. Premiere316 did not auto-load a replacement.")).catch((error) => toast.error(error instanceof Error ? error.message : "Unable to release local model."));
-      }}
-      onApplyQaRevision={(next) => {
-        persistScreenplay(next);
-        toast.success("Scoped revision appended. Prior approved Fountain is preserved.");
-      }}
-      onStoryDoctor={(modelId, target, secondOpinion) => {
-        const writerPin = explicitMoviePlanServedId(picture)?.replace(/^lmstudio:/, "") ?? null;
-        const writer = models.find((model) => model.id === picture.screenplay.selectedModelId) ?? null;
-        void storyDoctorRuns.run(picture.id, modelId.replace(/^lmstudio:/, ""), (progress) => beginScreenplayQa({
-          fountain: picture.screenplay.workingFountain,
-          modelId,
-          writerId: writerPin ?? picture.screenplay.selectedModelId,
-          pinnedQaServedId: picture.screenplay.pinnedQaServedId ?? writerPin,
-          secondOpinion,
-          goal: picture.intake.logline || picture.intake.premise || picture.title,
-          revisionTarget: target.scope,
-          rewriteScope: target.scope,
-          selectedNodeId: target.nodeId,
-          selectedNodeIds: target.nodeIds,
-          selection: target.selection,
-          characterState: picture.characters.map((item) => item.name).join(", "),
-          directorNotes: picture.intake.directorNotes,
-          research: hydratePictureResearch(picture.research, picture.intake),
-        }, progress)).then((report) => {
-          persistScreenplay({
-            ...picture.screenplay,
-            lastQaReport: {
-              id: report.id,
-              createdAt: report.createdAt,
-              modelId: report.model.id,
-              servedModelId: report.model.servedModelId,
-              displayName: report.model.displayName,
-              findings: report.findings,
-              fountainUnchanged: true,
-            },
-            updatedAt: Date.now(),
-          });
-          toast.message(report.findings[0]?.summary || "Story Doctor critique ready. Fountain was not changed.");
-        }).catch((error) => {
-          if (storyDoctorRuns.get(picture.id)?.status !== "stopped") toast.error(error instanceof Error ? error.message : "Story Doctor failed closed.");
-        });
-      }}
-    /></div></div>
+      <details className="shrink-0 border-b border-border px-4 py-3"><summary>Production profile · {profile.profileId === "astra-ultra" ? "Astra Ultra" : "Local Models"}</summary><ProductionProfileControls picture={picture} disabled={job?.status === "running" || job?.status === "queued"} /></details>
+      {picture.importedPackage ? (
+        <div className="shrink-0 px-4 pt-3">
+          <ImportedPackageResources importedPackage={picture.importedPackage} />
+        </div>
+      ) : null}
+      <div className="min-h-[40rem] flex-1 overflow-hidden sm:min-h-0">
+        <ScreenplayWorkspace
+          picture={picture}
+          intake={picture.intake}
+          screenplay={picture.screenplay}
+          models={models}
+          provider={provider}
+          job={job}
+          onTextChange={(workingFountain) =>
+            persistScreenplay({
+              ...picture.screenplay,
+              workingFountain,
+              status: picture.screenplay.approvedVersionId
+                ? picture.screenplay.status
+                : "READY_FOR_REVIEW",
+              updatedAt: Date.now(),
+            })
+          }
+          onSaveRevision={() =>
+            persistScreenplay(
+              addManualScreenplayVersion(
+                picture.screenplay,
+                picture.screenplay.workingFountain,
+                uid("spv"),
+              ),
+            )
+          }
+          onGenerate={(target) => void start({ target })}
+          onContinue={(target) => void start({ resume: true, target })}
+          onApplyQaRecommendations={(target) => void start({ target, applyQa: true })}
+          onRegeneratePass={(stepId, target) => void start({ stepId, target })}
+          researchApproved={isResearchApproved(
+            hydratePictureResearch(picture.research, picture.intake),
+          )}
+          onStop={() => {
+            const activeJobId = jobId ?? picture.screenplay.generation?.runId;
+            if (!activeJobId) return;
+            void stopScreenplayJob(activeJobId)
+              .then((snapshot) => {
+                setJob(snapshot);
+                setJobId(null);
+                persistScreenplay(
+                  snapshot?.screenplay ?? {
+                    ...picture.screenplay,
+                    status: picture.screenplay.approvedVersionId ? "APPROVED" : "READY_FOR_REVIEW",
+                    generation: null,
+                  },
+                );
+              })
+              .catch((error) =>
+                toast.error(error instanceof Error ? error.message : "Could not stop generation."),
+              );
+          }}
+          onRestore={(versionId) =>
+            persistScreenplay(restoreScreenplayVersion(picture.screenplay, versionId, uid("spv")))
+          }
+          onApprove={() =>
+            persistScreenplay(approveCurrentScreenplay(picture.screenplay, uid("spv")))
+          }
+          onRescan={() => void scan()}
+          onModelChange={(selectedModelId) => {
+            const chosen = models.find((model) => model.id === selectedModelId) ?? null;
+            const intake = {
+              ...picture.intake,
+              screenplayModelId: selectedModelId,
+              updatedAt: Date.now(),
+            };
+            persistScreenplay({
+              ...picture.screenplay,
+              selectedModelId,
+              pinnedWriterServedId: chosen?.servedModelId ?? null,
+              pinnedQaServedId:
+                chosen && isLlamaFamily(chosen)
+                  ? (picture.screenplay.pinnedQaServedId ?? chosen.servedModelId)
+                  : picture.screenplay.pinnedQaServedId,
+              updatedAt: Date.now(),
+            });
+            patchActive({ intake });
+          }}
+          onQaPin={(servedModelId) =>
+            persistScreenplay({
+              ...picture.screenplay,
+              pinnedQaServedId: servedModelId,
+              updatedAt: Date.now(),
+            })
+          }
+          onReleaseResident={() => {
+            void releaseLocalScreenplayModel()
+              .then(() =>
+                toast.message(
+                  "Local model claim released. Premiere316 did not auto-load a replacement.",
+                ),
+              )
+              .catch((error) =>
+                toast.error(
+                  error instanceof Error ? error.message : "Unable to release local model.",
+                ),
+              );
+          }}
+          onApplyQaRevision={(next) => {
+            persistScreenplay(next);
+            toast.success("Scoped revision appended. Prior approved Fountain is preserved.");
+          }}
+          onStoryDoctor={(modelId, target, secondOpinion) => {
+            const productionBinding=profile.bindings.find(binding=>binding.role === (secondOpinion ? "challenger" : "reviewer"));
+            if (!productionBinding?.callableModelId || ["unavailable","needs-verification","needs-refresh"].includes(productionBinding.status)) { toast.error(productionBinding?.statusReason ?? "Refresh the production profile before critique."); return; }
+            const writerPin = explicitMoviePlanServedId(picture)?.replace(/^lmstudio:/, "") ?? null;
+            const writer =
+              models.find((model) => model.id === picture.screenplay.selectedModelId) ?? null;
+            void storyDoctorRuns
+              .run(picture.id, modelId.replace(/^lmstudio:/, ""), (progress) =>
+                beginScreenplayQa(
+                  {
+                    productionBinding,
+                    generationInstructions: JSON.stringify(bibleAuthoringContext(picture)),
+                    fountain: picture.screenplay.workingFountain,
+                    modelId,
+                    writerId: writerPin ?? picture.screenplay.selectedModelId,
+                    pinnedQaServedId: picture.screenplay.pinnedQaServedId ?? writerPin,
+                    secondOpinion,
+                    goal: picture.intake.logline || picture.intake.premise || picture.title,
+                    revisionTarget: target.scope,
+                    rewriteScope: target.scope,
+                    selectedNodeId: target.nodeId,
+                    selectedNodeIds: target.nodeIds,
+                    selection: target.selection,
+                    characterState: picture.characters.map((item) => item.name).join(", "),
+                    directorNotes: picture.intake.directorNotes,
+                    research: hydratePictureResearch(picture.research, picture.intake),
+                  },
+                  progress,
+                ),
+              )
+              .then((report) => {
+                const current=useStudio.getState().pictures.find(item=>item.id===picture.id);
+                if (!current || current.screenplay.workingFountain!==picture.screenplay.workingFountain || screenplaySourceContextFingerprint(current)!==screenplaySourceContextFingerprint(picture)) throw new Error("Sources changed during critique. The obsolete result was not applied.");
+                persistScreenplay({
+                  ...picture.screenplay,
+                  lastQaReport: {
+                    id: report.id,
+                    createdAt: report.createdAt,
+                    modelId: report.model.id,
+                    servedModelId: report.model.servedModelId,
+                    displayName: report.model.displayName,
+                    findings: report.findings,
+                    fountainUnchanged: true,
+                  },
+                  updatedAt: Date.now(),
+                });
+                toast.message(
+                  report.findings[0]?.summary ||
+                    "Story Doctor critique ready. Fountain was not changed.",
+                );
+              })
+              .catch((error) => {
+                if (storyDoctorRuns.get(picture.id)?.status !== "stopped")
+                  toast.error(
+                    error instanceof Error ? error.message : "Story Doctor failed closed.",
+                  );
+              });
+          }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -591,62 +1095,148 @@ function InventoryStage({ picture }: { picture: Picture }) {
   const boundary = approvedScreenplayBoundary(picture.id, picture.intake, picture.screenplay);
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto sm:overflow-hidden">
-    {picture.importedPackage ? <div className="shrink-0 px-4 pt-3"><ImportedPackageResources importedPackage={picture.importedPackage} /></div> : null}
-    <div className="shrink-0 px-4 pt-3"><Button size="sm" variant="secondary" onClick={() => setGenerateFocus("assets")}>Open Generate / Assets</Button></div>
-    <div className="min-h-[40rem] flex-1 overflow-hidden sm:min-h-0">
-    <InventoryWorkspace
-      boundary={boundary}
-      record={picture.production ?? null}
-      busy={busy}
-      onRunBreakdown={async (approved) => {
-        setBusy(true);
-        try {
-          const extracted = await runProductionBreakdown(
-            approvedScreenplayInputFromBoundary(approved),
-            deterministicFountainExtractor,
-          );
-          const withResearch = createResearchAwareProductionBreakdown({
-            screenplay: approved,
-            research: hydratePictureResearch(picture.research, picture.intake),
-            drafts: extracted.requirements,
-          });
-          if ("error" in withResearch) throw new Error(withResearch.error);
-          const production = picture.production
-            ? reconcileProductionBreakdown(picture.production, withResearch)
-            : withResearch;
-          patchActive({ production });
-          toast.success(`Production breakdown ready · ${production.assets.length} assets`);
-        } catch (error) {
-          toast.error(error instanceof Error ? error.message : "Unable to build production inventory.");
-        } finally {
-          setBusy(false);
-        }
-      }}
-      visualApprovals={picture.visualDevelopment?.approvals.map((approval) => approval.id) ?? []}
-      cinematographyApprovals={picture.cinematography?.approvals.map((approval) => approval.id) ?? []}
-      onChange={(production) => patchActive({ production })}
-    />
-    </div></div>
+      {picture.importedPackage ? (
+        <div className="shrink-0 px-4 pt-3">
+          <ImportedPackageResources importedPackage={picture.importedPackage} />
+        </div>
+      ) : null}
+      <div className="shrink-0 px-4 pt-3">
+        <Button size="sm" variant="secondary" onClick={() => setGenerateFocus("assets")}>
+          Open Generate / Assets
+        </Button>
+      </div>
+      <div className="min-h-[40rem] flex-1 overflow-hidden sm:min-h-0">
+        <InventoryWorkspace
+          boundary={boundary}
+          record={picture.production ?? null}
+          busy={busy}
+          onRunBreakdown={async (approved) => {
+            setBusy(true);
+            try {
+              const extracted = await runProductionBreakdown(
+                approvedScreenplayInputFromBoundary(approved),
+                deterministicFountainExtractor,
+              );
+              const withResearch = createResearchAwareProductionBreakdown({
+                screenplay: approved,
+                research: hydratePictureResearch(picture.research, picture.intake),
+                drafts: extracted.requirements,
+              });
+              if ("error" in withResearch) throw new Error(withResearch.error);
+              const production = picture.production
+                ? reconcileProductionBreakdown(picture.production, withResearch)
+                : withResearch;
+              patchActive({ production });
+              toast.success(`Production breakdown ready · ${production.assets.length} assets`);
+            } catch (error) {
+              toast.error(
+                error instanceof Error ? error.message : "Unable to build production inventory.",
+              );
+            } finally {
+              setBusy(false);
+            }
+          }}
+          visualApprovals={
+            picture.visualDevelopment?.approvals.map((approval) => approval.id) ?? []
+          }
+          cinematographyApprovals={
+            picture.cinematography?.approvals.map((approval) => approval.id) ?? []
+          }
+          onChange={(production) => patchActive({ production })}
+        />
+      </div>
+    </div>
   );
 }
 
 function VisualDevelopmentStage({ picture }: { picture: Picture }) {
+  const [surface, setSurface] = useState<"sheets" | "visual">("sheets");
   const patchActive = useStudio((state) => state.patchActive);
-  const visualDevelopment = picture.visualDevelopment ?? hydrateVisualDevelopmentState(null, picture);
+  const visualDevelopment =
+    picture.visualDevelopment ?? hydrateVisualDevelopmentState(null, picture);
   useEffect(() => {
     if (!picture.visualDevelopment) patchActive({ visualDevelopment });
   }, [patchActive, picture.visualDevelopment, visualDevelopment]);
-  return <VisualDevelopmentWorkspace state={visualDevelopment} onChange={(visualDevelopment) => patchActive({ visualDevelopment })} />;
+  return (
+    <div className="h-full overflow-auto p-4">
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Button
+          variant={surface === "sheets" ? "primary" : "secondary"}
+          onClick={() => setSurface("sheets")}
+        >
+          Character sheets & scene states
+        </Button>
+        <Button
+          variant={surface === "visual" ? "primary" : "secondary"}
+          onClick={() => setSurface("visual")}
+        >
+          Visual development
+        </Button>
+      </div>
+      {surface === "sheets" ? (
+        <MovieBibleEditor
+          kinds={["character", "participant", "location", "prop", "wardrobe"]}
+          title="Characters & world"
+        />
+      ) : (
+        <VisualDevelopmentWorkspace
+          state={visualDevelopment}
+          onChange={(visualDevelopment) => patchActive({ visualDevelopment })}
+        />
+      )}
+    </div>
+  );
 }
 
 function CinematographyStage({ picture }: { picture: Picture }) {
+  const [surface, setSurface] = useState<"continuity" | "camera">("continuity");
   const patchActive = useStudio((state) => state.patchActive);
-  const visualDevelopment = picture.visualDevelopment ?? hydrateVisualDevelopmentState(null, picture);
+  const visualDevelopment =
+    picture.visualDevelopment ?? hydrateVisualDevelopmentState(null, picture);
   const cinematography = picture.cinematography ?? hydrateCinematographyState(null, picture);
   useEffect(() => {
-    if (!picture.visualDevelopment || !picture.cinematography) patchActive({ visualDevelopment, cinematography });
-  }, [patchActive, picture.visualDevelopment, picture.cinematography, visualDevelopment, cinematography]);
-  return <CinematographyWorkspace state={cinematography} visual={visualDevelopment} onChange={(cinematography) => patchActive({ cinematography })} />;
+    if (!picture.visualDevelopment || !picture.cinematography)
+      patchActive({ visualDevelopment, cinematography });
+  }, [
+    patchActive,
+    picture.visualDevelopment,
+    picture.cinematography,
+    visualDevelopment,
+    cinematography,
+  ]);
+  return (
+    <div className="h-full overflow-auto p-4">
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Button
+          variant={surface === "continuity" ? "primary" : "secondary"}
+          onClick={() => setSurface("continuity")}
+        >
+          Geography & continuity
+        </Button>
+        <Button
+          variant={surface === "camera" ? "primary" : "secondary"}
+          onClick={() => setSurface("camera")}
+        >
+          Cinematography
+        </Button>
+      </div>
+      {surface === "continuity" ? (
+        <>
+          <ShotContinuityEditor />
+          <MovieBibleEditor
+            kinds={["scene", "shot", "location"]}
+            title="Camera & geography sources"
+          />
+        </>
+      ) : (
+        <CinematographyWorkspace
+          state={cinematography}
+          visual={visualDevelopment}
+          onChange={(cinematography) => patchActive({ cinematography })}
+        />
+      )}
+    </div>
+  );
 }
 
 function PerformanceStage({ picture }: { picture: Picture }) {
@@ -661,21 +1251,52 @@ function PerformanceStage({ picture }: { picture: Picture }) {
   if (!workspace) {
     return (
       <div className="grid h-full min-h-64 place-items-center bg-bg p-6 text-center">
-        <div className="max-w-md"><p className="text-[11px] tracking-wide text-subtle uppercase">07 · Performance direction</p><h2 className="mt-1 font-display text-2xl tracking-tight">Approve the screenplay first</h2><p className="mt-2 text-sm leading-relaxed text-muted">Performance work begins from the immutable approved screenplay, never a working draft.</p></div>
+        <div className="max-w-md">
+          <p className="text-[11px] tracking-wide text-subtle uppercase">
+            07 · Performance direction
+          </p>
+          <h2 className="mt-1 font-display text-2xl tracking-tight">
+            Approve the screenplay first
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            Performance work begins from the immutable approved screenplay, never a working draft.
+          </p>
+        </div>
       </div>
     );
   }
 
-  const characters = picture.production?.assets.filter((asset) => asset.category === "character").map((asset) => ({ id: asset.id, name: asset.name, detail: asset.canonicalSpec.performanceNotes }))
-    ?? picture.characters.map((character) => ({ id: character.id, name: character.name, detail: character.role }));
+  const characters =
+    picture.production?.assets
+      .filter((asset) => asset.category === "character")
+      .map((asset) => ({
+        id: asset.id,
+        name: asset.name,
+        detail: asset.canonicalSpec.performanceNotes,
+      })) ??
+    picture.characters.map((character) => ({
+      id: character.id,
+      name: character.name,
+      detail: character.role,
+    }));
 
   return (
-    <div className="flex h-full min-h-0 flex-col"><EmotionPerformancePanel picture={picture}/><div className="min-h-0 flex-1"><PerformanceWorkspaceView
-      workspace={workspace}
-      characters={characters}
-      onChange={(performance) => patchActive({ performance, shots: canonicalShotsToLegacy(performance.shots, picture.shots) })}
-      onOpenShots={() => setStage("shots")}
-    /></div></div>
+    <div className="flex h-full min-h-0 flex-col">
+      <EmotionPerformancePanel picture={picture} />
+      <div className="min-h-0 flex-1">
+        <PerformanceWorkspaceView
+          workspace={workspace}
+          characters={characters}
+          onChange={(performance) =>
+            patchActive({
+              performance,
+              shots: canonicalShotsToLegacy(performance.shots, picture.shots),
+            })
+          }
+          onOpenShots={() => setStage("shots")}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -692,24 +1313,46 @@ function ShotsStage({ picture }: { picture: Picture }) {
   if (!workspace) {
     return (
       <div className="grid h-full min-h-64 place-items-center bg-bg p-6 text-center">
-        <div className="max-w-md"><p className="text-[11px] tracking-wide text-subtle uppercase">08 · Shot preparation</p><h2 className="mt-1 font-display text-2xl tracking-tight">Performance workspace required</h2><p className="mt-2 text-sm leading-relaxed text-muted">Approve the screenplay, then direct its beats before preparing coverage.</p></div>
+        <div className="max-w-md">
+          <p className="text-[11px] tracking-wide text-subtle uppercase">08 · Shot preparation</p>
+          <h2 className="mt-1 font-display text-2xl tracking-tight">
+            Performance workspace required
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            Approve the screenplay, then direct its beats before preparing coverage.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-    <div className="shrink-0 px-4 pt-3"><Button size="sm" variant="secondary" onClick={() => setGenerateFocus("keyframes", picture.shots[0]?.id ?? null)}>Open Generate / First-Last Frames</Button></div>
-    <div className="min-h-0 flex-1 overflow-hidden">
-    <ShotPreparationWorkspace
-      workspace={workspace}
-      frameWorkspace={picture.generateGates}
-      assets={picture.production?.assets ?? []}
-      onChange={(performance) => patchActive({ performance, shots: canonicalShotsToLegacy(performance.shots, picture.shots) })}
-      onBack={() => setStage("performance")}
-      onOpenPromptLab={() => setStage("prompts")}
-    />
-    </div></div>
+      <div className="shrink-0 px-4 pt-3">
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => setGenerateFocus("keyframes", picture.shots[0]?.id ?? null)}
+        >
+          Open Generate / First-Last Frames
+        </Button>
+      </div>
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <ShotPreparationWorkspace
+          workspace={workspace}
+          frameWorkspace={picture.generateGates}
+          assets={picture.production?.assets ?? []}
+          onChange={(performance) =>
+            patchActive({
+              performance,
+              shots: canonicalShotsToLegacy(performance.shots, picture.shots),
+            })
+          }
+          onBack={() => setStage("performance")}
+          onOpenPromptLab={() => setStage("prompts")}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -719,34 +1362,94 @@ function PromptStage({ picture }: { picture: Picture }) {
   const lab = hydratePromptLabState(picture.promptLab);
   return (
     <Pane title="Prompt Lab" kicker="09 · Dialects">
+      <RenderContextEditor />
+      <ShotContinuityEditor />
       <p className="mb-4 max-w-xl text-sm text-muted">
         Still dialect {engineById(picture.selectedEngine.image)?.name}. Motion dialect{" "}
-        {engineById(picture.selectedEngine.video)?.name}. Each shot is a 10–15s performance.
+        {engineById(picture.selectedEngine.video)?.name}. Editorial duration stays separate from
+        executable clip limits.
       </p>
       <div className="mb-4 max-w-xl rounded-md bg-elevated p-3 shadow-[var(--shadow-border)]">
         <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Prompt compiler</p>
-        <select aria-label="Prompt compiler" className="mt-3 h-9 w-full rounded-sm bg-inset px-2 text-xs text-fg shadow-[var(--shadow-border)]" value="llama" onChange={() => patchActive({ promptLab: lab })}>
-          <option value="llama">{DEFAULT_CREW_WRITER_DISPLAY} · default</option>
+        <select
+          aria-label="Prompt compiler"
+          className="mt-3 h-9 w-full rounded-sm bg-inset px-2 text-xs text-fg shadow-[var(--shadow-border)]"
+          value="llama"
+          onChange={() => patchActive({ promptLab: lab })}
+        >
+          <option value="llama">Deterministic selected-engine serializer · no model call</option>
         </select>
-        <select aria-label="Alternate compiler" className="mt-2 h-9 w-full rounded-sm bg-inset px-2 text-xs text-fg shadow-[var(--shadow-border)]" value={lab.alternate} onChange={(event) => patchActive({ promptLab: { ...lab, alternate: event.target.value === "qwen" ? "qwen" : "none" } })}>
+        <select
+          aria-label="Alternate compiler"
+          className="mt-2 h-9 w-full rounded-sm bg-inset px-2 text-xs text-fg shadow-[var(--shadow-border)]"
+          value={lab.alternate}
+          onChange={(event) =>
+            patchActive({
+              promptLab: { ...lab, alternate: event.target.value === "qwen" ? "qwen" : "none" },
+            })
+          }
+        >
           <option value="none">Alternate · None</option>
           <option value="qwen">Alternate · Qwen (explicit A/B only)</option>
         </select>
         <p className="mt-2 text-xs leading-relaxed text-muted">{promptLabRuntimeBlock()}</p>
-        <Button className="mt-3" size="sm" variant="secondary" onClick={() => {
-          const compiled = compilePicture(picture);
-          const drafts = compiled.shots.flatMap((shot) => {
-            const still = compileEnginePromptPackage({ picture: compiled, shot, target: "still" });
-            const motion = compileEnginePromptPackage({ picture: compiled, shot, target: "video" });
-            return [
-              { id: `${shot.id}:still`, family: "llama" as const, engineId: still.engineTarget, text: still.enginePrompt, canonicalSpecHash: canonicalSpecHash(still), createdAt: Date.now(), logicalRole: "prompt-engineer" as const, runtimeActivation: "gated-wave-5" as const },
-              { id: `${shot.id}:video`, family: "llama" as const, engineId: motion.engineTarget, text: motion.enginePrompt, canonicalSpecHash: canonicalSpecHash(motion), createdAt: Date.now(), logicalRole: "prompt-engineer" as const, runtimeActivation: "gated-wave-5" as const },
-            ];
-          });
-          patchActive({ shots: compiled.shots, promptLab: { ...lab, drafts } });
-          toast.success("Deterministic Llama-default compiler wrote still and motion drafts. No video runtime was invoked.");
-        }}>Compile drafts</Button>
-        <Button className="mt-3 ml-2" size="sm" variant="ghost" disabled title={promptLabRuntimeBlock()}>A/B benchmark</Button>
+        <Button
+          className="mt-3"
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            const compiled = compilePicture(picture);
+            const drafts = compiled.shots.flatMap((shot) => {
+              const still = compileEnginePromptPackage({
+                picture: compiled,
+                shot,
+                target: "still",
+              });
+              const motion = compileEnginePromptPackage({
+                picture: compiled,
+                shot,
+                target: "video",
+              });
+              return [
+                {
+                  id: `${shot.id}:still`,
+                  family: "llama" as const,
+                  engineId: still.engineTarget,
+                  text: still.enginePrompt,
+                  canonicalSpecHash: canonicalSpecHash(still),
+                  createdAt: Date.now(),
+                  logicalRole: "prompt-engineer" as const,
+                  runtimeActivation: "gated-wave-5" as const,
+                },
+                {
+                  id: `${shot.id}:video`,
+                  family: "llama" as const,
+                  engineId: motion.engineTarget,
+                  text: motion.enginePrompt,
+                  canonicalSpecHash: canonicalSpecHash(motion),
+                  createdAt: Date.now(),
+                  logicalRole: "prompt-engineer" as const,
+                  runtimeActivation: "gated-wave-5" as const,
+                },
+              ];
+            });
+            patchActive({ shots: compiled.shots, promptLab: { ...lab, drafts } });
+            toast.success(
+              "Deterministic serializer wrote still and motion drafts. No model or media runtime was invoked.",
+            );
+          }}
+        >
+          Compile drafts
+        </Button>
+        <Button
+          className="mt-3 ml-2"
+          size="sm"
+          variant="ghost"
+          disabled
+          title={promptLabRuntimeBlock()}
+        >
+          A/B benchmark
+        </Button>
       </div>
       <div className="grid gap-3">
         {picture.shots.map((s) => (
@@ -776,7 +1479,9 @@ function PromptStage({ picture }: { picture: Picture }) {
 function GenerateStage({ picture }: { picture: Picture }) {
   const [manifests, setManifests] = useState<ImageComponentManifest[]>([]);
   const [generating, setGenerating] = useState<string | null>(null);
-  const [backendStatus, setBackendStatus] = useState<Awaited<ReturnType<typeof desktopProductionAuthorityStatus>> | null>(null);
+  const [backendStatus, setBackendStatus] = useState<Awaited<
+    ReturnType<typeof desktopProductionAuthorityStatus>
+  > | null>(null);
   const setStage = useStudio((state) => state.setStage);
   const replaceActive = useStudio((state) => state.replaceActive);
   const generateGate = useStudio((state) => state.generateGate);
@@ -789,252 +1494,667 @@ function GenerateStage({ picture }: { picture: Picture }) {
     return status;
   }, [picture.id]);
   useEffect(() => {
-    void desktopImageManifests().then(setManifests).catch(() => setManifests([]));
-    void refreshAuthorityStatus().catch(() => setBackendStatus({ ok: false, error: "Backend authority status unavailable." }));
+    void desktopImageManifests()
+      .then(setManifests)
+      .catch(() => setManifests([]));
+    void refreshAuthorityStatus().catch(() =>
+      setBackendStatus({ ok: false, error: "Backend authority status unavailable." }),
+    );
   }, [refreshAuthorityStatus]);
   const prepared = picture.production?.preparedAssets ?? [];
   const assets = picture.production?.assets ?? [];
   const ready = prepared.filter((item) => item.status === "APPROVED_PREPARED");
-  const best = manifests.find((item) => item.status === "READY" && item.adapterId === "flux2") ?? manifests.find((item) => item.status === "READY" && item.adapterId === "flux") ?? manifests.find((item) => item.adapterId === "flux2") ?? manifests.find((item) => item.adapterId === "flux") ?? manifests[0];
-  const blockedReason = best?.disabledReason ?? "No complete offline native image adapter is verified on this workstation.";
-  const authorityCurrent = backendStatus?.ok === true && backendStatus.status === "CURRENT" && backendStatus.authorityId === picture.production?.productionAuthority?.authorityId && backendStatus.digest === picture.production?.productionAuthority?.digest;
-  const verifiedRoots = new Map((backendStatus?.ok === true ? (backendStatus.preparedApprovals ?? []) : []).map((root) => [root.preparedAssetId, root]));
-  const canAuthorizeWithBest = Boolean(best && best.status === "READY" && best.controls && picture.production && authorityCurrent);
+  const best =
+    manifests.find((item) => item.status === "READY" && item.adapterId === "flux2") ??
+    manifests.find((item) => item.status === "READY" && item.adapterId === "flux") ??
+    manifests.find((item) => item.adapterId === "flux2") ??
+    manifests.find((item) => item.adapterId === "flux") ??
+    manifests[0];
+  const blockedReason =
+    best?.disabledReason ??
+    "No complete offline native image adapter is verified on this workstation.";
+  const authorityCurrent =
+    backendStatus?.ok === true &&
+    backendStatus.status === "CURRENT" &&
+    backendStatus.authorityId === picture.production?.productionAuthority?.authorityId &&
+    backendStatus.digest === picture.production?.productionAuthority?.digest;
+  const verifiedRoots = new Map(
+    (backendStatus?.ok === true ? (backendStatus.preparedApprovals ?? []) : []).map((root) => [
+      root.preparedAssetId,
+      root,
+    ]),
+  );
+  const canAuthorizeWithBest = Boolean(
+    best && best.status === "READY" && best.controls && picture.production && authorityCurrent,
+  );
   const gateReadiness = generateGateReadiness(picture);
   const gateWorkspace = hydrateGenerateGates(picture.generateGates, picture);
   return (
     <Pane title="Generate" kicker="10 · Three-gate cohesion">
-      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">Generate assets, prepare keyframes, or render motion from your shot prompts. Review the actual outputs in this picture.</p>
+      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">
+        Generate assets, prepare keyframes, or render motion from your shot prompts. Review the
+        actual outputs in this picture.
+      </p>
       <VideoGenerationOptions picture={picture} />
-      <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; generation fails closed."}</div>
+      <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">
+        {backendStatus?.ok === true
+          ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"}`
+          : backendStatus?.ok === false
+            ? `Backend authority unavailable: ${backendStatus.error}`
+            : "Backend authority status pending; generation fails closed."}
+      </div>
       <div className="mb-4 grid gap-2 sm:grid-cols-3" aria-label="Generate gate readiness">
         {gateReadiness.map((item) => (
-          <button key={item.gate} type="button" className="rounded-md bg-elevated px-3 py-2 text-left text-xs shadow-[var(--shadow-border)]" onClick={() => setGenerateFocus(item.gate)}>
+          <button
+            key={item.gate}
+            type="button"
+            className="rounded-md bg-elevated px-3 py-2 text-left text-xs shadow-[var(--shadow-border)]"
+            onClick={() => setGenerateFocus(item.gate)}
+          >
             <span className="text-[11px] tracking-wide text-subtle uppercase">{item.status}</span>
-            <span className="mt-1 block font-display text-lg">{item.gate === "assets" ? "Assets" : item.gate === "keyframes" ? "First / Last" : "Video Clips"}</span>
-            <span className="mt-1 block text-muted">{item.approved}/{item.required} · {item.reason}</span>
+            <span className="mt-1 block font-display text-lg">
+              {item.gate === "assets"
+                ? "Assets"
+                : item.gate === "keyframes"
+                  ? "First / Last"
+                  : "Video Clips"}
+            </span>
+            <span className="mt-1 block text-muted">
+              {item.approved}/{item.required} · {item.reason}
+            </span>
           </button>
         ))}
       </div>
       <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Generate gates">
         {(["assets", "keyframes", "video"] as const).map((gate) => (
-          <Button key={gate} size="sm" variant={generateGate === gate ? "secondary" : "ghost"} onClick={() => setGenerateFocus(gate)}>{gate === "assets" ? "Asset Pass" : gate === "keyframes" ? "Keyframe Pass" : "Video Pass"}</Button>
+          <Button
+            key={gate}
+            size="sm"
+            variant={generateGate === gate ? "secondary" : "ghost"}
+            onClick={() => setGenerateFocus(gate)}
+          >
+            {gate === "assets"
+              ? "Asset Pass"
+              : gate === "keyframes"
+                ? "Keyframe Pass"
+                : "Video Pass"}
+          </Button>
         ))}
       </div>
-      {generateGate === "assets" ? <div className="mb-6"><AudioGenerationOptions picture={picture} /></div> : null}
-      {generateGate === "assets" ? <><GeneratedAssetsReview picture={picture} /><details className="mt-6"><summary className="cursor-pointer text-sm text-muted">Advanced preparation details</summary><div className="mt-3 grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
-        <section className="grid min-w-0 gap-3" aria-label="Prepared assets">
-          {(() => {
-            const plan = hydrateProductFlow(picture.productFlow);
-            const extracted = picture.production?.assets ?? [];
-            const blocked = plan.manualFallback || plan.steps.some((step) => step.status === "failed" || step.status === "blocked") || extracted.length === 0;
-            if (blocked) {
-              return (
-                <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" data-assets-gate-blocked="true">
-                  <p className="font-display text-xl">Movie plan did not complete.</p>
-                  <p className="mt-2 text-sm text-muted">Assets were not generated.</p>
-                  <p className="mt-2 text-xs text-muted">{MANUAL_FALLBACK_LABEL}</p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Button size="sm" onClick={() => setStage("intake")}>Retry Build Movie Plan</Button>
-                    <Button size="sm" variant="secondary" onClick={() => useStudio.getState().enterAdvancedDepartments()}>Open Manual Advanced Fallback</Button>
-                  </div>
+      {generateGate === "assets" ? (
+        <div className="mb-6">
+          <AudioGenerationOptions picture={picture} />
+        </div>
+      ) : null}
+      {generateGate === "assets" ? (
+        <>
+          <GeneratedAssetsReview picture={picture} />
+          <details className="mt-6">
+            <summary className="cursor-pointer text-sm text-muted">
+              Advanced preparation details
+            </summary>
+            <div className="mt-3 grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
+              <section className="grid min-w-0 gap-3" aria-label="Prepared assets">
+                {(() => {
+                  const plan = hydrateProductFlow(picture.productFlow);
+                  const extracted = picture.production?.assets ?? [];
+                  const blocked =
+                    plan.manualFallback ||
+                    plan.steps.some(
+                      (step) => step.status === "failed" || step.status === "blocked",
+                    ) ||
+                    extracted.length === 0;
+                  if (blocked) {
+                    return (
+                      <div
+                        className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+                        data-assets-gate-blocked="true"
+                      >
+                        <p className="font-display text-xl">Movie plan did not complete.</p>
+                        <p className="mt-2 text-sm text-muted">Assets were not generated.</p>
+                        <p className="mt-2 text-xs text-muted">{MANUAL_FALLBACK_LABEL}</p>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <Button size="sm" onClick={() => setStage("intake")}>
+                            Retry Build Movie Plan
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => useStudio.getState().enterAdvancedDepartments()}
+                          >
+                            Open Manual Advanced Fallback
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="grid gap-3" data-extracted-assets="true">
+                      {!prepared.length ? (
+                        <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+                          <p className="text-sm text-muted">
+                            The asset descriptions are ready. Review their specifications and
+                            prepare them for image generation.
+                          </p>
+                          <Button className="mt-3" onClick={() => setStage("inventory")}>
+                            Prepare asset images
+                          </Button>
+                        </div>
+                      ) : null}
+                      {extracted.map((asset) => (
+                        <article
+                          key={asset.id}
+                          className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+                        >
+                          <p className="text-[11px] tracking-wide text-subtle uppercase">
+                            {asset.category}
+                          </p>
+                          <h3 className="mt-1 font-display text-xl">{asset.name}</h3>
+                          <p className="mt-1 text-sm text-muted">
+                            {asset.canonicalSpec.visualDescription}
+                          </p>
+                        </article>
+                      ))}
+                    </div>
+                  );
+                })()}
+                {prepared.length
+                  ? prepared.map((item) => {
+                      const asset = assets.find((candidate) => candidate.id === item.assetId);
+                      const prompt =
+                        item.promptIngredients.join(". ") ||
+                        asset?.canonicalSpec.visualDescription ||
+                        asset?.name ||
+                        "";
+                      const verifiedRoot = verifiedRoots.get(item.id);
+                      const rootCurrent = Boolean(
+                        verifiedRoot &&
+                        verifiedRoot.rootId === item.preparedApprovalRootId &&
+                        verifiedRoot.digest === item.preparedApprovalDigest &&
+                        verifiedRoot.authorityId ===
+                          picture.production?.productionAuthority?.authorityId &&
+                        verifiedRoot.authorityDigest ===
+                          picture.production?.productionAuthority?.digest,
+                      );
+                      const blocked = !authorityCurrent
+                        ? "Production authority is missing or stale in the backend; explicitly reseal/reconcile in Inventory."
+                        : item.status !== "APPROVED_PREPARED"
+                          ? item.blockers.join(" ") || "Prepared asset is not approved."
+                          : !rootCurrent
+                            ? "Prepared approval root is not verified current by the backend ledger."
+                            : blockedReason;
+                      return (
+                        <article
+                          key={item.id}
+                          className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-[11px] tracking-wide text-subtle uppercase">
+                                {item.status.replaceAll("_", " ")}
+                              </p>
+                              <h3
+                                className="mt-1 truncate font-display text-xl"
+                                title={asset?.name ?? item.assetId}
+                              >
+                                {asset?.name ?? item.assetId}
+                              </h3>
+                              <p className="mt-1 line-clamp-2 text-sm text-muted">
+                                {prompt || "No prompt ingredients"}
+                              </p>
+                            </div>
+                            <Badge>{asset?.category ?? "asset"}</Badge>
+                          </div>
+                          <div className="mt-3 rounded-sm bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]">
+                            {canAuthorizeWithBest && item.status === "APPROVED_PREPARED"
+                              ? "Ready to generate. The writer model will be released to make room for images."
+                              : blocked}
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              disabled={
+                                generating === item.id ||
+                                item.status !== "APPROVED_PREPARED" ||
+                                !rootCurrent ||
+                                !asset ||
+                                !canAuthorizeWithBest
+                              }
+                              title={
+                                item.status === "APPROVED_PREPARED" &&
+                                rootCurrent &&
+                                canAuthorizeWithBest
+                                  ? "Authorize and generate one immutable iteration for this prepared asset"
+                                  : blocked
+                              }
+                              onClick={async () => {
+                                if (!picture.production || !asset || !best?.controls) return;
+                                setGenerating(item.id);
+                                try {
+                                  const latest = await refreshAuthorityStatus();
+                                  const latestRoot =
+                                    latest?.ok === true
+                                      ? (latest.preparedApprovals ?? []).find(
+                                          (root) => root.preparedAssetId === item.id,
+                                        )
+                                      : null;
+                                  if (
+                                    latest?.ok !== true ||
+                                    latest.status !== "CURRENT" ||
+                                    latest.authorityId !==
+                                      picture.production.productionAuthority?.authorityId ||
+                                    latest.digest !==
+                                      picture.production.productionAuthority?.digest ||
+                                    latestRoot?.rootId !== item.preparedApprovalRootId ||
+                                    latestRoot?.digest !== item.preparedApprovalDigest
+                                  )
+                                    throw new Error(
+                                      "Backend authority/prepared root mismatch; reseal or re-approve prepared before generation.",
+                                    );
+                                  const authorization = await desktopAuthorizePreparedImage({
+                                    authorityId:
+                                      picture.production.productionAuthority!.authorityId!,
+                                    preparedAssetId: item.id,
+                                    preparedApprovalRootId: item.preparedApprovalRootId ?? "",
+                                    engineId: best.adapterId,
+                                    engineName: best.modelVariant,
+                                    values: {
+                                      ...runtimeDefaults(best.controls),
+                                      width: 512,
+                                      height: 512,
+                                      seed: Date.now() % 2147483647,
+                                      precision: "BF16",
+                                      outputFormat: "PNG",
+                                      outputBitDepth: 8,
+                                    },
+                                  });
+                                  if (!authorization.ok) throw new Error(authorization.error);
+                                  if (picture.productFlow?.servedModelId)
+                                    await releaseMoviePlanWriterForImages(
+                                      picture.productFlow.servedModelId,
+                                      picture,
+                                    );
+                                  const result = await desktopGeneratePreparedImage({
+                                    token: authorization.token,
+                                  });
+                                  if (!result.ok) throw new Error(result.error);
+                                  const nextProduction = appendGeneratedIteration(
+                                    picture.production,
+                                    {
+                                      preparedAssetId: item.id,
+                                      iterationId:
+                                        result.iterationId ?? `iteration:${asset.id}:${Date.now()}`,
+                                      output: {
+                                        ...result.output,
+                                        mediaBytes: new Uint8Array(result.output.mediaBytes),
+                                        sidecarBytes: new Uint8Array(result.output.sidecarBytes),
+                                      },
+                                      provenance: result.provenance,
+                                      continuityFindings: result.continuityFindings,
+                                      receiptDigest: result.receiptDigest,
+                                    },
+                                  );
+                                  replaceActive({
+                                    ...picture,
+                                    production: nextProduction,
+                                    updatedAt: Date.now(),
+                                  });
+                                  await refreshAuthorityStatus();
+                                  toast.success("Generated image iteration appended for review.");
+                                  setStage("review");
+                                } catch (error) {
+                                  toast.error(
+                                    error instanceof Error
+                                      ? error.message
+                                      : "Prepared image generation failed.",
+                                  );
+                                } finally {
+                                  setGenerating(null);
+                                }
+                              }}
+                            >
+                              {generating === item.id ? "Generating…" : "Authorize + generate"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => setStage("review")}
+                            >
+                              Review iterations
+                            </Button>
+                          </div>
+                        </article>
+                      );
+                    })
+                  : null}
+              </section>
+              <aside
+                className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+                aria-label="Native adapter manifest"
+              >
+                <p className="text-[11px] tracking-wide text-subtle uppercase">
+                  Exact local adapter
+                </p>
+                <h3 className="mt-1 font-display text-xl">
+                  {best ? best.modelVariant : "Unavailable"}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  {best?.status === "READY"
+                    ? "Local image model and required components verified."
+                    : blockedReason}
+                </p>
+                <div className="mt-4 grid gap-2">
+                  {(best?.components ?? []).slice(0, 7).map((component) => (
+                    <div
+                      key={component.opaqueId}
+                      className="rounded-sm bg-inset px-3 py-2 text-xs shadow-[var(--shadow-border)]"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-muted">{component.role}</span>
+                        <span className={component.present ? "text-accent" : "text-rec"}>
+                          {component.present ? "present" : "missing"}
+                        </span>
+                      </div>
+                      <p className="mt-1 truncate text-subtle" title={component.rendererPath}>
+                        {component.stableId}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              );
-            }
-            return (
-              <div className="grid gap-3" data-extracted-assets="true">
-                {!prepared.length ? <div className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-                  <p className="text-sm text-muted">The asset descriptions are ready. Review their specifications and prepare them for image generation.</p>
-                  <Button className="mt-3" onClick={() => setStage("inventory")}>Prepare asset images</Button>
-                </div> : null}
-                {extracted.map((asset) => (
-                  <article key={asset.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-                    <p className="text-[11px] tracking-wide text-subtle uppercase">{asset.category}</p>
-                    <h3 className="mt-1 font-display text-xl">{asset.name}</h3>
-                    <p className="mt-1 text-sm text-muted">{asset.canonicalSpec.visualDescription}</p>
-                  </article>
-                ))}
-              </div>
-            );
-          })()}
-          {prepared.length ? prepared.map((item) => {
-            const asset = assets.find((candidate) => candidate.id === item.assetId);
-            const prompt = item.promptIngredients.join(". ") || asset?.canonicalSpec.visualDescription || asset?.name || "";
-            const verifiedRoot = verifiedRoots.get(item.id);
-            const rootCurrent = Boolean(verifiedRoot && verifiedRoot.rootId === item.preparedApprovalRootId && verifiedRoot.digest === item.preparedApprovalDigest && verifiedRoot.authorityId === picture.production?.productionAuthority?.authorityId && verifiedRoot.authorityDigest === picture.production?.productionAuthority?.digest);
-            const blocked = !authorityCurrent ? "Production authority is missing or stale in the backend; explicitly reseal/reconcile in Inventory." : item.status !== "APPROVED_PREPARED" ? item.blockers.join(" ") || "Prepared asset is not approved." : !rootCurrent ? "Prepared approval root is not verified current by the backend ledger." : blockedReason;
-            return (
-              <article key={item.id} className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[11px] tracking-wide text-subtle uppercase">{item.status.replaceAll("_", " ")}</p>
-                    <h3 className="mt-1 truncate font-display text-xl" title={asset?.name ?? item.assetId}>{asset?.name ?? item.assetId}</h3>
-                    <p className="mt-1 line-clamp-2 text-sm text-muted">{prompt || "No prompt ingredients"}</p>
-                  </div>
-                  <Badge>{asset?.category ?? "asset"}</Badge>
-                </div>
-                <div className="mt-3 rounded-sm bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]">
-                  {canAuthorizeWithBest && item.status === "APPROVED_PREPARED" ? "Ready to generate. The writer model will be released to make room for images." : blocked}
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" disabled={generating === item.id || item.status !== "APPROVED_PREPARED" || !rootCurrent || !asset || !canAuthorizeWithBest} title={item.status === "APPROVED_PREPARED" && rootCurrent && canAuthorizeWithBest ? "Authorize and generate one immutable iteration for this prepared asset" : blocked} onClick={async () => {
-                    if (!picture.production || !asset || !best?.controls) return;
-                    setGenerating(item.id);
-                    try {
-                      const latest = await refreshAuthorityStatus();
-                      const latestRoot = latest?.ok === true ? (latest.preparedApprovals ?? []).find((root) => root.preparedAssetId === item.id) : null;
-                      if (latest?.ok !== true || latest.status !== "CURRENT" || latest.authorityId !== picture.production.productionAuthority?.authorityId || latest.digest !== picture.production.productionAuthority?.digest || latestRoot?.rootId !== item.preparedApprovalRootId || latestRoot?.digest !== item.preparedApprovalDigest) throw new Error("Backend authority/prepared root mismatch; reseal or re-approve prepared before generation.");
-                      const authorization = await desktopAuthorizePreparedImage({
-                        authorityId: picture.production.productionAuthority!.authorityId!,
-                        preparedAssetId: item.id,
-                        preparedApprovalRootId: item.preparedApprovalRootId ?? "",
-                        engineId: best.adapterId,
-                        engineName: best.modelVariant,
-                        values: { ...runtimeDefaults(best.controls), width: 512, height: 512, seed: Date.now() % 2147483647, precision: "BF16", outputFormat: "PNG", outputBitDepth: 8 },
-                      });
-                      if (!authorization.ok) throw new Error(authorization.error);
-                      if (picture.productFlow?.servedModelId) await releaseMoviePlanWriterForImages(picture.productFlow.servedModelId);
-                      const result = await desktopGeneratePreparedImage({ token: authorization.token });
-                      if (!result.ok) throw new Error(result.error);
-                      const nextProduction = appendGeneratedIteration(picture.production, {
-                        preparedAssetId: item.id,
-                        iterationId: result.iterationId ?? `iteration:${asset.id}:${Date.now()}`,
-                        output: {
-                          ...result.output,
-                          mediaBytes: new Uint8Array(result.output.mediaBytes),
-                          sidecarBytes: new Uint8Array(result.output.sidecarBytes),
-                        },
-                        provenance: result.provenance,
-                        continuityFindings: result.continuityFindings,
-                        receiptDigest: result.receiptDigest,
-                      });
-                      replaceActive({ ...picture, production: nextProduction, updatedAt: Date.now() });
-                      await refreshAuthorityStatus();
-                      toast.success("Generated image iteration appended for review.");
-                      setStage("review");
-                    } catch (error) {
-                      toast.error(error instanceof Error ? error.message : "Prepared image generation failed.");
-                    } finally {
-                      setGenerating(null);
-                    }
-                  }}>{generating === item.id ? "Generating…" : "Authorize + generate"}</Button>
-                  <Button size="sm" variant="secondary" onClick={() => setStage("review")}>Review iterations</Button>
-                </div>
-              </article>
-            );
-          }) : null}
-        </section>
-        <aside className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Native adapter manifest">
-          <p className="text-[11px] tracking-wide text-subtle uppercase">Exact local adapter</p>
-          <h3 className="mt-1 font-display text-xl">{best ? best.modelVariant : "Unavailable"}</h3>
-          <p className="mt-2 text-sm leading-relaxed text-muted">{best?.status === "READY" ? "Local image model and required components verified." : blockedReason}</p>
-          <div className="mt-4 grid gap-2">
-            {(best?.components ?? []).slice(0, 7).map((component) => (
-              <div key={component.opaqueId} className="rounded-sm bg-inset px-3 py-2 text-xs shadow-[var(--shadow-border)]">
-                <div className="flex items-center justify-between gap-2"><span className="text-muted">{component.role}</span><span className={component.present ? "text-accent" : "text-rec"}>{component.present ? "present" : "missing"}</span></div>
-                <p className="mt-1 truncate text-subtle" title={component.rendererPath}>{component.stableId}</p>
-              </div>
-            ))}
-          </div>
-          <Button className="mt-4" variant="ghost" onClick={() => void import("@/lib/desktop/client").then((api) => api.desktopUnloadEngine()).then(() => toast.success("Local image model released."), (error) => toast.error(error instanceof Error ? error.message : "Release failed."))}>Release local image model</Button>
-        </aside>
-      </div></details></> : null}
+                <Button
+                  className="mt-4"
+                  variant="ghost"
+                  onClick={() =>
+                    void import("@/lib/desktop/client")
+                      .then((api) => api.desktopUnloadEngine())
+                      .then(
+                        () => toast.success("Local image model released."),
+                        (error) =>
+                          toast.error(error instanceof Error ? error.message : "Release failed."),
+                      )
+                  }
+                >
+                  Release local image model
+                </Button>
+              </aside>
+            </div>
+          </details>
+        </>
+      ) : null}
       {generateGate === "keyframes" ? (
         <section className="grid min-w-0 gap-3" aria-label="First last frames">
-          <p className="text-sm text-muted">First/Last frames lock video generate until each shot has an approved pair or is waived for imported video. Native keyframe generate stays fail-closed; import/waive is allowed.</p>
-          {(generateFilterId ? gateWorkspace.pairs.filter((pair) => pair.shotId === generateFilterId) : gateWorkspace.pairs).map((pair) => {
+          <p className="text-sm text-muted">
+            First/Last frames lock video generate until each shot has an approved pair or is waived
+            for imported video. Native keyframe generate stays fail-closed; import/waive is allowed.
+          </p>
+          {(generateFilterId
+            ? gateWorkspace.pairs.filter((pair) => pair.shotId === generateFilterId)
+            : gateWorkspace.pairs
+          ).map((pair) => {
             const shot = picture.shots.find((item) => item.id === pair.shotId);
             return (
-              <article key={pair.shotId} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-                <p className="text-[11px] tracking-wide text-subtle uppercase">{pair.status}{pair.waived ? " · waived" : ""}</p>
-                <h3 className="mt-1 font-display text-xl">{shot ? `${String(shot.index).padStart(2, "0")} ${shot.description}` : pair.shotId}</h3>
-                <p className="mt-1 text-xs text-muted">Refs: {pair.assetRefIds.join(", ") || "none"}{pair.staleReasons.length ? ` · ${pair.staleReasons[0]}` : ""}</p>
-                <KeyframeImages workspace={gateWorkspace} shotId={pair.shotId} onSelect={(iterationId) => replaceActive({ ...picture, generateGates: approveKeyframeIteration(gateWorkspace, iterationId) })} />
-                <label className="mt-3 block text-[11px] tracking-wide text-subtle uppercase">First frame prompt
-                  <textarea className="mt-1 min-h-20 w-full rounded-sm bg-inset p-2 text-sm" defaultValue={pair.firstPrompt} onBlur={(event) => replaceActive({ ...picture, generateGates: savePromptVersion(gateWorkspace, { gate: "keyframes", shotId: pair.shotId, assetId: null, kind: "first", text: event.target.value, assetRefIds: pair.assetRefIds, firstFrameId: pair.firstApprovedId, lastFrameId: pair.lastApprovedId }) })} />
+              <article
+                key={pair.shotId}
+                className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+              >
+                <p className="text-[11px] tracking-wide text-subtle uppercase">
+                  {pair.status}
+                  {pair.waived ? " · waived" : ""}
+                </p>
+                <h3 className="mt-1 font-display text-xl">
+                  {shot
+                    ? `${String(shot.index).padStart(2, "0")} ${shot.description}`
+                    : pair.shotId}
+                </h3>
+                <p className="mt-1 text-xs text-muted">
+                  Refs: {pair.assetRefIds.join(", ") || "none"}
+                  {pair.staleReasons.length ? ` · ${pair.staleReasons[0]}` : ""}
+                </p>
+                <KeyframeImages
+                  workspace={gateWorkspace}
+                  shotId={pair.shotId}
+                  onSelect={(iterationId) =>
+                    replaceActive({
+                      ...picture,
+                      generateGates: approveKeyframeIteration(gateWorkspace, iterationId),
+                    })
+                  }
+                />
+                <label className="mt-3 block text-[11px] tracking-wide text-subtle uppercase">
+                  First frame prompt
+                  <textarea
+                    className="mt-1 min-h-20 w-full rounded-sm bg-inset p-2 text-sm"
+                    defaultValue={pair.firstPrompt}
+                    onBlur={(event) =>
+                      replaceActive({
+                        ...picture,
+                        generateGates: savePromptVersion(gateWorkspace, {
+                          gate: "keyframes",
+                          shotId: pair.shotId,
+                          assetId: null,
+                          kind: "first",
+                          text: event.target.value,
+                          assetRefIds: pair.assetRefIds,
+                          firstFrameId: pair.firstApprovedId,
+                          lastFrameId: pair.lastApprovedId,
+                        }),
+                      })
+                    }
+                  />
                 </label>
-                <label className="mt-3 block text-[11px] tracking-wide text-subtle uppercase">Last frame prompt
-                  <textarea className="mt-1 min-h-20 w-full rounded-sm bg-inset p-2 text-sm" defaultValue={pair.lastPrompt} onBlur={(event) => replaceActive({ ...picture, generateGates: savePromptVersion(gateWorkspace, { gate: "keyframes", shotId: pair.shotId, assetId: null, kind: "last", text: event.target.value, assetRefIds: pair.assetRefIds, firstFrameId: pair.firstApprovedId, lastFrameId: pair.lastApprovedId }) })} />
+                <label className="mt-3 block text-[11px] tracking-wide text-subtle uppercase">
+                  Last frame prompt
+                  <textarea
+                    className="mt-1 min-h-20 w-full rounded-sm bg-inset p-2 text-sm"
+                    defaultValue={pair.lastPrompt}
+                    onBlur={(event) =>
+                      replaceActive({
+                        ...picture,
+                        generateGates: savePromptVersion(gateWorkspace, {
+                          gate: "keyframes",
+                          shotId: pair.shotId,
+                          assetId: null,
+                          kind: "last",
+                          text: event.target.value,
+                          assetRefIds: pair.assetRefIds,
+                          firstFrameId: pair.firstApprovedId,
+                          lastFrameId: pair.lastApprovedId,
+                        }),
+                      })
+                    }
+                  />
                 </label>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" variant="secondary" onClick={() => {
-                    replaceActive({ ...picture, generateGates: failClosedKeyframe(gateWorkspace, pair.shotId, "first", "Native first-frame generate is fail-closed. Import a still or waive for imported video.") });
-                    toast.error("First frame generate fail-closed. No still was labeled as video.");
-                  }}>Generate first frame</Button>
-                  <Button size="sm" variant="secondary" onClick={() => {
-                    replaceActive({ ...picture, generateGates: failClosedKeyframe(gateWorkspace, pair.shotId, "last", "Native last-frame generate is fail-closed. Import a still or waive for imported video.") });
-                    toast.error("Last frame generate fail-closed.");
-                  }}>Generate last frame</Button>
-                  <Button size="sm" variant="outline" onClick={() => {
-                    replaceActive({ ...picture, generateGates: waiveKeyframePair(gateWorkspace, pair.shotId, "Waived for imported video path.") });
-                    toast.success("Keyframe pair waived. Imported video may proceed.");
-                  }}>Waive pair for import</Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      replaceActive({
+                        ...picture,
+                        generateGates: failClosedKeyframe(
+                          gateWorkspace,
+                          pair.shotId,
+                          "first",
+                          "Native first-frame generate is fail-closed. Import a still or waive for imported video.",
+                        ),
+                      });
+                      toast.error(
+                        "First frame generate fail-closed. No still was labeled as video.",
+                      );
+                    }}
+                  >
+                    Generate first frame
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      replaceActive({
+                        ...picture,
+                        generateGates: failClosedKeyframe(
+                          gateWorkspace,
+                          pair.shotId,
+                          "last",
+                          "Native last-frame generate is fail-closed. Import a still or waive for imported video.",
+                        ),
+                      });
+                      toast.error("Last frame generate fail-closed.");
+                    }}
+                  >
+                    Generate last frame
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      replaceActive({
+                        ...picture,
+                        generateGates: waiveKeyframePair(
+                          gateWorkspace,
+                          pair.shotId,
+                          "Waived for imported video path.",
+                        ),
+                      });
+                      toast.success("Keyframe pair waived. Imported video may proceed.");
+                    }}
+                  >
+                    Waive pair for import
+                  </Button>
                 </div>
               </article>
             );
           })}
         </section>
       ) : null}
-      {generateGate === "video" && picture.selectedEngine.video === "ltx-director" ? <DirectorVideoPanel picture={picture} /> : null}
-      {generateGate === "video" && picture.selectedEngine.video === "minimax-h3" ? <NativeFilmPanel picture={picture} /> : null}
-      {generateGate === "video" ? <section className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Video generation queue">
-        <p className="text-[11px] tracking-wide text-subtle uppercase">Keyframe-conditioned generation / imports</p>
-        <h3 className="mt-1 font-display text-xl">Motion / {engineById(picture.selectedEngine.video)?.name ?? "video"}</h3>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{videoRuntimeBlock(videoEngineFromSelection(picture.selectedEngine.video))}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {picture.selectedEngine.video !== "ltx-director" ? <Button size="sm" variant="secondary" disabled title={videoRuntimeBlock(videoEngineFromSelection(picture.selectedEngine.video))}>In-app video rendering unavailable</Button> : null}
-          <Button size="sm" onClick={() => {
-            void (async () => {
-              const latest = useStudio.getState().pictures.find((item) => item.id === picture.id) ?? picture;
-              const shot = nextShotForImport(latest.shots, hydrateVideoWorkspace(latest.video)) ?? latest.shots[0];
-              if (!shot) {
-                toast.error("Add a shot before importing video.");
-                return;
-              }
-              const imported = await desktopImportVideo();
-              if (!imported.ok) {
-                if (imported.canceled) return;
-                toast.error(imported.error);
-                return;
-              }
-              const workspace = recordImportedVideoTake(hydrateVideoWorkspace(picture.video), {
-                pictureId: picture.id,
-                shotId: shot.id,
-                filename: imported.filename,
-                mediaUri: imported.mediaUri,
-                mediaSha256: imported.mediaSha256,
-                byteLength: imported.byteLength,
-                durationSec: imported.probe.durationSec ?? 0,
-                fps: imported.probe.fps,
-                width: imported.probe.width,
-                height: imported.probe.height,
-                codec: imported.probe.codec,
-                hasAudio: imported.probe.hasAudio,
-              });
-              replaceActive({ ...picture, video: workspace, updatedAt: Date.now() });
-              toast.success(`Imported ${imported.filename} as ${shot.id}. Provenance is imported, not generated.`);
-              setStage("review");
-            })();
-          }} disabled={!picture.shots.length}>Import video</Button>
-          <Button size="sm" variant="ghost" onClick={() => setStage("review")}>Review takes</Button>
-        </div>
-        <p className="mt-3 text-xs text-subtle">Shot readiness: {picture.shots.length ? picture.shots.map((shot) => `${shot.index}:${shotVideoReadiness(hydrateVideoWorkspace(picture.video), shot.id)}`).join(" · ") : "no shots"}</p>
-      </section> : null}
-      {generateGate === "assets" ? <section className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Voice generation queue">
-        <p className="text-[11px] tracking-wide text-subtle uppercase">Voice / ADR</p>
-        <h3 className="mt-1 font-display text-xl">Dialogue / {engineById(picture.selectedEngine.voice)?.name ?? "Qwen3 TTS"}</h3>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{voiceRuntimeBlock(voiceEngineFromSelection(picture.selectedEngine.voice))}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" onClick={() => {
-            const audio = queueMissingDialogue(picture);
-            replaceActive({ ...picture, audio, updatedAt: Date.now() });
-            toast.error("Dialogue jobs were queued and fail-closed. No cloud TTS ran.");
-            setStage("review");
-          }}>Queue missing dialogue</Button>
-          <Button size="sm" variant="ghost" onClick={() => setStage("score")}>Voice design & library</Button>
-        </div>
-      </section> : null}
-      {generateGate === "assets" && ready.length ? <p className="mt-4 text-xs text-subtle">{ready.length} prepared asset(s) are product-ready; generation still requires an exact READY manifest and one-use authorization.</p> : null}
+      {generateGate === "video" && picture.selectedEngine.video === "ltx-director" ? (
+        <DirectorVideoPanel picture={picture} />
+      ) : null}
+      {generateGate === "video" && picture.selectedEngine.video === "minimax-h3" ? (
+        <NativeFilmPanel picture={picture} />
+      ) : null}
+      {generateGate === "video" ? (
+        <section
+          className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+          aria-label="Video generation queue"
+        >
+          <p className="text-[11px] tracking-wide text-subtle uppercase">
+            Keyframe-conditioned generation / imports
+          </p>
+          <h3 className="mt-1 font-display text-xl">
+            Motion / {engineById(picture.selectedEngine.video)?.name ?? "video"}
+          </h3>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
+            {videoRuntimeBlock(videoEngineFromSelection(picture.selectedEngine.video))}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {picture.selectedEngine.video !== "ltx-director" ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled
+                title={videoRuntimeBlock(videoEngineFromSelection(picture.selectedEngine.video))}
+              >
+                In-app video rendering unavailable
+              </Button>
+            ) : null}
+            <Button
+              size="sm"
+              onClick={() => {
+                void (async () => {
+                  const latest =
+                    useStudio.getState().pictures.find((item) => item.id === picture.id) ?? picture;
+                  const shot =
+                    nextShotForImport(latest.shots, hydrateVideoWorkspace(latest.video)) ??
+                    latest.shots[0];
+                  if (!shot) {
+                    toast.error("Add a shot before importing video.");
+                    return;
+                  }
+                  const imported = await desktopImportVideo();
+                  if (!imported.ok) {
+                    if (imported.canceled) return;
+                    toast.error(imported.error);
+                    return;
+                  }
+                  const workspace = recordImportedVideoTake(hydrateVideoWorkspace(picture.video), {
+                    pictureId: picture.id,
+                    shotId: shot.id,
+                    filename: imported.filename,
+                    mediaUri: imported.mediaUri,
+                    mediaSha256: imported.mediaSha256,
+                    byteLength: imported.byteLength,
+                    durationSec: imported.probe.durationSec ?? 0,
+                    fps: imported.probe.fps,
+                    width: imported.probe.width,
+                    height: imported.probe.height,
+                    codec: imported.probe.codec,
+                    hasAudio: imported.probe.hasAudio,
+                  });
+                  replaceActive({ ...picture, video: workspace, updatedAt: Date.now() });
+                  toast.success(
+                    `Imported ${imported.filename} as ${shot.id}. Provenance is imported, not generated.`,
+                  );
+                  setStage("review");
+                })();
+              }}
+              disabled={!picture.shots.length}
+            >
+              Import video
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setStage("review")}>
+              Review takes
+            </Button>
+          </div>
+          <p className="mt-3 text-xs text-subtle">
+            Shot readiness:{" "}
+            {picture.shots.length
+              ? picture.shots
+                  .map(
+                    (shot) =>
+                      `${shot.index}:${shotVideoReadiness(hydrateVideoWorkspace(picture.video), shot.id)}`,
+                  )
+                  .join(" · ")
+              : "no shots"}
+          </p>
+        </section>
+      ) : null}
+      {generateGate === "assets" ? (
+        <section
+          className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+          aria-label="Voice generation queue"
+        >
+          <p className="text-[11px] tracking-wide text-subtle uppercase">Voice / ADR</p>
+          <h3 className="mt-1 font-display text-xl">
+            Dialogue / {engineById(picture.selectedEngine.voice)?.name ?? "Qwen3 TTS"}
+          </h3>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
+            {voiceRuntimeBlock(voiceEngineFromSelection(picture.selectedEngine.voice))}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                const audio = queueMissingDialogue(picture);
+                replaceActive({ ...picture, audio, updatedAt: Date.now() });
+                toast.error("Dialogue jobs were queued and fail-closed. No cloud TTS ran.");
+                setStage("review");
+              }}
+            >
+              Queue missing dialogue
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setStage("score")}>
+              Voice design & library
+            </Button>
+          </div>
+        </section>
+      ) : null}
+      {generateGate === "assets" && ready.length ? (
+        <p className="mt-4 text-xs text-subtle">
+          {ready.length} prepared asset(s) are product-ready; generation still requires an exact
+          READY manifest and one-use authorization.
+        </p>
+      ) : null}
     </Pane>
   );
 }
@@ -1043,168 +2163,616 @@ function ReviewStage({ picture }: { picture: Picture }) {
   const production = picture.production;
   const replaceActive = useStudio((state) => state.replaceActive);
   const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
-  const iterations = production?.assets.flatMap((asset) => asset.iterations.map((iteration) => ({ asset, iteration }))) ?? [];
+  const iterations =
+    production?.assets.flatMap((asset) =>
+      asset.iterations.map((iteration) => ({ asset, iteration })),
+    ) ?? [];
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
-  const [backendStatus, setBackendStatus] = useState<Awaited<ReturnType<typeof desktopProductionAuthorityStatus>> | null>(null);
+  const [backendStatus, setBackendStatus] = useState<Awaited<
+    ReturnType<typeof desktopProductionAuthorityStatus>
+  > | null>(null);
   const refreshAuthorityStatus = useCallback(async () => {
     if (!isDesktopApp()) return null;
     const status = await desktopProductionAuthorityStatus({ pictureId: picture.id });
     setBackendStatus(status);
     return status;
   }, [picture.id]);
-  useEffect(() => { void refreshAuthorityStatus().catch(() => setBackendStatus({ ok: false, error: "Backend authority status unavailable." })); }, [refreshAuthorityStatus]);
-  const authorityCurrent = backendStatus?.ok === true && backendStatus.status === "CURRENT" && backendStatus.authorityId === production?.productionAuthority?.authorityId && backendStatus.digest === production?.productionAuthority?.digest;
-  const verifiedRoots = new Map((backendStatus?.ok === true ? (backendStatus.preparedApprovals ?? []) : []).map((root) => [root.preparedAssetId, root]));
-  const backendCanonicalHistory = backendStatus?.ok === true ? (backendStatus.canonicalHistory ?? []) : [];
+  useEffect(() => {
+    void refreshAuthorityStatus().catch(() =>
+      setBackendStatus({ ok: false, error: "Backend authority status unavailable." }),
+    );
+  }, [refreshAuthorityStatus]);
+  const authorityCurrent =
+    backendStatus?.ok === true &&
+    backendStatus.status === "CURRENT" &&
+    backendStatus.authorityId === production?.productionAuthority?.authorityId &&
+    backendStatus.digest === production?.productionAuthority?.digest;
+  const verifiedRoots = new Map(
+    (backendStatus?.ok === true ? (backendStatus.preparedApprovals ?? []) : []).map((root) => [
+      root.preparedAssetId,
+      root,
+    ]),
+  );
+  const backendCanonicalHistory =
+    backendStatus?.ok === true ? (backendStatus.canonicalHistory ?? []) : [];
   function applyReview(nextProduction: NonNullable<Picture["production"]>) {
     replaceActive({ ...picture, production: nextProduction, updatedAt: Date.now() });
   }
   return (
     <Pane title="Review" kicker="11 · Iteration decisions">
-      <div className="mb-4"><Button size="sm" variant="secondary" onClick={() => setGenerateFocus("video")}>Open Generate / Video Clips</Button></div>
-      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">A/B review is append-only. Rejections, continuity confirmations, and canonical approvals preserve every generated file and sidecar; no output becomes canonical while dependencies, durable media, or identity confirmations are stale.</p>
-      <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"} · scoped decisions ${backendCanonicalHistory.length}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; review decisions fail closed."}</div>
+      <div className="mb-4">
+        <Button size="sm" variant="secondary" onClick={() => setGenerateFocus("video")}>
+          Open Generate / Video Clips
+        </Button>
+      </div>
+      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">
+        A/B review is append-only. Rejections, continuity confirmations, and canonical approvals
+        preserve every generated file and sidecar; no output becomes canonical while dependencies,
+        durable media, or identity confirmations are stale.
+      </p>
+      <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">
+        {backendStatus?.ok === true
+          ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"} · scoped decisions ${backendCanonicalHistory.length}`
+          : backendStatus?.ok === false
+            ? `Backend authority unavailable: ${backendStatus.error}`
+            : "Backend authority status pending; review decisions fail closed."}
+      </div>
       <div className="grid min-w-0 gap-3 lg:grid-cols-2">
-        {iterations.length ? iterations.map(({ asset, iteration }) => {
-          const findings = iteration.receiptContinuityFindings?.length ? iteration.receiptContinuityFindings : deterministicContinuityFindings(asset, iteration);
-          const reason = reasons[iteration.id] ?? "";
-          const allRequiredConfirmed = findings.every((finding) => finding.severity !== "blocker" || confirmed[finding.id]);
-          const verifiedRoot = verifiedRoots.get(iteration.preparedAssetId ?? "");
-          const rootCurrent = Boolean(verifiedRoot && verifiedRoot.rootId === (production?.preparedAssets ?? []).find((item) => item.id === iteration.preparedAssetId)?.preparedApprovalRootId && verifiedRoot.authorityId === production?.productionAuthority?.authorityId && verifiedRoot.authorityDigest === production?.productionAuthority?.digest);
-          const backendDecision = backendCanonicalHistory.find((entry) => typeof entry === "object" && entry && "iterationId" in entry && entry.iterationId === iteration.id) as { kind?: string } | undefined;
-          const backendCanonical = backendDecision?.kind === "canonicalDecision";
-          const backendRejected = backendDecision?.kind === "rejectionDecision";
-          return (
-            <article key={iteration.id} className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0"><p className="text-[11px] tracking-wide text-subtle uppercase">{backendCanonical ? "APPROVED" : backendRejected ? "REJECTED" : iteration.status}</p><h3 className="truncate font-display text-xl">{asset.name}</h3></div>
-                <Badge>{backendCanonical ? "canonical" : backendRejected ? "rejected" : "iteration"}</Badge>
-              </div>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div className="overflow-hidden rounded-md bg-inset shadow-[var(--shadow-border)]">
-                  <div className="flex min-h-11 items-center justify-between px-3 py-2 text-xs text-muted"><span>Approved reference/spec</span><span>A</span></div>
-                  <div className="p-3 text-xs leading-relaxed text-muted">{asset.canonicalSpec.visualDescription || asset.canonicalSpec.distinguishingFeatures.join(" · ") || "No approved visual description recorded."}</div>
+        {iterations.length ? (
+          iterations.map(({ asset, iteration }) => {
+            const findings = iteration.receiptContinuityFindings?.length
+              ? iteration.receiptContinuityFindings
+              : deterministicContinuityFindings(asset, iteration);
+            const reason = reasons[iteration.id] ?? "";
+            const allRequiredConfirmed = findings.every(
+              (finding) => finding.severity !== "blocker" || confirmed[finding.id],
+            );
+            const verifiedRoot = verifiedRoots.get(iteration.preparedAssetId ?? "");
+            const rootCurrent = Boolean(
+              verifiedRoot &&
+              verifiedRoot.rootId ===
+                (production?.preparedAssets ?? []).find(
+                  (item) => item.id === iteration.preparedAssetId,
+                )?.preparedApprovalRootId &&
+              verifiedRoot.authorityId === production?.productionAuthority?.authorityId &&
+              verifiedRoot.authorityDigest === production?.productionAuthority?.digest,
+            );
+            const backendDecision = backendCanonicalHistory.find(
+              (entry) =>
+                typeof entry === "object" &&
+                entry &&
+                "iterationId" in entry &&
+                entry.iterationId === iteration.id,
+            ) as { kind?: string } | undefined;
+            const backendCanonical = backendDecision?.kind === "canonicalDecision";
+            const backendRejected = backendDecision?.kind === "rejectionDecision";
+            return (
+              <article
+                key={iteration.id}
+                className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] tracking-wide text-subtle uppercase">
+                      {backendCanonical
+                        ? "APPROVED"
+                        : backendRejected
+                          ? "REJECTED"
+                          : iteration.status}
+                    </p>
+                    <h3 className="truncate font-display text-xl">{asset.name}</h3>
+                  </div>
+                  <Badge>
+                    {backendCanonical ? "canonical" : backendRejected ? "rejected" : "iteration"}
+                  </Badge>
                 </div>
-                {iteration.mediaUri ? <div className="overflow-hidden rounded-md bg-inset shadow-[var(--shadow-border)]"><div className="flex min-h-11 items-center justify-between px-3 py-2 text-xs text-muted"><span>Generated candidate</span><span>B</span></div><img src={iteration.previewUri ?? iteration.mediaUri} alt={`Generated iteration for ${asset.name}`} className="aspect-square w-full object-contain" /></div> : null}
-              </div>
-              <p className="mt-2 truncate text-xs text-muted" title={iteration.mediaUri}>{iteration.mediaUri}</p>
-              <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <Stat k="Media hash" v={iteration.mediaSha256 ? `${iteration.mediaSha256.slice(0, 10)}…` : "not recorded"} />
-                <Stat k="Sidecar" v={iteration.sidecarSha256 ? `${iteration.sidecarSha256.slice(0, 10)}…` : "not recorded"} />
-                <Stat k="Size" v={iteration.width && iteration.height ? `${iteration.width} × ${iteration.height}` : "unknown"} />
-                <Stat k="Decisions" v={String(iteration.reviewDecisionIds?.length ?? iteration.reviewDecisions?.length ?? 0)} />
-              </dl>
-              <fieldset className="mt-3 rounded-sm bg-inset p-3 shadow-[var(--shadow-border)]">
-                <legend className="text-[11px] tracking-wide text-subtle uppercase">Continuity checklist</legend>
-                {findings.length ? findings.map((finding) => (
-                  <label key={finding.id} className="mt-2 flex min-h-11 items-start gap-2 text-xs text-muted">
-                    <input className="mt-1" type="checkbox" checked={Boolean(confirmed[finding.id])} onChange={(event) => setConfirmed((current) => ({ ...current, [finding.id]: event.target.checked }))} />
-                    <span><span className={finding.severity === "blocker" ? "text-rec" : "text-fg"}>{finding.severity}</span> · {finding.message}</span>
-                  </label>
-                )) : <p className="mt-2 text-xs text-muted">No automated vision claim is made. Enter a visible review reason before approval.</p>}
-              </fieldset>
-              <div className="mt-3"><Label htmlFor={`reason-${iteration.id}`}>Reviewer reason</Label><Textarea id={`reason-${iteration.id}`} className="mt-1.5 min-h-20" value={reason} onChange={(event) => setReasons((current) => ({ ...current, [iteration.id]: event.target.value }))} placeholder="Describe the visible identity/continuity evidence for this decision." /></div>
-              <div className="mt-3 flex flex-wrap gap-2"><Button size="sm" disabled={!production || !authorityCurrent || !rootCurrent || !iteration.generationReceiptId || !iteration.generationReceiptDigest || backendRejected || backendCanonical || !reason.trim() || !allRequiredConfirmed} title="Verify durable media, then approve this reviewed iteration as canonical" onClick={async () => {
-                if (!production) return;
-                try {
-                  const latest = await refreshAuthorityStatus();
-                  const latestRoot = latest?.ok === true ? (latest.preparedApprovals ?? []).find((root) => root.preparedAssetId === iteration.preparedAssetId) : null;
-                  const preparedApprovalRootId = (production.preparedAssets ?? []).find((item) => item.id === iteration.preparedAssetId)?.preparedApprovalRootId ?? "";
-                  if (latest?.ok !== true || latest.status !== "CURRENT" || latest.authorityId !== production.productionAuthority?.authorityId || latest.digest !== production.productionAuthority?.digest || latestRoot?.rootId !== preparedApprovalRootId) throw new Error("Backend authority/prepared root mismatch; reseal or re-approve before canonical approval.");
-                  const confirmedContinuityFindings = findings.map((finding) => ({ ...finding, confirmed: finding.confirmed || Boolean(confirmed[finding.id]) }));
-                  const approved = await desktopApproveCanonicalImage({ authorityId: latest.authorityId ?? "", preparedApprovalRootId, receiptId: iteration.generationReceiptId ?? "", iterationId: iteration.id, reason, findings: confirmedContinuityFindings.map(({ id, confirmed }) => ({ id, confirmed })) });
-                  if (!approved.ok) throw new Error(approved.error);
-                  applyReview(approveCanonicalIteration(production, { iterationId: iteration.id, reviewer: "user", reason, canonicalProof: approved.proof, continuityFindings: confirmedContinuityFindings }));
-                  await refreshAuthorityStatus();
-                  toast.success("Canonical image iteration approved.");
-                } catch (error) {
-                  toast.error(error instanceof Error ? error.message : "Canonical approval failed.");
-                }
-              }}>Approve canonical</Button><Button size="sm" variant="outline" disabled={!production || !authorityCurrent || !rootCurrent || backendRejected || backendCanonical || !iteration.generationReceiptId || !reason.trim()} title="Reject this iteration append-only" onClick={async () => {
-                if (!production) return;
-                try {
-                  const latest = await refreshAuthorityStatus();
-                  const latestRoot = latest?.ok === true ? (latest.preparedApprovals ?? []).find((root) => root.preparedAssetId === iteration.preparedAssetId) : null;
-                  const preparedApprovalRootId = (production.preparedAssets ?? []).find((item) => item.id === iteration.preparedAssetId)?.preparedApprovalRootId ?? "";
-                  if (latest?.ok !== true || latest.status !== "CURRENT" || latest.authorityId !== production.productionAuthority?.authorityId || latest.digest !== production.productionAuthority?.digest || latestRoot?.rootId !== preparedApprovalRootId) throw new Error("Backend authority/prepared root mismatch; reseal or re-approve before rejection.");
-                  const rejected = await desktopRejectCanonicalImage({ authorityId: latest.authorityId ?? "", preparedApprovalRootId, receiptId: iteration.generationReceiptId ?? "", iterationId: iteration.id, reason });
-                  if (!rejected.ok) throw new Error(rejected.error);
-                  applyReview(reviewGeneratedIteration(production, { iterationId: iteration.id, decision: "reject", reviewer: "user", reason }));
-                  await refreshAuthorityStatus();
-                  toast.success("Image iteration rejected.");
-                } catch (error) {
-                  toast.error(error instanceof Error ? error.message : "Reject failed.");
-                }
-              }}>Reject</Button></div>
-            </article>
-          );
-        }) : <EmptyCard title="No generated iterations" body="Generate from an approved prepared asset after the native adapter gate passes. Imported or shot-only stills do not satisfy Wave 4." />}
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div className="overflow-hidden rounded-md bg-inset shadow-[var(--shadow-border)]">
+                    <div className="flex min-h-11 items-center justify-between px-3 py-2 text-xs text-muted">
+                      <span>Approved reference/spec</span>
+                      <span>A</span>
+                    </div>
+                    <div className="p-3 text-xs leading-relaxed text-muted">
+                      {asset.canonicalSpec.visualDescription ||
+                        asset.canonicalSpec.distinguishingFeatures.join(" · ") ||
+                        "No approved visual description recorded."}
+                    </div>
+                  </div>
+                  {iteration.mediaUri ? (
+                    <div className="overflow-hidden rounded-md bg-inset shadow-[var(--shadow-border)]">
+                      <div className="flex min-h-11 items-center justify-between px-3 py-2 text-xs text-muted">
+                        <span>Generated candidate</span>
+                        <span>B</span>
+                      </div>
+                      <img
+                        src={iteration.previewUri ?? iteration.mediaUri}
+                        alt={`Generated iteration for ${asset.name}`}
+                        className="aspect-square w-full object-contain"
+                      />
+                    </div>
+                  ) : null}
+                </div>
+                <p className="mt-2 truncate text-xs text-muted" title={iteration.mediaUri}>
+                  {iteration.mediaUri}
+                </p>
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <Stat
+                    k="Media hash"
+                    v={
+                      iteration.mediaSha256
+                        ? `${iteration.mediaSha256.slice(0, 10)}…`
+                        : "not recorded"
+                    }
+                  />
+                  <Stat
+                    k="Sidecar"
+                    v={
+                      iteration.sidecarSha256
+                        ? `${iteration.sidecarSha256.slice(0, 10)}…`
+                        : "not recorded"
+                    }
+                  />
+                  <Stat
+                    k="Size"
+                    v={
+                      iteration.width && iteration.height
+                        ? `${iteration.width} × ${iteration.height}`
+                        : "unknown"
+                    }
+                  />
+                  <Stat
+                    k="Decisions"
+                    v={String(
+                      iteration.reviewDecisionIds?.length ?? iteration.reviewDecisions?.length ?? 0,
+                    )}
+                  />
+                </dl>
+                <fieldset className="mt-3 rounded-sm bg-inset p-3 shadow-[var(--shadow-border)]">
+                  <legend className="text-[11px] tracking-wide text-subtle uppercase">
+                    Continuity checklist
+                  </legend>
+                  {findings.length ? (
+                    findings.map((finding) => (
+                      <label
+                        key={finding.id}
+                        className="mt-2 flex min-h-11 items-start gap-2 text-xs text-muted"
+                      >
+                        <input
+                          className="mt-1"
+                          type="checkbox"
+                          checked={Boolean(confirmed[finding.id])}
+                          onChange={(event) =>
+                            setConfirmed((current) => ({
+                              ...current,
+                              [finding.id]: event.target.checked,
+                            }))
+                          }
+                        />
+                        <span>
+                          <span className={finding.severity === "blocker" ? "text-rec" : "text-fg"}>
+                            {finding.severity}
+                          </span>{" "}
+                          · {finding.message}
+                        </span>
+                      </label>
+                    ))
+                  ) : (
+                    <p className="mt-2 text-xs text-muted">
+                      No automated vision claim is made. Enter a visible review reason before
+                      approval.
+                    </p>
+                  )}
+                </fieldset>
+                <div className="mt-3">
+                  <Label htmlFor={`reason-${iteration.id}`}>Reviewer reason</Label>
+                  <Textarea
+                    id={`reason-${iteration.id}`}
+                    className="mt-1.5 min-h-20"
+                    value={reason}
+                    onChange={(event) =>
+                      setReasons((current) => ({ ...current, [iteration.id]: event.target.value }))
+                    }
+                    placeholder="Describe the visible identity/continuity evidence for this decision."
+                  />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    disabled={
+                      !production ||
+                      !authorityCurrent ||
+                      !rootCurrent ||
+                      !iteration.generationReceiptId ||
+                      !iteration.generationReceiptDigest ||
+                      backendRejected ||
+                      backendCanonical ||
+                      !reason.trim() ||
+                      !allRequiredConfirmed
+                    }
+                    title="Verify durable media, then approve this reviewed iteration as canonical"
+                    onClick={async () => {
+                      if (!production) return;
+                      try {
+                        const latest = await refreshAuthorityStatus();
+                        const latestRoot =
+                          latest?.ok === true
+                            ? (latest.preparedApprovals ?? []).find(
+                                (root) => root.preparedAssetId === iteration.preparedAssetId,
+                              )
+                            : null;
+                        const preparedApprovalRootId =
+                          (production.preparedAssets ?? []).find(
+                            (item) => item.id === iteration.preparedAssetId,
+                          )?.preparedApprovalRootId ?? "";
+                        if (
+                          latest?.ok !== true ||
+                          latest.status !== "CURRENT" ||
+                          latest.authorityId !== production.productionAuthority?.authorityId ||
+                          latest.digest !== production.productionAuthority?.digest ||
+                          latestRoot?.rootId !== preparedApprovalRootId
+                        )
+                          throw new Error(
+                            "Backend authority/prepared root mismatch; reseal or re-approve before canonical approval.",
+                          );
+                        const confirmedContinuityFindings = findings.map((finding) => ({
+                          ...finding,
+                          confirmed: finding.confirmed || Boolean(confirmed[finding.id]),
+                        }));
+                        const approved = await desktopApproveCanonicalImage({
+                          authorityId: latest.authorityId ?? "",
+                          preparedApprovalRootId,
+                          receiptId: iteration.generationReceiptId ?? "",
+                          iterationId: iteration.id,
+                          reason,
+                          findings: confirmedContinuityFindings.map(({ id, confirmed }) => ({
+                            id,
+                            confirmed,
+                          })),
+                        });
+                        if (!approved.ok) throw new Error(approved.error);
+                        applyReview(
+                          approveCanonicalIteration(production, {
+                            iterationId: iteration.id,
+                            reviewer: "user",
+                            reason,
+                            canonicalProof: approved.proof,
+                            continuityFindings: confirmedContinuityFindings,
+                          }),
+                        );
+                        await refreshAuthorityStatus();
+                        toast.success("Canonical image iteration approved.");
+                      } catch (error) {
+                        toast.error(
+                          error instanceof Error ? error.message : "Canonical approval failed.",
+                        );
+                      }
+                    }}
+                  >
+                    Approve canonical
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={
+                      !production ||
+                      !authorityCurrent ||
+                      !rootCurrent ||
+                      backendRejected ||
+                      backendCanonical ||
+                      !iteration.generationReceiptId ||
+                      !reason.trim()
+                    }
+                    title="Reject this iteration append-only"
+                    onClick={async () => {
+                      if (!production) return;
+                      try {
+                        const latest = await refreshAuthorityStatus();
+                        const latestRoot =
+                          latest?.ok === true
+                            ? (latest.preparedApprovals ?? []).find(
+                                (root) => root.preparedAssetId === iteration.preparedAssetId,
+                              )
+                            : null;
+                        const preparedApprovalRootId =
+                          (production.preparedAssets ?? []).find(
+                            (item) => item.id === iteration.preparedAssetId,
+                          )?.preparedApprovalRootId ?? "";
+                        if (
+                          latest?.ok !== true ||
+                          latest.status !== "CURRENT" ||
+                          latest.authorityId !== production.productionAuthority?.authorityId ||
+                          latest.digest !== production.productionAuthority?.digest ||
+                          latestRoot?.rootId !== preparedApprovalRootId
+                        )
+                          throw new Error(
+                            "Backend authority/prepared root mismatch; reseal or re-approve before rejection.",
+                          );
+                        const rejected = await desktopRejectCanonicalImage({
+                          authorityId: latest.authorityId ?? "",
+                          preparedApprovalRootId,
+                          receiptId: iteration.generationReceiptId ?? "",
+                          iterationId: iteration.id,
+                          reason,
+                        });
+                        if (!rejected.ok) throw new Error(rejected.error);
+                        applyReview(
+                          reviewGeneratedIteration(production, {
+                            iterationId: iteration.id,
+                            decision: "reject",
+                            reviewer: "user",
+                            reason,
+                          }),
+                        );
+                        await refreshAuthorityStatus();
+                        toast.success("Image iteration rejected.");
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Reject failed.");
+                      }
+                    }}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              </article>
+            );
+          })
+        ) : (
+          <EmptyCard
+            title="No generated iterations"
+            body="Generate from an approved prepared asset after the native adapter gate passes. Imported or shot-only stills do not satisfy Wave 4."
+          />
+        )}
       </div>
       <section className="mt-6" aria-label="Video takes">
         <p className="mb-3 text-[11px] tracking-wide text-subtle uppercase">Video takes</p>
         <div className="grid min-w-0 gap-3 lg:grid-cols-2">
-          {hydrateVideoWorkspace(picture.video).takes.length ? hydrateVideoWorkspace(picture.video).takes.map((take) => (
-            <article key={take.id} className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0"><p className="text-[11px] tracking-wide text-subtle uppercase">{take.status.replaceAll("_", " ")}</p><h3 className="truncate font-display text-xl">{take.shotId} · {take.engineId}</h3></div>
-                <Badge>{take.canonical ? "canonical" : take.kind}</Badge>
-              </div>
-              <p className="mt-3 text-sm leading-relaxed text-muted">{take.failClosedReason ?? take.reviewReason ?? "Queued video take."}</p>
-              <p className="mt-2 text-xs text-subtle">{take.mediaUri ?? "No durable video media. Stills are not video."}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => {
-                  try {
-                    replaceActive({ ...picture, video: reviewVideoTake(hydrateVideoWorkspace(picture.video), take.id, "reject", "Rejected: no genuine video media.") });
-                    toast.success("Video take rejected and retained as history.");
-                  } catch (error) {
-                    toast.error(error instanceof Error ? error.message : "Reject failed.");
-                  }
-                }}>Reject take</Button>
-                <Button size="sm" disabled={take.canonical || take.origin !== "imported" || !take.mediaSha256 || !take.probe?.ok} title={take.origin === "imported" ? "Approve imported video as canonical. This is not native generation." : "Canonical video approval requires imported probed media or a real native worker."} onClick={() => {
-                  try {
-                    replaceActive({ ...picture, video: reviewVideoTake(hydrateVideoWorkspace(picture.video), take.id, "canonical", "Canonical imported video. Not native generation.") });
-                    toast.success("Imported video marked canonical. Not labeled as generated.");
-                  } catch (error) {
-                    toast.error(error instanceof Error ? error.message : "Canonical failed.");
-                  }
-                }}>Approve canonical</Button>
-              </div>
-            </article>
-          )) : <EmptyCard title="No video takes" body="Prepare scene workflows in Generate, then import rendered clips for review." />}
+          {hydrateVideoWorkspace(picture.video).takes.length ? (
+            hydrateVideoWorkspace(picture.video).takes.map((take) => (
+              <article
+                key={take.id}
+                className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] tracking-wide text-subtle uppercase">
+                      {take.status.replaceAll("_", " ")}
+                    </p>
+                    <h3 className="truncate font-display text-xl">
+                      {take.shotId} · {take.engineId}
+                    </h3>
+                  </div>
+                  <Badge>{take.canonical ? "canonical" : take.kind}</Badge>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-muted">
+                  {take.failClosedReason ?? take.reviewReason ?? "Queued video take."}
+                </p>
+                <p className="mt-2 text-xs text-subtle">
+                  {take.mediaUri ?? "No durable video media. Stills are not video."}
+                </p>
+                <p className="mt-2 text-sm text-muted">
+                  {picture.shots.find((s) => s.id === take.shotId)
+                    ? shotPacketFreshness(
+                        picture,
+                        picture.shots.find((s) => s.id === take.shotId)!,
+                        take.jobId,
+                        take.id,
+                      ).reason
+                    : "Source shot no longer exists."}
+                </p>
+                <label className="mt-3 grid gap-1 text-sm">
+                  Observed video review against current direction
+                  <Textarea
+                    value={reasons[take.id] ?? ""}
+                    onChange={(e) =>
+                      setReasons((previous) => ({ ...previous, [take.id]: e.target.value }))
+                    }
+                  />
+                </label>
+                <label className="mt-2 flex gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={confirmed[take.id] ?? false}
+                    onChange={(e) =>
+                      setConfirmed((previous) => ({ ...previous, [take.id]: e.target.checked }))
+                    }
+                  />
+                  I reviewed this exact take against the current source, including speech and
+                  continuity.
+                </label>
+                <SpeechReviewPanel key={`${take.id}:${take.mediaSha256}`} picture={picture} take={take}/>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      try {
+                        replaceActive({
+                          ...picture,
+                          video: reviewVideoTake(
+                            hydrateVideoWorkspace(picture.video),
+                            take.id,
+                            "reject",
+                            "Rejected: no genuine video media.",
+                          ),
+                        });
+                        toast.success("Video take rejected and retained as history.");
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Reject failed.");
+                      }
+                    }}
+                  >
+                    Reject take
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={
+                      !confirmed[take.id] ||
+                      !reasons[take.id]?.trim() ||
+                      !picture.shots.some((s) => s.id === take.shotId) ||
+                      take.origin !== "imported" ||
+                      !take.mediaSha256 ||
+                      !take.probe?.ok
+                    }
+                    title={
+                      take.origin === "imported"
+                        ? "Approve imported video as canonical. This is not native generation."
+                        : "Canonical video approval requires imported probed media or a real native worker."
+                    }
+                    onClick={() => {
+                      try {
+                        replaceActive({
+                          ...picture,
+                          video: reviewVideoTake(
+                            hydrateVideoWorkspace(picture.video),
+                            take.id,
+                            "canonical",
+                            reasons[take.id],
+                            Date.now(),
+                            resolveShotPacket(
+                              picture,
+                              picture.shots.find((s) => s.id === take.shotId)!,
+                            ).fingerprint,
+                          ),
+                        });
+                        toast.success("Imported video marked canonical. Not labeled as generated.");
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Canonical failed.");
+                      }
+                    }}
+                  >
+                    Approve canonical
+                  </Button>
+                </div>
+              </article>
+            ))
+          ) : (
+            <EmptyCard
+              title="No video takes"
+              body="Prepare scene workflows in Generate, then import rendered clips for review."
+            />
+          )}
         </div>
       </section>
       <section className="mt-6" aria-label="Audio takes">
         <p className="mb-3 text-[11px] tracking-wide text-subtle uppercase">Audio takes</p>
         <div className="grid min-w-0 gap-3 lg:grid-cols-2">
-          {hydrateAudioWorkspace(picture.audio).takes.length ? hydrateAudioWorkspace(picture.audio).takes.map((take) => (
-            <article key={take.id} className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0"><p className="text-[11px] tracking-wide text-subtle uppercase">{take.status.replaceAll("_", " ")}</p><h3 className="truncate font-display text-xl">{take.kind} · {take.engineId}</h3></div>
-                <Badge>{take.origin}</Badge>
-              </div>
-              <p className="mt-3 text-sm leading-relaxed text-muted">{take.failClosedReason ?? take.reviewReason ?? take.filename ?? "Queued audio take."}</p>
-              <p className="mt-2 text-xs text-subtle">{take.mediaUri ?? "No durable audio. Silence is not a take."}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => {
-                  try {
-                    replaceActive({ ...picture, audio: reviewAudioTake(hydrateAudioWorkspace(picture.audio), take.id, "reject", "Rejected audio take.") });
-                    toast.success("Audio take rejected.");
-                  } catch (error) {
-                    toast.error(error instanceof Error ? error.message : "Reject failed.");
-                  }
-                }}>Reject take</Button>
-                <Button size="sm" disabled={take.canonical || take.origin !== "imported" || !take.mediaSha256} onClick={() => {
-                  try {
-                    replaceActive({ ...picture, audio: reviewAudioTake(hydrateAudioWorkspace(picture.audio), take.id, "canonical", "Canonical imported audio.") });
-                    toast.success("Imported audio marked canonical.");
-                  } catch (error) {
-                    toast.error(error instanceof Error ? error.message : "Canonical failed.");
-                  }
-                }}>Approve canonical</Button>
-              </div>
-            </article>
-          )) : <EmptyCard title="No audio takes" body="Choose your audio tools in Generate, then import recordings or generated audio for review." />}
+          {hydrateAudioWorkspace(picture.audio).takes.length ? (
+            hydrateAudioWorkspace(picture.audio).takes.map((take) => (
+              <article
+                key={take.id}
+                className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] tracking-wide text-subtle uppercase">
+                      {take.status.replaceAll("_", " ")}
+                    </p>
+                    <h3 className="truncate font-display text-xl">
+                      {take.kind} · {take.engineId}
+                    </h3>
+                  </div>
+                  <Badge>{take.origin}</Badge>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-muted">
+                  {take.failClosedReason ??
+                    take.reviewReason ??
+                    take.filename ??
+                    "Queued audio take."}
+                </p>
+                <p className="mt-2 text-xs text-subtle">
+                  {take.mediaUri ?? "No durable audio. Silence is not a take."}
+                </p>
+                {take.mediaUri &&
+                  /^(\/api\/project-media\?|media:|https?:)/.test(take.mediaUri) && (
+                    <audio
+                      controls
+                      preload="none"
+                      className="mt-3 w-full"
+                      src={take.mediaUri}
+                      aria-label={`Listen to ${take.filename ?? take.id}`}
+                    />
+                  )}
+                <label className="mt-3 grid gap-1 text-sm">
+                  Listening review notes
+                  <Textarea
+                    value={reasons[take.id] ?? ""}
+                    onChange={(e) =>
+                      setReasons((previous) => ({ ...previous, [take.id]: e.target.value }))
+                    }
+                  />
+                </label>
+                <label className="mt-2 flex gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={confirmed[take.id] ?? false}
+                    onChange={(e) =>
+                      setConfirmed((previous) => ({ ...previous, [take.id]: e.target.checked }))
+                    }
+                  />
+                  I listened to the exact take and checked cue timing, permitted sounds and vocal
+                  policy.
+                </label>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      try {
+                        replaceActive({
+                          ...picture,
+                          audio: reviewAudioTake(
+                            hydrateAudioWorkspace(picture.audio),
+                            take.id,
+                            "reject",
+                            "Rejected audio take.",
+                          ),
+                        });
+                        toast.success("Audio take rejected.");
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Reject failed.");
+                      }
+                    }}
+                  >
+                    Reject take
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={
+                      take.canonical ||
+                      take.origin === "fail-closed" ||
+                      !take.mediaSha256 ||
+                      !reasons[take.id]?.trim() ||
+                      !confirmed[take.id]
+                    }
+                    onClick={() => {
+                      try {
+                        replaceActive({
+                          ...picture,
+                          audio: reviewAudioTake(
+                            hydrateAudioWorkspace(picture.audio),
+                            take.id,
+                            "canonical",
+                            reasons[take.id],
+                          ),
+                        });
+                        toast.success("Audio take marked canonical with its original provenance.");
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Canonical failed.");
+                      }
+                    }}
+                  >
+                    Approve canonical
+                  </Button>
+                </div>
+              </article>
+            ))
+          ) : (
+            <EmptyCard
+              title="No audio takes"
+              body="Choose your audio tools in Generate, then import recordings or generated audio for review."
+            />
+          )}
         </div>
       </section>
     </Pane>
@@ -1212,7 +2780,12 @@ function ReviewStage({ picture }: { picture: Picture }) {
 }
 
 function EmptyCard({ title, body }: { title: string; body: string }) {
-  return <div className="rounded-lg bg-elevated p-5 text-sm text-muted shadow-[var(--shadow-border)]"><h3 className="font-display text-xl text-fg">{title}</h3><p className="mt-2 leading-relaxed">{body}</p></div>;
+  return (
+    <div className="rounded-lg bg-elevated p-5 text-sm text-muted shadow-[var(--shadow-border)]">
+      <h3 className="font-display text-xl text-fg">{title}</h3>
+      <p className="mt-2 leading-relaxed">{body}</p>
+    </div>
+  );
 }
 
 function StitchStage({ picture }: { picture: Picture }) {
@@ -1228,7 +2801,9 @@ function StitchStage({ picture }: { picture: Picture }) {
           ) : shot?.stillUrl ? (
             <img src={shot.stillUrl} alt="" className="size-full object-contain" />
           ) : (
-            <div className="grid size-full place-items-center text-sm text-subtle">Select a shot</div>
+            <div className="grid size-full place-items-center text-sm text-subtle">
+              Select a shot
+            </div>
           )}
         </div>
       </div>
@@ -1236,16 +2811,28 @@ function StitchStage({ picture }: { picture: Picture }) {
         {plan.clips.map((clip) => {
           const s = picture.shots.find((item) => item.id === clip.shotId);
           return (
-          <li key={clip.shotId} className="flex items-center justify-between rounded-sm bg-elevated px-3 py-2 text-xs">
-            <span>
-              {String(s?.index ?? 0).padStart(2, "0")} {s?.description} · {clip.videoOrigin}
-            </span>
-            <span className="text-subtle">{clip.missing.length ? `missing ${clip.missing.join(", ")}` : `${clip.endSec - clip.startSec}s`}</span>
-          </li>
+            <li
+              key={clip.shotId}
+              className="flex items-center justify-between rounded-sm bg-elevated px-3 py-2 text-xs"
+            >
+              <span>
+                {String(s?.index ?? 0).padStart(2, "0")} {s?.description} · {clip.videoOrigin}
+              </span>
+              <span className="text-subtle">
+                {clip.missing.length
+                  ? `missing ${clip.missing.join(", ")}`
+                  : `${clip.endSec - clip.startSec}s`}
+              </span>
+            </li>
           );
         })}
       </ol>
-      <p className="mt-3 text-xs text-subtle">Shot timeline {plan.durationSec}s. Imported film {importedCanonicalFilm(picture).durationSec.toFixed(1)}s across {importedCanonicalFilm(picture).clips.length} canonical imported clip(s). Origin stays imported, never generated.</p>
+      <p className="mt-3 text-xs text-subtle">
+        Shot timeline {plan.durationSec}s. Imported film{" "}
+        {importedCanonicalFilm(picture).durationSec.toFixed(1)}s across{" "}
+        {importedCanonicalFilm(picture).clips.length} canonical imported clip(s). Origin stays
+        imported, never generated.
+      </p>
     </Pane>
   );
 }
@@ -1256,63 +2843,124 @@ function ScoreStage({ picture }: { picture: Picture }) {
   const audio = hydratePictureAudio(picture);
   return (
     <Pane title="Score" kicker="13 · Voice + Sound + Music">
-      <p className="mb-4 max-w-2xl text-sm text-muted">Plan cues, manage voices, and review imported audio. Choose song, instrumental, sound-effect, and speech tools in Generate.</p>
+      <SoundCueEditor />
+      <p className="mb-4 max-w-2xl text-sm text-muted">
+        Plan cues, manage voices, and review imported audio. Choose song, instrumental,
+        sound-effect, and speech tools in Generate.
+      </p>
       <VoiceDesignWorkspace key={picture.id} picture={picture} />
-      <div role="status" className="max-w-2xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]">{musicRuntimeBlock(musicEngineFromSelection(picture.selectedEngine.music))}</div>
+      <div
+        role="status"
+        className="max-w-2xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]"
+      >
+        {musicRuntimeBlock(musicEngineFromSelection(picture.selectedEngine.music))}
+      </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button size="sm" variant="secondary" onClick={() => {
-          replaceActive({ ...picture, audio: queueMissingDialogue(picture), updatedAt: Date.now() });
-          toast.error("Dialogue queued fail-closed. No cloud TTS.");
-        }}>Queue missing dialogue</Button>
-        <Button size="sm" variant="secondary" onClick={() => {
-          replaceActive({ ...picture, audio: queueMissingScore(picture), updatedAt: Date.now() });
-          toast.error("Score cues saved. The selected audio runtime is not connected; no audio was generated.");
-        }}>Queue missing score</Button>
-        <Button size="sm" onClick={() => {
-          void (async () => {
-            const imported = await desktopImportAudio();
-            if (!imported.ok) {
-              if (imported.canceled) return;
-              toast.error(imported.error);
-              return;
-            }
-            const workspace = recordImportedAudioTake(hydratePictureAudio(picture), {
-              pictureId: picture.id,
-              kind: "score",
-              filename: imported.filename,
-              mediaUri: imported.mediaUri,
-              mediaSha256: imported.mediaSha256,
-              byteLength: imported.byteLength,
-              durationSec: imported.probe.durationSec ?? 0,
-              sampleRate: imported.probe.sampleRate,
-              channels: imported.probe.channels,
-              format: imported.probe.codec,
-              cueId: hydratePictureAudio(picture).cues[0]?.id ?? picture.cues[0]?.id ?? null,
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            replaceActive({
+              ...picture,
+              audio: queueMissingDialogue(picture),
+              updatedAt: Date.now(),
             });
-            replaceActive({ ...picture, audio: workspace, updatedAt: Date.now() });
-            toast.success(`Imported ${imported.filename} as audio. Provenance is imported, not generated.`);
-            setStage("review");
-          })();
-        }}>Import audio</Button>
-        <Button size="sm" variant="ghost" onClick={() => setStage("review")}>Review audio takes</Button>
+            toast.error("Dialogue queued fail-closed. No cloud TTS.");
+          }}
+        >
+          Queue missing dialogue
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            replaceActive({ ...picture, audio: queueMissingScore(picture), updatedAt: Date.now() });
+            toast.error(
+              "Score cues saved. The selected audio runtime is not connected; no audio was generated.",
+            );
+          }}
+        >
+          Queue missing score
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => {
+            void (async () => {
+              const imported = await desktopImportAudio();
+              if (!imported.ok) {
+                if (imported.canceled) return;
+                toast.error(imported.error);
+                return;
+              }
+              const workspace = recordImportedAudioTake(hydratePictureAudio(picture), {
+                pictureId: picture.id,
+                kind: "score",
+                filename: imported.filename,
+                mediaUri: imported.mediaUri,
+                mediaSha256: imported.mediaSha256,
+                byteLength: imported.byteLength,
+                durationSec: imported.probe.durationSec ?? 0,
+                sampleRate: imported.probe.sampleRate,
+                channels: imported.probe.channels,
+                format: imported.probe.codec,
+                cueId: hydratePictureAudio(picture).cues[0]?.id ?? picture.cues[0]?.id ?? null,
+              });
+              replaceActive({ ...picture, audio: workspace, updatedAt: Date.now() });
+              toast.success(
+                `Imported ${imported.filename} as audio. Provenance is imported, not generated.`,
+              );
+              setStage("review");
+            })();
+          }}
+        >
+          Import audio
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setStage("review")}>
+          Review audio takes
+        </Button>
       </div>
       <div className="mt-5 grid gap-3">
         {audio.profiles.map((profile) => (
-          <article key={profile.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
+          <article
+            key={profile.id}
+            className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+          >
             <p className="text-[11px] tracking-wide text-subtle uppercase">Voice bible</p>
             <h3 className="font-display text-xl">{profile.characterName}</h3>
-            <p className="mt-1 text-xs text-muted">{profile.engineId} · {profile.notes}</p>
+            <p className="mt-1 text-xs text-muted">
+              {profile.engineId} · {profile.notes}
+            </p>
           </article>
         ))}
         {audio.lines.map((line) => (
-          <article key={line.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
-            <p className="text-[11px] tracking-wide text-subtle uppercase">Dialogue · {line.targetDurationSec}s</p>
+          <article
+            key={line.id}
+            className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+          >
+            <p className="text-[11px] tracking-wide text-subtle uppercase">
+              Dialogue · {line.targetDurationSec}s
+            </p>
             <h3 className="font-display text-xl">{line.characterName}</h3>
             <p className="mt-2 text-sm leading-relaxed text-muted">{line.text}</p>
-            <p className="mt-2 text-xs text-subtle">{line.emotion} · {line.delivery}</p>
+            <p className="mt-2 text-xs text-subtle">
+              {line.emotion} · {line.delivery}
+            </p>
           </article>
         ))}
-        {(audio.cues.length ? audio.cues : picture.cues.map((c) => ({ id: c.id, name: c.name, notes: c.mood, instrumentation: c.instruments, kind: "score" as const, startSec: c.startSec, durationSec: c.durationSec, sceneId: null, shotId: null }))).map((c) => (
+        {(audio.cues.length
+          ? audio.cues
+          : picture.cues.map((c) => ({
+              id: c.id,
+              name: c.name,
+              notes: c.mood,
+              instrumentation: c.instruments,
+              kind: "score" as const,
+              startSec: c.startSec,
+              durationSec: c.durationSec,
+              sceneId: null,
+              shotId: null,
+            }))
+        ).map((c) => (
           <article key={c.id} className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">
             <h3 className="font-display text-xl">{c.name}</h3>
             <p className="mt-1 text-xs text-muted">{c.notes}</p>
@@ -1328,7 +2976,12 @@ function ExportStage({ picture }: { picture: Picture }) {
   const dur = totalDuration(picture);
   const [files, setFiles] = useState<ReadyFile[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
-  const [ffmpeg, setFfmpeg] = useState<{ ok: boolean; ffmpeg: string | null; ffprobe: string | null; reason: string } | null>(null);
+  const [ffmpeg, setFfmpeg] = useState<{
+    ok: boolean;
+    ffmpeg: string | null;
+    ffprobe: string | null;
+    reason: string;
+  } | null>(null);
   const [lastExport, setLastExport] = useState<string | null>(null);
   const setStage = useStudio((state) => state.setStage);
   useEffect(() => {
@@ -1338,11 +2991,23 @@ function ExportStage({ picture }: { picture: Picture }) {
   const lifecycle = movieLifecycle(picture);
   const exportPlan = planPictureExport(picture, null);
   const nextStage = guidedNextStage(picture);
-  const canonicalImported = hydrateVideoWorkspace(picture.video).takes.find((take) => take.canonical && take.origin === "imported" && take.mediaUri);
+  const canonicalImported = hydrateVideoWorkspace(picture.video).takes.find(
+    (take) =>
+      take.canonical &&
+      take.origin === "imported" &&
+      take.mediaUri &&
+      picture.shots.some(
+        (shot) =>
+          shot.id === take.shotId &&
+          shotPacketFreshness(picture, shot, take.jobId, take.id).status !== "stale",
+      ),
+  );
   const litePlan = planLiteImportedExport(picture, ffmpeg?.ok ? ffmpeg.ffmpeg : null);
   const plusPlan = planPlusImportedExport(picture, ffmpeg?.ok ? ffmpeg.ffmpeg : null);
   const film = importedCanonicalFilm(picture);
-  const canonicalAudio = hydrateAudioWorkspace(picture.audio).takes.find((take) => take.canonical && take.origin === "imported" && take.mediaUri);
+  const canonicalAudio = hydrateAudioWorkspace(picture.audio).takes.find(
+    (take) => take.canonical && take.origin === "imported" && take.mediaUri,
+  );
 
   async function pull(file: ReadyFile) {
     setFiles((prev) => {
@@ -1351,80 +3016,131 @@ function ExportStage({ picture }: { picture: Picture }) {
     });
     const result = await saveReadyFile(file);
     if (result === "saved") toast.success(`Saved ${file.filename}`);
-    else if (result === "linked") toast.message("Use Save in the tray if nothing landed in Downloads.");
+    else if (result === "linked")
+      toast.message("Use Save in the tray if nothing landed in Downloads.");
   }
 
   return (
     <Pane title="Export" kicker="14 · Delivery">
-      <section className="mb-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" aria-label="Movie readiness">
+      <MovieAssemblyPanel key={picture.id} picture={picture}/>
+      <section
+        className="mb-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+        aria-label="Movie readiness"
+      >
         <p className="text-[11px] tracking-wide text-subtle uppercase">Movie readiness</p>
         <h3 className="mt-1 font-display text-xl">Guided finish path</h3>
         <p className="mt-2 text-sm text-muted">{exportPlan.reason}</p>
-        <p className="mt-2 text-xs text-subtle">{ffmpeg?.reason ?? "Checking local FFmpeg…"} {litePlan.reason} {plusPlan.reason}</p>
+        <p className="mt-2 text-xs text-subtle">
+          {ffmpeg?.reason ?? "Checking local FFmpeg…"} {litePlan.reason} {plusPlan.reason}
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button className="mt-0" size="sm" variant="secondary" onClick={() => setStage(nextStage)}>Next recommended · {nextStage}</Button>
-          <Button size="sm" disabled={!canonicalImported || !ffmpeg?.ok} onClick={() => {
-            void (async () => {
-              if (!canonicalImported?.mediaUri || !canonicalImported.mediaSha256 || !canonicalImported.probe?.durationSec) {
-                toast.error("Canonical imported video is missing.");
-                return;
-              }
-              const exported = await desktopExportLite({
-                mediaUri: canonicalImported.mediaUri,
-                mediaSha256: canonicalImported.mediaSha256,
-                durationSec: canonicalImported.probe.durationSec,
-                fps: canonicalImported.probe.fps ?? picture.fps ?? 24,
-                hasAudio: canonicalImported.probe.hasAudio,
+          <Button
+            className="mt-0"
+            size="sm"
+            variant="secondary"
+            onClick={() => setStage(nextStage)}
+          >
+            Next recommended · {nextStage}
+          </Button>
+          <Button
+            size="sm"
+            disabled={!canonicalImported || !ffmpeg?.ok}
+            onClick={() => {
+              void (async () => {
+                if (
+                  !canonicalImported?.mediaUri ||
+                  !canonicalImported.mediaSha256 ||
+                  !canonicalImported.probe?.durationSec
+                ) {
+                  toast.error("Canonical imported video is missing.");
+                  return;
+                }
+                const exported = await desktopExportLite({
+                  mediaUri: canonicalImported.mediaUri,
+                  mediaSha256: canonicalImported.mediaSha256,
+                  durationSec: canonicalImported.probe.durationSec,
+                  fps: canonicalImported.probe.fps ?? picture.fps ?? 24,
+                  hasAudio: canonicalImported.probe.hasAudio,
+                });
+                if (!exported.ok) {
+                  toast.error(exported.error);
+                  return;
+                }
+                setLastExport(exported.outputPath);
+                toast.success(`Exported imported MP4 ${exported.sha256.slice(0, 12)}…`);
+              })();
+            }}
+          >
+            Export MP4
+          </Button>
+          <Button
+            size="sm"
+            disabled={!plusPlan.ok}
+            onClick={() => {
+              void (async () => {
+                if (!canonicalAudio?.mediaUri || !canonicalAudio.mediaSha256) {
+                  toast.error("Canonical imported audio is required for the 30-second film.");
+                  return;
+                }
+                const exported = await desktopExportPlus({
+                  videos: film.clips,
+                  audioUri: canonicalAudio.mediaUri,
+                  audioSha256: canonicalAudio.mediaSha256,
+                  fps: picture.fps || 24,
+                });
+                if (!exported.ok) {
+                  toast.error(exported.error);
+                  return;
+                }
+                setLastExport(exported.outputPath);
+                toast.success(`Exported 30s imported film ${exported.sha256.slice(0, 12)}…`);
+              })();
+            }}
+          >
+            Export 30s film
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              void desktopOpenExportFolder().then((result) => {
+                if (!result.ok) toast.error(result.error || "Could not open folder");
               });
-              if (!exported.ok) {
-                toast.error(exported.error);
-                return;
-              }
-              setLastExport(exported.outputPath);
-              toast.success(`Exported imported MP4 ${exported.sha256.slice(0, 12)}…`);
-            })();
-          }}>Export MP4</Button>
-          <Button size="sm" disabled={!plusPlan.ok} onClick={() => {
-            void (async () => {
-              if (!canonicalAudio?.mediaUri || !canonicalAudio.mediaSha256) {
-                toast.error("Canonical imported audio is required for the 30-second film.");
-                return;
-              }
-              const exported = await desktopExportPlus({
-                videos: film.clips,
-                audioUri: canonicalAudio.mediaUri,
-                audioSha256: canonicalAudio.mediaSha256,
-                fps: picture.fps || 24,
-              });
-              if (!exported.ok) {
-                toast.error(exported.error);
-                return;
-              }
-              setLastExport(exported.outputPath);
-              toast.success(`Exported 30s imported film ${exported.sha256.slice(0, 12)}…`);
-            })();
-          }}>Export 30s film</Button>
-          <Button size="sm" variant="outline" onClick={() => {
-            void desktopOpenExportFolder().then((result) => {
-              if (!result.ok) toast.error(result.error || "Could not open folder");
-            });
-          }}>Open output folder</Button>
+            }}
+          >
+            Open output folder
+          </Button>
         </div>
-        {lastExport ? <p className="mt-2 truncate text-xs text-subtle" title={lastExport}>Last export {lastExport}</p> : null}
+        {lastExport ? (
+          <p className="mt-2 truncate text-xs text-subtle" title={lastExport}>
+            Last export {lastExport}
+          </p>
+        ) : null}
         <ul className="mt-4 grid gap-1 sm:grid-cols-2">
           {readiness.map((item) => (
             <li key={item.id}>
-              <button type="button" className="flex w-full items-start justify-between gap-2 rounded-sm bg-inset px-3 py-2 text-left text-xs shadow-[var(--shadow-border)]" onClick={() => {
-                if (item.id === "images" || item.id === "voice") useStudio.getState().setGenerateFocus("assets");
-                else if (item.id === "video") useStudio.getState().setGenerateFocus("video");
-                else setStage(item.stage);
-              }}>
-                <span><span className="text-subtle uppercase">{item.status}</span> · {item.label}<span className="mt-1 block text-muted">{item.reason}</span></span>
+              <button
+                type="button"
+                className="flex w-full items-start justify-between gap-2 rounded-sm bg-inset px-3 py-2 text-left text-xs shadow-[var(--shadow-border)]"
+                onClick={() => {
+                  if (item.id === "images" || item.id === "voice")
+                    useStudio.getState().setGenerateFocus("assets");
+                  else if (item.id === "video") useStudio.getState().setGenerateFocus("video");
+                  else setStage(item.stage);
+                }}
+              >
+                <span>
+                  <span className="text-subtle uppercase">{item.status}</span> · {item.label}
+                  <span className="mt-1 block text-muted">{item.reason}</span>
+                </span>
               </button>
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-[11px] text-subtle">{lifecycle.filter((stage) => stage.readiness).length} lifecycle stages tracked. Checkpoint/resume uses the existing picture store; jobs re-queue instead of duplicating.</p>
+        <p className="mt-3 text-[11px] text-subtle">
+          {lifecycle.filter((stage) => stage.readiness).length} lifecycle stages tracked.
+          Checkpoint/resume uses the existing picture store; jobs re-queue instead of duplicating.
+        </p>
       </section>
       <dl className="grid max-w-md grid-cols-2 gap-3 text-sm">
         <Stat k="Runtime" v={formatTimecode(dur, picture.fps)} />
@@ -1462,7 +3178,8 @@ function ExportStage({ picture }: { picture: Picture }) {
                 const result = await desktopSaveMany({
                   files: pack.map((f) => ({ filename: f.filename, contents: f.contents })),
                 });
-                if (!result.canceled) toast.success(`Saved ${result.count} files to ${result.folderLabel}`);
+                if (!result.canceled)
+                  toast.success(`Saved ${result.count} files to ${result.folderLabel}`);
                 return;
               }
               toast.success("Six files ready. Hit Save on each.");
@@ -1477,7 +3194,10 @@ function ExportStage({ picture }: { picture: Picture }) {
           <p className="text-[11px] tracking-wide text-subtle uppercase">Ready to save</p>
           <ul className="mt-3 grid gap-2">
             {files.map((file) => (
-              <li key={file.filename} className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-inset px-3 py-2">
+              <li
+                key={file.filename}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-inset px-3 py-2"
+              >
                 <span className="min-w-0 truncate text-sm">{file.filename}</span>
                 <span className="flex gap-1.5">
                   <button
@@ -1564,7 +3284,12 @@ function Field({
   return (
     <div>
       <Label>{label}</Label>
-      <Input className="mt-1.5" type={type} value={value} onChange={(e) => onChange(e.target.value)} />
+      <Input
+        className="mt-1.5"
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </div>
   );
 }
@@ -1585,40 +3310,94 @@ export function StageRail() {
   const enterAdvancedDepartments = useStudio((state) => state.enterAdvancedDepartments);
   const generateGate = useStudio((state) => state.generateGate);
   const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
-  const defaultIndex = Math.max(0, DEFAULT_NAV_STEPS.findIndex((step) => step.stage === stage && (step.gate ? generateGate === step.gate : true)));
+  const defaultIndex = Math.max(
+    0,
+    DEFAULT_NAV_STEPS.findIndex(
+      (step) => step.stage === stage && (step.gate ? generateGate === step.gate : true),
+    ),
+  );
   const goDefault = (step: (typeof DEFAULT_NAV_STEPS)[number]) => {
     if (step.gate) setGenerateFocus(step.gate);
     else setStage(step.stage);
   };
   return (
-    <nav className="min-w-0 max-w-full overflow-hidden" aria-label="Pipeline" data-active-stage={stage} data-ui-mode={uiMode}>
+    <nav
+      className="min-w-0 max-w-full overflow-hidden"
+      aria-label="Pipeline"
+      data-active-stage={stage}
+      data-ui-mode={uiMode}
+    >
       {uiMode === "default" ? (
         <div className="flex min-w-0 items-center gap-1 px-2 py-2">
           <div className="hidden min-w-0 flex-1 grid-cols-5 gap-1 xl:grid">
             {DEFAULT_NAV_STEPS.map((item) => {
-              const currentDefault = item.stage === stage && (item.gate ? generateGate === item.gate : item.stage !== "generate");
+              const currentDefault =
+                item.stage === stage &&
+                (item.gate ? generateGate === item.gate : item.stage !== "generate");
               return (
-                <button key={item.id} type="button" data-stage-id={item.stage} aria-label={`${item.number} ${item.label}`} aria-current={currentDefault ? "step" : undefined} onClick={() => goDefault(item)} className={cn("flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-sm px-2 text-sm", currentDefault ? "bg-elevated text-fg" : "text-muted hover:text-fg")}>
+                <button
+                  key={item.id}
+                  type="button"
+                  data-stage-id={item.stage}
+                  aria-label={`${item.number} ${item.label}`}
+                  aria-current={currentDefault ? "step" : undefined}
+                  onClick={() => goDefault(item)}
+                  className={cn(
+                    "flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-sm px-2 text-sm",
+                    currentDefault ? "bg-elevated text-fg" : "text-muted hover:text-fg",
+                  )}
+                >
                   <span className="shrink-0 text-xs text-subtle">{item.number}</span>
-                  <span className="min-w-0 truncate" title={item.label}>{item.label}</span>
+                  <span className="min-w-0 truncate" title={item.label}>
+                    {item.label}
+                  </span>
                 </button>
               );
             })}
           </div>
           <div className="flex min-w-0 flex-1 items-center gap-2 xl:hidden">
-            <Button size="icon-sm" variant="ghost" aria-label="Previous stage" disabled={defaultIndex === 0} onClick={() => goDefault(DEFAULT_NAV_STEPS[defaultIndex - 1])}><ChevronLeft /></Button>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label="Previous stage"
+              disabled={defaultIndex === 0}
+              onClick={() => goDefault(DEFAULT_NAV_STEPS[defaultIndex - 1])}
+            >
+              <ChevronLeft />
+            </Button>
             <label className="relative min-w-0 flex-1">
-              <span className="pointer-events-none absolute left-3 top-1 text-[9px] tracking-wide text-subtle uppercase">Touchpoint {defaultIndex + 1} of 5</span>
-              <select aria-label="Pipeline stage" value={DEFAULT_NAV_STEPS[defaultIndex]?.id} onChange={(event) => {
-                const step = DEFAULT_NAV_STEPS.find((item) => item.id === event.target.value);
-                if (step) goDefault(step);
-              }} className="h-11 w-full min-w-0 appearance-none rounded-sm bg-elevated px-3 pb-1 pt-4 text-sm text-fg shadow-[var(--shadow-border)] outline-none">
-                {DEFAULT_NAV_STEPS.map((item) => <option key={item.id} value={item.id}>{item.number} · {item.label}</option>)}
+              <span className="pointer-events-none absolute left-3 top-1 text-[9px] tracking-wide text-subtle uppercase">
+                Touchpoint {defaultIndex + 1} of 5
+              </span>
+              <select
+                aria-label="Pipeline stage"
+                value={DEFAULT_NAV_STEPS[defaultIndex]?.id}
+                onChange={(event) => {
+                  const step = DEFAULT_NAV_STEPS.find((item) => item.id === event.target.value);
+                  if (step) goDefault(step);
+                }}
+                className="h-11 w-full min-w-0 appearance-none rounded-sm bg-elevated px-3 pb-1 pt-4 text-sm text-fg shadow-[var(--shadow-border)] outline-none"
+              >
+                {DEFAULT_NAV_STEPS.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.number} · {item.label}
+                  </option>
+                ))}
               </select>
             </label>
-            <Button size="icon-sm" variant="ghost" aria-label="Next stage" disabled={defaultIndex === DEFAULT_NAV_STEPS.length - 1} onClick={() => goDefault(DEFAULT_NAV_STEPS[defaultIndex + 1])}><ChevronRight /></Button>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label="Next stage"
+              disabled={defaultIndex === DEFAULT_NAV_STEPS.length - 1}
+              onClick={() => goDefault(DEFAULT_NAV_STEPS[defaultIndex + 1])}
+            >
+              <ChevronRight />
+            </Button>
           </div>
-          <Button size="sm" variant="ghost" onClick={() => enterAdvancedDepartments()}>Advanced Departments</Button>
+          <Button size="sm" variant="ghost" onClick={() => enterAdvancedDepartments()}>
+            Advanced Departments
+          </Button>
         </div>
       ) : (
         <AdvancedDepartmentsRail />

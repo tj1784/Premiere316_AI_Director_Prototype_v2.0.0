@@ -160,6 +160,10 @@ export async function desktopImportAudio(): Promise<ImportedAudioResult> {
   if (!isDesktopApp()) return { ok: false, canceled: false, error: "Audio import is available only in the packaged desktop application." };
   return window.premiere316!.media.importAudio();
 }
+export async function desktopSpecialistAudio(input: import("../studio/specialist-audio").SpecialistInput): Promise<import("../studio/specialist-audio").SpecialistResult> {
+  if (!isDesktopApp() || !window.premiere316?.media.specialistAudio) return {ok:false, error:"Specialist audio requires the V4 desktop build and configured local runtimes."};
+  return window.premiere316.media.specialistAudio(input);
+}
 
 export async function desktopExportLite(input: LiteExportInput): Promise<LiteExportResult> {
   if (!isDesktopApp()) return { ok: false, error: "MP4 export is available only in the packaged desktop application." };

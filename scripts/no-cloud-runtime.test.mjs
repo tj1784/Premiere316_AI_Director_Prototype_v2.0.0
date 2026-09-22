@@ -6,13 +6,17 @@ import { livePackagedUatPassed } from "./pre-audit-evidence.mjs";
 import { injectGrokPwaHead, createHeadInjector } from "./grok-pwa-shared.mjs";
 
 test("packaged desktop keeps visible local attribution without a remote script", () => {
-  const html = '<html><head><title>Premiere316</title></head><body>Picture</body></html>';
+  const html = "<html><head><title>Premiere316</title></head><body>Picture</body></html>";
   const desktop = injectGrokPwaHead(html, { desktopOffline: true });
   assert.doesNotMatch(desktop, /src="https:\/\/grok.com/);
   assert.match(desktop, /Created with Grok \/ Remix/);
   assert.match(injectGrokPwaHead(html), /src="https:\/\/grok.com/);
   const injector = createHeadInjector({ desktopOffline: true });
-  const streamed = Buffer.concat([...injector.push(html.slice(0, 35)), ...injector.push(html.slice(35)), ...injector.flush()]).toString();
+  const streamed = Buffer.concat([
+    ...injector.push(html.slice(0, 35)),
+    ...injector.push(html.slice(35)),
+    ...injector.flush(),
+  ]).toString();
   assert.doesNotMatch(streamed, /src="https:\/\/grok.com/);
   assert.match(streamed, /grok-desktop-attribution/);
 });
@@ -24,37 +28,85 @@ function source(path) {
 test("GREEN requires successful live packaged provider and artifact evidence", () => {
   assert.equal(livePackagedUatPassed({ ok: false, skipped: true }), false);
   assert.equal(livePackagedUatPassed({ ok: true, offlineHonest: true }), false);
-  const live = { ok: true, skipped: false, packaged: true, onlineVerified: true, actualProviderCalls: 8,
-    researchGenerated: true, screenplayGenerated: true, qaGenerated: true, assetsExtracted: true,
-    noSilentFallback: true, network: { verified: true, cloud: 0, web: 0, comfy: 0, port8188: 0 } };
+  const live = {
+    ok: true,
+    skipped: false,
+    packaged: true,
+    onlineVerified: true,
+    actualProviderCalls: 8,
+    researchGenerated: true,
+    screenplayGenerated: true,
+    qaGenerated: true,
+    assetsExtracted: true,
+    noSilentFallback: true,
+    network: { verified: true, cloud: 0, web: 0, comfy: 0, port8188: 0 },
+  };
   assert.equal(livePackagedUatPassed(live), true);
-  for (const key of ["packaged", "onlineVerified", "researchGenerated", "screenplayGenerated", "qaGenerated", "assetsExtracted", "noSilentFallback"]) {
+  for (const key of [
+    "packaged",
+    "onlineVerified",
+    "researchGenerated",
+    "screenplayGenerated",
+    "qaGenerated",
+    "assetsExtracted",
+    "noSilentFallback",
+  ]) {
     assert.equal(livePackagedUatPassed({ ...live, [key]: false }), false, key);
   }
   assert.equal(livePackagedUatPassed({ ...live, actualProviderCalls: 0 }), false);
-  assert.equal(livePackagedUatPassed({ ...live, network: { ...live.network, verified: false } }), false);
+  assert.equal(
+    livePackagedUatPassed({ ...live, network: { ...live.network, verified: false } }),
+    false,
+  );
   assert.equal(livePackagedUatPassed({ ...live, network: { ...live.network, web: 1 } }), false);
 });
 
 test("Intake keeps optional fields closed and the idea/profile/guided action outside", () => {
-  const file = ts.createSourceFile("stage-views.tsx", source("src/components/studio/stage-views.tsx"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  const intake = file.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === "IntakeStage");
+  const file = ts.createSourceFile(
+    "stage-views.tsx",
+    source("src/components/studio/stage-views.tsx"),
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  );
+  const intake = file.statements.find(
+    (node) => ts.isFunctionDeclaration(node) && node.name?.text === "IntakeStage",
+  );
   assert.ok(intake);
   const disclosures = [];
   const visit = (node) => {
-    if (ts.isJsxElement(node) && node.openingElement.tagName.getText(file) === "details") disclosures.push(node);
+    if (ts.isJsxElement(node) && node.openingElement.tagName.getText(file) === "details")
+      disclosures.push(node);
     ts.forEachChild(node, visit);
   };
   visit(intake);
   assert.equal(disclosures.length, 1);
   const details = disclosures[0];
-  assert.equal(details.openingElement.attributes.properties.some((attr) => attr.name?.getText(file) === "open"), false);
+  assert.equal(
+    details.openingElement.attributes.properties.some(
+      (attr) => attr.name?.getText(file) === "open",
+    ),
+    false,
+  );
   const optional = details.getText(file);
-  for (const field of ["Source mode", "Title", "Logline", "Premise", "Treatment / Outline", "Existing screenplay", "Source material", "Source passages / references", "Genre", "Runtime (min)", "Tone", "Director notes"]) {
+  for (const field of [
+    "Source mode",
+    "Title",
+    "Logline",
+    "Premise",
+    "Treatment / Outline",
+    "Existing screenplay",
+    "Source material",
+    "Source passages / references",
+    "Genre",
+    "Runtime (min)",
+    "Tone",
+    "Director notes",
+  ]) {
     assert.ok(optional.includes(field), `${field} must remain inside Optional details`);
   }
   const primary = intake.getText(file).replace(optional, "");
-  assert.match(optional, />Optional details<\/summary>/);
+  assert.match(optional, />\s*Optional details\s*<\/summary>/);
   assert.match(primary, /What are we making\?/);
   assert.match(primary, /ProductionProfileControls/);
   assert.match(primary, /Run guided research step/);
@@ -74,8 +126,14 @@ test("director runtime fails closed outside packaged prepared-asset inference", 
   assert.match(director, /prepared-asset workflow/);
   assert.match(director, /ok: false/);
   assert.doesNotMatch(director, /exposeLocalStill|ensureLocalEngine|desktopGeneratePreparedImage/);
-  assert.doesNotMatch(director, /api\.x\.ai|XAI_API_KEY|grok-imagine-video|videos\/generations|\/tts\b/);
-  assert.doesNotMatch(director, /writePicture|polishPrompts|startClip|pollClip|speakLine|writeScore|askDirector/);
+  assert.doesNotMatch(
+    director,
+    /api\.x\.ai|XAI_API_KEY|grok-imagine-video|videos\/generations|\/tts\b/,
+  );
+  assert.doesNotMatch(
+    director,
+    /writePicture|polishPrompts|startClip|pollClip|speakLine|writeScore|askDirector/,
+  );
 });
 
 test("studio actions cannot invoke removed hosted director operations", () => {
@@ -85,11 +143,20 @@ test("studio actions cannot invoke removed hosted director operations", () => {
     source("src/components/studio/inspector.tsx"),
     source("src/components/studio/stage-views.tsx"),
   ].join("\n");
-  assert.doesNotMatch(surfaces, /writePicture|polishPrompts|startClip|pollClip|speakLine|writeScore|askDirector/);
-  assert.doesNotMatch(surfaces, /<Button[^>]*>\s*(Rewrite|Animate 10–15s|Ask|Spot the picture|Rewrite cue sheet|I2V)\s*<\/Button>/);
+  assert.doesNotMatch(
+    surfaces,
+    /writePicture|polishPrompts|startClip|pollClip|speakLine|writeScore|askDirector/,
+  );
+  assert.doesNotMatch(
+    surfaces,
+    /<Button[^>]*>\s*(Rewrite|Animate 10–15s|Ask|Spot the picture|Rewrite cue sheet|I2V)\s*<\/Button>/,
+  );
   // Runtime descriptions are engine-specific; enforce the absence of hosted
   // inference endpoints rather than requiring a particular UI disclaimer.
-  assert.doesNotMatch(surfaces, /api\.x\.ai|api\.openai\.com|api\.elevenlabs\.io|videos\/generations/);
+  assert.doesNotMatch(
+    surfaces,
+    /api\.x\.ai|api\.openai\.com|api\.elevenlabs\.io|videos\/generations/,
+  );
 });
 
 test("Stitch owns dedicated media and clip panels", () => {

@@ -1,7 +1,7 @@
 import { AUDIO_GENERATION_OPTIONS, audioGenerationOption } from "./audio-generation-catalog.ts";
 
 export type VoiceEngineId = "qwen3-tts" | "qwen3-tts-base" | "voxcpm2" | "index-tts";
-export type MusicEngineId = "minimax-music3" | "yue2" | "stable-audio-3" | "ace-step-1.5";
+export type MusicEngineId = "minimax-music3" | "yue2" | "stable-audio-3" | "ace-step-1.5" | "ace-step-1.5-xl-sft" | "stable-audio-3-small-sfx";
 
 export function voiceEngineFromSelection(value: string | null | undefined): VoiceEngineId {
   if (value === "voxcpm" || value === "voxcpm2") return "voxcpm2";

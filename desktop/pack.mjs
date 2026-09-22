@@ -4,7 +4,15 @@
  */
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
@@ -12,6 +20,9 @@ import { createRequire } from "node:module";
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const require = createRequire(import.meta.url);
 const dirOnly = process.argv.includes("--dir");
+const packageDirectory = process.env.PREMIERE316_PACKAGE_DIRECTORY || "dist-desktop";
+if (!/^dist-desktop(?:-[a-z0-9-]+)?$/.test(packageDirectory))
+  throw new Error("Package directory must be a named dist-desktop folder inside the repository.");
 
 function rendererSourceFiles() {
   const files = [];
@@ -23,7 +34,12 @@ function rendererSourceFiles() {
     }
   };
   visit(join(ROOT, "src"));
-  for (const name of ["package.json", "package-lock.json", "vite.config.ts", "electron-builder.yml"]) {
+  for (const name of [
+    "package.json",
+    "package-lock.json",
+    "vite.config.ts",
+    "electron-builder.yml",
+  ]) {
     files.push(join(ROOT, name));
   }
   return files;
@@ -49,7 +65,11 @@ function writeBuildIdentity() {
     rendererSourceHash,
     rendererMode: "PACKAGED DIST",
   };
-  writeFileSync(join(ROOT, "desktop", "build-info.json"), `${JSON.stringify(info, null, 2)}\n`, "utf8");
+  writeFileSync(
+    join(ROOT, "desktop", "build-info.json"),
+    `${JSON.stringify(info, null, 2)}\n`,
+    "utf8",
+  );
   console.log(`[premiere316] build identity ${buildId}`);
 }
 
@@ -72,6 +92,7 @@ function run(command, args, extraEnv = {}) {
 async function bundleBackend() {
   const esbuild = await import("esbuild");
   mkdirSync(join(ROOT, "desktop", "dist"), { recursive: true });
+  await esbuild.build({entryPoints:[join(ROOT,"src/lib/studio/movie-assembly.ts")],outfile:join(ROOT,"desktop/dist/movie-assembly-plan.mjs"),bundle:true,platform:"node",format:"esm",target:"node22"});
   await esbuild.build({
     absWorkingDir: ROOT,
     entryPoints: [join(ROOT, "desktop", "backend.mjs")],
@@ -119,23 +140,35 @@ await bundleBackend();
 console.log("[premiere316] building UI for the desktop Node server…");
 const rendererOutput = join(ROOT, ".output");
 if (existsSync(rendererOutput)) rmSync(rendererOutput, { recursive: true, force: true });
-await run(process.execPath, [wrapper, process.execPath, viteJs, "build"], { PREMIERE316_DESKTOP: "1" });
+await run(process.execPath, [wrapper, process.execPath, viteJs, "build"], {
+  PREMIERE316_DESKTOP: "1",
+});
 
 const uiEntry = join(ROOT, ".output", "server", "index.mjs");
 if (!existsSync(uiEntry) && !existsSync(join(ROOT, ".output", "server", "index.js"))) {
-  throw new Error("Desktop UI build did not produce .output/server. Premiere316.exe needs that entry.");
+  throw new Error(
+    "Desktop UI build did not produce .output/server. Premiere316.exe needs that entry.",
+  );
 }
 
 const builderCli = existsSync(builderBin) ? builderBin : require.resolve("electron-builder/cli.js");
 const targets = dirOnly ? ["--win", "dir", "--x64"] : ["--win", "--x64"];
 console.log(`[premiere316] electron-builder ${targets.join(" ")}…`);
-await run(process.execPath, [builderCli, ...targets]);
+await run(process.execPath, [
+  builderCli,
+  ...targets,
+  `--config.directories.output=${packageDirectory}`,
+]);
 
-const packagedResources = join(ROOT, "dist-desktop", "win-unpacked", "resources");
+const packagedResources = join(ROOT, packageDirectory, "win-unpacked", "resources");
 const asarPath = join(packagedResources, "app.asar");
 const { listPackage } = require("@electron/asar");
-const asarEntries = new Set(listPackage(asarPath, { isPack: false }).map((entry) => entry.replaceAll("\\", "/")));
+const asarEntries = new Set(
+  listPackage(asarPath, { isPack: false }).map((entry) => entry.replaceAll("\\", "/")),
+);
 const requiredAsarEntries = [
+  "/desktop/movie-assembly.mjs",
+  "/desktop/specialist-audio.mjs",
   "/desktop/director-progress.mjs",
   "/desktop/director-workspace.mjs",
   "/desktop/director-workspace.html",
@@ -156,6 +189,8 @@ const requiredAsarEntries = [
 ];
 const missingAsarEntries = requiredAsarEntries.filter((entry) => !asarEntries.has(entry));
 const requiredResources = [
+  join(packagedResources, "movie-assembly-plan.mjs"),
+  join(packagedResources, "workers", "specialist_audio_worker.py"),
   join(packagedResources, "backend.mjs"),
   join(packagedResources, "build-info.json"),
   join(packagedResources, "workers", "flux1_jsonl_worker.py"),
@@ -168,13 +203,15 @@ if (missingAsarEntries.length || missingResources.length) {
       `missing resources: ${missingResources.map((entry) => relative(ROOT, entry)).join(", ") || "none"}`,
   );
 }
-console.log(`[premiere316] packaged runtime audit passed (${requiredAsarEntries.length} ASAR modules, ${requiredResources.length} resources)`);
+console.log(
+  `[premiere316] packaged runtime audit passed (${requiredAsarEntries.length} ASAR modules, ${requiredResources.length} resources)`,
+);
 
-const unpacked = join(ROOT, "dist-desktop", "win-unpacked", "Premiere316.exe");
+const unpacked = join(ROOT, packageDirectory, "win-unpacked", "Premiere316.exe");
 if (existsSync(unpacked)) {
   console.log(`[premiere316] Premiere316.exe → ${unpacked}`);
 }
-const setup = join(ROOT, "dist-desktop", "Premiere316-Setup.exe");
+const setup = join(ROOT, packageDirectory, "Premiere316-Setup.exe");
 if (existsSync(setup)) {
   console.log(`[premiere316] installer → ${setup}`);
 }

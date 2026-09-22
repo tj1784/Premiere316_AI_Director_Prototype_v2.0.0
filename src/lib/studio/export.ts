@@ -1,12 +1,16 @@
 import { engineById, ENGINES } from "./engines";
 import { fountainFrom, shotStarts } from "./prompt-compiler";
 import { MODEL_ROOT, type Picture } from "./types";
+import { movieBibleIndex } from "./movie-bible";
+import { resolveRenderContext } from "./render-context";
+import { measuredSpeechAudit } from "./speech-review";
+import { compileEnginePromptPackage } from "./prompt-compiler";
 import { readyTextFile, type ReadyFile, formatTimecode } from "../utils";
 
 export function buildFountain(picture: Picture): ReadyFile {
   return readyTextFile(
     `${slug(picture.title)}.fountain`,
-    picture.screenplayFountain || fountainFrom(picture),
+    picture.screenplay.workingFountain || picture.screenplayFountain || fountainFrom(picture),
   );
 }
 
@@ -30,7 +34,11 @@ export function buildShotList(picture: Picture): ReadyFile {
     ];
     return cells.join(",");
   });
-  return readyTextFile(`${slug(picture.title)}-shots.csv`, [header, ...rows].join("\n"), "text/csv");
+  return readyTextFile(
+    `${slug(picture.title)}-shots.csv`,
+    [header, ...rows].join("\n"),
+    "text/csv",
+  );
 }
 
 export function buildEdl(picture: Picture): ReadyFile {
@@ -57,7 +65,10 @@ export function buildCueSheet(picture: Picture): ReadyFile {
         `${c.name}\n  ${formatTimecode(c.startSec)}–${formatTimecode(c.startSec + c.durationSec)}  ${c.durationSec}s\n  ${c.mood}\n  ${c.instruments}\n  Music3: ${c.minimaxPrompt}\n  SFX: ${c.sfx}\n`,
     )
     .join("\n");
-  return readyTextFile(`${slug(picture.title)}-cues.txt`, `CUE SHEET — ${picture.title}\n\n${body}`);
+  return readyTextFile(
+    `${slug(picture.title)}-cues.txt`,
+    `CUE SHEET — ${picture.title}\n\n${body}\n\nSOURCE-BOUND CUES\n${(picture.audio?.cues ?? []).map((c) => `${c.id} · ${c.name} · ${c.kind}\n${c.startSec}s + ${c.durationSec}s; tail ${c.tailSec ?? 0}s\n${c.notes}\nInstrumentation: ${c.instrumentation}\nPerspective: ${c.perspective ?? "unspecified"}\nMix: ${c.mixPriority ?? "unspecified"}\nSync: ${c.syncLandmarks ?? "unspecified"}\nMotif: ${JSON.stringify(c.motif ?? null)}\nVocal policy: ${c.vocalPolicy ?? "unspecified"}\nDestination: ${c.destination ?? "unspecified"}\n`).join("\n")}`,
+  );
 }
 
 export function buildPromptPack(picture: Picture): ReadyFile {
@@ -72,7 +83,8 @@ export function buildPromptPack(picture: Picture): ReadyFile {
       s.t2iPrompt,
       "",
       `I2V [${video}]`,
-      s.i2vPrompt,
+      safeCompiledPreview(picture, s).compiledPreview?.enginePrompt ??
+        `BLOCKED: ${safeCompiledPreview(picture, s).error}`,
       "",
       s.t2voicePrompt ? `VOICE\n${s.t2voicePrompt}\n` : "",
     ].join("\n"),
@@ -89,7 +101,7 @@ export function buildProjectJson(picture: Picture): ReadyFile {
     JSON.stringify(
       {
         app: "Premiere316",
-        version: "3.02",
+        version: "4.0.0",
         modelRoot: MODEL_ROOT,
         engines: ENGINES.map((e) => ({ id: e.id, repo: `${e.org}/${e.repo}` })),
         picture,
@@ -103,6 +115,7 @@ export function buildProjectJson(picture: Picture): ReadyFile {
 
 export function buildAllExports(picture: Picture): ReadyFile[] {
   return [
+    buildBibleManifest(picture),
     buildFountain(picture),
     buildShotList(picture),
     buildEdl(picture),
@@ -112,8 +125,65 @@ export function buildAllExports(picture: Picture): ReadyFile[] {
   ];
 }
 
+export function buildBibleManifest(picture: Picture): ReadyFile {
+  return readyTextFile(
+    `${slug(picture.title)}-bible-manifest.json`,
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        pictureId: picture.id,
+        exportedAt: new Date().toISOString(),
+        scope: "Authored source and prompt package; not a rendered movie or media-quality approval",
+        registry: movieBibleIndex(picture),
+        bible: picture.movieBible ?? null,
+        continuity: picture.shotContinuity ?? null,
+        soundCues: picture.audio?.cues ?? [],
+        measuredSpeech: measuredSpeechAudit(picture),
+        globalAndLocal: picture.renderContext ?? null,
+        shots: picture.shots.map((shot) => ({
+          shotId: shot.id,
+          sceneId: shot.sceneId,
+          renderContext: resolveRenderContext(picture, shot),
+          storedImagePrompt: shot.t2iPrompt,
+          storedVideoPrompt: shot.i2vPrompt,
+          ...safeCompiledPreview(picture, shot),
+        })),
+        authoringRun: picture.bibleRun ?? null,
+        approvedScreenplayVersion: picture.screenplay.approvedVersionId,
+        selectedEngines: picture.selectedEngine,
+        mediaReview:
+          "See canonical iteration and take review receipts in the project export. Prompt compilation does not approve media.",
+      },
+      null,
+      2,
+    ),
+    "application/json",
+  );
+}
+
+function safeCompiledPreview(picture: Picture, shot: Picture["shots"][number]) {
+  try {
+    return {
+      status: "compiled-preview",
+      compiledPreview: compileEnginePromptPackage({ picture, shot, target: "video" }),
+      error: null,
+    };
+  } catch (error) {
+    return {
+      status: "blocked",
+      compiledPreview: null,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 function slug(title: string) {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "picture";
+  return (
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "picture"
+  );
 }
 
 function quote(s: string) {

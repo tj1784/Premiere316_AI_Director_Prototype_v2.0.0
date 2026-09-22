@@ -1,20 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #09090b;
-  --color-surface: #121214;
-  --color-elevated: #1a1a1e;
+  --color-bg: #0b0d10;
+  --color-surface: #15191d;
+  --color-elevated: #1d2328;
   --color-inset: #0c0c0e;
-  --color-fg: #efe8dc;
-  --color-muted: #9a9186;
-  --color-subtle: #6b655c;
-  --color-accent: #c4a574;
+  --color-fg: #f2efe7;
+  --color-muted: #b8b5ac;
+  --color-subtle: #a4a69f;
+  --color-accent: #d5b57a;
   --color-accent-fg: #1a140c;
-  --color-border: rgba(239, 232, 220, 0.1);
+  --color-border: #343d43;
+  --color-edge: #343d43;
+  --color-ok: #91b6a0;
   --color-rec: #b33a3a;
   --color-good: #7d9b6a;
   --font-sans: "Segoe UI Variable Text", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Segoe UI Variable Display", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -28,7 +30,7 @@
     background: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);
-    font-weight: 300;
+    font-weight: 400;
     min-height: 100%;
     min-width: 0;
     overflow-x: hidden;
@@ -62,6 +64,135 @@
 
 .picture-grid {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+}
+
+.workspace-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.workspace-navigation {
+  width: 13rem;
+  flex-shrink: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.workspace-nav-content {
+  padding: 1rem 0.6rem;
+}
+.workspace-wordmark {
+  padding: 0.5rem 0.6rem 1.5rem;
+  color: var(--color-accent);
+}
+.workspace-wordmark span {
+  display: block;
+  font: 1.6rem var(--font-display);
+}
+.workspace-wordmark small {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+}
+.workspace-navigation section {
+  margin-top: 1rem;
+}
+.workspace-navigation h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  font: 0.65rem var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-muted);
+}
+.workspace-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.6rem;
+  border-left: 2px solid transparent;
+  text-align: left;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  transition:
+    background 150ms,
+    color 150ms;
+}
+.workspace-nav-link:hover {
+  background: var(--color-elevated);
+  color: var(--color-fg);
+}
+.workspace-nav-link[aria-current] {
+  background: var(--color-elevated);
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+}
+.workspace-nav-footer {
+  padding: 1.5rem 0.6rem 0.5rem;
+  font-size: 0.65rem;
+  line-height: 1.8;
+  color: var(--color-muted);
+}
+.workspace-nav-toggle {
+  display: none;
+}
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+@media (max-width: 900px) {
+  .workspace-body {
+    flex-direction: column;
+  }
+  .workspace-navigation {
+    width: 100%;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+    position: relative;
+    z-index: 25;
+  }
+  .workspace-nav-toggle {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    min-height: 44px;
+    font-size: 0.8rem;
+  }
+  .workspace-nav-content {
+    display: none;
+  }
+  .workspace-nav-content.is-open {
+    display: block;
+    position: absolute;
+    inset: 100% 0 auto;
+    max-height: 70dvh;
+    overflow: auto;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: 0 16px 30px #0006;
+  }
+  .workspace-wordmark {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
 }
 
 .picture-cover {
@@ -114,8 +245,12 @@
   min-height: 0;
   object-fit: cover;
 }
-.picture-cover-art--triptych { grid-template-columns: 1fr 1.5fr 1fr; }
-.picture-cover-art--board img { object-position: center 72%; }
+.picture-cover-art--triptych {
+  grid-template-columns: 1fr 1.5fr 1fr;
+}
+.picture-cover-art--board img {
+  object-position: center 72%;
+}
 .picture-cover-edition {
   position: absolute;
   bottom: 0.75rem;
@@ -191,4 +326,15 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+}
+
+/* Native select labels must not impose their intrinsic width on narrow editors. */
+.workspace-body :where(section, fieldset, div, label, select) {
+  min-width: 0;
+}
+.workspace-body select {
+  max-width: 100%;
+}
+.workspace-body :where(p, h2, h3, h4) {
+  overflow-wrap: anywhere;
 }

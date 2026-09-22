@@ -209,6 +209,22 @@ test("provider-neutral telemetry supports future local providers without busines
   assert.equal(future.cloudFallback, false);
 });
 
+test("fallback discovery cannot falsely certify an owned model was unloaded", async () => {
+  let unloaded = false;
+  const fetcher: typeof fetch = async (input, init) => {
+    const url = String(input);
+    if (url.endsWith("/api/v1/models/unload") && init?.method === "POST") {unloaded = true; return json({ok:true});}
+    if (url.endsWith("/api/v1/models")) return unloaded ? json({error:"native unavailable"},404) : json({models:[{key:"writer",type:"llm",loaded_instances:[{id:"owned",context_length:4096}]}]});
+    if (url.endsWith("/v1/models")) return json({data:[{id:"writer"}]});
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  const provider = new LMStudioProvider({fetch:fetcher,endpointCache:new MemoryEndpointCache(),sampleResources:resources});
+  await provider.load({servedModelId:"writer",settings});
+  await provider.releaseResident("user-explicit");
+  assert.equal(provider.telemetry()?.unloadVerification,"failed");
+  await assert.rejects(provider.verifiedNativeModels(),/Native residency evidence/);
+});
+
 test("NativeLlamaProvider is explicit, inert, and unavailable", async () => {
   const native = new NativeLlamaProvider();
   const discovery = await native.discover();

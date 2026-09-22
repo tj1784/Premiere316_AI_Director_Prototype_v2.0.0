@@ -105,7 +105,9 @@ describe("movie plan model selection never silently substitutes", () => {
     const model = readFileSync(new URL("./movie-plan-model.ts", import.meta.url), "utf8");
     assert.doesNotMatch(client, /ready\[0\]/);
     assert.doesNotMatch(client, /\?\? ready\[0\]/);
-    assert.match(client, /selectMoviePlanModel/);
+    assert.match(client, /profileTextRuntime/);
+    assert.match(client, /generateBibleText/);
+    assert.doesNotMatch(client, /ensureMoviePlanModel|stills\.unload/);
     assert.doesNotMatch(model, /ready\[0\]/);
     const dir = resolve("screenshots/pre-audit-build-movie-plan-blockers");
     mkdirSync(dir, { recursive: true });

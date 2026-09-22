@@ -27,6 +27,7 @@ function Home() {
     if (persist.hasHydrated?.()) {
       setReady(true);
     } else {
+      setReady(false);
       void Promise.resolve(persist.rehydrate()).then(() => {
         if (disposed) return;
         if (persist.hasHydrated?.()) setReady(true);
@@ -36,7 +37,7 @@ function Home() {
       });
     }
     return () => { disposed = true; window.removeEventListener(PROJECT_STORAGE_ERROR_EVENT, report); };
-  }, []);
+  }, [useStudio]);
 
   if (!ready) return <main className="grid min-h-dvh place-content-center gap-4 bg-bg p-6 text-fg" aria-live="polite">
     <h1 className="font-display text-xl">{loadError ? "Could not open saved pictures" : "Opening your pictures…"}</h1>

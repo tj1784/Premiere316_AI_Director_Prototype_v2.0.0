@@ -142,7 +142,7 @@ export async function generateAssetDrafts(picture: Picture, onPicture: (picture:
   const writerIds = [...new Set(assets.map((asset) => picture.assetPromptSources?.[asset.id]?.modelId || picture.productFlow?.servedModelId).filter((id): id is string => Boolean(id)))];
   for (const writerId of writerIds) {
     onProgress(`All ${prompts.size} prompts are queued. Offloading ${writerId} to free GPU memory for the image renderer…`);
-    const released = await releaseMoviePlanWriterForImages(writerId);
+    const released = await releaseMoviePlanWriterForImages(writerId, picture);
     if (!released?.released) throw new Error("Writer offload was not confirmed. Image generation has not started.");
   }
   onProgress("Writer offload confirmed. Checking the local asset image renderer…");

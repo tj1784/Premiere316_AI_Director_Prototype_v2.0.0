@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { ApiWorkflow, SpeakerReference } from "./joint-generation.ts";
 export type JointReviewInput = {
+  shotId?: string;
   pictureId: string;
   draftId: string;
   lineIds: string[];

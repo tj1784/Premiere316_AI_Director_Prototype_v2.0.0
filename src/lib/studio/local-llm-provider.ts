@@ -2,10 +2,7 @@ import type { ScreenplayGenerationSettings, ScreenplayTelemetry } from "./screen
 
 export const LM_STUDIO_ENDPOINT = "http://127.0.0.1:1234";
 /** Explicitly approved LM Studio loopback ports only. Never include the Vite/dev UI port. */
-export const LM_STUDIO_ENDPOINT_CANDIDATES = [
-  LM_STUDIO_ENDPOINT,
-  "http://127.0.0.1:1235",
-] as const;
+export const LM_STUDIO_ENDPOINT_CANDIDATES = [LM_STUDIO_ENDPOINT, "http://127.0.0.1:1235"] as const;
 
 export type LocalLLMServedModel = {
   id: string;
@@ -18,6 +15,7 @@ export type LocalLLMServedModel = {
   quantization: string | null;
   contextLength: number | null;
   sizeBytes: number | null;
+  speculativeDraft?: boolean;
 };
 
 export type LocalLLMProviderDiscovery = {
@@ -43,9 +41,13 @@ export type LocalLLMGenerateRequest = {
   system: string;
   prompt: string;
   thinkingEnabled?: boolean;
-  responseFormat?: { type: "json_schema"; json_schema: { name: string; strict: boolean; schema: Record<string, unknown> } };
+  responseFormat?: {
+    type: "json_schema";
+    json_schema: { name: string; strict: boolean; schema: Record<string, unknown> };
+  };
   onToken?: (token: string) => void;
   onReasoning?: (text: string) => void;
+  useModelDefaults?: boolean;
 };
 
 export type LocalLLMGenerateResult = {
@@ -61,7 +63,10 @@ export interface LocalLLMProvider {
   discover(): Promise<LocalLLMProviderDiscovery>;
   listModels(): Promise<LocalLLMServedModel[]>;
   load(config: LocalLLMLoadConfig): Promise<void>;
-  generate(request: LocalLLMGenerateRequest, config: LocalLLMLoadConfig): Promise<LocalLLMGenerateResult>;
+  generate(
+    request: LocalLLMGenerateRequest,
+    config: LocalLLMLoadConfig,
+  ): Promise<LocalLLMGenerateResult>;
   cancel(): Promise<void>;
   telemetry(): ScreenplayTelemetry | null;
   unload(): Promise<void>;
@@ -80,15 +85,27 @@ export class NativeLlamaProvider implements LocalLLMProvider {
       local: true,
       cloudFallback: false,
       available: false,
-      reason: "Native llama.cpp is disabled in this release. Start the LM Studio local API instead.",
+      reason:
+        "Native llama.cpp is disabled in this release. Start the LM Studio local API instead.",
       models: [],
       discoveredAt: Date.now(),
     };
   }
-  async listModels(): Promise<LocalLLMServedModel[]> { return []; }
-  async load(_config: LocalLLMLoadConfig): Promise<void> { throw new Error("Native llama.cpp is disabled in this release."); }
-  async generate(_request: LocalLLMGenerateRequest, _config: LocalLLMLoadConfig): Promise<LocalLLMGenerateResult> { throw new Error("Native llama.cpp is disabled in this release."); }
+  async listModels(): Promise<LocalLLMServedModel[]> {
+    return [];
+  }
+  async load(_config: LocalLLMLoadConfig): Promise<void> {
+    throw new Error("Native llama.cpp is disabled in this release.");
+  }
+  async generate(
+    _request: LocalLLMGenerateRequest,
+    _config: LocalLLMLoadConfig,
+  ): Promise<LocalLLMGenerateResult> {
+    throw new Error("Native llama.cpp is disabled in this release.");
+  }
   async cancel(): Promise<void> {}
-  telemetry(): ScreenplayTelemetry | null { return null; }
+  telemetry(): ScreenplayTelemetry | null {
+    return null;
+  }
   async unload(): Promise<void> {}
 }

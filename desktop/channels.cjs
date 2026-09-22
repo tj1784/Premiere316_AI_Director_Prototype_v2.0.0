@@ -43,7 +43,9 @@ module.exports = {
   mediaDiscover: "p316:media:discover",
   mediaImportVideo: "p316:media:importVideo",
   mediaImportAudio: "p316:media:importAudio",
+  specialistAudio: "p316:media:specialistAudio",
   mediaExportLite: "p316:media:exportLite",
   mediaExportPlus: "p316:media:exportPlus",
+  mediaAssemble: "p316:media:assemble",
   mediaOpenFolder: "p316:media:openFolder",
 };

@@ -19,17 +19,28 @@ export function HomeBay() {
           </span>
           <div>
             <p className="font-display text-lg leading-tight tracking-tight">Premiere316</p>
-            <p className="text-[11px] tracking-[0.18em] text-muted uppercase">V3.02 · Standalone picture studio</p>
+            <p className="text-[11px] tracking-[0.18em] text-muted uppercase">
+              V4 · Movie Script Production Bible
+            </p>
           </div>
         </div>
         <div className="flex min-w-0 items-center gap-2">
-          <p className="hidden max-w-64 truncate text-[11px] text-subtle sm:block" title={MODEL_ROOT}>{MODEL_ROOT}</p>
+          <p
+            className="hidden max-w-64 truncate text-[11px] text-subtle sm:block"
+            title={MODEL_ROOT}
+          >
+            {MODEL_ROOT}
+          </p>
           <InterfaceScale />
         </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-5 pb-16 pt-8 sm:px-8 sm:pt-10">
-        <PicturesLibrary pictures={pictures} onNew={() => newPicture(makePictureIntake())} onOpen={openPicture} />
+        <PicturesLibrary
+          pictures={pictures}
+          onNew={() => newPicture(makePictureIntake())}
+          onOpen={openPicture}
+        />
       </main>
     </div>
   );

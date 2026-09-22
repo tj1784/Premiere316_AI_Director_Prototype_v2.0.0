@@ -1,7 +1,7 @@
 {
   "name": "app-builder-workspace",
   "productName": "Premiere316",
-  "version": "3.0.2",
+  "version": "4.0.0",
   "description": "Premiere316 standalone picture factory",
   "author": "Premiere316",
   "main": "desktop/main.mjs",
@@ -12,6 +12,7 @@
     "nf3": "0.3.17"
   },
   "scripts": {
+    "test:v4": "node --experimental-strip-types --test desktop/movie-assembly.test.mjs desktop/specialist-audio.test.mjs src/lib/studio/bible-run.test.ts src/lib/studio/bible-request-ledger.test.ts src/lib/studio/astra-adapter.test.ts src/lib/studio/profile-text-runtime.test.ts src/lib/emotion/integration.test.ts src/lib/emotion/r4.test.ts",
     "dev": "node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080",
     "build": "node scripts/with-app-env.mjs vite build && npm run db:migrate",
     "db:migrate": "node scripts/migrate.mjs",
