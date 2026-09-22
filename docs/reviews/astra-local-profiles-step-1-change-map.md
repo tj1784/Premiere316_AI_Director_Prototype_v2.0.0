@@ -1,14 +1,14 @@
 # Astra Ultra / Local Models — Implementation Step 1 change map
 
-Source specification: `Premiere316_V3_Two_Profile_Review_Patch(1).md`, revision 1.2 (supplied 2026-09-22). This packet supersedes the revision 1.1 Step 1 review map at the same inspection baseline.
+Source specification: `Premiere316_V3_Two_Profile_Review_Patch(2).md`, revision 1.6 (supplied 2026-09-22). This packet preserves the original Step 1 inspection and supersedes its revision 1.1/1.2 binding snapshot with current installation evidence.
 
 Inspection baseline: commit `35cdafb` on `codex/voice-reference-emotion`. The historical R4 review point was `90c6732`; the current branch also contains the later Cueboard implementation commit `0e2b43b`.
 
-Status: review packet only. No profile, orchestration, approval, serializer, project-data, download, or live-generation behavior has been changed. This completes the revision 1.2 update to Implementation Step 1 and deliberately stops before Step 2.
+Status: review packet only. No profile, orchestration, approval, serializer, project-data, download, model-lifecycle, or live-generation behavior has been changed. This completes the revision 1.6 update to Implementation Step 1 and deliberately stops before Step 2.
 
 ## Executive finding
 
-Premiere316 already has most of the reusable pieces: exact LM Studio model discovery, versioned screenplay artifacts, explicit approval functions, project persistence, dependency invalidation, media take review, immutable Director workflow review, and a narrow versioned Cueboard H3 serializer. It does **not** have the requested two-profile contract or an Astra provider, and its default movie-plan path currently behaves opposite to the requested guided default.
+Premiere316 already has most of the reusable pieces: exact LM Studio model discovery, versioned screenplay artifacts, explicit approval functions, project persistence, dependency invalidation, media take review, immutable Director workflow review, and a narrow versioned Cueboard H3 serializer. It does **not** have the requested two-profile contract or an Astra provider, and its default movie-plan path currently behaves opposite to the requested guided default. The requested regular GAIN V1.1 Q8_0 artifact is now verified on disk and loaded, but LM Studio exposes it under an inherited served key ending in `mtp`; Step 2 must therefore persist artifact identity separately from the callable alias.
 
 The implementation should extend the existing `Picture`, `PictureScreenplay`, `ProductFlowState`, project storage, approval functions, and media workspaces. It should not create another project database or approval system.
 
@@ -43,30 +43,43 @@ The current application defaults are legacy Llama/Qwen-oriented rather than the 
 - `src/lib/studio/screenplay-models.ts`: correctly retains exact served IDs, local catalog matches, quantization, context, and status.
 - `src/lib/studio/qwen-writer-identity.ts` and `src/lib/studio/exact-local-writer.ts`: enforce the current Llama/Qwen identity rules and will need role-aware replacements rather than broad family matching.
 
-Read-only inspection of LM Studio's native model catalog at Step 1 found no loaded text instances. The exact relevant installed state was:
+The refreshed read-only inspection on 2026-09-22 found the following relevant state:
 
-| Requested binding | Current exact evidence | Step 1 status |
+| Requested binding | Current exact evidence | Refreshed Step 1 status |
 | --- | --- | --- |
-| Hermes 4 70B | Directory `lmstudio-community/Hermes-4-70B-GGUF` contains only `Hermes-4-70B-Q6_K-00002-of-00002.gguf`; it is absent from LM Studio's native catalog | Unavailable/incomplete; do not bind or substitute |
-| Artemis 31B v1.1 | No matching installed file or native-catalog entry | Optional and unavailable |
-| GAIN V1.1 | Native key `qwen3.8-27b-cold-fusion-gain-v1.1-nm-dau-neo-max-mtp`; Q8_0, 27B, 31,630,644,152 bytes, 262,144 max context; not loaded | Installed, exact key known, not currently runnable |
+| Hermes 4 70B | Both Q6_K shards exist: `Hermes-4-70B-Q6_K-00001-of-00002.gguf` (39,953,846,688 bytes) and `...00002-of-00002.gguf` (17,934,300,608 bytes). Native key `nousresearch/hermes-4-70b`; selected variant `@q6_k`; no loaded instance | Installed — not loaded; restore architect, lead screenplay writer, and rewrite roles |
+| Artemis 31B v1.1 | No matching installed file or native-catalog entry in the refreshed evidence | Optional and unavailable; retain explicit skip, never substitute |
+| GAIN V1.1 | User-confirmed file `D:/AI/Models/LMStudio/DavidAU/Qwen3.8-27B-Cold-Fusion-GAIN-V1.1-NM-DAU-NEO-MAX-MTP-GGUF/Qwen3.8-27B-Cold-Fusion-GAIN-V1.1-NM-DAU-NEO-MAX-NEO-Q8_0.gguf` exists at 29,787,699,776 bytes. Native key `qwen3.8-27b-cold-fusion-gain-v1.1-nm-dau-neo-max-mtp`; Q8_0, 27B, 31,630,644,152 catalog bytes, 262,144 max context; loaded instance at 8,192 context | Loaded and selected for the shot/prompt/cue role; successful inference is not claimed. The artifact filename is regular non-MTP even though the repository folder, native key, and LM Studio label end in `mtp` |
 | GPT-OSS 120B | Native key `gptoss-120b-uncensored-hauhaucs-aggressive`; MXFP4, 65,369,016,544 bytes, 131,072 max context; not loaded | Installed, requested uncensored variant preserved, not currently runnable |
+| Observerx Heretic Abliterated | Exact file `RVN-BF16.gguf` (53,808,281,888 bytes); native key `qwen3.8-27b-heretic-abliterated-uncensored`; no loaded instance | Installed — not loaded; unassigned alternate only |
+| Huihui Abliterated | Exact file `Huihui-Qwen3.8-27B-abliterated-bf16.gguf` (54,657,733,920 bytes); native key `huihui-qwen3.8-27b-abliterated`; no loaded instance | Installed — not loaded; unassigned alternate only |
 
 This is a machine snapshot, not a permanent registry assertion. Runtime resolution must always refresh the native catalog and record the exact served instance. The application must not treat `/v1/models` rows as loaded; `LmStudioProvider` already correctly relies on `/api/v1/models` loaded instances.
 
-### Revision 1.2 user-authorized unavailable placeholders
+### Revision 1.6 GAIN identity — regular artifact under an inherited MTP alias
 
-Revision 1.2 explicitly authorizes the three screenshot entries below to remain stable unavailable/pending placeholders. They do not block Step 2 profile, persistence, migration, or review-UI work, and they do not block an independently configured Astra Ultra run. This exception authorizes skipping affected inference; it does not authorize a substitute model, a fabricated callable ID, a forged output, a model download, or a retry.
+The GAIN repository distributes regular and MTP variants. The selected regular file is:
 
-| Placeholder display identity | Persisted availability/reason | Assignment and routing consequence |
+| Decision | Exact weight filename |
 | --- | --- | --- |
-| `nousresearch/hermes-4-70b` | Unavailable; download/verification incomplete and the supplied screenshot shows checksum failure | Preserve Hermes as the intended architect, lead writer, and rewrite owner with a null callable ID until exact installation validation |
-| `Observerx: Qwen3.8 27B Heretic Abliterated Uncensored GGUF…` | Pending/unavailable; the screenshot shows an in-progress transfer and the exact variant is truncated | Keep as an unassigned alternate catalog entry; never equate it with GAIN V1.1 or report an unobserved checksum failure |
-| `huihui-ai: Huihui Qwen3.8 27B Abliterated GGUF BF16` | Unavailable; download/verification incomplete and the supplied screenshot shows checksum failure | Keep as an unassigned alternate catalog entry; never replace GAIN or another assigned role with it |
+| Use for shot, prompt, and cue authoring | `Qwen3.8-27B-Cold-Fusion-GAIN-V1.1-NM-DAU-NEO-MAX-NEO-Q8_0.gguf` |
+| Exclude | `Qwen3.8-27B-Cold-Fusion-GAIN-V1.1-NM-DAU-NEO-MAX-NEO-MTP-Q8_0.gguf` and every other actual MTP weight artifact |
 
-The placeholder record belongs in the same versioned production-routing state proposed for `Picture`. It needs a stable identity, display label, optional intended role, status, observed/user-reported reason, `authorizedSkip: true`, and `callableModelId: null`. Artemis remains the separately named optional challenger; GAIN and GPT-OSS retain their own assignments and must continue to resolve from live catalog evidence.
+LM Studio currently displays and serves the selected regular file as `qwen3.8-27b-cold-fusion-gain-v1.1-nm-dau-neo-max-mtp`. The user's screenshot and the native API both confirm that alias. The implementation must use that real callable alias after matching it to the verified regular artifact; it must not invent or rename the callable ID to a speculative non-MTP label.
 
-For an affected inference unit, the orchestrator must record **Skipped — model unavailable** without issuing a request. Guided mode still enters the ordinary review pause. Autonomous mode may continue independent eligible units, but dependent work with no real required input must become **Skipped — required source unavailable**. Such a run ends **Finished with missing sections — review required**, never **Complete movie script**. Availability refresh and retry remain explicit user actions after a verified installation, while placeholder identity and history stay intact.
+Step 2 must persist at least repository identity, exact absolute artifact path, exact filename, quantization, size/hash when available, actual callable alias, and discovery timestamp as separate fields. Eligibility is determined from verified artifact identity, not a substring test on the parent folder, repository slug, display label, or served key. This allows the regular `NEO-Q8_0.gguf` to remain eligible under the inherited MTP alias while still rejecting the distinct `NEO-MTP-Q8_0.gguf`, a renamed MTP file, or an ambiguous mapping. If multiple artifacts share an alias, resolution must stop at **Needs verification** rather than guessing.
+
+GAIN remains assigned to P5 asset/image/video prompts, shot/camera/VFX plans, and sound/music cue sheets. Hermes remains the screenplay and rewrite owner; GPT-OSS remains the semantic reviewer; Artemis remains the optional challenger. Observerx, Huihui, and TURBO-Fable remain unassigned alternates and cannot silently replace GAIN or another role.
+
+### Refreshed availability and historical placeholder promotion
+
+The earlier checksum/in-progress screenshot is historical. Hermes, Observerx, and Huihui now appear in the native catalog with complete files on disk. Their stable placeholder records should be promoted in place to **Installed — not loaded**, preserving prior failure/skip history while clearing stale current-error status. GAIN should be recorded as **Loaded — selected** only while its exact current loaded instance remains discoverable; a successful generation still requires the ordinary runtime request checks.
+
+The revision 1.2 skip authorization becomes a conditional fallback, not a permanent blacklist. Refresh authoritative discovery before skipping. An offline catalog or installed-but-unloaded model is not evidence of absence. If an original entry is genuinely missing or incomplete after successful discovery, the affected inference unit may still record **Skipped — model unavailable** without substitution; dependent missing inputs remain explicit and cannot satisfy completeness checks.
+
+### Managed sequential local execution gap
+
+The existing provider `load()` validates an already-loaded instance, and its ordinary `unload()` retains residency. That is not yet the requested sequential crew lifecycle. Step 3 must extend the existing provider/scheduler boundary to resolve an exact eligible artifact, estimate occupancy, reuse or load the intended instance, track run-owned versus borrowed residency, physically release only run-owned predecessors when required, verify the next instance, and then submit the declared step. Tests must cover Hermes → regular GAIN Q8_0 → GPT-OSS, cancel/failure paths, and protection of unrelated user-owned instances. No lifecycle action is part of Step 1 or Step 2 configuration work.
 
 ### Shared engines
 
@@ -85,13 +98,14 @@ The requested exact audio variants are therefore unresolved. Step 5 must add the
 - `src/lib/studio/project-storage.ts` — Zustand JSON is persisted under `premiere316-v302-c`, primarily in IndexedDB, with ordered migration/write protection.
 - `src/lib/studio/project-library-client.ts` — desktop-local project folders are reconciled into the same storage path.
 
-Step 2 should add an optional, versioned production-routing field to `Picture` and hydrate it in `migratePicture`. New projects get Astra Ultra plus Step-by-step review. Existing projects with an explicit `selectedModelId`, `pinnedWriterServedId`, or saved provider choice must keep that exact legacy selection under the Local Models profile; it must not be relabelled as Astra or rewritten to a new preferred local binding.
+Step 2 should add an optional, versioned production-routing field to `Picture` and hydrate it in `migratePicture`. New projects get Astra Ultra plus Step-by-step review. Existing projects with an explicit `selectedModelId`, `pinnedWriterServedId`, or saved provider choice must keep that exact legacy selection under the Local Models profile; it must not be relabelled as Astra or rewritten to a new preferred local binding. The Local Models snapshot must bind GAIN's artifact identity and the actual LM Studio callable alias separately so the verified regular file remains usable without weakening the no-MTP policy.
 
 The persisted run record must distinguish:
 
 - project profile preference;
 - new-run execution-mode default (always guided);
 - active run's explicit mode and immutable profile/model/settings snapshot;
+- per-role artifact path/identity, callable alias, availability evidence, ownership/residency, and no-MTP eligibility decision;
 - current production step/unit, inputs, dependency versions, output revision, pending review, and checkpoint state;
 - user approval receipt versus machine validation/checkpoint;
 - cancellation/pause state and obsolete late candidates.
@@ -208,7 +222,7 @@ Primary integration points:
 - `src/components/studio/movie-plan-activity.tsx`: render durable unit progress/checkpoints and blocking conditions rather than only transient stream activity.
 - Existing research, inventory, performance, prompt, Generate, Score, and Review workspaces: host the relevant complete deliverable and shared review controls without losing current previews or delete/approval controls.
 
-The compact creative surface should show profile, mode, current unit/scope, source revision, review state, proposed next step, and the complete result. Exact provider IDs, settings, reference resolution, hashes, validation, and cost/remote status belong in technical details.
+The compact creative surface should show profile, mode, current unit/scope, source revision, review state, proposed next step, and the complete result. It may present the verified creative label **GAIN V1.1 — Q8_0 — regular artifact** while technical details retain the exact disk path and real LM Studio alias ending in `mtp`. Exact provider IDs, settings, reference resolution, hashes, validation, and cost/remote status belong in technical details.
 
 ## Planned file-level implementation sequence
 
@@ -218,8 +232,10 @@ The compact creative surface should show profile, mode, current unit/scope, sour
 - Extend `Picture` and `store.ts::blankPicture/migratePicture` with compatible routing/run defaults.
 - Replace legacy Llama/Qwen default resolution in `model-routing.ts` and `movie-plan-model.ts` with exact role resolution while preserving legacy explicit IDs.
 - Generalize provider status enough to represent unavailable Astra without fabricating a call.
-- Persist the three revision 1.2 placeholder records with null callable IDs and the user-authorized skip policy; expose Refresh availability without starting a download or retry.
+- Promote the three historical placeholder records from current discovery without losing their stable IDs/history; retain the skip policy only as a conditional fallback after successful refresh.
+- Persist GAIN's verified regular `...NEO-Q8_0.gguf` artifact identity separately from the real callable alias `qwen3.8-27b-cold-fusion-gain-v1.1-nm-dau-neo-max-mtp`; reject actual MTP artifacts without inventing a renamed alias.
 - Add the two selectors/status/technical details in `stage-views.tsx` and supporting components.
+- Keep both new execution controls non-executable until Step 3 replaces the old automatic-approval path; Step 2 is configuration/persistence only.
 
 ### Step 3 — execution and review
 
@@ -227,7 +243,7 @@ The compact creative surface should show profile, mode, current unit/scope, sour
 - Refactor `executeMoviePlan`, `runScreenplayWorkflow`, and `ScreenplayJobManager` around immutable request snapshots and idempotent dispatch.
 - Remove machine-created research/screenplay approval from the orchestration path.
 - Add shared review actions mapped to existing approval functions.
-- Add coverage, retry/revision budgets, pause/cancel/recovery, late-result quarantine, authorized unavailable-step records, missing-source propagation, affected-scope retry, and autonomous P1–P6 completion validation.
+- Add coverage, retry/revision budgets, pause/cancel/recovery, late-result quarantine, conditional unavailable-step records, missing-source propagation, affected-scope retry, managed sequential model lifecycle, and autonomous P1–P6 completion validation.
 
 ### Step 4 — authoring, registry resolution, serializers, and V3
 
@@ -251,9 +267,10 @@ The compact creative surface should show profile, mode, current unit/scope, sour
 
 Extend these suites rather than creating a disconnected checklist:
 
-- Profiles/bindings/defaults: `model-routing.test.ts`, `movie-plan-model.test.ts`, new `production-profiles.test.ts`.
-- Persistence/migration/recovery: `project-storage.test.ts`, `screenplay.test.ts`, `audio-iterations.test.ts`, `video-iterations.test.ts`, including stable placeholder identity across availability refresh.
-- Guided/autonomous orchestration: `movie-plan-pipeline.test.ts`, `screenplay-jobs.test.ts`, `movie-plan-stream.test.ts`, plus new run-state tests for authorized skip, dependency propagation, truthful incomplete status, and affected-scope retry.
+- Profiles/bindings/defaults: `model-routing.test.ts`, `movie-plan-model.test.ts`, new `production-profiles.test.ts`, including artifact-versus-alias classification for regular and MTP GAIN files.
+- Persistence/migration/recovery: `project-storage.test.ts`, `screenplay.test.ts`, `audio-iterations.test.ts`, `video-iterations.test.ts`, including stable placeholder promotion and separate artifact/callable identity across availability refresh.
+- Guided/autonomous orchestration: `movie-plan-pipeline.test.ts`, `screenplay-jobs.test.ts`, `movie-plan-stream.test.ts`, plus new run-state tests for conditional skip, dependency propagation, truthful incomplete status, stale binding snapshots, and affected-scope retry.
+- Model lifecycle/ownership: extend `local-llm-provider.test.ts`, `screenplay-jobs.test.ts`, and residency tests for Hermes → regular GAIN Q8_0 → GPT-OSS, borrowed/run-owned instances, physical release verification, cancel/failure, ambiguous aliases, and zero calls to actual MTP artifacts.
 - Approval/staleness/identity: `research` tests, `production/dependency-graph.test.ts`, `generate-gates.test.ts`, `performance*.test.ts`, `emotion/integration.test.ts`, `emotion/review-guard.test.ts`.
 - Serializers and exact speech/sound: `emotion/r4.test.ts`, `prompt-compiler.test.ts`, `director-compiler.test.mjs`.
 - Submission/idempotency/media review: `director-execution.test.mjs`, `audio-iterations.test.ts`, `video-iterations.test.ts`.
@@ -264,16 +281,19 @@ Several current assertions must intentionally change, including `product-flow.te
 ## Decisions and boundaries for Step 2
 
 1. The actual callable Astra provider/model binding and its supported Ultra effort value must be supplied or configured. Until then, Astra Ultra can be the visible new-work default but must show a blocking setup state and make no call.
-2. The three revision 1.2 download entries are not Step 2 completion gates. Step 2 must persist them as authorized unavailable/pending placeholders with unresolved callable IDs. It must not repair, redownload, substitute, or repeatedly request skip permission. Artemis remains optional and separately unavailable until verified.
-3. GAIN V1.1 and GPT-OSS 120B must still be resolved from the current LM Studio catalog when a run starts; the historical Step 1 snapshot is not runtime proof of availability.
-4. The Harrowing V3 direction/routing source documents named by the specification must be imported or mapped to existing approved project revisions before preset content is written.
-5. Persistent patch/rule IDs for this proposed addendum should be allocated in `docs/cueboard-r4/RULE_REGISTER.md` only when the addendum is adopted; Step 1 does not claim those IDs.
+2. Use the user-confirmed regular GAIN file `D:/AI/Models/LMStudio/DavidAU/Qwen3.8-27B-Cold-Fusion-GAIN-V1.1-NM-DAU-NEO-MAX-MTP-GGUF/Qwen3.8-27B-Cold-Fusion-GAIN-V1.1-NM-DAU-NEO-MAX-NEO-Q8_0.gguf` for the GAIN role. Its current callable alias ends in `mtp`; preserve that real alias and prove eligibility from the artifact mapping rather than a label.
+3. Hermes, Observerx, and Huihui are now installed according to both disk and native-catalog evidence. Promote their existing placeholder identities in place. Observerx and Huihui remain unassigned alternates; Artemis remains optional and unavailable until verified.
+4. Step 2 may finish with honest unavailable provider/optional-model states, but its new controls must not execute the legacy automatic-approval pipeline before Step 3 exists.
+5. Every run must refresh GAIN, Hermes, GPT-OSS, and optional Artemis from the current catalog and snapshot the exact instance/configuration. The refreshed Step 1 state is evidence, not a permanent readiness assertion.
+6. The Harrowing V3 direction/routing source documents named by the specification must be imported or mapped to existing approved project revisions before preset content is written.
+7. Persistent patch/rule IDs for this proposed addendum should be allocated in `docs/cueboard-r4/RULE_REGISTER.md` only when the addendum is adopted; Step 1 does not claim those IDs.
 
 ## Step 1 verification boundary
 
 - Inspected current repository instructions, source, tests, current branch history, R4 implementation record, provider adapters, live LM Studio native catalog, installed relevant model files, Harrowing project records, serializers, audio/video paths, approvals, and persistence.
-- Compared specification revisions 1.1 and 1.2 and incorporated the user's narrow placeholder/skip authorization into the planned persistence, orchestration, UI, and test surfaces.
-- No model was loaded, unloaded, or called.
+- Compared specification revisions 1.2 and 1.6 and incorporated refreshed downloads, conditional placeholder promotion, managed sequential lifecycle requirements, and artifact-level no-MTP enforcement into the planned persistence, orchestration, UI, and test surfaces.
+- Verified the user-supplied GAIN path exists and names the regular `NEO-Q8_0.gguf` artifact at 29,787,699,776 bytes. Verified LM Studio exposes that artifact through the inherited `...-mtp` native key and currently reports one loaded instance.
+- Verified complete Hermes shards plus installed Observerx, Huihui, and GPT-OSS files/native catalog entries. No model was loaded, unloaded, or called by this inspection.
 - No model download was started, repaired, canceled, or retried.
 - No media was generated, submitted, changed, approved, or deleted.
 - No existing project record, source text, reference, engine choice, or approval was changed.
