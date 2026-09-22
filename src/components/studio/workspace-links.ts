@@ -18,6 +18,7 @@ function navigate(pictureId: string, stage: StageId, preferences: Record<string,
 export function openCharacterSheet(pictureId: string, recordId: string) {
   navigate(pictureId, "visual-development", {
     "characters-workspace-view": "sheets",
+    "character-dossier-world": "character",
     "bible-record:Characters & world": recordId,
     "bible-category:Characters & world": "all",
     "bible-field-group:Characters & world": "all",

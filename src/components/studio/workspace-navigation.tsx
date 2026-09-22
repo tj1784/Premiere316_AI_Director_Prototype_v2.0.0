@@ -74,7 +74,7 @@ const tools: { id: Destination; label: string; icon: LucideIcon }[] = [
   { id: "run", label: "Script runs", icon: Workflow },
   { id: "review", label: "Reviews", icon: ListChecks },
 ];
-const pinned: Destination[] = ["bible", "screenplay", "inventory", "timeline", "score", "review"];
+const pinned: Destination[] = ["bible", "screenplay", "visual-development", "inventory", "timeline", "score", "review"];
 
 export function WorkspaceNavigation() {
   const stage = useStage();

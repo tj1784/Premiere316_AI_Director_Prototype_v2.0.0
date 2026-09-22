@@ -90,6 +90,7 @@ import { BibleRunWorkspace } from "./bible-run-workspace";
 import { SoundCueEditor } from "./sound-cue-editor";
 import { ShotContinuityEditor } from "./shot-continuity-editor";
 import { MovieBibleEditor } from "./movie-bible-editor";
+import { CharacterWorkspace } from "./character-workspace";
 import { RenderContextEditor } from "./render-context-editor";
 import { VisualDirectionField } from "./visual-direction-field";
 import { SOURCE_TYPE_LABELS } from "@/lib/studio/picture-intake";
@@ -1275,33 +1276,15 @@ function VisualDevelopmentStage({ picture }: { picture: Picture }) {
   useEffect(() => {
     if (!picture.visualDevelopment) patchActive({ visualDevelopment });
   }, [patchActive, picture.visualDevelopment, visualDevelopment]);
-  return (
+  return surface === "sheets" ? (
+    <CharacterWorkspace picture={picture} onVisual={() => setSurface("visual")} />
+  ) : (
     <div className="h-full overflow-auto p-4">
-      <div className="mb-4 flex flex-wrap gap-2">
-        <Button
-          variant={surface === "sheets" ? "primary" : "secondary"}
-          onClick={() => setSurface("sheets")}
-        >
-          Character sheets & scene states
-        </Button>
-        <Button
-          variant={surface === "visual" ? "primary" : "secondary"}
-          onClick={() => setSurface("visual")}
-        >
-          Visual development
-        </Button>
-      </div>
-      {surface === "sheets" ? (
-        <MovieBibleEditor
-          kinds={["character", "participant", "location", "prop", "wardrobe"]}
-          title="Characters & world"
-        />
-      ) : (
+      <Button variant="ghost" onClick={() => setSurface("sheets")}>Back to character workspace</Button>
         <VisualDevelopmentWorkspace
           state={visualDevelopment}
           onChange={(visualDevelopment) => patchActive({ visualDevelopment })}
         />
-      )}
     </div>
   );
 }
