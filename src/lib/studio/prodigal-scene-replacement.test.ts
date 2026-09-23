@@ -1,10 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { makeProdigalSonPicture } from "./prodigal-son.ts";
 import { hydrateProdigalSonFrames } from "./prodigal-frames.ts";
 import { applyExplicitProdigalSceneReplacement, hydrateProdigalSceneReplacements } from "./prodigal-scene-replacement.ts";
 import { hydrateProdigalSonDirector } from "./prodigal-director.ts";
 import { PRODIGAL_SON_DIRECTOR } from "./bundled-pictures/prodigal-son/director.ts";
+import { PRODIGAL_SON_FRAMES } from "./bundled-pictures/prodigal-son/frames.ts";
 import { directorPlanForScene, directorPlanImages } from "./director-scene-authoring.ts";
 import { parseScreenplayHierarchy } from "./screenplay-hierarchy.ts";
 import { isPerformanceDraftStale, performanceSourceKey, type PerformanceDraft } from "../emotion/integration.ts";
@@ -25,7 +28,25 @@ test("rebuilt opening replaces 4 old shots with all 22 exact segments and source
   const shots = updated.shots.filter((shot) => shot.sceneId === sceneId);
   assert.equal(shots.length, 22);
   assert.equal(shots.reduce((sum, shot) => sum + shot.durationSec, 0), 280);
-  assert.equal(new Set(sourceScene.segments.map((segment) => segment.startImage.sha256)).size, 9);
+  assert.equal(new Set(sourceScene.segments.map((segment) => segment.startImage.sha256)).size, 14);
+  const regenerated = [14, 16, 19, 20, 22].map((number) => sourceScene.segments.find((segment) => segment.shotId === `PS-S01-SH${String(number).padStart(3, "0")}`)!);
+  assert.equal(new Set(regenerated.map((segment) => segment.startImage.sha256)).size, regenerated.length,
+    "each highlighted first frame has its own close camera view");
+  for (const segment of regenerated) {
+    const media = segment.startImage;
+    const file = readFileSync(`public${media.mediaUri}`);
+    assert.equal(file.byteLength, media.bytes);
+    assert.equal(createHash("sha256").update(file).digest("hex"), media.sha256);
+  }
+  for (const shotId of ["PS-S15-SH001", "PS-S22-SH001"]) {
+    const frames = PRODIGAL_SON_FRAMES.shots.find((item) => item.id === shotId)!.frames;
+    for (const media of [frames.first, frames.last]) {
+      assert.ok(media);
+      const file = readFileSync(`public${media.mediaUri}`);
+      assert.equal(file.byteLength, media.bytes);
+      assert.equal(createHash("sha256").update(file).digest("hex"), media.sha256);
+    }
+  }
   assert.deepEqual(shots.map((shot) => shot.index), Array.from({ length: 22 }, (_, index) => index + 1));
   assert.deepEqual(shots.map((shot) => [shot.id, shot.durationSec, shot.i2vPrompt, shot.stillUrl]), sourceScene.segments.map((segment) => [segment.shotId, segment.durationSeconds, segment.prompt, segment.startImage.mediaUri]));
   assert.equal(updated.scenes[0].durationSec, 280);
@@ -49,6 +70,39 @@ test("rebuilt opening replaces 4 old shots with all 22 exact segments and source
   assert.deepEqual(images.issues, []);
   assert.deepEqual(Object.values(images.guides).map((image) => image.sha256), sourceScene.segments.map((segment) => segment.startImage.sha256));
   assert.deepEqual(original, snapshot, "input is immutable");
+});
+
+test("saved opening replaces only an untouched bundled first frame and preserves a custom neighbor", () => {
+  const saved = hydrateProdigalSonDirector(hydrateProdigalSceneReplacements(baseline()));
+  const oldUri = "/pictures/prodigal-son/director/starting-images/PS-S01/PS-S01-SH014_START-8480bcbd0a31.png";
+  const oldSha = "8480bcbd0a31b04f087f61f36fa7578e39860646fc963cdb3f6f5c96eb941e8b";
+  const target = saved.shots.find((shot) => shot.id === "PS-S01-SH014")!;
+  const neighbor = saved.shots.find((shot) => shot.id === "PS-S01-SH016")!;
+  target.stillUrl = oldUri;
+  neighbor.stillUrl = "/pictures/custom/jesus-angle.webp";
+  saved.performance!.shots.find((shot) => shot.shotId === target.id)!.references.firstFrame = [oldUri];
+  saved.performance!.shots.find((shot) => shot.shotId === neighbor.id)!.references.firstFrame = [neighbor.stillUrl];
+  const binding = saved.directorScenes!["PS-S01"].segments.find((segment) => segment.shotId === target.id)!.imageBinding!;
+  binding.mediaUri = oldUri;
+  binding.sha256 = oldSha;
+  const oldIteration = saved.generateGates!.iterations.find((item) => item.shotId === target.id && item.kind === "first")!;
+  oldIteration.id = `${PRODIGAL_SON_DIRECTOR.packageId}:${target.id}:start:${oldSha}`;
+  oldIteration.mediaUri = oldUri;
+  oldIteration.mediaSha256 = oldSha;
+  binding.iterationId = oldIteration.id;
+  const sameRevision = saved.directorSceneRevisions!["PS-S01"];
+  const updated = hydrateProdigalSceneReplacements(saved);
+  const expected = sourceScene.segments.find((segment) => segment.shotId === target.id)!.startImage;
+  assert.equal(updated.shots.find((shot) => shot.id === target.id)!.stillUrl, expected.mediaUri);
+  assert.equal(updated.performance!.shots.find((shot) => shot.shotId === target.id)!.references.firstFrame?.[0], expected.mediaUri);
+  assert.equal(updated.directorScenes!["PS-S01"].segments.find((segment) => segment.shotId === target.id)!.imageBinding!.sha256, expected.sha256);
+  assert.ok(updated.generateGates!.iterations.some((item) => item.id === oldIteration.id && item.mediaSha256 === oldSha),
+    "the old imported candidate remains in history");
+  assert.ok(updated.generateGates!.iterations.some((item) => item.shotId === target.id && item.mediaSha256 === expected.sha256),
+    "the corrected candidate is available for review");
+  assert.equal(updated.shots.find((shot) => shot.id === neighbor.id)!.stillUrl, neighbor.stillUrl);
+  assert.equal(updated.directorSceneRevisions!["PS-S01"], sameRevision);
+  assert.equal(hydrateProdigalSceneReplacements(updated), updated, "reload is idempotent");
 });
 
 test("other scenes and user data survive exactly except necessary global shot/beat index offsets", () => {

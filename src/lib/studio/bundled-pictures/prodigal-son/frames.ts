@@ -5,7 +5,7 @@ export const PRODIGAL_SON_FRAMES: ProdigalFrameManifest = {
   "schemaVersion": 1,
   "packageId": "prodigal-son-first-last-20260911",
   "pictureId": "pic_prodigal_son_20260909",
-  "revision": "3fec45d5c4955e257700122d9809177a233eb3d4af81b32b2ff2664c5b6a0c42",
+  "revision": "premiere316-v4.1-scene-image-corrections",
   "sourceCommit": "5d25b6674b16d93ce809b93ef8749740135ba4f6",
   "screenplayVersionId": "pic_prodigal_son_20260909:user-directed-opening:v2",
   "aspectRatio": "2.39:1",
@@ -4149,8 +4149,8 @@ export const PRODIGAL_SON_FRAMES: ProdigalFrameManifest = {
       "duration_seconds": 10,
       "lens_mm": 35,
       "camera_motion": "Low steady lateral track parallel to the trough, keeping body, basket and pig contact readable.",
-      "first_frame": "Daytime inside the foreign pig enclosure: the younger staggers under a large basket of dry feed pods, sweat catching dust on his neck. Several ordinary domestic pigs crowd the rough trough. His worn narrow-blue-bordered mantle hangs on a peg inside the left lean-to; he works in his plain tunic and original worn sandals. His personal bedding and repaired waterskin are stowed under that lean-to. One instantaneous photographic frame from a continuous photorealistic live-action first-century eastern Mediterranean film; 2.39:1 anamorphic composition, natural restrained film color and texture, physically plausible anatomy and lighting. No collage, text, captions, labels, modern items, or fantasy.",
-      "last_frame": "The younger has emptied the feed basket into the same trough, holding it tipped and nearly empty. A domestic pig shoulders past his lower leg; he recoils slightly but steadies himself to continue. The blue-bordered mantle remains visibly on the lean-to peg, personal bundle beneath it. One instantaneous photographic frame from a continuous photorealistic live-action first-century eastern Mediterranean film; 2.39:1 anamorphic composition, natural restrained film color and texture, physically plausible anatomy and lighting. No collage, text, captions, labels, modern items, or fantasy.",
+      "first_frame": "Daytime inside the foreign pig enclosure: the younger stands beside the low feed trough, a large basket of dry pods held securely in both hands at waist height. He has just begun to tilt it, with his shoulders, elbows, wrists and legs naturally aligned. Sweat catches dust on his neck. Several ordinary domestic pigs crowd the trough. His worn narrow-blue-bordered mantle hangs on a peg inside the left lean-to; he works in his plain tunic and original worn sandals. His personal bedding and repaired waterskin are stowed under that lean-to. One instantaneous photographic frame from a continuous photorealistic live-action first-century eastern Mediterranean film; 2.39:1 anamorphic composition, natural restrained film color and texture, physically plausible anatomy and lighting. No collage, text, captions, labels, modern items, or fantasy.",
+      "last_frame": "The younger has emptied the same feed basket into the same trough. It is now nearly empty and tipped from his two-handed grip at waist height, with both arms and legs anatomically aligned. A domestic pig brushes past his lower leg; he recoils slightly but steadies himself. His narrow-blue-bordered mantle remains on the lean-to peg and the personal bundle beneath it. One instantaneous photographic frame from a continuous photorealistic live-action first-century eastern Mediterranean film; 2.39:1 anamorphic composition, natural restrained film color and texture, physically plausible anatomy and lighting. No collage, text, captions, labels, modern items, or fantasy.",
       "visible_character_asset_ids": [
         "PS-CHR-YOUNGER"
       ],
@@ -4174,16 +4174,16 @@ export const PRODIGAL_SON_FRAMES: ProdigalFrameManifest = {
       "dialogue_framing": "no_dialogue",
       "frames": {
         "first": {
-          "mediaUri": "/pictures/prodigal-son/frames/PS-S15/PS-S15-SH001_FIRST-8918810bba7e.png",
-          "sha256": "8918810bba7e4aa34310e25076909fffe33c87586eb04c0925eaa2a4cf131f47",
-          "bytes": 2672830,
-          "width": 1935,
+          "mediaUri": "/pictures/prodigal-son/frames/PS-S15/PS-S15-SH001_FIRST-v42.webp",
+          "sha256": "21aa4c74cc0da1aaaf17023096c1ac404385557e937f538c50536b918a5174b6",
+          "bytes": 178082,
+          "width": 1937,
           "height": 812
         },
         "last": {
-          "mediaUri": "/pictures/prodigal-son/frames/PS-S15/PS-S15-SH001_LAST-fd46bd7f1cfb.png",
-          "sha256": "fd46bd7f1cfb0f3beff50723327fb152d0c5b31bfeca5d678faa1ecf42cb961d",
-          "bytes": 2578095,
+          "mediaUri": "/pictures/prodigal-son/frames/PS-S15/PS-S15-SH001_LAST-v42.webp",
+          "sha256": "a26bdaeab40d8f96672eb3cea49a496ecc9dd181a5152d468f3ec874754ec3c8",
+          "bytes": 175092,
           "width": 1935,
           "height": 812
         }
@@ -6563,8 +6563,8 @@ export const PRODIGAL_SON_FRAMES: ProdigalFrameManifest = {
       "duration_seconds": 13,
       "lens_mm": 50,
       "camera_motion": "Hold layered view from just outside threshold past elder and father toward younger table; no crossing camera.",
-      "first_frame": "One instantaneous photographic endpoint from a single continuous live-action shot; no montage, split panel, internal cut, caption, lettering, watermark or interface. 2.39:1 anamorphic composition, 35mm film texture, 24 fps production, natural first-century Judean light and restrained realistic performance. Match the supplied user-selected character and location drafts, never their sheet layouts or labels. Preserve each canonical face, reference hair color and hairstyle, age, build and wardrobe construction; only apply the explicitly specified story state. These references are selected drafts, not recorded approvals. Night at same threshold, elder and dusty father outside in near foreground, clear doorway between them. Younger inside raises his eyes from table and sees elder for first time. His hands rest near the two cups; best robe, right-hand ring and new sandals remain, thin neck and exhaustion plainly visible. Original empty bowl stays beside threshold.",
-      "last_frame": "One instantaneous photographic endpoint from a single continuous live-action shot; no montage, split panel, internal cut, caption, lettering, watermark or interface. 2.39:1 anamorphic composition, 35mm film texture, 24 fps production, natural first-century Judean light and restrained realistic performance. Match the supplied user-selected character and location drafts, never their sheet layouts or labels. Preserve each canonical face, reference hair color and hairstyle, age, build and wardrobe construction; only apply the explicitly specified story state. These references are selected drafts, not recorded approvals. Same uninterrupted view. Younger has begun to stand but is only partly upright, one hand gripping table edge for support, making NO beckoning gesture. Elder sees the struggle; fingers visibly loosen around olive mantle without dropping it. Father stands beside elder close enough to touch, leaving doorway entirely clear. Neither elder nor father has entered.",
+      "first_frame": "One instantaneous photographic endpoint from a single continuous live-action shot; no montage, split panel, internal cut, caption, lettering, watermark or interface. 2.39:1 anamorphic composition, 35mm film texture, 24 fps production, natural first-century Judean light and restrained realistic performance. Match the supplied user-selected character and location drafts, never their sheet layouts or labels. Preserve each canonical face, reference hair color and hairstyle, age, build and wardrobe construction; only apply the explicitly specified story state. These references are selected drafts, not recorded approvals. Night at the same threshold: the elder and dusty father stay outside in the near foreground with an open, unobstructed doorway between them. Inside, the younger sits at the nearby ordinary-sized table and raises his eyes to see the elder for the first time. His head, thin neck and shoulders align naturally above a full-proportioned body; both hands rest near the two cups, his knees and fitted new sandals correctly below the table. Best robe over dirty tunic and plain ring on his RIGHT hand remain; exhaustion is plainly visible. The original empty bowl stays beside the threshold.",
+      "last_frame": "One instantaneous photographic endpoint from a single continuous live-action shot; no montage, split panel, internal cut, caption, lettering, watermark or interface. 2.39:1 anamorphic composition, 35mm film texture, 24 fps production, natural first-century Judean light and restrained realistic performance. Match the supplied user-selected character and location drafts, never their sheet layouts or labels. Preserve each canonical face, reference hair color and hairstyle, age, build and wardrobe construction; only apply the explicitly specified story state. These references are selected drafts, not recorded approvals. Same uninterrupted night view, with father and elder still outside and younger just inside at the same table. Younger begins to rise but is only partly upright, one hand gripping the table edge for support. His torso, hips, knees and correctly fitted sandals remain anatomically proportioned and in sequence with the seated first frame. He makes NO beckoning gesture. Elder sees the effort and his fingers loosen around the carried olive mantle without dropping it. Father stays close beside the elder; both leave the doorway clear and neither enters.",
       "visible_character_asset_ids": [
         "PS-CHR-YOUNGER",
         "PS-CHR-ELDER",
@@ -6589,16 +6589,16 @@ export const PRODIGAL_SON_FRAMES: ProdigalFrameManifest = {
       "dialogue_framing": "no_dialogue",
       "frames": {
         "first": {
-          "mediaUri": "/pictures/prodigal-son/frames/PS-S22/PS-S22-SH001_FIRST-7a716440014e.png",
-          "sha256": "7a716440014e4b52f887a9397f7a93dc81699a9b337d9b1d7df57446ef3522f3",
-          "bytes": 2291569,
+          "mediaUri": "/pictures/prodigal-son/frames/PS-S22/PS-S22-SH001_FIRST-v42.webp",
+          "sha256": "67c50c506dbdab7c0cb8d89f4f9f73baea3747d537a0cb9f2581cbbd44e3c2d3",
+          "bytes": 153756,
           "width": 1933,
           "height": 813
         },
         "last": {
-          "mediaUri": "/pictures/prodigal-son/frames/PS-S22/PS-S22-SH001_LAST-a9f5ff7a4243.png",
-          "sha256": "a9f5ff7a42439650e6dba5213054d41db0648c6caf46506421d58a7d0659d001",
-          "bytes": 2208105,
+          "mediaUri": "/pictures/prodigal-son/frames/PS-S22/PS-S22-SH001_LAST-v42.webp",
+          "sha256": "e83c58e4f85e12928bff2f65e742bf29b37f0306f5972a80ec810f579e332424",
+          "bytes": 149364,
           "width": 1933,
           "height": 813
         }
