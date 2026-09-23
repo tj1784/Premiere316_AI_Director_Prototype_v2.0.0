@@ -48,6 +48,95 @@ export type ApproveCanonicalIterationInput = {
   now?: number;
 };
 
+export type ImageIterationDeletionEligibility =
+  | { allowed: true; reason: null }
+  | { allowed: false; reason: string };
+
+/**
+ * Remove only an unselected draft import whose identity is not part of a
+ * canonical decision, an append-only review, a native generation receipt, or
+ * another production record. Durable media is deliberately never unlinked.
+ */
+export function imageIterationDeletionEligibility(
+  record: ProductionBreakdown,
+  iterationId: string,
+  selectedIterationId: string | null,
+): ImageIterationDeletionEligibility {
+  const located = locateIteration(record, iterationId);
+  if (!located || located.asset.tombstone) return { allowed: false, reason: "Image iteration is no longer available." };
+  const { asset, iteration } = located;
+  if (iterationId === selectedIterationId) return { allowed: false, reason: "Select another image before deleting this iteration." };
+  if (asset.approvedIterationId === iterationId || iteration.status === "APPROVED" || iteration.canonicalProof) {
+    return { allowed: false, reason: "Canonical or approved images must remain in the asset history." };
+  }
+  if (iteration.reviewDecisionIds?.length || iteration.reviewDecisions?.length || asset.rejectedIterationIds.includes(iterationId) || iteration.status === "REJECTED") {
+    return { allowed: false, reason: "Reviewed images and their decision history must be retained." };
+  }
+  if (iteration.status !== "GENERATED" && iteration.status !== "NEEDS_REVIEW") {
+    return { allowed: false, reason: "This image has a workflow state that requires retention." };
+  }
+  if (iteration.generationReceiptId || iteration.generationReceiptDigest || iteration.execution || iteration.sidecarSha256 || iteration.mediaUri.startsWith("media://stills/")) {
+    return { allowed: false, reason: "Native generated media is tied to durable backend evidence and cannot be deleted here." };
+  }
+  if (record.productionAuthority?.authorityId || (record.preparedAssets ?? []).some((prepared) => prepared.assetId === asset.id)) {
+    return { allowed: false, reason: "This asset has production preparation or a sealed authority. Resolve it in the desktop workflow first." };
+  }
+  const dependency = record.dependencies.some((edge) =>
+    edge.fromType === "iteration" && edge.fromId === iterationId ||
+    edge.toType === "iteration" && edge.toId === iterationId && edge.fromType !== "generation-spec",
+  );
+  if (dependency || record.graph?.edges.some((edge) => edge.from === `iteration:${iterationId}` || edge.to === `iteration:${iterationId}`) || record.graph?.stale.some((finding) => finding.recordId === iterationId)) {
+    return { allowed: false, reason: "Another production record depends on this image iteration." };
+  }
+  if (record.assets.some((other) => other.references.some((reference) =>
+    reference.uri === iteration.mediaUri || reference.previewUri === iteration.previewUri && Boolean(iteration.previewUri) ||
+    reference.provenance.evidenceNote?.includes(iterationId),
+  )) || record.queue.some((item) => item.referenceIds.includes(iterationId) || item.dependencyIds.includes(iterationId))) {
+    return { allowed: false, reason: "This image is used as a reference by another production record." };
+  }
+  return { allowed: true, reason: null };
+}
+
+export function deleteUnselectedImageIteration(
+  record: ProductionBreakdown,
+  input: { iterationId: string; selectedIterationId: string | null; now?: number },
+): ProductionBreakdown {
+  const eligibility = imageIterationDeletionEligibility(record, input.iterationId, input.selectedIterationId);
+  if (!eligibility.allowed) throw new Error(eligibility.reason);
+  const located = locateIteration(record, input.iterationId)!;
+  const now = input.now ?? Date.now();
+  const assets = record.assets.map((asset) => {
+    if (asset.id !== located.asset.id) return asset;
+    const next = { ...asset, iterations: asset.iterations.filter((iteration) => iteration.id !== input.iterationId), updatedAt: now };
+    return withReadiness(next);
+  });
+  const next: ProductionBreakdown = {
+    ...record,
+    assets,
+    dependencies: record.dependencies.filter((edge) =>
+      !(edge.fromType === "iteration" && edge.fromId === input.iterationId) &&
+      !(edge.toType === "iteration" && edge.toId === input.iterationId),
+    ),
+    auditLog: [...(record.auditLog ?? []), {
+      id: `lineage:edited:delete-iteration:${input.iterationId}:${now}`,
+      type: "edited", at: now, sourceAssetIds: [located.asset.id], targetAssetIds: [located.asset.id],
+      reason: `Unreviewed image iteration ${input.iterationId} removed from the asset library; durable media bytes retained.`,
+    }],
+    inventoryVersion: (record.inventoryVersion ?? 1) + 1,
+    updatedAt: now,
+  };
+  const graph = buildDependencyGraphV2(next, now);
+  // Imported packages can carry explicit continuity edges absent from the
+  // computed graph. Preserve them, plus existing stale findings.
+  const nodes = new Set(graph.nodes.map((node) => node.id));
+  const customEdges = (record.graph?.edges ?? []).filter((edge) =>
+    nodes.has(edge.from) && nodes.has(edge.to) &&
+    edge.from !== `iteration:${input.iterationId}` && edge.to !== `iteration:${input.iterationId}` &&
+    !graph.edges.some((computed) => JSON.stringify(computed) === JSON.stringify(edge)),
+  );
+  return { ...next, graph: { ...graph, edges: [...graph.edges, ...customEdges], stale: record.graph?.stale ?? [] } };
+}
+
 export function appendGeneratedIteration(record: ProductionBreakdown, input: AppendGeneratedIterationInput): ProductionBreakdown {
   const now = input.now ?? Date.now();
   const prepared = requirePrepared(record, input.preparedAssetId);

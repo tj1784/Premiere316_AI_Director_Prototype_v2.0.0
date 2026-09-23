@@ -1,0 +1,98 @@
+/* Context remains in the workspace. A single pane owns the available width. */
+.studio-canvas-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.studio-canvas-body > main {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.studio-context-panel {
+  display: flex;
+  flex: 0 0 clamp(300px, 30vw, 470px);
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: color-mix(in srgb, var(--workbench-panel) 70%, transparent);
+  outline: none;
+}
+.studio-context-panel-left { border-right: 1px solid var(--workbench-border); }
+.studio-context-panel-right { border-left: 1px solid var(--workbench-border); }
+.studio-context-panel:focus-visible { outline: 2px solid var(--workbench-accent); outline-offset: -2px; }
+.studio-context-heading {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--workbench-border);
+}
+.studio-context-heading h2 { font-size: 15px; font-weight: 600; }
+.studio-context-body { min-height: 0; flex: 1; overflow: auto; padding: 16px; }
+.studio-context-body > * { min-width: 0; }
+.project-files-panel { display: flex; min-height: 100%; flex-direction: column; gap: 16px; }
+.project-files-panel > .project-files-list { flex: 1; min-height: 0; overflow-y: auto; }
+.project-files-panel article { min-width: 0; border-radius: 0; border-width: 0 0 1px; padding: 10px 0; background: none; }
+.project-files-panel img,
+.project-files-panel video { max-height: 180px; }
+
+.screenplay-workspace.cabinet-screenplay.writing-workbench-screenplay[data-scenes-open="true"] {
+  grid-template-columns: minmax(240px, 23%) minmax(0, 1fr);
+}
+.screenplay-workspace.cabinet-screenplay.writing-workbench-screenplay[data-scenes-open="true"][data-context-open="true"] {
+  grid-template-columns: minmax(220px, 21%) minmax(0, 1fr) minmax(300px, 29%);
+}
+[data-studio-shell] .screenplay-workspace.cabinet-screenplay .screenplay-scene-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--workbench-border);
+  background: color-mix(in srgb, var(--workbench-panel) 70%, transparent);
+}
+.screenplay-scene-list-header {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--workbench-border);
+}
+.screenplay-scene-list-header h3 { font-size: 17px; font-weight: 600; }
+.screenplay-scene-list-content { flex: 1; min-height: 0; overflow: auto; padding: 14px; }
+.screenplay-scene-list-content button { min-height: 40px; }
+.screenplay-mobile-inspector-close { display: none; }
+.home-picture-delete-inline {
+  margin: 0 20px 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--workbench-border);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.home-picture-delete-inline .home-delete-actions { margin-top: 8px; }
+@media (max-width: 900px) {
+  .studio-canvas-body[data-panel-open="true"] > main { display: none; }
+  .studio-context-panel { flex: 1 1 auto; border: 0; }
+  .studio-canvas[data-has-panel="true"] .studio-timeline { display: none; }
+  .screenplay-workspace.cabinet-screenplay.writing-workbench-screenplay[data-scenes-open],
+  .screenplay-workspace.cabinet-screenplay.writing-workbench-screenplay[data-scenes-open][data-context-open] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .screenplay-workspace[data-scenes-open="true"] > .writing-workbench-manuscript,
+  .screenplay-workspace[data-compact-inspector-open="true"] > .writing-workbench-manuscript { display: none; }
+  [data-studio-shell] .screenplay-workspace.cabinet-screenplay[data-scenes-open="true"] .screenplay-scene-list { display: flex; }
+  .screenplay-workspace[data-scenes-open="true"] > .writing-workbench-inspector { display: none; }
+  .screenplay-workspace[data-compact-inspector-open="true"] > .writing-workbench-inspector { display: block; border-left: 0; }
+  .screenplay-mobile-inspector-close { display: block; padding: 10px 12px 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-context-panel, .screenplay-scene-list { transition: none; }
+}

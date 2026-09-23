@@ -153,6 +153,14 @@ export function createMovieAssemblyService({
       const picture = readPicture(input?.pictureId);
       if (!picture || JSON.stringify(picture) !== input.pictureSnapshot)
         throw new Error("Saved picture changed. Wait for saving and review the assembly again.");
+      // Keep the desktop trust boundary aligned with movieAssemblyPlan: the
+      // encoder below always creates MP4 with H.264 video and AAC audio.
+      const requestedFormat = picture.intake?.deliveryFormat?.trim().toLowerCase();
+      const requestedCodec = picture.intake?.deliveryCodec?.trim().toLowerCase();
+      if (requestedFormat && !["mp4", "video/mp4"].includes(requestedFormat))
+        throw new Error("Requested delivery format is unsupported by final assembly. Choose MP4 or leave it blank.");
+      if (requestedCodec && !["h.264", "h264", "avc", "avc1", "libx264"].includes(requestedCodec))
+        throw new Error("Requested video codec is unsupported by final assembly. Choose H.264 or leave it blank.");
       const plan = await resolvePlan(picture);
       if (JSON.stringify(plan) !== JSON.stringify(input.plan))
         throw new Error("Assembly inputs differ from current canonical sources.");

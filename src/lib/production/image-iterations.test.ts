@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import {mkdtempSync,mkdirSync,writeFileSync} from 'node:fs';
+import {existsSync,mkdtempSync,mkdirSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createProjectLibrary} from '../../../desktop/project-library.mjs';
 import { describe, it } from "node:test";
-import { appendGeneratedIteration, approveCanonicalIteration, reviewGeneratedIteration, validatePngSignature } from "./image-iterations.ts";
+import { appendGeneratedIteration, approveCanonicalIteration, deleteUnselectedImageIteration, imageIterationDeletionEligibility, reviewGeneratedIteration, validatePngSignature } from "./image-iterations.ts";
 import { applyPreparedApproval, applyProductionAuthority, approveInventoryAssetSpec, editInventoryAsset, prepareAssetRecords } from "./inventory.ts";
 import { createProductionBreakdown } from "./breakdown.ts";
+import { hydrateProdigalSonVisualReference, makeProdigalSonPicture } from "../studio/prodigal-son.ts";
 import type { GenerationProvenance } from "../studio/generation-provenance.ts";
 
 function record(withReference = false) {
@@ -111,6 +112,80 @@ function canonicalProof(start: ReturnType<typeof record>, reason: string, output
 }
 
 describe("Wave 4 image iterations", () => {
+  it("removes a real Prodigal draft import after deselection without removing its source preview or other assets", () => {
+    const picture = makeProdigalSonPicture();
+    const production = picture.production!;
+    const asset = production.assets.find((item) => item.id === "PS-CHR-JESUS")!;
+    const iteration = asset.iterations[0]!;
+    const mediaPreview = join(process.cwd(), "public", iteration.previewUri!.replace(/^\//, ""));
+    assert.equal(existsSync(mediaPreview), true);
+    assert.deepEqual(imageIterationDeletionEligibility(production, iteration.id, null), { allowed: true, reason: null });
+    const next = deleteUnselectedImageIteration(production, { iterationId: iteration.id, selectedIterationId: null, now: 1800 });
+    assert.equal(next.assets.find((item) => item.id === asset.id)!.iterations.length, 0);
+    assert.equal(next.assets.find((item) => item.id === "PS-CHR-FATHER")!.iterations.length, 1);
+    assert.equal(existsSync(mediaPreview), true);
+    assert.equal(production.assets.find((item) => item.id === asset.id)!.iterations.length, 1);
+    const reloaded = hydrateProdigalSonVisualReference(JSON.parse(JSON.stringify({ ...picture, production: next })));
+    assert.equal(reloaded.production!.assets.find((item) => item.id === asset.id)!.iterations.length, 0);
+    assert.equal(reloaded.production!.assets.find((item) => item.id === "PS-CHR-FATHER")!.iterations.length, 1);
+    const undone = hydrateProdigalSonVisualReference({ ...picture, production });
+    assert.equal(undone.production!.assets.find((item) => item.id === asset.id)!.iterations.length, 1);
+    const reimported = hydrateProdigalSonVisualReference({ ...picture, production: {
+      ...next, assets: next.assets.map((item) => item.id === asset.id ? { ...item, iterations: [iteration] } : item),
+    } });
+    assert.equal(reimported.production!.assets.find((item) => item.id === asset.id)!.iterations.length, 1);
+  });
+
+  it("deletes only an unselected unreviewed import and keeps the other image, continuity edges, and media identity", () => {
+    const start = record();
+    const asset = start.record.assets[0]!;
+    const first = { id: "import-first", assetId: asset.id, variantId: null, specVersionId: asset.approvedSpecVersionId ?? "", mediaUri: "/pictures/first.png", previewUri: "/pictures/first.webp", createdAt: 1400, status: "NEEDS_REVIEW" as const, provenance: asset.provenance[0]! };
+    const second = { ...first, id: "import-second", mediaUri: "/pictures/second.png", previewUri: "/pictures/second.webp", createdAt: 1500 };
+    const prepared = {
+      ...start.record,
+      productionAuthority: null,
+      preparedAssets: [],
+      assets: [{ ...asset, iterations: [first, second] }],
+      dependencies: [
+        ...start.record.dependencies,
+        { fromType: "generation-spec" as const, fromId: `spec:${asset.id}`, toType: "iteration" as const, toId: first.id },
+        { fromType: "generation-spec" as const, fromId: `spec:${asset.id}`, toType: "iteration" as const, toId: second.id },
+      ],
+    };
+    const originalGraphEdge = prepared.graph!.edges.find((edge) => edge.from.startsWith("scene:") && edge.to.startsWith("requirement:"))!;
+    prepared.graph = { ...prepared.graph!, edges: [...prepared.graph!.edges, { ...originalGraphEdge, reason: "Imported continuity link" }] };
+    assert.deepEqual(imageIterationDeletionEligibility(prepared, first.id, second.id), { allowed: true, reason: null });
+    assert.match(imageIterationDeletionEligibility(prepared, second.id, second.id).reason ?? "", /Select another image/);
+
+    const next = deleteUnselectedImageIteration(prepared, { iterationId: first.id, selectedIterationId: second.id, now: 1600 });
+    assert.deepEqual(next.assets[0]!.iterations, [second]);
+    assert.equal(next.assets[0]!.iterations[0]!.mediaUri, "/pictures/second.png");
+    assert.equal(next.assets[0]!.approvedIterationId, prepared.assets[0]!.approvedIterationId);
+    assert.deepEqual(next.requirements, prepared.requirements);
+    assert.equal(next.dependencies.some((edge) => edge.toType === "iteration" && edge.toId === first.id), false);
+    assert.equal(next.dependencies.some((edge) => edge.toType === "iteration" && edge.toId === second.id), true);
+    assert.equal(next.graph!.edges.some((edge) => edge.reason === "Imported continuity link"), true);
+    assert.match(next.auditLog!.at(-1)!.reason, /media bytes retained/);
+    assert.equal(prepared.assets[0]!.iterations.length, 2);
+  });
+
+  it("protects approved, reviewed, receipted, sealed, and referenced iterations from deletion", () => {
+    const start = record();
+    const generated = appendGeneratedIteration(start.record, { preparedAssetId: start.preparedId, iterationId: "iter-1", output, provenance: provenance(start.assetId), now: 1400, receiptDigest });
+    assert.match(imageIterationDeletionEligibility(generated, "iter-1", "other").reason ?? "", /Native generated media/);
+    assert.throws(() => deleteUnselectedImageIteration(generated, { iterationId: "iter-1", selectedIterationId: "other" }), /Native generated media/);
+    const asset = start.record.assets[0]!;
+    const draft = { id: "import-draft", assetId: asset.id, variantId: null, mediaUri: "/pictures/draft.png", createdAt: 1450, status: "NEEDS_REVIEW" as const, provenance: asset.provenance[0]! };
+    const editable = { ...start.record, productionAuthority: null, preparedAssets: [], assets: [{ ...asset, iterations: [draft] }] };
+    assert.match(imageIterationDeletionEligibility({ ...editable, assets: [{ ...editable.assets[0], approvedIterationId: draft.id }] }, draft.id, "other").reason ?? "", /Canonical/);
+    assert.match(imageIterationDeletionEligibility({ ...editable, assets: [{ ...editable.assets[0], iterations: [{ ...draft, reviewDecisionIds: ["review-1"] }] }] }, draft.id, "other").reason ?? "", /Reviewed/);
+    assert.match(imageIterationDeletionEligibility(start.record, draft.id, "other").reason ?? "", /no longer available/);
+    assert.match(imageIterationDeletionEligibility({ ...editable, productionAuthority: start.record.productionAuthority }, draft.id, "other").reason ?? "", /sealed/);
+    assert.match(imageIterationDeletionEligibility({ ...editable, dependencies: [...editable.dependencies, { fromType: "iteration", fromId: draft.id, toType: "approved-asset", toId: asset.id }] }, draft.id, "other").reason ?? "", /depends on/);
+    const reference = { id: "ref-to-draft", name: "Draft reference", uri: draft.mediaUri, mediaType: "image/png", preferred: false, uploadedAt: 1450, provenance: asset.provenance[0]! };
+    assert.match(imageIterationDeletionEligibility({ ...editable, assets: [{ ...editable.assets[0], references: [reference] }] }, draft.id, "other").reason ?? "", /reference/);
+  });
+
   it('project localization preserves canonical proof digests and uses a separate playable preview',()=>{
     const start=record(true),reason='Visible wool coat and silver glasses match.';
     const withIteration=appendGeneratedIteration(start.record,{preparedAssetId:start.preparedId,iterationId:'iter-1',output,provenance:provenance(start.assetId),now:1400,receiptDigest});

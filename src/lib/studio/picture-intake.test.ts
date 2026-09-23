@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { INTAKE_SOURCE_TYPES, makePictureIntake, sourceMediaType, validatePictureIntake } from "./picture-intake.ts";
+import { packAuthoringIntake } from "./authoring-contract.ts";
+import { makePreparationForIntake } from "./picture-preparation.ts";
 
 test("all five intake source modes remain available", () => {
   assert.deepEqual(INTAKE_SOURCE_TYPES, ["concept", "treatment", "existing-screenplay", "source-material", "biblical-historical"]);
@@ -32,4 +34,28 @@ test("plain text, Fountain, and Markdown imports are supported without accepting
   assert.equal(sourceMediaType("outline.md"), "text/markdown");
   assert.equal(sourceMediaType("notes.txt"), "text/plain");
   assert.equal(sourceMediaType("screenplay.pdf"), null);
+});
+
+test("the optional film contract survives picture intake and reaches the authoring brief", () => {
+  const blank = makePictureIntake(1);
+  assert.equal("moralQuestion" in blank, false);
+  const intake = {
+    ...blank,
+    title: "The Return",
+    premise: "A family waits.",
+    moralQuestion: "Can resentment and mercy share a home?",
+    language: "Aramaic with English subtitles",
+    deliveryFormat: "MP4",
+    deliveryCodec: "H.264",
+    continuityPolicy: "Keep the father in the same robe through supper.",
+    voicePolicy: "One performer per character.",
+    scoreStrategy: "Only diegetic music at the feast.",
+  };
+  assert.equal(validatePictureIntake(intake).valid, true);
+  const stored = makePreparationForIntake(intake, "the-return", 2).intake;
+  const brief = JSON.parse(packAuthoringIntake(stored, false));
+  for (const key of ["moralQuestion", "language", "deliveryFormat", "deliveryCodec", "continuityPolicy", "voicePolicy", "scoreStrategy"] as const) {
+    assert.equal(stored[key], intake[key]);
+    assert.equal(brief[key], intake[key]);
+  }
 });

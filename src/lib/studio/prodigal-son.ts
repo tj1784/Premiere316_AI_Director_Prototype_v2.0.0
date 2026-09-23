@@ -25,6 +25,8 @@ const VISUAL_REFERENCE_FILE = "visual-development-reference.png";
 const VISUAL_REFERENCE_URI = `${RESOURCE_ROOT}/${VISUAL_REFERENCE_FILE}`;
 const CHARACTER_ASSET_ROOT = `${RESOURCE_ROOT}/character-assets`;
 const GENERATED_ASSET_ROOT = `${RESOURCE_ROOT}/generated-assets`;
+const WEB_PREVIEW_ROOT = `${RESOURCE_ROOT}/previews`;
+const VISUAL_REFERENCE_PREVIEW_URI = `${WEB_PREVIEW_ROOT}/visual-development-reference.webp`;
 export const PRODIGAL_SON_VISUAL_REFERENCE_URI = VISUAL_REFERENCE_URI;
 
 const CHARACTER_ASSET_IMAGE_FILES: Record<string, string> = {
@@ -295,12 +297,14 @@ function assetSpec(source: ImportedVisualAsset): CanonicalAssetSpec {
 function characterAssetImageIteration(source: Pick<ImportedVisualAsset, "id" | "name" | "scenes">) {
   const fileName = CHARACTER_ASSET_IMAGE_FILES[source.id];
   if (!fileName) return null;
+  const servedMediaUri = `${WEB_PREVIEW_ROOT}/${fileName.replace(/\.png$/i, ".webp")}`;
   return {
     id: `${source.id}:uploaded-character-image:v1`,
     assetId: source.id,
     variantId: null,
     specVersionId: `${source.id}:imported-spec:v1`,
-    mediaUri: `${CHARACTER_ASSET_ROOT}/${fileName}`,
+    mediaUri: servedMediaUri,
+    previewUri: servedMediaUri,
     createdAt: PRODIGAL_SON_IMPORTED_AT,
     status: "NEEDS_REVIEW" as const,
     provenance: {
@@ -317,12 +321,14 @@ function characterAssetImageIteration(source: Pick<ImportedVisualAsset, "id" | "
 function generatedAssetImageIteration(source: Pick<ImportedVisualAsset, "id" | "name" | "scenes">) {
   const fileName = GENERATED_ASSET_IMAGE_FILES[source.id];
   if (!fileName) return null;
+  const servedMediaUri = `${WEB_PREVIEW_ROOT}/${fileName.replace(/\.png$/i, ".webp")}`;
   return {
     id: `${source.id}:comfy-generated-asset:v1`,
     assetId: source.id,
     variantId: null,
     specVersionId: `${source.id}:imported-spec:v1`,
-    mediaUri: `${GENERATED_ASSET_ROOT}/${fileName}`,
+    mediaUri: servedMediaUri,
+    previewUri: servedMediaUri,
     createdAt: PRODIGAL_SON_IMPORTED_AT,
     status: "NEEDS_REVIEW" as const,
     provenance: {
@@ -430,7 +436,7 @@ export function makeProdigalSonPicture(): Picture {
     genre: intake.genre, tone: intake.tone, format: intake.aspectRatio, fps: intake.frameRate,
     runtimeMinutes: 30, createdAt: now, updatedAt: now, stage: "inventory", lastOpenedStage: "inventory",
     intake, screenplay, screenplayFountain: PRODIGAL_SON_SOURCE.fountain, research: importedResearch(),
-    importedPackage: importedPackage(), thumbnailUrl: VISUAL_REFERENCE_URI, selectedEngine: { ...DEFAULT_ENGINES },
+    importedPackage: importedPackage(), thumbnailUrl: VISUAL_REFERENCE_PREVIEW_URI, selectedEngine: { ...DEFAULT_ENGINES },
     production: null, visualDevelopment: makeVisualDevelopmentState(now), cinematography: makeCinematographyState(now), performance: null,
     acts: [{ number: 1, name: "The Prodigal Son" }],
     scenes: PRODIGAL_SON_SOURCE.scenes.map((scene) => ({ id: scene.id, act: 1, slugline: scene.slugline, summary: scene.action, emotionalBeat: scene.title, durationSec: scene.duration_seconds })),
@@ -481,7 +487,24 @@ export function hydrateProdigalSonVisualReference(picture: Picture): Picture {
       const importedIterations = source ? importedAssetIterations(source) : [];
       const importedIds = new Set(importedIterations.map((iteration) => iteration.id));
       const iterations = importedIterations.length
-        ? [...importedIterations.map((iteration) => asset.iterations.find((saved) => saved.id === iteration.id) ?? iteration), ...asset.iterations.filter((iteration) => !importedIds.has(iteration.id))]
+        ? [...importedIterations.filter((iteration) => {
+            if (asset.iterations.some((saved) => saved.id === iteration.id)) return true;
+            const deletionPrefix = `lineage:edited:delete-iteration:${iteration.id}:`;
+            return !(production.auditLog ?? []).some((event) => event.type === "edited" && event.id.startsWith(deletionPrefix) && /^\d+$/.test(event.id.slice(deletionPrefix.length)));
+          }).map((iteration) => {
+            const saved = asset.iterations.find((candidate) => candidate.id === iteration.id);
+            if (!saved) return iteration;
+            // Earlier imports pointed at PNG paths that are not shipped with the Site.
+            // Keep later user media, while repairing only the known bundled PNG paths.
+            const missingBundledPng = saved.mediaUri?.startsWith(`${CHARACTER_ASSET_ROOT}/`)
+              || saved.mediaUri?.startsWith(`${GENERATED_ASSET_ROOT}/`);
+            return {
+              ...iteration,
+              ...saved,
+              mediaUri: missingBundledPng ? iteration.mediaUri : saved.mediaUri ?? iteration.mediaUri,
+              previewUri: saved.previewUri ?? iteration.previewUri,
+            };
+          }), ...asset.iterations.filter((iteration) => !importedIds.has(iteration.id))]
         : asset.iterations;
       return {
         ...asset,
@@ -492,7 +515,9 @@ export function hydrateProdigalSonVisualReference(picture: Picture): Picture {
   } : production;
   const nextPicture = {
     ...picture,
-    thumbnailUrl: picture.thumbnailUrl || VISUAL_REFERENCE_URI,
+    thumbnailUrl: picture.thumbnailUrl && picture.thumbnailUrl !== VISUAL_REFERENCE_URI
+      ? picture.thumbnailUrl
+      : VISUAL_REFERENCE_PREVIEW_URI,
     production: nextProduction,
     assetImagePrompts: { ...picture.assetImagePrompts, ...prodigalSonAssetImagePrompts() },
     assetPromptSources: Object.fromEntries(Object.entries(picture.assetPromptSources ?? {}).filter(([, source]) => source.modelId !== "workbook-import")),

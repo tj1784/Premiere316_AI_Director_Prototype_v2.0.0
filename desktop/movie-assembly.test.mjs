@@ -76,6 +76,17 @@ test("controlled assembly host revalidates persisted sources, recovers deliverie
       service.assemble({ ...input, plan: { ...plan, durationSec: 1 } }),
       /differ from current/,
     );
+    picture.intake = { deliveryFormat: "MOV", deliveryCodec: "H.264" };
+    await assert.rejects(
+      service.assemble({ ...input, pictureSnapshot: JSON.stringify(picture) }),
+      /Requested delivery format is unsupported/,
+    );
+    picture.intake = { deliveryFormat: "MP4", deliveryCodec: "ProRes" };
+    await assert.rejects(
+      service.assemble({ ...input, pictureSnapshot: JSON.stringify(picture) }),
+      /Requested video codec is unsupported/,
+    );
+    delete picture.intake;
     const result = await service.assemble(input);
     assert.equal(result.ok, true);
     const recovered = createMovieAssemblyService(options);

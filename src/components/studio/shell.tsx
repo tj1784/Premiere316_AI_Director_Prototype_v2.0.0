@@ -1,7 +1,17 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowLeft, PanelLeft, PanelRight, X, Maximize2, Minimize2, Settings2 } from "lucide-react";
+import {
+  ArrowLeft,
+  FolderOpen,
+  PanelLeft,
+  PanelRight,
+  X,
+  Maximize2,
+  Minimize2,
+  Settings2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CabinetModal } from "./cabinet";
+import "./nonmodal-shell-and-script.css";
+import "./ps5-canvas.css";
 import { ProductionProfileControls } from "./production-profile-controls";
 import { ProjectFiles } from "./project-files";
 import { ProjectSaveStatus } from "./project-save-status";
@@ -26,10 +36,7 @@ import {
   type ShellRightKind,
 } from "@/lib/studio/stage-layout";
 
-const FOCUSABLE =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-function Drawer({
+function ContextPanel({
   side,
   title,
   children,
@@ -40,34 +47,15 @@ function Drawer({
   children: ReactNode;
   onClose: () => void;
 }) {
-  const panel = useRef<HTMLElement>(null);
+  const region = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const focusables = () => [...(panel.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [])];
-    (focusables()[0] ?? panel.current)?.focus();
-
+    region.current?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const items = focusables();
-      if (!items.length) {
-        event.preventDefault();
-        panel.current?.focus();
-        return;
-      }
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
       }
     };
 
@@ -79,30 +67,22 @@ function Drawer({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-40 bg-bg/70" role="presentation">
-      <button
-        type="button"
-        className="absolute inset-0 cursor-default"
-        aria-label={`Close ${title}`}
-        onClick={onClose}
-      />
-      <section
-        ref={panel}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={`absolute inset-y-0 ${side === "left" ? "left-0 border-r" : "right-0 border-l"} flex w-[min(22rem,88vw)] min-w-0 flex-col border-border bg-surface shadow-2xl outline-none`}
-      >
-        <header className="flex h-12 shrink-0 items-center justify-between border-b border-border px-3">
-          <p className="text-[11px] tracking-wide text-subtle uppercase">{title}</p>
-          <Button size="icon-sm" variant="ghost" aria-label={`Close ${title}`} onClick={onClose}>
-            <X />
-          </Button>
-        </header>
-        <div className="min-h-0 flex-1">{children}</div>
-      </section>
-    </div>
+    <section
+      ref={region}
+      id="studio-side-panel"
+      tabIndex={-1}
+      role="region"
+      aria-label={title}
+      className={`studio-context-panel studio-context-panel-${side}`}
+    >
+      <header className="studio-context-heading">
+        <h2>{title}</h2>
+        <Button size="icon-sm" variant="ghost" aria-label={`Close ${title}`} onClick={onClose}>
+          <X aria-hidden="true" />
+        </Button>
+      </header>
+      <div className="studio-context-body">{children}</div>
+    </section>
   );
 }
 
@@ -120,11 +100,11 @@ export function StudioShell() {
   const uiMode = useStudio((s) => s.uiMode);
   const advancedSurface = useStudio((s) => s.advancedSurface);
   const [expanded, setExpanded] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [leftDrawer, setLeftDrawer] = useState(false);
-  const [rightDrawer, setRightDrawer] = useState(false);
-  const closeLeftDrawer = useCallback(() => setLeftDrawer(false), []);
-  const closeRightDrawer = useCallback(() => setRightDrawer(false), []);
+  const [failedAmbient, setFailedAmbient] = useState<string[]>([]);
+  const [panel, setPanel] = useState<"left" | "right" | "files" | "settings" | null>(null);
+  const closePanel = useCallback(() => setPanel(null), []);
+  const togglePanel = (next: NonNullable<typeof panel>) =>
+    setPanel((current) => (current === next ? null : next));
   useEffect(() => {
     const restore = (event: KeyboardEvent) => {
       if (event.key === "Escape") setExpanded(false);
@@ -133,8 +113,7 @@ export function StudioShell() {
     return () => window.removeEventListener("keydown", restore);
   }, []);
   useEffect(() => {
-    setLeftDrawer(false);
-    setRightDrawer(false);
+    setPanel(null);
   }, [stage, picture?.workspacePanel]);
   if (!picture) return null;
   const workspacePanel = picture.workspacePanel;
@@ -144,6 +123,13 @@ export function StudioShell() {
   const leftKind = shellLeftKind(policy);
   const rightKind = shellRightKind(policy);
   const showTimeline = showTimelineForStage(layoutStage) && !workspacePanel && !expanded;
+  const ambientImage = [
+    picture.shots.find((shot) => shot.stillUrl)?.stillUrl,
+    picture.id === "pic_prodigal_son_20260909"
+      ? "/pictures/prodigal-son/previews/PS-S18-SH005-FIRST.webp"
+      : null,
+    picture.thumbnailUrl,
+  ].find((uri) => uri && !failedAmbient.includes(uri));
   return (
     <div
       data-studio-shell="true"
@@ -153,27 +139,39 @@ export function StudioShell() {
       data-advanced-surface={advancedSurface}
       className="studio-desktop"
     >
+      {ambientImage && (
+        <div className="studio-ambient-art" aria-hidden="true">
+          <img src={ambientImage} alt="" onError={() => setFailedAmbient((previous) => [...previous, ambientImage])} />
+        </div>
+      )}
       <header className="studio-titlebar">
         <div className="studio-project-identity">
-        <button
-          className="studio-project-switch"
-          aria-label="Home · movie scripts"
-          onClick={() => useStudio.getState().closePicture()}
-        >
-          <ArrowLeft size={16} />
-          <span>{picture.title}</span>
-        </button>
-        <ProjectSaveStatus />
+          <button
+            className="studio-project-switch"
+            aria-label="Home · movie scripts"
+            title="Home · movie scripts"
+            onClick={() => useStudio.getState().closePicture()}
+          >
+            <ArrowLeft size={16} />
+            <span className="studio-brand-name">Premiere316</span>
+            <span className="studio-project-mobile">{picture.title}</span>
+          </button>
+          <ProjectSaveStatus />
         </div>
         {!expanded && <WorkspaceNavigation />}
         <div className="studio-title-actions">
+          <span className="studio-project-caption" title={picture.title}>
+            {picture.title}
+          </span>
           {!workspacePanel && leftKind && (
             <Button
               size="icon-sm"
               variant="ghost"
               aria-label={`Open ${shellLeftTitle(leftKind)}`}
               title={shellLeftTitle(leftKind)}
-              onClick={() => setLeftDrawer(true)}
+              aria-expanded={panel === "left"}
+              aria-controls="studio-side-panel"
+              onClick={() => togglePanel("left")}
             >
               <PanelLeft size={17} />
             </Button>
@@ -184,18 +182,32 @@ export function StudioShell() {
               variant="ghost"
               aria-label={`Open ${shellRightTitle(rightKind)}`}
               title={shellRightTitle(rightKind)}
-              onClick={() => setRightDrawer(true)}
+              aria-expanded={panel === "right"}
+              aria-controls="studio-side-panel"
+              onClick={() => togglePanel("right")}
             >
               <PanelRight size={17} />
             </Button>
           )}
-          <ProjectFiles picture={picture} iconOnly />
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            aria-label="Project files"
+            title="Project files"
+            aria-expanded={panel === "files"}
+            aria-controls="studio-side-panel"
+            onClick={() => togglePanel("files")}
+          >
+            <FolderOpen size={17} aria-hidden="true" />
+          </Button>
           <Button
             size="icon-sm"
             variant="ghost"
             aria-label="Project settings"
             title="Project settings"
-            onClick={() => setProfileOpen(true)}
+            aria-expanded={panel === "settings"}
+            aria-controls="studio-side-panel"
+            onClick={() => togglePanel("settings")}
           >
             <Settings2 size={17} />
           </Button>
@@ -210,36 +222,49 @@ export function StudioShell() {
           </Button>
         </div>
       </header>
-      <div className="studio-canvas" data-has-timeline={showTimeline}>
-        <main>
-          {workspacePanel ? (
-            <div className="cabinet-workspace-panel">
-              {workspacePanel === "bible" ? <MovieBibleEditor /> : <BibleRunWorkspace />}
-            </div>
-          ) : (
-            <StageView />
+      <div
+        className="studio-canvas"
+        data-has-timeline={showTimeline}
+        data-has-panel={Boolean(panel)}
+      >
+        <div className="studio-canvas-body" data-panel-open={Boolean(panel)}>
+          {panel === "left" && leftKind && (
+            <ContextPanel side="left" title={shellLeftTitle(leftKind)} onClose={closePanel}>
+              <LeftPanel kind={leftKind} />
+            </ContextPanel>
           )}
-        </main>
+          <main>
+            {workspacePanel ? (
+              <div className="cabinet-workspace-panel">
+                {workspacePanel === "bible" ? <MovieBibleEditor /> : <BibleRunWorkspace />}
+              </div>
+            ) : (
+              <StageView />
+            )}
+          </main>
+          {panel === "right" && rightKind && (
+            <ContextPanel side="right" title={shellRightTitle(rightKind)} onClose={closePanel}>
+              <RightPanel kind={rightKind} />
+            </ContextPanel>
+          )}
+          {panel === "files" && (
+            <ContextPanel side="right" title="Project files" onClose={closePanel}>
+              <ProjectFiles picture={picture} />
+            </ContextPanel>
+          )}
+          {panel === "settings" && (
+            <ContextPanel side="right" title="Project settings" onClose={closePanel}>
+              <ProductionProfileControls picture={picture} />
+              <InterfaceScale />
+            </ContextPanel>
+          )}
+        </div>
         {showTimeline && (
           <div className="studio-timeline">
             <Timeline />
           </div>
         )}
       </div>
-      <CabinetModal title="Project settings" open={profileOpen} onOpenChange={setProfileOpen}>
-        <ProductionProfileControls picture={picture} />
-        <InterfaceScale />
-      </CabinetModal>
-      {leftDrawer && leftKind && (
-        <Drawer side="left" title={shellLeftTitle(leftKind)} onClose={closeLeftDrawer}>
-          <LeftPanel kind={leftKind} />
-        </Drawer>
-      )}
-      {rightDrawer && rightKind && (
-        <Drawer side="right" title={shellRightTitle(rightKind)} onClose={closeRightDrawer}>
-          <RightPanel kind={rightKind} />
-        </Drawer>
-      )}
     </div>
   );
 }

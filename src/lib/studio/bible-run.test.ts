@@ -227,6 +227,20 @@ test("Bible edits preserve IDs, source history and affect authoring packet", () 
     /reason/,
   );
 });
+
+test("final assembly rejects an explicitly incompatible delivery container or video codec", () => {
+  const p = picture();
+  assert.equal(movieAssemblyPlan(p).issues.some((issue) => issue.includes("Requested delivery")), false);
+  p.intake.deliveryFormat = "MOV";
+  p.intake.deliveryCodec = "ProRes";
+  const blocked = movieAssemblyPlan(p);
+  assert.equal(blocked.ok, false);
+  assert.match(blocked.issues.join("\n"), /Requested delivery format/);
+  assert.match(blocked.issues.join("\n"), /Requested video codec/);
+  p.intake.deliveryFormat = "MP4";
+  p.intake.deliveryCodec = "H.264";
+  assert.equal(movieAssemblyPlan(p).issues.some((issue) => issue.includes("Requested")), false);
+});
 test("persisted snapshots and configured Astra bindings survive serialization", () => {
   const p = picture();
   const r = startBibleRun(p);

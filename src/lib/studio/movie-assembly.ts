@@ -16,6 +16,14 @@ export function continuationSourceIssue(picture: Picture, takeId: string) {
 /** Full-length assembly is separate from the preserved 10s/30s demonstration exports. */
 export function movieAssemblyPlan(picture: Picture) {
   const issues: string[] = [];
+  const requestedFormat = picture.intake?.deliveryFormat?.trim().toLowerCase();
+  const requestedCodec = picture.intake?.deliveryCodec?.trim().toLowerCase();
+  // The desktop encoder currently writes movie.mp4 with H.264 video and AAC audio.
+  // An explicit incompatible target must never receive a differently encoded movie.
+  if (requestedFormat && !["mp4", "video/mp4"].includes(requestedFormat))
+    issues.push("Requested delivery format cannot be produced by final assembly. Choose MP4 or leave the target blank.");
+  if (requestedCodec && !["h.264", "h264", "avc", "avc1", "libx264"].includes(requestedCodec))
+    issues.push("Requested video codec cannot be produced by final assembly. Choose H.264 or leave the target blank.");
   if (!Number.isFinite(picture.fps) || picture.fps <= 0 || picture.fps > 120)
     issues.push("Delivery frame rate must be greater than zero and at most 120 fps.");
   if (picture.cues.length && !picture.audio?.cues.length)

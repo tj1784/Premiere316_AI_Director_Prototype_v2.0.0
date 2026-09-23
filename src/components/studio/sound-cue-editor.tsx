@@ -7,6 +7,7 @@ import { useActivePicture, useStudio } from "@/lib/studio/store";
 import { hydratePictureAudio, recordImportedAudioTake } from "@/lib/production/audio-iterations";
 import type { SoundCueRecord } from "@/lib/production/audio-types";
 import { stableHash } from "@/lib/production/dependency-graph";
+import { hasVocalIntent, soundCueSaveError } from "@/lib/production/sound-cue-policy";
 import { desktopImportAudio } from "@/lib/desktop/client";
 import { uid } from "@/lib/utils";
 import { useWorkspaceDraft } from "./use-workspace-draft";
@@ -207,6 +208,12 @@ export function SoundCueEditor() {
             </fieldset>
           )}
           {field("destination", "Destination / format / execution notes")}
+          {hasVocalIntent(draft) && (
+            <p className="text-xs text-muted">
+              New dialogue and vocal cues need a shot in an approved screenplay scene and an
+              authored sound permission with its source in the scene or shot Bible.
+            </p>
+          )}
           <p className="text-xs text-muted">
             Specialist targets: ACE-Step 1.5 XL SFT (score), Stable Audio 3 Small-SFX (effects).
             Installed adapter and exact variant must be verified; no Medium/Turbo substitution. Text
@@ -228,6 +235,15 @@ export function SoundCueEditor() {
                   toast.error("Name, description and valid timing are required.");
                   return;
                 }
+                const evidenceError = soundCueSaveError(
+                  picture,
+                  draft,
+                  audio.cues.find((item) => item.id === draft.id) ?? null,
+                );
+                if (evidenceError) {
+                  toast.error(evidenceError);
+                  return;
+                }
                 const cue = {
                   ...draft,
                   revision: (draft.revision ?? 0) + 1,
@@ -235,6 +251,8 @@ export function SoundCueEditor() {
                     screenplay: picture.screenplay.approvedVersionId,
                     scene: picture.scenes.find((s) => s.id === draft.sceneId),
                     shot: picture.shots.find((s) => s.id === draft.shotId),
+                    sceneSound: draft.sceneId ? picture.movieBible?.records[draft.sceneId] : null,
+                    shotSound: draft.shotId ? picture.movieBible?.records[draft.shotId] : null,
                   }),
                 };
                 patch({

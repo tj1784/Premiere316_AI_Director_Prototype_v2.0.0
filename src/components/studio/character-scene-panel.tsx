@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   ArrowUpRight,
   ChevronDown,
@@ -6,6 +6,7 @@ import {
   LockKeyhole,
   Pencil,
   ScanLine,
+  X,
 } from "lucide-react";
 import type { Picture } from "@/lib/studio/types";
 import type { ProductionAsset } from "@/lib/production/types";
@@ -20,7 +21,6 @@ import {
 import { useStudio } from "@/lib/studio/store";
 import { useWorkspaceDraft } from "./use-workspace-draft";
 import { openScreenplayScene } from "./workspace-links";
-import { CabinetModal } from "./cabinet";
 import { ShotContinuityEditor } from "./shot-continuity-editor";
 import "./character-scene-panel.css";
 
@@ -228,11 +228,13 @@ export function CharacterScenePanel({
   record,
   asset,
   onEdit,
+  onContinuityFocusChange,
 }: {
   picture: Picture;
   record: BibleIndexRow;
   asset?: ProductionAsset;
   onEdit: (recordId: string, kind: BibleKind, field: string) => void;
+  onContinuityFocusChange: (focused: boolean) => void;
 }) {
   const uid = useId();
   const scenes = characterSceneLinks(picture, record.id, asset);
@@ -282,6 +284,17 @@ export function CharacterScenePanel({
         shot.subject.approvedReferences?.some((ref) => ref.characterId === record.id)),
   );
   const [continuityOpen, setContinuityOpen] = useState(false);
+  const continuityHeadingRef = useRef<HTMLHeadingElement>(null);
+  const sceneHeadingRef = useRef<HTMLHeadingElement>(null);
+  const openedRef = useRef(false);
+  useEffect(() => {
+    if (continuityOpen) {
+      openedRef.current = true;
+      continuityHeadingRef.current?.focus();
+    } else if (openedRef.current) {
+      sceneHeadingRef.current?.focus();
+    }
+  }, [continuityOpen]);
   const openPerformance = () => useStudio.getState().openAdvancedDepartment("performance");
   const openContinuity = (shotId: string) => {
     const state = useStudio.getState();
@@ -304,6 +317,7 @@ export function CharacterScenePanel({
       },
     });
     setContinuityOpen(true);
+    onContinuityFocusChange(true);
   };
   const changeContinuityOpen = (open: boolean) => {
     if (!open) {
@@ -320,7 +334,35 @@ export function CharacterScenePanel({
         });
     }
     setContinuityOpen(open);
+    onContinuityFocusChange(open);
   };
+
+  if (continuityOpen) {
+    return (
+      <aside
+        className="character-scene-panel character-scene-continuity-focus"
+        aria-label={`${record.name} physical continuity`}
+      >
+        <header className="character-scene-continuity-heading">
+          <div>
+            <h2 tabIndex={-1} ref={continuityHeadingRef}>
+              Physical continuity
+            </h2>
+          </div>
+          <button
+            type="button"
+            aria-label="Return to scene state"
+            onClick={() => changeContinuityOpen(false)}
+          >
+            <X size={18} />
+          </button>
+        </header>
+        <div className="character-scene-continuity-body">
+          <ShotContinuityEditor />
+        </div>
+      </aside>
+    );
+  }
 
   return (
     <aside
@@ -330,7 +372,9 @@ export function CharacterScenePanel({
       <header className="character-scene-panel-head">
         <div className="character-scene-heading">
           <ScanLine size={16} />
-          <h2>Scene state</h2>
+          <h2 tabIndex={-1} ref={sceneHeadingRef}>
+            Scene state
+          </h2>
         </div>
         <span className="character-scene-count">
           {scenes.length} linked {scenes.length === 1 ? "scene" : "scenes"}
@@ -719,13 +763,6 @@ export function CharacterScenePanel({
           </section>
         </div>
       )}
-      <CabinetModal
-        title={`${record.name} · physical continuity`}
-        open={continuityOpen}
-        onOpenChange={changeContinuityOpen}
-      >
-        <ShotContinuityEditor />
-      </CabinetModal>
     </aside>
   );
 }

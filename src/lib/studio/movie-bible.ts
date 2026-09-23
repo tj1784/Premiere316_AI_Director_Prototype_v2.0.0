@@ -112,6 +112,56 @@ export const BIBLE_FIELDS = {
   ],
 } as const;
 export type BibleKind = keyof typeof BIBLE_FIELDS;
+/** Direct intake direction is readable in the Bible without creating an
+ * approved or authored Bible revision. A saved Bible edit takes precedence. */
+export function pictureBibleFieldView(picture: Picture, field: string) {
+  const intake = picture.intake;
+  const read = (value: string | undefined) => value?.trim() ?? "";
+  let value = "";
+  let source = "";
+  if (field === BIBLE_FIELDS.picture[0]) {
+    value = read(intake.moralQuestion);
+    source = "Intake · moral question";
+  } else if (field === BIBLE_FIELDS.picture[1]) {
+    value = read(intake.treatment);
+    source = "Intake · treatment";
+  } else if (field === BIBLE_FIELDS.picture[2]) {
+    value = read(intake.language);
+    source = "Intake · language";
+  } else if (field === BIBLE_FIELDS.picture[3]) {
+    value = [
+      read(intake.deliveryFormat) && `Requested format: ${read(intake.deliveryFormat)}`,
+      read(intake.deliveryCodec) && `Requested video codec: ${read(intake.deliveryCodec)}`,
+      read(intake.aspectRatio) && `Aspect ratio: ${read(intake.aspectRatio)}`,
+      Number.isFinite(intake.frameRate) && intake.frameRate > 0 && `Frame rate: ${intake.frameRate} fps`,
+      intake.runtimeSource === "manual" && Number.isFinite(intake.targetRuntimeMinutes) && intake.targetRuntimeMinutes > 0 && `Target runtime: ${intake.targetRuntimeMinutes} minutes`,
+    ].filter(Boolean).join("\n");
+    source = "Intake · delivery settings";
+  } else if (field === BIBLE_FIELDS.picture[4]) {
+    const policy = read(intake.continuityPolicy);
+    const constraints = read(intake.storyConstraints);
+    value = policy && constraints
+      ? `Continuity policy: ${policy}\nStory constraints: ${constraints}`
+      : policy || constraints;
+    source = "Intake · continuity / story constraints";
+  } else if (field === BIBLE_FIELDS.picture[5]) {
+    const policy = read(intake.voicePolicy);
+    const style = read(intake.dialogueStyle);
+    value = policy && style
+      ? `Voice policy: ${policy}\nDialogue style: ${style}`
+      : policy || style;
+    source = "Intake · voice / dialogue style";
+  } else if (field === BIBLE_FIELDS.picture[6]) {
+    value = read(intake.scoreStrategy);
+    source = "Intake · score strategy";
+  }
+  return {
+    value,
+    source: value ? source : "",
+    disposition: value ? ("source" as const) : ("missing" as const),
+    revision: 0,
+  };
+}
 export type BibleField = {
   value: string;
   disposition: "authored" | "missing" | "not-applicable";
@@ -181,6 +231,18 @@ export type BibleIndexRow = {
   tags?: string[];
 };
 
+/** Intake files have no stored ID. Derive one from their immutable import metadata,
+ * disambiguating repeated filenames imported within the same millisecond. */
+function indexedIntakeSources(picture: Picture) {
+  const occurrences = new Map<string, number>();
+  return (picture.intake.importedSources ?? []).map((source) => {
+    const base = `intake-source:${encodeURIComponent(source.fileName)}:${source.importedAt}`;
+    const occurrence = occurrences.get(base) ?? 0;
+    occurrences.set(base, occurrence + 1);
+    return { id: `${base}:${occurrence}`, source };
+  });
+}
+
 /** Derived discovery view: ownership and approvals remain in their original stores. */
 export function movieBibleIndex(picture: Picture): BibleIndexRow[] {
   const rows: BibleIndexRow[] = [
@@ -193,6 +255,16 @@ export function movieBibleIndex(picture: Picture): BibleIndexRow[] {
       locator: "intake",
     },
   ];
+  for (const { id, source } of indexedIntakeSources(picture))
+    rows.push({
+      id,
+      kind: "source",
+      name: source.fileName,
+      status: "user-supplied file",
+      parentId: picture.id,
+      revision: stableHash(source),
+      locator: "intake",
+    });
   for (const [kind, records, locator] of [
     ["character", picture.characters, "visual-development"],
     ["scene", picture.scenes, "screenplay"],
@@ -589,6 +661,8 @@ export function resolveBibleRecord(picture: Picture, id: string): unknown {
       intake: picture.intake,
       bible: picture.movieBible?.records[id],
     };
+  const imported = indexedIntakeSources(picture).find((item) => item.id === id);
+  if (imported) return imported.source;
   for (const plan of Object.values(picture.directorScenes ?? {})) {
     if (id === `workflow:${plan.sceneId}`) return plan;
     const segment = plan.segments.find((s) => s.segmentId === id);
@@ -644,6 +718,29 @@ export function resolveBibleRecord(picture: Picture, id: string): unknown {
   );
 }
 
+/** Read the canonical source text and its recorded locator without assigning
+ * verification or canon status to an uploaded document. */
+export function bibleSourceReading(picture: Picture, row: BibleIndexRow): {
+  locator: string;
+  text: string;
+  label: string;
+  importedAt?: number;
+} | null {
+  if (row.kind !== "source") return null;
+  const source = resolveBibleRecord(picture, row.id);
+  if (!source || typeof source !== "object") return null;
+  const record = source as Record<string, unknown>;
+  const hasQuote = typeof record.quote === "string";
+  return {
+    locator: typeof record.locator === "string"
+      ? record.locator
+      : typeof record.fileName === "string" ? record.fileName : "",
+    text: hasQuote ? record.quote as string : typeof record.text === "string" ? record.text : "",
+    label: hasQuote ? "Source quote / supplied text" : "Imported document",
+    ...(typeof record.importedAt === "number" ? { importedAt: record.importedAt } : {}),
+  };
+}
+
 /** Cross-picture discovery remains a view of canonical owners, never a copied asset store. */
 export function searchMovieBibles(pictures: Picture[], query: string, limit = 50) {
   const needle = query.trim().toLowerCase();
@@ -667,6 +764,7 @@ export function bibleSearchText(row: BibleIndexRow, picture: Picture) {
   const sceneNames = picture.scenes
     .filter((scene) => relatedIds.includes(scene.id))
     .map((scene) => scene.slugline);
+  const source = bibleSourceReading(picture, row);
   return [
     row.id,
     row.name,
@@ -676,6 +774,8 @@ export function bibleSearchText(row: BibleIndexRow, picture: Picture) {
     ...(row.tags ?? []),
     ...relatedIds,
     ...sceneNames,
+    source?.locator ?? "",
+    source?.text ?? "",
   ].join(" ");
 }
 

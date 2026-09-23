@@ -1,56 +1,7 @@
-import { useRef, useState, type ReactNode } from "react";
-import * as Dialog from "@radix-ui/react-dialog";
+import { useState, type ReactNode } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-export function CabinetModal({
-  title,
-  children,
-  open,
-  onOpenChange,
-  trigger,
-}: {
-  title: string;
-  children: ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  trigger?: ReactNode;
-}) {
-  const opener = useRef<HTMLElement | null>(null);
-  return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      {trigger && <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>}
-      <Dialog.Portal>
-        <Dialog.Overlay className="cabinet-overlay" />
-        <Dialog.Content
-          className="cabinet-modal"
-          aria-describedby={undefined}
-          onOpenAutoFocus={() => {
-            opener.current =
-              document.activeElement instanceof HTMLElement ? document.activeElement : null;
-          }}
-          onCloseAutoFocus={(event) => {
-            if (!trigger && opener.current?.isConnected) {
-              event.preventDefault();
-              opener.current.focus();
-            }
-          }}
-        >
-          <header>
-            <Dialog.Title>{title}</Dialog.Title>
-            <Dialog.Close asChild>
-              <Button variant="ghost" size="icon-sm" aria-label={`Close ${title}`}>
-                <X size={18} />
-              </Button>
-            </Dialog.Close>
-          </header>
-          <div className="cabinet-modal-content">{children}</div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
-  );
-}
 export function CabinetTabs({
   items,
   label,

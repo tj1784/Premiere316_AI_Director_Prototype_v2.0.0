@@ -44,6 +44,7 @@ export function inventoryCards(record: ProductionBreakdown, filter: InventoryFil
   const sceneMap = new Map(record.scenes.map((scene) => [scene.id, scene.slugline]));
   return filterInventoryAssets(record, filter).map((asset) => {
     const approved = asset.iterations.find((iteration) => iteration.id === asset.approvedIterationId);
+    const latest = [...asset.iterations].reverse().find((iteration) => iteration.status !== "REJECTED" && (iteration.previewUri || iteration.mediaUri));
     const preferred = asset.references.find((reference) => reference.preferred) ?? asset.references[0];
     return {
       id: asset.id,
@@ -54,7 +55,7 @@ export function inventoryCards(record: ProductionBreakdown, filter: InventoryFil
       sceneCount: asset.requiredSceneIds.length,
       sceneLabels: asset.requiredSceneIds.map((id) => sceneMap.get(id) ?? id),
       variantCount: asset.variants.length,
-      previewUri: approved?.mediaUri ?? [...asset.iterations].reverse().find(iteration => iteration.mediaUri && iteration.status !== "REJECTED")?.mediaUri ?? preferred?.uri ?? null,
+      previewUri: approved?.previewUri ?? approved?.mediaUri ?? latest?.previewUri ?? latest?.mediaUri ?? preferred?.uri ?? null,
       canonicalApproved: asset.canonicalApproved,
     };
   });

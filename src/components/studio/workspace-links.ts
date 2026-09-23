@@ -24,6 +24,15 @@ export function openCharacterSheet(pictureId: string, recordId: string) {
     "bible-field-group:Characters & world": "all",
   });
 }
+export function openWorldSheet(pictureId: string, recordId: string, kind: "location" | "prop" | "wardrobe") {
+  const title = `${kind[0].toUpperCase()}${kind.slice(1)} records`;
+  navigate(pictureId, "visual-development", {
+    "characters-workspace-view": "sheets",
+    "character-dossier-world": kind,
+    [`bible-record:${title}`]: recordId,
+    [`bible-category:${title}`]: "all",
+  });
+}
 export function openAssetIterations(pictureId: string, assetId: string) {
   navigate(pictureId, "inventory", {
     "asset-workspace-view": "library",

@@ -1,11 +1,21 @@
 import { totalDuration, shotStarts } from "@/lib/studio/prompt-compiler";
 import { useActivePicture, useStudio } from "@/lib/studio/store";
+import { loadBundledMediaMap, resolveSiteStillPreview, type BundledMediaMap } from "@/lib/studio/site-media-preview.ts";
+import { PRODIGAL_SON_PICTURE_ID } from "@/lib/studio/prodigal-son.ts";
 import { cn, formatTimecode } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 export function Timeline() {
   const picture = useActivePicture();
   const selectedShotId = useStudio((s) => s.selectedShotId);
   const selectShot = useStudio((s) => s.selectShot);
+  const [mediaMap, setMediaMap] = useState<BundledMediaMap>({});
+  useEffect(() => {
+    if (picture?.id !== PRODIGAL_SON_PICTURE_ID) { setMediaMap({}); return; }
+    let current = true;
+    void loadBundledMediaMap().then((mapping) => { if (current) setMediaMap(mapping); });
+    return () => { current = false; };
+  }, [picture?.id]);
   if (!picture) return null;
   const total = Math.max(totalDuration(picture), 1);
   const starts = shotStarts(picture);
@@ -22,19 +32,21 @@ export function Timeline() {
           <Track label="V1">
             {picture.shots.map((s) => {
               const span = starts.find((x) => x.id === s.id);
+              const preview = resolveSiteStillPreview(picture.id, s.stillUrl, [], mediaMap);
               return (
                 <button
                   key={s.id}
                   type="button"
                   onClick={() => selectShot(s.id)}
+                  title={s.stillUrl && !preview ? "Exact still unavailable in this Site" : undefined}
                   style={{ width: `${(s.durationSec / total) * 100}%` }}
                   className={cn(
                     "relative h-14 overflow-hidden rounded-sm bg-elevated text-left shadow-[var(--shadow-border)]",
                     selectedShotId === s.id && "ring-1 ring-accent/50",
                   )}
                 >
-                  {s.stillUrl ? (
-                    <img src={s.stillUrl} alt="" className="absolute inset-0 size-full object-cover opacity-50" />
+                  {preview ? (
+                    <img src={preview.uri} alt="" className="absolute inset-0 size-full object-cover opacity-50" />
                   ) : null}
                   <span className="relative z-10 block truncate px-2 pt-1.5 text-[10px] text-fg">
                     {String(s.index).padStart(2, "0")} {s.type}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import {
   ArrowUpRight,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Picture } from "@/lib/studio/types";
+import { PRODIGAL_SON_PICTURE_ID } from "@/lib/studio/prodigal-son";
 import { BIBLE_FIELDS, movieBibleIndex, type BibleKind } from "@/lib/studio/movie-bible";
 import {
   applyCharacterFieldEdit,
@@ -26,13 +27,14 @@ import {
   type BibleFieldEdit,
 } from "@/lib/studio/character-dossier";
 import { useStudio } from "@/lib/studio/store";
-import { CabinetModal } from "./cabinet";
 import { MovieBibleEditor } from "./movie-bible-editor";
-import { CharacterMediaPanel } from "./character-media-panel";
+import { CharacterMediaPanel, characterMedia } from "./character-media-panel";
+import { AssetImagePreview } from "./asset-image-preview";
 import { CharacterScenePanel, participantFieldView } from "./character-scene-panel";
 import { useWorkspaceDraft } from "./use-workspace-draft";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/field";
+import "./character-inline-panels.css";
 
 const fieldLabel = (field: string) => CHARACTER_FIELD_DETAILS[field]?.label ?? field;
 const statusLabel = (status: string) =>
@@ -56,9 +58,13 @@ export function CharacterWorkspace({
     "character" | "location" | "prop" | "wardrobe"
   >("character-dossier-world", "character");
   const [compactPane, setCompactPane] = useState("dossier");
+  const [failedHeroUris, setFailedHeroUris] = useState<string[]>([]);
   const [picker, setPicker] = useState(false);
   const [query, setQuery] = useState("");
   const [detail, setDetail] = useState<"source" | "history" | "coverage" | null>(null);
+  const [continuityFocus, setContinuityFocus] = useState(false);
+  const focusHeadingRef = useRef<HTMLHeadingElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const [editing, setEditing] = useState<{
     recordId: string;
     kind: BibleKind;
@@ -76,7 +82,32 @@ export function CharacterWorkspace({
     )
     .find((item) => item.id === selected)?.characterId;
   const row = rows.find((r) => r.id === (participantOwner ?? selected)) ?? rows[0];
+  const [selectedReference] = useWorkspaceDraft(
+    `character-media-selection:${row?.id ?? "none"}`,
+    "",
+  );
   const asset = picture.production?.assets.find((a) => a.id === row?.id && !a.tombstone);
+  const imageReferences = row
+    ? characterMedia(picture, row.id, asset).filter(
+        (item) => item.mediaType.startsWith("image") && (item.previewUri || item.uri),
+      )
+    : [];
+  const heroReference =
+    imageReferences.find((item) => item.key === selectedReference) ??
+    imageReferences.find((item) => item.approved) ??
+    imageReferences.find((item) => item.label === "Preferred design reference") ??
+    imageReferences[0];
+  const reunionFrameUri =
+    picture.id === PRODIGAL_SON_PICTURE_ID &&
+    (row?.id === "PS-CHR-FATHER" || row?.id === "PS-CHR-YOUNGER")
+      ? "/pictures/prodigal-son/previews/PS-S18-SH005-FIRST.webp"
+      : null;
+  const heroUri = (
+    selectedReference
+      ? [heroReference?.previewUri, heroReference?.uri, reunionFrameUri]
+      : [reunionFrameUri, heroReference?.previewUri, heroReference?.uri]
+  ).find((uri) => uri && !failedHeroUris.includes(uri));
+  const showingReunionFrame = Boolean(reunionFrameUri && heroUri === reunionFrameUri);
   const legacy = picture.characters.find((c) => c.id === row?.id);
   const visual = picture.visualDevelopment?.characterBibles.find((c) => c.characterId === row?.id);
   const section = CHARACTER_SECTIONS.find((s) => s.id === sectionId) ?? CHARACTER_SECTIONS[0];
@@ -105,11 +136,39 @@ export function CharacterWorkspace({
     setPicker(false);
     setQuery("");
     setEditing(null);
+    setDetail(null);
+    setContinuityFocus(false);
   };
-  const onEdit = (recordId: string, kind: BibleKind, field: string) =>
+  const onEdit = (recordId: string, kind: BibleKind, field: string) => {
+    setPicker(false);
+    setDetail(null);
     setEditing({ recordId, kind, field });
+  };
+  const focusMode = editing ? "edit" : picker ? "cast" : detail;
+  useEffect(() => {
+    if (focusMode) {
+      if (!previousFocusRef.current && document.activeElement instanceof HTMLElement) {
+        previousFocusRef.current = document.activeElement;
+      }
+      focusHeadingRef.current?.focus();
+    } else if (previousFocusRef.current) {
+      if (previousFocusRef.current.isConnected) previousFocusRef.current.focus();
+      previousFocusRef.current = null;
+    }
+  }, [focusMode]);
+  const closeFocus = () => {
+    setPicker(false);
+    setDetail(null);
+    setEditing(null);
+  };
   return (
-    <div className="character-workspace" data-compact-pane={compactPane}>
+    <div
+      className="character-workspace"
+      data-compact-pane={focusMode ? "dossier" : continuityFocus ? "scene" : compactPane}
+      data-focus-mode={focusMode ?? undefined}
+      data-continuity-focus={continuityFocus || undefined}
+      data-character-stage={worldKind === "character" && row ? "hero" : undefined}
+    >
       <header className="character-workspace-heading">
         <div className="character-heading-main">
           <div className="character-eyebrow">
@@ -117,7 +176,11 @@ export function CharacterWorkspace({
             <select
               aria-label="Character and world records"
               value={worldKind}
-              onChange={(e) => setWorldKind(e.target.value as typeof worldKind)}
+              onChange={(e) => {
+                closeFocus();
+                setContinuityFocus(false);
+                setWorldKind(e.target.value as typeof worldKind);
+              }}
             >
               <option value="character">Characters</option>
               <option value="location">Locations</option>
@@ -165,11 +228,22 @@ export function CharacterWorkspace({
         </div>
         <div className="character-heading-actions">
           {worldKind === "character" && row && (
-            <button className="character-coverage-pill" onClick={() => setDetail("coverage")}>
+            <button
+              className="character-coverage-pill"
+              onClick={() => setDetail("coverage")}
+              aria-label={
+                missing
+                  ? `${missing} character fields need direction`
+                  : "All character fields recorded"
+              }
+              title="Character field coverage"
+            >
               <span
                 className={missing ? "character-status-dot incomplete" : "character-status-dot"}
               />
-              {missing ? `${missing} fields need direction` : "All fields recorded"}
+              <span className="character-coverage-text">
+                {missing ? `${missing} fields need direction` : "All fields recorded"}
+              </span>
               <ChevronDown size={13} />
             </button>
           )}
@@ -221,318 +295,492 @@ export function CharacterWorkspace({
         </div>
       ) : (
         <>
-          <div className="character-compact-tabs" role="group" aria-label="Character panels">
-            {[
-              ["media", "References & voice"],
-              ["dossier", "Character sheet"],
-              ["scene", "Scene state"],
-            ].map(([id, label]) => (
-              <button key={id} aria-pressed={compactPane === id} onClick={() => setCompactPane(id)}>
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="character-workspace-grid">
-            <aside className="character-reference-column">
-              <CharacterMediaPanel key={row.id} picture={picture} record={row} asset={asset} />
-            </aside>
-            <section
-              className="character-dossier-column"
-              aria-label={`${row.name} character sheet`}
+          <div className="character-ps5-stage">
+            <div
+              className={`character-ps5-backdrop${showingReunionFrame ? " is-scene-frame" : ""}${showingReunionFrame && row.id === "PS-CHR-FATHER" ? " is-father-frame" : ""}`}
+              aria-hidden="true"
             >
-              <Tabs.Root
-                value={section.id}
-                onValueChange={setSectionId}
-                className="character-sections"
+              {heroUri && (
+                <img
+                  key={heroUri}
+                  src={heroUri}
+                  alt=""
+                  onError={() => setFailedHeroUris((previous) => [...previous, heroUri])}
+                />
+              )}
+            </div>
+            <div className="character-ps5-vignette" aria-hidden="true" />
+            {!focusMode && !continuityFocus && (
+              <div className="character-ps5-identity">
+                <span>CHARACTERS &amp; WORLD / {String(index + 1).padStart(2, "0")}</span>
+                <button
+                  type="button"
+                  onClick={() => setPicker(true)}
+                  aria-label={`Choose character, current ${row.name}`}
+                >
+                  <h2>{row.name}</h2>
+                  <ChevronDown size={22} />
+                </button>
+                {legacy?.role && legacy.role !== row.name && <p>{legacy.role}</p>}
+                <small>
+                  {showingReunionFrame
+                    ? "Scene 18 · The reunion · linked scene frame"
+                    : heroUri
+                      ? heroReference?.label
+                      : "No visual reference attached"}
+                </small>
+              </div>
+            )}
+            <div className="character-compact-tabs" role="group" aria-label="Character panels">
+              {[
+                ["dossier", "Identity"],
+                ["media", "References & voice"],
+                ["scene", "Scene state"],
+              ].map(([id, label]) => (
+                <button
+                  key={id}
+                  aria-pressed={compactPane === id}
+                  onClick={() => setCompactPane(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="character-workspace-grid">
+              <aside className="character-reference-column">
+                <CharacterMediaPanel key={row.id} picture={picture} record={row} asset={asset} />
+              </aside>
+              <section
+                className="character-dossier-column"
+                aria-label={`${row.name} character sheet`}
               >
-                <Tabs.List aria-label="Character sheet sections" className="character-section-tabs">
-                  {CHARACTER_SECTIONS.map((item) => {
-                    const count = item.fields.filter(
-                      (n) => fields[n].disposition !== "missing" && fields[n].value.trim(),
-                    ).length;
-                    return (
-                      <Tabs.Trigger key={item.id} value={item.id}>
-                        {item.title}
-                        <span aria-label={`${count} of ${item.fields.length} fields recorded`}>
-                          {count}/{item.fields.length}
-                        </span>
-                      </Tabs.Trigger>
-                    );
-                  })}
-                </Tabs.List>
-                {CHARACTER_SECTIONS.map((item) => (
-                  <Tabs.Content key={item.id} value={item.id} className="character-section-body">
-                    <div className="character-section-intro">
-                      <p>{item.subtitle}</p>
-                      <span>Character sheet</span>
-                    </div>
-                    <div className="character-field-grid">
-                      {item.fields.map((n) => {
-                        const field = fields[n];
-                        const meta = CHARACTER_FIELD_DETAILS[field.field];
-                        const empty = !field.value.trim() || field.disposition === "missing";
-                        return (
-                          <article
-                            key={field.field}
-                            className={`character-field ${empty ? "is-missing" : "has-value"}`}
-                          >
-                            <header>
-                              <h2>{meta.label}</h2>
+                {focusMode ? (
+                  <div
+                    className="character-focus-pane"
+                    aria-label={
+                      focusMode === "cast"
+                        ? "Cast of this picture"
+                        : focusMode === "edit"
+                          ? `Edit ${fieldLabel(editing?.field ?? "")}`
+                          : `Character ${detail}`
+                    }
+                  >
+                    <header className="character-focus-heading">
+                      <div>
+                        <h2 tabIndex={-1} ref={focusHeadingRef}>
+                          {picker
+                            ? "Cast of this picture"
+                            : editing
+                              ? fieldLabel(editing.field)
+                              : detail === "source"
+                                ? "Source dossier"
+                                : detail === "history"
+                                  ? "Revision history"
+                                  : "Field coverage"}
+                        </h2>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label="Return to character sheet"
+                        onClick={closeFocus}
+                      >
+                        <X size={18} />
+                      </button>
+                    </header>
+                    <div className="character-focus-content">
+                      {picker && (
+                        <>
+                          <div className="character-picker-search">
+                            <Search size={17} />
+                            <Input
+                              aria-label="Find a character"
+                              placeholder="Search characters or aliases…"
+                              value={query}
+                              onChange={(e) => setQuery(e.target.value)}
+                            />
+                          </div>
+                          <div className="character-cast-grid">
+                            {filtered.map((character) => (
                               <button
-                                aria-label={`Edit ${meta.label}`}
-                                title={`Edit ${meta.label}`}
-                                onClick={() => onEdit(row.id, "character", field.field)}
+                                key={character.id}
+                                aria-current={character.id === row?.id ? "true" : undefined}
+                                onClick={() => choose(character.id)}
                               >
-                                <Pencil size={14} />
-                              </button>
-                            </header>
-                            {empty ? (
-                              <>
-                                {field.value.trim() && (
-                                  <p className="character-field-value">{field.value}</p>
-                                )}
-                                <p className="character-field-hint">{meta.hint}</p>
-                                <button
-                                  className="character-add-field"
-                                  onClick={() => onEdit(row.id, "character", field.field)}
-                                >
-                                  <CircleDashed size={13} />
-                                  Add direction or mark N/A
-                                </button>
-                              </>
-                            ) : (
-                              <p className="character-field-value">{field.value}</p>
-                            )}
-                            <footer>
-                              <span
-                                className={`character-field-status status-${field.disposition}`}
-                              >
-                                {empty ? (
-                                  <CircleDashed size={11} />
-                                ) : field.disposition === "not-applicable" ? (
-                                  <X size={11} />
+                                <span className="character-cast-monogram" aria-hidden="true">
+                                  {character.name
+                                    .split(/\s+/)
+                                    .map((w) => w[0])
+                                    .slice(0, 2)
+                                    .join("")}
+                                </span>
+                                <span>
+                                  <strong>{character.name}</strong>
+                                  <small>
+                                    {character.aliases?.length
+                                      ? character.aliases.join(" · ")
+                                      : `Character ${rows.indexOf(character) + 1}`}
+                                  </small>
+                                </span>
+                                {character.id === row?.id ? (
+                                  <Check size={16} />
                                 ) : (
-                                  <Check size={11} />
-                                )}{" "}
-                                {statusLabel(field.disposition)}
-                              </span>
-                              {field.source && (
-                                <span className="character-field-source">{field.source}</span>
-                              )}
-                            </footer>
-                          </article>
-                        );
-                      })}
-                    </div>
-                    {item.id === "performance" &&
-                      (asset?.canonicalSpec.performanceNotes || legacy?.arc) && (
-                        <div className="character-original-direction">
-                          <span>Existing source direction</span>
-                          {asset?.canonicalSpec.performanceNotes && (
-                            <p>{asset.canonicalSpec.performanceNotes}</p>
+                                  <ArrowUpRight size={15} />
+                                )}
+                              </button>
+                            ))}
+                            {!filtered.length && <p>No character matches this search.</p>}
+                          </div>
+                        </>
+                      )}
+                      {detail === "source" && (
+                        <div className="character-source-dossier">
+                          <p className="character-modal-intro">
+                            Original records and their recorded status. Character direction is saved
+                            separately with its source and revision.
+                          </p>
+                          {asset && (
+                            <>
+                              <h3>
+                                Canonical identity ·{" "}
+                                {asset.canonicalApproved
+                                  ? "approved specification"
+                                  : "specification needs review"}
+                              </h3>
+                              <RecordDetails value={asset.canonicalSpec} />
+                              <h3>Aliases & provenance</h3>
+                              <RecordDetails
+                                value={{
+                                  id: asset.id,
+                                  aliases: asset.aliases,
+                                  provenance: asset.provenance,
+                                  approvedSpecVersionId: asset.approvedSpecVersionId,
+                                  stale: asset.stale,
+                                  staleReasons: asset.staleReasons,
+                                  blockedReasons: asset.blockedReasons,
+                                }}
+                              />
+                            </>
                           )}
-                          {legacy?.arc && (
-                            <p>
-                              <strong>Character arc</strong> · {legacy.arc}
-                            </p>
+                          {legacy && (
+                            <>
+                              <h3>Character source record</h3>
+                              <RecordDetails value={legacy} />
+                            </>
                           )}
-                          <button onClick={() => setDetail("source")}>
-                            View source & identity constraints
-                            <ArrowUpRight size={13} />
-                          </button>
+                          {visual && (
+                            <>
+                              <h3>Visual identity Bible</h3>
+                              <RecordDetails value={visual} />
+                            </>
+                          )}
+                          {!asset && !legacy && !visual && <p>No source record is available.</p>}
                         </div>
                       )}
-                    {item.id === "identity" && visual && (
-                      <div className="character-original-direction">
-                        <span>
-                          Visual identity · {visual.status.toLowerCase().replaceAll("_", " ")}
-                        </span>
-                        {visual.invariants.length > 0 && <p>{visual.invariants.join("\n")}</p>}
-                        <button onClick={() => setDetail("source")}>
-                          Expression matrix, posture & drift rules
-                          <ArrowUpRight size={13} />
-                        </button>
-                      </div>
-                    )}
-                  </Tabs.Content>
-                ))}
-              </Tabs.Root>
-              <footer className="character-dossier-footer">
-                <span>
-                  <BookOpen size={13} /> Bible-linked direction
-                </span>
-                <button onClick={() => setDetail("source")}>
-                  Sources & identity details
-                  <ArrowUpRight size={13} />
-                </button>
-              </footer>
-            </section>
-            <aside className="character-state-column">
-              <CharacterScenePanel
-                key={row.id}
-                picture={picture}
-                record={row}
-                asset={asset}
-                onEdit={onEdit}
-              />
-            </aside>
+                      {detail === "history" && (
+                        <div className="character-revision-list">
+                          {!corrections.length && (
+                            <p>No character-field corrections recorded yet.</p>
+                          )}
+                          {corrections.map((c) => (
+                            <article key={c.id}>
+                              <header>
+                                <h3>{fieldLabel(c.field)}</h3>
+                                <small>
+                                  {new Date(c.at).toLocaleString()} · revision {c.after.revision}
+                                </small>
+                              </header>
+                              {c.recordId !== row?.id && (
+                                <small>Scene participant · {c.recordId}</small>
+                              )}
+                              <p>{c.after.value || "Explicitly missing"}</p>
+                              <small>
+                                {statusLabel(c.after.disposition)} ·{" "}
+                                {c.after.source || "Source not recorded"}
+                              </small>
+                              {c.before && (
+                                <details>
+                                  <summary>Previous value</summary>
+                                  <p>{c.before.value || "Missing"}</p>
+                                  <small>{c.before.source}</small>
+                                </details>
+                              )}
+                            </article>
+                          ))}
+                        </div>
+                      )}
+                      {detail === "coverage" && (
+                        <div className="character-coverage-list">
+                          <p className="character-modal-intro">
+                            All 17 character field groups are available. Recorded text is not proof
+                            of completeness or media approval; source-derived values still need
+                            review.
+                          </p>
+                          {fields.map((f) => (
+                            <button
+                              key={f.field}
+                              onClick={() => {
+                                setDetail(null);
+                                if (row) onEdit(row.id, "character", f.field);
+                              }}
+                            >
+                              <span>
+                                <strong>{fieldLabel(f.field)}</strong>
+                                <small>{CHARACTER_FIELD_DETAILS[f.field].hint}</small>
+                              </span>
+                              <span className={`character-field-status status-${f.disposition}`}>
+                                {statusLabel(f.disposition)}
+                                <Pencil size={12} />
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {editing && (
+                        <CharacterFieldEditor
+                          key={`${editing.recordId}:${editing.field}`}
+                          picture={picture}
+                          {...editing}
+                          onClose={() => setEditing(null)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <Tabs.Root
+                    value={section.id}
+                    onValueChange={setSectionId}
+                    className="character-sections"
+                  >
+                    <Tabs.List
+                      aria-label="Character sheet sections"
+                      className="character-section-tabs"
+                    >
+                      {CHARACTER_SECTIONS.map((item) => {
+                        const count = item.fields.filter(
+                          (n) => fields[n].disposition !== "missing" && fields[n].value.trim(),
+                        ).length;
+                        return (
+                          <Tabs.Trigger key={item.id} value={item.id}>
+                            {item.title}
+                            <span aria-label={`${count} of ${item.fields.length} fields recorded`}>
+                              {count}/{item.fields.length}
+                            </span>
+                          </Tabs.Trigger>
+                        );
+                      })}
+                    </Tabs.List>
+                    {CHARACTER_SECTIONS.map((item) => (
+                      <Tabs.Content
+                        key={item.id}
+                        value={item.id}
+                        className="character-section-body"
+                      >
+                        {item.id === "identity" && (
+                          <section
+                            className="character-ps5-profile"
+                            aria-label="Character overview"
+                          >
+                            <header>
+                              <span>Identity</span>
+                              <small>Character {String(index + 1).padStart(2, "0")}</small>
+                            </header>
+                            <h2>{row.name}</h2>
+                            <dl>
+                              <div>
+                                <dt>Role</dt>
+                                <dd>{legacy?.role || asset?.canonicalSpec.identity || row.name}</dd>
+                              </div>
+                              <div>
+                                <dt>Objectives</dt>
+                                <dd>{fields[5].value || "No direction recorded"}</dd>
+                              </div>
+                              <div>
+                                <dt>Appearance</dt>
+                                <dd>
+                                  {asset?.canonicalSpec.visualDescription ||
+                                    legacy?.look ||
+                                    fields[1].value ||
+                                    "No appearance recorded"}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Relationships</dt>
+                                <dd>{fields[10].value || "No direction recorded"}</dd>
+                              </div>
+                            </dl>
+                            <button type="button" onClick={() => setCompactPane("scene")}>
+                              Scene state · {asset?.requiredSceneIds.length ?? 0} linked scenes
+                              <ArrowUpRight size={13} />
+                            </button>
+                          </section>
+                        )}
+                        <div className="character-section-intro">
+                          <p>{item.subtitle}</p>
+                          <span>Character sheet</span>
+                        </div>
+                        <div className="character-field-grid">
+                          {item.fields.map((n) => {
+                            const field = fields[n];
+                            const meta = CHARACTER_FIELD_DETAILS[field.field];
+                            const empty = !field.value.trim() || field.disposition === "missing";
+                            return (
+                              <article
+                                key={field.field}
+                                className={`character-field ${empty ? "is-missing" : "has-value"}`}
+                              >
+                                <header>
+                                  <h2>{meta.label}</h2>
+                                  <button
+                                    aria-label={`Edit ${meta.label}`}
+                                    title={`Edit ${meta.label}`}
+                                    onClick={() => onEdit(row.id, "character", field.field)}
+                                  >
+                                    <Pencil size={14} />
+                                  </button>
+                                </header>
+                                {empty ? (
+                                  <>
+                                    {field.value.trim() && (
+                                      <p className="character-field-value">{field.value}</p>
+                                    )}
+                                    <p className="character-field-hint">{meta.hint}</p>
+                                    <button
+                                      className="character-add-field"
+                                      onClick={() => onEdit(row.id, "character", field.field)}
+                                    >
+                                      <CircleDashed size={13} />
+                                      Add direction or mark N/A
+                                    </button>
+                                  </>
+                                ) : (
+                                  <p className="character-field-value">{field.value}</p>
+                                )}
+                                <footer>
+                                  <span
+                                    className={`character-field-status status-${field.disposition}`}
+                                  >
+                                    {empty ? (
+                                      <CircleDashed size={11} />
+                                    ) : field.disposition === "not-applicable" ? (
+                                      <X size={11} />
+                                    ) : (
+                                      <Check size={11} />
+                                    )}{" "}
+                                    {statusLabel(field.disposition)}
+                                  </span>
+                                  {field.source && (
+                                    <span className="character-field-source">{field.source}</span>
+                                  )}
+                                </footer>
+                              </article>
+                            );
+                          })}
+                        </div>
+                        {item.id === "performance" &&
+                          (asset?.canonicalSpec.performanceNotes || legacy?.arc) && (
+                            <div className="character-original-direction">
+                              <span>Existing source direction</span>
+                              {asset?.canonicalSpec.performanceNotes && (
+                                <p>{asset.canonicalSpec.performanceNotes}</p>
+                              )}
+                              {legacy?.arc && (
+                                <p>
+                                  <strong>Character arc</strong> · {legacy.arc}
+                                </p>
+                              )}
+                              <button onClick={() => setDetail("source")}>
+                                View source & identity constraints
+                                <ArrowUpRight size={13} />
+                              </button>
+                            </div>
+                          )}
+                        {item.id === "identity" && visual && (
+                          <div className="character-original-direction">
+                            <span>
+                              Visual identity · {visual.status.toLowerCase().replaceAll("_", " ")}
+                            </span>
+                            {visual.invariants.length > 0 && <p>{visual.invariants.join("\n")}</p>}
+                            <button onClick={() => setDetail("source")}>
+                              Expression matrix, posture & drift rules
+                              <ArrowUpRight size={13} />
+                            </button>
+                          </div>
+                        )}
+                      </Tabs.Content>
+                    ))}
+                  </Tabs.Root>
+                )}
+                {!focusMode && (
+                  <footer className="character-dossier-footer">
+                    <span>
+                      <BookOpen size={13} /> Bible-linked direction
+                    </span>
+                    <button onClick={() => setDetail("source")}>
+                      Sources & identity details
+                      <ArrowUpRight size={13} />
+                    </button>
+                  </footer>
+                )}
+              </section>
+              <aside className="character-state-column">
+                <CharacterScenePanel
+                  key={row.id}
+                  picture={picture}
+                  record={row}
+                  asset={asset}
+                  onEdit={onEdit}
+                  onContinuityFocusChange={setContinuityFocus}
+                />
+              </aside>
+            </div>
+            {!focusMode && !continuityFocus && (
+              <nav className="character-ps5-rail" aria-label="Characters in this picture">
+                {rows.map((character) => {
+                  const characterAsset = picture.production?.assets.find(
+                    (item) => item.id === character.id && !item.tombstone,
+                  );
+                  const images = characterMedia(picture, character.id, characterAsset).filter(
+                    (item) => item.mediaType.startsWith("image") && (item.previewUri || item.uri),
+                  );
+                  const thumbnail =
+                    images.find((item) => item.approved) ??
+                    images.find((item) => item.label === "Preferred design reference") ??
+                    images[0];
+                  return (
+                    <button
+                      type="button"
+                      key={character.id}
+                      data-reference-sheet={
+                        picture.id === PRODIGAL_SON_PICTURE_ID &&
+                        thumbnail?.previewUri?.includes(`/previews/${character.id}.webp`)
+                          ? "true"
+                          : undefined
+                      }
+                      aria-current={character.id === row.id ? "true" : undefined}
+                      onClick={() => choose(character.id)}
+                      title={character.name}
+                    >
+                      <span className="character-ps5-rail-art">
+                        {thumbnail ? (
+                          <AssetImagePreview
+                            previewUri={thumbnail.previewUri}
+                            mediaUri={thumbnail.uri}
+                            alt=""
+                            className="character-ps5-rail-image"
+                            compact
+                          />
+                        ) : (
+                          <span aria-hidden="true">{character.name.slice(0, 1)}</span>
+                        )}
+                      </span>
+                      <span className="character-ps5-rail-title">{character.name}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            )}
           </div>
         </>
-      )}
-      <CabinetModal title="Cast of this picture" open={picker} onOpenChange={setPicker}>
-        <div className="character-picker-search">
-          <Search size={17} />
-          <Input
-            aria-label="Find a character"
-            placeholder="Search characters or aliases…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-        <div className="character-cast-grid">
-          {filtered.map((character, i) => (
-            <button
-              key={character.id}
-              aria-current={character.id === row?.id ? "true" : undefined}
-              onClick={() => choose(character.id)}
-            >
-              <span className="character-cast-monogram" aria-hidden="true">
-                {character.name
-                  .split(/\s+/)
-                  .map((w) => w[0])
-                  .slice(0, 2)
-                  .join("")}
-              </span>
-              <span>
-                <strong>{character.name}</strong>
-                <small>
-                  {character.aliases?.length
-                    ? character.aliases.join(" · ")
-                    : `Character ${rows.indexOf(character) + 1}`}
-                </small>
-              </span>
-              {character.id === row?.id ? <Check size={16} /> : <ArrowUpRight size={15} />}
-            </button>
-          ))}
-          {!filtered.length && <p>No character matches this search.</p>}
-        </div>
-      </CabinetModal>
-      <CabinetModal
-        title={
-          detail === "source"
-            ? `${row?.name ?? "Character"} · source dossier`
-            : detail === "history"
-              ? "Character revision history"
-              : "Character field coverage"
-        }
-        open={detail !== null}
-        onOpenChange={(open) => !open && setDetail(null)}
-      >
-        {detail === "source" && (
-          <div className="character-source-dossier">
-            <p className="character-modal-intro">
-              Original records and their recorded status. Character direction is saved separately
-              with its source and revision.
-            </p>
-            {asset && (
-              <>
-                <h3>
-                  Canonical identity ·{" "}
-                  {asset.canonicalApproved
-                    ? "approved specification"
-                    : "specification needs review"}
-                </h3>
-                <RecordDetails value={asset.canonicalSpec} />
-                <h3>Aliases & provenance</h3>
-                <RecordDetails
-                  value={{
-                    id: asset.id,
-                    aliases: asset.aliases,
-                    provenance: asset.provenance,
-                    approvedSpecVersionId: asset.approvedSpecVersionId,
-                    stale: asset.stale,
-                    staleReasons: asset.staleReasons,
-                    blockedReasons: asset.blockedReasons,
-                  }}
-                />
-              </>
-            )}
-            {legacy && (
-              <>
-                <h3>Character source record</h3>
-                <RecordDetails value={legacy} />
-              </>
-            )}
-            {visual && (
-              <>
-                <h3>Visual identity Bible</h3>
-                <RecordDetails value={visual} />
-              </>
-            )}
-            {!asset && !legacy && !visual && <p>No source record is available.</p>}
-          </div>
-        )}
-        {detail === "history" && (
-          <div className="character-revision-list">
-            {!corrections.length && <p>No character-field corrections recorded yet.</p>}
-            {corrections.map((c) => (
-              <article key={c.id}>
-                <header>
-                  <h3>{fieldLabel(c.field)}</h3>
-                  <small>
-                    {new Date(c.at).toLocaleString()} · revision {c.after.revision}
-                  </small>
-                </header>
-                {c.recordId !== row?.id && <small>Scene participant · {c.recordId}</small>}
-                <p>{c.after.value || "Explicitly missing"}</p>
-                <small>
-                  {statusLabel(c.after.disposition)} · {c.after.source || "Source not recorded"}
-                </small>
-                {c.before && (
-                  <details>
-                    <summary>Previous value</summary>
-                    <p>{c.before.value || "Missing"}</p>
-                    <small>{c.before.source}</small>
-                  </details>
-                )}
-              </article>
-            ))}
-          </div>
-        )}
-        {detail === "coverage" && (
-          <div className="character-coverage-list">
-            <p className="character-modal-intro">
-              All 17 character field groups are available. Recorded text is not proof of
-              completeness or media approval; source-derived values still need review.
-            </p>
-            {fields.map((f) => (
-              <button
-                key={f.field}
-                onClick={() => {
-                  setDetail(null);
-                  if (row) onEdit(row.id, "character", f.field);
-                }}
-              >
-                <span>
-                  <strong>{fieldLabel(f.field)}</strong>
-                  <small>{CHARACTER_FIELD_DETAILS[f.field].hint}</small>
-                </span>
-                <span className={`character-field-status status-${f.disposition}`}>
-                  {statusLabel(f.disposition)}
-                  <Pencil size={12} />
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
-      </CabinetModal>
-      {editing && (
-        <CharacterFieldEditor
-          key={`${editing.recordId}:${editing.field}`}
-          picture={picture}
-          {...editing}
-          onClose={() => setEditing(null)}
-        />
       )}
     </div>
   );
@@ -629,7 +877,7 @@ function CharacterFieldEditor({
     }
   };
   return (
-    <CabinetModal title={fieldLabel(field)} open onOpenChange={(open) => !open && onClose()}>
+    <div className="character-edit-panel">
       <div className="character-edit-form">
         {CHARACTER_FIELD_DETAILS[field] && (
           <p className="character-modal-intro">{CHARACTER_FIELD_DETAILS[field].hint}</p>
@@ -696,6 +944,6 @@ function CharacterFieldEditor({
           </Button>
         </footer>
       </div>
-    </CabinetModal>
+    </div>
   );
 }

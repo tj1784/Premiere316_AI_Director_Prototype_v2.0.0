@@ -1,7 +1,9 @@
-import { CabinetModal } from "./cabinet";
+import "./stage-inline-workspaces.css";
+import "./stage-visual-surfaces.css";
 import { PromptPayloadPreview } from "./prompt-payload-preview";
 import { EditorialClipEditor } from "./editorial-clip-editor";
 import { ImageIterationReview } from "./image-iteration-review";
+import { AssetImagePreview } from "./asset-image-preview";
 import { useWorkspaceDraft } from "./use-workspace-draft";
 import { EmotionPerformancePanel } from "@/components/performance/emotion-performance-panel";
 import { storyDoctorRuns } from "@/lib/studio/story-doctor-runs";
@@ -12,7 +14,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  ImagePlus,
   SlidersHorizontal,
   ArrowUpRight,
 } from "lucide-react";
@@ -88,6 +89,7 @@ import type { PictureIntake } from "@/lib/studio/picture-intake";
 import { ProductionProfileControls } from "./production-profile-controls";
 import { BibleRunWorkspace } from "./bible-run-workspace";
 import { SoundCueEditor } from "./sound-cue-editor";
+import { stableHash } from "@/lib/production/dependency-graph";
 import { ShotContinuityEditor } from "./shot-continuity-editor";
 import { MovieBibleEditor } from "./movie-bible-editor";
 import { CharacterWorkspace } from "./character-workspace";
@@ -122,7 +124,6 @@ import { qwenWriterBlockReason } from "@/lib/studio/qwen-writer-identity.ts";
 import {
   canonicalSpecHash,
   hydratePromptLabState,
-  promptLabRuntimeBlock,
 } from "@/lib/studio/prompt-lab.ts";
 import { videoEngineFromSelection } from "@/lib/studio/generation-config.ts";
 import { videoRuntimeBlock } from "@/lib/studio/video-runtime.ts";
@@ -140,6 +141,7 @@ import {
   planPlusImportedExport,
 } from "@/lib/studio/ffmpeg-export.ts";
 import { buildTimelinePlan, importedCanonicalFilm } from "@/lib/studio/timeline-plan.ts";
+import { loadBundledMediaMap, loadBundledScenePreviews, resolveSiteImageUri, resolveSiteStillPreview, type BundledMediaMap, type BundledScenePreview } from "@/lib/studio/site-media-preview.ts";
 import { resolveShotPacket, shotPacketFreshness } from "@/lib/studio/resolved-shot-packet";
 import {
   nextShotForImport,
@@ -238,23 +240,111 @@ export function StageView() {
   }
 }
 
-function Pane({ title, kicker, children, tabs }: { title: string; kicker: string; children: ReactNode; tabs?: ReactNode }) {
+function Pane({ title, kicker, children, tabs, focusShotId }: { title: string; kicker: string; children: ReactNode; tabs?: ReactNode; focusShotId?: string | null }) {
+  const picture = useActivePicture();
+  const stage = useStage();
+  const media = useStageVisualMedia(picture, stage, focusShotId);
   return (
-    <div className="stage-pane flex h-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden">
-      <header className="shrink-0 px-4 pb-2 pt-3 sm:px-6 sm:pb-3 sm:pt-4">
-        <p className="text-[11px] tracking-[0.2em] text-subtle uppercase">{kicker}</p>
-        <h2
-          className="mt-1 break-words font-display text-[clamp(1.5rem,3vw,1.875rem)] tracking-tight"
-          title={title}
-        >
-          {title}
-        </h2>
-      </header>
+    <div className="stage-pane stage-cinema-pane flex h-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden" data-stage-surface={stage}>
+      {media.length && picture ? <StageVisualRail picture={picture} stage={stage} media={media} title={title} kicker={kicker} /> : (
+        <header className="shrink-0 px-4 pb-2 pt-3 sm:px-6 sm:pb-3 sm:pt-4">
+          <p className="text-[11px] tracking-[0.2em] text-subtle uppercase">{kicker}</p>
+          <h2 className="mt-1 break-words font-display text-[clamp(1.5rem,3vw,1.875rem)] tracking-tight" title={title}>{title}</h2>
+        </header>
+      )}
       {tabs ? <div className="shrink-0 px-4 pb-3 sm:px-6">{tabs}</div> : null}
-      <div className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 sm:px-6">
+      <div className="stage-cinema-work min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 sm:px-6">
         {children}
       </div>
     </div>
+  );
+}
+
+type StageVisualMedia = { id: string; label: string; previewUri: string; mediaUri?: string; kind: string; detail: string; sceneId?: string };
+
+function useStageVisualMedia(picture: Picture | null, stage: string, focusShotId?: string | null): StageVisualMedia[] {
+  const [scenePreviews, setScenePreviews] = useState<BundledScenePreview[]>([]);
+  const [mediaMap, setMediaMap] = useState<BundledMediaMap>({});
+  const selectedShotId = useStudio((state) => state.selectedShotId);
+  useEffect(() => {
+    if (picture?.id !== "pic_prodigal_son_20260909") { setScenePreviews([]); setMediaMap({}); return; }
+    let current = true;
+    void Promise.all([loadBundledScenePreviews(), loadBundledMediaMap()]).then(([frames, mapping]) => {
+      if (current) { setScenePreviews(frames); setMediaMap(mapping); }
+    });
+    return () => { current = false; };
+  }, [picture?.id]);
+  return picture ? stageVisualMedia(picture, stage, scenePreviews, mediaMap, focusShotId ?? selectedShotId) : [];
+}
+
+function stageVisualMedia(picture: Picture, stage: string, scenePreviews: BundledScenePreview[], mediaMap: BundledMediaMap, focusShotId?: string | null): StageVisualMedia[] {
+  const byCharacter = stage === "performance";
+  const byLocation = stage === "intake" || stage === "cinematography";
+  const focusedShot = picture.shots.find((shot) => shot.id === focusShotId) ?? picture.shots[0];
+  const focusedSceneId = focusedShot?.sceneId;
+  const assets = (picture.production?.assets ?? []).filter((asset) => !asset.tombstone);
+  const orderedAssets = [...assets].sort((a, b) =>
+    Number((byCharacter && b.category === "character") || (byLocation && b.category === "location")) -
+    Number((byCharacter && a.category === "character") || (byLocation && a.category === "location")),
+  );
+  const assetMedia = orderedAssets.flatMap((asset): StageVisualMedia[] => {
+    const approved = asset.iterations.find((iteration) => iteration.id === asset.approvedIterationId);
+    const imageUri = (iteration: typeof approved) => resolveSiteImageUri(picture.id, iteration?.previewUri, mediaMap) ?? resolveSiteImageUri(picture.id, iteration?.mediaUri, mediaMap);
+    const approvedUri = imageUri(approved);
+    const visibleDraft = [...asset.iterations].reverse().find((iteration) => iteration.status !== "REJECTED" && imageUri(iteration));
+    const reference = asset.references.find((item) => item.preferred && item.mediaType.startsWith("image")) ?? asset.references.find((item) => item.mediaType.startsWith("image"));
+    const referenceUri = resolveSiteImageUri(picture.id, reference?.previewUri, mediaMap) ?? resolveSiteImageUri(picture.id, reference?.uri, mediaMap);
+    const previewUri = approvedUri ?? imageUri(visibleDraft) ?? referenceUri;
+    const kind = approvedUri ? "Approved image" : approved ? "Source preview · approved image unavailable" : "Visual reference";
+    return previewUri ? [{ id: `asset:${asset.id}`, label: asset.name, previewUri, mediaUri: previewUri, kind, detail: asset.category.replaceAll("_", " ") }] : [];
+  });
+  const shotMedia = picture.shots.flatMap((shot): StageVisualMedia[] => {
+    const preview = resolveSiteStillPreview(picture.id, shot.stillUrl, scenePreviews, mediaMap);
+    return preview ? [{ id: `shot:${shot.id}`, label: `Shot ${String(shot.index).padStart(2, "0")}`, previewUri: preview.uri, mediaUri: preview.uri, kind: preview.kind, detail: `${shot.durationSec}s · ${shot.lens || shot.type}`, sceneId: shot.sceneId }] : [];
+  });
+  const linkedShotIds = new Set(picture.shots.map((shot) => shot.id));
+  const linkedSceneMedia = scenePreviews.flatMap((frame): StageVisualMedia[] => {
+    const shotId = `PS-${frame.scene}-${frame.shot}`;
+    if (!linkedShotIds.has(shotId) || picture.directorSceneRevisions?.[`PS-${frame.scene}`]) return [];
+    return [{ id: `scene:${shotId}:${frame.endpoint}`, label: `${frame.scene} · ${frame.shot}`, previewUri: frame.preview, mediaUri: frame.preview, kind: `${frame.endpoint} frame`, detail: frame.description, sceneId: `PS-${frame.scene}` }];
+  });
+  const thumbnail: StageVisualMedia[] = picture.thumbnailUrl ? [{ id: `film:${picture.id}`, label: picture.title, previewUri: picture.thumbnailUrl, mediaUri: picture.thumbnailUrl, kind: "Film image", detail: picture.format }] : [];
+  const focusedShotMedia = shotMedia.filter((item) => item.id === `shot:${focusedShot?.id}`);
+  const focusedSceneMedia = linkedSceneMedia.filter((item) => item.sceneId === focusedSceneId);
+  const otherShotMedia = shotMedia.filter((item) => item.id !== `shot:${focusedShot?.id}`);
+  const ordered = byCharacter || byLocation
+    ? [...focusedShotMedia, ...focusedSceneMedia, ...assetMedia, ...otherShotMedia, ...thumbnail, ...linkedSceneMedia]
+    : [...focusedShotMedia, ...focusedSceneMedia, ...otherShotMedia, ...assetMedia, ...thumbnail, ...linkedSceneMedia];
+  const seen = new Set<string>();
+  return ordered.filter((item) => {
+    if (seen.has(item.previewUri)) return false;
+    seen.add(item.previewUri);
+    return true;
+  }).slice(0, 8);
+}
+
+function StageVisualRail({ picture, stage, media, title, kicker }: { picture: Picture; stage: string; media: StageVisualMedia[]; title: string; kicker: string }) {
+  const [selectedId, setSelectedId] = useState(media[0]?.id ?? "");
+  useEffect(() => setSelectedId(media[0]?.id ?? ""), [media[0]?.id]);
+  const selected = media.find((item) => item.id === selectedId) ?? media[0];
+  if (!selected) return null;
+  return (
+    <section className="stage-visual-rail" aria-label={`${title} visual context`} data-stage={stage}>
+      <div className="stage-visual-backdrop"><AssetImagePreview key={selected.id} previewUri={selected.previewUri} mediaUri={selected.mediaUri} alt="" className="stage-visual-backdrop-image" /></div>
+      <div className="stage-visual-vignette" aria-hidden="true" />
+      <div className="stage-visual-heading">
+        <p>{kicker}</p>
+        <h2>{title}</h2>
+        <span>{picture.title}</span>
+      </div>
+      <div className="stage-visual-context" aria-live="polite"><span>{selected.kind}</span><strong>{selected.label}</strong><small>{selected.detail}</small></div>
+      {media.length > 1 && <div className="stage-visual-thumbs" aria-label="Browse visual references">
+        {media.map((item) => <button type="button" key={item.id} aria-pressed={selected.id === item.id} title={`${item.kind} · ${item.label}`} onClick={() => setSelectedId(item.id)}>
+          <AssetImagePreview previewUri={item.previewUri} mediaUri={item.mediaUri} alt="" compact className="stage-visual-thumb" />
+          <span>{item.label}</span>
+        </button>)}
+      </div>}
+    </section>
   );
 }
 
@@ -267,6 +357,14 @@ function IntakeStage({ picture }: { picture: Picture }) {
   const [directionBusy, setDirectionBusy] = useState(false);
   const [activity, setActivity] = useState<MoviePlanProgress[]>([]);
   const [activityStartedAt, setActivityStartedAt] = useState<number | null>(null);
+  const [intakePanel, setIntakePanel] = useState<"brief" | "script" | "visual" | "contract" | "settings">("brief");
+  const intakeViews = [
+    ["brief", "Brief"],
+    ["script", "Script run"],
+    ["visual", "Visual references"],
+    ["contract", "Film contract"],
+    ["settings", "Story settings"],
+  ] as const;
   const routing = hydrateProductionRouting(picture.productionRouting, {
     legacyLocalSelection: Boolean(
       picture.screenplay.pinnedWriterServedId || picture.screenplay.selectedModelId,
@@ -380,8 +478,25 @@ function IntakeStage({ picture }: { picture: Picture }) {
     setBuilding(false);
   }
   return (
-    <Pane title="The brief" kicker="01 · Source & intent">
-      <div className="intake-cabinet-grid">
+    <Pane
+      title={intakePanel === "brief" ? "The brief" : intakeViews.find(([id]) => id === intakePanel)?.[1] ?? "The brief"}
+      kicker="01 · Source & intent"
+      tabs={<div className="intake-stage-tabs" role="tablist" aria-label="Source and intent views" onKeyDown={(event) => {
+        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+        event.preventDefault();
+        const tabs = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("[role=tab]"));
+        const current = tabs.indexOf(document.activeElement as HTMLButtonElement);
+        const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (current + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+        tabs[next]?.focus();
+        tabs[next]?.click();
+      }}>
+        {intakeViews.map(([id, label]) => (
+          <button key={id} id={`intake-tab-${id}`} aria-controls={`intake-panel-${id}`} tabIndex={intakePanel === id ? 0 : -1} type="button" role="tab" aria-selected={intakePanel === id} onClick={() => setIntakePanel(id)}>{label}</button>
+        ))}
+      </div>}
+    >
+      {intakePanel === "brief" ? (
+      <div id="intake-panel-brief" className="intake-cabinet-grid" role="tabpanel" aria-labelledby="intake-tab-brief">
         <div>
           <Label htmlFor="movie-idea">What are we making?</Label>
           <Textarea
@@ -396,32 +511,7 @@ function IntakeStage({ picture }: { picture: Picture }) {
             links, or request web research and name the source and period.
           </p>
         </div>
-        <CabinetModal
-          title="Script run"
-          trigger={
-            <Button className="intake-run-action">
-              Create movie script <ArrowUpRight size={16} />
-            </Button>
-          }
-        >
-          <BibleRunWorkspace />
-        </CabinetModal>
-        <CabinetModal
-          title="Visual direction"
-          trigger={
-            <Button className="intake-reference-action" variant="ghost">
-              <ImagePlus size={17} /> Visual references
-            </Button>
-          }
-        >
-          <VisualDirectionField
-            value={picture.intake.visualDirection}
-            onChange={(value) => patchIntake("visualDirection", value)}
-            disabled={building}
-            onBusy={setDirectionBusy}
-            writerId={picture.screenplay.pinnedWriterServedId ?? undefined}
-          />
-        </CabinetModal>
+        <Button className="intake-run-action" onClick={() => setIntakePanel("script")}>Create movie script <ArrowUpRight size={16} /></Button>
 
         {routing.profileId === "local-models" && routing.executionMode === "guided" && (
           <Button
@@ -499,15 +589,52 @@ function IntakeStage({ picture }: { picture: Picture }) {
             ))}
           </ul>
         ) : null}
-        <CabinetModal
-          title="Source details"
-          trigger={
-            <Button className="intake-details-action" variant="ghost">
-              <SlidersHorizontal size={17} /> Story settings
-            </Button>
-          }
-        >
-          <div className="mt-4 grid gap-5">
+      </div>
+      ) : null}
+      {intakePanel === "script" ? (
+        <div id="intake-panel-script" className="intake-stage-content" role="tabpanel" aria-labelledby="intake-tab-script"><BibleRunWorkspace /></div>
+      ) : null}
+      {intakePanel === "visual" ? (
+        <div id="intake-panel-visual" className="intake-stage-content" role="tabpanel" aria-labelledby="intake-tab-visual">
+          <VisualDirectionField
+            value={picture.intake.visualDirection}
+            onChange={(value) => patchIntake("visualDirection", value)}
+            disabled={building}
+            onBusy={setDirectionBusy}
+            writerId={picture.screenplay.pinnedWriterServedId ?? undefined}
+          />
+        </div>
+      ) : null}
+      {intakePanel === "contract" ? (
+        <section id="intake-panel-contract" className="intake-stage-content intake-story-panel" role="tabpanel" aria-labelledby="intake-tab-contract">
+          <p className="text-xs leading-relaxed text-muted">These optional choices become part of the picture intake and appear in the Movie Script Bible. Leave undecided directions blank.</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="intake-moral-question">Moral question</Label>
+              <Textarea id="intake-moral-question" className="mt-1.5" rows={3} value={picture.intake.moralQuestion ?? ""} onChange={(event) => patchIntake("moralQuestion", event.target.value)} />
+            </div>
+            <Field label="Language" value={picture.intake.language ?? ""} onChange={(value) => patchIntake("language", value)} />
+            <Field label="Requested delivery format" value={picture.intake.deliveryFormat ?? ""} onChange={(value) => patchIntake("deliveryFormat", value)} />
+            <Field label="Requested video codec" value={picture.intake.deliveryCodec ?? ""} onChange={(value) => patchIntake("deliveryCodec", value)} />
+            <div>
+              <Label htmlFor="intake-continuity-policy">Continuity policy</Label>
+              <Textarea id="intake-continuity-policy" className="mt-1.5" rows={3} value={picture.intake.continuityPolicy ?? ""} onChange={(event) => patchIntake("continuityPolicy", event.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="intake-voice-policy">Voice policy</Label>
+              <Textarea id="intake-voice-policy" className="mt-1.5" rows={3} value={picture.intake.voicePolicy ?? ""} onChange={(event) => patchIntake("voicePolicy", event.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="intake-score-strategy">Score strategy</Label>
+              <Textarea id="intake-score-strategy" className="mt-1.5" rows={3} value={picture.intake.scoreStrategy ?? ""} onChange={(event) => patchIntake("scoreStrategy", event.target.value)} />
+            </div>
+          </div>
+          <p className="mt-4 text-xs text-muted">Current final assembly produces MP4 with H.264 video. A different requested format or codec requires separate export support.</p>
+        </section>
+      ) : null}
+      {intakePanel === "settings" ? (
+        <section id="intake-panel-settings" className="intake-stage-content intake-story-panel" role="tabpanel" aria-labelledby="intake-tab-settings">
+          <div className="grid gap-5">
             <label className="flex min-h-11 items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -701,8 +828,8 @@ function IntakeStage({ picture }: { picture: Picture }) {
               />
             </div>
           </div>
-        </CabinetModal>
-      </div>
+        </section>
+      ) : null}
     </Pane>
   );
 }
@@ -1296,6 +1423,7 @@ function CinematographyStage({ picture }: { picture: Picture }) {
   const visualDevelopment =
     picture.visualDevelopment ?? hydrateVisualDevelopmentState(null, picture);
   const cinematography = picture.cinematography ?? hydrateCinematographyState(null, picture);
+  const visualMedia = useStageVisualMedia(picture, "cinematography");
   useEffect(() => {
     if (!picture.visualDevelopment || !picture.cinematography)
       patchActive({ visualDevelopment, cinematography });
@@ -1307,7 +1435,8 @@ function CinematographyStage({ picture }: { picture: Picture }) {
     cinematography,
   ]);
   return (
-    <div className="workbench-frame">
+    <div className="workbench-frame stage-cinema-workbench">
+      {visualMedia.length > 0 && <StageVisualRail picture={picture} stage="cinematography" media={visualMedia} title="Camera & geography" kicker="FILM / CINEMATOGRAPHY" />}
       <div className="workbench-switcher">
         <Button
           variant={surface === "continuity" ? "primary" : "secondary"}
@@ -1348,6 +1477,7 @@ function PerformanceStage({ picture }: { picture: Picture }) {
   const patchActive = useStudio((state) => state.patchActive);
   const setStage = useStudio((state) => state.setStage);
   const workspace = picture.performance ?? migratePicturePerformance(picture);
+  const visualMedia = useStageVisualMedia(picture, "performance");
 
   useEffect(() => {
     if (!picture.performance && workspace) patchActive({ performance: workspace });
@@ -1386,7 +1516,8 @@ function PerformanceStage({ picture }: { picture: Picture }) {
     }));
 
   return (
-    <div className="workbench-frame">
+    <div className="workbench-frame stage-cinema-workbench">
+      {visualMedia.length > 0 && <StageVisualRail picture={picture} stage="performance" media={visualMedia} title="Performance direction" kicker="FILM / ACTING" />}
       <div className="workbench-switcher">
         <Button variant={surface === "direction" ? "primary" : "secondary"} onClick={() => setSurface("direction")}>Performance direction</Button>
         <Button variant={surface === "emotion" ? "primary" : "secondary"} onClick={() => setSurface("emotion")}>Emotion & voice</Button>
@@ -1413,6 +1544,7 @@ function ShotsStage({ picture }: { picture: Picture }) {
   const setStage = useStudio((state) => state.setStage);
   const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
   const workspace = picture.performance ?? migratePicturePerformance(picture);
+  const visualMedia = useStageVisualMedia(picture, "shots");
 
   useEffect(() => {
     if (!picture.performance && workspace) patchActive({ performance: workspace });
@@ -1435,7 +1567,8 @@ function ShotsStage({ picture }: { picture: Picture }) {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="stage-cinema-workbench flex h-full min-h-0 flex-col">
+      {visualMedia.length > 0 && <StageVisualRail picture={picture} stage="shots" media={visualMedia} title="Shot preparation" kicker="FILM / SHOTS" />}
       <div className="shrink-0 px-4 pt-3">
         <Button
           size="sm"
@@ -1471,8 +1604,10 @@ function PromptStage({ picture }: { picture: Picture }) {
   const [selectedPromptShot, setSelectedPromptShot] = useWorkspaceDraft("prompt-selected-shot", "");
   const activePromptShot = picture.shots.find((shot) => shot.id === selectedPromptShot) ?? picture.shots[0];
   const lab = hydratePromptLabState(picture.promptLab);
+  const routing = hydrateProductionRouting(picture.productionRouting, { legacyLocalSelection: Boolean(picture.screenplay.pinnedWriterServedId || picture.screenplay.selectedModelId) });
+  const promptBinding = routing.bindings.find((binding) => binding.role === "prompt-cue");
   return (
-    <Pane title="Prompts & render direction" kicker="FILM / SCENE / SHOT" tabs={<div className="workspace-tabs" aria-label="Prompt workspace">
+    <Pane title="Prompts & render direction" kicker="FILM / SCENE / SHOT" focusShotId={activePromptShot?.id} tabs={<div className="workspace-tabs" aria-label="Prompt workspace">
         {[
           ["global", "Global & inherited look"],
           ["scene", "Scene context"],
@@ -1498,39 +1633,18 @@ function PromptStage({ picture }: { picture: Picture }) {
       <div hidden={surface !== "execution"}>
         <PromptPayloadPreview picture={picture} />
       </div>
-      <div hidden={surface !== "compiler"}>
+      <div hidden={surface !== "compiler"} className="prompt-compiler-layout">
           <h3 className="mb-3 text-sm font-medium">Batch compiler & saved shot prompts</h3>
           <p className="mb-4 max-w-xl text-sm text-muted">
             Still dialect {engineById(picture.selectedEngine.image)?.name}. Motion dialect{" "}
             {engineById(picture.selectedEngine.video)?.name}. Editorial duration stays separate from
             executable clip limits.
           </p>
-          <div className="mb-4 max-w-xl rounded-md bg-elevated p-3 shadow-[var(--shadow-border)]">
-            <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Prompt compiler</p>
-            <select
-              aria-label="Prompt compiler"
-              className="mt-3 h-9 w-full rounded-sm bg-inset px-2 text-xs text-fg shadow-[var(--shadow-border)]"
-              value="llama"
-              onChange={() => patchActive({ promptLab: lab })}
-            >
-              <option value="llama">
-                Deterministic selected-engine serializer · no model call
-              </option>
-            </select>
-            <select
-              aria-label="Alternate compiler"
-              className="mt-2 h-9 w-full rounded-sm bg-inset px-2 text-xs text-fg shadow-[var(--shadow-border)]"
-              value={lab.alternate}
-              onChange={(event) =>
-                patchActive({
-                  promptLab: { ...lab, alternate: event.target.value === "qwen" ? "qwen" : "none" },
-                })
-              }
-            >
-              <option value="none">Alternate · None</option>
-              <option value="qwen">Alternate · Qwen (explicit A/B only)</option>
-            </select>
-            <p className="mt-2 text-xs leading-relaxed text-muted">{promptLabRuntimeBlock()}</p>
+          <div className="stage-compiler-panel mb-4 max-w-xl">
+            <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Production prompt role</p>
+            <p className="mt-1 text-sm">{promptBinding?.label ?? "No prompt model configured"} · {routing.profileId === "astra-ultra" ? "Astra Ultra profile" : "Local Models profile"}</p>
+            <p className="mt-2 text-xs leading-relaxed text-muted">Draft compilation below uses the selected engine’s deterministic serializer. It does not call {promptBinding?.label ?? "a model"}. {promptBinding?.statusReason}</p>
+            {lab.alternate !== "none" && <p className="mt-2 text-xs text-muted">Saved legacy A/B preference: {lab.alternate}. No comparison ran.</p>}
             <Button
               className="mt-3"
               size="sm"
@@ -1578,15 +1692,6 @@ function PromptStage({ picture }: { picture: Picture }) {
               }}
             >
               Compile drafts
-            </Button>
-            <Button
-              className="mt-3 ml-2"
-              size="sm"
-              variant="ghost"
-              disabled
-              title={promptLabRuntimeBlock()}
-            >
-              A/B benchmark
             </Button>
           </div>
           <div className="grid gap-3">
@@ -1679,18 +1784,24 @@ function GenerateStage({ picture }: { picture: Picture }) {
   const gateReadiness = generateGateReadiness(picture);
   const gateWorkspace = hydrateGenerateGates(picture.generateGates, picture);
   return (
-    <Pane title="Generate" kicker="10 · Three-gate cohesion">
+    <Pane title="Generate" kicker="10 · Three-gate cohesion" focusShotId={generateFilterId}>
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
         <div className="workspace-tabs" role="tablist" aria-label="Generate gates">
           {gateReadiness.map((item) => <button key={item.gate} role="tab" aria-selected={generateGate === item.gate} title={item.reason} onClick={() => setGenerateFocus(item.gate)}>{item.gate === "assets" ? "Assets" : item.gate === "keyframes" ? "First / last frames" : "Video clips"}<span className="ml-2 text-xs opacity-70">{item.approved}/{item.required}</span></button>)}
         </div>
-        <Button size="sm" variant="ghost" onClick={() => setSettingsOpen(true)}>Generation settings</Button>
+        <Button size="sm" variant="ghost" aria-expanded={settingsOpen} aria-controls="generate-settings-panel" onClick={() => setSettingsOpen((open) => !open)}><SlidersHorizontal size={15} /> Generation settings</Button>
       </div>
       <p className="mb-4 text-sm text-muted">{gateReadiness.find((item) => item.gate === generateGate)?.reason}</p>
-      <CabinetModal title="Generation settings & authority" open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <VideoGenerationOptions picture={picture} />
-        <div className="mt-4 rounded-lg border border-border p-3 text-sm text-muted">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; generation fails closed."}</div>
-      </CabinetModal>
+      {settingsOpen ? (
+        <section id="generate-settings-panel" className="generate-settings-panel" aria-label="Generation settings and authority">
+          <header className="generate-settings-heading">
+            <h3>Generation settings & authority</h3>
+            <Button size="sm" variant="ghost" onClick={() => setSettingsOpen(false)}>Close settings</Button>
+          </header>
+          <div className="generate-settings-content"><VideoGenerationOptions picture={picture} /></div>
+          <div className="generate-settings-authority">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; generation fails closed."}</div>
+        </section>
+      ) : null}
       {generateGate === "assets" ? (
         <div className="mb-6">
           <AudioGenerationOptions picture={picture} />
@@ -2273,6 +2384,7 @@ function ReviewStage({ picture }: { picture: Picture }) {
   const [surface, setSurface] = useWorkspaceDraft("review-media-surface", "images");
   const [reasons, setReasons] = useWorkspaceDraft<Record<string, string>>("review-reasons", {});
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
+  const [playableVideo, setPlayableVideo] = useState<Record<string, boolean>>({});
   const replaceActive = useStudio((state) => state.replaceActive);
   const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
   return (
@@ -2309,9 +2421,12 @@ function ReviewStage({ picture }: { picture: Picture }) {
                 <p className="mt-3 text-sm leading-relaxed text-muted">
                   {take.failClosedReason ?? take.reviewReason ?? "Queued video take."}
                 </p>
-                <p className="mt-2 text-xs text-subtle">
-                  {take.mediaUri ?? "No durable video media. Stills are not video."}
-                </p>
+                <VideoReviewPlayer
+                  key={`${take.id}:${take.mediaSha256 ?? take.mediaUri}`}
+                  uri={take.mediaUri}
+                  label={`${take.shotId} imported video take`}
+                  onPlayableChange={(playable) => setPlayableVideo((previous) => ({ ...previous, [`${take.id}:${take.mediaSha256 ?? take.mediaUri}`]: playable }))}
+                />
                 <p className="mt-2 text-sm text-muted">
                   {picture.shots.find((s) => s.id === take.shotId)
                     ? shotPacketFreshness(
@@ -2374,6 +2489,7 @@ function ReviewStage({ picture }: { picture: Picture }) {
                     size="sm"
                     disabled={
                       !confirmed[take.id] ||
+                      !playableVideo[`${take.id}:${take.mediaSha256 ?? take.mediaUri}`] ||
                       !reasons[take.id]?.trim() ||
                       !picture.shots.some((s) => s.id === take.shotId) ||
                       take.origin !== "imported" ||
@@ -2545,6 +2661,25 @@ function ReviewStage({ picture }: { picture: Picture }) {
   );
 }
 
+function VideoReviewPlayer({ uri, label, onPlayableChange }: { uri: string | null; label: string; onPlayableChange: (playable: boolean) => void }) {
+  const [failed, setFailed] = useState(false);
+  if (!uri) return <p className="review-media-unavailable">No durable video media. Stills are not video; import the rendered take before review.</p>;
+  return (
+    <div className="review-video-player">
+      <video
+        src={uri}
+        controls
+        playsInline
+        preload="metadata"
+        aria-label={`Review ${label}`}
+        onCanPlay={() => { setFailed(false); onPlayableChange(true); }}
+        onError={() => { setFailed(true); onPlayableChange(false); }}
+      />
+      {failed && <p role="alert">This video file cannot be played here. Approval stays blocked; import or repair the exact take.</p>}
+    </div>
+  );
+}
+
 function EmptyCard({ title, body }: { title: string; body: string }) {
   return (
     <div className="rounded-lg bg-elevated p-5 text-sm text-muted shadow-[var(--shadow-border)]">
@@ -2558,18 +2693,22 @@ function StitchStage({ picture }: { picture: Picture }) {
   const [surface, setSurface] = useWorkspaceDraft("timeline-view", "preview");
   const selectedShotId = useStudio((s) => s.selectedShotId);
   const shot = picture.shots.find((s) => s.id === selectedShotId) ?? picture.shots[0];
+  const visualMedia = useStageVisualMedia(picture, "timeline", shot?.id);
+  const stillPreview = shot?.stillUrl?.startsWith("/pictures/prodigal-son/")
+    ? visualMedia.find((item) => item.id === `shot:${shot?.id}`)?.previewUri
+    : shot?.stillUrl;
   const plan = buildTimelinePlan(picture);
   return (
-    <Pane title="Timeline & soundtrack" kicker="MOVIE ASSEMBLY">
+    <Pane title="Timeline & soundtrack" kicker="MOVIE ASSEMBLY" focusShotId={shot?.id}>
       <div className="workspace-tabs mb-4" aria-label="Movie assembly views">
         {[["preview", "Preview"], ["order", "Clip order"], ["readiness", "Coverage"]].map(([id,label]) => <button key={id} aria-pressed={surface === id} onClick={() => setSurface(id)}>{label}</button>)}
       </div>
       <div hidden={surface !== "preview"} className="overflow-hidden rounded-lg bg-inset shadow-[var(--shadow-border)]">
         <div className="grid h-[clamp(12rem,48dvh,32rem)] place-items-center">
           {shot?.videoUrl ? (
-            <video src={shot.videoUrl} className="size-full object-contain" controls playsInline />
+            <TimelineVideoPreview key={shot.videoUrl} uri={shot.videoUrl} label={shot.description} />
           ) : shot?.stillUrl ? (
-            <img src={shot.stillUrl} alt="" className="size-full object-contain" />
+            stillPreview ? <AssetImagePreview previewUri={stillPreview} mediaUri={stillPreview} alt={`Still for shot ${shot.index}`} className="size-full object-contain" /> : <p className="text-sm text-muted">The exact frame is not packaged for Site preview.</p>
           ) : (
             <div className="grid size-full place-items-center text-sm text-subtle">
               Select a shot
@@ -2610,10 +2749,20 @@ function StitchStage({ picture }: { picture: Picture }) {
   );
 }
 
+function TimelineVideoPreview({ uri, label }: { uri: string; label: string }) {
+  const [failed, setFailed] = useState(false);
+  return failed ? <p className="text-sm text-muted">This clip cannot be played here. Its review status is unchanged.</p> : <video src={uri} aria-label={`Preview ${label}`} className="size-full object-contain" controls playsInline onError={() => setFailed(true)} />;
+}
+
 function ScoreStage({ picture }: { picture: Picture }) {
   const replaceActive = useStudio((state) => state.replaceActive);
   const setStage = useStudio((state) => state.setStage);
   const [surface, setSurface] = useWorkspaceDraft("sound-workspace-view", "cues");
+  const [importSelection, setImportSelection] = useWorkspaceDraft("sound-import-selection", {
+    pictureId: "",
+    cueId: "",
+  });
+  const importCueId = importSelection.pictureId === picture.id ? importSelection.cueId : "";
   const audio = hydratePictureAudio(picture);
   return (
     <Pane title="Sound, voice & music" kicker="AUDIO DEVELOPMENT" tabs={<div className="workspace-tabs" aria-label="Sound workspace">
@@ -2676,34 +2825,64 @@ function ScoreStage({ picture }: { picture: Picture }) {
           >
             Queue missing score
           </Button>
+          <label className="grid gap-1 text-sm">
+            Import for authored cue
+            <select
+              className="min-h-11 rounded border border-border bg-surface px-3"
+              value={audio.cues.some((cue) => cue.id === importCueId && cue.kind !== "silence") ? importCueId : ""}
+              onChange={(event) => setImportSelection({ pictureId: picture.id, cueId: event.target.value })}
+            >
+              <option value="">Select cue</option>
+              {audio.cues.filter((cue) => cue.kind !== "silence").map((cue) => (
+                <option key={cue.id} value={cue.id}>{cue.name} · {cue.kind}</option>
+              ))}
+            </select>
+          </label>
           <Button
             size="sm"
+            disabled={!audio.cues.some((cue) => cue.id === importCueId && cue.kind !== "silence")}
             onClick={() => {
+              const selectedCue = audio.cues.find((cue) => cue.id === importCueId && cue.kind !== "silence");
+              if (!selectedCue) {
+                toast.error("Select an authored cue before importing audio.");
+                return;
+              }
               void (async () => {
-                const imported = await desktopImportAudio();
-                if (!imported.ok) {
-                  if (imported.canceled) return;
-                  toast.error(imported.error);
-                  return;
+                try {
+                  const imported = await desktopImportAudio();
+                  if (!imported.ok) {
+                    if (!imported.canceled) toast.error(imported.error);
+                    return;
+                  }
+                  const state = useStudio.getState();
+                  if (state.activeId !== picture.id)
+                    throw new Error("The active picture changed. Choose the cue again before importing.");
+                  const latest = state.pictures.find((item) => item.id === picture.id);
+                  if (!latest) throw new Error("The picture is no longer available.");
+                  const latestAudio = hydratePictureAudio(latest);
+                  const currentCue = latestAudio.cues.find((item) => item.id === selectedCue.id);
+                  if (!currentCue || stableHash(currentCue) !== stableHash(selectedCue))
+                    throw new Error("The cue changed during import. Choose its current version and retry.");
+                  const workspace = recordImportedAudioTake(latestAudio, {
+                    pictureId: picture.id,
+                    kind: currentCue.kind,
+                    filename: imported.filename,
+                    mediaUri: imported.mediaUri,
+                    mediaSha256: imported.mediaSha256,
+                    byteLength: imported.byteLength,
+                    durationSec: imported.probe.durationSec ?? 0,
+                    sampleRate: imported.probe.sampleRate,
+                    channels: imported.probe.channels,
+                    format: imported.probe.codec,
+                    cueId: currentCue.id,
+                    shotId: currentCue.shotId,
+                  });
+                  state.replaceActive({ ...latest, audio: workspace, updatedAt: Date.now() });
+                  toast.success(`Imported ${imported.filename} for ${currentCue.name} · ${currentCue.kind}. Awaiting listening review.`);
+                  setStage("review");
+                } catch (error) {
+                  toast.error(String(error));
                 }
-                const workspace = recordImportedAudioTake(hydratePictureAudio(picture), {
-                  pictureId: picture.id,
-                  kind: "score",
-                  filename: imported.filename,
-                  mediaUri: imported.mediaUri,
-                  mediaSha256: imported.mediaSha256,
-                  byteLength: imported.byteLength,
-                  durationSec: imported.probe.durationSec ?? 0,
-                  sampleRate: imported.probe.sampleRate,
-                  channels: imported.probe.channels,
-                  format: imported.probe.codec,
-                  cueId: hydratePictureAudio(picture).cues[0]?.id ?? picture.cues[0]?.id ?? null,
-                });
-                replaceActive({ ...picture, audio: workspace, updatedAt: Date.now() });
-                toast.success(
-                  `Imported ${imported.filename} as audio. Provenance is imported, not generated.`,
-                );
-                setStage("review");
               })();
             }}
           >
@@ -2985,7 +3164,7 @@ function ExportStage({ picture }: { picture: Picture }) {
           </p>
         </section>
       </div>
-      <section hidden={surface !== "package"} aria-label="Script and production package">
+      <section hidden={surface !== "package"} className="delivery-package-panel" aria-label="Script and production package">
         <h3 className="font-display text-2xl">Your movie script package</h3>
         <p className="mb-6 mt-2 text-sm text-muted">
           Save the complete writing and production handoff, or choose individual files.

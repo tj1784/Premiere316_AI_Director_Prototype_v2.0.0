@@ -57,6 +57,14 @@ export type PictureIntake = {
   genre: string;
   tone: string;
   audienceRating: string;
+  /** User-authored film contract. Absent on older pictures until explicitly set. */
+  moralQuestion?: string;
+  language?: string;
+  deliveryFormat?: string;
+  deliveryCodec?: string;
+  continuityPolicy?: string;
+  voicePolicy?: string;
+  scoreStrategy?: string;
   aspectRatio: string;
   frameRate: number;
   productionStyle: string;

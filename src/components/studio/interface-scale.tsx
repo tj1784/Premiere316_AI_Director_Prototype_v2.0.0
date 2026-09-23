@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Minus, Plus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { desktopZoomGet, desktopZoomSet, desktopZoomSubscribe, isDesktopApp } from "@/lib/desktop/client";
@@ -9,6 +9,7 @@ export function InterfaceScale() {
   const [desktop, setDesktop] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [open, setOpen] = useState(false);
+  const controlsId = useId();
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,11 +35,11 @@ export function InterfaceScale() {
 
   return (
     <div className="relative shrink-0" ref={root}>
-      <Button size="sm" variant="ghost" className="px-2 tabular-nums" aria-expanded={open} aria-haspopup="dialog" title="Interface scale (Ctrl + / - / 0)" onClick={() => setOpen((value) => !value)}>
+      <Button size="sm" variant="ghost" className="px-2 tabular-nums" aria-expanded={open} aria-controls={controlsId} title="Interface scale (Ctrl + / - / 0)" onClick={() => setOpen((value) => !value)}>
         {Math.round(zoom * 100)}%
       </Button>
       {open ? (
-        <div role="dialog" aria-label="Interface scale" className="absolute right-0 top-full z-50 mt-2 w-52 rounded-lg bg-elevated p-3 shadow-[0_12px_32px_rgba(0,0,0,0.45),var(--shadow-border)]">
+        <div id={controlsId} role="group" aria-label="Interface scale controls" className="absolute right-0 top-full z-50 mt-2 w-52 rounded-lg bg-elevated p-3 shadow-[0_12px_32px_rgba(0,0,0,0.45),var(--shadow-border)]">
           <p className="text-[11px] tracking-wide text-subtle uppercase">Interface scale</p>
           <div className="mt-2 flex items-center justify-between gap-2">
             <Button size="icon-sm" variant="secondary" aria-label="Zoom out" disabled={index === 0} onClick={() => update(STEPS[Math.max(0, index - 1)])}><Minus /></Button>

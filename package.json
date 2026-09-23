@@ -1,7 +1,7 @@
 {
   "name": "app-builder-workspace",
   "productName": "Premiere316",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Premiere316 standalone picture factory",
   "author": "Premiere316",
   "main": "desktop/main.mjs",

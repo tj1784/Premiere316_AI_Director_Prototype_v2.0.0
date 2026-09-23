@@ -225,6 +225,7 @@ export function queueMissingScore(picture: Picture, now = Date.now()): AudioWork
   const engineId = musicEngineFromSelection(picture.selectedEngine.music);
   const reason = musicRuntimeBlock(engineId);
   for (const cue of workspace.cues) {
+    if (cue.kind !== "score") continue;
     if (
       workspace.takes.some(
         (take) =>

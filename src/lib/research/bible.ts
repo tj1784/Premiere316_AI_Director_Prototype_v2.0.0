@@ -15,6 +15,19 @@ export type ResearchSource = {
   createdAt: number;
 };
 
+/** Keep the exact supplied text with its source record; shorten only its visible list preview. */
+export function researchSourceFromFile(fileName: string, text: string, id: string, createdAt: number): ResearchSource {
+  return {
+    id,
+    title: fileName,
+    locator: fileName,
+    quote: text,
+    confidence: "C",
+    importedFrom: fileName,
+    createdAt,
+  };
+}
+
 export type ResearchDispute = {
   id: string;
   sourceIds: string[];
@@ -225,22 +238,14 @@ export function seedResearchBibleFromIntake(intake: PictureIntake, now = Date.no
   const bible = makeEmptyResearchBible(now);
   const sources: ResearchSource[] = [];
   for (const imported of intake.importedSources) {
-    sources.push({
-      id: `src:import:${imported.fileName}:${imported.importedAt}`,
-      title: imported.fileName,
-      locator: imported.fileName,
-      quote: imported.text.slice(0, 400),
-      confidence: "C",
-      importedFrom: imported.fileName,
-      createdAt: imported.importedAt,
-    });
+    sources.push(researchSourceFromFile(imported.fileName, imported.text, `src:import:${imported.fileName}:${imported.importedAt}`, imported.importedAt));
   }
   if (intake.sourcePassages.trim()) {
     sources.push({
       id: `src:passages:${now}`,
       title: "Source passages",
       locator: intake.sourcePassages.split(/\n/)[0]?.slice(0, 120) ?? "",
-      quote: intake.sourcePassages.slice(0, 400),
+      quote: intake.sourcePassages,
       confidence: intake.sourceType === "biblical-historical" ? "A" : "C",
       importedFrom: null,
       createdAt: now,
@@ -252,7 +257,7 @@ export function seedResearchBibleFromIntake(intake: PictureIntake, now = Date.no
       id: `src:intake:${now}`,
       title: "Picture intake",
       locator: intake.sourceType,
-      quote: text.slice(0, 400),
+      quote: text,
       confidence: "C",
       importedFrom: null,
       createdAt: now,

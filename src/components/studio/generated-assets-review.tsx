@@ -1,4 +1,3 @@
-import { CabinetModal } from "./cabinet";
 import { AssetLibraryBrowser } from "./asset-library-browser";
 import {
   GLOBAL_PRODUCTION_INSTRUCTIONS,
@@ -183,6 +182,7 @@ export function AssetRunActivity({ pictureId }: { pictureId: string }) {
 }
 
 export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const globalInstructions = useSyncExternalStore(
     subscribeGlobalProductionInstructions,
     getGlobalProductionInstructions,
@@ -499,7 +499,8 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
   return (
     <section aria-label="Generated asset review" className="asset-review-surface">
       <AssetRunSummary pictureId={picture.id} />
-      <CabinetModal title="Package & generation settings" trigger={<Button variant="ghost" size="sm" className="asset-review-settings">Package & generation settings · {currentImages}/{assets.length} current</Button>}>
+      <Button variant="ghost" size="sm" className="asset-review-settings" aria-expanded={settingsOpen} onClick={() => setSettingsOpen((open) => !open)}>{settingsOpen ? "Return to asset carousel" : `Package & generation settings · ${currentImages}/${assets.length} current`}</Button>
+      {settingsOpen && <section className="asset-generation-settings" aria-label="Package and generation settings">
       <ImportedPackageResources importedPackage={picture.importedPackage} />
       <details className="rounded-md bg-elevated p-3 text-sm">
         <summary>Global generation instructions · all pictures</summary>
@@ -637,14 +638,14 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
           <AssetRunActivity pictureId={picture.id} />
         )}
       </details>
-      </CabinetModal>
-      <AssetLibraryBrowser
+      </section>}
+      {!settingsOpen && <AssetLibraryBrowser
         picture={picture}
         reviews={assetReviews}
         busy={busy}
         onGenerate={(id) => void generate(id)}
         onRewrite={(id) => void regenerateCharacterSheet(id)}
-      />
+      />}
     </section>
   );
 }

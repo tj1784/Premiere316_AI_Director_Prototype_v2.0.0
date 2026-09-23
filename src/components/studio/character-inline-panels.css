@@ -1,0 +1,766 @@
+/* Workbench views replace overlays and use the full character canvas. */
+.character-workspace[data-focus-mode] .character-workspace-grid,
+.character-workspace[data-continuity-focus="true"] .character-workspace-grid,
+.character-workspace .character-workspace-grid:has(.character-media-inline-detail) {
+  display: block;
+}
+.character-workspace[data-focus-mode] .character-reference-column,
+.character-workspace[data-focus-mode] .character-state-column,
+.character-workspace[data-continuity-focus="true"] .character-reference-column,
+.character-workspace[data-continuity-focus="true"] .character-dossier-column,
+.character-workspace
+  .character-workspace-grid:has(.character-media-inline-detail)
+  > .character-dossier-column,
+.character-workspace
+  .character-workspace-grid:has(.character-media-inline-detail)
+  > .character-state-column {
+  display: none;
+}
+.character-workspace[data-focus-mode] .character-dossier-column,
+.character-workspace[data-continuity-focus="true"] .character-state-column,
+.character-workspace
+  .character-workspace-grid:has(.character-media-inline-detail)
+  > .character-reference-column {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.character-workspace[data-continuity-focus="true"]
+  .character-state-column
+  > .character-scene-panel {
+  width: 100%;
+}
+.character-workspace:has(.character-media-inline-detail) .character-compact-tabs,
+.character-workspace[data-focus-mode] .character-compact-tabs,
+.character-workspace[data-continuity-focus="true"] .character-compact-tabs {
+  display: none;
+}
+.character-focus-pane,
+.character-media-inline-detail,
+.character-scene-continuity-focus {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+.character-focus-heading,
+.character-media-detail-heading,
+.character-scene-continuity-heading {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid #d9e9ff1a;
+  padding: 17px 24px;
+  background: linear-gradient(100deg, #d8e9ff0a, #101d2c22 60%);
+}
+.character-focus-heading h2,
+.character-media-detail-heading h3,
+.character-scene-continuity-heading h2 {
+  margin: 0;
+  color: #f1f4f8;
+  font-size: clamp(19px, 2vw, 27px);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+.character-focus-heading > button,
+.character-media-detail-heading > button,
+.character-scene-continuity-heading > button {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: #b7c9da;
+  border: 1px solid #dfedff20;
+  border-radius: 10px;
+  background: #d1e9ff0c;
+  cursor: pointer;
+}
+.character-focus-heading > button:hover,
+.character-media-detail-heading > button:hover,
+.character-scene-continuity-heading > button:hover {
+  color: #f1f4f8;
+  border-color: #dfedff54;
+  background: #d1e9ff1e;
+}
+.character-focus-content,
+.character-media-detail-content,
+.character-scene-continuity-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+  padding: 20px 24px 32px;
+}
+.character-focus-content::-webkit-scrollbar,
+.character-media-detail-content::-webkit-scrollbar,
+.character-scene-continuity-body::-webkit-scrollbar {
+  display: none;
+}
+.character-media-inline-detail {
+  width: 100%;
+}
+.character-media-detail-content .character-media-image-expanded {
+  width: 100%;
+  height: min(62vh, 560px);
+  object-fit: contain;
+  background: #03091366;
+  border-radius: 15px;
+}
+.character-media-detail-content .character-media-full-preview,
+.character-media-detail-content .character-media-import {
+  max-width: 1160px;
+  margin: 0 auto;
+}
+.character-media-detail-content .character-media-audio {
+  width: 100%;
+}
+.character-media-detail-content [aria-label$="voice samples"] {
+  border-top: 0;
+  padding-top: 0;
+}
+.character-scene-continuity-body > section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.character-edit-form {
+  max-width: 1020px;
+}
+.character-focus-pane .character-revision-list article,
+.character-focus-pane .character-coverage-list > button,
+.character-focus-pane .character-cast-grid > button {
+  border: 0;
+  border-bottom: 1px solid #d9e9ff18;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.character-focus-pane .character-coverage-list > button:hover,
+.character-focus-pane .character-cast-grid > button:hover,
+.character-focus-pane .character-cast-grid > button[aria-current="true"] {
+  border-color: #dbc59755;
+  background: #dbc5970b;
+}
+/* Header actions can switch focus while another inline panel retains its draft. */
+.character-workspace[data-focus-mode] .character-workspace-grid > .character-reference-column,
+.character-workspace[data-focus-mode] .character-workspace-grid > .character-state-column,
+.character-workspace[data-continuity-focus="true"]:not([data-focus-mode])
+  .character-workspace-grid
+  > .character-reference-column,
+.character-workspace[data-continuity-focus="true"]:not([data-focus-mode])
+  .character-workspace-grid
+  > .character-dossier-column {
+  display: none;
+}
+.character-workspace[data-focus-mode] .character-workspace-grid > .character-dossier-column,
+.character-workspace[data-continuity-focus="true"]:not([data-focus-mode])
+  .character-workspace-grid
+  > .character-state-column {
+  display: flex;
+}
+@media (max-width: 600px) {
+  .character-focus-heading,
+  .character-media-detail-heading,
+  .character-scene-continuity-heading {
+    padding: 14px 16px;
+  }
+  .character-focus-content,
+  .character-media-detail-content,
+  .character-scene-continuity-body {
+    padding: 14px 16px 24px;
+  }
+}
+
+/* The character room follows the approved image-led console composition. */
+.character-workspace[data-character-stage="hero"] {
+  position: relative;
+  isolation: isolate;
+  padding: 0;
+  overflow: hidden;
+  color: #f7f6f2;
+  background: #0a0c0f;
+}
+.character-workspace[data-character-stage="hero"] .character-workspace-heading {
+  position: absolute;
+  z-index: 5;
+  inset: 0 0 auto;
+  min-height: 65px;
+  margin: 0;
+  padding: 13px clamp(20px, 3vw, 42px);
+  align-items: center;
+  background: linear-gradient(180deg, #050608ad, transparent);
+}
+.character-workspace[data-character-stage="hero"] .character-title-row {
+  display: none;
+}
+.character-workspace[data-character-stage="hero"] .character-eyebrow,
+.character-workspace[data-character-stage="hero"] .character-eyebrow select {
+  color: #fafaf8;
+  font-size: 12px;
+  font-weight: 500;
+  text-shadow: 0 1px 10px #000;
+}
+.character-workspace[data-character-stage="hero"] .character-eyebrow > span {
+  border-color: #ffffff4a;
+  color: #d7d8d7;
+}
+.character-workspace[data-character-stage="hero"] .character-heading-actions {
+  max-width: min(65%, 610px);
+  gap: 6px;
+}
+.character-workspace[data-character-stage="hero"] .character-heading-actions button {
+  min-height: 34px;
+  color: #f1f1ee;
+  border-color: #ffffff32;
+  background: #14141455;
+  backdrop-filter: blur(16px);
+}
+.character-workspace[data-character-stage="hero"] .character-heading-actions button:hover {
+  border-color: #fff9;
+  background: #3338;
+}
+.character-workspace[data-character-stage="hero"] .character-tool {
+  border: 0 !important;
+  background: transparent !important;
+}
+.character-ps5-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 65% 75% at 36% 40%, #52606a6b, transparent 75%),
+    linear-gradient(130deg, #222a2f 0%, #101417 52%, #050608 100%);
+}
+.character-ps5-backdrop,
+.character-ps5-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.character-ps5-backdrop img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 42% 35%;
+  opacity: 0.98;
+  filter: brightness(0.86) saturate(0.94);
+  animation: character-hero-arrive 360ms ease-out both;
+}
+.character-ps5-backdrop.is-scene-frame img {
+  object-position: 48% 36%;
+}
+.character-ps5-backdrop.is-father-frame img {
+  object-position: 100% 36%;
+}
+.character-ps5-vignette {
+  background:
+    linear-gradient(90deg, #070808a8 0%, transparent 34%, #08090a52 100%),
+    linear-gradient(0deg, #050608e8 0%, #05060818 36%, transparent 65%),
+    linear-gradient(180deg, #05060875 0%, transparent 23%);
+}
+.character-ps5-identity {
+  position: absolute;
+  z-index: 2;
+  left: clamp(28px, 4.4vw, 72px);
+  bottom: clamp(158px, 20vh, 220px);
+  width: min(48%, 670px);
+  text-shadow: 0 3px 28px #000c;
+}
+.character-ps5-identity > span {
+  color: #f4f4f0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+}
+.character-ps5-identity > button {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  max-width: 100%;
+  margin-top: 8px;
+  text-align: left;
+}
+.character-ps5-identity h2 {
+  color: #fff;
+  font-size: clamp(36px, 4vw, 64px);
+  font-weight: 400;
+  letter-spacing: -0.048em;
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+.character-ps5-identity > p {
+  max-width: 36ch;
+  margin-top: 8px;
+  color: #ecebe8;
+  font-size: clamp(14px, 1.4vw, 18px);
+}
+.character-ps5-identity > small {
+  display: block;
+  max-width: 40ch;
+  margin-top: 12px;
+  color: #d1d3d1;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.character-workspace[data-character-stage="hero"] .character-compact-tabs {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  top: 80px;
+  right: clamp(16px, 2.5vw, 40px);
+  width: clamp(350px, 32vw, 460px);
+  min-width: 0;
+  margin: 0;
+  padding: 0 6px;
+  gap: 0;
+  border: 1px solid #ffffff2b;
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: #131416a6;
+  backdrop-filter: blur(20px);
+}
+.character-workspace[data-character-stage="hero"] .character-compact-tabs button {
+  flex: 1;
+  min-width: 0;
+  min-height: 39px;
+  padding: 7px 5px;
+  color: #cdd0cf;
+  font-size: 11px;
+  white-space: normal;
+  border: 0;
+  border-bottom: 2px solid transparent;
+}
+.character-workspace[data-character-stage="hero"]
+  .character-compact-tabs
+  button[aria-pressed="true"] {
+  border-bottom-color: #f7f7f5;
+  color: #fff;
+}
+.character-workspace[data-character-stage="hero"] .character-workspace-grid {
+  position: absolute;
+  z-index: 4;
+  display: block;
+  top: 119px;
+  right: clamp(16px, 2.5vw, 40px);
+  bottom: auto;
+  width: clamp(350px, 32vw, 460px);
+  height: min(60vh, 550px, calc(100% - 255px));
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #ffffff2b;
+  border-radius: 0 0 10px 10px;
+  background: #121416b8;
+  box-shadow: 0 28px 65px #0007;
+  backdrop-filter: blur(26px) saturate(90%);
+}
+.character-workspace[data-character-stage="hero"] .character-workspace-grid > * {
+  display: none;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.character-workspace[data-character-stage="hero"][data-compact-pane="dossier"]
+  .character-workspace-grid
+  > .character-dossier-column,
+.character-workspace[data-character-stage="hero"][data-compact-pane="media"]
+  .character-workspace-grid
+  > .character-reference-column,
+.character-workspace[data-character-stage="hero"][data-compact-pane="scene"]
+  .character-workspace-grid
+  > .character-state-column {
+  display: flex;
+}
+.character-workspace[data-character-stage="hero"] .character-reference-column {
+  overflow-y: auto;
+  padding: 19px 20px !important;
+}
+.character-workspace[data-character-stage="hero"] .character-dossier-column {
+  display: flex;
+  flex-direction: column;
+}
+.character-workspace[data-character-stage="hero"] .character-section-tabs {
+  padding: 4px 10px;
+  gap: 0;
+  background: transparent;
+}
+.character-workspace[data-character-stage="hero"] .character-section-tabs > button {
+  min-width: 0;
+  min-height: 42px;
+  padding: 6px 2px;
+  flex-direction: column;
+  gap: 0;
+  color: #d1d4d5;
+  font-size: 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.character-workspace[data-character-stage="hero"]
+  .character-section-tabs
+  > button[data-state="active"] {
+  color: #fff;
+  border-bottom-color: #f6f6f2;
+  background: transparent;
+  box-shadow: none;
+}
+.character-workspace[data-character-stage="hero"] .character-section-body {
+  padding: 16px 20px 24px;
+  scrollbar-width: none;
+}
+.character-ps5-profile {
+  margin-bottom: 20px;
+}
+.character-ps5-profile > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: #d5dfdc;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.character-ps5-profile > header small {
+  color: #b6c0bb;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.character-ps5-profile > h2 {
+  margin: 7px 0 12px;
+  color: #fff;
+  font-size: clamp(19px, 1.7vw, 25px);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+.character-ps5-profile dl {
+  border-top: 1px solid #ffffff36;
+}
+.character-ps5-profile dl > div {
+  display: grid;
+  grid-template-columns: minmax(75px, 30%) minmax(0, 1fr);
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid #ffffff25;
+}
+.character-ps5-profile dt {
+  color: #dce3df;
+  font-size: 11px;
+}
+.character-ps5-profile dd {
+  min-width: 0;
+  color: #f2f3ef;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.character-ps5-profile > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 11px 0;
+  color: #f3f5f1;
+  border-bottom: 1px solid #ffffff36;
+  font-size: 11px;
+  text-align: left;
+}
+.character-ps5-profile > button:hover,
+.character-ps5-profile > button:focus-visible {
+  color: #fff;
+  background: #ffffff14;
+}
+.character-workspace[data-character-stage="hero"] .character-section-body::-webkit-scrollbar,
+.character-workspace[data-character-stage="hero"] .character-reference-column::-webkit-scrollbar,
+.character-workspace[data-character-stage="hero"] .character-scene-scroll::-webkit-scrollbar {
+  display: none;
+}
+.character-workspace[data-character-stage="hero"] .character-field-grid {
+  display: block;
+}
+.character-workspace[data-character-stage="hero"] .character-field,
+.character-workspace[data-character-stage="hero"] .character-original-direction {
+  border: 0;
+  border-bottom: 1px solid #ffffff27;
+  border-radius: 0;
+  padding: 13px 0;
+  margin: 0;
+  background: transparent;
+}
+.character-workspace[data-character-stage="hero"] .character-field-value,
+.character-workspace[data-character-stage="hero"] .character-scene-field p {
+  color: #f0f0ee;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.character-workspace[data-character-stage="hero"] .character-field h2,
+.character-workspace[data-character-stage="hero"] .character-scene-panel h4 {
+  color: #e5e7e5;
+  font-size: 13px;
+}
+.character-workspace[data-character-stage="hero"] .character-media-note,
+.character-workspace[data-character-stage="hero"] .character-field-hint {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.character-workspace[data-character-stage="hero"] .character-workspace-grid .character-scene-panel {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.character-workspace[data-character-stage="hero"] .character-scene-scroll {
+  scrollbar-width: none;
+}
+.character-workspace[data-character-stage="hero"] .character-ps5-rail {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  gap: 12px;
+  left: clamp(22px, 3.8vw, 64px);
+  right: clamp(22px, 3.8vw, 64px);
+  bottom: 12px;
+  align-items: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  padding: 5px 2px 3px;
+}
+.character-ps5-rail::-webkit-scrollbar {
+  display: none;
+}
+.character-ps5-rail > button {
+  flex: 0 0 clamp(110px, 11vw, 180px);
+  min-width: 0;
+  color: #e2e5e5;
+  text-align: center;
+}
+.character-ps5-rail-art {
+  display: grid;
+  position: relative;
+  place-items: center;
+  height: clamp(68px, 9vh, 98px);
+  overflow: hidden;
+  border: 2px solid #ffffff38;
+  border-radius: 6px;
+  background: #20252a;
+  color: #c9d1d4;
+  font-size: 26px;
+}
+.character-ps5-rail > button[aria-current="true"] .character-ps5-rail-art,
+.character-ps5-rail > button:hover .character-ps5-rail-art {
+  border-color: #fff;
+  box-shadow:
+    0 0 0 1px #fff5,
+    0 7px 18px #0009;
+}
+.character-ps5-rail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.character-ps5-rail > button[data-reference-sheet="true"] .character-ps5-rail-image {
+  position: absolute;
+  top: -264%;
+  left: 17%;
+  width: auto;
+  max-width: none;
+  height: 390%;
+  object-fit: fill;
+}
+.character-ps5-rail-title {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-shadow: 0 2px 8px #000;
+}
+.character-workspace[data-character-stage="hero"][data-focus-mode] .character-workspace-grid,
+.character-workspace[data-character-stage="hero"][data-continuity-focus="true"]
+  .character-workspace-grid,
+.character-workspace[data-character-stage="hero"]:has(.character-media-inline-detail)
+  .character-workspace-grid {
+  top: 76px;
+  left: clamp(18px, 3.3vw, 54px);
+  right: clamp(18px, 3.3vw, 54px);
+  bottom: 20px;
+  width: auto;
+  height: auto;
+  border-radius: 11px;
+}
+.character-workspace[data-character-stage="hero"][data-focus-mode] .character-compact-tabs,
+.character-workspace[data-character-stage="hero"][data-continuity-focus="true"]
+  .character-compact-tabs,
+.character-workspace[data-character-stage="hero"]:has(.character-media-inline-detail)
+  .character-compact-tabs,
+.character-workspace[data-character-stage="hero"]:has(.character-media-inline-detail)
+  .character-ps5-identity,
+.character-workspace[data-character-stage="hero"]:has(.character-media-inline-detail)
+  .character-ps5-rail {
+  display: none;
+}
+.character-workspace[data-character-stage="hero"][data-focus-mode]
+  .character-workspace-grid
+  > .character-dossier-column,
+.character-workspace[data-character-stage="hero"][data-continuity-focus="true"]:not(
+    [data-focus-mode]
+  )
+  .character-workspace-grid
+  > .character-state-column,
+.character-workspace[data-character-stage="hero"]:has(.character-media-inline-detail):not(
+    [data-focus-mode]
+  ):not([data-continuity-focus="true"])
+  .character-workspace-grid
+  > .character-reference-column {
+  display: flex;
+}
+.character-workspace[data-character-stage="hero"][data-focus-mode]
+  .character-workspace-grid
+  > .character-reference-column,
+.character-workspace[data-character-stage="hero"][data-focus-mode]
+  .character-workspace-grid
+  > .character-state-column,
+.character-workspace[data-character-stage="hero"][data-continuity-focus="true"]:not(
+    [data-focus-mode]
+  )
+  .character-workspace-grid
+  > .character-reference-column,
+.character-workspace[data-character-stage="hero"][data-continuity-focus="true"]:not(
+    [data-focus-mode]
+  )
+  .character-workspace-grid
+  > .character-dossier-column {
+  display: none;
+}
+.character-workspace[data-character-stage="hero"]:has(.character-media-inline-detail)
+  .character-reference-column {
+  padding: 0 !important;
+}
+@media (max-width: 800px) {
+  .character-workspace[data-character-stage="hero"] .character-ps5-identity {
+    top: 70px;
+    left: 18px;
+    bottom: auto;
+    width: calc(100% - 36px);
+  }
+  .character-workspace[data-character-stage="hero"] .character-ps5-identity h2 {
+    font-size: 25px;
+  }
+  .character-workspace[data-character-stage="hero"] .character-ps5-identity > span,
+  .character-workspace[data-character-stage="hero"] .character-ps5-identity > small,
+  .character-workspace[data-character-stage="hero"] .character-ps5-identity > p {
+    display: none;
+  }
+  .character-workspace[data-character-stage="hero"] .character-compact-tabs,
+  .character-workspace[data-character-stage="hero"] .character-workspace-grid {
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+  .character-workspace[data-character-stage="hero"] .character-compact-tabs {
+    top: 112px;
+  }
+  .character-workspace[data-character-stage="hero"] .character-workspace-grid {
+    top: 151px;
+    bottom: 114px;
+    height: auto;
+  }
+  .character-workspace[data-character-stage="hero"] .character-ps5-rail {
+    bottom: 6px;
+    left: 12px;
+    right: 12px;
+  }
+  .character-ps5-rail > button {
+    flex-basis: 96px;
+  }
+  .character-ps5-rail-art {
+    height: 48px;
+  }
+  .character-workspace[data-character-stage="hero"][data-focus-mode] .character-workspace-grid,
+  .character-workspace[data-character-stage="hero"][data-continuity-focus="true"]
+    .character-workspace-grid,
+  .character-workspace[data-character-stage="hero"]:has(.character-media-inline-detail)
+    .character-workspace-grid {
+    top: 67px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+  }
+}
+@media (max-height: 620px) {
+  .character-workspace[data-character-stage="hero"] .character-ps5-identity {
+    bottom: 112px;
+  }
+  .character-workspace[data-character-stage="hero"] .character-ps5-identity h2 {
+    font-size: 30px;
+  }
+  .character-workspace[data-character-stage="hero"] .character-compact-tabs {
+    top: 69px;
+  }
+  .character-workspace[data-character-stage="hero"] .character-workspace-grid {
+    top: 108px;
+    height: min(60vh, calc(100% - 215px));
+  }
+}
+@media (max-width: 420px) {
+  .character-workspace[data-character-stage="hero"] .character-workspace-heading {
+    flex-wrap: nowrap;
+    gap: 3px;
+    padding: 9px 8px;
+  }
+  .character-workspace[data-character-stage="hero"] .character-eyebrow > span,
+  .character-workspace[data-character-stage="hero"] .character-coverage-text {
+    display: none;
+  }
+  .character-workspace[data-character-stage="hero"] .character-heading-actions {
+    flex-wrap: nowrap;
+    gap: 1px;
+    max-width: 55%;
+  }
+  .character-workspace[data-character-stage="hero"] .character-coverage-pill {
+    padding: 7px;
+  }
+}
+@keyframes character-hero-arrive {
+  from {
+    opacity: 0;
+    transform: scale(1.025);
+  }
+  to {
+    opacity: 0.92;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .character-ps5-backdrop img {
+    animation: none;
+  }
+}

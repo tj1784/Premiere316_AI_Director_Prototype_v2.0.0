@@ -1,0 +1,186 @@
+{
+  "sourceCommit": "e03628b31c12422cf20d88cd9662b9d52e810be6",
+  "note": "Optimized WebP previews derived from the Prodigal Son scene first/last frames in the original premiere316-v3 branch. Original PNG files are not bundled in this Site.",
+  "frames": [
+    {
+      "preview": "/pictures/prodigal-son/previews/PS-S01-SH001-LAST.webp",
+      "source": "public/pictures/prodigal-son/frames/PS-S01/PS-S01-SH001_LAST-7e1a503721cc.png",
+      "scene": "S01",
+      "shot": "SH001",
+      "endpoint": "last",
+      "description": "S01 teaching wide; group under olives, open hillside",
+      "recommendedUse": "research or opening scene",
+      "originalSize": [
+        1937,
+        812
+      ],
+      "previewSize": [
+        1600,
+        671
+      ],
+      "bytes": 210504
+    },
+    {
+      "preview": "/pictures/prodigal-son/previews/PS-S01-SH002-FIRST.webp",
+      "source": "public/pictures/prodigal-son/frames/PS-S01/PS-S01-SH002_FIRST-46c2e33740e0.png",
+      "scene": "S01",
+      "shot": "SH002",
+      "endpoint": "first",
+      "description": "S01 teaching close; seated conversation",
+      "recommendedUse": "scene thumbnail or screenplay",
+      "originalSize": [
+        1916,
+        821
+      ],
+      "previewSize": [
+        1600,
+        686
+      ],
+      "bytes": 125986
+    },
+    {
+      "preview": "/pictures/prodigal-son/previews/PS-S01-SH004-FIRST.webp",
+      "source": "public/pictures/prodigal-son/frames/PS-S01/PS-S01-SH004_FIRST-55e479015eb0.png",
+      "scene": "S01",
+      "shot": "SH004",
+      "endpoint": "first",
+      "description": "S01 teaching close; speaker portrait",
+      "recommendedUse": "script/character context",
+      "originalSize": [
+        1937,
+        812
+      ],
+      "previewSize": [
+        1600,
+        671
+      ],
+      "bytes": 95102
+    },
+    {
+      "preview": "/pictures/prodigal-son/previews/PS-S17-SH005-FIRST.webp",
+      "source": "public/pictures/prodigal-son/frames/PS-S17/PS-S17-SH005_FIRST-6c2f94613d61.png",
+      "scene": "S17",
+      "shot": "SH005",
+      "endpoint": "first",
+      "description": "S17 son returning on winding road",
+      "recommendedUse": "departure and return transition",
+      "originalSize": [
+        1938,
+        812
+      ],
+      "previewSize": [
+        1600,
+        670
+      ],
+      "bytes": 247338
+    },
+    {
+      "preview": "/pictures/prodigal-son/previews/PS-S18-SH002-LAST.webp",
+      "source": "public/pictures/prodigal-son/frames/PS-S18/PS-S18-SH002_LAST-26c1d4a48d56.png",
+      "scene": "S18",
+      "shot": "SH002",
+      "endpoint": "last",
+      "description": "S18 father runs toward son",
+      "recommendedUse": "arrival scene",
+      "originalSize": [
+        1932,
+        814
+      ],
+      "previewSize": [
+        1600,
+        674
+      ],
+      "bytes": 191040
+    },
+    {
+      "preview": "/pictures/prodigal-son/previews/PS-S18-SH004-LAST.webp",
+      "source": "public/pictures/prodigal-son/frames/PS-S18/PS-S18-SH004_LAST-a6e00dc2a458.png",
+      "scene": "S18",
+      "shot": "SH004",
+      "endpoint": "last",
+      "description": "S18 father holds kneeling son, wider setting",
+      "recommendedUse": "S18 wide backdrop",
+      "originalSize": [
+        1932,
+        814
+      ],
+      "previewSize": [
+        1600,
+        674
+      ],
+      "bytes": 179660
+    },
+    {
+      "preview": "/pictures/prodigal-son/previews/PS-S18-SH005-FIRST.webp",
+      "source": "public/pictures/prodigal-son/frames/PS-S18/PS-S18-SH005_FIRST-6fe805579fa8.png",
+      "scene": "S18",
+      "shot": "SH005",
+      "endpoint": "first",
+      "description": "S18 father and son embrace, emotional close frame",
+      "recommendedUse": "home hero or character backdrop",
+      "originalSize": [
+        1932,
+        814
+      ],
+      "previewSize": [
+        1600,
+        674
+      ],
+      "bytes": 113850
+    },
+    {
+      "preview": "/pictures/prodigal-son/previews/PS-S18-SH008-LAST.webp",
+      "source": "public/pictures/prodigal-son/frames/PS-S18/PS-S18-SH008_LAST-c14553299a2c.png",
+      "scene": "S18",
+      "shot": "SH008",
+      "endpoint": "last",
+      "description": "S18 father guides son toward the house",
+      "recommendedUse": "return transition",
+      "originalSize": [
+        1932,
+        814
+      ],
+      "previewSize": [
+        1600,
+        674
+      ],
+      "bytes": 189852
+    },
+    {
+      "preview": "/pictures/prodigal-son/previews/PS-S19-SH002-LAST.webp",
+      "source": "public/pictures/prodigal-son/frames/PS-S19/PS-S19-SH002_LAST-ff699165fe04.png",
+      "scene": "S19",
+      "shot": "SH002",
+      "endpoint": "last",
+      "description": "S19 father and family robe the son",
+      "recommendedUse": "post-return scene",
+      "originalSize": [
+        1933,
+        813
+      ],
+      "previewSize": [
+        1600,
+        673
+      ],
+      "bytes": 137118
+    },
+    {
+      "preview": "/pictures/prodigal-son/previews/PS-S19-SH009-FIRST.webp",
+      "source": "public/pictures/prodigal-son/frames/PS-S19/PS-S19-SH009_FIRST-411b22e4f440.png",
+      "scene": "S19",
+      "shot": "SH009",
+      "endpoint": "first",
+      "description": "S19 father at evening feast",
+      "recommendedUse": "feast scene",
+      "originalSize": [
+        1933,
+        813
+      ],
+      "previewSize": [
+        1600,
+        673
+      ],
+      "bytes": 88652
+    }
+  ]
+}

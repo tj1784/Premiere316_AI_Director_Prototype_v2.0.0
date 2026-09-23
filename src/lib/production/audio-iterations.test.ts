@@ -128,6 +128,22 @@ describe("Wave 6 audio architecture", () => {
     );
   });
 
+  it("does not queue an authored Foley cue as a score", () => {
+    const input = picture();
+    const seeded = hydratePictureAudio(input);
+    input.audio = {
+      ...seeded,
+      cues: [
+        seeded.cues[0],
+        { ...seeded.cues[0], id: "cue-footsteps", name: "Footsteps", kind: "foley" },
+      ],
+    };
+    const workspace = queueMissingScore(input, 20);
+    assert.equal(workspace.jobs.length, 1);
+    assert.equal(workspace.jobs[0].cueId, seeded.cues[0].id);
+    assert.equal(workspace.takes.some((take) => take.cueId === "cue-footsteps"), false);
+  });
+
   it("retains the chosen audio engine in jobs and failed takes", () => {
     for (const engineId of ["minimax-music3", "yue2", "stable-audio-3", "ace-step-1.5"]) {
       const input = picture();

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { makePictureIntake } from "../studio/picture-intake.ts";
-import { approveResearchBible, emptyResearchSections, hydratePictureResearch, makeEmptyResearchBible, RESEARCH_BIBLE_SECTION_KEYS, researchBlocksScreenplay, researchSectionsLookPlaceholder, saveResearchDraft, seedResearchBibleFromIntake } from "./bible.ts";
+import { approveResearchBible, emptyResearchSections, hydratePictureResearch, makeEmptyResearchBible, RESEARCH_BIBLE_SECTION_KEYS, researchBlocksScreenplay, researchSectionsLookPlaceholder, researchSourceFromFile, saveResearchDraft, seedResearchBibleFromIntake } from "./bible.ts";
 import { startDeltaResearch } from "./delta-research.ts";
 import { addResearchSource } from "./source-ledger.ts";
 
@@ -12,6 +12,19 @@ test("missing research hydrates without wiping intake text", () => {
   assert.equal(bible.status, "DRAFT");
   assert.equal(intake.logline, "An archive answers back.");
   assert.ok(bible.content.sources.length >= 1);
+});
+
+test("a long imported source survives intake, direct import and research versions without truncation", () => {
+  const completeText = "First source paragraph.\n\n" + "Body of the supplied document. ".repeat(100) + "\n\nFinal source paragraph.";
+  const intake = { ...makePictureIntake(1), importedSources: [{ fileName: "full-source.md", mediaType: "text/markdown" as const, importedAt: 1, text: completeText }] };
+  const seeded = seedResearchBibleFromIntake(intake, 2);
+  assert.equal(seeded.content.sources[0].quote, completeText);
+  const directlyImported = researchSourceFromFile("another.md", completeText, "src:direct", 3);
+  const saved = saveResearchDraft(seeded, { ...seeded.content, sources: [...seeded.content.sources, directlyImported] }, "v-draft", 4);
+  if ("error" in saved) throw new Error(saved.error);
+  const approved = approveResearchBible(saved, "v-approved", 5);
+  if ("error" in approved) throw new Error(approved.error);
+  assert.deepEqual(approved.versions.at(-1)?.content.sources.map((source) => source.quote), [completeText, completeText]);
 });
 
 test("class A source without locator is rejected", () => {

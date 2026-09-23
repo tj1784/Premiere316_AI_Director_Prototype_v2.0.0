@@ -1,21 +1,26 @@
 import "./research-workbench.css";
-import { useRef, useState } from "react";
-import { Check, FolderPlus, GitBranch, RefreshCw, Save, Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowUpRight, Check, ChevronLeft, ChevronRight, FolderPlus, GitBranch, RefreshCw, Save, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/field";
-import { BibleNav } from "./bible-nav";
+import { AssetImagePreview } from "@/components/studio/asset-image-preview";
+import { useActivePicture, useStudio } from "@/lib/studio/store";
+import type { ProductionAsset } from "@/lib/production/types";
 import { SourceLedgerPanel, AddSourceForm } from "./source-ledger-panel";
 import { SocialWorldPanel } from "./social-world-panel";
 import {
   cloneResearchContent,
+  RESEARCH_BIBLE_SECTION_KEYS,
+  RESEARCH_BIBLE_SECTION_LABELS,
+  researchSourceFromFile,
   saveResearchDraft,
   type PictureResearchBible,
   type ResearchContent,
   type ResearchSource,
 } from "@/lib/research/bible.ts";
-import { addResearchSource, disputesForSources } from "@/lib/research/source-ledger.ts";
+import { addResearchSource, classifyResearchSource, disputesForSources, recordResearchDispute, resolveResearchDispute } from "@/lib/research/source-ledger.ts";
 import { approveResearchOrError } from "@/lib/research/research-approval.ts";
 import { startDeltaResearch } from "@/lib/research/delta-research.ts";
 import {
@@ -29,7 +34,43 @@ import {
 } from "@/lib/research/research-room.ts";
 import { uid } from "@/lib/utils";
 import type { Character, Asset } from "@/lib/studio/types";
-import { useStudio } from "@/lib/studio/store";
+import { PRODIGAL_SON_PICTURE_ID } from "@/lib/studio/prodigal-son";
+import { loadBundledMediaMap, resolveSiteImageUri, type BundledMediaMap } from "@/lib/studio/site-media-preview.ts";
+
+// The approved Research composition has a dedicated picture wallpaper. Location
+// thumbnails always switch to their actual asset image when selected.
+const RESEARCH_WALLPAPER_URI = "/pictures/prodigal-son/wallpapers/research-galilee.webp";
+const FEATURED_LOCATION_IDS = [
+  "PS-LOC-HILLSIDE",
+  "PS-LOC-HOMESTEAD",
+  "PS-LOC-TOWN",
+  "PS-LOC-MARKET",
+] as const;
+
+const SECTIONS = [
+  ["overview", "Overview"],
+  ["sources", "Sources"],
+  ["social", "Social world"],
+  ["camera", "Cinematography"],
+  ["risks", "Risks"],
+  ["versions", "Versions"],
+] as const;
+type Section = (typeof SECTIONS)[number][0];
+
+/** Only the exact approved correction may be shown as approved. */
+function locationImage(asset: ProductionAsset, pictureId: string | undefined, mediaMap: BundledMediaMap) {
+  const resolve = (previewUri?: string, mediaUri?: string) =>
+    resolveSiteImageUri(pictureId ?? "", previewUri, mediaMap) ?? resolveSiteImageUri(pictureId ?? "", mediaUri, mediaMap);
+  const approved = asset.iterations.find((item) => item.id === asset.approvedIterationId);
+  const approvedUri = resolve(approved?.previewUri, approved?.mediaUri);
+  if (approvedUri) return { previewUri: approvedUri, mediaUri: approvedUri, draftFallback: false };
+  const draft = [...asset.iterations].reverse().find((item) => item.status !== "REJECTED" && resolve(item.previewUri, item.mediaUri));
+  const draftUri = resolve(draft?.previewUri, draft?.mediaUri);
+  if (draftUri) return { previewUri: draftUri, mediaUri: draftUri, draftFallback: Boolean(approved) };
+  const reference = asset.references.find((item) => item.preferred) ?? asset.references[0];
+  const referenceUri = resolve(reference?.previewUri, reference?.uri);
+  return referenceUri ? { previewUri: referenceUri, mediaUri: referenceUri, draftFallback: Boolean(approved) } : null;
+}
 
 export function ResearchWorkspace({
   title,
@@ -52,15 +93,70 @@ export function ResearchWorkspace({
   onBuildDraft: () => Promise<void>;
   building?: boolean;
 }) {
-  const [section, setSection] = useState(() => researchBibleGenerated(bible) ? "sources" : "overview");
+  const [section, setSection] = useState<Section>(() =>
+    researchBibleGenerated(bible) ? "sources" : "overview",
+  );
   const [draft, setDraft] = useState<ResearchContent>(cloneResearchContent(bible.content));
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteTitle, setPasteTitle] = useState("");
   const [pasteText, setPasteText] = useState("");
+  const [manualRequested, setManualRequested] = useState(false);
+  const [selectedLocationId, setSelectedLocationId] = useState("");
+  const [mediaMap, setMediaMap] = useState<BundledMediaMap>({});
   const manualRef = useRef<HTMLDetailsElement>(null);
   const packRef = useRef<HTMLInputElement>(null);
+  const referenceTrackRef = useRef<HTMLDivElement>(null);
+  const picture = useActivePicture();
+  useEffect(() => {
+    if (picture?.id !== PRODIGAL_SON_PICTURE_ID) { setMediaMap({}); return; }
+    let current = true;
+    void loadBundledMediaMap().then((mapping) => { if (current) setMediaMap(mapping); });
+    return () => { current = false; };
+  }, [picture?.id]);
+  const loadedVersion = useRef(`${picture?.id ?? ""}:${bible.currentVersionId ?? ""}`);
   const returnToDefaultMode = useStudio((state) => state.returnToDefaultMode);
   const view = researchRoomView(bible, llamaAvailable);
+  const visualLocations = [
+    ...(picture?.production?.assets.filter(
+      (asset) => asset.category === "location" && !asset.tombstone,
+    ) ?? []),
+  ].sort((a, b) => {
+    const first = FEATURED_LOCATION_IDS.indexOf(a.id as (typeof FEATURED_LOCATION_IDS)[number]);
+    const second = FEATURED_LOCATION_IDS.indexOf(b.id as (typeof FEATURED_LOCATION_IDS)[number]);
+    return (first < 0 ? Infinity : first) - (second < 0 ? Infinity : second);
+  });
+  const selectedLocation =
+    visualLocations.find((item) => item.id === selectedLocationId) ??
+    visualLocations.find((item) => locationImage(item, picture?.id, mediaMap)) ??
+    visualLocations[0];
+  const image = selectedLocation && locationImage(selectedLocation, picture?.id, mediaMap);
+  const showingPictureWallpaper =
+    picture?.id === PRODIGAL_SON_PICTURE_ID && !selectedLocationId;
+  const backdrop =
+    (showingPictureWallpaper
+      ? { previewUri: RESEARCH_WALLPAPER_URI, mediaUri: RESEARCH_WALLPAPER_URI }
+      : image) ??
+    (picture?.thumbnailUrl
+      ? { previewUri: picture.thumbnailUrl, mediaUri: picture.thumbnailUrl }
+      : null);
+
+  useEffect(() => {
+    const key = `${picture?.id ?? ""}:${bible.currentVersionId ?? ""}`;
+    if (loadedVersion.current === key) return;
+    loadedVersion.current = key;
+    // A newly generated or selected version replaces the working view. Ordinary field edits
+    // keep the same version ID, so they cannot erase the user's unsaved draft.
+    setDraft(cloneResearchContent(bible.content));
+  }, [bible.currentVersionId, bible.content, picture?.id]);
+
+  useEffect(() => {
+    if (section !== "sources" || !manualRequested) return;
+    if (manualRef.current) {
+      manualRef.current.open = true;
+      manualRef.current.scrollIntoView({ block: "nearest" });
+    }
+    setManualRequested(false);
+  }, [section, manualRequested]);
 
   const persistContent = (content: ResearchContent) => {
     setDraft(content);
@@ -82,201 +178,389 @@ export function ResearchWorkspace({
   };
 
   const openManualNotes = () => {
-    if (manualRef.current) manualRef.current.open = true;
-    manualRef.current?.scrollIntoView({ block: "nearest" });
+    setSection("sources");
+    setManualRequested(true);
   };
-
   const addSourceMaterial = () => packRef.current?.click();
-
   const buildResearchDraft = () => {
     if (llamaAvailable === false) {
-      toast.error(view.offlineTitle + " " + view.offlineBody);
+      toast.error(`${view.offlineTitle} ${view.offlineBody}`);
       return;
     }
     void onBuildDraft();
   };
 
-  const generated = researchBibleGenerated(bible);
-
   return (
     <div
-      className="research-workbench grid h-full min-h-0 min-w-0"
+      className="research-workbench"
       data-research-room="true"
       data-research-status={view.status}
       data-research-empty={view.showEmptyState ? "true" : "false"}
       data-research-offline={view.showOffline ? "true" : "false"}
       data-research-mode-panel="false"
     >
-      <section className="flex min-h-0 min-w-0 flex-col">
-        <header className="shrink-0 border-b border-border px-4 py-3 sm:px-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Research Room</p>
-              <h2 className="mt-1 font-display text-xl tracking-tight">{title || "Picture Research"}</h2>
-            </div>
-            <Badge>{view.statusLabel}</Badge>
-          </div>
-          <div className="research-section-tabs" role="tablist" aria-label="Research sections">
-            {[["overview","Overview"],["sources","Sources"],["social","Social world"],["camera","Cinematography"],["risks","Risks"]].map(([id,label]) => <button key={id} role="tab" aria-selected={section === id} onClick={() => setSection(id)}>{label}</button>)}
-          </div>
-          <p className="mt-3 max-w-2xl text-xs leading-relaxed text-muted">{view.purpose}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={buildResearchDraft} disabled={building}><Search />{building ? "Building…" : RESEARCH_ROOM_PRIMARY_CTA}</Button>
-            <Button variant="secondary" onClick={buildResearchDraft}><RefreshCw />{RESEARCH_ROOM_REGENERATE_CTA}</Button>
+      <div className="research-cinema-backdrop" aria-hidden="true">
+        {backdrop && (
+          <AssetImagePreview
+            key={`${showingPictureWallpaper ? "research-wallpaper" : selectedLocation?.id ?? picture?.id}:${backdrop.previewUri ?? backdrop.mediaUri}`}
+            previewUri={backdrop.previewUri}
+            mediaUri={backdrop.mediaUri}
+            alt=""
+            className="research-cinema-image"
+            compact
+          />
+        )}
+      </div>
+      <input
+        ref={packRef}
+        type="file"
+        accept=".txt,.md,.fountain,text/plain,text/markdown"
+        multiple
+        className="sr-only"
+        onChange={(event) => {
+          const files = event.currentTarget.files;
+          if (!files?.length) return;
+          void Promise.all(
+            [...files].map(async (file) => ({ name: file.name, text: await file.text() })),
+          ).then((entries) => {
+            let sources = draft.sources;
+            let disputes = draft.disputes;
+            for (const entry of entries) {
+              const now = Date.now();
+              const result = addResearchSource(
+                sources,
+                researchSourceFromFile(entry.name, entry.text, uid("src"), now),
+              );
+              if ("error" in result) {
+                toast.error(result.error);
+                continue;
+              }
+              sources = result.sources;
+              disputes = disputesForSources(sources, disputes, now);
+            }
+            persistContent({ ...draft, sources, disputes });
+            toast.success("Source material added.");
+          });
+          event.currentTarget.value = "";
+        }}
+      />
+      <div className="research-room-stage">
+        <section className="research-room-hero" aria-label="Research picture">
+          <p className="research-room-kicker">RESEARCH BIBLE</p>
+          <h1>{title || "Picture Research"}</h1>
+          <p className="research-room-subtitle">{view.purpose}</p>
+          <p className="research-room-measures">
+            {draft.sources.length} sources · {draft.socialWorldNotes.length} social notes ·{" "}
+            {bible.versions.length} versions
+          </p>
+          {selectedLocation && !showingPictureWallpaper && (
+            <p className="research-current-place">Location reference: {selectedLocation.name}{image?.draftFallback ? " · imported draft; approved correction unavailable" : ""}</p>
+          )}
+          <div className="research-hero-actions">
+            <Button onClick={buildResearchDraft} disabled={building}>
+              <Search /> {building ? "Building…" : RESEARCH_ROOM_PRIMARY_CTA}
+            </Button>
+            <Button variant="secondary" onClick={buildResearchDraft} disabled={building}>
+              <RefreshCw /> {RESEARCH_ROOM_REGENERATE_CTA}
+            </Button>
             <Button
-              variant="secondary"
+              variant="ghost"
               disabled={!bible.approvedVersionId}
               onClick={() => {
                 onChange(startDeltaResearch(bible, draft, uid("rsv")));
                 toast.message("Delta Research opened. Approved notes remain.");
               }}
             >
-              <GitBranch />Delta Research
+              <GitBranch /> Delta Research
             </Button>
           </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <input
-              ref={packRef}
-              type="file"
-              accept=".txt,.md,.fountain,text/plain,text/markdown"
-              multiple
-              className="sr-only"
-              onChange={(event) => {
-                const files = event.currentTarget.files;
-                if (!files?.length) return;
-                void Promise.all([...files].map(async (file) => {
-                  const text = await file.text();
-                  addSource({
-                    title: file.name,
-                    locator: file.name,
-                    quote: text.slice(0, 800),
-                    confidence: "C",
-                    importedFrom: file.name,
-                  });
-                })).then(() => toast.success("Source material added."));
-                event.currentTarget.value = "";
-              }}
-            />
-            <Button variant="ghost" size="sm" onClick={addSourceMaterial}><FolderPlus />{RESEARCH_SOURCE_MATERIAL_CTA}</Button>
-            <Button variant="ghost" size="sm" onClick={openManualNotes}>{RESEARCH_MANUAL_SUMMARY}</Button>
+          {view.showOffline && (
+            <div className="research-offline-note" data-research-offline-panel="true">
+              <strong>{view.offlineTitle}</strong>
+              <p>{view.offlineBody}</p>
+              <div>
+                <Button size="sm" variant="ghost" onClick={onRescan}>
+                  <RefreshCw />
+                  Rescan
+                </Button>
+                <Button size="sm" variant="ghost" onClick={addSourceMaterial}>
+                  {RESEARCH_SOURCE_MATERIAL_CTA}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={openManualNotes}>
+                  {RESEARCH_MANUAL_SUMMARY}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => returnToDefaultMode()}>
+                  Return to Default Mode
+                </Button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <aside className="research-room-inspector" aria-label="Research Bible">
+          <div className="research-inspector-heading">
+            <span>Research Bible</span>
+            <Badge>{view.statusLabel}</Badge>
           </div>
-        </header>
-
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
-          {view.showOffline ? (
-            <div className="mb-5 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]" data-research-offline-panel="true">
-              <p className="font-display text-lg tracking-tight">{view.offlineTitle}</p>
-              <p className="mt-2 text-sm leading-relaxed text-muted">{view.offlineBody}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button size="sm" variant="secondary" onClick={onRescan}><RefreshCw />Rescan</Button>
-                <Button size="sm" variant="ghost" onClick={addSourceMaterial}>{RESEARCH_SOURCE_MATERIAL_CTA}</Button>
-                <Button size="sm" variant="ghost" onClick={openManualNotes}>{RESEARCH_MANUAL_SUMMARY}</Button>
-                <Button size="sm" variant="ghost" onClick={() => returnToDefaultMode()}>Return to Default Mode</Button>
+          <nav className="research-section-tabs" aria-label="Research sections">
+            {SECTIONS.map(([id, label]) => (
+              <button
+                key={id}
+                aria-current={section === id ? "page" : undefined}
+                onClick={() => setSection(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+          <div className="research-inspector-scroll">
+            {section === "overview" && (
+              <div className="research-section-content">
+                <h2>Research Bible</h2>
+                {view.showEmptyState && (
+                  <div data-research-empty-state="true">
+                    <p>No Research Bible has been generated yet.</p>
+                    <p>Build Research Draft to draft:</p>
+                    <ul>
+                      {RESEARCH_EMPTY_SECTIONS.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <dl className="research-overview-cast">
+                  <dt>Characters</dt>
+                  <dd>
+                    {characters.length
+                      ? characters.map((item) => item.name).join(", ")
+                      : "Not in Research Bible yet"}
+                  </dd>
+                  <dt>Locations</dt>
+                  <dd>
+                    {locations.length
+                      ? locations.map((item) => item.name).join(", ")
+                      : "Not in Research Bible yet"}
+                  </dd>
+                </dl>
+                <p className="research-section-hint">
+                  All {RESEARCH_BIBLE_SECTION_KEYS.length} sections, including source evidence and production feasibility, stay
+                  editable here.
+                </p>
+                {RESEARCH_BIBLE_SECTION_KEYS.map((key) => (
+                  <details className="research-section-entry" key={key}>
+                    <summary>
+                      {RESEARCH_BIBLE_SECTION_LABELS[key]}
+                      <ArrowUpRight size={14} />
+                    </summary>
+                    <Textarea
+                      aria-label={RESEARCH_BIBLE_SECTION_LABELS[key]}
+                      rows={7}
+                      value={draft.sections[key]}
+                      placeholder="No direction recorded yet"
+                      onChange={(event) =>
+                        persistContent({
+                          ...draft,
+                          sections: { ...draft.sections, [key]: event.target.value },
+                        })
+                      }
+                    />
+                  </details>
+                ))}
               </div>
-            </div>
-          ) : null}
+            )}
 
-          {pasteOpen ? (
-            <form
-              className="mb-5 grid max-w-3xl gap-2 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
-              onSubmit={(event) => {
-                event.preventDefault();
-                addSource({
-                  title: pasteTitle.trim() || "Pasted source",
-                  locator: "pasted-source-text",
-                  quote: pasteText,
-                  confidence: "C",
-                  importedFrom: null,
-                });
-                setPasteTitle("");
-                setPasteText("");
-                setPasteOpen(false);
-                toast.success("Source material added.");
-              }}
-            >
-              <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Source material</p>
-              <Input value={pasteTitle} onChange={(event) => setPasteTitle(event.target.value)} placeholder="Title" />
-              <Textarea className="min-h-32" value={pasteText} onChange={(event) => setPasteText(event.target.value)} placeholder="Source text" required />
-              <div className="flex flex-wrap gap-2">
-                <Button type="submit" size="sm">Add source material</Button>
-                <Button type="button" size="sm" variant="ghost" onClick={() => setPasteOpen(false)}>Cancel</Button>
-              </div>
-            </form>
-          ) : null}
-
-          {view.showEmptyState && section === "overview" ? (
-            <div className="max-w-3xl rounded-lg bg-elevated p-5 shadow-[var(--shadow-border)]" data-research-empty-state="true">
-              <p className="font-display text-xl tracking-tight">No Research Bible has been generated yet.</p>
-              <p className="mt-2 text-sm leading-relaxed text-muted">Build Research Draft to draft:</p>
-              <ul className="mt-3 grid gap-1 text-sm text-muted">
-                {RESEARCH_EMPTY_SECTIONS.map((item) => <li key={item}>· {item}</li>)}
-              </ul>
-              <Button className="mt-5" onClick={buildResearchDraft}><Search />{RESEARCH_ROOM_PRIMARY_CTA}</Button>
-            </div>
-          ) : null}
-
-          {!view.showEmptyState && section === "overview" ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <SectionCard title="Source / Canon Ledger" body={`${draft.sources.length} source(s)`} onOpen={() => setSection("sources")} />
-              <SectionCard title="World Overview" body={draft.socialWorldNotes.length ? `${draft.socialWorldNotes.length} social notes` : (draft.notes.trim() || "No world notes yet")} onOpen={() => setSection("social")} />
-              <SectionCard title="Characters" body={characters.length ? characters.map((item) => item.name).join(", ") : "Not in Research Bible yet"} />
-              <SectionCard title="Locations" body={locations.length ? locations.map((item) => item.name).join(", ") : "Not in Research Bible yet"} />
-              <SectionCard title="Visual Identity" body={draft.cinematographyManifesto.texture || draft.cinematographyManifesto.thesis || "Not generated"} onOpen={() => setSection("camera")} />
-              <SectionCard title="Cinematography" body={draft.cinematographyManifesto.lensLanguage || draft.cinematographyManifesto.thesis || "Not generated"} onOpen={() => setSection("camera")} />
-              <SectionCard title="Risks" body={draft.risks.trim() || "No risks recorded"} onOpen={() => setSection("risks")} />
-            </div>
-          ) : null}
-
-          {section === "sources" ? <SourceLedgerPanel content={draft} /> : null}
-          {section === "social" ? <SocialWorldPanel content={draft} onChange={persistContent} /> : null}
-          {section === "camera" ? (
-            <div className="grid max-w-3xl gap-3">
-              <p className="text-xs leading-relaxed text-muted">Picture-level cinematography research. This does not rewrite shots or prompts.</p>
-              {([
-                ["thesis", "Thesis"],
-                ["lensLanguage", "Lens language"],
-                ["lighting", "Lighting"],
-                ["geography", "Geography"],
-                ["movement", "Movement"],
-                ["texture", "Texture / grain"],
-                ["soundWorld", "Sound world"],
-                ["musicResearch", "Music research"],
-              ] as const).map(([key, label]) => (
-                <div key={key}>
-                  <Label>{label}</Label>
-                  <Textarea className="mt-1.5" value={draft.cinematographyManifesto[key]} onChange={(event) => persistContent({ ...draft, cinematographyManifesto: { ...draft.cinematographyManifesto, [key]: event.target.value } })} />
+            {section === "sources" && (
+              <div className="research-section-content">
+                <h2>Sources & disputes</h2>
+                <SourceLedgerPanel
+                  content={draft}
+                  onRecordDispute={(input) => {
+                    const result = recordResearchDispute(draft, input, Date.now());
+                    if ("error" in result) toast.error(result.error);
+                    else persistContent(result.content);
+                  }}
+                  onResolveDispute={(id, note) => {
+                    const result = resolveResearchDispute(draft, id, note, Date.now());
+                    if ("error" in result) toast.error(result.error);
+                    else persistContent(result.content);
+                  }}
+                  onClassifySource={(id, confidence) => {
+                    const result = classifyResearchSource(draft, id, confidence);
+                    if ("error" in result) toast.error(result.error);
+                    else persistContent(result.content);
+                  }}
+                />
+                <div className="research-source-actions">
+                  <Button variant="ghost" size="sm" onClick={addSourceMaterial}>
+                    <FolderPlus />
+                    {RESEARCH_SOURCE_MATERIAL_CTA}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={openManualNotes}>
+                    {RESEARCH_MANUAL_SUMMARY}
+                  </Button>
                 </div>
-              ))}
-            </div>
-          ) : null}
-          {section === "risks" ? (
-            <div className="grid max-w-3xl gap-3">
-              <div>
-                <Label>Risks / disputes</Label>
-                <Textarea className="mt-1.5 min-h-32" value={draft.risks} onChange={(event) => persistContent({ ...draft, risks: event.target.value })} />
+                <details
+                  ref={manualRef}
+                  id="manual-source-entry"
+                  data-manual-source-entry="true"
+                  className="research-manual-entry"
+                >
+                  <summary>{RESEARCH_MANUAL_SUMMARY}</summary>
+                  <AddSourceForm onAdd={addSource} />
+                  <Button size="sm" variant="secondary" onClick={() => setPasteOpen(true)}>
+                    Paste source text
+                  </Button>
+                  <label>
+                    Research notes
+                    <Textarea
+                      value={draft.notes}
+                      onChange={(event) => persistContent({ ...draft, notes: event.target.value })}
+                    />
+                  </label>
+                </details>
+                {pasteOpen && (
+                  <form
+                    className="research-paste-form"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      addSource({
+                        title: pasteTitle.trim() || "Pasted source",
+                        locator: "pasted-source-text",
+                        quote: pasteText,
+                        confidence: "C",
+                        importedFrom: null,
+                      });
+                      setPasteTitle("");
+                      setPasteText("");
+                      setPasteOpen(false);
+                      toast.success("Source material added.");
+                    }}
+                  >
+                    <h3>Source material</h3>
+                    <Input
+                      value={pasteTitle}
+                      onChange={(event) => setPasteTitle(event.target.value)}
+                      placeholder="Title"
+                    />
+                    <Textarea
+                      value={pasteText}
+                      onChange={(event) => setPasteText(event.target.value)}
+                      placeholder="Source text"
+                      required
+                    />
+                    <div>
+                      <Button type="submit" size="sm">
+                        Add source material
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setPasteOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                )}
               </div>
-              <div>
-                <Label>AI production feasibility</Label>
-                <Textarea className="mt-1.5 min-h-32" value={draft.feasibility} onChange={(event) => persistContent({ ...draft, feasibility: event.target.value })} />
-              </div>
-            </div>
-          ) : null}
+            )}
 
-          <details ref={manualRef} id="manual-source-entry" data-manual-source-entry="true" className="mt-6 max-w-3xl rounded-lg bg-inset p-4">
-            <summary className="cursor-pointer text-sm text-muted">{RESEARCH_MANUAL_SUMMARY}</summary>
-            <div className="mt-4 grid gap-4">
-              <AddSourceForm onAdd={addSource} />
-              <Button size="sm" variant="secondary" onClick={() => setPasteOpen(true)}>Paste source text</Button>
-              <div>
-                <Label>Research notes</Label>
-                <Textarea className="mt-1.5 min-h-24" value={draft.notes} onChange={(event) => persistContent({ ...draft, notes: event.target.value })} />
+            {section === "social" && (
+              <div className="research-section-content">
+                <h2>Social world</h2>
+                <SocialWorldPanel content={draft} onChange={persistContent} />
               </div>
-            </div>
-          </details>
-        </div>
-
-        <footer className="shrink-0 border-t border-border px-4 py-3 sm:px-6">
-          <div className="flex flex-wrap items-center gap-2">
+            )}
+            {section === "camera" && (
+              <div className="research-section-content research-direction-fields">
+                <h2>Cinematography</h2>
+                <p>
+                  Picture-level cinematography research. This does not rewrite shots or prompts.
+                </p>
+                {(
+                  [
+                    ["thesis", "Thesis"],
+                    ["lensLanguage", "Lens language"],
+                    ["lighting", "Lighting"],
+                    ["geography", "Geography"],
+                    ["movement", "Movement"],
+                    ["texture", "Texture / grain"],
+                    ["soundWorld", "Sound world"],
+                    ["musicResearch", "Music research"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <div key={key}>
+                    <Label>{label}</Label>
+                    <Textarea
+                      value={draft.cinematographyManifesto[key]}
+                      onChange={(event) =>
+                        persistContent({
+                          ...draft,
+                          cinematographyManifesto: {
+                            ...draft.cinematographyManifesto,
+                            [key]: event.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            {section === "risks" && (
+              <div className="research-section-content research-direction-fields">
+                <h2>Risks & feasibility</h2>
+                <div>
+                  <Label>Risks / disputes</Label>
+                  <Textarea
+                    value={draft.risks}
+                    onChange={(event) => persistContent({ ...draft, risks: event.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>AI production feasibility</Label>
+                  <Textarea
+                    value={draft.feasibility}
+                    onChange={(event) =>
+                      persistContent({ ...draft, feasibility: event.target.value })
+                    }
+                  />
+                </div>
+              </div>
+            )}
+            {section === "versions" && (
+              <div
+                className="research-section-content research-versions"
+                data-research-status-panel="true"
+              >
+                <h2>Versions & status</h2>
+                <dl>
+                  <dt>Research status</dt>
+                  <dd>{view.statusLabel}</dd>
+                  <dt>Configured model</dt>
+                  <dd>{view.modelStatusLabel}</dd>
+                </dl>
+                <Button size="sm" variant="secondary" onClick={onRescan}>
+                  <RefreshCw />
+                  Rescan availability
+                </Button>
+                <h3>Version history</h3>
+                <ol>
+                  {[...bible.versions].reverse().map((version) => (
+                    <li key={version.id}>
+                      <strong>{version.label}</strong>
+                      <span>
+                        {version.scope} · {new Date(version.createdAt).toLocaleString()}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+                {!bible.versions.length && <p>No version has been saved yet.</p>}
+              </div>
+            )}
+          </div>
+          <footer className="research-room-footer">
             <Button
               variant="secondary"
               onClick={() => {
@@ -289,10 +573,10 @@ export function ResearchWorkspace({
                 toast.success("Research draft saved.");
               }}
             >
-              <Save />Save research
+              <Save />
+              Save research
             </Button>
             <Button
-              className="ml-auto"
               disabled={bible.status === "APPROVED"}
               onClick={() => {
                 const approved = approveResearchOrError({ ...bible, content: draft }, uid("rsv"));
@@ -304,33 +588,74 @@ export function ResearchWorkspace({
                 toast.success("Research Bible approved.");
               }}
             >
-              <Check />Approve research
+              <Check />
+              Approve research
             </Button>
-          </div>
-        </footer>
-      </section>
-      <aside className="research-status-inspector" aria-label="Research status and versions" data-research-status-panel="true">
-        <p className="text-xs text-muted">Research status</p><p>{view.statusLabel}</p>
-        <p className="mt-5 text-xs text-muted">Configured model</p><p>{view.modelStatusLabel}</p>
-        <Button className="mt-3" size="sm" variant="secondary" onClick={onRescan}><RefreshCw />Rescan availability</Button>
-        <h3 className="mt-6">Version history</h3>
-        <ol>{[...bible.versions].reverse().map((version) => <li key={version.id}><strong>{version.label}</strong><span>{version.scope} · {new Date(version.createdAt).toLocaleString()}</span></li>)}</ol>
-      </aside>
-    </div>
-  );
-}
+          </footer>
+        </aside>
+      </div>
 
-function SectionCard({ title, body, onOpen }: { title: string; body: string; onOpen?: () => void }) {
-  const inner = (
-    <>
-      <h3 className="font-display text-lg tracking-tight">{title}</h3>
-      <p className="mt-2 text-xs leading-relaxed text-muted">{body}</p>
-    </>
-  );
-  if (!onOpen) return <article className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]">{inner}</article>;
-  return (
-    <button type="button" className="rounded-lg bg-elevated p-4 text-left shadow-[var(--shadow-border)] hover:shadow-[var(--shadow-border-hover)]" onClick={onOpen}>
-      {inner}
-    </button>
+      <div
+        className="research-reference-rail"
+        aria-label={visualLocations.length ? "Location references" : "Research sections"}
+      >
+        <button
+          type="button"
+          className="research-reference-arrow"
+          aria-label="Previous references"
+          onClick={() => referenceTrackRef.current?.scrollBy({ left: -450, behavior: "smooth" })}
+        >
+          <ChevronLeft size={22} aria-hidden="true" />
+        </button>
+        <div className="research-reference-track" ref={referenceTrackRef}>
+          {visualLocations.length
+            ? visualLocations.map((asset) => {
+                const thumbnail = locationImage(asset, picture?.id, mediaMap);
+                return (
+                  <button
+                    key={asset.id}
+                    className="research-reference-item"
+                    aria-current={asset.id === selectedLocation?.id && !showingPictureWallpaper ? "true" : undefined}
+                    onClick={() => setSelectedLocationId(asset.id)}
+                  >
+                    <span className="research-reference-thumb">
+                      {thumbnail && (
+                        <AssetImagePreview
+                          key={`${asset.id}:${thumbnail.previewUri ?? thumbnail.mediaUri}`}
+                          previewUri={thumbnail.previewUri}
+                          mediaUri={thumbnail.mediaUri}
+                          alt=""
+                          compact
+                        />
+                      )}
+                    </span>
+                    <span>{asset.name}{thumbnail?.draftFallback ? <small className="block text-[10px]">Draft preview</small> : null}</span>
+                  </button>
+                );
+              })
+            : SECTIONS.map(([id, label]) => (
+                <button
+                  key={id}
+                  className="research-reference-item research-reference-section"
+                  aria-current={section === id ? "true" : undefined}
+                  onClick={() => setSection(id)}
+                >
+                  <span className="research-reference-thumb">
+                    <span>{label}</span>
+                  </span>
+                  <span>{label}</span>
+                </button>
+              ))}
+        </div>
+        <button
+          type="button"
+          className="research-reference-arrow"
+          aria-label="Next references"
+          onClick={() => referenceTrackRef.current?.scrollBy({ left: 450, behavior: "smooth" })}
+        >
+          <ChevronRight size={22} aria-hidden="true" />
+        </button>
+      </div>
+    </div>
   );
 }

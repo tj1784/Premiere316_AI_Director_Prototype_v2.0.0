@@ -8,6 +8,7 @@ import { approvedScreenplayBoundary } from "./screenplay.ts";
 import { sceneNodes } from "./screenplay-hierarchy.ts";
 import { migratePicturePreparation } from "./picture-preparation.ts";
 import { sanitizeProductionBreakdown } from "../production/persistence.ts";
+import { deleteUnselectedImageIteration } from "../production/image-iterations.ts";
 import { PRODUCTION_CATEGORIES } from "../production/types.ts";
 import { isVisualAsset } from "./asset-prompt-context.ts";
 import { hydrateVisualDevelopmentState } from "../visual-development.ts";
@@ -83,7 +84,7 @@ test("published scene IDs and exact source spans survive native screenplay migra
   assert.ok(!scenes[21].fountain.includes("#PS-S23#"));
 });
 
-test("an accepted text import does not invent visual approvals, generated media or runtime usage", () => {
+test("an accepted text import does not invent visual approvals or app-generated runtime usage", () => {
   const picture = makeProdigalSonPicture();
   assert.equal(picture.research!.status, "IN_REVIEW");
   assert.equal(picture.research!.approvedVersionId, null);
@@ -93,7 +94,7 @@ test("an accepted text import does not invent visual approvals, generated media 
   assert.equal(picture.screenplay.lastTelemetry, null);
   assert.equal(picture.screenplay.versions.at(-1)!.model, null);
   assert.equal(picture.sample, undefined);
-  assert.equal(picture.thumbnailUrl, PRODIGAL_SON_VISUAL_REFERENCE_URI);
+  assert.equal(picture.thumbnailUrl, "/pictures/prodigal-son/previews/visual-development-reference.webp");
   assert.equal(picture.production!.sourceBoundary, null);
   assert.equal(picture.production!.productionAuthority, null);
   assert.deepEqual(picture.production!.preparedAssets, []);
@@ -105,11 +106,13 @@ test("an accepted text import does not invent visual approvals, generated media 
     assert.ok(asset.specVersions!.every((spec) => !spec.approved));
     if (asset.category === "character") {
       assert.equal(asset.iterations.length, 1);
-      assert.equal(asset.iterations[0].mediaUri, `/pictures/prodigal-son/character-assets/${asset.id === "PS-CHR-PHARISEE" ? "PS-EXT-LISTENERS" : asset.id}.png`);
+      assert.equal(asset.iterations[0].previewUri, `/pictures/prodigal-son/previews/${asset.id === "PS-CHR-PHARISEE" ? "PS-EXT-LISTENERS" : asset.id}.webp`);
+      assert.equal(asset.iterations[0].mediaUri, asset.iterations[0].previewUri);
       assert.equal(asset.iterations[0].status, "NEEDS_REVIEW");
     } else if (asset.iterations.length) {
       assert.equal(asset.iterations.length, 1);
-      assert.equal(asset.iterations[0].mediaUri, `/pictures/prodigal-son/generated-assets/${asset.id}.png`);
+      assert.equal(asset.iterations[0].previewUri, `/pictures/prodigal-son/previews/${asset.id}.webp`);
+      assert.equal(asset.iterations[0].mediaUri, asset.iterations[0].previewUri);
       assert.equal(asset.iterations[0].status, "NEEDS_REVIEW");
     } else {
       assert.deepEqual(asset.iterations, []);
@@ -126,6 +129,20 @@ test("an accepted text import does not invent visual approvals, generated media 
   assert.ok(picture.production!.assets.find((asset) => asset.id === "PS-PRP-RING")!.canonicalSpec.continuityLocks.some((lock) => lock.includes("PS-CONT-07")));
 });
 
+test("every imported image and the film board has a complete, served WebP preview", () => {
+  const picture = makeProdigalSonPicture();
+  const uris = [picture.thumbnailUrl!, ...picture.production!.assets.flatMap((asset) => asset.iterations.map((iteration) => iteration.previewUri!))];
+  assert.ok(uris.length > 100);
+  for (const uri of new Set(uris)) {
+    assert.match(uri, /^\/pictures\/prodigal-son\/previews\/[\w-]+\.webp$/);
+    const content = readFileSync(new URL(`../../../public${uri}`, import.meta.url));
+    assert.ok(content.length > 12, `${uri} is an empty or truncated preview`);
+    assert.equal(content.toString("ascii", 0, 4), "RIFF", uri);
+    assert.equal(content.toString("ascii", 8, 12), "WEBP", uri);
+    assert.equal(content.readUInt32LE(4) + 8, content.length, `${uri} has an incomplete RIFF body`);
+  }
+});
+
 test("visual development board backfills only the Prodigal Son thumbnail and is removed from asset references", () => {
   const picture = makeProdigalSonPicture();
   const legacy = {
@@ -140,11 +157,40 @@ test("visual development board backfills only the Prodigal Son thumbnail and is 
     },
   };
   const hydrated = hydrateProdigalSonVisualReference(legacy);
-  assert.equal(hydrated.thumbnailUrl, PRODIGAL_SON_VISUAL_REFERENCE_URI);
+  assert.equal(hydrated.thumbnailUrl, "/pictures/prodigal-son/previews/visual-development-reference.webp");
   assert.equal(hydrated.production!.assets.length, 130);
   assert.equal(hydrated.production!.assets.every((asset) => !asset.references.some((reference) => reference.uri === PRODIGAL_SON_VISUAL_REFERENCE_URI)), true);
-  assert.equal(hydrated.production!.assets.filter((asset) => asset.category === "character" && asset.iterations.some((iteration) => iteration.mediaUri === `/pictures/prodigal-son/character-assets/${asset.id}.png`)).length, 29);
-  assert.equal(hydrated.production!.assets.filter((asset) => asset.iterations.some((iteration) => iteration.mediaUri === `/pictures/prodigal-son/generated-assets/${asset.id}.png`)).length, 100);
+  assert.equal(hydrated.production!.assets.filter((asset) => asset.category === "character" && asset.iterations.some((iteration) => iteration.previewUri === `/pictures/prodigal-son/previews/${asset.id}.webp`)).length, 29);
+  assert.equal(hydrated.production!.assets.filter((asset) => asset.iterations.some((iteration) => iteration.previewUri === `/pictures/prodigal-son/previews/${asset.id}.webp`)).length, 129);
+});
+
+test("hydration repairs bundled PNG paths without replacing user media or resurrecting removed drafts", () => {
+  const picture = makeProdigalSonPicture();
+  const father = picture.production!.assets.find((asset) => asset.id === "PS-CHR-FATHER")!;
+  father.iterations[0].mediaUri = "/pictures/prodigal-son/character-assets/PS-CHR-FATHER.png";
+  father.iterations[0].previewUri = undefined;
+  const location = picture.production!.assets.find((asset) => asset.id === "PS-LOC-TOWN")!;
+  location.iterations[0].mediaUri = "/pictures/prodigal-son/generated-assets/PS-LOC-TOWN.png";
+  location.iterations[0].previewUri = undefined;
+  const younger = picture.production!.assets.find((asset) => asset.id === "PS-CHR-YOUNGER")!;
+  younger.iterations[0].mediaUri = "/user-media/younger-new-face.png";
+  younger.iterations[0].previewUri = "/user-media/younger-new-face.webp";
+  const userIteration = { ...father.iterations[0], id: "father:user-iteration", mediaUri: "/user-media/father-comparison.png", previewUri: "/user-media/father-comparison.webp" };
+  father.iterations.push(userIteration);
+  const removedId = picture.production!.assets.find((asset) => asset.id === "PS-CHR-JESUS")!.iterations[0].id;
+  picture.production = deleteUnselectedImageIteration(picture.production!, { iterationId: removedId, selectedIterationId: null, now: 1800 });
+
+  const hydrated = hydrateProdigalSonVisualReference(JSON.parse(JSON.stringify(picture)));
+  const assets = hydrated.production!.assets;
+  const fatherAfter = assets.find((asset) => asset.id === father.id)!;
+  assert.equal(fatherAfter.iterations[0].mediaUri, "/pictures/prodigal-son/previews/PS-CHR-FATHER.webp");
+  assert.equal(fatherAfter.iterations[0].previewUri, fatherAfter.iterations[0].mediaUri);
+  assert.deepEqual(fatherAfter.iterations.find((iteration) => iteration.id === userIteration.id), userIteration);
+  assert.equal(assets.find((asset) => asset.id === location.id)!.iterations[0].mediaUri, "/pictures/prodigal-son/previews/PS-LOC-TOWN.webp");
+  assert.equal(assets.find((asset) => asset.id === younger.id)!.iterations[0].mediaUri, "/user-media/younger-new-face.png");
+  assert.equal(assets.find((asset) => asset.id === younger.id)!.iterations[0].previewUri, "/user-media/younger-new-face.webp");
+  assert.equal(assets.find((asset) => asset.id === "PS-CHR-JESUS")!.iterations.some((iteration) => iteration.id === removedId), false);
+  assert.ok(hydrated.production!.auditLog?.some((event) => event.id === `lineage:edited:delete-iteration:${removedId}:1800`));
 });
 
 test("native hydration leaves downstream creative work empty and every media gate locked", () => {
@@ -221,9 +267,11 @@ test("each factory result is independent and complete metadata survives serializ
   assert.ok(JSON.stringify(second).length < 2_250_000, "Text metadata should stay within a reasonable localStorage footprint.");
 });
 
-test("all supplied download files exactly match their source SHA-256 and text payloads", () => {
+test("all supplied direct downloads match their source SHA-256 and text payloads", () => {
   const picture = makeProdigalSonPicture();
-  for (const [fileName, expectedHash] of Object.entries(PRODIGAL_SON_SOURCE.sourceSha256)) {
+  for (const { fileName } of picture.importedPackage!.resources) {
+    const expectedHash = PRODIGAL_SON_SOURCE.sourceSha256[fileName as keyof typeof PRODIGAL_SON_SOURCE.sourceSha256];
+    assert.ok(expectedHash, `Missing source digest for ${fileName}`);
     const content = readFileSync(new URL(`../../..${RESOURCE_PATH}/${fileName}`, import.meta.url));
     assert.equal(createHash("sha256").update(content).digest("hex"), expectedHash, fileName);
   }
