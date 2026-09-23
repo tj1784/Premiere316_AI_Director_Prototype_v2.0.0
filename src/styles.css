@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+html.premiere-desktop .desktop-drag-region {
+  -webkit-app-region: drag;
+  padding-right: 9rem;
+}
+
+html.premiere-desktop .desktop-drag-region button,
+html.premiere-desktop .desktop-drag-region input,
+html.premiere-desktop .desktop-drag-region a {
+  -webkit-app-region: no-drag;
+}
+
 @theme {
   --color-bg: #0b0d10;
   --color-surface: #15191d;

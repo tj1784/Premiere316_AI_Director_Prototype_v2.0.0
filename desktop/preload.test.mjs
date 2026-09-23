@@ -38,7 +38,8 @@ describe("desktop security boundary", () => {
     assert.match(main, /contextIsolation:\s*true/);
     assert.match(main, /sandbox:\s*true/);
     assert.match(main, /webviewTag:\s*false/);
-    assert.match(main, /frame:\s*true/);
+    assert.match(main, /titleBarStyle:\s*"hidden"/);
+    assert.match(main, /titleBarOverlay:/);
     assert.match(main, /minimizable:\s*true/);
   });
   it("production does not open an external browser for the product", () => {

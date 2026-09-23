@@ -174,6 +174,8 @@ const requiredAsarEntries = [
   "/desktop/director-workspace.html",
   "/desktop/director-workspace-preload.cjs",
   "/desktop/main.mjs",
+  "/desktop/project-library.mjs",
+  "/src/lib/studio/voice-reconciliation.mjs",
   "/desktop/preload.cjs",
   "/desktop/authority-review-preload.cjs",
   "/desktop/authority-review.html",
@@ -195,6 +197,12 @@ const requiredResources = [
   join(packagedResources, "build-info.json"),
   join(packagedResources, "workers", "flux1_jsonl_worker.py"),
   join(packagedResources, "ui", "server", "index.mjs"),
+  ...[
+    "david.png", "harrowing-adam.png", "harrowing-gates.png",
+    "harrowing-jesus.png", "harrowing-v2-golgotha.png",
+    "harrowing-v2-jesus.png", "last-reel.png",
+    "moses-reference.jpg", "studio-studies.png",
+  ].map((name) => join(packagedResources, "ui", "public", "picture-covers", name)),
 ];
 const missingResources = requiredResources.filter((entry) => !existsSync(entry));
 if (missingAsarEntries.length || missingResources.length) {

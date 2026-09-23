@@ -12,7 +12,7 @@ export function HomeBay() {
 
   return (
     <div className="min-h-dvh bg-bg">
-      <header className="flex items-center justify-between gap-4 px-5 py-4 sm:px-8">
+      <header className="desktop-drag-region flex items-center justify-between gap-4 px-5 py-4 sm:px-8">
         <div className="flex items-center gap-3">
           <span className="relative grid size-10 place-items-center rounded-md bg-elevated shadow-[var(--shadow-border)]">
             <Clapperboard className="size-4 text-accent" aria-hidden="true" />

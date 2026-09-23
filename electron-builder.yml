@@ -10,6 +10,7 @@ files:
   - desktop/specialist-audio.mjs
   - desktop/project-location.mjs
   - desktop/project-library.mjs
+  - src/lib/studio/voice-reconciliation.mjs
   - desktop/director-progress.mjs
   - desktop/director-workspace.mjs
   - desktop/director-workspace.html

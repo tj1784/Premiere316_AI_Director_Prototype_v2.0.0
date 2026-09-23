@@ -3,8 +3,18 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
+import { useEffect } from "react";
 
 const APP_NAME = "Premiere316";
+
+function DesktopWindowStyle() {
+  useEffect(() => {
+    if (!window.premiere316?.isDesktop) return;
+    document.documentElement.classList.add("premiere-desktop");
+    return () => document.documentElement.classList.remove("premiere-desktop");
+  }, []);
+  return null;
+}
 
 export const Route = createRootRoute({
   head: () => ({
@@ -31,6 +41,7 @@ export const Route = createRootRoute({
         <HeadContent />
       </head>
       <body className="bg-bg text-fg">
+        <DesktopWindowStyle />
         <PreviewHostBridge />
         <AuthProvider>
           <Outlet />

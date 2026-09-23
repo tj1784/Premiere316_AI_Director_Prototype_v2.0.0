@@ -208,7 +208,7 @@ export function StudioShell() {
       data-right-panel={rightKind ?? "none"}
       className="flex h-dvh min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-bg"
     >
-      <header className="relative z-30 flex min-w-0 shrink-0 items-center gap-1 border-b border-border px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-2">
+      <header className="desktop-drag-region relative z-30 flex min-w-0 shrink-0 items-center gap-1 border-b border-border px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-2">
         <Button variant="ghost" size="icon-sm" onClick={closePicture} aria-label="Back to pictures">
           <ArrowLeft />
         </Button>

@@ -5,8 +5,7 @@ node_modules
 .vercel
 .nitro
 dist
-dist-desktop
-dist-desktop-v4
+dist-desktop*
 desktop/dist
 *.local
 .DS_Store
