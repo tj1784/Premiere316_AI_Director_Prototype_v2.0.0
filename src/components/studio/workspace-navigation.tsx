@@ -16,7 +16,7 @@ const groups: { title: string; icon: typeof BookOpen; links: [StageId, string][]
       ["cinematography", "Camera & continuity"],
       ["shots", "Shots & coverage"],
       ["prompts", "Prompts"],
-      ["score", "Sound & music"],
+      ["score", "Voice design & sound"],
     ],
   },
   { title: "Assets", icon: Layers, links: [["inventory", "Assets & iterations"]] },

@@ -2843,12 +2843,12 @@ function ScoreStage({ picture }: { picture: Picture }) {
   const audio = hydratePictureAudio(picture);
   return (
     <Pane title="Score" kicker="13 · Voice + Sound + Music">
-      <SoundCueEditor />
       <p className="mb-4 max-w-2xl text-sm text-muted">
         Plan cues, manage voices, and review imported audio. Choose song, instrumental,
         sound-effect, and speech tools in Generate.
       </p>
       <VoiceDesignWorkspace key={picture.id} picture={picture} />
+      <SoundCueEditor />
       <div
         role="status"
         className="max-w-2xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]"
