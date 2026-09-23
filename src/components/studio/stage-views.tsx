@@ -238,19 +238,20 @@ export function StageView() {
   }
 }
 
-function Pane({ title, kicker, children }: { title: string; kicker: string; children: ReactNode }) {
+function Pane({ title, kicker, children, tabs }: { title: string; kicker: string; children: ReactNode; tabs?: ReactNode }) {
   return (
     <div className="stage-pane flex h-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden">
       <header className="shrink-0 px-4 pb-2 pt-3 sm:px-6 sm:pb-3 sm:pt-4">
         <p className="text-[11px] tracking-[0.2em] text-subtle uppercase">{kicker}</p>
         <h2
-          className="mt-1 truncate font-display text-[clamp(1.5rem,3vw,1.875rem)] tracking-tight"
+          className="mt-1 break-words font-display text-[clamp(1.5rem,3vw,1.875rem)] tracking-tight"
           title={title}
         >
           {title}
         </h2>
       </header>
-      <div className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto px-4 pb-8 sm:px-6">
+      {tabs ? <div className="shrink-0 px-4 pb-3 sm:px-6">{tabs}</div> : null}
+      <div className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4 sm:px-6">
         {children}
       </div>
     </div>
@@ -1197,7 +1198,7 @@ function InventoryStage({ picture }: { picture: Picture }) {
   const [surface, setSurface] = useWorkspaceDraft("asset-workspace-view", "library");
   const boundary = approvedScreenplayBoundary(picture.id, picture.intake, picture.screenplay);
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto sm:overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <header className="workspace-header">
         <div>
           <p className="workspace-eyebrow">PRODUCTION ASSETS</p>
@@ -1216,11 +1217,11 @@ function InventoryStage({ picture }: { picture: Picture }) {
         </div>
       </header>
       {surface === "library" && picture.production ? (
-        <div className="min-h-0 flex-1 overflow-auto p-4">
+        <div className="min-h-0 flex-1 overflow-hidden p-3">
           <GeneratedAssetsReview picture={picture} />
         </div>
       ) : (
-        <div className="min-h-[40rem] flex-1 overflow-hidden sm:min-h-0">
+        <div className="min-h-0 flex-1 overflow-hidden">
           <InventoryWorkspace
             boundary={boundary}
             record={picture.production ?? null}
@@ -1279,7 +1280,7 @@ function VisualDevelopmentStage({ picture }: { picture: Picture }) {
   return surface === "sheets" ? (
     <CharacterWorkspace picture={picture} onVisual={() => setSurface("visual")} />
   ) : (
-    <div className="h-full overflow-auto p-4">
+    <div className="workbench-frame p-4">
       <Button variant="ghost" onClick={() => setSurface("sheets")}>Back to character workspace</Button>
         <VisualDevelopmentWorkspace
           state={visualDevelopment}
@@ -1290,7 +1291,7 @@ function VisualDevelopmentStage({ picture }: { picture: Picture }) {
 }
 
 function CinematographyStage({ picture }: { picture: Picture }) {
-  const [surface, setSurface] = useWorkspaceDraft<"continuity" | "camera">(
+  const [surface, setSurface] = useWorkspaceDraft<"continuity" | "camera" | "sources">(
     "camera-workspace-view",
     "continuity",
   );
@@ -1309,8 +1310,8 @@ function CinematographyStage({ picture }: { picture: Picture }) {
     cinematography,
   ]);
   return (
-    <div className="h-full overflow-auto p-4">
-      <div className="mb-4 flex flex-wrap gap-2">
+    <div className="workbench-frame">
+      <div className="workbench-switcher">
         <Button
           variant={surface === "continuity" ? "primary" : "secondary"}
           onClick={() => setSurface("continuity")}
@@ -1323,15 +1324,16 @@ function CinematographyStage({ picture }: { picture: Picture }) {
         >
           Cinematography
         </Button>
+        <Button variant={surface === "sources" ? "primary" : "secondary"} onClick={() => setSurface("sources")}>Source geography</Button>
       </div>
+      <div className="workbench-content">
       {surface === "continuity" ? (
-        <>
-          <ShotContinuityEditor />
+        <ShotContinuityEditor />
+      ) : surface === "sources" ? (
           <MovieBibleEditor
             kinds={["scene", "shot", "location"]}
             title="Camera & geography sources"
           />
-        </>
       ) : (
         <CinematographyWorkspace
           state={cinematography}
@@ -1339,11 +1341,13 @@ function CinematographyStage({ picture }: { picture: Picture }) {
           onChange={(cinematography) => patchActive({ cinematography })}
         />
       )}
+      </div>
     </div>
   );
 }
 
 function PerformanceStage({ picture }: { picture: Picture }) {
+  const [surface, setSurface] = useWorkspaceDraft<"direction" | "emotion">("performance-surface", "direction");
   const patchActive = useStudio((state) => state.patchActive);
   const setStage = useStudio((state) => state.setStage);
   const workspace = picture.performance ?? migratePicturePerformance(picture);
@@ -1385,10 +1389,13 @@ function PerformanceStage({ picture }: { picture: Picture }) {
     }));
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <EmotionPerformancePanel picture={picture} />
-      <div className="min-h-0 flex-1">
-        <PerformanceWorkspaceView
+    <div className="workbench-frame">
+      <div className="workbench-switcher">
+        <Button variant={surface === "direction" ? "primary" : "secondary"} onClick={() => setSurface("direction")}>Performance direction</Button>
+        <Button variant={surface === "emotion" ? "primary" : "secondary"} onClick={() => setSurface("emotion")}>Emotion & voice</Button>
+      </div>
+      <div className="workbench-content">
+        {surface === "emotion" ? <EmotionPerformancePanel picture={picture} /> : <PerformanceWorkspaceView
           workspace={workspace}
           characters={characters}
           onChange={(performance) =>
@@ -1398,7 +1405,7 @@ function PerformanceStage({ picture }: { picture: Picture }) {
             })
           }
           onOpenShots={() => setStage("shots")}
-        />
+        />}
       </div>
     </div>
   );
@@ -1464,21 +1471,24 @@ function PromptStage({ picture }: { picture: Picture }) {
   const setStage = useStudio((s) => s.setStage);
   const patchActive = useStudio((s) => s.patchActive);
   const [surface, setSurface] = useWorkspaceDraft("prompt-workspace-view", "global");
+  const [selectedPromptShot, setSelectedPromptShot] = useWorkspaceDraft("prompt-selected-shot", "");
+  const activePromptShot = picture.shots.find((shot) => shot.id === selectedPromptShot) ?? picture.shots[0];
   const lab = hydratePromptLabState(picture.promptLab);
   return (
-    <Pane title="Prompts & render direction" kicker="FILM / SCENE / SHOT">
-      <div className="workspace-tabs mb-5" aria-label="Prompt workspace">
+    <Pane title="Prompts & render direction" kicker="FILM / SCENE / SHOT" tabs={<div className="workspace-tabs" aria-label="Prompt workspace">
         {[
           ["global", "Global & inherited look"],
           ["scene", "Scene context"],
           ["local", "Local shot direction"],
           ["execution", "Execution & payload"],
+          ["compiler", "Saved prompts"],
         ].map(([id, label]) => (
           <button key={id} aria-pressed={surface === id} onClick={() => setSurface(id)}>
             {label}
           </button>
         ))}
-      </div>
+      </div>}>
+
       <div hidden={surface !== "global"}>
         <RenderContextEditor />
       </div>
@@ -1490,10 +1500,9 @@ function PromptStage({ picture }: { picture: Picture }) {
       </div>
       <div hidden={surface !== "execution"}>
         <PromptPayloadPreview picture={picture} />
-        <details className="mt-6">
-          <summary className="cursor-pointer py-3 text-sm">
-            Batch compiler & saved shot prompts
-          </summary>
+      </div>
+      <div hidden={surface !== "compiler"}>
+          <h3 className="mb-3 text-sm font-medium">Batch compiler & saved shot prompts</h3>
           <p className="mb-4 max-w-xl text-sm text-muted">
             Still dialect {engineById(picture.selectedEngine.image)?.name}. Motion dialect{" "}
             {engineById(picture.selectedEngine.video)?.name}. Editorial duration stays separate from
@@ -1584,7 +1593,12 @@ function PromptStage({ picture }: { picture: Picture }) {
             </Button>
           </div>
           <div className="grid gap-3">
-            {picture.shots.map((s) => (
+            <label className="text-sm text-muted">Shot
+              <select aria-label="Saved prompt shot" className="mt-2 block w-full rounded-lg bg-inset p-3 text-fg" value={activePromptShot?.id ?? ""} onChange={(event) => setSelectedPromptShot(event.target.value)}>
+                {picture.shots.map((shot) => <option key={shot.id} value={shot.id}>{String(shot.index).padStart(2, "0")} · {shot.description}</option>)}
+              </select>
+            </label>
+            {(activePromptShot ? [activePromptShot] : []).map((s) => (
               <article
                 key={s.id}
                 className="rounded-lg bg-elevated p-3 shadow-[var(--shadow-border)]"
@@ -1604,7 +1618,7 @@ function PromptStage({ picture }: { picture: Picture }) {
               </article>
             ))}
           </div>
-        </details>
+
         <Button className="mt-5" variant="secondary" onClick={() => setStage("generate")}>
           Open generate bay
         </Button>
@@ -1614,6 +1628,7 @@ function PromptStage({ picture }: { picture: Picture }) {
 }
 
 function GenerateStage({ picture }: { picture: Picture }) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [manifests, setManifests] = useState<ImageComponentManifest[]>([]);
   const [generating, setGenerating] = useState<string | null>(null);
   const [backendStatus, setBackendStatus] = useState<Awaited<
@@ -1668,56 +1683,17 @@ function GenerateStage({ picture }: { picture: Picture }) {
   const gateWorkspace = hydrateGenerateGates(picture.generateGates, picture);
   return (
     <Pane title="Generate" kicker="10 · Three-gate cohesion">
-      <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">
-        Generate assets, prepare keyframes, or render motion from your shot prompts. Review the
-        actual outputs in this picture.
-      </p>
-      <VideoGenerationOptions picture={picture} />
-      <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">
-        {backendStatus?.ok === true
-          ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"}`
-          : backendStatus?.ok === false
-            ? `Backend authority unavailable: ${backendStatus.error}`
-            : "Backend authority status pending; generation fails closed."}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
+        <div className="workspace-tabs" role="tablist" aria-label="Generate gates">
+          {gateReadiness.map((item) => <button key={item.gate} role="tab" aria-selected={generateGate === item.gate} title={item.reason} onClick={() => setGenerateFocus(item.gate)}>{item.gate === "assets" ? "Assets" : item.gate === "keyframes" ? "First / last frames" : "Video clips"}<span className="ml-2 text-xs opacity-70">{item.approved}/{item.required}</span></button>)}
+        </div>
+        <Button size="sm" variant="ghost" onClick={() => setSettingsOpen(true)}>Generation settings</Button>
       </div>
-      <div className="mb-4 grid gap-2 sm:grid-cols-3" aria-label="Generate gate readiness">
-        {gateReadiness.map((item) => (
-          <button
-            key={item.gate}
-            type="button"
-            className="rounded-md bg-elevated px-3 py-2 text-left text-xs shadow-[var(--shadow-border)]"
-            onClick={() => setGenerateFocus(item.gate)}
-          >
-            <span className="text-[11px] tracking-wide text-subtle uppercase">{item.status}</span>
-            <span className="mt-1 block font-display text-lg">
-              {item.gate === "assets"
-                ? "Assets"
-                : item.gate === "keyframes"
-                  ? "First / Last"
-                  : "Video Clips"}
-            </span>
-            <span className="mt-1 block text-muted">
-              {item.approved}/{item.required} · {item.reason}
-            </span>
-          </button>
-        ))}
-      </div>
-      <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Generate gates">
-        {(["assets", "keyframes", "video"] as const).map((gate) => (
-          <Button
-            key={gate}
-            size="sm"
-            variant={generateGate === gate ? "secondary" : "ghost"}
-            onClick={() => setGenerateFocus(gate)}
-          >
-            {gate === "assets"
-              ? "Asset Pass"
-              : gate === "keyframes"
-                ? "Keyframe Pass"
-                : "Video Pass"}
-          </Button>
-        ))}
-      </div>
+      <p className="mb-4 text-sm text-muted">{gateReadiness.find((item) => item.gate === generateGate)?.reason}</p>
+      <CabinetModal title="Generation settings & authority" open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <VideoGenerationOptions picture={picture} />
+        <div className="mt-4 rounded-lg border border-border p-3 text-sm text-muted">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; generation fails closed."}</div>
+      </CabinetModal>
       {generateGate === "assets" ? (
         <div className="mb-6">
           <AudioGenerationOptions picture={picture} />
@@ -2297,7 +2273,8 @@ function GenerateStage({ picture }: { picture: Picture }) {
 }
 
 function ReviewStage({ picture }: { picture: Picture }) {
-  const [reasons, setReasons] = useState<Record<string, string>>({});
+  const [surface, setSurface] = useWorkspaceDraft("review-media-surface", "images");
+  const [reasons, setReasons] = useWorkspaceDraft<Record<string, string>>("review-reasons", {});
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
   const replaceActive = useStudio((state) => state.replaceActive);
   const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
@@ -2308,8 +2285,11 @@ function ReviewStage({ picture }: { picture: Picture }) {
           Open video jobs
         </Button>
       </div>
-      <ImageIterationReview picture={picture} />
-      <section className="mt-6" aria-label="Video takes">
+      <div className="workspace-tabs mb-4" aria-label="Review media type">
+        {[["images", "Images"], ["video", "Video"], ["audio", "Audio"]].map(([id, label]) => <button key={id} aria-pressed={surface === id} onClick={() => setSurface(id)}>{label}</button>)}
+      </div>
+      <div hidden={surface !== "images"}><ImageIterationReview picture={picture} /></div>
+      <section hidden={surface !== "video"} aria-label="Video takes">
         <p className="mb-3 text-[11px] tracking-wide text-subtle uppercase">Video takes</p>
         <div className="grid min-w-0 gap-3 lg:grid-cols-2">
           {hydrateVideoWorkspace(picture.video).takes.length ? (
@@ -2323,7 +2303,7 @@ function ReviewStage({ picture }: { picture: Picture }) {
                     <p className="text-[11px] tracking-wide text-subtle uppercase">
                       {take.status.replaceAll("_", " ")}
                     </p>
-                    <h3 className="truncate font-display text-xl">
+                    <h3 className="break-words font-display text-xl">
                       {take.shotId} · {take.engineId}
                     </h3>
                   </div>
@@ -2443,7 +2423,7 @@ function ReviewStage({ picture }: { picture: Picture }) {
           )}
         </div>
       </section>
-      <section className="mt-6" aria-label="Audio takes">
+      <section hidden={surface !== "audio"} aria-label="Audio takes">
         <p className="mb-3 text-[11px] tracking-wide text-subtle uppercase">Audio takes</p>
         <div className="grid min-w-0 gap-3 lg:grid-cols-2">
           {hydrateAudioWorkspace(picture.audio).takes.length ? (
@@ -2457,7 +2437,7 @@ function ReviewStage({ picture }: { picture: Picture }) {
                     <p className="text-[11px] tracking-wide text-subtle uppercase">
                       {take.status.replaceAll("_", " ")}
                     </p>
-                    <h3 className="truncate font-display text-xl">
+                    <h3 className="break-words font-display text-xl">
                       {take.kind} · {take.engineId}
                     </h3>
                   </div>
@@ -2578,12 +2558,16 @@ function EmptyCard({ title, body }: { title: string; body: string }) {
 }
 
 function StitchStage({ picture }: { picture: Picture }) {
+  const [surface, setSurface] = useWorkspaceDraft("timeline-view", "preview");
   const selectedShotId = useStudio((s) => s.selectedShotId);
   const shot = picture.shots.find((s) => s.id === selectedShotId) ?? picture.shots[0];
   const plan = buildTimelinePlan(picture);
   return (
     <Pane title="Timeline & soundtrack" kicker="MOVIE ASSEMBLY">
-      <div className="overflow-hidden rounded-lg bg-inset shadow-[var(--shadow-border)]">
+      <div className="workspace-tabs mb-4" aria-label="Movie assembly views">
+        {[["preview", "Preview"], ["order", "Clip order"], ["readiness", "Coverage"]].map(([id,label]) => <button key={id} aria-pressed={surface === id} onClick={() => setSurface(id)}>{label}</button>)}
+      </div>
+      <div hidden={surface !== "preview"} className="overflow-hidden rounded-lg bg-inset shadow-[var(--shadow-border)]">
         <div className="grid h-[clamp(12rem,48dvh,32rem)] place-items-center">
           {shot?.videoUrl ? (
             <video src={shot.videoUrl} className="size-full object-contain" controls playsInline />
@@ -2596,15 +2580,9 @@ function StitchStage({ picture }: { picture: Picture }) {
           )}
         </div>
       </div>
-      <details className="mt-4 rounded border border-border p-3">
-        <summary className="cursor-pointer text-sm">
-          Editorial clip selection & sequence review
-        </summary>
-        <div className="mt-4">
-          <EditorialClipEditor picture={picture} />
-        </div>
-      </details>
-      <ol className="mt-4 grid gap-1">
+      <div hidden={surface !== "order"}><EditorialClipEditor picture={picture} /></div>
+      <div hidden={surface !== "readiness"}>
+      <ol className="grid gap-1">
         {plan.clips.map((clip) => {
           const s = picture.shots.find((item) => item.id === clip.shotId);
           return (
@@ -2630,6 +2608,7 @@ function StitchStage({ picture }: { picture: Picture }) {
         {importedCanonicalFilm(picture).clips.length} canonical imported clip(s). Origin stays
         imported, never generated.
       </p>
+      </div>
     </Pane>
   );
 }
@@ -2640,8 +2619,7 @@ function ScoreStage({ picture }: { picture: Picture }) {
   const [surface, setSurface] = useWorkspaceDraft("sound-workspace-view", "cues");
   const audio = hydratePictureAudio(picture);
   return (
-    <Pane title="Sound, voice & music" kicker="AUDIO DEVELOPMENT">
-      <div className="workspace-tabs mb-5" aria-label="Sound workspace">
+    <Pane title="Sound, voice & music" kicker="AUDIO DEVELOPMENT" tabs={<div className="workspace-tabs" aria-label="Sound workspace">
         {[
           ["cues", "Cue editor"],
           ["voices", "Character voices"],
@@ -2651,7 +2629,8 @@ function ScoreStage({ picture }: { picture: Picture }) {
             {label}
           </button>
         ))}
-      </div>
+      </div>}>
+
       <div hidden={surface !== "cues"}>
         <SoundCueEditor />
       </div>
@@ -2873,8 +2852,7 @@ function ExportStage({ picture }: { picture: Picture }) {
   }
 
   return (
-    <Pane title="Delivery" kicker="SCRIPT PACKAGE / FINISHED MOVIE">
-      <div className="workspace-tabs mb-5" aria-label="Delivery workspace">
+    <Pane title="Delivery" kicker="SCRIPT PACKAGE / FINISHED MOVIE" tabs={<div className="workspace-tabs" aria-label="Delivery workspace">
         {[
           ["package", "Script & production package"],
           ["movie", "Finished movie"],
@@ -2884,7 +2862,8 @@ function ExportStage({ picture }: { picture: Picture }) {
             {label}
           </button>
         ))}
-      </div>
+      </div>}>
+
       <div hidden={surface !== "movie"}>
         <MovieAssemblyPanel key={picture.id} picture={picture} />
       </div>

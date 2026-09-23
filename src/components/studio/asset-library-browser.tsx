@@ -1,3 +1,4 @@
+import "./asset-workbench.css";
 import { CabinetCarousel, CabinetModal } from "./cabinet";
 import { openCharacterSheet } from "./workspace-links";
 import { AssetImagePreview } from "./asset-image-preview";
@@ -56,7 +57,7 @@ export function AssetLibraryBrowser({
       (status === "all" ||
         (status === "approved" ? Boolean(a.approvedIterationId) : !a.approvedIterationId)),
   );
-  const asset = assets.find((a) => a.id === selectedId);
+  const asset = filtered.find((a) => a.id === selectedId) ?? filtered[0];
   const review = reviews.find((r) => r.asset.id === asset?.id);
   const iterations = [...(asset?.iterations ?? [])].reverse();
   const selected =
@@ -72,7 +73,7 @@ export function AssetLibraryBrowser({
     if (latest) replaceActive({ ...latest, production, updatedAt: Date.now() });
   };
   return (
-    <section aria-label="Asset library" className="asset-library-browser grid gap-4">
+    <section aria-label="Asset library" className="asset-library-browser">
       <div className="asset-library-filters flex items-center gap-3">
         <Input
           className="min-w-0 max-w-md flex-1"
@@ -138,7 +139,7 @@ export function AssetLibraryBrowser({
       <div className="asset-cabinet-carousel">
         <CabinetCarousel
           label="Assets"
-          pageSize={4}
+          pageSize={12}
           items={filtered.map((item) => {
             const itemReview = reviews.find((r) => r.asset.id === item.id);
             const cover =
@@ -189,13 +190,8 @@ export function AssetLibraryBrowser({
           })}
         />
       </div>
-      <CabinetModal
-        title={asset?.name ?? "Asset"}
-        open={Boolean(asset)}
-        onOpenChange={(open) => {
-          if (!open) setSelectedId("");
-        }}
-      >
+      <aside className="asset-library-inspector" aria-label="Selected asset inspector">
+        <header className="asset-inspector-heading"><div><span className="text-xs text-muted">Asset inspector</span><h2>{asset?.name ?? "Choose an asset"}</h2></div></header>
         <div className="asset-detail-modal" aria-label="Selected asset inspector">
           {asset ? (
             <>
@@ -462,7 +458,7 @@ export function AssetLibraryBrowser({
             </p>
           )}
         </div>
-      </CabinetModal>
+      </aside>
       {specification && asset && picture.production && (
         <AssetInspector
           key={asset.id}

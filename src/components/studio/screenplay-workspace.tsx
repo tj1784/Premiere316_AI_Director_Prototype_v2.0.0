@@ -1,3 +1,4 @@
+import "./writing-workspaces.css";
 import { CabinetModal } from "./cabinet";
 import { openCharacterSheet, openAssetIterations } from "./workspace-links";
 import {
@@ -7,6 +8,10 @@ import {
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   Check,
+  ChevronLeft,
+  ChevronRight,
+  PanelRightClose,
+  PanelRightOpen,
   Circle,
   GitCompareArrows,
   LoaderCircle,
@@ -100,11 +105,11 @@ export function ScreenplayWorkspace({
   onReleaseResident?: () => void;
   researchApproved: boolean;
 }) {
-  const [compareId, setCompareId] = useState<string>("");
-  const [passId, setPassId] = useState<ScreenplayStep["id"]>("pass-1");
+  const [compareId, setCompareId] = useWorkspaceDraft<string>("screenplay-compare-version", "");
+  const [passId, setPassId] = useWorkspaceDraft<ScreenplayStep["id"]>("screenplay-pass", "pass-1");
   const [qaModelId, setQaModelId] = useState("");
-  const [rewriteScope, setRewriteScope] = useState<ScreenplayScope>("scene");
-  const [secondOpinion, setSecondOpinion] = useState(false);
+  const [rewriteScope, setRewriteScope] = useWorkspaceDraft<ScreenplayScope>("screenplay-rewrite-scope", "scene");
+  const [secondOpinion, setSecondOpinion] = useWorkspaceDraft("screenplay-second-opinion", false);
   const [selectedNodeId, setSelectedNodeId] = useWorkspaceDraft<string | null>(
     "screenplay-selected-scene",
     null,
@@ -114,7 +119,9 @@ export function ScreenplayWorkspace({
   const [scenesOpen, setScenesOpen] = useState(false);
   const [inspectorTab, setInspectorTab] = useWorkspaceDraft("screenplay-inspector-tab", "context");
   const editor = useRef<HTMLTextAreaElement>(null);
-  const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
+  const [selectedNodeIds, setSelectedNodeIds] = useWorkspaceDraft<string[]>("screenplay-selected-scenes", []);
+  const [inspectorOpen, setInspectorOpen] = useWorkspaceDraft("screenplay-context-open", true);
+  const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const [selection, setSelection] = useState<ScreenplaySelection>(null);
   const generation = job?.screenplay.generation ?? screenplay.generation;
   const running =
@@ -207,129 +214,23 @@ export function ScreenplayWorkspace({
       screenplay.versions.map((version) => (version.label === "Draft 1" ? "Draft" : version.label)),
   );
 
-  return (
-    <div className="screenplay-workspace cabinet-screenplay">
-      <section className="flex min-h-0 min-w-0 flex-col">
-        <header className="screenplay-document-header flex shrink-0 flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <div className="min-w-0 flex-1">
-            <h2 className="break-words font-display text-xl tracking-tight">
-              {sceneOnly && activeScene
-                ? activeScene.slugline || activeScene.title
-                : "Full screenplay"}
-            </h2>
-            <p className="mt-1 text-xs text-muted">
-              {sceneOnly && activeScene
-                ? `Scene ${activeScene.order + 1}`
-                : `${scenes.length} scenes`}
-              {" · "}
-              {statusLabel(running ? "GENERATING" : screenplay.status)}
-            </p>
-          </div>
-          <div className="screenplay-document-actions flex shrink-0 items-center gap-1">
-            <CabinetModal
-              title="Scenes"
-              open={scenesOpen}
-              onOpenChange={setScenesOpen}
-              trigger={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Scenes"
-                  title={`Scenes · ${scenes.length}`}
-                >
-                  <ListVideo />
-                </Button>
-              }
-            >
-              {" "}
-              <aside className="min-h-0 p-1" aria-label="Screenplay scenes and versions">
-                <input
-                  className="mt-3 w-full rounded border border-border bg-inset px-2 py-2 text-xs"
-                  aria-label="Find a scene"
-                  placeholder="Find a scene…"
-                  value={sceneQuery}
-                  onChange={(e) => setSceneQuery(e.target.value)}
-                />
-                <button
-                  className="workspace-nav-link mt-3"
-                  aria-pressed={!sceneOnly}
-                  onClick={() => {
-                    setSceneOnly(false);
-                    setSelection(null);
-                    setScenesOpen(false);
-                  }}
-                >
-                  Full screenplay · {scenes.length} scenes
-                </button>
-                <ol className="mt-3 grid gap-1">
-                  {hierarchy.nodes
-                    .filter(
-                      (node) =>
-                        node.kind === "scene" &&
-                        `${node.title} ${node.slugline}`
-                          .toLowerCase()
-                          .includes(sceneQuery.toLowerCase()),
-                    )
-                    .map((scene, index) => (
-                      <li key={scene.id}>
-                        <button
-                          type="button"
-                          aria-pressed={
-                            selectedNodeIds.includes(scene.id) || selectedNodeId === scene.id
-                          }
-                          className={`w-full rounded-sm px-2 py-2 text-left text-xs hover:bg-elevated hover:text-fg ${selectedNodeIds.includes(scene.id) || selectedNodeId === scene.id ? "bg-elevated text-fg" : "text-muted"}`}
-                          onClick={(event) => {
-                            setSceneOnly(true);
-                            setSelection(null);
-                            if (event.ctrlKey || event.metaKey) {
-                              const next = selectedNodeIds.includes(scene.id)
-                                ? selectedNodeIds.filter((id) => id !== scene.id)
-                                : [...selectedNodeIds, scene.id];
-                              setSelectedNodeIds(next);
-                              setSelectedNodeId(next[next.length - 1] ?? scene.id);
-                              if (next.length > 1) setRewriteScope("selected-scenes");
-                              else setRewriteScope(defaultScreenplayScope(scene));
-                              return;
-                            }
-                            setSelectedNodeId(scene.id);
-                            setSelectedNodeIds([scene.id]);
-                            setScenesOpen(false);
-                            setRewriteScope(defaultScreenplayScope(scene));
-                          }}
-                        >
-                          <span className="mr-2 text-[10px] tabular-nums text-subtle">
-                            {String(index + 1).padStart(2, "0")}
-                          </span>
-                          {scene.slugline ?? scene.title}
-                        </button>
-                      </li>
-                    ))}
-                </ol>
-                {!scenes.length ? (
-                  <p className="mt-3 text-xs leading-relaxed text-muted">
-                    Scene headings appear here as the Fountain draft develops.
-                  </p>
-                ) : null}
-              </aside>
-            </CabinetModal>
-            <CabinetModal
-              title="Writing & versions"
-              trigger={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Writing & versions"
-                  title="Writing & versions"
-                >
-                  <SlidersHorizontal />
-                </Button>
-              }
-            >
-              {" "}
-              <aside className="min-h-0 p-1" aria-label="Screenplay profile, writing and critique">
-                <div className="workspace-tabs mb-5" aria-label="Screenplay inspector">
+  const sceneNodes = hierarchy.nodes.filter((node) => node.kind === "scene");
+  const sceneIndex = sceneNodes.findIndex((node) => node.id === selectedNodeId);
+  const chooseScene = (id: string) => {
+    const scene = sceneNodes.find((node) => node.id === id);
+    setSceneOnly(Boolean(scene));
+    setSelectedNodeId(scene?.id ?? null);
+    setSelectedNodeIds(scene ? [scene.id] : []);
+    setSelection(null);
+    if (scene) setRewriteScope(defaultScreenplayScope(scene));
+  };
+
+  const inspectorContent = (
+              <aside className="writing-workbench-inspector-content" aria-label="Screenplay profile, writing and critique">
+                <div className="writing-workbench-tabs" aria-label="Screenplay inspector">
                   {[
                     ["context", "Scene"],
+                    ["source", "Source"],
                     ["writing", "Writing"],
                     ["versions", "Versions"],
                   ].map(([id, label]) => (
@@ -343,7 +244,7 @@ export function ScreenplayWorkspace({
                   ))}
                 </div>
                 {inspectorTab === "context" && (
-                  <section aria-label="Selected scene context">
+                  <section className="writing-workbench-context" aria-label="Selected scene context">
                     <h3 className="mt-2 font-display text-xl">
                       {activeScene?.slugline || activeScene?.title || "Select a scene"}
                     </h3>
@@ -396,6 +297,15 @@ export function ScreenplayWorkspace({
                         </div>
                       </section>
                     )}
+                    {sceneDialogue.length > 0 && <section className="mt-6">
+                      <h4 className="text-sm">Exact dialogue</h4>
+                      <div className="mt-2 grid gap-3">{sceneDialogue.map((line) => (
+                        <article key={line.id} className="writing-workbench-source-note">
+                          <p className="text-xs text-accent">{line.title}</p>
+                          <p className="mt-1 whitespace-pre-wrap font-mono text-xs leading-relaxed">{line.fountain}</p>
+                        </article>
+                      ))}</div>
+                    </section>}
                     <h4 className="mt-6 text-sm">Scene beats</h4>
                     <ol className="mt-2 space-y-3">
                       {sceneBeats.map((beat, i) => (
@@ -415,6 +325,33 @@ export function ScreenplayWorkspace({
                     )}
                   </section>
                 )}
+                {inspectorTab === "source" && <section className="writing-workbench-source-context" aria-label="Governing source and story direction">
+                  <p className="text-xs text-muted">Saved picture direction · {researchApproved ? "Research approved" : "Research awaiting approval"}</p>
+                  {([
+                    ["Premise", intake.premise || intake.concept],
+                    ["Treatment", intake.treatment],
+                    ["Story notes", intake.storyNotes],
+                    ["Source material", intake.sourceMaterial],
+                    ["Source passages", intake.sourcePassages],
+                    ["Supplied source text", intake.suppliedSourceText],
+                    ["Adaptation instructions", intake.adaptationInstructions],
+                    ["Protected material", intake.materialToPreserve],
+                    ["Permitted dramatization", intake.materialMayDramatize],
+                    ["Fidelity requirements", intake.fidelityRequirements],
+                    ["Adaptation boundaries", intake.adaptationBoundaries],
+                    ["Story constraints", intake.storyConstraints],
+                    ["Required inclusions", intake.mustInclude],
+                    ["Prohibited additions", intake.mustAvoid],
+                    ["Dialogue direction", intake.dialogueStyle],
+                    ["Director notes", intake.directorNotes],
+                  ] as const).map(([label, text]) => <div key={label} className="writing-workbench-source-note">
+                    <h4 className="text-xs text-accent">{label}</h4>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{text || "Not supplied"}</p>
+                  </div>)}
+                  {intake.importedSources.map((source, index) => <details key={`${source.fileName}-${index}`} className="writing-workbench-source-note">
+                    <summary>{source.fileName}</summary><p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{source.text}</p>
+                  </details>)}
+                </section>}
                 <div hidden={inspectorTab !== "writing"}>
                   {job || running ? (
                     <section
@@ -789,7 +726,124 @@ export function ScreenplayWorkspace({
                   ) : null}
                 </div>
               </aside>
+  );
+
+  return (
+    <div className="screenplay-workspace cabinet-screenplay writing-workbench writing-workbench-screenplay" data-context-open={inspectorOpen}>
+      <section className="writing-workbench-manuscript flex min-h-0 min-w-0 flex-col">
+        <header className="screenplay-document-header flex shrink-0 flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div className="min-w-0 flex-1">
+            <h2 className="break-words font-display text-xl tracking-tight">
+              {sceneOnly && activeScene
+                ? activeScene.slugline || activeScene.title
+                : "Full screenplay"}
+            </h2>
+            <p className="mt-1 text-xs text-muted">
+              {sceneOnly && activeScene
+                ? `Scene ${activeScene.order + 1}`
+                : `${scenes.length} scenes`}
+              {" · "}
+              {statusLabel(running ? "GENERATING" : screenplay.status)}
+            </p>
+          </div>
+          <div className="screenplay-document-actions flex shrink-0 items-center gap-1">
+            <CabinetModal
+              title="Scenes"
+              open={scenesOpen}
+              onOpenChange={setScenesOpen}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Scenes"
+                  title={`Scenes · ${scenes.length}`}
+                >
+                  <ListVideo />
+                </Button>
+              }
+            >
+              {" "}
+              <aside className="min-h-0 p-1" aria-label="Screenplay scenes and versions">
+                <input
+                  className="mt-3 w-full rounded border border-border bg-inset px-2 py-2 text-xs"
+                  aria-label="Find a scene"
+                  placeholder="Find a scene…"
+                  value={sceneQuery}
+                  onChange={(e) => setSceneQuery(e.target.value)}
+                />
+                <button
+                  className="workspace-nav-link mt-3"
+                  aria-pressed={!sceneOnly}
+                  onClick={() => {
+                    setSceneOnly(false);
+                    setSelection(null);
+                    setScenesOpen(false);
+                  }}
+                >
+                  Full screenplay · {scenes.length} scenes
+                </button>
+                <ol className="mt-3 grid gap-1">
+                  {hierarchy.nodes
+                    .filter(
+                      (node) =>
+                        node.kind === "scene" &&
+                        `${node.title} ${node.slugline}`
+                          .toLowerCase()
+                          .includes(sceneQuery.toLowerCase()),
+                    )
+                    .map((scene, index) => (
+                      <li key={scene.id}>
+                        <button
+                          type="button"
+                          aria-pressed={
+                            selectedNodeIds.includes(scene.id) || selectedNodeId === scene.id
+                          }
+                          className={`w-full rounded-sm px-2 py-2 text-left text-xs hover:bg-elevated hover:text-fg ${selectedNodeIds.includes(scene.id) || selectedNodeId === scene.id ? "bg-elevated text-fg" : "text-muted"}`}
+                          onClick={(event) => {
+                            setSceneOnly(true);
+                            setSelection(null);
+                            if (event.ctrlKey || event.metaKey) {
+                              const next = selectedNodeIds.includes(scene.id)
+                                ? selectedNodeIds.filter((id) => id !== scene.id)
+                                : [...selectedNodeIds, scene.id];
+                              setSelectedNodeIds(next);
+                              setSelectedNodeId(next[next.length - 1] ?? scene.id);
+                              if (next.length > 1) setRewriteScope("selected-scenes");
+                              else setRewriteScope(defaultScreenplayScope(scene));
+                              return;
+                            }
+                            setSelectedNodeId(scene.id);
+                            setSelectedNodeIds([scene.id]);
+                            setScenesOpen(false);
+                            setRewriteScope(defaultScreenplayScope(scene));
+                          }}
+                        >
+                          <span className="mr-2 text-[10px] tabular-nums text-subtle">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                          {scene.slugline ?? scene.title}
+                        </button>
+                      </li>
+                    ))}
+                </ol>
+                {!scenes.length ? (
+                  <p className="mt-3 text-xs leading-relaxed text-muted">
+                    Scene headings appear here as the Fountain draft develops.
+                  </p>
+                ) : null}
+              </aside>
             </CabinetModal>
+            <Button variant="ghost" size="icon" className="writing-workbench-desktop-inspector-toggle"
+              aria-label={inspectorOpen ? "Hide writing context" : "Show writing context"}
+              title={inspectorOpen ? "Hide writing context" : "Show writing context"}
+              onClick={() => setInspectorOpen(!inspectorOpen)}>
+              {inspectorOpen ? <PanelRightClose /> : <PanelRightOpen />}
+            </Button>
+            <Button variant="ghost" size="icon" className="writing-workbench-compact-inspector-toggle"
+              aria-label="Writing & versions" title="Writing & versions" onClick={() => setCompactInspectorOpen(true)}>
+              <SlidersHorizontal />
+            </Button>
+
             <Button
               variant="ghost"
               size="icon"
@@ -827,6 +881,16 @@ export function ScreenplayWorkspace({
             )}
           </div>
         </header>
+        <div className="writing-workbench-scene-strip" aria-label="Current screenplay scene">
+          <Button variant="ghost" size="icon-sm" aria-label="Previous screenplay scene" disabled={sceneIndex <= 0} onClick={() => chooseScene(sceneNodes[sceneIndex - 1]?.id ?? "")}><ChevronLeft size={16} /></Button>
+          <select aria-label="Screenplay scene" value={sceneOnly ? (activeScene?.id ?? "") : ""} onChange={(event) => chooseScene(event.target.value)}>
+            <option value="">Full screenplay · {scenes.length} scenes</option>
+            {sceneNodes.map((scene, index) => <option key={scene.id} value={scene.id}>{String(index + 1).padStart(2, "0")} · {scene.slugline || scene.title}</option>)}
+          </select>
+          <Button variant="ghost" size="icon-sm" aria-label="Next screenplay scene" disabled={sceneIndex >= sceneNodes.length - 1} onClick={() => chooseScene(sceneNodes[sceneIndex + 1]?.id ?? "")}><ChevronRight size={16} /></Button>
+          {selectedNodeIds.length > 1 && <span className="text-xs text-muted">{selectedNodeIds.length} selected</span>}
+          {sceneOnly && <button className="writing-workbench-text-action" onClick={() => setSceneOnly(false)}>Full script</button>}
+        </div>
         {running && (
           <p className="px-4 pb-2 text-xs text-muted sm:px-6" role="status">
             {job?.activeLabel ?? generation?.activeLabel ?? "Writing screenplay…"}
@@ -875,6 +939,8 @@ export function ScreenplayWorkspace({
           />
         </div>
       </section>
+      {inspectorOpen && <div className="writing-workbench-inspector" aria-label="Writing context">{inspectorContent}</div>}
+      <CabinetModal title="Writing & versions" open={compactInspectorOpen} onOpenChange={setCompactInspectorOpen}>{inspectorContent}</CabinetModal>
     </div>
   );
 }

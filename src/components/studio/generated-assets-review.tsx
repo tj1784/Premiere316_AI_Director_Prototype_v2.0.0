@@ -1,3 +1,4 @@
+import { CabinetModal } from "./cabinet";
 import { AssetLibraryBrowser } from "./asset-library-browser";
 import {
   GLOBAL_PRODUCTION_INSTRUCTIONS,
@@ -496,8 +497,9 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
     }
   };
   return (
-    <section aria-label="Generated asset review" className="grid gap-4">
+    <section aria-label="Generated asset review" className="asset-review-surface">
       <AssetRunSummary pictureId={picture.id} />
+      <CabinetModal title="Package & generation settings" trigger={<Button variant="ghost" size="sm" className="asset-review-settings">Package & generation settings · {currentImages}/{assets.length} current</Button>}>
       <ImportedPackageResources importedPackage={picture.importedPackage} />
       <details className="rounded-md bg-elevated p-3 text-sm">
         <summary>Global generation instructions · all pictures</summary>
@@ -635,6 +637,7 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
           <AssetRunActivity pictureId={picture.id} />
         )}
       </details>
+      </CabinetModal>
       <AssetLibraryBrowser
         picture={picture}
         reviews={assetReviews}

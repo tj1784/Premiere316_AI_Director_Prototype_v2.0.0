@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useActivePicture, useStudio } from "@/lib/studio/store";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/field";
@@ -15,6 +16,17 @@ export function ShotContinuityEditor() {
   const picture = useActivePicture();
   const patch = useStudio((s) => s.patchActive);
   const [draft, setDraft] = useWorkspaceDraft<ShotContinuity | null>("shot-continuity", null);
+  useEffect(() => {
+    if (!picture || draft || !picture.shots[0]) return;
+    const first = picture.shots[0];
+    setDraft(structuredClone(picture.shotContinuity?.[first.id] ?? {
+      id: "", shotId: first.id, revision: 0, predecessorId: null,
+      source: "User direction", cameraPosition: { x: 0, y: 1.6, z: 5 },
+      cameraTarget: { x: 0, y: 1.6, z: 0 }, participants: [],
+      completedEvents: [], newEvents: [], restartReason: "",
+      imageDisposition: "uninspected", imageHash: "", inspectionReason: "",
+    }));
+  }, [picture, draft, setDraft]);
   if (!picture) return null;
   const shot = picture.shots.find((s) => s.id === draft?.shotId);
   const updateParticipant = (index: number, change: Partial<ParticipantContinuity>) =>

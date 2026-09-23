@@ -1,14 +1,15 @@
 import { useState } from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-import { ArrowUpRight, ChevronLeft, ChevronRight, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, FileUp, Plus, Search, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { PictureCover } from "./picture-cover";
 import type { PreparedPicture } from "@/lib/studio/picture-preparation";
 import { useStudio } from "@/lib/studio/store";
 import { formatRuntimeMinutes } from "@/lib/utils";
+import { STAGES } from "@/lib/studio/types";
 
-const PAGE_SIZE = 3;
+const PAGE_SIZE = 6;
 
 function relativeModified(timestamp: number): string {
   if (!timestamp || timestamp <= 1) return "Studio sample";
@@ -22,10 +23,14 @@ export function PicturesLibrary({
   pictures,
   onNew,
   onOpen,
+  onImport,
+  importing = false,
 }: {
   pictures: PreparedPicture[];
   onNew: () => void;
   onOpen: (id: string) => void;
+  onImport?: () => void;
+  importing?: boolean;
 }) {
   const deletePicture = useStudio((state) => state.deletePicture);
   const [query, setQuery] = useState("");
@@ -44,10 +49,11 @@ export function PicturesLibrary({
   return (
     <section className="home-library" aria-labelledby="pictures-heading">
       <div className="home-library-heading">
-        <h1 id="pictures-heading">Your films<span className="home-library-count">{pictures.length}</span></h1>
-        <Button className="home-create" size="icon" onClick={onNew} aria-label="New movie script" title="New movie script">
-          <Plus aria-hidden="true" />
-        </Button>
+        <div><p className="home-library-eyebrow">Picture library</p><h1 id="pictures-heading">Your films<span className="home-library-count">{pictures.length}</span></h1></div>
+        <div className="home-library-actions">
+          {onImport && <Button variant="ghost" onClick={onImport} disabled={importing}><FileUp aria-hidden="true" />{importing ? "Importing…" : "Import source"}</Button>}
+          <Button className="home-create" onClick={onNew} aria-label="New movie script"><Plus aria-hidden="true" />New film</Button>
+        </div>
       </div>
 
       <div className="home-library-tools">
@@ -81,16 +87,16 @@ export function PicturesLibrary({
               onClick={() => onOpen(picture.id)}
               aria-label={`Open ${picture.title}`}
             >
-              <span className="home-picture-art">
-                <PictureCover picture={picture} />
-                <span className="home-picture-enter" aria-hidden="true"><ArrowUpRight /></span>
-              </span>
+              {picture.thumbnailUrl ? <span className="home-picture-art"><PictureCover picture={picture} /></span> : null}
               <span className="home-picture-copy">
+                <span className="home-picture-stage">{STAGES.find((stage) => stage.id === (picture.lastOpenedStage ?? picture.stage))?.label ?? "Picture setup"}</span>
                 <span className="home-picture-title">{picture.title}</span>
                 {picture.logline && <span className="home-picture-logline">{picture.logline}</span>}
+                <span className="home-picture-detail">{picture.genre || "Genre not set"}<span aria-hidden="true">·</span>{picture.scenes.length ? `${picture.scenes.length} scenes` : "No scenes yet"}</span>
               </span>
             </button>
             <div className="home-picture-footer">
+              <button type="button" className="home-picture-resume" onClick={() => onOpen(picture.id)} aria-label={`Resume ${picture.title}`}>Resume<ArrowUpRight className="size-4" aria-hidden="true" /></button>
               <span className="home-picture-meta">
                 <span>{picture.sample ? "Sample" : relativeModified(picture.updatedAt)}</span>
                 {picture.runtimeMinutes > 0 && <span>{formatRuntimeMinutes(picture.runtimeMinutes)}</span>}
@@ -124,7 +130,7 @@ export function PicturesLibrary({
 
       {!visible.length && (
         <p className="home-library-empty" role="status">
-          {query || filter !== "all" ? "No films match. Try another search or filter." : "Your next film starts here. Use + to begin."}
+          {query || filter !== "all" ? "No films match. Try another search or filter." : "Start a new film or import your existing screenplay or source material."}
         </p>
       )}
       {pages > 1 && (

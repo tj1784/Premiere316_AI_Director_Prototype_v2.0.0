@@ -250,7 +250,7 @@ export function MovieBibleEditor({
         </div>
       </header>
 
-      <div className="bible-reading-surface" tabIndex={0} aria-label={`${row.name} direction`}>
+      <div className="bible-reading-surface bible-record-board" tabIndex={0} aria-label={`${row.name} direction`}>
         {!!passages.length && (
           <div className="bible-source-passages">
             {passages.map((passage) => (
@@ -261,7 +261,8 @@ export function MovieBibleEditor({
             ))}
           </div>
         )}
-        {authoredFields.map((field) => (
+        <div className="bible-field-board">
+        {fields.map((field) => (
           <section className="bible-passage bible-authored-passage" key={field}>
             <div className="bible-passage-heading">
               <h3>{field}</h3>
@@ -278,9 +279,10 @@ export function MovieBibleEditor({
             {record?.fields[field]?.disposition === "not-applicable" && (
               <span className="bible-disposition">Not applicable</span>
             )}
-            <p>{record?.fields[field]?.value}</p>
+            {record?.fields[field]?.value.trim() ? <p>{record.fields[field].value}</p> : <button className="bible-missing-field" onClick={() => edit(field)}><Plus size={16} /> Add {field.toLowerCase()}</button>}
           </section>
         ))}
+        </div>
         {!passages.length && !authoredFields.length && (
           <div className="bible-desk-empty">
             <BookOpen size={24} />
