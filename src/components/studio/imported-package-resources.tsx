@@ -1,6 +1,7 @@
 import { ChevronDown, Download, FileText } from "lucide-react";
 import { formatRuntimeMinutes } from "@/lib/utils";
 import type { ImportedPicturePackage } from "@/lib/studio/imported-picture-package";
+import { packageSourceRecords } from "@/lib/studio/imported-source-records";
 
 export function ImportedPackageResources({
   importedPackage,
@@ -12,6 +13,7 @@ export function ImportedPackageResources({
     (total, scene) => total + scene.duration_seconds,
     0,
   );
+  const sourceManifest = packageSourceRecords(importedPackage);
 
   return (
     <section aria-label="Imported screenplay package" className="screenplay-package">
@@ -42,6 +44,25 @@ export function ImportedPackageResources({
               </a>
             ))}
           </div>
+          <details className="mt-4 rounded border border-border p-3">
+            <summary className="cursor-pointer text-sm">
+              Source manifest · {sourceManifest.length} recorded files
+            </summary>
+            <ul className="mt-3 grid gap-3 text-xs">
+              {sourceManifest.map((source) => (
+                <li key={source.id} className="min-w-0 break-words border-t border-border pt-2">
+                  {source.href ? (
+                    <a href={source.href} download={source.fileName} className="underline underline-offset-2">
+                      {source.fileName}
+                    </a>
+                  ) : (
+                    <span>{source.fileName} · no direct file link</span>
+                  )}
+                  <p className="mt-1 break-all text-muted">SHA-256 {source.sha256}</p>
+                </li>
+              ))}
+            </ul>
+          </details>
         </div>
       </details>
     </section>

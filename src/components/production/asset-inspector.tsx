@@ -24,7 +24,7 @@ import { ReadinessBadge } from "./inventory-primitives";
 import { AssetReferenceUpload } from "./asset-reference-upload";
 import { CharacterVoiceSamples } from "../studio/character-voice-samples";
 
-export function AssetInspector({ record, asset, onChange, onClose }: { record: ProductionBreakdown; asset: ProductionAsset; onChange: (record: ProductionBreakdown) => void; onClose: () => void }) {
+export function AssetInspector({ record, asset, onChange, onClose, className = "" }: { record: ProductionBreakdown; asset: ProductionAsset; onChange: (record: ProductionBreakdown) => void; onClose: () => void; className?: string }) {
   type InspectorTab = "identity" | "scenes" | "images" | "breakdown" | "readiness";
   const [activeTab, setActiveTab] = useState<InspectorTab>("identity");
   const tabId = useId();
@@ -100,7 +100,7 @@ export function AssetInspector({ record, asset, onChange, onClose }: { record: P
     <aside
       ref={inspectorRef}
       aria-labelledby={`${tabId}-heading`}
-      className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden border-l border-border/65 bg-surface/75 text-fg"
+      className={`flex h-full min-h-0 min-w-0 flex-col overflow-hidden border-l border-border/65 bg-surface/75 text-fg ${className}`}
       onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); onClose(); } }}
     >
       <header className="flex shrink-0 items-start justify-between gap-3 border-b border-border/65 px-4 py-3">

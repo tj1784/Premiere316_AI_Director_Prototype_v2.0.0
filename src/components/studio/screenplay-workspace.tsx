@@ -2,7 +2,6 @@ import "./writing-workspaces.css";
 import "./nonmodal-shell-and-script.css";
 import "./screenplay-ps5.css";
 import { AssetImagePreview } from "./asset-image-preview";
-import { openCharacterSheet, openAssetIterations } from "./workspace-links";
 import {
   replaceScreenplayEditorScene,
   textareaOffsetToSource,
@@ -54,6 +53,11 @@ import { hydrateProductionRouting } from "@/lib/studio/production-profiles";
 import { BIBLE_FIELDS } from "@/lib/studio/movie-bible";
 import { applyCharacterFieldEdit, type BibleFieldEdit } from "@/lib/studio/character-dossier";
 import { PRODIGAL_SON_PICTURE_ID } from "@/lib/studio/prodigal-son";
+import {
+  loadBundledMediaMap,
+  resolveSiteImageUri,
+  type BundledMediaMap,
+} from "@/lib/studio/site-media-preview";
 import { useStudio } from "@/lib/studio/store";
 import { participantFieldView } from "./character-scene-panel";
 
@@ -63,67 +67,23 @@ function statusLabel(status: PictureScreenplay["status"]): string {
   return status === "GENERATING" ? "Generating" : "Draft";
 }
 
-const BUNDLED_SCENE_REFERENCE_ASSETS: Record<string, string> = {
-  "PS-S02": "PS-LOC-HOMESTEAD",
-  "PS-S03": "PS-LOC-HOMESTEAD",
-  "PS-S04": "PS-LOC-COURTYARD",
-  "PS-S05": "PS-LOC-ENTRANCE",
-  "PS-S06": "PS-LOC-HOMESTEAD",
-  "PS-S07": "PS-LOC-HOMESTEAD",
-  "PS-S08": "PS-LOC-JOURNEY",
-  "PS-S09": "PS-LOC-TOWN",
-  "PS-S10": "PS-LOC-RENTEDROOM",
-  "PS-S11": "PS-LOC-HOMESTEAD",
-  "PS-S12": "PS-LOC-TOWN",
-  "PS-S13": "PS-LOC-TOWN",
-  "PS-S14": "PS-LOC-HOMESTEAD",
-  "PS-S15": "PS-LOC-TERRACE",
-  "PS-S16": "PS-LOC-HOMESTEAD",
-  "PS-S20": "PS-LOC-HOMESTEAD",
-  "PS-S21": "PS-LOC-HOMESTEAD",
-  "PS-S22": "PS-LOC-HOMESTEAD",
-  "PS-S23": "PS-GFX-CREDITS",
-};
-
-function sceneArtwork(picture: Picture, sceneId: string) {
-  const bundledPreviews: Record<string, string> = {
-    "PS-S01": "/pictures/prodigal-son/previews/PS-S01-SH002-FIRST.webp",
-    "PS-S17": "/pictures/prodigal-son/previews/PS-S17-SH005-FIRST.webp",
-    "PS-S18": "/pictures/prodigal-son/previews/PS-S18-SH005-FIRST.webp",
-    "PS-S19": "/pictures/prodigal-son/previews/PS-S19-SH009-FIRST.webp",
-  };
-  const bundledPreview =
-    picture.id === PRODIGAL_SON_PICTURE_ID ? bundledPreviews[sceneId] : undefined;
-  if (bundledPreview) return { uri: bundledPreview, previewUri: bundledPreview, backdrop: true };
-  const shot = picture.shots.find(
-    (item) =>
-      item.sceneId === sceneId &&
-      item.stillUrl?.trim() &&
-      !item.stillUrl.startsWith("/pictures/prodigal-son/frames/"),
-  );
-  if (shot?.stillUrl) return { uri: shot.stillUrl, previewUri: shot.stillUrl, backdrop: true };
-  const assets = (picture.production?.assets ?? []).filter(
-    (asset) => !asset.tombstone && asset.requiredSceneIds.includes(sceneId),
-  );
-  if (picture.id === PRODIGAL_SON_PICTURE_ID) {
-    const assetId = BUNDLED_SCENE_REFERENCE_ASSETS[sceneId];
-    if (!assetId || !assets.some((asset) => asset.id === assetId)) return null;
-    const uri = `/pictures/prodigal-son/previews/${assetId}.webp`;
-    return { uri, previewUri: uri, backdrop: false };
+function sceneArtwork(picture: Picture, sceneId: string, mediaMap: BundledMediaMap) {
+  for (const shot of picture.shots) {
+    if (shot.sceneId !== sceneId) continue;
+    const uri = resolveSiteImageUri(picture.id, shot.stillUrl, mediaMap);
+    if (uri) return uri;
   }
-  const selected = assets
-    .flatMap((asset) => asset.iterations.map((iteration) => ({ asset, iteration })))
-    .find(
-      ({ asset, iteration }) =>
-        asset.approvedIterationId === iteration.id &&
-        Boolean(iteration.previewUri || iteration.mediaUri),
-    );
-  if (selected)
-    return {
-      uri: selected.iteration.mediaUri,
-      previewUri: selected.iteration.previewUri,
-      backdrop: true,
-    };
+  // The Site also bundles the original first frames. A saved picture may not
+  // contain their shot records yet; display an exact scene frame in that case.
+  if (picture.id === PRODIGAL_SON_PICTURE_ID && !picture.directorSceneRevisions?.[sceneId]) {
+    const prefix = `/pictures/prodigal-son/frames/${sceneId}/`;
+    const skippedShots = new Set(picture.frameBundle?.skippedShotIds ?? []);
+    const frame = Object.entries(mediaMap).find(([source]) => {
+      const shotId = source.slice(prefix.length).split("_FIRST-")[0];
+      return source.startsWith(prefix) && source.includes("_FIRST-") && !skippedShots.has(shotId);
+    });
+    if (frame) return frame[1];
+  }
   return null;
 }
 
@@ -220,7 +180,18 @@ export function ScreenplayWorkspace({
   const [inspectorOpen, setInspectorOpen] = useWorkspaceDraft("screenplay-context-open", true);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const [failedBackdropUris, setFailedBackdropUris] = useState<string[]>([]);
+  const [bundledMediaMap, setBundledMediaMap] = useState<BundledMediaMap>({});
   const [selection, setSelection] = useState<ScreenplaySelection>(null);
+  useEffect(() => {
+    if (picture.id !== PRODIGAL_SON_PICTURE_ID) return;
+    let mounted = true;
+    void loadBundledMediaMap().then((map) => {
+      if (mounted) setBundledMediaMap(map);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [picture.id]);
   const generation = job?.screenplay.generation ?? screenplay.generation;
   const running =
     job?.status === "queued" || job?.status === "running" || screenplay.status === "GENERATING";
@@ -271,10 +242,9 @@ export function ScreenplayWorkspace({
   );
   const sceneNodes = hierarchy.nodes.filter((node) => node.kind === "scene" && !node.tombstoned);
   const activeScene = sceneNodes.find((node) => node.id === selectedNodeId) ?? sceneNodes[0];
-  const activeArtwork = activeScene ? sceneArtwork(picture, activeScene.id) : null;
-  const backdropUri = (
-    activeArtwork?.backdrop ? [activeArtwork.previewUri, activeArtwork.uri] : []
-  ).find((uri) => uri && !failedBackdropUris.includes(uri));
+  const activeArtwork = activeScene ? sceneArtwork(picture, activeScene.id, bundledMediaMap) : null;
+  const backdropUri =
+    activeArtwork && !failedBackdropUris.includes(activeArtwork) ? activeArtwork : null;
   const editorOffset = sceneOnly && activeScene && !running ? activeScene.sourceStart : 0;
   const editorText =
     sceneOnly && activeScene && !running
@@ -298,6 +268,7 @@ export function ScreenplayWorkspace({
   const sceneBibleFields = activeScene
     ? (picture.movieBible?.records[activeScene.id]?.fields ?? {})
     : {};
+  const speakingRoles = [...new Set(sceneDialogue.map((line) => line.title))];
   const sceneRecord = activeScene
     ? picture.scenes.find((scene) => scene.id === activeScene.id)
     : undefined;
@@ -366,24 +337,44 @@ export function ScreenplayWorkspace({
       <div className="writing-workbench-tabs" aria-label="Screenplay inspector">
         {[
           ["context", "Scene"],
-          ["bible", "Bible"],
-          ["source", "Source"],
-          ["writing", "Writing"],
-          ["versions", "Versions"],
+          ["notes", "Notes"],
+          ["continuity", "Continuity"],
+          ["tags", "Tags"],
         ].map(([id, label]) => (
-          <button key={id} aria-pressed={inspectorTab === id} onClick={() => setInspectorTab(id)}>
+          <button
+            type="button"
+            key={id}
+            aria-pressed={inspectorTab === id}
+            onClick={() => setInspectorTab(id)}
+          >
             {label}
           </button>
         ))}
       </div>
+      <div className="screenplay-ps5-inspector-tools">
+        <span>Scene {activeScene ? String(activeScene.order + 1).padStart(2, "0") : "—"}</span>
+        <select
+          aria-label="More screenplay tools"
+          value={
+            ["bible", "source", "writing", "versions"].includes(inspectorTab) ? inspectorTab : ""
+          }
+          onChange={(event) => setInspectorTab(event.target.value)}
+        >
+          <option value="">More tools…</option>
+          <option value="bible">Scene Bible</option>
+          <option value="source">Story source</option>
+          <option value="writing">Writing & critique</option>
+          <option value="versions">Versions</option>
+        </select>
+      </div>
       {inspectorTab === "context" && (
         <section className="writing-workbench-context" aria-label="Selected scene context">
-          <p className="screenplay-ps5-context-kicker">
-            {activeScene ? `Scene ${activeScene.order + 1}` : "Scene"}
-          </p>
-          <h3 className="mt-2 font-display text-xl">
+          <h3 className="font-display">
             {activeScene?.slugline || activeScene?.title || "Select a scene"}
           </h3>
+          <p className="screenplay-ps5-scene-status">
+            <span aria-hidden="true" /> {statusLabel(running ? "GENERATING" : screenplay.status)}
+          </p>
           {activeScene && (
             <dl className="screenplay-ps5-scene-facts">
               {sceneLocation && (
@@ -398,102 +389,107 @@ export function ScreenplayWorkspace({
                   <dd>{sceneTime}</dd>
                 </div>
               )}
-              {sceneDialogue.length > 0 && (
+              {speakingRoles.length > 0 && (
                 <div>
-                  <dt>Speaking roles</dt>
-                  <dd>{[...new Set(sceneDialogue.map((line) => line.title))].join(" · ")}</dd>
+                  <dt>Characters</dt>
+                  <dd>{speakingRoles.join(", ")}</dd>
                 </div>
               )}
               {sceneBibleFields[BIBLE_FIELDS.scene[0]]?.value && (
                 <div>
-                  <dt>Narrative purpose</dt>
+                  <dt>Objective</dt>
                   <dd>{sceneBibleFields[BIBLE_FIELDS.scene[0]].value}</dd>
                 </div>
               )}
-              {sceneBibleFields[BIBLE_FIELDS.scene[9]]?.value && (
+              {(sceneRecord || importedScene) && (
                 <div>
-                  <dt>Outgoing continuity</dt>
-                  <dd>{sceneBibleFields[BIBLE_FIELDS.scene[9]].value}</dd>
+                  <dt>Duration</dt>
+                  <dd>{sceneRecord?.durationSec ?? importedScene?.duration_seconds} sec</dd>
                 </div>
               )}
             </dl>
           )}
-          <p className="mt-3 text-sm text-muted">
-            {activeScene
-              ? `${sceneBeats.length} beats · ${sceneDialogue.length} dialogue passages`
-              : "Open Scenes to choose a scene."}
+          <p className="screenplay-ps5-scene-summary">
+            {sceneRecord?.summary ||
+              (activeScene
+                ? `${sceneBeats.length} beats · ${sceneDialogue.length} dialogue passages`
+                : "Choose a scene from the film strip below.")}
           </p>
-          {sceneDialogue.length > 0 && (
-            <>
-              <h4 className="mt-6 text-sm">Speaking characters</h4>
-              <p className="mt-2 text-sm text-muted">
-                {[...new Set(sceneDialogue.map((n) => n.title))].join(" · ")}
-              </p>
-            </>
-          )}
-          {activeScene && (
-            <section className="mt-6">
-              <h4 className="text-sm">Linked production assets</h4>
-              <div className="mt-2 grid gap-2">
-                {picture.production?.assets
-                  .filter((a) => !a.tombstone && a.requiredSceneIds.includes(activeScene.id))
-                  .map((asset) => (
-                    <div key={asset.id} className="rounded border border-border p-2">
-                      <p className="text-sm">{asset.name}</p>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => openAssetIterations(picture.id, asset.id)}
-                        >
-                          Images
-                        </Button>
-                        {["character", "location", "prop", "wardrobe"].includes(asset.category) && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openCharacterSheet(picture.id, asset.id)}
-                          >
-                            Sheet
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </section>
-          )}
-          {sceneDialogue.length > 0 && (
-            <section className="mt-6">
-              <h4 className="text-sm">Exact dialogue</h4>
-              <div className="mt-2 grid gap-3">
-                {sceneDialogue.map((line) => (
-                  <article key={line.id} className="writing-workbench-source-note">
-                    <p className="text-xs text-accent">{line.title}</p>
-                    <p className="mt-1 whitespace-pre-wrap font-mono text-xs leading-relaxed">
-                      {line.fountain}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </section>
-          )}
-          <h4 className="mt-6 text-sm">Scene beats</h4>
-          <ol className="mt-2 space-y-3">
-            {sceneBeats.map((beat, i) => (
-              <li
-                key={beat.id}
-                className="border-l border-border pl-3 text-xs leading-relaxed text-muted"
-              >
-                <span className="text-accent">{String(i + 1).padStart(2, "0")} </span>
-                {beat.fountain}
-              </li>
-            ))}
-          </ol>
-          {activeScene && (
-            <p className="mt-6 text-xs text-muted">
-              Edits in selected-scene view are saved into the complete screenplay.
-            </p>
+        </section>
+      )}
+      {inspectorTab === "notes" && (
+        <section className="screenplay-ps5-compact-section" aria-label="Scene notes">
+          <h3>Notes</h3>
+          <dl className="screenplay-ps5-scene-facts">
+            {(
+              [
+                ["Story", sceneRecord?.summary],
+                ["Emotional beat", sceneRecord?.emotionalBeat],
+                ["Narrative purpose", sceneBibleFields[BIBLE_FIELDS.scene[0]]?.value],
+                ["Emotional change", sceneBibleFields[BIBLE_FIELDS.scene[5]]?.value],
+                ["Sound", sceneBibleFields[BIBLE_FIELDS.scene[7]]?.value],
+              ] as const
+            )
+              .filter(([, value]) => value?.trim())
+              .map(([label, value]) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+          </dl>
+          <button
+            type="button"
+            className="screenplay-ps5-inline-link"
+            onClick={() => setInspectorTab("bible")}
+          >
+            Open scene Bible to edit notes
+          </button>
+        </section>
+      )}
+      {inspectorTab === "continuity" && (
+        <section className="screenplay-ps5-compact-section" aria-label="Scene continuity">
+          <h3>Continuity</h3>
+          <dl className="screenplay-ps5-scene-facts">
+            {(
+              [
+                ["Incoming", sceneBibleFields[BIBLE_FIELDS.scene[1]]?.value],
+                ["Geography", sceneBibleFields[BIBLE_FIELDS.scene[2]]?.value],
+                ["Entrances / exits", sceneBibleFields[BIBLE_FIELDS.scene[3]]?.value],
+                ["Outgoing", sceneBibleFields[BIBLE_FIELDS.scene[9]]?.value],
+                ["Source note", importedScene?.continuity],
+              ] as const
+            )
+              .filter(([, value]) => value?.trim())
+              .map(([label, value]) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+          </dl>
+          <button
+            type="button"
+            className="screenplay-ps5-inline-link"
+            onClick={() => setInspectorTab("bible")}
+          >
+            Open scene Bible to edit continuity
+          </button>
+        </section>
+      )}
+      {inspectorTab === "tags" && (
+        <section className="screenplay-ps5-compact-section" aria-label="Scene tags">
+          <h3>Tags</h3>
+          <p>From this scene’s saved script and timing</p>
+          <div className="screenplay-ps5-tags">
+            {[sceneLocation, sceneTime, importedScene?.story_time, ...speakingRoles]
+              .filter((tag): tag is string => Boolean(tag?.trim()))
+              .map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+          </div>
+          {!sceneLocation && !sceneTime && !speakingRoles.length && (
+            <p>No scene details to show yet.</p>
           )}
         </section>
       )}
@@ -1158,13 +1154,23 @@ export function ScreenplayWorkspace({
             </h2>
             <p className="mt-1 text-xs text-muted">
               {sceneOnly && activeScene
-                ? `Scene ${activeScene.order + 1}`
+                ? `Scene ${String(activeScene.order + 1).padStart(2, "0")} of ${sceneNodes.length}`
                 : `${scenes.length} scenes`}
               {" · "}
               {statusLabel(running ? "GENERATING" : screenplay.status)}
+              {!running && " · Saved as you type"}
             </p>
           </div>
           <div className="screenplay-document-actions flex shrink-0 items-center gap-1">
+            {sceneOnly && (
+              <button
+                type="button"
+                className="screenplay-ps5-full-script"
+                onClick={() => chooseScene("")}
+              >
+                Full script
+              </button>
+            )}
             <Button
               ref={sceneTrigger}
               variant="ghost"
@@ -1335,42 +1341,29 @@ export function ScreenplayWorkspace({
           <ChevronLeft size={18} />
         </Button>
         <div className="screenplay-ps5-scene-track">
-          <button
-            type="button"
-            aria-current={!sceneOnly || !activeScene ? "true" : undefined}
-            onClick={() => chooseScene("")}
-          >
-            <span className="screenplay-ps5-scene-art screenplay-ps5-full-art">
-              {scenes.length}
-            </span>
-            <span>Full script</span>
-          </button>
           {sceneNodes.map((scene, index) => {
-            const artwork = sceneArtwork(picture, scene.id);
+            const artwork = sceneArtwork(picture, scene.id, bundledMediaMap);
             return (
               <button
                 type="button"
                 key={scene.id}
                 aria-current={sceneOnly && activeScene?.id === scene.id ? "true" : undefined}
-                aria-label={`Scene ${index + 1}: ${scene.slugline || scene.title}${artwork && !artwork.backdrop ? "; linked draft asset reference" : ""}`}
+                aria-label={`Scene ${index + 1}: ${scene.slugline || scene.title}`}
                 onClick={() => chooseScene(scene.id)}
-                title={`${scene.slugline || scene.title}${artwork && !artwork.backdrop ? " · Linked draft asset reference" : ""}`}
+                title={scene.slugline || scene.title}
               >
                 <span className="screenplay-ps5-scene-art">
                   {artwork ? (
                     <AssetImagePreview
-                      previewUri={artwork.previewUri}
-                      mediaUri={artwork.uri}
+                      previewUri={artwork}
+                      mediaUri={artwork}
                       alt=""
                       className="screenplay-ps5-scene-image"
                       compact
                     />
                   ) : (
-                    <span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
-                  )}
-                  {artwork && !artwork.backdrop && (
-                    <span className="screenplay-ps5-scene-reference-badge" aria-hidden="true">
-                      Source
+                    <span className="screenplay-ps5-unframed" aria-hidden="true">
+                      {String(index + 1).padStart(2, "0")}
                     </span>
                   )}
                 </span>

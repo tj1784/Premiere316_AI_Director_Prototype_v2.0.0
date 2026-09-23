@@ -97,6 +97,15 @@ test("film contract reads only explicit intake direction and preserves saved Bib
   assert.equal(pictureBibleFieldView(p, fields[0]).disposition, "missing");
   assert.equal(pictureBibleFieldView(p, fields[2]).value, "");
   assert.equal(pictureBibleFieldView(p, fields[6]).value, "");
+  p.intake.premise = "Resentment and forgiveness pull the family apart.";
+  p.intake.storyNotes = "The father welcomes both sons.";
+  p.intake.dialogueStyle = "Restrained, first-century speech.";
+  assert.equal(pictureBibleFieldView(p, fields[0]).disposition, "missing");
+  assert.equal(pictureBibleFieldView(p, fields[1]).disposition, "missing");
+  assert.equal(pictureBibleFieldView(p, fields[2]).disposition, "missing");
+  assert.equal(pictureBibleFieldView(p, fields[4]).disposition, "missing");
+  assert.equal(pictureBibleFieldView(p, fields[5]).disposition, "missing");
+  assert.equal(pictureBibleFieldView(p, fields[6]).disposition, "missing");
   p.intake.moralQuestion = "What does mercy cost?";
   p.intake.language = "Aramaic";
   p.intake.deliveryFormat = "MP4";

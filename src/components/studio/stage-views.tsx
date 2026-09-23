@@ -1,5 +1,7 @@
 import "./stage-inline-workspaces.css";
 import "./stage-visual-surfaces.css";
+import "./timeline-cinematic.css";
+import "./generate-cinema.css";
 import { PromptPayloadPreview } from "./prompt-payload-preview";
 import { EditorialClipEditor } from "./editorial-clip-editor";
 import { ImageIterationReview } from "./image-iteration-review";
@@ -10,10 +12,14 @@ import { storyDoctorRuns } from "@/lib/studio/story-doctor-runs";
 import { exactLocalWriterBlock } from "@/lib/studio/exact-local-writer";
 import { explicitMoviePlanServedId } from "@/lib/studio/movie-plan-model";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
+  Film,
+  Play,
+  SkipBack,
+  SkipForward,
   SlidersHorizontal,
   ArrowUpRight,
 } from "lucide-react";
@@ -63,6 +69,7 @@ import { useDirector } from "@/lib/studio/use-director";
 import {
   compileEnginePromptPackage,
   compilePicture,
+  shotStarts,
   totalDuration,
 } from "@/lib/studio/prompt-compiler";
 import {
@@ -240,13 +247,14 @@ export function StageView() {
   }
 }
 
-function Pane({ title, kicker, children, tabs, focusShotId }: { title: string; kicker: string; children: ReactNode; tabs?: ReactNode; focusShotId?: string | null }) {
+function Pane({ title, kicker, children, tabs, focusShotId, mediaOverride, selectedMediaId, onMediaSelect, panelVariant }: { title: string; kicker: string; children: ReactNode; tabs?: ReactNode; focusShotId?: string | null; mediaOverride?: StageVisualMedia[]; selectedMediaId?: string; onMediaSelect?: (id: string) => void; panelVariant?: string }) {
   const picture = useActivePicture();
   const stage = useStage();
-  const media = useStageVisualMedia(picture, stage, focusShotId);
+  const stageMedia = useStageVisualMedia(picture, stage, focusShotId);
+  const media = mediaOverride?.length ? mediaOverride : stageMedia;
   return (
-    <div className="stage-pane stage-cinema-pane flex h-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden" data-stage-surface={stage}>
-      {media.length && picture ? <StageVisualRail picture={picture} stage={stage} media={media} title={title} kicker={kicker} /> : (
+    <div className="stage-pane stage-cinema-pane flex h-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden" data-stage-surface={stage} data-panel-variant={panelVariant}>
+      {media.length && picture ? <StageVisualRail picture={picture} stage={stage} media={media} title={title} kicker={kicker} selectedMediaId={selectedMediaId} onMediaSelect={onMediaSelect} /> : (
         <header className="shrink-0 px-4 pb-2 pt-3 sm:px-6 sm:pb-3 sm:pt-4">
           <p className="text-[11px] tracking-[0.2em] text-subtle uppercase">{kicker}</p>
           <h2 className="mt-1 break-words font-display text-[clamp(1.5rem,3vw,1.875rem)] tracking-tight" title={title}>{title}</h2>
@@ -323,10 +331,10 @@ function stageVisualMedia(picture: Picture, stage: string, scenePreviews: Bundle
   }).slice(0, 8);
 }
 
-function StageVisualRail({ picture, stage, media, title, kicker }: { picture: Picture; stage: string; media: StageVisualMedia[]; title: string; kicker: string }) {
+function StageVisualRail({ picture, stage, media, title, kicker, selectedMediaId, onMediaSelect }: { picture: Picture; stage: string; media: StageVisualMedia[]; title: string; kicker: string; selectedMediaId?: string; onMediaSelect?: (id: string) => void }) {
   const [selectedId, setSelectedId] = useState(media[0]?.id ?? "");
   useEffect(() => setSelectedId(media[0]?.id ?? ""), [media[0]?.id]);
-  const selected = media.find((item) => item.id === selectedId) ?? media[0];
+  const selected = media.find((item) => item.id === (selectedMediaId ?? selectedId)) ?? media[0];
   if (!selected) return null;
   return (
     <section className="stage-visual-rail" aria-label={`${title} visual context`} data-stage={stage}>
@@ -339,7 +347,7 @@ function StageVisualRail({ picture, stage, media, title, kicker }: { picture: Pi
       </div>
       <div className="stage-visual-context" aria-live="polite"><span>{selected.kind}</span><strong>{selected.label}</strong><small>{selected.detail}</small></div>
       {media.length > 1 && <div className="stage-visual-thumbs" aria-label="Browse visual references">
-        {media.map((item) => <button type="button" key={item.id} aria-pressed={selected.id === item.id} title={`${item.kind} · ${item.label}`} onClick={() => setSelectedId(item.id)}>
+        {media.map((item) => <button type="button" key={item.id} aria-pressed={selected.id === item.id} title={`${item.kind} · ${item.label}`} onClick={() => { setSelectedId(item.id); onMediaSelect?.(item.id); }}>
           <AssetImagePreview previewUri={item.previewUri} mediaUri={item.mediaUri} alt="" compact className="stage-visual-thumb" />
           <span>{item.label}</span>
         </button>)}
@@ -359,11 +367,11 @@ function IntakeStage({ picture }: { picture: Picture }) {
   const [activityStartedAt, setActivityStartedAt] = useState<number | null>(null);
   const [intakePanel, setIntakePanel] = useState<"brief" | "script" | "visual" | "contract" | "settings">("brief");
   const intakeViews = [
-    ["brief", "Brief"],
-    ["script", "Script run"],
-    ["visual", "Visual references"],
-    ["contract", "Film contract"],
-    ["settings", "Story settings"],
+    ["brief", "The brief", "Brief"],
+    ["script", "Script run", "Run"],
+    ["visual", "Visual references", "Visuals"],
+    ["contract", "Film contract", "Contract"],
+    ["settings", "Story settings", "Settings"],
   ] as const;
   const routing = hydrateProductionRouting(picture.productionRouting, {
     legacyLocalSelection: Boolean(
@@ -490,8 +498,8 @@ function IntakeStage({ picture }: { picture: Picture }) {
         tabs[next]?.focus();
         tabs[next]?.click();
       }}>
-        {intakeViews.map(([id, label]) => (
-          <button key={id} id={`intake-tab-${id}`} aria-controls={`intake-panel-${id}`} tabIndex={intakePanel === id ? 0 : -1} type="button" role="tab" aria-selected={intakePanel === id} onClick={() => setIntakePanel(id)}>{label}</button>
+        {intakeViews.map(([id, label, tabLabel]) => (
+          <button key={id} id={`intake-tab-${id}`} aria-label={label} aria-controls={`intake-panel-${id}`} tabIndex={intakePanel === id ? 0 : -1} type="button" role="tab" aria-selected={intakePanel === id} onClick={() => setIntakePanel(id)}>{tabLabel}</button>
         ))}
       </div>}
     >
@@ -870,12 +878,12 @@ function ResearchStage({ picture }: { picture: Picture }) {
     );
   }, []);
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col">
-      <div className="flex shrink-0 items-center justify-end border-b border-border px-4 py-2">
+    <div className="research-cinema-shell flex h-full min-h-0 min-w-0 flex-col">
+      <div className="research-cinema-actions flex shrink-0 items-center justify-end border-b border-border px-4 py-2">
         <Button variant="ghost" size="sm" aria-expanded={profileOpen} onClick={() => setProfileOpen((value) => !value)}>Profile · {researchBinding?.label ?? "unconfigured"}</Button>
       </div>
       {profileOpen && <div className="research-profile-panel" aria-label="Research production profile"><ProductionProfileControls picture={picture} disabled={building} /></div>}
-      <div className="min-h-0 flex-1"><ResearchWorkspace
+      <div className="research-cinema-body min-h-0 flex-1"><ResearchWorkspace
         title={picture.title}
         bible={bible}
         llamaAvailable={llamaAvailable}
@@ -1322,8 +1330,8 @@ function InventoryStage({ picture }: { picture: Picture }) {
   const [surface, setSurface] = useWorkspaceDraft("asset-workspace-view", "library");
   const boundary = approvedScreenplayBoundary(picture.id, picture.intake, picture.screenplay);
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <header className="workspace-header">
+    <div className="inventory-stage flex h-full min-h-0 flex-col overflow-hidden" data-surface={surface}>
+      <header className="inventory-stage-header workspace-header">
         <div>
           <p className="workspace-eyebrow">PRODUCTION ASSETS</p>
           <h2>Assets & iterations</h2>
@@ -1341,7 +1349,7 @@ function InventoryStage({ picture }: { picture: Picture }) {
         </div>
       </header>
       {surface === "library" && picture.production ? (
-        <div className="min-h-0 flex-1 overflow-hidden p-3">
+        <div className="min-h-0 flex-1 overflow-hidden">
           <GeneratedAssetsReview picture={picture} />
         </div>
       ) : (
@@ -1404,8 +1412,8 @@ function VisualDevelopmentStage({ picture }: { picture: Picture }) {
   return surface === "sheets" ? (
     <CharacterWorkspace picture={picture} onVisual={() => setSurface("visual")} />
   ) : (
-    <div className="workbench-frame p-4">
-      <Button variant="ghost" onClick={() => setSurface("sheets")}>Back to character workspace</Button>
+    <div className="workbench-frame visual-development-frame">
+      <Button className="visual-development-return" variant="ghost" size="sm" onClick={() => setSurface("sheets")}>← Character sheets</Button>
         <VisualDevelopmentWorkspace
           state={visualDevelopment}
           onChange={(visualDevelopment) => patchActive({ visualDevelopment })}
@@ -1543,6 +1551,7 @@ function ShotsStage({ picture }: { picture: Picture }) {
   const patchActive = useStudio((state) => state.patchActive);
   const setStage = useStudio((state) => state.setStage);
   const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
+  const selectShot = useStudio((state) => state.selectShot);
   const workspace = picture.performance ?? migratePicturePerformance(picture);
   const visualMedia = useStageVisualMedia(picture, "shots");
 
@@ -1569,16 +1578,7 @@ function ShotsStage({ picture }: { picture: Picture }) {
   return (
     <div className="stage-cinema-workbench flex h-full min-h-0 flex-col">
       {visualMedia.length > 0 && <StageVisualRail picture={picture} stage="shots" media={visualMedia} title="Shot preparation" kicker="FILM / SHOTS" />}
-      <div className="shrink-0 px-4 pt-3">
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => setGenerateFocus("keyframes", picture.shots[0]?.id ?? null)}
-        >
-          Open Generate / First-Last Frames
-        </Button>
-      </div>
-      <div className="min-h-0 flex-1 overflow-hidden">
+      <div className="workbench-content shot-stage-content">
         <ShotPreparationWorkspace
           workspace={workspace}
           frameWorkspace={picture.generateGates}
@@ -1591,6 +1591,8 @@ function ShotsStage({ picture }: { picture: Picture }) {
           }
           onBack={() => setStage("performance")}
           onOpenPromptLab={() => setStage("prompts")}
+          onOpenFrames={(shotId) => setGenerateFocus("keyframes", shotId)}
+          onSelectShot={selectShot}
         />
       </div>
     </div>
@@ -1731,6 +1733,7 @@ function PromptStage({ picture }: { picture: Picture }) {
 
 function GenerateStage({ picture }: { picture: Picture }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSurface, setSettingsSurface] = useState<"native" | "motion" | "sound">("native");
   const [manifests, setManifests] = useState<ImageComponentManifest[]>([]);
   const [generating, setGenerating] = useState<string | null>(null);
   const [backendStatus, setBackendStatus] = useState<Awaited<
@@ -1783,34 +1786,10 @@ function GenerateStage({ picture }: { picture: Picture }) {
   );
   const gateReadiness = generateGateReadiness(picture);
   const gateWorkspace = hydrateGenerateGates(picture.generateGates, picture);
-  return (
-    <Pane title="Generate" kicker="10 · Three-gate cohesion" focusShotId={generateFilterId}>
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
-        <div className="workspace-tabs" role="tablist" aria-label="Generate gates">
-          {gateReadiness.map((item) => <button key={item.gate} role="tab" aria-selected={generateGate === item.gate} title={item.reason} onClick={() => setGenerateFocus(item.gate)}>{item.gate === "assets" ? "Assets" : item.gate === "keyframes" ? "First / last frames" : "Video clips"}<span className="ml-2 text-xs opacity-70">{item.approved}/{item.required}</span></button>)}
-        </div>
-        <Button size="sm" variant="ghost" aria-expanded={settingsOpen} aria-controls="generate-settings-panel" onClick={() => setSettingsOpen((open) => !open)}><SlidersHorizontal size={15} /> Generation settings</Button>
-      </div>
-      <p className="mb-4 text-sm text-muted">{gateReadiness.find((item) => item.gate === generateGate)?.reason}</p>
-      {settingsOpen ? (
-        <section id="generate-settings-panel" className="generate-settings-panel" aria-label="Generation settings and authority">
-          <header className="generate-settings-heading">
-            <h3>Generation settings & authority</h3>
-            <Button size="sm" variant="ghost" onClick={() => setSettingsOpen(false)}>Close settings</Button>
-          </header>
-          <div className="generate-settings-content"><VideoGenerationOptions picture={picture} /></div>
-          <div className="generate-settings-authority">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; generation fails closed."}</div>
-        </section>
-      ) : null}
-      {generateGate === "assets" ? (
-        <div className="mb-6">
-          <AudioGenerationOptions picture={picture} />
-        </div>
-      ) : null}
-      {generateGate === "assets" ? (
-        <>
-          <GeneratedAssetsReview picture={picture} />
-          <details className="mt-6">
+  const selectedPair = gateWorkspace.pairs.find((pair) => pair.shotId === generateFilterId) ?? gateWorkspace.pairs[0];
+  const focusedShotId = generateFilterId ?? selectedPair?.shotId ?? picture.shots[0]?.id;
+  const nativePreparation = (
+          <details open className="generate-native-preparation">
             <summary className="cursor-pointer text-sm text-muted">
               Advanced preparation details
             </summary>
@@ -2100,23 +2079,94 @@ function GenerateStage({ picture }: { picture: Picture }) {
               </aside>
             </div>
           </details>
-        </>
+  );
+  if (generateGate === "assets") {
+    return (
+      <section className="generate-cinema" aria-label="Jobs and takes">
+        <GeneratedAssetsReview picture={picture} />
+        <nav className="generate-cinema-tabs" aria-label="Generation stages">
+          {gateReadiness.map((item) => (
+            <button key={item.gate} aria-current={item.gate === "assets" ? "page" : undefined} title={item.reason} onClick={() => { setSettingsOpen(false); setGenerateFocus(item.gate); }}>
+              {item.gate === "assets" ? "Assets" : item.gate === "keyframes" ? "First / last frames" : "Video clips"}
+              <span>{item.approved}/{item.required}</span>
+            </button>
+          ))}
+        </nav>
+        <Button className="generate-cinema-setup" size="sm" variant="ghost" aria-expanded={settingsOpen} aria-controls="generate-cinema-setup" onClick={() => setSettingsOpen((open) => !open)}>
+          <SlidersHorizontal size={15} /> Production setup
+        </Button>
+        {settingsOpen ? (
+          <aside id="generate-cinema-setup" className="generate-cinema-inspector" aria-label="Production setup">
+            <header><div><span>Jobs and takes</span><h2>Production setup</h2></div><Button size="sm" variant="ghost" onClick={() => setSettingsOpen(false)}>Close</Button></header>
+            <nav className="generate-cinema-inspector-tabs" aria-label="Production setup sections">
+              {([["native", "Prepared images"], ["motion", "Video"], ["sound", "Sound"]] as const).map(([id, label]) =>
+                <button key={id} aria-pressed={settingsSurface === id} onClick={() => setSettingsSurface(id)}>{label}</button>
+              )}
+            </nav>
+            <div className="generate-cinema-inspector-body">
+              {settingsSurface === "native" ? nativePreparation : null}
+              {settingsSurface === "motion" ? <VideoGenerationOptions picture={picture} /> : null}
+              {settingsSurface === "sound" ? (
+                <>
+                  <div className="generate-cinema-sound-queue">
+                    <span>Voice / ADR</span>
+                    <h3>Dialogue</h3>
+                    <p>{voiceRuntimeBlock(voiceEngineFromSelection(picture.selectedEngine.voice))}</p>
+                    <div><Button size="sm" variant="secondary" onClick={() => {
+                      const audio = queueMissingDialogue(picture);
+                      replaceActive({ ...picture, audio, updatedAt: Date.now() });
+                      toast.error("Dialogue jobs were queued and fail-closed. No cloud TTS ran.");
+                      setStage("review");
+                    }}>Queue missing dialogue</Button><Button size="sm" variant="ghost" onClick={() => setStage("score")}>Voice design &amp; library</Button></div>
+                  </div>
+                  <AudioGenerationOptions picture={picture} />
+                </>
+              ) : null}
+            </div>
+            <footer>{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · current authority verified" : " · reseal/reconcile required"}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : isDesktopApp() ? "Backend authority status pending; generation fails closed." : "Desktop authority unavailable on this site; local generation remains disabled."}{ready.length ? ` · ${ready.length} prepared` : ""}</footer>
+          </aside>
+        ) : null}
+      </section>
+    );
+  }
+  return (
+    <Pane title={generateGate === "keyframes" ? "First / last frames" : "Video clips"} kicker="JOBS AND TAKES" focusShotId={focusedShotId} selectedMediaId={focusedShotId ? `shot:${focusedShotId}` : undefined} onMediaSelect={(id) => {
+      if (id.startsWith("shot:")) setGenerateFocus(generateGate, id.slice(5));
+      else if (id.startsWith("scene:")) {
+        const shotId = id.split(":")[1];
+        if (picture.shots.some((shot) => shot.id === shotId)) setGenerateFocus(generateGate, shotId);
+      }
+    }}>
+      <div className="generate-gate-controls flex flex-wrap items-center justify-between gap-3 pb-3">
+        <div className="workspace-tabs" role="tablist" aria-label="Generate gates">
+          {gateReadiness.map((item) => <button key={item.gate} role="tab" aria-selected={generateGate === item.gate} title={item.reason} onClick={() => { setSettingsOpen(false); setGenerateFocus(item.gate); }}>{item.gate === "assets" ? "Assets" : item.gate === "keyframes" ? "First / last frames" : "Video clips"}<span className="ml-2 text-xs opacity-70">{item.approved}/{item.required}</span></button>)}
+        </div>
+        <Button size="sm" variant="ghost" aria-expanded={settingsOpen} aria-controls="generate-settings-panel" onClick={() => setSettingsOpen((open) => !open)}><SlidersHorizontal size={15} /> Generation settings</Button>
+      </div>
+      <label className="generate-shot-picker">Shot
+        <select aria-label="Select generation shot" value={focusedShotId ?? ""} onChange={(event) => setGenerateFocus(generateGate, event.target.value)}>
+          {picture.shots.map((shot) => <option key={shot.id} value={shot.id}>{String(shot.index).padStart(2, "0")} · {shot.description}</option>)}
+        </select>
+      </label>
+      <p className="generate-gate-status">{gateReadiness.find((item) => item.gate === generateGate)?.reason}</p>
+      {settingsOpen ? (
+        <section id="generate-settings-panel" className="generate-settings-panel" aria-label="Generation settings and authority">
+          <header className="generate-settings-heading">
+            <h3>Generation settings & authority</h3>
+            <Button size="sm" variant="ghost" onClick={() => setSettingsOpen(false)}>Close settings</Button>
+          </header>
+          <div className="generate-settings-content"><VideoGenerationOptions picture={picture} /></div>
+          <div className="generate-settings-authority">{backendStatus?.ok === true ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"}` : backendStatus?.ok === false ? `Backend authority unavailable: ${backendStatus.error}` : "Backend authority status pending; generation fails closed."}</div>
+        </section>
       ) : null}
       {generateGate === "keyframes" ? (
-        <section className="grid min-w-0 gap-3" aria-label="First last frames">
-          <p className="text-sm text-muted">
-            First/Last frames lock video generate until each shot has an approved pair or is waived
-            for imported video. Native keyframe generate stays fail-closed; import/waive is allowed.
-          </p>
-          {(generateFilterId
-            ? gateWorkspace.pairs.filter((pair) => pair.shotId === generateFilterId)
-            : gateWorkspace.pairs
-          ).map((pair) => {
+        <section className="generate-frame-workspace grid min-w-0 gap-3" aria-label="First last frames">
+          {(selectedPair ? [selectedPair] : []).map((pair) => {
             const shot = picture.shots.find((item) => item.id === pair.shotId);
             return (
               <article
                 key={pair.shotId}
-                className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+                className="generate-frame-inspector rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
               >
                 <p className="text-[11px] tracking-wide text-subtle uppercase">
                   {pair.status}
@@ -2141,6 +2191,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
                     })
                   }
                 />
+                <details className="generate-frame-prompts"><summary>Edit first and last frame prompts</summary>
                 <label className="mt-3 block text-[11px] tracking-wide text-subtle uppercase">
                   First frame prompt
                   <textarea
@@ -2185,6 +2236,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
                     }
                   />
                 </label>
+                </details>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button
                     size="sm"
@@ -2248,36 +2300,19 @@ function GenerateStage({ picture }: { picture: Picture }) {
         </section>
       ) : null}
       {generateGate === "video" && picture.selectedEngine.video === "ltx-director" ? (
-        <DirectorVideoPanel picture={picture} />
+        <details className="generate-render-controls"><summary>Local render controls</summary><DirectorVideoPanel picture={picture} /></details>
       ) : null}
       {generateGate === "video" && picture.selectedEngine.video === "minimax-h3" ? (
-        <NativeFilmPanel picture={picture} />
+        <details className="generate-render-controls"><summary>Local render controls</summary><NativeFilmPanel picture={picture} /></details>
       ) : null}
       {generateGate === "video" ? (
         <section
-          className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+          className="generate-video-queue rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
           aria-label="Video generation queue"
         >
-          <p className="text-[11px] tracking-wide text-subtle uppercase">
-            Keyframe-conditioned generation / imports
-          </p>
-          <h3 className="mt-1 font-display text-xl">
-            Motion / {engineById(picture.selectedEngine.video)?.name ?? "video"}
-          </h3>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-            {videoRuntimeBlock(videoEngineFromSelection(picture.selectedEngine.video))}
-          </p>
+          <p className="text-[11px] tracking-wide text-subtle uppercase">Keyframe-conditioned generation / imports</p>
+          <h3 className="mt-1 font-display text-xl">Video takes</h3>
           <div className="mt-3 flex flex-wrap gap-2">
-            {picture.selectedEngine.video !== "ltx-director" ? (
-              <Button
-                size="sm"
-                variant="secondary"
-                disabled
-                title={videoRuntimeBlock(videoEngineFromSelection(picture.selectedEngine.video))}
-              >
-                In-app video rendering unavailable
-              </Button>
-            ) : null}
             <Button
               size="sm"
               onClick={() => {
@@ -2285,6 +2320,7 @@ function GenerateStage({ picture }: { picture: Picture }) {
                   const latest =
                     useStudio.getState().pictures.find((item) => item.id === picture.id) ?? picture;
                   const shot =
+                    latest.shots.find((item) => item.id === focusedShotId) ??
                     nextShotForImport(latest.shots, hydrateVideoWorkspace(latest.video)) ??
                     latest.shots[0];
                   if (!shot) {
@@ -2326,55 +2362,12 @@ function GenerateStage({ picture }: { picture: Picture }) {
               Review takes
             </Button>
           </div>
-          <p className="mt-3 text-xs text-subtle">
-            Shot readiness:{" "}
-            {picture.shots.length
-              ? picture.shots
-                  .map(
-                    (shot) =>
-                      `${shot.index}:${shotVideoReadiness(hydrateVideoWorkspace(picture.video), shot.id)}`,
-                  )
-                  .join(" · ")
-              : "no shots"}
-          </p>
+          <p className="mt-3 text-xs text-subtle">{focusedShotId ? `Selected shot: ${shotVideoReadiness(hydrateVideoWorkspace(picture.video), focusedShotId)}` : "No shots available"}</p>
+          <details className="generate-render-availability"><summary>Render availability</summary>
+            <p>{videoRuntimeBlock(videoEngineFromSelection(picture.selectedEngine.video))}</p>
+            {picture.selectedEngine.video !== "ltx-director" ? <Button size="sm" variant="secondary" disabled title={videoRuntimeBlock(videoEngineFromSelection(picture.selectedEngine.video))}>In-app video rendering unavailable</Button> : null}
+          </details>
         </section>
-      ) : null}
-      {generateGate === "assets" ? (
-        <section
-          className="mt-6 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
-          aria-label="Voice generation queue"
-        >
-          <p className="text-[11px] tracking-wide text-subtle uppercase">Voice / ADR</p>
-          <h3 className="mt-1 font-display text-xl">
-            Dialogue / {engineById(picture.selectedEngine.voice)?.name ?? "Qwen3 TTS"}
-          </h3>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-            {voiceRuntimeBlock(voiceEngineFromSelection(picture.selectedEngine.voice))}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                const audio = queueMissingDialogue(picture);
-                replaceActive({ ...picture, audio, updatedAt: Date.now() });
-                toast.error("Dialogue jobs were queued and fail-closed. No cloud TTS ran.");
-                setStage("review");
-              }}
-            >
-              Queue missing dialogue
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setStage("score")}>
-              Voice design & library
-            </Button>
-          </div>
-        </section>
-      ) : null}
-      {generateGate === "assets" && ready.length ? (
-        <p className="mt-4 text-xs text-subtle">
-          {ready.length} prepared asset(s) are product-ready; generation still requires an exact
-          READY manifest and one-use authorization.
-        </p>
       ) : null}
     </Pane>
   );
@@ -2382,22 +2375,32 @@ function GenerateStage({ picture }: { picture: Picture }) {
 
 function ReviewStage({ picture }: { picture: Picture }) {
   const [surface, setSurface] = useWorkspaceDraft("review-media-surface", "images");
+  const [reviewIterationId, setReviewIterationId] = useWorkspaceDraft("review-selected-iteration", "");
   const [reasons, setReasons] = useWorkspaceDraft<Record<string, string>>("review-reasons", {});
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
   const [playableVideo, setPlayableVideo] = useState<Record<string, boolean>>({});
   const replaceActive = useStudio((state) => state.replaceActive);
   const setGenerateFocus = useStudio((state) => state.setGenerateFocus);
+  const reviewIterations = (picture.production?.assets ?? []).flatMap((asset) => asset.iterations.map((iteration) => ({ asset, iteration })));
+  const imageReviewMedia: StageVisualMedia[] = (picture.production?.assets ?? []).flatMap((asset) =>
+    asset.iterations.flatMap((iteration) => {
+      const previewUri = iteration.previewUri || iteration.mediaUri;
+      return previewUri ? [{ id: iteration.id, label: asset.name, previewUri, mediaUri: iteration.mediaUri ?? undefined, kind: iteration.status.replaceAll("_", " "), detail: `${asset.category.replaceAll("_", " ")} · ${iteration.id}` }] : [];
+    }),
+  );
+  const selectedReviewId = reviewIterations.some((item) => item.iteration.id === reviewIterationId)
+    ? reviewIterationId
+    : reviewIterations[0]?.iteration.id;
+  const selectedReviewHasImage = imageReviewMedia.some((item) => item.id === selectedReviewId);
   return (
-    <Pane title="Review & approval" kicker="ITERATION DECISIONS">
-      <div className="mb-4">
-        <Button size="sm" variant="secondary" onClick={() => setGenerateFocus("video")}>
-          Open video jobs
-        </Button>
+    <Pane title="Review & approval" kicker="ITERATION DECISIONS" mediaOverride={surface === "images" && selectedReviewHasImage ? imageReviewMedia : undefined} selectedMediaId={surface === "images" && selectedReviewHasImage ? selectedReviewId : undefined} onMediaSelect={surface === "images" ? setReviewIterationId : undefined}>
+      <div className="review-workspace-controls">
+        <div className="workspace-tabs" aria-label="Review media type">
+          {[["images", "Images"], ["video", "Video"], ["audio", "Audio"]].map(([id, label]) => <button key={id} aria-pressed={surface === id} onClick={() => setSurface(id)}>{label}</button>)}
+        </div>
+        <Button size="sm" variant="secondary" onClick={() => setGenerateFocus("video")}>Open jobs</Button>
       </div>
-      <div className="workspace-tabs mb-4" aria-label="Review media type">
-        {[["images", "Images"], ["video", "Video"], ["audio", "Audio"]].map(([id, label]) => <button key={id} aria-pressed={surface === id} onClick={() => setSurface(id)}>{label}</button>)}
-      </div>
-      <div hidden={surface !== "images"}><ImageIterationReview picture={picture} /></div>
+      <div hidden={surface !== "images"}><ImageIterationReview picture={picture} iterationId={selectedReviewId} onIterationSelect={setReviewIterationId} /></div>
       <section hidden={surface !== "video"} aria-label="Video takes">
         <p className="mb-3 text-[11px] tracking-wide text-subtle uppercase">Video takes</p>
         <div className="grid min-w-0 gap-3 lg:grid-cols-2">
@@ -2692,61 +2695,140 @@ function EmptyCard({ title, body }: { title: string; body: string }) {
 function StitchStage({ picture }: { picture: Picture }) {
   const [surface, setSurface] = useWorkspaceDraft("timeline-view", "preview");
   const selectedShotId = useStudio((s) => s.selectedShotId);
-  const shot = picture.shots.find((s) => s.id === selectedShotId) ?? picture.shots[0];
-  const visualMedia = useStageVisualMedia(picture, "timeline", shot?.id);
-  const stillPreview = shot?.stillUrl?.startsWith("/pictures/prodigal-son/")
-    ? visualMedia.find((item) => item.id === `shot:${shot?.id}`)?.previewUri
-    : shot?.stillUrl;
+  const selectShot = useStudio((s) => s.selectShot);
+  const selectedIndex = Math.max(0, picture.shots.findIndex((item) => item.id === selectedShotId));
+  const shot = picture.shots[selectedIndex];
+  const previews = useTimelineShotPreviews(picture);
+  const stillPreview = shot ? previews[shot.id] : undefined;
   const plan = buildTimelinePlan(picture);
+  const clip = plan.clips[selectedIndex];
+  const imported = importedCanonicalFilm(picture);
+  const latestMovie = picture.movieAssemblies?.at(-1);
+  const movieUri = latestMovie ? `media://assemblies/${latestMovie.id}/movie.mp4` : null;
+  const [playback, setPlayback] = useState<"still" | "clip" | "movie">("still");
+  const filmstripRef = useRef<HTMLDivElement>(null);
+  const starts = shotStarts(picture);
+
+  useEffect(() => { setPlayback("still"); }, [shot?.id, picture.id]);
+  useEffect(() => {
+    const strip = filmstripRef.current;
+    const active = strip?.querySelector<HTMLElement>("[aria-current='true']");
+    if (strip && active) strip.scrollTo({ left: active.offsetLeft - strip.clientWidth / 2 + active.clientWidth / 2, behavior: "smooth" });
+  }, [shot?.id]);
+
+  const select = (index: number) => {
+    const next = picture.shots[index];
+    if (next) { selectShot(next.id); setPlayback("still"); }
+  };
+
   return (
-    <Pane title="Timeline & soundtrack" kicker="MOVIE ASSEMBLY" focusShotId={shot?.id}>
-      <div className="workspace-tabs mb-4" aria-label="Movie assembly views">
-        {[["preview", "Preview"], ["order", "Clip order"], ["readiness", "Coverage"]].map(([id,label]) => <button key={id} aria-pressed={surface === id} onClick={() => setSurface(id)}>{label}</button>)}
-      </div>
-      <div hidden={surface !== "preview"} className="overflow-hidden rounded-lg bg-inset shadow-[var(--shadow-border)]">
-        <div className="grid h-[clamp(12rem,48dvh,32rem)] place-items-center">
-          {shot?.videoUrl ? (
-            <TimelineVideoPreview key={shot.videoUrl} uri={shot.videoUrl} label={shot.description} />
-          ) : shot?.stillUrl ? (
-            stillPreview ? <AssetImagePreview previewUri={stillPreview} mediaUri={stillPreview} alt={`Still for shot ${shot.index}`} className="size-full object-contain" /> : <p className="text-sm text-muted">The exact frame is not packaged for Site preview.</p>
-          ) : (
-            <div className="grid size-full place-items-center text-sm text-subtle">
-              Select a shot
-            </div>
-          )}
+    <div className="stage-pane timeline-cinematic" data-stage-surface="timeline" aria-label="Timeline and soundtrack">
+      {stillPreview && <AssetImagePreview key={shot?.id} previewUri={stillPreview} mediaUri={stillPreview} alt="" className="timeline-cinematic-art" />}
+      <div className="timeline-cinematic-shade" aria-hidden="true" />
+      {playback !== "still" && (playback === "movie" ? movieUri : clip?.videoUri) && (
+        <div className="timeline-cinematic-player">
+          <TimelineVideoPreview key={playback === "movie" ? movieUri : clip?.videoUri} uri={(playback === "movie" ? movieUri : clip?.videoUri)!} label={playback === "movie" ? `${picture.title} full movie` : shot?.description ?? "selected clip"} />
+          <button className="timeline-exit-playback" type="button" onClick={() => setPlayback("still")}>Back to still</button>
         </div>
+      )}
+      <header className="timeline-cinematic-heading">
+        <p>Movie assembly <span>·</span> {picture.title}</p>
+        <h2>Timeline &amp; soundtrack</h2>
+        {shot && <span>Shot {String(shot.index).padStart(2, "0")} <span aria-hidden="true">/</span> {picture.shots.length} · {shot.durationSec}s · {shot.lens || shot.type}</span>}
+      </header>
+      <div className="timeline-cinematic-focus">
+        {shot ? <>
+          <p>{picture.scenes.find((scene) => scene.id === shot.sceneId)?.slugline ?? shot.sceneId}</p>
+          <h3>{shot.description}</h3>
+          <div className="timeline-cinematic-transport" aria-label="Shot transport">
+            <button type="button" onClick={() => select(selectedIndex - 1)} disabled={selectedIndex === 0} aria-label="Previous shot" title="Previous shot"><SkipBack size={18} /></button>
+            <button type="button" onClick={() => setPlayback("clip")} disabled={!clip?.videoUri} aria-label="Play selected clip" title={clip?.videoUri ? "Play selected clip" : "No playable video for this shot"}><Play size={18} fill="currentColor" /><span>Play clip</span></button>
+            <button type="button" onClick={() => select(selectedIndex + 1)} disabled={selectedIndex >= picture.shots.length - 1} aria-label="Next shot" title="Next shot"><SkipForward size={18} /></button>
+            <span className="timeline-cinematic-timecode">{formatTimecode(starts[selectedIndex]?.start ?? 0, picture.fps)} <span>/</span> {formatTimecode(plan.durationSec, picture.fps)}</span>
+          </div>
+        </> : <p>Prepare a shot to begin assembling the movie.</p>}
       </div>
-      <div hidden={surface !== "order"}><EditorialClipEditor picture={picture} /></div>
-      <div hidden={surface !== "readiness"}>
-      <ol className="grid gap-1">
-        {plan.clips.map((clip) => {
-          const s = picture.shots.find((item) => item.id === clip.shotId);
-          return (
-            <li
-              key={clip.shotId}
-              className="flex items-center justify-between rounded-sm bg-elevated px-3 py-2 text-xs"
-            >
-              <span>
-                {String(s?.index ?? 0).padStart(2, "0")} {s?.description} · {clip.videoOrigin}
-              </span>
-              <span className="text-subtle">
-                {clip.missing.length
-                  ? `missing ${clip.missing.join(", ")}`
-                  : `${clip.endSec - clip.startSec}s`}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-      <p className="mt-3 text-xs text-subtle">
-        Shot timeline {plan.durationSec}s. Imported film{" "}
-        {importedCanonicalFilm(picture).durationSec.toFixed(1)}s across{" "}
-        {importedCanonicalFilm(picture).clips.length} canonical imported clip(s). Origin stays
-        imported, never generated.
-      </p>
-      </div>
-    </Pane>
+      <aside className="timeline-inspector" aria-label="Timeline inspector">
+        <div className="timeline-inspector-heading"><span>Selected shot</span><strong>{shot ? String(shot.index).padStart(2, "0") : "—"}</strong></div>
+        <div className="timeline-inspector-tabs" role="group" aria-label="Movie assembly views">
+          {([ ["preview", "Preview"], ["order", "Clip order"], ["readiness", "Coverage"] ] as const).map(([id, label]) => (
+            <button type="button" key={id} aria-pressed={surface === id} onClick={() => setSurface(id)}>{label}</button>
+          ))}
+        </div>
+        <div className="timeline-inspector-content" hidden={surface !== "preview"}>
+          {shot ? <>
+            <h3>Shot {String(shot.index).padStart(2, "0")} · {shot.type}</h3>
+            <p>{shot.description}</p>
+            <dl>
+              <div><dt>Source</dt><dd>{clip?.videoOrigin?.replaceAll("-", " ") ?? "Awaiting source"}</dd></div>
+              <div><dt>Camera</dt><dd>{shot.camera || "—"} · {shot.lens || "—"}</dd></div>
+              <div><dt>Audio</dt><dd>{clip?.audioTakeIds.length ? `${clip.audioTakeIds.length} reviewed take(s)` : "No reviewed take bound"}</dd></div>
+            </dl>
+            <div className="timeline-inspector-actions">
+              <button type="button" disabled={!clip?.videoUri} onClick={() => setPlayback("clip")}><Play size={15} fill="currentColor" /> Play clip</button>
+              <button type="button" disabled={!movieUri} onClick={() => setPlayback("movie")}><Film size={15} /> Full movie</button>
+            </div>
+            {!stillPreview && shot.stillUrl && <p className="timeline-inspector-note">The exact still is unavailable in this preview.</p>}
+            {!movieUri && <p className="timeline-inspector-note">Assemble the full movie to preview it here.</p>}
+          </> : <p>No shot selected.</p>}
+        </div>
+        <div className="timeline-inspector-content timeline-inspector-editor" hidden={surface !== "order"}>
+          <h3>Clip order</h3>
+          <p>Review the selected shot’s takes in playback order.</p>
+          {shot ? <EditorialClipEditor key={shot.id} picture={{ ...picture, shots: [shot] }} /> : <p>No shots to edit.</p>}
+          <div className="timeline-inspector-stepping">
+            <button type="button" disabled={selectedIndex === 0} onClick={() => select(selectedIndex - 1)}><ChevronLeft size={16} /> Earlier shot</button>
+            <button type="button" disabled={selectedIndex >= picture.shots.length - 1} onClick={() => select(selectedIndex + 1)}>Later shot <ChevronRight size={16} /></button>
+          </div>
+        </div>
+        <div className="timeline-inspector-content" hidden={surface !== "readiness"}>
+          <h3>Coverage</h3>
+          <p>{plan.clips.filter((item) => !item.missing.length).length} / {plan.clips.length} shots ready · {imported.durationSec.toFixed(1)}s canonical imported footage.</p>
+          {shot && clip && <div className="timeline-coverage-selected"><strong>Shot {String(shot.index).padStart(2, "0")}</strong><span>{clip.missing.length ? `Missing: ${clip.missing.join(", ")}` : "Picture and sound linked"}</span></div>}
+          <ol className="timeline-coverage-list">
+            {plan.clips.map((item, index) => (
+              <li key={item.shotId}>
+                <button type="button" aria-current={index === selectedIndex ? "true" : undefined} onClick={() => select(index)}>
+                  <span>{String(picture.shots[index]?.index ?? index + 1).padStart(2, "0")} · {picture.shots[index]?.description}</span>
+                  <small>{item.missing.length ? item.missing.join(", ") : "Ready"}</small>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </aside>
+      <nav className="timeline-filmstrip" aria-label="Shot filmstrip">
+        <div className="timeline-filmstrip-title"><strong>Shots</strong><small>{picture.shots.length ? `${selectedIndex + 1} / ${picture.shots.length}` : "0 / 0"}</small></div>
+        <button className="timeline-filmstrip-arrow" type="button" aria-label="Scroll shots left" onClick={() => filmstripRef.current?.scrollBy({ left: -500, behavior: "smooth" })}><ChevronLeft size={18} /></button>
+        <div className="timeline-filmstrip-list" ref={filmstripRef}>
+          {picture.shots.map((item, index) => (
+            <button type="button" key={item.id} aria-current={index === selectedIndex ? "true" : undefined} aria-label={`Shot ${String(item.index).padStart(2, "0")}: ${item.description}`} onClick={() => select(index)} onKeyDown={(event) => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); const nextIndex = Math.max(0, Math.min(picture.shots.length - 1, index + (event.key === "ArrowRight" ? 1 : -1))); select(nextIndex); filmstripRef.current?.querySelectorAll<HTMLButtonElement>("button")[nextIndex]?.focus(); } }}>
+              <span className="timeline-filmstrip-image">{previews[item.id] ? <img src={previews[item.id]} alt="" loading="lazy" /> : <Film size={18} aria-hidden="true" />}</span>
+              <span className="timeline-filmstrip-caption">{String(item.index).padStart(2, "0")} <small>{item.durationSec}s</small></span>
+            </button>
+          ))}
+        </div>
+        <button className="timeline-filmstrip-arrow" type="button" aria-label="Scroll shots right" onClick={() => filmstripRef.current?.scrollBy({ left: 500, behavior: "smooth" })}><ChevronRight size={18} /></button>
+      </nav>
+    </div>
   );
+}
+
+function useTimelineShotPreviews(picture: Picture): Record<string, string> {
+  const [scenePreviews, setScenePreviews] = useState<BundledScenePreview[]>([]);
+  const [mediaMap, setMediaMap] = useState<BundledMediaMap>({});
+  useEffect(() => {
+    if (picture.id !== "pic_prodigal_son_20260909") { setScenePreviews([]); setMediaMap({}); return; }
+    let current = true;
+    void Promise.all([loadBundledScenePreviews(), loadBundledMediaMap()]).then(([frames, mapping]) => {
+      if (current) { setScenePreviews(frames); setMediaMap(mapping); }
+    });
+    return () => { current = false; };
+  }, [picture.id]);
+  return Object.fromEntries(picture.shots.flatMap((item) => {
+    const preview = resolveSiteStillPreview(picture.id, item.stillUrl, scenePreviews, mediaMap);
+    return preview ? [[item.id, preview.uri]] : [];
+  }));
 }
 
 function TimelineVideoPreview({ uri, label }: { uri: string; label: string }) {
@@ -2765,7 +2847,7 @@ function ScoreStage({ picture }: { picture: Picture }) {
   const importCueId = importSelection.pictureId === picture.id ? importSelection.cueId : "";
   const audio = hydratePictureAudio(picture);
   return (
-    <Pane title="Sound, voice & music" kicker="AUDIO DEVELOPMENT" tabs={<div className="workspace-tabs" aria-label="Sound workspace">
+    <Pane title="Sound, voice & music" kicker="AUDIO DEVELOPMENT" panelVariant={surface} tabs={<div className="workspace-tabs" aria-label="Sound workspace">
         {[
           ["cues", "Cue editor"],
           ["voices", "Character voices"],
@@ -2784,16 +2866,8 @@ function ScoreStage({ picture }: { picture: Picture }) {
         <VoiceDesignWorkspace key={picture.id} picture={picture} />
       </div>
       <div hidden={surface !== "takes"}>
-        <p className="mb-4 max-w-2xl text-sm text-muted">
-          Plan cues, manage voices, and review imported audio. Choose song, instrumental,
-          sound-effect, and speech tools in Generate.
-        </p>
-        <div
-          role="status"
-          className="max-w-2xl rounded-md bg-inset px-3 py-2 text-xs leading-relaxed text-muted shadow-[var(--shadow-border)]"
-        >
-          {musicRuntimeBlock(musicEngineFromSelection(picture.selectedEngine.music))}
-        </div>
+        <p className="mb-2 text-xs text-muted">Review imported audio and its linked voice and cue context.</p>
+        <details className="sound-runtime-detail"><summary>Local audio availability</summary><p role="status">{musicRuntimeBlock(musicEngineFromSelection(picture.selectedEngine.music))}</p></details>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button
             size="sm"
@@ -2892,9 +2966,9 @@ function ScoreStage({ picture }: { picture: Picture }) {
             Review audio takes
           </Button>
         </div>
-        <div className="mt-5 grid gap-3">
+        <div className="sound-take-list mt-4">
           {audio.takes.map((take) => (
-            <article key={take.id} className="rounded-lg border border-border bg-surface p-4">
+            <article key={take.id} className="sound-take-row">
               <h3 className="text-sm">
                 {take.kind} ·{" "}
                 {take.canonical
@@ -2922,34 +2996,9 @@ function ScoreStage({ picture }: { picture: Picture }) {
             </article>
           ))}
 
-          {audio.profiles.map((profile) => (
-            <article
-              key={profile.id}
-              className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
-            >
-              <p className="text-[11px] tracking-wide text-subtle uppercase">Voice bible</p>
-              <h3 className="font-display text-xl">{profile.characterName}</h3>
-              <p className="mt-1 text-xs text-muted">
-                {profile.engineId} · {profile.notes}
-              </p>
-            </article>
-          ))}
-          {audio.lines.map((line) => (
-            <article
-              key={line.id}
-              className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
-            >
-              <p className="text-[11px] tracking-wide text-subtle uppercase">
-                Dialogue · {line.targetDurationSec}s
-              </p>
-              <h3 className="font-display text-xl">{line.characterName}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted">{line.text}</p>
-              <p className="mt-2 text-xs text-subtle">
-                {line.emotion} · {line.delivery}
-              </p>
-            </article>
-          ))}
-          {(audio.cues.length
+          {audio.profiles.length > 0 && <details className="sound-context-list"><summary>Voice bible · {audio.profiles.length}</summary><dl>{audio.profiles.map((profile) => <div key={profile.id}><dt>{profile.characterName}</dt><dd>{profile.notes}<small>Source voice tool: {profile.engineId}</small></dd></div>)}</dl></details>}
+          {audio.lines.length > 0 && <details className="sound-context-list"><summary>Dialogue lines · {audio.lines.length}</summary><dl>{audio.lines.map((line) => <div key={line.id}><dt>{line.characterName} · {line.targetDurationSec}s</dt><dd>{line.text}<small>{line.emotion} · {line.delivery}</small></dd></div>)}</dl></details>}
+          <details className="sound-context-list"><summary>Authored cues · {audio.cues.length || picture.cues.length}</summary><dl>{(audio.cues.length
             ? audio.cues
             : picture.cues.map((c) => ({
                 id: c.id,
@@ -2962,16 +3011,7 @@ function ScoreStage({ picture }: { picture: Picture }) {
                 sceneId: null,
                 shotId: null,
               }))
-          ).map((c) => (
-            <article
-              key={c.id}
-              className="rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
-            >
-              <h3 className="font-display text-xl">{c.name}</h3>
-              <p className="mt-1 text-xs text-muted">{c.notes}</p>
-              <p className="mt-2 text-xs">{c.instrumentation}</p>
-            </article>
-          ))}
+          ).map((c) => <div key={c.id}><dt>{c.name}</dt><dd>{c.notes}<small>{c.instrumentation}</small></dd></div>)}</dl></details>
         </div>
       </div>
     </Pane>

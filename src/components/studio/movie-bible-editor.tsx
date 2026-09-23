@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
+  ArrowLeft,
+  ArrowRight,
   BookOpen,
   Check,
   ChevronDown,
@@ -28,7 +30,6 @@ import {
 } from "@/lib/studio/movie-bible";
 import { useActivePicture, useStudio } from "@/lib/studio/store";
 import type { Picture, StageId } from "@/lib/studio/types";
-import { sourceTextForIntake } from "@/lib/studio/picture-intake";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/field";
 import { openAssetIterations, openScreenplayScene } from "./workspace-links";
@@ -93,9 +94,28 @@ function sourcePassages(
     add("Performance", asset.canonicalSpec.performanceNotes);
     add("Continuity", asset.canonicalSpec.continuityLocks.join("\n"));
   } else if (row.kind === "picture") {
-    add("Premise", picture.logline);
-    add("Source & intent", sourceTextForIntake(picture.intake));
-    add("Director’s notes", picture.directorNotes);
+    // These are distinct authored inputs. A premise or dialogue style must not
+    // masquerade as an unanswered moral question or language policy.
+    const intake = picture.intake;
+    for (const [label, value] of [
+      ["Concept", intake.concept], ["Premise", intake.premise],
+      ["Logline", intake.logline], ["Story notes", intake.storyNotes],
+      ["Treatment", intake.treatment], ["Existing screenplay", intake.existingScreenplay],
+      ["Source material", intake.sourceMaterial], ["Adaptation instructions", intake.adaptationInstructions],
+      ["Material to preserve", intake.materialToPreserve], ["Permitted dramatization", intake.materialMayDramatize],
+      ["Source passages", intake.sourcePassages], ["Supplied source text", intake.suppliedSourceText],
+      ["Fidelity requirements", intake.fidelityRequirements], ["Historical period", intake.historicalPeriod],
+      ["Cultural and social world", intake.culturalSocialWorld], ["Adaptation boundaries", intake.adaptationBoundaries],
+      ["Production style", intake.productionStyle], ["Director notes", intake.directorNotes],
+      ["Dialogue style", intake.dialogueStyle], ["Story constraints", intake.storyConstraints],
+      ["Must include", intake.mustInclude], ["Must avoid", intake.mustAvoid],
+      ["Moral question", intake.moralQuestion], ["Language", intake.language],
+      ["Continuity policy", intake.continuityPolicy], ["Voice policy", intake.voicePolicy],
+      ["Score strategy", intake.scoreStrategy], ["Delivery format", intake.deliveryFormat],
+      ["Delivery codec", intake.deliveryCodec],
+    ] as const) {
+      if (value?.trim()) passages.push({ label, text: value });
+    }
   } else if (row.kind === "character") {
     const character = picture.characters.find((item) => item.id === row.id);
     add("Role", character?.role);
@@ -159,7 +179,8 @@ export function MovieBibleEditor({
   const patch = useStudio((s) => s.patchActive);
   const [query, setQuery] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
+  const [selectedField, setSelectedField] = useState<string | null>(null);
+  const [fieldPage, setFieldPage] = useState(0);
   const [detail, setDetail] = useState<DetailView>("direction");
   const [category, setCategory] = useWorkspaceDraft(`bible-category:${title}`, "all");
   const [selected, setSelected] = useWorkspaceDraft(`bible-record:${title}`, "");
@@ -170,11 +191,7 @@ export function MovieBibleEditor({
   const workbenchRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!editing) return;
-    const activeField = workbenchRef.current?.querySelector<HTMLElement>(
-      '.bible-authored-passage[data-editing="true"]',
-    );
-    activeField?.scrollIntoView({ block: "nearest", behavior: "instant" });
-    activeField?.querySelector("textarea")?.focus({ preventScroll: true });
+    workbenchRef.current?.querySelector<HTMLTextAreaElement>(".bible-inline-editor textarea")?.focus({ preventScroll: true });
   }, [editing, selected]);
   if (!picture) return null;
 
@@ -215,7 +232,6 @@ export function MovieBibleEditor({
     const view = fieldViews.get(field);
     return view?.disposition !== "missing" && Boolean(view?.value.trim());
   });
-  const missingFields = fields.filter((field) => !completedFields.includes(field));
   const passages = sourcePassages(picture, row, sourceReading).filter(
     (passage) => !completedFields.some((field) => fieldViews.get(field)?.value === passage.text),
   );
@@ -253,12 +269,14 @@ export function MovieBibleEditor({
       if (target.kind === "shot") useStudio.getState().selectShot(target.id);
     }
     setEditing(null);
+    setSelectedField(null);
+    setFieldPage(0);
     setPickerOpen(false);
     setDetail("direction");
   };
   const edit = (field: string) => {
-    setFieldPickerOpen(false);
     setDetail("direction");
+    setSelectedField(field);
     setEditing(field);
     const current = fieldViews.get(field);
     setValue(current?.value ?? "");
@@ -303,15 +321,21 @@ export function MovieBibleEditor({
   const selectedIndex = kindRows.findIndex((item) => item.id === row.id);
   const railStart = Math.max(0, Math.min(selectedIndex - 3, kindRows.length - 7));
   const railRows = kindRows.slice(railStart, railStart + 7);
+  const topicRail = kindRows.length === 1 && fields.length > 0;
+  const fieldsPerPage = 7;
+  const fieldPageCount = Math.max(1, Math.ceil(fields.length / fieldsPerPage));
+  const visibleFields = fields.slice(fieldPage * fieldsPerPage, (fieldPage + 1) * fieldsPerPage);
+  const focusedField = selectedField && fields.includes(selectedField) ? selectedField : null;
+  const focusedIndex = focusedField ? fields.indexOf(focusedField) : -1;
+  const focusedView = focusedField ? fieldViews.get(focusedField) : undefined;
   const image = bibleImage(picture, row.id);
-  // The imported film thumbnail is a labeled contact sheet. Use its existing
-  // existing return-scene frame as the film-level canvas, while the original
-  // thumbnail remains available in the rail and Media view.
+  // The imported film thumbnail is a labeled contact sheet. A bundled landscape
+  // shows the setting without recycling a character's scene portrait.
   const heroImage =
     row.kind === "picture" && picture.id === "pic_prodigal_son_20260909"
       ? {
-          previewUri: "/pictures/prodigal-son/previews/PS-S18-SH005-FIRST.webp",
-          mediaUri: "/pictures/prodigal-son/previews/PS-S18-SH005-FIRST.webp",
+          previewUri: "/pictures/prodigal-son/previews/PS-LOC-TERRACE.webp",
+          mediaUri: "/pictures/prodigal-son/previews/PS-LOC-TERRACE.webp",
         }
       : image;
 
@@ -439,9 +463,7 @@ export function MovieBibleEditor({
           aria-label={`${row.name} direction`}
         >
           <div className="bible-hero-copy">
-            <span>
-              {row.kind.replaceAll("-", " ")} · {row.status}
-            </span>
+            <span>{row.kind === "picture" ? "Production Bible" : row.kind.replaceAll("-", " ")}</span>
             <h1>{row.name}</h1>
             {row.kind === "picture" && picture.logline && <p>{picture.logline}</p>}
             <button onClick={() => setDetail("source")}>
@@ -453,21 +475,19 @@ export function MovieBibleEditor({
         <aside className="bible-workbench-context" aria-label={detailTitle[detail]}>
           <header className="bible-context-heading">
             <div>
-              <small>
-                {row.kind.replaceAll("-", " ")} · {record?.revision ?? row.revision}
-              </small>
+              <small>{row.kind.replaceAll("-", " ")} · revision {record?.revision ?? row.revision}</small>
               <h2>{detailTitle[detail]}</h2>
             </div>
             <span className="bible-field-count">
-              {completedFields.length}/{fields.length} fields
+              {completedFields.length} of {fields.length} with content
             </span>
           </header>
           <nav className="bible-inspector-tabs" aria-label="Bible record views">
             {(
               [
                 ["direction", "Direction"],
-                ["source", "Sources"],
-                ["media", "Media"],
+                ["source", "Source text"],
+                ["history", "History"],
                 ["tools", "More"],
               ] as const
             ).map(([key, label]) => (
@@ -480,121 +500,94 @@ export function MovieBibleEditor({
               </button>
             ))}
           </nav>
-          <div className="bible-context-content">
+          <div className="bible-context-content" data-view={detail}>
             {detail === "direction" && (
               <div className="bible-direction-content">
-                <div className="bible-field-board">
-                  {fieldPickerOpen && (
-                    <section className="bible-inline-picker" aria-label="Creative direction fields">
-                      <header className="bible-context-heading">
-                        <div>
-                          <small>CREATIVE DIRECTION</small>
-                          <h2>Choose a field</h2>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Close field selection"
-                          onClick={() => setFieldPickerOpen(false)}
-                        >
-                          <X size={16} />
-                        </Button>
-                      </header>
-                      <div className="bible-field-list">
-                        {fields.map((field) => (
-                          <button key={field} onClick={() => edit(field)}>
-                            <span>{field}</span>
-                            {completedFields.includes(field) ? (
-                              <Pencil size={15} />
-                            ) : (
-                              <Plus size={15} />
-                            )}
-                          </button>
-                        ))}
+                {focusedField ? (
+                  <section className="bible-field-focused" aria-label={focusedField}>
+                    <div className="bible-field-navigation">
+                      <button onClick={() => { setSelectedField(null); setEditing(null); }}>
+                        <ArrowLeft size={15} /> All fields
+                      </button>
+                      <span>{String(focusedIndex + 1).padStart(2, "0")} / {String(fields.length).padStart(2, "0")}</span>
+                    </div>
+                    <div className="bible-focused-heading">
+                      <div>
+                        <small>CREATIVE DIRECTION</small>
+                        <h3>{focusedField}</h3>
+                        <span>{focusedView?.source || (focusedView?.disposition === "missing" ? "Open field" : "Bible direction")}</span>
                       </div>
-                    </section>
-                  )}
-                  {fields.map((field) => {
-                    const current = fieldViews.get(field);
-                    return (
-                      <section
-                        className="bible-passage bible-authored-passage"
-                        key={field}
-                        data-editing={editing === field}
-                      >
-                        <div className="bible-passage-heading">
-                          <h3>{field}</h3>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={`Edit ${field}`}
-                            title={`Edit ${field}`}
-                            onClick={() => edit(field)}
-                          >
-                            <Pencil size={14} />
-                          </Button>
+                      {editing !== focusedField && (
+                        <Button variant="ghost" size="icon-sm" aria-label={`Edit ${focusedField}`} title={`Edit ${focusedField}`} onClick={() => edit(focusedField)}>
+                          <Pencil size={16} />
+                        </Button>
+                      )}
+                    </div>
+                    {editing === focusedField ? (
+                      <div className="bible-inline-editor" aria-label={`Edit ${focusedField}`}>
+                        <Textarea aria-label={focusedField} rows={7} value={value} onChange={(event) => setValue(event.target.value)} />
+                        <label>
+                          Source or correction reason
+                          <Input aria-label="Source or correction reason" value={reason} onChange={(event) => setReason(event.target.value)} />
+                        </label>
+                        <label className="bible-inline-check">
+                          <input type="checkbox" checked={na} onChange={(event) => setNa(event.target.checked)} />
+                          Not applicable (explain above)
+                        </label>
+                        <div className="bible-inline-actions">
+                          <Button variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
+                          <Button onClick={saveDirection}>Save direction</Button>
                         </div>
-                        {editing === field ? (
-                          <div className="bible-inline-editor" aria-label={`Edit ${field}`}>
-                            <Textarea
-                              aria-label={field}
-                              rows={8}
-                              value={value}
-                              onChange={(event) => setValue(event.target.value)}
-                            />
-                            <label>
-                              Source or correction reason
-                              <Input
-                                aria-label="Source or correction reason"
-                                value={reason}
-                                onChange={(event) => setReason(event.target.value)}
-                              />
-                            </label>
-                            <label className="bible-inline-check">
-                              <input
-                                type="checkbox"
-                                checked={na}
-                                onChange={(event) => setNa(event.target.checked)}
-                              />
-                              Not applicable (explain above)
-                            </label>
-                            <div className="bible-inline-actions">
-                              <Button variant="ghost" onClick={() => setEditing(null)}>
-                                Cancel
-                              </Button>
-                              <Button onClick={saveDirection}>Save direction</Button>
-                            </div>
+                      </div>
+                    ) : focusedView?.value.trim() ? (
+                      <p className="bible-field-value">{focusedView.value}</p>
+                    ) : (
+                      <button className="bible-empty-direction" onClick={() => edit(focusedField)}>
+                        <Plus size={18} /> Add {focusedField.toLowerCase()}
+                      </button>
+                    )}
+                    <div className="bible-field-pager">
+                      <button disabled={focusedIndex === 0} onClick={() => { setSelectedField(fields[focusedIndex - 1]); setEditing(null); }}>
+                        <ArrowLeft size={15} /> Previous field
+                      </button>
+                      <button disabled={focusedIndex === fields.length - 1} onClick={() => { setSelectedField(fields[focusedIndex + 1]); setEditing(null); }}>
+                        Next field <ArrowRight size={15} />
+                      </button>
+                    </div>
+                  </section>
+                ) : (
+                  <div className="bible-field-overview">
+                    <div className="bible-overview-caption">
+                      <span>{row.kind === "picture" ? "Film direction from the imported source and Bible edits" : "Record direction and source notes"}</span>
+                      <span>{fields.length} topics</span>
+                    </div>
+                    <div className="bible-field-board">
+                      {visibleFields.map((field, index) => {
+                        const current = fieldViews.get(field);
+                        return (
+                          <div className="bible-field-row" key={field}>
+                            <button className="bible-field-choice" onClick={() => setSelectedField(field)}>
+                              <span className="bible-field-number">{String(fieldPage * fieldsPerPage + index + 1).padStart(2, "0")}</span>
+                              <span className="bible-field-summary">
+                                <strong>{field}</strong>
+                                <span>{current?.value.trim() ? "Open to read complete direction" : "Open to add direction"}</span>
+                              </span>
+                              <span className="bible-field-origin">{current?.disposition === "source" ? "Source" : current?.disposition === "missing" || !current?.value.trim() ? "Open" : "Bible edit"}</span>
+                            </button>
+                            <button className="bible-field-edit" aria-label={`Edit ${field}`} title={`Edit ${field}`} onClick={() => edit(field)}><Pencil size={14} /></button>
                           </div>
-                        ) : (
-                          <>
-                            {current?.disposition === "not-applicable" && (
-                              <span className="bible-disposition">Not applicable</span>
-                            )}
-                            {current?.disposition === "source" && (
-                              <span className="bible-disposition">{current.source}</span>
-                            )}
-                            {current?.disposition !== "missing" && current?.value.trim() ? (
-                              <p>{current.value}</p>
-                            ) : (
-                              <button className="bible-missing-field" onClick={() => edit(field)}>
-                                <Plus size={16} /> Add {field.toLowerCase()}
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </section>
-                    );
-                  })}
-                  {!!missingFields.length && (
-                    <Button
-                      className="bible-add-direction"
-                      variant="ghost"
-                      onClick={() => setFieldPickerOpen(true)}
-                    >
-                      <Plus /> Add direction
-                    </Button>
-                  )}
-                </div>
+                        );
+                      })}
+                    </div>
+                    {fieldPageCount > 1 && (
+                      <div className="bible-field-pager">
+                        <button disabled={fieldPage === 0} onClick={() => setFieldPage(fieldPage - 1)}><ArrowLeft size={15} /> Previous</button>
+                        <span>{fieldPage + 1} / {fieldPageCount}</span>
+                        <button disabled={fieldPage === fieldPageCount - 1} onClick={() => setFieldPage(fieldPage + 1)}>Next <ArrowRight size={15} /></button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {!passages.length && !completedFields.length && !fields.length && (
                   <div className="bible-desk-empty">
                     <BookOpen size={24} />
@@ -606,7 +599,7 @@ export function MovieBibleEditor({
                 )}
               </div>
             )}
-            {!["direction", "source", "media", "tools"].includes(detail) && (
+            {!["direction", "source", "history", "media", "tools"].includes(detail) && (
               <button className="bible-context-back" onClick={() => setDetail("tools")}>
                 <ChevronDown size={15} /> All record options
               </button>
@@ -657,6 +650,16 @@ export function MovieBibleEditor({
                     <>
                       <dt>Source locator</dt>
                       <dd>{sourceReading?.locator || "Not recorded"}</dd>
+                      {row.uri && (
+                        <>
+                          <dt>Original file</dt>
+                          <dd>
+                            <a href={row.uri} download={sourceReading?.locator || undefined} className="underline underline-offset-2">
+                              Open {sourceReading?.locator || row.name}
+                            </a>
+                          </dd>
+                        </>
+                      )}
                       {sourceReading?.importedAt !== undefined && (
                         <>
                           <dt>Imported</dt>
@@ -804,13 +807,24 @@ export function MovieBibleEditor({
       </div>
       <div className="bible-filmstrip" aria-label="Bible records">
         <span className="bible-filmstrip-label">
-          {row.kind.replaceAll("-", " ")}
+          {topicRail ? "Bible topics" : row.kind.replaceAll("-", " ")}
           <small>
-            {selectedIndex + 1} / {kindRows.length}
+            {topicRail ? `${fields.length} fields` : `${selectedIndex + 1} / ${kindRows.length}`}
           </small>
         </span>
         <div className="bible-filmstrip-track">
-          {railRows.map((item) => {
+          {topicRail ? fields.map((field, index) => (
+            <button
+              key={field}
+              className="bible-filmstrip-topic"
+              aria-current={detail === "direction" && focusedField === field ? "true" : undefined}
+              onClick={() => { setDetail("direction"); setSelectedField(field); setEditing(null); }}
+            >
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <strong>{field}</strong>
+              <small>{fieldViews.get(field)?.disposition === "source" ? "Imported source" : fieldViews.get(field)?.value.trim() ? "Bible direction" : "Open field"}</small>
+            </button>
+          )) : railRows.map((item) => {
             const thumbnail = bibleImage(picture, item.id);
             return (
               <button

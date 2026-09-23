@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
-  ArrowUpRight,
   BookOpen,
   FileUp,
   Film,
@@ -84,6 +83,7 @@ export function PicturesLibrary({
   const pendingPicture = pictures.find((picture) => picture.id === pendingDelete) ?? null;
   const heroArt = heroArtFor(featured).find((uri) => !failedHero.includes(uri));
   const hasHeroArt = Boolean(heroArt);
+  const isProdigalHero = featured?.id === "pic_prodigal_son_20260909" && heroArt === PRODIGAL_AMBIENT_IMAGE;
 
   useEffect(() => {
     if (pendingDelete) keepButton.current?.focus();
@@ -119,6 +119,7 @@ export function PicturesLibrary({
       className="home-library home-cinema"
       aria-labelledby="pictures-heading"
       data-has-art={hasHeroArt}
+      data-prodigal-hero={isProdigalHero}
     >
       {hasHeroArt && heroArt && (
         <img
@@ -130,6 +131,12 @@ export function PicturesLibrary({
         />
       )}
       <div className="home-cinema-vignette" aria-hidden="true" />
+      {featured && (
+        <div className="home-current-project" aria-hidden="true">
+          <span>{featured.title}</span>
+          <small>{featured.sample ? "Studio sample" : "Your film"}</small>
+        </div>
+      )}
 
       <nav className="home-icon-dock" aria-label="Film workspace">
         <button
@@ -242,12 +249,12 @@ export function PicturesLibrary({
           </p>
           <h1 id="pictures-heading">{featured?.title ?? "Your films"}</h1>
           <p className="home-feature-description">
-            {featured?.logline ||
+            {(isProdigalHero ? "A story of return" : featured?.logline) ||
               (featured
                 ? "Your story is ready to develop."
                 : "Start a new film or import a screenplay or source text.")}
           </p>
-          {featured && (
+          {featured && !isProdigalHero && (
             <p className="home-feature-meta">
               <span>{featured.genre || "Genre not set"}</span>
               <span aria-hidden="true">·</span>
@@ -326,6 +333,9 @@ export function PicturesLibrary({
           )}
         </div>
       </div>
+      {isProdigalHero && (
+        <p className="home-feature-motto" aria-hidden="true">Grace<br />changes<br />everything</p>
+      )}
 
       <div className="home-film-rail" aria-label="Films">
         <Button
@@ -337,9 +347,9 @@ export function PicturesLibrary({
         >
           <ArrowLeft aria-hidden="true" />
         </Button>
-        <ul className="home-gallery" aria-label="Film artwork">
+        <ul className="home-gallery" aria-label={`${visible.length} ${visible.length === 1 ? "film" : "films"}`}>
           {pagePictures.map((picture) => (
-            <li key={picture.id} className="home-picture" data-active={featured?.id === picture.id}>
+            <li key={picture.id} className="home-picture" data-active={featured?.id === picture.id} data-prodigal-art={picture.id === "pic_prodigal_son_20260909"}>
               <button
                 type="button"
                 className="home-picture-open"
@@ -356,8 +366,9 @@ export function PicturesLibrary({
                       : picture} />
                   ) : (
                     <span className="home-picture-missing-art" aria-hidden="true">
-                      <Film strokeWidth={1.2} />
-                      <small>No image attached</small>
+                      <small>{picture.sample ? "Studio sample" : "In development"}</small>
+                      <strong>{picture.title}</strong>
+                      <span>{picture.genre || "Your film"}</span>
                     </span>
                   )}
                 </span>
@@ -368,14 +379,6 @@ export function PicturesLibrary({
                   {STAGES.find((stage) => stage.id === (picture.lastOpenedStage ?? picture.stage))
                     ?.label ?? "Picture setup"}
                 </span>
-                <button
-                  type="button"
-                  className="home-picture-resume"
-                  onClick={() => onOpen(picture.id)}
-                  aria-label={"Resume " + picture.title}
-                >
-                  <ArrowUpRight aria-hidden="true" />
-                </button>
                 {!picture.sample && (
                   <Button
                     variant="ghost"
@@ -397,6 +400,13 @@ export function PicturesLibrary({
               </div>
             </li>
           ))}
+          {!visible.length && (query || filter !== "all") && (
+            <li className="home-picture home-library-empty" role="status">
+              <strong>No films found</strong>
+              <span>Try a different search or show all films.</span>
+              <Button variant="secondary" size="sm" onClick={() => { setQuery(""); setFilter("all"); setPage(0); }}>Show all films</Button>
+            </li>
+          )}
         </ul>
         <Button
           variant="ghost"
@@ -408,14 +418,9 @@ export function PicturesLibrary({
           <ArrowRight aria-hidden="true" />
         </Button>
       </div>
-      {!visible.length && (query || filter !== "all") && (
-        <p className="home-library-empty" role="status">
-          No films match. Try another search or filter.
-        </p>
-      )}
-      <span className="home-gallery-paging" aria-live="polite">
-        {visible.length ? currentPage + 1 : 0} / {visible.length ? pages : 0}
-      </span>
+      {pages > 1 && <span className="home-gallery-paging" aria-live="polite">
+        {currentPage + 1} / {pages}
+      </span>}
     </section>
   );
 }

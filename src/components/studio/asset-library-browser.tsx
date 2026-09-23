@@ -2,7 +2,7 @@ import "./asset-workbench.css";
 import { CabinetCarousel } from "./cabinet";
 import { openCharacterSheet, openWorldSheet } from "./workspace-links";
 import { AssetImagePreview } from "./asset-image-preview";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ImageOff, Maximize2, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/field";
@@ -75,12 +75,14 @@ export function AssetLibraryBrowser({
   busy,
   onGenerate,
   onRewrite,
+  settingsAction,
 }: {
   picture: Picture;
   reviews: AssetReview[];
   busy: boolean;
   onGenerate: (id: string) => void;
   onRewrite: (id: string) => void;
+  settingsAction?: ReactNode;
 }) {
   const replaceActive = useStudio((s) => s.replaceActive);
   const [category, setCategory] = useWorkspaceDraft("asset-library-category", "all");
@@ -214,8 +216,13 @@ export function AssetLibraryBrowser({
   return (
     <section aria-label="Asset library" className={`asset-library-browser${enlarged ? " is-enlarged" : ""}`}>
       <div className="asset-library-backdrop" aria-hidden="true">
-        {(backdropPreview || backdropOriginal) && <AssetImagePreview key={`${asset?.id}:${selected?.id}`} previewUri={backdropPreview} mediaUri={backdropOriginal} alt="" compact className="asset-library-backdrop-image" />}
+        {(backdropPreview || backdropOriginal) && <AssetImagePreview key={`${asset?.id}:${selected?.id}:${chosenCharacterReference?.id ?? ""}`} previewUri={backdropPreview} mediaUri={backdropOriginal} alt="" compact className="asset-library-backdrop-image" />}
       </div>
+      {!enlarged && <div className="asset-library-hero-copy" aria-live="polite">
+        <span className="asset-library-eyebrow">{asset?.category.replaceAll("_", " ") ?? "Production assets"} · {asset?.id ?? "Library"}</span>
+        <h2>{asset?.name ?? "Select an asset"}</h2>
+        <span className="asset-library-hero-status">{asset ? asset.approvedIterationId ? "Approved image" : asset.stale ? "Stale source" : asset.iterations.length ? "Imported draft · review pending" : "No generated image" : "Browse the production library"}</span>
+      </div>}
       <div className="asset-library-filters flex flex-wrap items-center gap-3">
         <Input
           className="min-w-0 max-w-md flex-1"
@@ -227,6 +234,7 @@ export function AssetLibraryBrowser({
         <Button variant="ghost" size="sm" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>
           <SlidersHorizontal size={16} /> Filters
         </Button>
+        {settingsAction}
         {filtersOpen && <div className="asset-inline-filters" role="group" aria-label="Asset filters">
             <label className="grid gap-1 text-xs text-muted">
               Category
@@ -279,7 +287,7 @@ export function AssetLibraryBrowser({
       <div className="asset-cabinet-carousel">
         <CabinetCarousel
           label="Assets"
-          pageSize={12}
+          pageSize={10}
           items={filtered.map((item) => {
             const itemReview = reviews.find((r) => r.asset.id === item.id);
             const saved = picture.editorDrafts?.[displayIterationKey(item.id)];
@@ -305,6 +313,7 @@ export function AssetLibraryBrowser({
             return (
               <button
                 key={item.id}
+                title={`${item.name} · ${item.category.replaceAll("_", " ")}`}
                 aria-pressed={asset?.id === item.id}
                 className="asset-library-tile"
                 onClick={() => {
@@ -315,7 +324,7 @@ export function AssetLibraryBrowser({
                   setDeleteError(null);
                 }}
               >
-                <span className="asset-library-thumbnail">
+                <span className={`asset-library-thumbnail${uri?.includes("/pictures/prodigal-son/previews/PS-CHR-") ? " is-character-sheet" : ""}`}>
                   {uri ? (
                     <AssetImagePreview
                       previewUri={cover?.previewUri ?? uri}
@@ -334,11 +343,8 @@ export function AssetLibraryBrowser({
                   <span className="asset-row-name">
                     {item.name}
                   </span>
-                  <span className="asset-row-meta">
-                    {item.category.replaceAll("_", " ")} · {item.iterations.length} iterations
-                  </span>
-                  <span className="asset-row-status">
-                    {item.approvedIterationId ? "Approved image" : item.stale ? "Stale source" : item.iterations.length ? "Awaiting approval" : "No generated image"}
+                  <span className="asset-row-status sr-only">
+                    {item.approvedIterationId ? "Approved" : item.stale ? "Stale" : item.iterations.length ? "Needs review" : "No image"}
                   </span>
                 </span>
               </button>
@@ -349,27 +355,25 @@ export function AssetLibraryBrowser({
       {specification && asset && picture.production ? (
         <AssetInspector
           key={asset.id}
+          className="asset-library-specification"
           record={picture.production}
           asset={asset}
           onChange={commitProduction}
           onClose={() => setSpecification(false)}
         />
-      ) : <aside className="asset-library-inspector" aria-label="Selected asset inspector">
-        <header className="asset-inspector-heading"><div><span className="text-xs text-muted">Asset inspector</span><h2>{asset?.name ?? "Choose an asset"}</h2></div></header>
+      ) : <aside className={`asset-library-inspector ${tab === "preview" ? "is-overview" : "is-extended"}`} aria-label="Selected asset inspector">
+        <header className="asset-inspector-heading"><div><span className="asset-inspector-kicker">Asset details</span><h2 title={asset?.name}>{asset?.name ?? "Choose an asset"}</h2></div><span className="asset-inspector-state">{asset?.approvedIterationId ? "Approved" : asset?.iterations.length ? "Needs review" : "No image"}</span></header>
         <div className="asset-detail-modal" aria-label="Selected asset inspector">
           {asset ? (
             <>
-              <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-muted">
-                <span>{asset.category.replaceAll("_", " ")}</span>
-                <span>{asset.approvedIterationId ? "Approved image" : asset.stale ? "Stale source" : asset.iterations.length ? "Awaiting approval" : "No generated image"}</span>
-              </div>
               <div>
-                <div className="workspace-tabs mb-4" aria-label="Asset inspector views">
+                <div className="workspace-tabs asset-inspector-tabs" aria-label="Asset inspector views">
                   {[
-                    ["preview", "Preview"],
+                    ["preview", "Details"],
                     ["prompt", "Prompt"],
                     ["references", "References"],
                     ["review", "Review"],
+                    ["versions", "Versions"],
                   ].map(([id, label]) => (
                     <button key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>
                       {label}
@@ -377,100 +381,39 @@ export function AssetLibraryBrowser({
                   ))}
                 </div>
                 {tab === "preview" && (
-                  <div className="grid gap-4">
-                    <div className={compared ? "grid grid-cols-2 gap-2" : ""}>
-                      <figure>
-                        <div className="asset-preview aspect-video max-h-96">
-                          {imageUri ? (
-                            <AssetImagePreview
-                              previewUri={selected?.previewUri}
-                              mediaUri={selected?.mediaUri}
-                              alt={`${asset.name}, selected iteration`}
-                              onRepair={() => setTab("references")}
-                            />
-                          ) : (
-                            <p className="p-8 text-center text-sm text-muted">
-                              Generate or import an image to preview it here.
-                            </p>
-                          )}
-                        </div>
-                        <figcaption className="mt-2 break-words text-xs text-muted">
-                          {selected
-                            ? `${displayed?.id === selected.id ? "Saved visual display" : "Image preview"} · ${selected.status.toLowerCase().replaceAll("_", " ")}`
-                            : "No image selected"}
-                        </figcaption>
-                      </figure>
-                      {compared && (
-                        <figure>
-                          <div className="asset-preview aspect-video max-h-96">
-                            <AssetImagePreview
-                              previewUri={compared.previewUri}
-                              mediaUri={compared.mediaUri}
-                              alt={`${asset.name}, comparison iteration`}
-                              onRepair={() => setTab("references")}
-                            />
-                          </div>
-                          <figcaption className="mt-2 break-words text-xs text-muted">
-                            Comparison · {compared.status.toLowerCase().replaceAll("_", " ")}
-                          </figcaption>
-                        </figure>
-                      )}
+                  <div className="asset-inspector-body">
+                    <dl className="asset-spec-list">
+                      {([
+                        ["Identity", asset.canonicalSpec.identity],
+                        ["Appearance", asset.canonicalSpec.appearance],
+                        ["Direction", asset.canonicalSpec.visualDescription],
+                        ["Period", asset.canonicalSpec.period],
+                        ["Scenes", `${asset.requiredSceneIds.length} linked`],
+                      ] as const).filter(([, value]) => Boolean(value)).map(([label, value]) => (
+                        <div key={label}><dt>{label}</dt><dd title={value}>{value}</dd></div>
+                      ))}
+                    </dl>
+                    <div className="asset-inspector-actions">
+                      <Button size="sm" variant="secondary" onClick={() => setSpecification(true)}>Full specification</Button>
+                      <Button size="sm" variant="ghost" disabled={!backdropPreview && !backdropOriginal} onClick={() => setEnlarged(true)}><Maximize2 /> View image</Button>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        disabled={!imageUri}
-                        onClick={() => setEnlarged(true)}
-                      >
-                        <Maximize2 />
-                        Enlarge
-                      </Button>
-                      <Button size="sm" variant="secondary" onClick={() => setSpecification(true)}>
-                        Edit specification
-                      </Button>
-                      {selected && imageUri && selected.status !== "REJECTED" && selected.status !== "STALE" && displayed?.id !== selected.id &&
-                        <Button size="sm" variant="secondary" onClick={() => chooseDisplayIteration(selected.id)}>
-                          Show in workspace
-                        </Button>}
-                      {effectiveDisplayId &&
-                        <Button size="sm" variant="ghost" onClick={clearDisplayIteration}>
-                          {displayed ? "Clear display choice" : "Clear unavailable display choice"}
-                        </Button>}
-                      {selected && picture.production && imageIterationDeletionEligibility(picture.production, selected.id, null).allowed &&
-                        <Button size="sm" variant="ghost" onClick={() => {
-                          setIterationId(NO_ITERATION_SELECTED);
-                          setCompareId("");
-                          setPendingDelete(null);
-                        }}>Deselect draft image</Button>}
-                    </div>
-                    {selected && (
-                      <p className="text-xs text-muted">
-                        {selected.width && selected.height
-                          ? `${selected.width} × ${selected.height} · `
-                          : ""}
-                        {new Date(selected.createdAt).toLocaleString()}
-                      </p>
-                    )}
-                    {selected && <p className="text-xs text-muted">A saved display choice changes the image shown in this workspace{asset.category === "character" ? " and on the character sheet" : ""}. Image approval is a separate review action.</p>}
-                    <label className="grid gap-2 text-xs text-muted">
-                      Compare with
-                      <select
-                        aria-label="Compare image iterations"
-                        className="min-h-10 rounded border border-border bg-inset px-2 text-fg"
-                        value={compared?.id ?? ""}
-                        onChange={(e) => setCompareId(e.target.value)}
-                      >
-                        <option value="">No comparison</option>
-                        {iterations
-                          .filter((i) => i.id !== selected?.id && i.mediaUri)
-                          .map((i) => (
-                            <option key={i.id} value={i.id}>
-                              {new Date(i.createdAt).toLocaleString()} · {i.status}
-                            </option>
-                          ))}
-                      </select>
-                    </label>
+                    <details className="asset-overview-more">
+                      <summary>Image choices and linked records</summary>
+                      <div className="asset-inspector-actions">
+                        {selected && imageUri && selected.status !== "REJECTED" && selected.status !== "STALE" && displayed?.id !== selected.id &&
+                          <Button size="sm" variant="secondary" onClick={() => chooseDisplayIteration(selected.id)}>Show in workspace</Button>}
+                        {effectiveDisplayId && <Button size="sm" variant="ghost" onClick={clearDisplayIteration}>{displayed ? "Clear display choice" : "Clear unavailable display choice"}</Button>}
+                        {selected && picture.production && imageIterationDeletionEligibility(picture.production, selected.id, null).allowed &&
+                          <Button size="sm" variant="ghost" onClick={() => { setIterationId(NO_ITERATION_SELECTED); setCompareId(""); setPendingDelete(null); }}>Deselect draft image</Button>}
+                      </div>
+                      {selected && <p className="asset-inspector-caption">{displayed?.id === selected.id ? "Shown in workspace" : "Selected iteration"} · {selected.status.toLowerCase().replaceAll("_", " ")}{selected.width && selected.height ? ` · ${selected.width} × ${selected.height}` : ""} · {new Date(selected.createdAt).toLocaleDateString()}</p>}
+                      {compared && <figure className="asset-comparison"><AssetImagePreview previewUri={compared.previewUri} mediaUri={compared.mediaUri} alt={`${asset.name}, comparison iteration`} onRepair={() => setTab("references")} /><figcaption>Comparison · {compared.status.toLowerCase().replaceAll("_", " ")}</figcaption></figure>}
+                      <label className="grid gap-2 text-xs text-muted">Compare with
+                        <select aria-label="Compare image iterations" className="min-h-10 rounded border border-border bg-inset px-2 text-fg" value={compared?.id ?? ""} onChange={(e) => setCompareId(e.target.value)}>
+                          <option value="">No comparison</option>
+                          {iterations.filter((i) => i.id !== selected?.id && i.mediaUri).map((i) => <option key={i.id} value={i.id}>{new Date(i.createdAt).toLocaleString()} · {i.status}</option>)}
+                        </select>
+                      </label>
                     {(asset.category === "character" || asset.category === "location" || asset.category === "prop" || asset.category === "wardrobe") && (
                       <Button
                         variant="secondary"
@@ -481,10 +424,6 @@ export function AssetLibraryBrowser({
                         Open {asset.category} sheet
                       </Button>
                     )}
-                    <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-muted">
-                      {asset.canonicalSpec.visualDescription ||
-                        "No visual description authored yet."}
-                    </p>
                     {asset.category === "character" && (
                       <CharacterVoiceSamples pictureId={picture.id} characterId={asset.id} />
                     )}
@@ -496,6 +435,7 @@ export function AssetLibraryBrowser({
                         Open sound & voice workspace
                       </Button>
                     )}
+                    </details>
                   </div>
                 )}
                 {tab === "prompt" && (
@@ -580,8 +520,8 @@ export function AssetLibraryBrowser({
                   ) : (
                     <p className="text-sm text-muted">Choose a generated iteration to review.</p>
                   ))}
-                <section
-                  className="mt-5 border-t border-border pt-4"
+                {tab === "versions" && <section
+                  className="asset-versions"
                   aria-label="Image iteration history"
                 >
                   <h4 className="text-sm">All iterations · {iterations.length}</h4>
@@ -643,9 +583,9 @@ export function AssetLibraryBrowser({
                       No generated or imported images yet.
                     </p>
                   )}
-                </section>
-                {review && (
-                  <footer className="mt-5 flex flex-wrap gap-2 border-t border-border pt-4">
+                </section>}
+                {review && (tab === "prompt" || tab === "review") && (
+                  <footer className="asset-generate-actions">
                     <Button
                       disabled={busy || !review.sourceCurrent}
                       onClick={() => onGenerate(asset.id)}
@@ -666,9 +606,9 @@ export function AssetLibraryBrowser({
           )}
         </div>
       </aside>}
-      {enlarged && imageUri && <section className="asset-enlarged-panel" aria-label="Enlarged selected asset">
-        <header><h2>{asset?.name} · selected iteration</h2><Button variant="secondary" onClick={() => setEnlarged(false)}>Return to assets</Button></header>
-        <AssetImagePreview previewUri={selected?.previewUri} mediaUri={selected?.mediaUri} alt={`${asset?.name ?? "Asset"}, selected iteration enlarged`} onRepair={() => { setEnlarged(false); setTab("references"); }} />
+      {enlarged && (backdropPreview || backdropOriginal) && <section className="asset-enlarged-panel" aria-label="Full selected asset image">
+        <header><h2>{asset?.name} · full image</h2><Button variant="secondary" onClick={() => setEnlarged(false)}>Return to assets</Button></header>
+        <AssetImagePreview previewUri={backdropPreview} mediaUri={backdropOriginal} alt={`${asset?.name ?? "Asset"}, full source image`} onRepair={() => { setEnlarged(false); setTab("references"); }} />
       </section>}
     </section>
   );

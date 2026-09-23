@@ -6,7 +6,7 @@ import {
   subscribeGlobalProductionInstructions,
 } from "@/lib/studio/production-instructions";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Settings2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useStudio } from "@/lib/studio/store";
@@ -498,9 +498,17 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
   };
   return (
     <section aria-label="Generated asset review" className="asset-review-surface">
+      <AssetLibraryBrowser
+        picture={picture}
+        reviews={assetReviews}
+        busy={busy}
+        onGenerate={(id) => void generate(id)}
+        onRewrite={(id) => void regenerateCharacterSheet(id)}
+        settingsAction={<Button variant="ghost" size="sm" className="asset-review-settings" aria-label={`Package and generation settings · ${currentImages} of ${assets.length} images current`} aria-expanded={settingsOpen} aria-controls="asset-generation-settings-panel" onClick={() => setSettingsOpen((open) => !open)}><Settings2 size={15} /> Generate</Button>}
+      />
       <AssetRunSummary pictureId={picture.id} />
-      <Button variant="ghost" size="sm" className="asset-review-settings" aria-expanded={settingsOpen} onClick={() => setSettingsOpen((open) => !open)}>{settingsOpen ? "Return to asset carousel" : `Package & generation settings · ${currentImages}/${assets.length} current`}</Button>
-      {settingsOpen && <section className="asset-generation-settings" aria-label="Package and generation settings">
+      {settingsOpen && <section id="asset-generation-settings-panel" className="asset-generation-settings" aria-label="Package and generation settings">
+      <header className="asset-generation-settings-header"><div><span>Production assets</span><h2>Generation settings</h2></div><Button variant="ghost" size="icon-sm" aria-label="Close generation settings" onClick={() => setSettingsOpen(false)}><X size={18}/></Button></header>
       <ImportedPackageResources importedPackage={picture.importedPackage} />
       <details className="rounded-md bg-elevated p-3 text-sm">
         <summary>Global generation instructions · all pictures</summary>
@@ -639,13 +647,6 @@ export function GeneratedAssetsReview({ picture }: { picture: Picture }) {
         )}
       </details>
       </section>}
-      {!settingsOpen && <AssetLibraryBrowser
-        picture={picture}
-        reviews={assetReviews}
-        busy={busy}
-        onGenerate={(id) => void generate(id)}
-        onRewrite={(id) => void regenerateCharacterSheet(id)}
-      />}
     </section>
   );
 }

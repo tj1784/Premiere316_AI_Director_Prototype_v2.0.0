@@ -582,18 +582,25 @@
     0 7px 18px #0009;
 }
 .character-ps5-rail-image {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-.character-ps5-rail > button[data-reference-sheet="true"] .character-ps5-rail-image {
+.character-ps5-rail-art[data-portrait-sheet="true"] .character-ps5-rail-image {
   position: absolute;
-  top: -264%;
-  left: 17%;
-  width: auto;
+  inset: 0 auto auto 0;
+  width: 500%;
   max-width: none;
-  height: 390%;
-  object-fit: fill;
+  height: 100%;
+  object-fit: cover;
+  object-position: left 79%;
+}
+.character-ps5-rail-initial {
+  font-family: Georgia, serif;
+  font-size: 30px;
+  line-height: 1;
+  color: #ded8cd;
 }
 .character-ps5-rail-title {
   display: block;
@@ -762,5 +769,184 @@
 @media (prefers-reduced-motion: reduce) {
   .character-ps5-backdrop img {
     animation: none;
+  }
+}
+
+/* The hero uses a real solo shot. The inspector stays concise; the complete
+   editable Bible opens on the larger canvas through its own action. */
+.character-workspace[data-character-stage="hero"] .character-ps5-backdrop.is-father-solo img {
+  object-position: 43% 39%;
+  filter: brightness(1.04) saturate(0.96);
+}
+.character-workspace[data-character-stage="hero"] .character-workspace-heading {
+  top: 60px;
+}
+.character-workspace[data-character-stage="hero"] .character-ps5-vignette {
+  background:
+    linear-gradient(90deg, #08080735 0%, transparent 42%, #08080860 100%),
+    linear-gradient(0deg, #050608e8 0%, #05060816 31%, transparent 60%),
+    linear-gradient(180deg, #05060886 0%, transparent 18%);
+}
+.character-workspace[data-character-stage="hero"] .character-compact-tabs {
+  top: 126px;
+  right: clamp(20px, 2.6vw, 42px);
+  width: clamp(340px, 28vw, 430px);
+  border-color: #ffffff32;
+  background: #161715ae;
+}
+.character-workspace[data-character-stage="hero"] .character-compact-tabs button {
+  min-height: 35px;
+  font-size: 11px;
+}
+.character-workspace[data-character-stage="hero"] .character-workspace-grid {
+  top: 161px;
+  right: clamp(20px, 2.6vw, 42px);
+  width: clamp(340px, 28vw, 430px);
+  height: auto;
+  max-height: calc(100% - 290px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  background: #171815c4;
+  border-color: #ffffff32;
+  box-shadow: 0 20px 48px #0009;
+}
+.character-workspace[data-character-stage="hero"] .character-workspace-grid > .character-dossier-column {
+  height: auto;
+  overflow: visible;
+}
+.character-workspace[data-character-stage="hero"]:not([data-focus-mode]) .character-dossier-column .character-sections {
+  height: auto;
+  flex: none;
+}
+.character-workspace[data-character-stage="hero"]:not([data-focus-mode]) .character-dossier-column .character-section-body {
+  padding: 15px 18px 16px;
+  overflow: visible;
+}
+.character-workspace[data-character-stage="hero"]:not([data-focus-mode]) .character-dossier-column .character-section-tabs,
+.character-workspace[data-character-stage="hero"]:not([data-focus-mode]) .character-dossier-column .character-section-intro,
+.character-workspace[data-character-stage="hero"]:not([data-focus-mode]) .character-dossier-column .character-field-grid,
+.character-workspace[data-character-stage="hero"]:not([data-focus-mode]) .character-dossier-column .character-original-direction,
+.character-workspace[data-character-stage="hero"]:not([data-focus-mode]) .character-dossier-footer {
+  display: none;
+}
+.character-workspace[data-character-stage="hero"] .character-ps5-profile {
+  margin: 0;
+}
+.character-workspace[data-character-stage="hero"] .character-ps5-profile > h2 {
+  margin: 5px 0 9px;
+  font-size: 23px;
+}
+.character-workspace[data-character-stage="hero"] .character-ps5-profile dl > div {
+  grid-template-columns: 80px minmax(0, 1fr);
+  gap: 8px;
+  padding: 7px 0;
+}
+.character-workspace[data-character-stage="hero"] .character-ps5-profile dt,
+.character-workspace[data-character-stage="hero"] .character-ps5-profile dd {
+  font-size: 11px;
+  line-height: 1.38;
+}
+.character-workspace[data-character-stage="hero"] .character-ps5-profile dd {
+  overflow-wrap: normal;
+}
+.character-workspace[data-character-stage="hero"] .character-ps5-profile .character-overview-source {
+  display: block;
+  margin-top: 4px;
+  color: #d7c29a;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+.character-workspace[data-character-stage="hero"] .character-ps5-profile > button {
+  min-height: 32px;
+  padding: 7px 2px;
+  border-bottom-color: #ffffff20;
+  font-size: 11px;
+}
+.character-workspace[data-character-stage="hero"] .character-ps5-rail {
+  gap: 8px;
+  bottom: 13px;
+  padding-block: 5px 3px;
+}
+.character-workspace[data-character-stage="hero"] .character-ps5-rail > button {
+  flex-basis: clamp(106px, 9.8vw, 150px);
+}
+.character-workspace[data-character-stage="hero"] .character-ps5-rail-art {
+  height: clamp(56px, 8.2vh, 78px);
+  border-width: 1px;
+  border-radius: 5px;
+}
+.character-workspace[data-character-stage="hero"][data-focus-mode] .character-workspace-grid,
+.character-workspace[data-character-stage="hero"][data-continuity-focus="true"] .character-workspace-grid,
+.character-workspace[data-character-stage="hero"]:has(.character-media-inline-detail) .character-workspace-grid {
+  top: 76px;
+  left: clamp(18px, 3.3vw, 54px);
+  right: clamp(18px, 3.3vw, 54px);
+  bottom: 20px;
+  width: auto;
+  max-height: none;
+  height: auto;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #15181bdc;
+}
+.character-workspace[data-character-stage="hero"][data-focus-mode] .character-workspace-grid > .character-dossier-column {
+  height: 100%;
+  overflow: hidden;
+}
+.character-workspace[data-character-stage="hero"][data-focus-mode="bible"] .character-ps5-identity,
+.character-workspace[data-character-stage="hero"][data-focus-mode="bible"] .character-ps5-rail {
+  display: none;
+}
+.character-workspace[data-character-stage="hero"][data-focus-mode="bible"] .character-sections {
+  flex: 1;
+  min-height: 0;
+}
+.character-workspace[data-character-stage="hero"][data-focus-mode="bible"] .character-section-tabs {
+  padding: 9px 20px 0;
+}
+.character-workspace[data-character-stage="hero"][data-focus-mode="bible"] .character-section-body {
+  padding: 22px 27px 34px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.character-workspace[data-character-stage="hero"][data-focus-mode="bible"] .character-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 30px;
+}
+.character-workspace[data-character-stage="hero"][data-focus-mode="bible"] .character-ps5-profile {
+  display: none;
+}
+.character-workspace[data-character-stage="hero"][data-focus-mode="bible"] .character-bible-heading {
+  width: 100%;
+}
+@media (max-width: 800px) {
+  .character-workspace[data-character-stage="hero"] .character-compact-tabs,
+  .character-workspace[data-character-stage="hero"] .character-workspace-grid {
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+  .character-workspace[data-character-stage="hero"] .character-compact-tabs { top: 111px; }
+  .character-workspace[data-character-stage="hero"] .character-workspace-grid {
+    top: 193px;
+    max-height: calc(100% - 300px);
+  }
+  .character-workspace[data-character-stage="hero"] .character-ps5-identity {
+    top: 111px;
+  }
+  .character-workspace[data-character-stage="hero"] .character-compact-tabs { top: 158px; }
+  .character-workspace[data-character-stage="hero"][data-focus-mode] .character-workspace-grid,
+  .character-workspace[data-character-stage="hero"][data-continuity-focus="true"] .character-workspace-grid,
+  .character-workspace[data-character-stage="hero"]:has(.character-media-inline-detail) .character-workspace-grid {
+    top: 67px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    max-height: none;
+  }
+  .character-workspace[data-character-stage="hero"][data-focus-mode="bible"] .character-field-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -29,7 +29,6 @@ import {
 import { useStudio } from "@/lib/studio/store";
 import { MovieBibleEditor } from "./movie-bible-editor";
 import { CharacterMediaPanel, characterMedia } from "./character-media-panel";
-import { AssetImagePreview } from "./asset-image-preview";
 import { CharacterScenePanel, participantFieldView } from "./character-scene-panel";
 import { useWorkspaceDraft } from "./use-workspace-draft";
 import { Button } from "@/components/ui/button";
@@ -44,6 +43,42 @@ const statusLabel = (status: string) =>
     authored: "Direction",
     "not-applicable": "Not applicable",
   })[status] ?? status;
+
+function CastRailArt({
+  name,
+  sources,
+}: {
+  name: string;
+  sources: string[];
+}) {
+  const [failed, setFailed] = useState<string[]>([]);
+  const source = sources.find((uri) => !failed.includes(uri));
+  const isBundledPortraitSheet = Boolean(
+    source?.match(/^\/pictures\/prodigal-son\/previews\/PS-CHR-[A-Z]+\.webp$/),
+  );
+  return (
+    <span
+      className="character-ps5-rail-art"
+      data-portrait-sheet={isBundledPortraitSheet ? "true" : undefined}
+    >
+      {source ? (
+        <img
+          key={source}
+          src={source}
+          alt=""
+          className="character-ps5-rail-image"
+          loading="eager"
+          decoding="async"
+          onError={() => setFailed((previous) => [...previous, source])}
+        />
+      ) : (
+        <span className="character-ps5-rail-initial" aria-hidden="true">
+          {name.slice(0, 1)}
+        </span>
+      )}
+    </span>
+  );
+}
 
 export function CharacterWorkspace({
   picture,
@@ -61,7 +96,7 @@ export function CharacterWorkspace({
   const [failedHeroUris, setFailedHeroUris] = useState<string[]>([]);
   const [picker, setPicker] = useState(false);
   const [query, setQuery] = useState("");
-  const [detail, setDetail] = useState<"source" | "history" | "coverage" | null>(null);
+  const [detail, setDetail] = useState<"source" | "history" | "coverage" | "bible" | null>(null);
   const [continuityFocus, setContinuityFocus] = useState(false);
   const focusHeadingRef = useRef<HTMLHeadingElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -97,17 +132,18 @@ export function CharacterWorkspace({
     imageReferences.find((item) => item.approved) ??
     imageReferences.find((item) => item.label === "Preferred design reference") ??
     imageReferences[0];
-  const reunionFrameUri =
-    picture.id === PRODIGAL_SON_PICTURE_ID &&
-    (row?.id === "PS-CHR-FATHER" || row?.id === "PS-CHR-YOUNGER")
-      ? "/pictures/prodigal-son/previews/PS-S18-SH005-FIRST.webp"
+  // This is an existing shot from the imported picture, not a newly approved
+  // identity image. Keep the canonical contact sheet in References & voice.
+  const fatherSoloUri =
+    picture.id === PRODIGAL_SON_PICTURE_ID && row?.id === "PS-CHR-FATHER"
+      ? "/pictures/prodigal-son/wallpapers/father-solo-scene-04.png"
       : null;
   const heroUri = (
     selectedReference
-      ? [heroReference?.previewUri, heroReference?.uri, reunionFrameUri]
-      : [reunionFrameUri, heroReference?.previewUri, heroReference?.uri]
+      ? [heroReference?.previewUri, heroReference?.uri, fatherSoloUri]
+      : [fatherSoloUri, heroReference?.previewUri, heroReference?.uri]
   ).find((uri) => uri && !failedHeroUris.includes(uri));
-  const showingReunionFrame = Boolean(reunionFrameUri && heroUri === reunionFrameUri);
+  const showingFatherSolo = Boolean(fatherSoloUri && heroUri === fatherSoloUri);
   const legacy = picture.characters.find((c) => c.id === row?.id);
   const visual = picture.visualDevelopment?.characterBibles.find((c) => c.characterId === row?.id);
   const section = CHARACTER_SECTIONS.find((s) => s.id === sectionId) ?? CHARACTER_SECTIONS[0];
@@ -115,6 +151,16 @@ export function CharacterWorkspace({
     field,
     ...characterFieldView(picture, row?.id ?? "", field),
   }));
+  const isBundledFather = picture.id === PRODIGAL_SON_PICTURE_ID && row?.id === "PS-CHR-FATHER";
+  const displayName = isBundledFather ? "The Father" : row?.name;
+  // These two lines summarize the existing screenplay and intake when the
+  // corresponding authored Bible fields have not yet been recorded.
+  const overviewObjectives = fields[5].value || (isBundledFather
+    ? "Welcome his younger son home.\nReach his elder son outside the feast.\nHold both sons in equal love."
+    : "Open the character Bible to add objectives.");
+  const overviewRelationships = fields[10].value || (isBundledFather
+    ? "Father of the younger and elder sons.\nLoves both equally; expresses it differently."
+    : "Open the character Bible to add relationships.");
   const missing = fields.filter((f) => f.disposition === "missing" || !f.value.trim()).length;
   const participantIds = new Set(
     Object.entries(picture.performance?.performance ?? {}).flatMap(([beatId, people]) =>
@@ -141,10 +187,13 @@ export function CharacterWorkspace({
   };
   const onEdit = (recordId: string, kind: BibleKind, field: string) => {
     setPicker(false);
-    setDetail(null);
+    // Keep the full sheet open behind its editor so a series of Bible edits
+    // returns to the same section instead of resetting to the overview.
+    setDetail((current) => current === "bible" ? current : null);
     setEditing({ recordId, kind, field });
   };
   const focusMode = editing ? "edit" : picker ? "cast" : detail;
+  const showingBible = detail === "bible" && !editing && !picker;
   useEffect(() => {
     if (focusMode) {
       if (!previousFocusRef.current && document.activeElement instanceof HTMLElement) {
@@ -297,7 +346,7 @@ export function CharacterWorkspace({
         <>
           <div className="character-ps5-stage">
             <div
-              className={`character-ps5-backdrop${showingReunionFrame ? " is-scene-frame" : ""}${showingReunionFrame && row.id === "PS-CHR-FATHER" ? " is-father-frame" : ""}`}
+              className={`character-ps5-backdrop${showingFatherSolo ? " is-father-solo" : ""}`}
               aria-hidden="true"
             >
               {heroUri && (
@@ -318,13 +367,17 @@ export function CharacterWorkspace({
                   onClick={() => setPicker(true)}
                   aria-label={`Choose character, current ${row.name}`}
                 >
-                  <h2>{row.name}</h2>
+                  <h2>{displayName}</h2>
                   <ChevronDown size={22} />
                 </button>
-                {legacy?.role && legacy.role !== row.name && <p>{legacy.role}</p>}
+                {isBundledFather ? (
+                  <p>Compassion Without Condition</p>
+                ) : legacy?.role && legacy.role !== row.name ? (
+                  <p>{legacy.role}</p>
+                ) : null}
                 <small>
-                  {showingReunionFrame
-                    ? "Scene 18 · The reunion · linked scene frame"
+                  {showingFatherSolo
+                    ? "Scene 04 · Father at supper · existing shot frame"
                     : heroUri
                       ? heroReference?.label
                       : "No visual reference attached"}
@@ -354,7 +407,7 @@ export function CharacterWorkspace({
                 className="character-dossier-column"
                 aria-label={`${row.name} character sheet`}
               >
-                {focusMode ? (
+                {focusMode && !showingBible ? (
                   <div
                     className="character-focus-pane"
                     aria-label={
@@ -546,8 +599,17 @@ export function CharacterWorkspace({
                     </div>
                   </div>
                 ) : (
+                  <>
+                  {showingBible && (
+                    <header className="character-focus-heading character-bible-heading">
+                      <h2 tabIndex={-1} ref={focusHeadingRef}>Character Bible · {row.name}</h2>
+                      <button type="button" aria-label="Return to character overview" onClick={closeFocus}>
+                        <X size={18} />
+                      </button>
+                    </header>
+                  )}
                   <Tabs.Root
-                    value={section.id}
+                    value={showingBible ? section.id : "identity"}
                     onValueChange={setSectionId}
                     className="character-sections"
                   >
@@ -584,7 +646,7 @@ export function CharacterWorkspace({
                               <span>Identity</span>
                               <small>Character {String(index + 1).padStart(2, "0")}</small>
                             </header>
-                            <h2>{row.name}</h2>
+                            <h2>{displayName}</h2>
                             <dl>
                               <div>
                                 <dt>Role</dt>
@@ -592,7 +654,10 @@ export function CharacterWorkspace({
                               </div>
                               <div>
                                 <dt>Objectives</dt>
-                                <dd>{fields[5].value || "No direction recorded"}</dd>
+                                <dd>
+                                  {overviewObjectives}
+                                  {isBundledFather && !fields[5].value && <small className="character-overview-source">From the screenplay</small>}
+                                </dd>
                               </div>
                               <div>
                                 <dt>Appearance</dt>
@@ -605,9 +670,16 @@ export function CharacterWorkspace({
                               </div>
                               <div>
                                 <dt>Relationships</dt>
-                                <dd>{fields[10].value || "No direction recorded"}</dd>
+                                <dd>
+                                  {overviewRelationships}
+                                  {isBundledFather && !fields[10].value && <small className="character-overview-source">From the screenplay and story notes</small>}
+                                </dd>
                               </div>
                             </dl>
+                            <button type="button" onClick={() => setDetail("bible")}>
+                              Open all 17 Bible fields
+                              <ArrowUpRight size={13} />
+                            </button>
                             <button type="button" onClick={() => setCompactPane("scene")}>
                               Scene state · {asset?.requiredSceneIds.length ?? 0} linked scenes
                               <ArrowUpRight size={13} />
@@ -709,6 +781,7 @@ export function CharacterWorkspace({
                       </Tabs.Content>
                     ))}
                   </Tabs.Root>
+                  </>
                 )}
                 {!focusMode && (
                   <footer className="character-dossier-footer">
@@ -746,33 +819,26 @@ export function CharacterWorkspace({
                     images.find((item) => item.approved) ??
                     images.find((item) => item.label === "Preferred design reference") ??
                     images[0];
+                  const bundledPortrait =
+                    picture.id === PRODIGAL_SON_PICTURE_ID &&
+                    character.id.startsWith("PS-CHR-") &&
+                    character.id !== "PS-CHR-PHARISEE"
+                      ? `/pictures/prodigal-son/previews/${character.id}.webp`
+                      : null;
+                  const thumbnailSources = [
+                    thumbnail?.previewUri,
+                    thumbnail?.uri,
+                    bundledPortrait,
+                  ].filter((uri): uri is string => Boolean(uri));
                   return (
                     <button
                       type="button"
                       key={character.id}
-                      data-reference-sheet={
-                        picture.id === PRODIGAL_SON_PICTURE_ID &&
-                        thumbnail?.previewUri?.includes(`/previews/${character.id}.webp`)
-                          ? "true"
-                          : undefined
-                      }
                       aria-current={character.id === row.id ? "true" : undefined}
                       onClick={() => choose(character.id)}
                       title={character.name}
                     >
-                      <span className="character-ps5-rail-art">
-                        {thumbnail ? (
-                          <AssetImagePreview
-                            previewUri={thumbnail.previewUri}
-                            mediaUri={thumbnail.uri}
-                            alt=""
-                            className="character-ps5-rail-image"
-                            compact
-                          />
-                        ) : (
-                          <span aria-hidden="true">{character.name.slice(0, 1)}</span>
-                        )}
-                      </span>
+                      <CastRailArt name={character.name} sources={thumbnailSources} />
                       <span className="character-ps5-rail-title">{character.name}</span>
                     </button>
                   );

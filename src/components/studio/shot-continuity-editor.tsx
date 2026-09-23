@@ -39,7 +39,7 @@ export function ShotContinuityEditor() {
         : null,
     );
   return (
-    <section className="my-4 rounded-lg border border-border bg-surface p-4">
+    <section className="continuity-geometry-editor my-4 rounded-lg border border-border bg-surface p-4">
       <h2 className="text-2xl">Geography & continuity</h2>
       <p className="my-2 text-sm text-muted">
         Physical state, individual tasks and completed events are separate from emotional direction.

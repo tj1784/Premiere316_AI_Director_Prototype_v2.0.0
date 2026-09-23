@@ -41,11 +41,21 @@ import { loadBundledMediaMap, resolveSiteImageUri, type BundledMediaMap } from "
 // thumbnails always switch to their actual asset image when selected.
 const RESEARCH_WALLPAPER_URI = "/pictures/prodigal-son/wallpapers/research-galilee.webp";
 const FEATURED_LOCATION_IDS = [
-  "PS-LOC-HILLSIDE",
-  "PS-LOC-HOMESTEAD",
   "PS-LOC-TOWN",
   "PS-LOC-MARKET",
+  "PS-LOC-HILLSIDE",
+  "PS-LOC-HOMESTEAD",
+  "PS-LOC-COURTYARD",
+  "PS-LOC-OUTSKIRTS",
 ] as const;
+const RESEARCH_TOPIC_LABELS: Record<string, string> = {
+  "PS-LOC-TOWN": "Galilean Villages",
+  "PS-LOC-MARKET": "Jewish Marketplace",
+  "PS-LOC-HILLSIDE": "Olive Hillsides",
+  "PS-LOC-HOMESTEAD": "Agriculture",
+  "PS-LOC-COURTYARD": "Domestic Life",
+  "PS-LOC-OUTSKIRTS": "Rural Routes",
+};
 
 const SECTIONS = [
   ["overview", "Overview"],
@@ -132,6 +142,7 @@ export function ResearchWorkspace({
   const image = selectedLocation && locationImage(selectedLocation, picture?.id, mediaMap);
   const showingPictureWallpaper =
     picture?.id === PRODIGAL_SON_PICTURE_ID && !selectedLocationId;
+  const showingGalilee = picture?.id === PRODIGAL_SON_PICTURE_ID;
   const backdrop =
     (showingPictureWallpaper
       ? { previewUri: RESEARCH_WALLPAPER_URI, mediaUri: RESEARCH_WALLPAPER_URI }
@@ -246,9 +257,9 @@ export function ResearchWorkspace({
       />
       <div className="research-room-stage">
         <section className="research-room-hero" aria-label="Research picture">
-          <p className="research-room-kicker">RESEARCH BIBLE</p>
-          <h1>{title || "Picture Research"}</h1>
-          <p className="research-room-subtitle">{view.purpose}</p>
+          <p className="research-room-kicker">RESEARCH</p>
+          <h1>{showingGalilee ? "First-Century Galilee" : title || "Picture Research"}</h1>
+          <p className="research-room-subtitle">{showingGalilee ? "Real Places. Deeper Stories." : view.purpose}</p>
           <p className="research-room-measures">
             {draft.sources.length} sources · {draft.socialWorldNotes.length} social notes ·{" "}
             {bible.versions.length} versions
@@ -597,7 +608,7 @@ export function ResearchWorkspace({
 
       <div
         className="research-reference-rail"
-        aria-label={visualLocations.length ? "Location references" : "Research sections"}
+        aria-label={visualLocations.length ? "Research topics and location references" : "Research sections"}
       >
         <button
           type="button"
@@ -609,14 +620,14 @@ export function ResearchWorkspace({
         </button>
         <div className="research-reference-track" ref={referenceTrackRef}>
           {visualLocations.length
-            ? visualLocations.map((asset) => {
+            ? visualLocations.map((asset, index) => {
                 const thumbnail = locationImage(asset, picture?.id, mediaMap);
                 return (
                   <button
                     key={asset.id}
                     className="research-reference-item"
-                    aria-current={asset.id === selectedLocation?.id && !showingPictureWallpaper ? "true" : undefined}
-                    onClick={() => setSelectedLocationId(asset.id)}
+                    aria-current={(showingPictureWallpaper ? index === 0 : asset.id === selectedLocation?.id) ? "true" : undefined}
+                    onClick={() => setSelectedLocationId(showingGalilee && index === 0 ? "" : asset.id)}
                   >
                     <span className="research-reference-thumb">
                       {thumbnail && (
@@ -629,7 +640,7 @@ export function ResearchWorkspace({
                         />
                       )}
                     </span>
-                    <span>{asset.name}{thumbnail?.draftFallback ? <small className="block text-[10px]">Draft preview</small> : null}</span>
+                    <span>{showingGalilee ? RESEARCH_TOPIC_LABELS[asset.id] ?? asset.name : asset.name}{thumbnail?.draftFallback ? <small className="block text-[10px]">Draft preview</small> : null}</span>
                   </button>
                 );
               })

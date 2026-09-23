@@ -1,5 +1,5 @@
 import { reviewDifferences } from "@/lib/studio/review-differences";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/field";
@@ -18,6 +18,8 @@ import { readyTextFile, saveReadyFile } from "@/lib/utils";
 import { applyBibleScreenplay, applyBiblePlanning } from "@/lib/studio/bible-application";
 import { startScopedBibleRevision } from "@/lib/studio/bible-run";
 import { useWorkspaceDraft } from "./use-workspace-draft";
+import { loadBundledMediaMap, loadBundledScenePreviews, resolveSiteStillPreview, type BundledMediaMap, type BundledScenePreview } from "@/lib/studio/site-media-preview";
+import "./run-cinema.css";
 
 export function BibleRunWorkspace() {
   const picture = useActivePicture();
@@ -29,7 +31,30 @@ export function BibleRunWorkspace() {
   const [compare, setCompare] = useState(false);
   const [drafts, setDrafts] = useWorkspaceDraft<Record<string, string>>("run-candidate-drafts", {});
   const [revisionScene, setRevisionScene] = useState("");
+  const [scenePreviews, setScenePreviews] = useState<BundledScenePreview[]>([]);
+  const [mediaMap, setMediaMap] = useState<BundledMediaMap>({});
+  const [selectedFrameId, setSelectedFrameId] = useWorkspaceDraft("run-selected-frame", "");
+  useEffect(() => {
+    if (picture?.id !== "pic_prodigal_son_20260909") return;
+    let live = true;
+    void Promise.all([loadBundledScenePreviews(), loadBundledMediaMap()]).then(([frames, map]) => {
+      if (live) { setScenePreviews(frames); setMediaMap(map); }
+    });
+    return () => { live = false; };
+  }, [picture?.id]);
   if (!picture) return null;
+  const sceneFrames = picture.shots.flatMap((shot) => {
+    const frame = resolveSiteStillPreview(picture.id, shot.stillUrl, scenePreviews, mediaMap);
+    return frame ? [{ id: shot.id, uri: frame.uri, label: `Shot ${String(shot.index).padStart(2, "0")}` }] : [];
+  });
+  const defaultImage = picture.id === "pic_prodigal_son_20260909"
+    ? "/pictures/prodigal-son/wallpapers/father-solo-scene-04.png"
+    : picture.thumbnailUrl;
+  const runFrames = [
+    ...(defaultImage ? [{ id: `cover:${picture.id}`, uri: defaultImage, label: picture.title }] : []),
+    ...sceneFrames.filter((frame, index, all) => all.findIndex((item) => item.uri === frame.uri) === index).slice(0, 8),
+  ];
+  const selectedFrame = runFrames.find((frame) => frame.id === selectedFrameId) ?? runFrames[0];
   const run = picture.bibleRun;
   const current = run && nextBibleUnit(run);
   const selected = run?.units.find((u) => u.id === selectedId) ?? current ?? run?.units.at(-1);
@@ -92,9 +117,13 @@ export function BibleRunWorkspace() {
   };
   return (
     <section
-      className="run-workspace grid gap-4 rounded-lg border border-border bg-surface p-4"
+      className="run-workspace run-cinema"
       aria-label="Complete Movie Script run"
     >
+      {selectedFrame ? <img className="run-cinema-wallpaper" src={selectedFrame.uri} alt="" /> : null}
+      <div className="run-cinema-vignette" aria-hidden="true" />
+      <div className="run-cinema-title"><p>FILM / WRITING</p><h1>Script runs</h1><span>{picture.title}</span></div>
+      <div className="run-cinema-inspector">
       <header>
         <h2 className="text-2xl">Complete Movie Script</h2>
         <p className="mt-2 text-sm text-muted">
@@ -300,7 +329,7 @@ export function BibleRunWorkspace() {
               </>
             )}
           </div>
-          <div className="grid gap-4 xl:grid-cols-[minmax(12rem,1fr)_minmax(0,3fr)]">
+          <div className="run-cinema-unit-layout grid gap-4 xl:grid-cols-[minmax(12rem,1fr)_minmax(0,3fr)]">
             <div className="run-coverage-ledger" aria-label="Run coverage ledger">
               {run.units.map((u) => (
                 <button
@@ -489,6 +518,12 @@ export function BibleRunWorkspace() {
           </div>
         </>
       )}
+      </div>
+      {runFrames.length > 1 ? <nav className="run-cinema-rail" aria-label="Script run film frames">
+        {runFrames.map((frame) => <button type="button" key={frame.id} aria-pressed={selectedFrame?.id === frame.id} onClick={() => setSelectedFrameId(frame.id)}>
+          <img src={frame.uri} alt="" loading="lazy" /><span>{frame.label}</span>
+        </button>)}
+      </nav> : null}
     </section>
   );
 }

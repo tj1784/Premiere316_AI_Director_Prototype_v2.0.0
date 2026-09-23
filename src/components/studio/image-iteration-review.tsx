@@ -16,6 +16,7 @@ import {
   deterministicContinuityFindings,
   reviewGeneratedIteration,
 } from "@/lib/production";
+import "./image-review-cinema.css";
 function Stat({ k, v }: { k: string; v: string }) {
   return (
     <div>
@@ -27,9 +28,11 @@ function Stat({ k, v }: { k: string; v: string }) {
 export function ImageIterationReview({
   picture,
   iterationId,
+  onIterationSelect,
 }: {
   picture: Picture;
   iterationId?: string;
+  onIterationSelect?: (id: string) => void;
 }) {
   const production = picture.production;
   const replaceActive = useStudio((state) => state.replaceActive);
@@ -39,6 +42,8 @@ export function ImageIterationReview({
         .filter((iteration) => !iterationId || iteration.id === iterationId)
         .map((iteration) => ({ asset, iteration })),
     ) ?? [];
+  const allIterations = production?.assets.flatMap((asset) => asset.iterations.map((iteration) => ({ asset, iteration }))) ?? [];
+  const selectedIteration = allIterations.find(({ iteration }) => iteration.id === iterationId) ?? allIterations[0];
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({});
   const [backendStatus, setBackendStatus] = useState<Awaited<
@@ -73,17 +78,19 @@ export function ImageIterationReview({
     if (latest) replaceActive({ ...latest, production: nextProduction, updatedAt: Date.now() });
   }
   return (
-    <section aria-label="Image review decisions">
-      <div className="mb-4 rounded-md bg-inset p-3 text-xs text-muted shadow-[var(--shadow-border)]">
-        {backendStatus?.ok === true
+    <section aria-label="Image review decisions" className="image-review-decision">
+      {allIterations.length > 1 && onIterationSelect && <details className="image-review-picker"><summary>Image iteration · {selectedIteration?.asset.name} · {selectedIteration?.iteration.status.replaceAll("_", " ")}</summary><div className="image-review-options">{allIterations.map(({ asset, iteration }) => <button type="button" key={iteration.id} aria-current={iteration.id === selectedIteration?.iteration.id ? "true" : undefined} onClick={(event) => { onIterationSelect(iteration.id); event.currentTarget.closest("details")?.removeAttribute("open"); }}>{asset.name} · {iteration.status.replaceAll("_", " ")}</button>)}</div></details>}
+      <details className="image-review-authority">
+        <summary>{backendStatus?.ok === true ? `Approval record · ${backendStatus.status.replaceAll("_", " ").toLowerCase()}` : "Approval record · unavailable"}</summary>
+        <p>{backendStatus?.ok === true
           ? `Backend authority: ${backendStatus.status.replaceAll("_", " ").toLowerCase()}${authorityCurrent ? " · exact current authority verified" : " · reseal/reconcile required"} · scoped decisions ${backendCanonicalHistory.length}`
           : backendStatus?.ok === false
             ? `Backend authority unavailable: ${backendStatus.error}`
             : isDesktopApp()
               ? "Verifying current approval authority…"
-              : "Image approval requires the desktop app’s verified media records."}
-      </div>
-      <div className={iterationId ? "grid min-w-0 gap-3" : "grid min-w-0 gap-3 lg:grid-cols-2"}>
+              : "Image approval requires the desktop app’s verified media records."}</p>
+      </details>
+      <div className="image-review-items">
         {iterations.length ? (
           iterations.map(({ asset, iteration }) => {
             const findings = iteration.receiptContinuityFindings?.length
@@ -115,7 +122,7 @@ export function ImageIterationReview({
             return (
               <article
                 key={iteration.id}
-                className="min-w-0 rounded-lg bg-elevated p-4 shadow-[var(--shadow-border)]"
+                className="image-review-item"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -126,42 +133,27 @@ export function ImageIterationReview({
                           ? "REJECTED"
                           : iteration.status}
                     </p>
-                    <h3 className="truncate font-display text-xl">{asset.name}</h3>
+                    <h3 className="font-display text-xl">{asset.name}</h3>
                   </div>
                   <Badge>
                     {backendCanonical ? "canonical" : backendRejected ? "rejected" : "iteration"}
                   </Badge>
                 </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="overflow-hidden rounded-md bg-inset shadow-[var(--shadow-border)]">
-                    <div className="flex min-h-11 items-center justify-between px-3 py-2 text-xs text-muted">
+                <div className="image-review-compare">
+                  <div>
+                    <div className="flex items-center justify-between text-xs text-muted">
                       <span>Approved reference/spec</span>
                       <span>A</span>
                     </div>
-                    <div className="p-3 text-xs leading-relaxed text-muted">
+                    <div className="image-review-spec text-xs leading-relaxed">
                       {asset.canonicalSpec.visualDescription ||
                         asset.canonicalSpec.distinguishingFeatures.join(" · ") ||
                         "No approved visual description recorded."}
                     </div>
                   </div>
-                  {iteration.mediaUri ? (
-                    <div className="overflow-hidden rounded-md bg-inset shadow-[var(--shadow-border)]">
-                      <div className="flex min-h-11 items-center justify-between px-3 py-2 text-xs text-muted">
-                        <span>Generated candidate</span>
-                        <span>B</span>
-                      </div>
-                      <img
-                        src={iteration.previewUri ?? iteration.mediaUri}
-                        alt={`Generated iteration for ${asset.name}`}
-                        className="aspect-square w-full object-contain"
-                      />
-                    </div>
-                  ) : null}
+                  <div><div className="flex items-center justify-between text-xs text-muted"><span>Candidate on canvas</span><span>B</span></div><p className="image-review-spec text-xs">{iteration.mediaUri ? `Actual iteration · ${iteration.status.replaceAll("_", " ").toLowerCase()}` : "Media is unavailable; approval remains blocked."}</p></div>
                 </div>
-                <p className="mt-2 truncate text-xs text-muted" title={iteration.mediaUri}>
-                  {iteration.mediaUri}
-                </p>
-                <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <details className="image-review-evidence"><summary>Image provenance & exact file</summary><p className="break-all text-xs">{iteration.mediaUri || "No durable media URI"}</p><dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
                   <Stat
                     k="Media hash"
                     v={
@@ -192,8 +184,8 @@ export function ImageIterationReview({
                       iteration.reviewDecisionIds?.length ?? iteration.reviewDecisions?.length ?? 0,
                     )}
                   />
-                </dl>
-                <fieldset className="mt-3 rounded-sm bg-inset p-3 shadow-[var(--shadow-border)]">
+                </dl></details>
+                <fieldset className="image-review-checklist">
                   <legend className="text-[11px] tracking-wide text-subtle uppercase">
                     Continuity checklist
                   </legend>

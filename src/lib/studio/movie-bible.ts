@@ -2,6 +2,7 @@ import type { Picture } from "./types.ts";
 import { stableHash } from "../production/dependency-graph.ts";
 import { HARROWING_V3 } from "./creative-preset.ts";
 import { bibleDomainRecords } from "./bible-domain-records.ts";
+import { importedSourceRecords } from "./imported-source-records.ts";
 
 /** These are extensions of canonical records, keyed by their existing IDs, not copies. */
 export const BIBLE_FIELDS = {
@@ -138,19 +139,11 @@ export function pictureBibleFieldView(picture: Picture, field: string) {
     ].filter(Boolean).join("\n");
     source = "Intake · delivery settings";
   } else if (field === BIBLE_FIELDS.picture[4]) {
-    const policy = read(intake.continuityPolicy);
-    const constraints = read(intake.storyConstraints);
-    value = policy && constraints
-      ? `Continuity policy: ${policy}\nStory constraints: ${constraints}`
-      : policy || constraints;
-    source = "Intake · continuity / story constraints";
+    value = read(intake.continuityPolicy);
+    source = "Intake · continuity policy";
   } else if (field === BIBLE_FIELDS.picture[5]) {
-    const policy = read(intake.voicePolicy);
-    const style = read(intake.dialogueStyle);
-    value = policy && style
-      ? `Voice policy: ${policy}\nDialogue style: ${style}`
-      : policy || style;
-    source = "Intake · voice / dialogue style";
+    value = read(intake.voicePolicy);
+    source = "Intake · voice policy";
   } else if (field === BIBLE_FIELDS.picture[6]) {
     value = read(intake.scoreStrategy);
     source = "Intake · score strategy";
@@ -264,6 +257,19 @@ export function movieBibleIndex(picture: Picture): BibleIndexRow[] {
       parentId: picture.id,
       revision: stableHash(source),
       locator: "intake",
+    });
+  for (const source of importedSourceRecords(picture))
+    rows.push({
+      id: source.id,
+      kind: "source",
+      name: source.label,
+      status: source.href ? "original package file" : "source manifest entry",
+      parentId: picture.id,
+      revision: source.sha256,
+      locator: "screenplay",
+      uri: source.href ?? undefined,
+      hash: source.sha256,
+      aliases: [source.fileName],
     });
   for (const [kind, records, locator] of [
     ["character", picture.characters, "visual-development"],
@@ -663,6 +669,8 @@ export function resolveBibleRecord(picture: Picture, id: string): unknown {
     };
   const imported = indexedIntakeSources(picture).find((item) => item.id === id);
   if (imported) return imported.source;
+  const packageSource = importedSourceRecords(picture).find((item) => item.id === id);
+  if (packageSource) return packageSource;
   for (const plan of Object.values(picture.directorScenes ?? {})) {
     if (id === `workflow:${plan.sceneId}`) return plan;
     const segment = plan.segments.find((s) => s.segmentId === id);
@@ -736,7 +744,7 @@ export function bibleSourceReading(picture: Picture, row: BibleIndexRow): {
       ? record.locator
       : typeof record.fileName === "string" ? record.fileName : "",
     text: hasQuote ? record.quote as string : typeof record.text === "string" ? record.text : "",
-    label: hasQuote ? "Source quote / supplied text" : "Imported document",
+    label: hasQuote ? "Source quote / supplied text" : typeof record.packageId === "string" ? "Original package source" : "Imported document",
     ...(typeof record.importedAt === "number" ? { importedAt: record.importedAt } : {}),
   };
 }

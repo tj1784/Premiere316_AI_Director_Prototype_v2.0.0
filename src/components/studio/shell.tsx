@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import "./nonmodal-shell-and-script.css";
 import "./ps5-canvas.css";
+import "./cinematic-shell.css";
 import { ProductionProfileControls } from "./production-profile-controls";
 import { ProjectFiles } from "./project-files";
 import { ProjectSaveStatus } from "./project-save-status";
@@ -227,7 +228,7 @@ export function StudioShell() {
         data-has-timeline={showTimeline}
         data-has-panel={Boolean(panel)}
       >
-        <div className="studio-canvas-body" data-panel-open={Boolean(panel)}>
+        <div className="studio-canvas-body" data-panel-open={Boolean(panel)} data-panel-kind={panel ?? ""}>
           {panel === "left" && leftKind && (
             <ContextPanel side="left" title={shellLeftTitle(leftKind)} onClose={closePanel}>
               <LeftPanel kind={leftKind} />

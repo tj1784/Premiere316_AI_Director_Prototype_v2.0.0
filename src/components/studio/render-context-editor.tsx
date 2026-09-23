@@ -34,7 +34,7 @@ export function RenderContextEditor() {
   const shot = picture.shots.find((s) => s.id === shotId) ?? picture.shots[0];
   const resolved = shot && resolveRenderContext(picture, shot);
   return (
-    <section className="grid gap-3 rounded-lg border border-border bg-surface p-4">
+    <section className="render-context-editor grid gap-3 rounded-lg border border-border bg-surface p-4">
       <h2 className="text-2xl">Global & local render description</h2>
       <p className="text-sm text-muted">
         Only invariant audiovisual properties belong at film scope. Local light, weather and music
