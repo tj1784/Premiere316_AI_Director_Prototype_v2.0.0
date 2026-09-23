@@ -1,3 +1,4 @@
+import "./research-workbench.css";
 import { useRef, useState } from "react";
 import { Check, FolderPlus, GitBranch, RefreshCw, Save, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -51,7 +52,7 @@ export function ResearchWorkspace({
   onBuildDraft: () => Promise<void>;
   building?: boolean;
 }) {
-  const [section, setSection] = useState("overview");
+  const [section, setSection] = useState(() => researchBibleGenerated(bible) ? "sources" : "overview");
   const [draft, setDraft] = useState<ResearchContent>(cloneResearchContent(bible.content));
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteTitle, setPasteTitle] = useState("");
@@ -99,28 +100,13 @@ export function ResearchWorkspace({
 
   return (
     <div
-      className="grid h-full min-h-0 min-w-0 lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)_minmax(14rem,18rem)]"
+      className="research-workbench grid h-full min-h-0 min-w-0"
       data-research-room="true"
       data-research-status={view.status}
       data-research-empty={view.showEmptyState ? "true" : "false"}
       data-research-offline={view.showOffline ? "true" : "false"}
       data-research-mode-panel="false"
     >
-      <aside className="hidden min-h-0 overflow-y-auto border-r border-border p-3 lg:block">
-        <p className="mb-3 text-[10px] tracking-[0.2em] text-subtle uppercase">Bible</p>
-        <button
-          type="button"
-          className={`mb-1 w-full rounded-sm px-2 py-2 text-left text-xs ${section === "overview" ? "bg-elevated text-fg" : "text-muted hover:bg-elevated hover:text-fg"}`}
-          aria-current={section === "overview" ? "true" : undefined}
-          onClick={() => setSection("overview")}
-        >
-          Room overview
-        </button>
-        {generated ? <BibleNav bible={{ ...bible, content: draft }} active={section} onSelect={setSection} /> : (
-          <p className="mt-3 text-[11px] leading-relaxed text-muted">No Research Bible has been generated yet. Build a research draft instead of filling a worksheet.</p>
-        )}
-      </aside>
-
       <section className="flex min-h-0 min-w-0 flex-col">
         <header className="shrink-0 border-b border-border px-4 py-3 sm:px-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -129,6 +115,9 @@ export function ResearchWorkspace({
               <h2 className="mt-1 font-display text-xl tracking-tight">{title || "Picture Research"}</h2>
             </div>
             <Badge>{view.statusLabel}</Badge>
+          </div>
+          <div className="research-section-tabs" role="tablist" aria-label="Research sections">
+            {[["overview","Overview"],["sources","Sources"],["social","Social world"],["camera","Cinematography"],["risks","Risks"]].map(([id,label]) => <button key={id} role="tab" aria-selected={section === id} onClick={() => setSection(id)}>{label}</button>)}
           </div>
           <p className="mt-3 max-w-2xl text-xs leading-relaxed text-muted">{view.purpose}</p>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -320,40 +309,12 @@ export function ResearchWorkspace({
           </div>
         </footer>
       </section>
-
-      <aside className="hidden min-h-0 overflow-y-auto border-l border-border p-4 lg:block" data-research-status-panel="true">
-        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Research status</p>
-        <p className="mt-2 text-sm">{view.statusLabel}</p>
-        <div className="my-5 border-t border-border" />
-        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Model status</p>
-        <p className="mt-2 text-sm">{view.modelStatusLabel}</p>
-        <div className="my-5 border-t border-border" />
-        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Actions</p>
-        <div className="mt-3 grid gap-2">
-          <Button size="sm" variant="secondary" onClick={onRescan}><RefreshCw />Rescan</Button>
-          <Button size="sm" variant="secondary" onClick={buildResearchDraft}><RefreshCw />{RESEARCH_ROOM_REGENERATE_CTA}</Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={!bible.approvedVersionId}
-            onClick={() => {
-              onChange(startDeltaResearch(bible, draft, uid("rsv")));
-              toast.message("Delta Research opened. Approved notes remain.");
-            }}
-          >
-            <GitBranch />Delta Research
-          </Button>
-        </div>
-        <div className="my-5 border-t border-border" />
-        <p className="text-[10px] tracking-[0.2em] text-subtle uppercase">Versions</p>
-        <ol className="mt-3 grid gap-2">
-          {[...bible.versions].reverse().map((version) => (
-            <li key={version.id} className="rounded-md bg-elevated p-3 shadow-[var(--shadow-border)]">
-              <p className="truncate text-xs">{version.label}</p>
-              <p className="mt-1 text-[10px] text-subtle">{version.scope} · {new Date(version.createdAt).toLocaleString()}</p>
-            </li>
-          ))}
-        </ol>
+      <aside className="research-status-inspector" aria-label="Research status and versions" data-research-status-panel="true">
+        <p className="text-xs text-muted">Research status</p><p>{view.statusLabel}</p>
+        <p className="mt-5 text-xs text-muted">Configured model</p><p>{view.modelStatusLabel}</p>
+        <Button className="mt-3" size="sm" variant="secondary" onClick={onRescan}><RefreshCw />Rescan availability</Button>
+        <h3 className="mt-6">Version history</h3>
+        <ol>{[...bible.versions].reverse().map((version) => <li key={version.id}><strong>{version.label}</strong><span>{version.scope} · {new Date(version.createdAt).toLocaleString()}</span></li>)}</ol>
       </aside>
     </div>
   );

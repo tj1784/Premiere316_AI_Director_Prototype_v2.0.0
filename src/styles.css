@@ -2328,3 +2328,13 @@
 .bible-record-board:not(:has(.bible-source-passages)) { grid-template-columns:minmax(0,1fr); }
 @media(max-width:900px) { .bible-reading-surface.bible-record-board { grid-template-columns:minmax(0,1fr); padding:16px; } }
 @media(max-width:600px) { .bible-field-board { grid-template-columns:minmax(0,1fr); } }
+
+/* V4 production glass surfaces: depth belongs to the working panes. */
+.stage-pane,.workbench-frame,.production-workbench,.research-workbench,.asset-review-surface { position:relative; isolation:isolate; }
+.stage-pane::before,.workbench-frame::before,.production-workbench::before,.research-workbench::before { content:"";position:absolute;inset:0 0 auto; height:1px; pointer-events:none;z-index:2;background:linear-gradient(90deg,transparent,#e4edf331,transparent); }
+.workbench-content,.bible-record-board,.writing-workbench-manuscript,.pw-main,.asset-cabinet-carousel { background:radial-gradient(ellipse at 12% -30%,#7198be14,transparent 52%); }
+.bible-field-board .bible-passage,.asset-library-tile,.pw-context,.pw-editor,.pw-inspector,.asset-library-inspector { backdrop-filter:blur(14px) saturate(118%);box-shadow:inset 0 1px 0 #ffffff0e,0 12px 28px #03091220;transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease; }
+.bible-field-board .bible-passage:hover,.asset-library-tile:hover {border-color:#e3c69360;transform:translateY(-2px);box-shadow:inset 0 1px 0 #ffffff18,0 18px 32px #03091236;}
+.workspace-tabs button,.workbench-switcher button,.pw-tabs button {transition:background-color .18s ease,color .18s ease,box-shadow .18s ease;}
+.workspace-tabs button:focus-visible,.workbench-switcher button:focus-visible,.pw-tabs button:focus-visible {outline:2px solid var(--workbench-accent);outline-offset:2px;}
+@media(prefers-reduced-motion:reduce){.bible-field-board .bible-passage,.asset-library-tile,.workspace-tabs button,.workbench-switcher button,.pw-tabs button{transition:none!important;transform:none!important;}}

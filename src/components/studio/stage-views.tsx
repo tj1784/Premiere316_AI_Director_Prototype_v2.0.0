@@ -732,26 +732,23 @@ function ResearchStage({ picture }: { picture: Picture }) {
     ),
   });
   const researchBinding = researchProfile.bindings.find((binding) => binding.role === "architect");
-  const llamaAvailable = Boolean(
-    researchBinding?.callableModelId && ["installed", "loaded"].includes(researchBinding.status),
-  );
+  // The local served-model check does not describe Astra availability.
+  const llamaAvailable = researchProfile.profileId === "astra-ultra"
+    ? null
+    : Boolean(researchBinding?.callableModelId && ["installed", "loaded"].includes(researchBinding.status));
   const scan = useCallback(async () => {
     toast.info(
       "Refresh availability in the production profile controls above. No alternate model is used.",
     );
   }, []);
   return (
-    <div className="min-w-0">
-      <details className="border-b border-border p-3">
-        <summary>Research production profile · {researchBinding?.label}</summary>
-        <CabinetModal
-          title="Production profile"
-          trigger={<Button variant="secondary">Production profile & models</Button>}
-        >
+    <div className="flex h-full min-h-0 min-w-0 flex-col">
+      <div className="flex shrink-0 items-center justify-end border-b border-border px-4 py-2">
+        <CabinetModal title="Research production profile" trigger={<Button variant="ghost" size="sm">Profile · {researchBinding?.label ?? "unconfigured"}</Button>}>
           <ProductionProfileControls picture={picture} disabled={building} />
         </CabinetModal>
-      </details>
-      <ResearchWorkspace
+      </div>
+      <div className="min-h-0 flex-1"><ResearchWorkspace
         title={picture.title}
         bible={bible}
         llamaAvailable={llamaAvailable}
@@ -789,7 +786,7 @@ function ResearchStage({ picture }: { picture: Picture }) {
             setBuilding(false);
           }
         }}
-      />
+      /></div>
     </div>
   );
 }

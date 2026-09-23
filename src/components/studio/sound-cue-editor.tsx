@@ -1,3 +1,4 @@
+import "./sound-workbench.css";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,9 @@ export function SoundCueEditor() {
   const picture = useActivePicture();
   const patch = useStudio((s) => s.patchActive);
   const [draft, setDraft] = useWorkspaceDraft<SoundCueRecord | null>("sound-cue", null);
+  const [selectedCueId, setSelectedCueId] = useWorkspaceDraft("selected-sound-cue", "");
+  const [surface, setSurface] = useWorkspaceDraft("sound-cue-surface", "direction");
+  const [legacyCueId, setLegacyCueId] = useWorkspaceDraft("legacy-sound-cue", "");
   if (!picture) return null;
   const audio = hydratePictureAudio(picture);
   const field = (
@@ -39,7 +43,7 @@ export function SoundCueEditor() {
     </label>
   );
   return (
-    <section className="my-5 grid gap-4 rounded-lg border border-border bg-surface p-4">
+    <section className="sound-workbench">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl">Sound & musical development</h2>
@@ -65,7 +69,16 @@ export function SoundCueEditor() {
           Add cue
         </Button>
       </header>
-      {draft && (
+      <div className="sound-workbench-body"><aside className="sound-cue-rail" aria-label="Sound cues">
+        {audio.cues.map((cue) => <button key={cue.id} aria-pressed={(selectedCueId || audio.cues[0]?.id) === cue.id} onClick={() => { setSelectedCueId(cue.id); setLegacyCueId(""); setDraft(null); setSurface("direction"); }}><span>{cue.name}</span><small>{cue.kind} · {cue.startSec}s</small></button>)}
+        {picture.cues.filter((cue) => !audio.cues.some((authored) => authored.id === cue.id)).map((cue) => <button key={cue.id} aria-pressed={legacyCueId === cue.id} onClick={() => { setLegacyCueId(cue.id); setSelectedCueId(""); setDraft(null); setSurface("direction"); }}><span>{cue.name}</span><small>Source score · {cue.startSec}s</small></button>)}
+        {!audio.cues.length && !picture.cues.length && <p>No cues yet. Add a cue to define the soundtrack.</p>}
+      </aside><div className="sound-workbench-main">
+      <div className="workspace-tabs mb-4" aria-label="Cue work">
+        <button aria-pressed={surface === "direction"} onClick={() => setSurface("direction")}>Direction & takes</button>
+        <button aria-pressed={surface === "specialists"} onClick={() => setSurface("specialists")}>Specialist audio</button>
+      </div>
+      {surface === "direction" && draft && (
         <div className="grid gap-3 rounded border border-border bg-inset p-4">
           <div className="grid gap-3 sm:grid-cols-2">
             {field("name", "Cue name")}
@@ -251,8 +264,9 @@ export function SoundCueEditor() {
           </div>
         </div>
       )}
-      <SpecialistAudioPanel key={picture.id} picture={picture} />
-      {audio.cues.map((c) => (
+      {surface === "specialists" && <SpecialistAudioPanel key={picture.id} picture={picture} />}
+      {surface === "direction" && !draft && picture.cues.length && (legacyCueId || !audio.cues.length) ? (() => { const cue = picture.cues.find((item) => item.id === legacyCueId) ?? picture.cues[0]; return <article className="sound-source-cue"><p className="text-xs text-muted">Source cue · {cue.id}</p><h3>{cue.name}</h3><p>{cue.startSec}s · {cue.durationSec}s · {cue.mood}</p><p>Instruments: {cue.instruments || "Not authored"}</p><p>Sound: {cue.sfx || "Not authored"}</p><p className="whitespace-pre-wrap">{cue.minimaxPrompt}</p><Button variant="secondary" onClick={() => setDraft({ id: cue.id, name: cue.name, kind: "score", startSec: cue.startSec, durationSec: cue.durationSec, sceneId: null, shotId: null, notes: cue.mood || cue.minimaxPrompt, instrumentation: cue.instruments })}>Develop this cue</Button></article>; })() : null}
+      {surface === "direction" && !draft && !legacyCueId && audio.cues.filter((c) => c.id === (selectedCueId || audio.cues[0]?.id)).map((c) => (
         <article key={c.id} className="rounded border border-border p-3">
           <div className="flex flex-wrap justify-between gap-3">
             <div>
@@ -313,6 +327,7 @@ export function SoundCueEditor() {
           )}
         </article>
       ))}
+      </div></div>
     </section>
   );
 }
