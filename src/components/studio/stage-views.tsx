@@ -725,6 +725,7 @@ function ResearchStage({ picture }: { picture: Picture }) {
   const patchActive = useStudio((state) => state.patchActive);
   const replaceActive = useStudio((state) => state.replaceActive);
   const [building, setBuilding] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const bible = hydratePictureResearch(picture.research, picture.intake);
   const researchProfile = hydrateProductionRouting(picture.productionRouting, {
     legacyLocalSelection: Boolean(
@@ -744,10 +745,9 @@ function ResearchStage({ picture }: { picture: Picture }) {
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col">
       <div className="flex shrink-0 items-center justify-end border-b border-border px-4 py-2">
-        <CabinetModal title="Research production profile" trigger={<Button variant="ghost" size="sm">Profile · {researchBinding?.label ?? "unconfigured"}</Button>}>
-          <ProductionProfileControls picture={picture} disabled={building} />
-        </CabinetModal>
+        <Button variant="ghost" size="sm" aria-expanded={profileOpen} onClick={() => setProfileOpen((value) => !value)}>Profile · {researchBinding?.label ?? "unconfigured"}</Button>
       </div>
+      {profileOpen && <div className="research-profile-panel" aria-label="Research production profile"><ProductionProfileControls picture={picture} disabled={building} /></div>}
       <div className="min-h-0 flex-1"><ResearchWorkspace
         title={picture.title}
         bible={bible}

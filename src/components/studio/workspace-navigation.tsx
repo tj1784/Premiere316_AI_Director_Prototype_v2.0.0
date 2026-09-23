@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BookOpen,
   Film,
@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { useActivePicture, useStage, useStudio } from "@/lib/studio/store";
 import type { StageId } from "@/lib/studio/types";
-import { CabinetModal } from "./cabinet";
 
 export const workspaceGroups: {
   title: string;
@@ -81,6 +80,24 @@ export function WorkspaceNavigation() {
   const picture = useActivePicture();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const dockRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    searchRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    const onPointer = (event: PointerEvent) => {
+      if (!dockRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onPointer);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onPointer);
+    };
+  }, [open]);
   const active = picture?.workspacePanel || stage;
   const navigate = (id: Destination) => {
     useStudio
@@ -90,8 +107,7 @@ export function WorkspaceNavigation() {
     setOpen(false);
   };
   return (
-    <>
-      <div className="studio-dock" role="navigation" aria-label="Workspace dock">
+      <div className="studio-dock" role="navigation" aria-label="Workspace dock" ref={dockRef}>
         {pinned.map((id) => {
           const item = tools.find((t) => t.id === id)!;
           return (
@@ -111,35 +127,29 @@ export function WorkspaceNavigation() {
           className="dock-icon"
           aria-label="All workspaces"
           aria-expanded={open}
-          onClick={() => setOpen(true)}
+          onClick={() => setOpen((value) => !value)}
         >
           <Grid2X2 size={20} strokeWidth={1.6} />
           <span className="dock-tooltip">All workspaces</span>
         </button>
-      </div>
-      <CabinetModal title="Workspaces" open={open} onOpenChange={setOpen}>
-        <input
-          className="workspace-finder"
-          aria-label="Find a workspace"
-          placeholder="Find a workspace…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <div className="workspace-launcher">
-          {tools
-            .filter((t) => t.label.toLowerCase().includes(query.toLowerCase()))
-            .map((item) => (
-              <button
-                key={item.id}
-                onClick={() => navigate(item.id)}
-                aria-current={active === item.id ? "page" : undefined}
-              >
-                <item.icon size={20} strokeWidth={1.5} />
+        {open && <div className="workspace-dock-panel" role="region" aria-label="Workspaces">
+          <input
+            ref={searchRef}
+            className="workspace-finder"
+            aria-label="Find a workspace"
+            placeholder="Find a workspace…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <div className="workspace-launcher">
+            {tools.filter((item) => item.label.toLowerCase().includes(query.toLowerCase())).map((item) => (
+              <button key={item.id} onClick={() => navigate(item.id)} aria-current={active === item.id ? "page" : undefined}>
+                <item.icon size={18} strokeWidth={1.5} />
                 <span>{item.label}</span>
               </button>
             ))}
-        </div>
-      </CabinetModal>
-    </>
+          </div>
+        </div>}
+      </div>
   );
 }

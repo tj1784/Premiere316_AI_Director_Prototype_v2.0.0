@@ -12,7 +12,7 @@ Missing Bible fields appear in the film record board without inventing values. F
 
 | Bible requirement | Interface location and evidence |
 | --- | --- |
-| UX001–002 Visual system and contextual navigation | Shared workbench tokens and bounded stages in `src/styles.css`, icon dock / searchable cabinet in `workspace-navigation.tsx`. |
+| UX001–002 Visual system and contextual navigation | Shared workbench tokens and bounded stages in `src/styles.css`, icon dock / anchored searchable panel in `workspace-navigation.tsx`. |
 | UX003 Setup, profile, execution mode | Film intake and profile controls remain in the brief, research and screenplay workspaces and settings. |
 | UX004 Source authority and story | Film Bible source passages, corrections, record picker; research source workspace. |
 | UX005 Characters, world, state | Character sheet and linked scene state; Bible record board and source geography. |
@@ -26,4 +26,4 @@ Missing Bible fields appear in the film record board without inventing values. F
 | UX014 Timeline and delivery | Clip selection, timeline preview, coverage, finished movie and script package views. |
 | UX015 Accessibility/reflow | Desktop bounded panes; controls have labels; short transitions respect reduced motion. Narrow layouts reflow to one column. |
 
-Validation: `npm run typecheck` and `npm run test:v4` (48 tests) passed. Production Sites build succeeded. Interactive preview verified film home, Bible, screenplay, assets, research, performance, camera and audio at 1363×936, with no body overflow. This is **not** a complete model/runtime UAT: actual media references shipped without their image or voice bytes and appear unavailable; generation, audio audition, export, mobile and 200% zoom were not exercised end to end. Image iteration deletion is not implemented by this interface revision; do not claim UX008 deletion acceptance. Source-backed fields that are missing are explicitly shown as missing.
+Validation: `npm run typecheck` and `npm run test:v4` (48 tests) passed. Production Sites build succeeded. Interactive preview verified film home, Bible, screenplay, assets, research, performance, camera and audio at 1363×936, with no body overflow. Dock search and inline Research profile were exercised separately. This is **not** a complete model/runtime UAT: actual media references shipped without their image or voice bytes and appear unavailable; generation, audio audition, export, mobile and 200% zoom were not exercised end to end. Image iteration deletion is not implemented by this interface revision; do not claim UX008 deletion acceptance. Source-backed fields that are missing are explicitly shown as missing.
